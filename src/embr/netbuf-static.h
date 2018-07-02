@@ -31,14 +31,14 @@ public:
 
     bool next() const { return false; }
 
-    ExpandResult expand(size_type by_amount)
+    ExpandResult expand(size_type by_amount, bool move_to_next)
     {
         return ExpandResult::ExpandFailFixedSize;
     }
 
     bool last() const { return true; }
 
-    size_type total_size() { return N; }
+    size_type total_size() const { return N; }
 };
 
 }
@@ -66,7 +66,7 @@ public:
 
     bool next() const { return false; }
 
-    ExpandResult expand(size_type by_amount)
+    ExpandResult expand(size_type by_amount, bool move_to_next)
     {
         if(base::resize(base::size() + by_amount))
             return ExpandResult::ExpandOKLinear;
@@ -82,8 +82,25 @@ public:
     // simple buffers so not too bad.  Indicates that really we should put a data()
     // into those containers which are gaurunteed to be that simple
     const uint8_t* data() const { return base::clock(); }
+
+    uint8_t* data() { return base::lock(); }
 };
 
 }
+
+template <size_t N>
+struct NetBufTraits<layer1::NetBuf<N> >
+{
+    static CONSTEXPR bool can_chain() { return false; }
+    static CONSTEXPR bool can_expand() { return false; }
+};
+
+template <size_t N>
+struct NetBufTraits<layer2::NetBuf<N> >
+{
+    static CONSTEXPR bool can_chain() { return false; }
+    static CONSTEXPR bool can_expand() { return true; }
+};
+
 
 }}

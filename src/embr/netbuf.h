@@ -2,13 +2,28 @@
 
 #include <estd/span.h>
 
+/*
+ * EXPAND operation can optionally auto-move to next chain if it's a chaining netbuf
+ */
+
 namespace embr { namespace mem {
+
+
+template <class TNetBuf>
+class NetBufTraits;
 
 enum ExpandResult
 {
+    ExpandWarnChained = -4, // allocated *some* of requested memory
+    ExpandWarnLinear = -3, // allocated *some* of requested memory
+
     ExpandFailFixedSize = -2,
     ExpandFailOutOfMemory = -1,
+    // expanded by linking another chain in the list.  data() will
+    // definitely be different here
     ExpandOKChained = 0,
+    // expanded in-place, or perhaps realloc style
+    // always query data() again just to be sure after the expand
     ExpandOKLinear = 1
 };
 
