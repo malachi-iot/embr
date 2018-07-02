@@ -4,15 +4,9 @@
 #include <estd/array.h>
 #include <estd/vector.h>
 
-namespace embr { namespace mem {
+#include "netbuf.h"
 
-enum ExpandResult
-{
-    ExpandFailFixedSize = -2,
-    ExpandFailOutOfMemory = -1,
-    ExpandOKChained = 0,
-    ExpandOKLinear = 1
-};
+namespace embr { namespace mem {
 
 namespace layer1 {
 

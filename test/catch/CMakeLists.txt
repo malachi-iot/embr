@@ -20,6 +20,7 @@ add_subdirectory(${EMBR_NETBUF_DIR} netbuf)
 set(SOURCE_FILES
     main.cpp
     reader-test.cpp
+    writer-test.cpp
     )
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
