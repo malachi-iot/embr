@@ -10,6 +10,6 @@
 
 #include <catch.hpp>
 
-TEST_CASE("main")
+TEST_CASE("main test", "[main-test]")
 {
 }

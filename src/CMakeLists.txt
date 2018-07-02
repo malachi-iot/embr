@@ -8,6 +8,8 @@ set(ESTDLIB_DIR ${EXT_DIR}/estdlib/src)
 
 include_directories(${ESTDLIB_DIR})
 
+add_subdirectory(${ESTDLIB_DIR} estdlib)
+
 set(SOURCE_FILES
     main.cpp
     embr/netbuf.h
