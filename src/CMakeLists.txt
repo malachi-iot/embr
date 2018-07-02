@@ -13,6 +13,9 @@ add_subdirectory(${ESTDLIB_DIR} estdlib)
 set(SOURCE_FILES
     main.cpp
     embr/netbuf.h
+    embr/netbuf-static.h
+    embr/netbuf-reader.h
+    embr/netbuf-writer.h
     )
 
 add_library(${PROJECT_NAME} ${SOURCE_FILES})
