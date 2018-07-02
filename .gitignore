@@ -30,3 +30,22 @@
 *.exe
 *.out
 *.app
+
+# CLion specific
+cmake-build-debug/
+**/.idea/workspace.xml
+**/.idea/vcs.xml
+
+# Qt specific
+build/
+*.user
+
+# Visual Studio specific
+.vs/
+*.userprefs
+bin/
+obj/
+test/**/packages/
+
+# macOS misc
+.DS_Store
