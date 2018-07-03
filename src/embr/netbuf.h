@@ -5,6 +5,19 @@
 
 /*
  * EXPAND operation can optionally auto-move to next chain if it's a chaining netbuf
+ *
+ * NetBufReader treats NetBuf.size() as maximum readable (processed) bytes,
+ *      and tracks its own pos reading through it.  It is assumed that every byte presented
+ *      by NetBuf is interesting and readable - nothing uninitialized
+ * NetBufWriter treats NetBuf.size() as maximum writeable (unprocessed) bytes,
+ *      and tracks its own pos filling it up so that subsequent buffer() calls always
+ *      present empty, writeable buffer space
+ * NetBuf signature (concept) is:
+ *      uint8* data() = raw available bytes in this chunk/chain
+ *      size_type size() = number of available bytes in chunk/chain
+ *      expand(size_type by_amount, bool auto_next) = attempt to expand netbuf size
+ *      bool last() = check to see if this is the last nextbuf
+ *      bool next() = attempt to move forward in a netbuf chain (only relevant for chained, prepopulated netbuf)
  */
 
 namespace embr { namespace mem {

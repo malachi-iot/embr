@@ -26,7 +26,7 @@ TEST_CASE("writer test", "[writer]")
         SECTION("basic write")
         {
             REQUIRE(writer.next(100));
-            REQUIRE(writer.total_size() == 100);
+            REQUIRE(writer.total_size() >= 100); // Because of our 'room to grow' policy
             estd::mutable_buffer b = writer.buffer();
 
             estd::layer3::string s((char*)b.data(), 0, b.size());

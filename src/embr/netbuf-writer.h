@@ -14,7 +14,7 @@ namespace embr { namespace mem {
 // TODO: writer is potentially going to need all that ostream stuff
 // so keep << unfancy until we finish porting in util.embedded ostream, then make
 // NetBufWriter an actual participant in that space
-template <class TNetBuf>
+template <class TNetBuf, class TPolicy = void>
 class NetBufWriter : public internal::NetBufWrapper<TNetBuf>
 {
     typedef internal::NetBufWrapper<TNetBuf> base;
@@ -50,6 +50,9 @@ public:
     // if some but not all memory could be allocated
     bool next(size_type by_amount)
     {
+        // TODO: Make this by_amount padding come direct from policy
+        by_amount += 8; // room to grow without having to reallocate
+
         switch(netbuf().expand(by_amount, true))
         {
             case ExpandResult::ExpandOKChained:
@@ -77,38 +80,31 @@ NetBufWriter<TNetBuf>& operator <<(NetBufWriter<TNetBuf>& writer, const estd::co
     estd::mutable_buffer b = writer.buffer();
     typedef typename NetBufWriter<TNetBuf>::size_type size_type;
 
-    /*
-    if(copy_from.size() > b.size())
+    size_type copy_from_size = copy_from.size();
+    typedef estd::const_buffer::iterator iterator;
+    iterator copy_from_begin = copy_from.begin();
+
+    // while source copy from buffer exceeds available netbuf size
+    while(copy_from_size > b.size())
     {
-        typedef estd::const_buffer::iterator iterator;
-        size_type remainder;
-        size_type copy_from_size = copy_from.size();
-        iterator copy_from_begin = copy_from.begin();
+        // fill remainder of current chunk up completely
+        std::copy(copy_from_begin, copy_from_begin + b.size(), b.begin());
 
-        do
+        // move through copy_from by netbuf chunk size
+        copy_from_begin += b.size();
+        copy_from_size -= b.size();
+
+        // advance to next chunk, asking for (remaining) size we really need
+        if (!writer.next(copy_from_size))
         {
-            // remainder = amount we still need to write
-            remainder = copy_from_size - b.size();
+            // ASSERT some kind of problem
+        }
 
-            // fill remainder of current chunk up completely
-            std::copy(copy_from_begin, copy_from_begin + b.size(), b.begin());
-
-            // advance to next chunk
-            if (!writer.next(remainder))
-            {
-                // ASSERT some kind of problem
-            }
-
-            copy_from_begin += remainder;
-            copy_from_size -= remainder;
-
-            b = writer.buffer();
-
-            // keep going if copy_from still is larger than the presented chunk
-        } while(copy_from_size > b.size());
+        // acquire buffer moved to by 'next' operation
+        b = writer.buffer();
     }
-    else */
-        std::copy(copy_from.begin(), copy_from.end(), b.begin());
+
+    std::copy(copy_from_begin, copy_from.end(), b.begin());
 
     return writer;
 }
