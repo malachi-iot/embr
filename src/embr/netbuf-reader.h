@@ -10,6 +10,10 @@ class NetBufReader : public internal::NetBufWrapper<TNetBuf>
 {
     typedef internal::NetBufWrapper<TNetBuf> base;
 
+    template <class _TNetBuf>
+    friend NetBufReader<_TNetBuf>& operator >>(NetBufReader<_TNetBuf>& reader, uint8_t& value);
+
+
 public:
     typedef typename base::netbuf_type netbuf_type;
     typedef typename base::size_type size_type;
@@ -33,5 +37,13 @@ public:
 
     bool next() { return netbuf().next(); }
 };
+
+template <class TNetBuf>
+NetBufReader<TNetBuf>& operator >>(NetBufReader<TNetBuf>& reader, uint8_t& value)
+{
+    value = reader.netbuf().data()[0];
+    reader.advance(1);
+    return reader;
+}
 
 }}

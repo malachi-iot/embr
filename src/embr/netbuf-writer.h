@@ -19,6 +19,9 @@ class NetBufWriter : public internal::NetBufWrapper<TNetBuf>
 {
     typedef internal::NetBufWrapper<TNetBuf> base;
 
+    template <class _TNetBuf>
+    friend NetBufWriter<_TNetBuf>& operator <<(NetBufWriter<_TNetBuf>& reader, uint8_t value);
+
 public:
     typedef typename base::netbuf_type netbuf_type;
     typedef typename base::size_type size_type;
@@ -72,9 +75,49 @@ template <class TNetBuf>
 NetBufWriter<TNetBuf>& operator <<(NetBufWriter<TNetBuf>& writer, const estd::const_buffer& copy_from)
 {
     estd::mutable_buffer b = writer.buffer();
+    typedef typename NetBufWriter<TNetBuf>::size_type size_type;
 
-    // TODO: do bounds checking
-    std::copy(copy_from.begin(), copy_from.end(), b.begin());
+    /*
+    if(copy_from.size() > b.size())
+    {
+        typedef estd::const_buffer::iterator iterator;
+        size_type remainder;
+        size_type copy_from_size = copy_from.size();
+        iterator copy_from_begin = copy_from.begin();
+
+        do
+        {
+            // remainder = amount we still need to write
+            remainder = copy_from_size - b.size();
+
+            // fill remainder of current chunk up completely
+            std::copy(copy_from_begin, copy_from_begin + b.size(), b.begin());
+
+            // advance to next chunk
+            if (!writer.next(remainder))
+            {
+                // ASSERT some kind of problem
+            }
+
+            copy_from_begin += remainder;
+            copy_from_size -= remainder;
+
+            b = writer.buffer();
+
+            // keep going if copy_from still is larger than the presented chunk
+        } while(copy_from_size > b.size());
+    }
+    else */
+        std::copy(copy_from.begin(), copy_from.end(), b.begin());
+
+    return writer;
+}
+
+template <class TNetBuf>
+NetBufWriter<TNetBuf>& operator <<(NetBufWriter<TNetBuf>& writer, uint8_t value)
+{
+    writer.netbuf().data()[0] = value;
+    return writer;
 }
 
 namespace experimental {

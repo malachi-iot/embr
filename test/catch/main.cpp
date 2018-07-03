@@ -9,7 +9,3 @@
 #endif
 
 #include <catch.hpp>
-
-TEST_CASE("main test", "[main-test]")
-{
-}

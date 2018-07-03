@@ -39,6 +39,8 @@ TEST_CASE("writer test", "[writer]")
             REQUIRE((char)netbuf[2] == '2');
             REQUIRE((char)netbuf[3] == 'u');
         }
+        // FIX: These all actually should be failing since we didn't expand
+        // but because bounds checking is currently so weak, it works
         SECTION("basic << operator")
         {
             uint8_t buffer[] = { 1, 2, 3 };
@@ -57,6 +59,18 @@ TEST_CASE("writer test", "[writer]")
 
             for(int i = 0; i < buffer.size(); i++)
                 REQUIRE(buffer[i] == netbuf[i]);
+        }
+        SECTION("byte << operator")
+        {
+            uint8_t value = 0xFF;
+
+            writer << value;
+
+            REQUIRE(0xFF == netbuf[0]);
+        }
+        SECTION("chunked write")
+        {
+
         }
         SECTION("experimental")
         {

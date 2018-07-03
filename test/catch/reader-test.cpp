@@ -23,5 +23,13 @@ TEST_CASE("reader test", "[reader]")
 
             REQUIRE(reader.buffer()[0] == 'o');
         }
+        SECTION("byte >> operator")
+        {
+            uint8_t value;
+
+            reader >> value;
+
+            REQUIRE(value == netbuf[0]);
+        }
     }
 }

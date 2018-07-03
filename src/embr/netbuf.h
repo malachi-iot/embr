@@ -1,6 +1,7 @@
 #pragma once
 
 #include <estd/span.h>
+//#include <estd/ios.h>
 
 /*
  * EXPAND operation can optionally auto-move to next chain if it's a chaining netbuf
@@ -28,11 +29,28 @@ enum ExpandResult
 };
 
 
+namespace experimental {
+
+// for things like ios formatter and error bits
+template <bool has_metadata>
+class NetBufMetadata;
+
+/*
+template <>
+struct NetBufMetadata<true> : estd::ios_base {}; */
+
+template <>
+struct NetBufMetadata<false> {};
+
+
+}
+
 namespace internal {
+
 
 // since read and write are 90% similar, consolidate their functions here
 template <class TNetBuf>
-class NetBufWrapper
+class NetBufWrapper : experimental::NetBufMetadata<false>
 {
 public:
     typedef typename std::remove_reference<TNetBuf>::type netbuf_type;
