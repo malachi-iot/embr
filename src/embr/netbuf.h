@@ -63,7 +63,17 @@ protected:
 public:
     size_type total_size() const { return m_netbuf.total_size(); }
 
-    bool end() const { return m_netbuf.end(); }
+    bool last() const { return m_netbuf.last(); }
+
+    size_type advance(size_type by_amount)
+    {
+        if(m_netbuf.size() < by_amount)
+            by_amount = m_netbuf.size();
+
+        m_pos += by_amount;
+
+        return by_amount;
+    }
 };
 
 }

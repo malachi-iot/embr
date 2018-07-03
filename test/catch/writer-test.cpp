@@ -39,5 +39,36 @@ TEST_CASE("writer test", "[writer]")
             REQUIRE((char)netbuf[2] == '2');
             REQUIRE((char)netbuf[3] == 'u');
         }
+        SECTION("basic << operator")
+        {
+            uint8_t buffer[] = { 1, 2, 3 };
+
+            writer << buffer;
+
+            for(int i = 0; i < sizeof(buffer); i++)
+                REQUIRE(buffer[i] == netbuf[i]);
+        }
+        SECTION("string(ish) << operator")
+        {
+            estd::layer2::const_string s = "hello";
+            estd::const_buffer buffer((uint8_t*)s.lock(), s.size());
+
+            writer << buffer;
+
+            for(int i = 0; i < buffer.size(); i++)
+                REQUIRE(buffer[i] == netbuf[i]);
+        }
+        SECTION("experimental")
+        {
+            SECTION("itoa")
+            {
+                embr::mem::experimental::itoa(writer, 500);
+
+                REQUIRE('5' == netbuf[0]);
+                REQUIRE('0' == netbuf[1]);
+                REQUIRE(0 != netbuf[2]);
+                REQUIRE('0' == netbuf[2]);
+            }
+        }
     }
 }

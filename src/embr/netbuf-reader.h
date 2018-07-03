@@ -6,7 +6,7 @@
 namespace embr { namespace mem {
 
 template <class TNetBuf>
-class NetBufReader : internal::NetBufWrapper<TNetBuf>
+class NetBufReader : public internal::NetBufWrapper<TNetBuf>
 {
     typedef internal::NetBufWrapper<TNetBuf> base;
 
@@ -28,14 +28,10 @@ public:
     estd::const_buffer buffer() const
     {
         return estd::const_buffer(netbuf().data() + base::m_pos,
-                                  netbuf().size());
+                                  netbuf().size() - base::m_pos);
     }
 
-    bool advance(size_type by_amount)
-    {
-        base::m_pos += by_amount;
-        return true;
-    }
+    bool next() { return netbuf().next(); }
 };
 
 }}
