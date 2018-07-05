@@ -40,8 +40,9 @@ public:
     NetBufAllocator(TNetBuf&& nb) :
         netbuf(std::move(nb)) {} */
 
-    NetBufAllocator(const TNetBuf& nb) :
-        netbuf(nb) {}
+    NetBufAllocator(TNetBuf& nb) :
+        netbuf(nb),
+        absolute_pos(0) {}
 
     /*
 #ifdef FEATURE_CPP_MOVESEMANTIC
@@ -193,5 +194,27 @@ public:
     { }
 #endif
 };
+
+// FIX: Very annoying to explicitly define reference version
+// NOTE: Doesn't compile well, due to const inconsistencies through string/allocated_array/impl
+// chains.  That needs to be ironed out
+template <class T, class TNetBuf, class TPolicy>
+class dynamic_array<embr::experimental::NetBufAllocator<T, TNetBuf>&, TPolicy > :
+        public dynamic_array_base<embr::experimental::NetBufAllocator<T, TNetBuf>&, false >
+{
+    typedef dynamic_array_base<embr::experimental::NetBufAllocator<T, TNetBuf>&, false > base;
+
+public:
+#if defined(FEATURE_CPP_MOVESEMANTIC) && defined(FEATURE_CPP_VARIADIC)
+    template <class ... TArgs>
+    dynamic_array(TArgs&&...args) : base(std::forward<TArgs>(args)...)
+    { }
+#endif
+
+    typedef typename std::remove_reference<typename base::allocator_type>::type allocator_type;
+    // TODO: A lof of 'allocator_traits<TAllocator>' floating around, still need to weed that out
+    typedef typename estd::allocator_traits<allocator_type> allocator_traits;
+};
+
 
 }}}

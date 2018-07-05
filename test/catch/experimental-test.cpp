@@ -23,17 +23,20 @@ class test_string : public estd::basic_string<
 
 public:
     test_string(TAllocator& a) : base(a) {}
+
+    // NOTE: makes no difference
+    typedef typename std::remove_reference<TAllocator>::type allocator_type;
 };
 
 
-template <class TNetBufAllocator>
-void test(TNetBufAllocator& a)
+template <class TAllocator>
+void test(TAllocator& a)
 {
     // FIX: Misbehaves when we really want it to be TNetBufAllocator&
     // runs destructor since we're actually copying to a local TNetBufAllocator
     // rather than a reference, which results in two active TNetBufAllocators
     // - at the moment it doesn't crash, but it will
-    test_string<TNetBufAllocator> s(a);
+    test_string<TAllocator&> s(a);
 
     s += "hello";
 
