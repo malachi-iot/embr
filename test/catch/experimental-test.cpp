@@ -1,6 +1,7 @@
 #include <catch.hpp>
 
 #include <embr/netbuf-static.h>
+#include <embr/netbuf-dynamic.h>
 #include <embr/netbuf-reader.h>
 #include <embr/exp/netbuf-alloc.h>
 
@@ -26,7 +27,7 @@ public:
 
 TEST_CASE("experimental test", "[experimental]")
 {
-    SECTION("A")
+    SECTION("NetBufAllocator")
     {
         embr::mem::layer1::NetBuf<128> nb;
         NetBufAllocator<char, decltype(nb)& > a(nb);
@@ -35,5 +36,13 @@ TEST_CASE("experimental test", "[experimental]")
         s += "hello";
 
         REQUIRE(s == "hello");
+    }
+    SECTION("NetBufDynamic")
+    {
+        embr::mem::experimental::NetBufDynamic<> nb;
+
+        REQUIRE(nb.size() == 128);
+
+        nb.data();
     }
 }

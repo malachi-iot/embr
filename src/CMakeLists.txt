@@ -14,6 +14,7 @@ set(SOURCE_FILES
     main.cpp
     embr/netbuf.h
     embr/netbuf-static.h
+    embr/netbuf-dynamic.h
     embr/netbuf-reader.h
     embr/netbuf-writer.h
     embr/exp/netbuf-alloc.h
