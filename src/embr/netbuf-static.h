@@ -39,10 +39,14 @@ public:
     bool last() const { return true; }
 
     size_type total_size() const { return N; }
+    size_type size() const { return base::size(); }
 
     const uint8_t* data() const { return base::data(); }
 
     uint8_t* data() { return base::data(); }
+
+    // position back at the beginning
+    void reset() {}
 };
 
 }
@@ -85,6 +89,9 @@ public:
     const uint8_t* data() const { return base::data(); }
 
     uint8_t* data() { return base::data(); }
+
+    // position back at the beginning
+    void reset() {}
 };
 
 }

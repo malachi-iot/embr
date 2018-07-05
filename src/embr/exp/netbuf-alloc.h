@@ -3,6 +3,8 @@
 #include <estd/type_traits.h>
 #include <estd/allocators/fixed.h>
 
+#include "../netbuf.h"
+
 namespace embr {
 
 namespace experimental {
@@ -59,6 +61,8 @@ public:
 
     static CONSTEXPR bool is_singular() { return true; }
 
+    static CONSTEXPR bool is_contiguous() { return false; }
+
     static CONSTEXPR bool has_size() { return true; }
 
     // call not present in estd allocators. experimental
@@ -71,7 +75,7 @@ public:
 
     value_type& lock(handle_type, size_type pos, size_type count)
     {
-        // TODO: Netbuf will need a 'reset' to reposition chunk to the beginning
+        // Netbuf will need a 'reset' to reposition chunk to the beginning
         // then, we'll need to count chunks forward until we arrive at pos.  Then,
         // we'll have to be extra sure 'count' is available.  Perhaps make going
         // past 'count' undefined, and demand caller heed max_lock_size.  Will be
@@ -79,9 +83,26 @@ public:
 
         if(pos < absolute_pos)
         {
-            // TODO:
-            //netbuf.reset();
+            netbuf.reset();
             absolute_pos = 0;
+
+            while(netbuf.size() < pos)
+            {
+                pos -= netbuf.size();
+
+                if(netbuf.last())
+                {
+                    embr::mem::ExpandResult r = netbuf.expand(pos, false);
+
+                    if(r < 0)
+                    {
+                        // TODO: Report error, couldn't expand to requested position
+                    }
+                }
+
+                absolute_pos += netbuf.size();
+                netbuf.next();
+            }
         }
 
         return *((char*)netbuf.data() + pos);
@@ -120,7 +141,8 @@ public:
 
     handle_type reallocate(handle_type h, size_t len)
     {
-        // Not supported operation
+        // Not yet supported operation, but netbufs (usually)
+        // can do this
         assert(false);
 
         return h;
