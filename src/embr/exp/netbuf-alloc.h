@@ -92,12 +92,14 @@ public:
 
                 if(netbuf.last())
                 {
-                    embr::mem::ExpandResult r = netbuf.expand(pos, false);
+                    // FIX: Just commented this out, we shouldn't be expanding
+                    // inside a lock operation... that's what realloc is for
+                    /*embr::mem::ExpandResult r = netbuf.expand(pos, false);
 
                     if(r < 0)
                     {
                         // TODO: Report error, couldn't expand to requested position
-                    }
+                    } */
                 }
 
                 absolute_pos += netbuf.size();
@@ -123,6 +125,8 @@ public:
         return handle_with_offset(h, pos);
     }
 
+    handle_type allocate(size_type) { return invalid(); }
+
     handle_with_size allocate_ext(size_type size)
     {
         // already allocated, shouldn't do it again
@@ -141,9 +145,22 @@ public:
 
     handle_type reallocate(handle_type h, size_t len)
     {
+        using namespace embr::mem;
+
+        // FIX: Doublecheck and make sure this really is an expand
+        len -= netbuf.total_size();
+
+        ExpandResult r = netbuf.expand(len, true);
+
+        if(r < 0)
+        {
+            // FIX: do something about a failure
+        }
+
+        /*
         // Not yet supported operation, but netbufs (usually)
         // can do this
-        assert(false);
+        assert(false); */
 
         return h;
     }
@@ -152,6 +169,29 @@ public:
     typedef typename estd::nothing_allocator<T>::lock_counter lock_counter;
 };
 
+
 }
 
 }
+
+namespace estd { namespace internal { namespace impl {
+
+// NOTE: The generic one in impl/dynamic_array.h is not suitable because it doesn't (can't)
+// know that we're always preallocated.  The smart-specialized one in allocators/handle_desc.h
+// hopefully will participate, and would be nice if a similar notion applied to dynamic_array
+// itself to auto deduce new types
+template <class T, class TNetBuf, class TPolicy>
+class dynamic_array<embr::experimental::NetBufAllocator<T, TNetBuf>, TPolicy > :
+        public dynamic_array_base<embr::experimental::NetBufAllocator<T, TNetBuf>, false >
+{
+    typedef dynamic_array_base<embr::experimental::NetBufAllocator<T, TNetBuf>, false > base;
+
+public:
+#if defined(FEATURE_CPP_MOVESEMANTIC) && defined(FEATURE_CPP_VARIADIC)
+    template <class ... TArgs>
+    dynamic_array(TArgs&&...args) : base(std::forward<TArgs>(args)...)
+    { }
+#endif
+};
+
+}}}

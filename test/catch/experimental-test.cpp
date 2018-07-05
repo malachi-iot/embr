@@ -41,8 +41,25 @@ TEST_CASE("experimental test", "[experimental]")
     {
         embr::mem::experimental::NetBufDynamic<> nb;
 
-        REQUIRE(nb.size() == 128);
+        REQUIRE(nb.size() == 0);
+        REQUIRE(nb.data() == NULLPTR);
+        REQUIRE(nb.total_size() == 0);
 
-        nb.data();
+        SECTION("Coupled with NetBufAllocator")
+        {
+            // working well-ish but have yet to test actual chaining
+            // it's clear naming is a little confusing here, NetBufAllocator and NetBufDynamic
+            NetBufAllocator<char, decltype(nb)& > a(nb);
+
+            test_string<decltype(a)> s(a);
+
+            s += "hello";
+
+            REQUIRE(s == "hello");
+
+            s += " world!";
+
+            REQUIRE(s == "hello world!");
+        }
     }
 }

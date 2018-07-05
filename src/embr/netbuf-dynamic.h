@@ -13,6 +13,7 @@ struct NetBufDynamicDefaultPolicy
     CONSTEXPR int size_to_allocate() const { return 128; }
 };
 
+// NOTE: Close, but not perfectly well suited, to our locking allocator scheme
 template <class TAllocator = std::allocator<uint8_t> >
 class NetBufDynamic
 {
@@ -42,7 +43,7 @@ private:
 
     TAllocator get_allocator() { return TAllocator(); }
 
-    bool empty() { return current != NULLPTR; }
+    bool empty() { return current == NULLPTR; }
 
     Chunk* allocate(size_type sz)
     {
@@ -79,29 +80,53 @@ public:
 
     uint8_t* data()
     {
-        if(empty())
+        if(empty()) return NULLPTR;
+        /*
         {
             current = allocate(size_to_allocate());
             chunks.push_front(*current);
-        }
+        } */
 
         return current->data;
     }
 
     size_type size()
     {
-        if(empty())
+        if(empty()) return 0;
+
+
+        return current->size;
+    }
+
+    size_type total_size()
+    {
+        size_type total = 0;
+
+        // FIX: Can't do const yet because iterator dereference doesn't
+        // have a const version.  When we rememedy this, see about ->
+        // operator too
+        iterator it = chunks.begin();
+
+        while(it != chunks.end())
         {
-            current = allocate(size_to_allocate());
-            chunks.push_front(*current);
+            total += (*it).size;
+            it++;
         }
 
-        return 128;
+        return total;
     }
 
     bool next()
     {
-        if(!empty() && current->next())
+        if(empty())
+        {
+            if(!chunks.empty())
+            {
+                current = &chunks.front();
+                return true;
+            }
+        }
+        else if(current->next())
         {
             current = current->next();
             return true;
@@ -115,10 +140,26 @@ public:
         // attempt this too, since contiguous is (often) preferred
         //realloc()
 
-        // presumes we want to tack on past where we currently are
-        current->next(allocate(expand_by));
+        Chunk* allocated = allocate(expand_by);
 
-        if(auto_next) current = current->next();
+        if(empty())
+        {
+            // FIX: Beware, current == NULLPTR but chunks having
+            // a value is theoretically valid (think before_begin() )
+            // but is not fully thought out here so may behave in an undefined way
+            // *except* for next() which has been specially treated to handle
+            // this scenario
+            if(auto_next) current = allocated;
+            // TODO: Assert that chunks is also empty
+            chunks.push_front(*current);
+        }
+        else
+        {
+            // presumes we want to tack on past where we currently are
+            current->next(allocated);
+
+            if(auto_next) current = current->next();
+        }
 
         return ExpandResult::ExpandOKChained;
     }
