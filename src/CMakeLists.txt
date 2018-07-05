@@ -16,6 +16,7 @@ set(SOURCE_FILES
     embr/netbuf-static.h
     embr/netbuf-reader.h
     embr/netbuf-writer.h
+    embr/exp/netbuf-alloc.h
     )
 
 add_library(${PROJECT_NAME} ${SOURCE_FILES})

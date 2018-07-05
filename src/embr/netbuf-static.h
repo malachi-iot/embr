@@ -10,13 +10,15 @@ namespace embr { namespace mem {
 
 namespace layer1 {
 
+// private inheritance so that we don't collide on oft-used methods like last, end, data(), etc
 template <size_t N>
-class NetBuf : public estd::array<uint8_t, N>
+class NetBuf : estd::array<uint8_t, N>
 {
     typedef estd::array<uint8_t, N> base;
 
 public:
     typedef typename base::value_type value_type;
+    typedef typename base::size_type size_type;
 
 #ifdef FEATURE_CPP_INITIALIZER_LIST
     NetBuf(::std::initializer_list<value_type> init) : base(init)
@@ -26,8 +28,6 @@ public:
 
     NetBuf() = default;
 #endif
-
-    typedef typename base::size_type size_type;
 
     bool next() const { return false; }
 
@@ -39,6 +39,10 @@ public:
     bool last() const { return true; }
 
     size_type total_size() const { return N; }
+
+    const uint8_t* data() const { return base::data(); }
+
+    uint8_t* data() { return base::data(); }
 };
 
 }
@@ -46,12 +50,13 @@ public:
 namespace layer2 {
 
 template <size_t N>
-class NetBuf : public estd::layer1::vector<uint8_t, N>
+class NetBuf : estd::layer1::vector<uint8_t, N>
 {
     typedef estd::layer1::vector<uint8_t, N> base;
 
 public:
     typedef typename base::value_type value_type;
+    typedef typename base::size_type size_type;
 
 #ifdef FEATURE_CPP_INITIALIZER_LIST
     NetBuf(::std::initializer_list<value_type> init) : base(init)
@@ -61,8 +66,6 @@ public:
 
     NetBuf() = default;
 #endif
-
-    typedef typename base::size_type size_type;
 
     bool next() const { return false; }
 
@@ -76,14 +79,12 @@ public:
 
     bool last() const { return true; }
 
-    size_type total_size() { return base::size(); }
+    size_type size() const { return base::size(); }
+    size_type total_size() const { return base::size(); }
 
-    // NOTE: Mild abuse of clock, but we know that layer1 vectors are always
-    // simple buffers so not too bad.  Indicates that really we should put a data()
-    // into those containers which are gaurunteed to be that simple
-    const uint8_t* data() const { return base::clock(); }
+    const uint8_t* data() const { return base::data(); }
 
-    uint8_t* data() { return base::lock(); }
+    uint8_t* data() { return base::data(); }
 };
 
 }

@@ -94,6 +94,8 @@ protected:
 public:
     size_type total_size() const { return m_netbuf.total_size(); }
 
+    // TODO: Revisit this.  Named it 'last' so it wouldn't collide with inherited
+    // 'end' for static netbuf but realizing array has a 'last' call too...
     bool last() const { return m_netbuf.last(); }
 
     size_type advance(size_type by_amount)

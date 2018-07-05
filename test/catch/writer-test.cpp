@@ -34,10 +34,10 @@ TEST_CASE("writer test", "[writer]")
 
             s += "Hi2u";
 
-            REQUIRE((char)netbuf[0] == 'H');
-            REQUIRE((char)netbuf[1] == 'i');
-            REQUIRE((char)netbuf[2] == '2');
-            REQUIRE((char)netbuf[3] == 'u');
+            REQUIRE(netbuf.data()[0] == 'H');
+            REQUIRE(netbuf.data()[1] == 'i');
+            REQUIRE(netbuf.data()[2] == '2');
+            REQUIRE(netbuf.data()[3] == 'u');
         }
         // FIX: These all actually should be failing since we didn't expand
         // but because bounds checking is currently so weak, it works
@@ -48,7 +48,7 @@ TEST_CASE("writer test", "[writer]")
             writer << buffer;
 
             for(int i = 0; i < sizeof(buffer); i++)
-                REQUIRE(buffer[i] == netbuf[i]);
+                REQUIRE(buffer[i] == netbuf.data()[i]);
         }
         SECTION("string(ish) << operator")
         {
@@ -58,7 +58,7 @@ TEST_CASE("writer test", "[writer]")
             writer << buffer;
 
             for(int i = 0; i < buffer.size(); i++)
-                REQUIRE(buffer[i] == netbuf[i]);
+                REQUIRE(buffer[i] == netbuf.data()[i]);
         }
         SECTION("byte << operator")
         {
@@ -66,7 +66,7 @@ TEST_CASE("writer test", "[writer]")
 
             writer << value;
 
-            REQUIRE(0xFF == netbuf[0]);
+            REQUIRE(0xFF == netbuf.data()[0]);
         }
         SECTION("chunked write")
         {
@@ -78,10 +78,10 @@ TEST_CASE("writer test", "[writer]")
             {
                 embr::mem::experimental::itoa(writer, 500);
 
-                REQUIRE('5' == netbuf[0]);
-                REQUIRE('0' == netbuf[1]);
-                REQUIRE(0 != netbuf[2]);
-                REQUIRE('0' == netbuf[2]);
+                REQUIRE('5' == netbuf.data()[0]);
+                REQUIRE('0' == netbuf.data()[1]);
+                REQUIRE(0 != netbuf.data()[2]);
+                REQUIRE('0' == netbuf.data()[2]);
             }
         }
     }

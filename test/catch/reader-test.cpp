@@ -29,7 +29,7 @@ TEST_CASE("reader test", "[reader]")
 
             reader >> value;
 
-            REQUIRE(value == netbuf[0]);
+            REQUIRE(value == netbuf.data()[0]);
         }
     }
 }
