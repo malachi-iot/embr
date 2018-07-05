@@ -98,7 +98,7 @@ public:
         return current->size;
     }
 
-    size_type total_size()
+    size_type total_size() const
     {
         size_type total = 0;
 
