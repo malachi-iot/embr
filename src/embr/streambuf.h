@@ -15,8 +15,9 @@ template <class TChar, class TNetbuf>
 struct out_netbuf_streambuf
 {
     typedef TChar char_type;
-    typedef typename estd::remove_reference<TNetbuf> netbuf_type;
+    typedef typename estd::remove_reference<TNetbuf>::type netbuf_type;
     typedef typename netbuf_type::size_type size_type;
+    typedef estd::streamsize streamsize;
 
 private:
 
@@ -26,16 +27,22 @@ private:
     // how far into current netbuf chunk we are
     size_type pos;
 
+    char_type* data() { return reinterpret_cast<char_type*>(netbuf.data()); }
+
 public:
     out_netbuf_streambuf(size_type pos = 0) : pos(pos) {}
+
+    template <class TParam1>
+    out_netbuf_streambuf(TParam1& p) :
+        netbuf(p), pos(0) {}
 
     // NOTE: Duplicated code from elsewhere.  Annoying, but expected
     // since this is the first time I've put it in a truly standard place
     streamsize xsputn(const char_type* s, streamsize count)
     {
-        char_type* d = netbuf.data() + pos;
+        char_type* d = data() + pos;
         streamsize orig_count = count;
-        size_type remaining = netbuf.length() - pos;
+        size_type remaining = netbuf.size() - pos;
 
         // if we have more to write than fits in the current netbuf.data()
         while(count > remaining)
@@ -56,8 +63,8 @@ public:
             if(has_next)
             {
                 // if there's another netbuf.data() for us to move to, get specs for it
-                remaining = netbuf.length();
-                d = netbuf.data();
+                remaining = netbuf.size();
+                d = data();
             }
             else
             {

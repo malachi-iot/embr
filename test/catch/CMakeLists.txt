@@ -5,6 +5,8 @@ project(embr-unit-test)
 # necessary for Catch2
 set(CMAKE_CXX_STANDARD 11)
 
+add_definitions(-DUNIT_TESTING)
+
 set(ROOT_DIR ../..)
 set(EXT_DIR ${ROOT_DIR}/ext)
 set(ESTDLIB_DIR ${EXT_DIR}/estdlib/src)
@@ -20,6 +22,7 @@ add_subdirectory(${EMBR_NETBUF_DIR} netbuf)
 set(SOURCE_FILES
     main.cpp
     basics-test.cpp
+    ios-test.cpp
     experimental-test.cpp
     reader-test.cpp
     writer-test.cpp
