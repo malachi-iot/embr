@@ -2,15 +2,17 @@
 
 #include <embr/streambuf.h>
 #include <embr/netbuf-static.h>
+
 #include <estd/string.h>
+#include <estd/ostream.h>
 
 using namespace embr;
 
 TEST_CASE("iostreams", "[ios]")
 {
-    SECTION("basic output netbuf+streambuf")
+    mem::layer1::NetBuf<32> nb;
+    SECTION("basic output netbuf+streambuf impl")
     {
-        mem::layer1::NetBuf<32> nb;
         mem::impl::out_netbuf_streambuf<char, mem::layer1::NetBuf<32>& > sb(nb);
 
         sb.xsputn("hi2u", 5); // cheat and include null termination also
@@ -23,5 +25,19 @@ TEST_CASE("iostreams", "[ios]")
         estd::layer2::const_string s(helper);
 
         REQUIRE(s == "hi2u");
+    }
+    SECTION("proper netbuf_streambuf type (not impl) + ostream")
+    {
+        using namespace estd::internal;
+
+        mem::netbuf_streambuf<char, mem::layer1::NetBuf<32>& > sb(nb);
+        estd::internal::basic_ostream<decltype(sb)&> out(sb);
+
+        out.put('a');
+
+        REQUIRE(nb.data()[0] == 'a');
+
+        // NOTE: Odd that this doesn't work.  no usings seem to clear it up either
+        //out << "a";
     }
 }
