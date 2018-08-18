@@ -33,11 +33,20 @@ TEST_CASE("iostreams", "[ios]")
         mem::netbuf_streambuf<char, mem::layer1::NetBuf<32>& > sb(nb);
         estd::internal::basic_ostream<decltype(sb)&> out(sb);
 
-        out.put('a');
+        out << 'a';
 
         REQUIRE(nb.data()[0] == 'a');
 
         // NOTE: Odd that this doesn't work.  no usings seem to clear it up either
-        //out << "a";
+        out << " nice day";
+
+        REQUIRE(memcmp(nb.data(), "a nice day", 10)== 0);
+
+        int sz = sizeof(sb);
+
+        SECTION("Direct pointer access")
+        {
+            REQUIRE(sb.pbase() == (char*)nb.data());
+        }
     }
 }

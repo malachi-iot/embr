@@ -6,6 +6,17 @@ namespace embr { namespace mem {
 
 namespace impl {
 
+template <class TChar, class TNetbuf, class CharTraits>
+struct netbuf_streambuf_base
+{
+    typedef TChar char_type;
+    typedef CharTraits traits_type;
+    typedef typename estd::remove_reference<TNetbuf>::type netbuf_type;
+    typedef typename netbuf_type::size_type size_type;
+
+    // Spot for shared netbuf, if we ever actually need it
+};
+
 // EXPERIMENTAL - copy/moved from estd ios branch
 // output streambuf whose output destination is a netbuf
 // also trying to crowbar internal-pos tracking out of netbuf.  This is a good mechanism for it
@@ -13,9 +24,12 @@ namespace impl {
 // note also netbuf architecture is such that it is decoupled from its consumer, so sync/emit
 // calls to this streambuf would have diminished meaning unless we also connected this streambuf
 // to an actual consuming device somehow.  Not a terrible idea, but not doing that for now
-template <class TChar, class TNetbuf, class CharTraits = std::char_traits<TChar> >
-struct out_netbuf_streambuf
+template <class TChar, class TNetbuf,
+          class CharTraits = std::char_traits<TChar>,
+          class TBase = netbuf_streambuf_base<TChar, TNetbuf, CharTraits> >
+struct out_netbuf_streambuf : TBase
 {
+    typedef TBase base_type;
     typedef TChar char_type;
     typedef CharTraits traits_type;
     typedef typename estd::remove_reference<TNetbuf>::type netbuf_type;
@@ -30,7 +44,7 @@ private:
     // how far into current netbuf chunk we are
     size_type pos;
 
-    char_type* data() { return reinterpret_cast<char_type*>(netbuf.data()); }
+    char_type* data() const { return reinterpret_cast<char_type*>(netbuf.data()); }
     size_type size() const { return netbuf.size(); }
 
 public:
@@ -94,6 +108,14 @@ public:
 
         return orig_count;
     }
+};
+
+template <class TChar, class TNetbuf,
+          class CharTraits = std::char_traits<TChar>,
+          class TBase = netbuf_streambuf_base<TChar, TNetbuf, CharTraits> >
+struct in_netbuf_streambuf : TBase
+{
+
 };
 
 
