@@ -17,6 +17,7 @@ set(SOURCE_FILES
     embr/netbuf-dynamic.h
     embr/netbuf-reader.h
     embr/netbuf-writer.h
+    embr/streambuf.h
     embr/exp/netbuf-alloc.h
     )
 
