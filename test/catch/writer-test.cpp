@@ -29,10 +29,14 @@ TEST_CASE("writer test", "[writer]")
             REQUIRE(writer.total_size() >= 100); // Because of our 'room to grow' policy
             estd::mutable_buffer b = writer.buffer();
 
+#ifdef BROKEN_AMBIGUOUS_CONSTRUCTOR
             estd::layer3::string s((char*)b.data(), 0, b.size());
             //writer.buffer();
 
             s += "Hi2u";
+#else
+            sprintf((char*)b.data(), "Hi2u");
+#endif
 
             REQUIRE(netbuf.data()[0] == 'H');
             REQUIRE(netbuf.data()[1] == 'i');

@@ -19,6 +19,12 @@ class NetBufAllocator
     TNetBuf netbuf;
 
 public:
+    // notifies support logic to treat this as stateful/an instance
+    typedef void is_stateful_tag;
+    typedef void is_singular_tag;
+    typedef void is_locking_tag;
+    typedef void has_size_tag;
+
     typedef const void* const_void_pointer;
     typedef typename estd::remove_reference<TNetBuf>::type netbuf_type;
     typedef bool handle_type; //single-allocator
@@ -62,6 +68,9 @@ public:
 
     static CONSTEXPR bool is_singular() { return true; }
 
+    // NOTE: Since we're using tags now, consider
+    // tag to be is_noncontiguous since default tag state (nonexistant)
+    // is false
     static CONSTEXPR bool is_contiguous() { return false; }
 
     static CONSTEXPR bool has_size() { return true; }
@@ -167,7 +176,7 @@ public:
     }
 
 
-    typedef typename estd::nothing_allocator<T>::lock_counter lock_counter;
+    //typedef typename estd::nothing_allocator<T>::lock_counter lock_counter;
 };
 
 
@@ -177,6 +186,7 @@ public:
 
 namespace estd { namespace internal { namespace impl {
 
+#ifdef UNUSED
 // NOTE: The generic one in impl/dynamic_array.h is not suitable because it doesn't (can't)
 // know that we're always preallocated.  The smart-specialized one in allocators/handle_desc.h
 // hopefully will participate, and would be nice if a similar notion applied to dynamic_array
@@ -215,6 +225,6 @@ public:
     // TODO: A lof of 'allocator_traits<TAllocator>' floating around, still need to weed that out
     typedef typename estd::allocator_traits<allocator_type> allocator_traits;
 };
-
+#endif
 
 }}}
