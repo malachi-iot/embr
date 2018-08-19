@@ -2,6 +2,7 @@
 
 #include <embr/streambuf.h>
 #include <embr/netbuf-static.h>
+#include <embr/netbuf-dynamic.h>
 
 #include <estd/string.h>
 #include <estd/ostream.h>
@@ -47,6 +48,24 @@ TEST_CASE("iostreams", "[ios]")
         SECTION("Direct pointer access")
         {
             REQUIRE(sb.pbase() == (char*)nb.data());
+        }
+    }
+    SECTION("dynamic")
+    {
+        mem::experimental::NetBufDynamic<> nb2;
+
+        // FIX: this breaks, something about intrusive list
+        nb2.expand(100, false);
+
+        SECTION("streambuf")
+        {
+            mem::netbuf_streambuf<char, decltype (nb2)&> sb(nb2);
+
+            sb.sputc('a');
+        }
+        SECTION("ostream")
+        {
+
         }
     }
 }

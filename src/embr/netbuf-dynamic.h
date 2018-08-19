@@ -150,7 +150,8 @@ public:
             // *except* for next() which has been specially treated to handle
             // this scenario
             if(auto_next) current = allocated;
-            // TODO: Assert that chunks is also empty
+
+            // FIX: Some glitch in here, 'current' devolves into a null-ptr 'new_front'
             chunks.push_front(*current);
         }
         else
