@@ -45,6 +45,7 @@ struct out_netbuf_streambuf : TBase
     typedef CharTraits traits_type;
     typedef typename estd::remove_reference<TNetbuf>::type netbuf_type;
     typedef typename netbuf_type::size_type size_type;
+    typedef typename traits_type::int_type int_type;
     typedef estd::streamsize streamsize;
 
 private:
@@ -55,6 +56,9 @@ private:
     char_type* data() const { return base_type::data(); }
     size_type size() const { return base_type::size(); }
     netbuf_type& netbuf() const { return base_type::netbuf; }
+
+    // end of particular chunk has been reached
+    bool eol() const { return pos == size(); }
 
 public:
     out_netbuf_streambuf(size_type pos = 0) : pos(pos) {}
@@ -71,6 +75,21 @@ public:
 
     // as per documentation, no bounds checking is performed on count
     void pbump(int count) { pos += count; }
+
+
+    // TODO: We need to figure out our interaction with device itself (i.e. output sequence)
+    // which is supposed
+    // to empty these things out - probably interacting with overflow() and/or sync()
+    // NOTE: Not ready yet because it doesn't do expands
+    /*
+    int_type sputc(char_type ch)
+    {
+        if(eol()) return traits_type::eof();
+
+        *pptr() = ch;
+
+        pos++;
+    } */
 
     // NOTE: Duplicated code from elsewhere.  Annoying, but expected
     // since this is the first time I've put it in a truly standard place
@@ -166,15 +185,40 @@ public:
     char_type* gptr() const { return data() + pos; }
     char_type* egptr() const { return data() + size(); }
 
+    // as per documentation, no bounds checking is performed on count
+    void gbump(int count) { pos += count; }
+
     int_type sgetc()
     {
         // TODO: do a next() here in a nonblocking way
         // to try to get at more data if available.  Unclear how to do this
         // right now because sgetc is supposed to not advance the pointer
         if(eol())
-            return traits_type::eof();
-        else
-            return *gptr();
+        {
+            // eol is a special condition where the 'past the end' position
+            // sort of maps onto the 'beginning of the next' position, so go
+            // ahead and try to bump forward in this scenario
+            if(!netbuf().next()) return traits_type::eof();
+
+            pos = 0;
+        }
+
+        // we arrive here if we're pointing at non-eol of a valid chunk
+        return traits_type::to_int_type(*gptr());
+    }
+
+    // TODO: Consolidate this into estd::internal::streambuf as a SFINAE
+    // selection if sgetc is available and sbumpc is NOT explicitly implemented
+    // in Impl
+    int_type sbumpc()
+    {
+        int_type ret_value = sgetc();
+
+        // if ret_value is not eof, then by definition we have at least
+        // one pos we can advance.
+        if(ret_value != traits_type::eof()) pos++;
+
+        return ret_value;
     }
 
     streamsize xsgetn(char_type* d, streamsize count)

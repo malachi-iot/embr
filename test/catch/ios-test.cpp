@@ -225,6 +225,12 @@ TEST_CASE("iostreams", "[ios]")
                 estd::internal::basic_istream<decltype (in_sb)&> in(in_sb);
 
                 in >> buf;
+
+                REQUIRE(buf == "athe");
+
+                in >> buf;
+
+                REQUIRE(buf == "quick");
             }
         }
 
