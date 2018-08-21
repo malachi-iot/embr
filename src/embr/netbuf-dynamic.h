@@ -13,6 +13,19 @@ struct NetBufDynamicDefaultPolicy
     CONSTEXPR int size_to_allocate() const { return 128; }
 };
 
+struct NetBufDynamicChunk : estd::experimental::forward_node_base_base<NetBufDynamicChunk*>
+{
+    typedef estd::experimental::forward_node_base_base<NetBufDynamicChunk*> base_type;
+    typedef int size_type;
+
+    size_type size;
+    uint8_t data[];
+
+    NetBufDynamicChunk(size_type size) :
+        base_type(NULLPTR),
+        size(size) {}
+};
+
 // NOTE: Close, but not perfectly well suited, to our locking allocator scheme
 template <class TAllocator = std::allocator<uint8_t> >
 class NetBufDynamic
@@ -29,15 +42,14 @@ private:
     CONSTEXPR size_type size_to_allocate() const
     { return get_policy().size_to_allocate(); }
 
-    struct Chunk : estd::experimental::forward_node_base_base<Chunk*>
-    {
-        size_type size;
-        uint8_t data[];
-    };
+    typedef NetBufDynamicChunk Chunk;
 
-    estd::intrustive_forward_list<Chunk> chunks;
+#ifdef UNIT_TESTING
+public:
+#endif
+    estd::intrusive_forward_list<Chunk> chunks;
 
-    typedef typename estd::intrustive_forward_list<Chunk>::iterator iterator;
+    typedef typename estd::intrusive_forward_list<Chunk>::iterator iterator;
 
     Chunk* current;
 
@@ -53,7 +65,7 @@ private:
 
         if(chunk == NULLPTR) return NULLPTR;
 
-        chunk->size = sz;
+        new (chunk) Chunk(sz);
 
         return chunk;
     }
@@ -68,17 +80,16 @@ public:
 
         while(it != chunks.end())
         {
-            Chunk* chunk = &(*it);
+            Chunk& chunk = *it;
 
-            // FIX: this line crashes when not debugging
-            iterator it_next = it+1;
+            ++it;
+
+            chunk.~Chunk();
 
             allocator_traits::deallocate(a,
-                                         (uint8_t*)chunk,
-                                         chunk->size +
+                                         (uint8_t*)&chunk,
+                                         chunk.size +
                                          sizeof(Chunk));
-
-            it = it_next;
         }
     }
 
@@ -171,7 +182,9 @@ public:
             // on to the end)
             current->next(allocated);
 
-            if(auto_next) current = current->next();
+            if(auto_next)
+                //current = current->next();
+                current = allocated;
         }
 
         return ExpandResult::ExpandOKChained;
