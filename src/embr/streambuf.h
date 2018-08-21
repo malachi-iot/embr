@@ -2,6 +2,8 @@
 
 #include <estd/streambuf.h>
 
+#include "netbuf.h"
+
 namespace embr { namespace mem {
 
 namespace impl {
@@ -80,7 +82,6 @@ public:
 
             // move to next netbuf.data()
             bool has_next = netbuf.next();
-            // TODO: Assert that there's a next to work with
 
             // whether or not has_next succeeds, pos is reset here
             // this means if it fails, the next write operation will overwrite the contents
@@ -95,10 +96,21 @@ public:
             }
             else
             {
-                // NOTE: pos is left in an invalid state here
-                // otherwise, we aren't able to write everything so return what we
-                // could do
-                return orig_count - count;
+                // try to expand.  Not all netbufs can or will
+                // also auto advance to next buffer
+                switch(netbuf.expand(count, true))
+                {
+                    case ExpandResult::ExpandOKChained:
+                        remaining = size();
+                        d = data();
+                        break;
+
+                    default:
+                        // NOTE: pos is left in an invalid state here
+                        // otherwise, we aren't able to write everything so return what we
+                        // could do
+                        return orig_count - count;
+                }
             }
         }
 

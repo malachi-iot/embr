@@ -43,7 +43,7 @@ private:
 
     TAllocator get_allocator() { return TAllocator(); }
 
-    bool empty() { return current == NULLPTR; }
+    bool empty() const { return current == NULLPTR; }
 
     Chunk* allocate(size_type sz)
     {
@@ -67,6 +67,8 @@ public:
         while(it != chunks.end())
         {
             Chunk* chunk = &(*it);
+
+            // FIX: this line crashes when not debugging
             iterator it_next = it+1;
 
             allocator_traits::deallocate(a,
@@ -78,7 +80,7 @@ public:
         }
     }
 
-    uint8_t* data()
+    uint8_t* data() const
     {
         if(empty()) return NULLPTR;
         /*
@@ -90,7 +92,7 @@ public:
         return current->data;
     }
 
-    size_type size()
+    size_type size() const
     {
         if(empty()) return 0;
 
@@ -135,6 +137,8 @@ public:
         return false;
     }
 
+    // expand by allocating a brand new chunk of memory
+    // auto-next will move our current pointer forward to the newly allocated chunk
     ExpandResult expand(size_type expand_by, bool auto_next)
     {
         // attempt this too, since contiguous is (often) preferred
@@ -142,6 +146,7 @@ public:
 
         Chunk* allocated = allocate(expand_by);
 
+        // if we have no chunks at this time
         if(empty())
         {
             // FIX: Beware, current == NULLPTR but chunks having
@@ -151,12 +156,12 @@ public:
             // this scenario
             if(auto_next) current = allocated;
 
-            // FIX: Some glitch in here, 'current' devolves into a null-ptr 'new_front'
-            chunks.push_front(*current);
+            chunks.push_front(*allocated);
         }
         else
         {
-            // presumes we want to tack on past where we currently are
+            // presumes we want to tack on past where we currently are (tack
+            // on to the end)
             current->next(allocated);
 
             if(auto_next) current = current->next();

@@ -11,6 +11,9 @@ using namespace embr;
 
 TEST_CASE("iostreams", "[ios]")
 {
+    // FIX: constructor botches for some reason on that one
+    //estd::layer2::string<> test_str = "the quick brown fox jumped over the lazy dog";
+    estd::layer2::const_string test_str = "the quick brown fox jumped over the lazy dog";
     mem::layer1::NetBuf<32> nb;
     SECTION("basic output netbuf+streambuf impl")
     {
@@ -53,20 +56,32 @@ TEST_CASE("iostreams", "[ios]")
     SECTION("dynamic")
     {
         mem::experimental::NetBufDynamic<> nb2;
+        constexpr int nb2sz = 32;
 
-        /*
         // FIX: this breaks, something about intrusive list
-        nb2.expand(100, false);
+        nb2.expand(nb2sz, false);
 
         SECTION("streambuf")
         {
             mem::netbuf_streambuf<char, decltype (nb2)&> sb(nb2);
 
             sb.sputc('a');
-        }
-        SECTION("ostream")
-        {
 
-        } */
+            REQUIRE(nb2.size() == nb2sz);
+            REQUIRE(nb2.total_size() == nb2sz);
+
+            sb.sputn(test_str.data(), test_str.size());
+
+            SECTION("ostream")
+            {
+                estd::internal::basic_ostream<decltype (sb)&> out(sb);
+
+                // FIX: Encounters a problem, can't resolve
+                //out << test_str;
+                //out << test_str.data();
+            }
+
+
+        }
     }
 }
