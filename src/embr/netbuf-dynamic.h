@@ -51,6 +51,8 @@ private:
 
         Chunk* chunk = (Chunk*) allocator_traits::allocate(a, sizeof(Chunk) + sz);
 
+        if(chunk == NULLPTR) return NULLPTR;
+
         chunk->size = sz;
 
         return chunk;
@@ -146,6 +148,8 @@ public:
 
         Chunk* allocated = allocate(expand_by);
 
+        if(allocated == NULLPTR) return ExpandResult::ExpandFailOutOfMemory;
+
         // if we have no chunks at this time
         if(empty())
         {
@@ -160,6 +164,9 @@ public:
         }
         else
         {
+            // TODO:
+            // assert that current != null
+
             // presumes we want to tack on past where we currently are (tack
             // on to the end)
             current->next(allocated);

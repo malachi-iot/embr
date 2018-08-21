@@ -55,11 +55,16 @@ TEST_CASE("iostreams", "[ios]")
     }
     SECTION("dynamic")
     {
-        mem::experimental::NetBufDynamic<> nb2;
+        INFO("examining");
+
+        mem::experimental::NetBufDynamic<>* _nb2 = new mem::experimental::NetBufDynamic<>();
+        mem::experimental::NetBufDynamic<>& nb2 = *_nb2;
         constexpr int nb2sz = 32;
 
         // FIX: this breaks, something about intrusive list
         nb2.expand(nb2sz, false);
+
+        // any iteration thru the nb2 linked list dies
 
         SECTION("streambuf")
         {
@@ -72,6 +77,8 @@ TEST_CASE("iostreams", "[ios]")
 
             sb.sputn(test_str.data(), test_str.size());
 
+            //REQUIRE(nb2.total_size() == test_str.size() + 1);
+
             SECTION("ostream")
             {
                 estd::internal::basic_ostream<decltype (sb)&> out(sb);
@@ -81,7 +88,10 @@ TEST_CASE("iostreams", "[ios]")
                 //out << test_str.data();
             }
 
-
         }
+
+        // Just making sure it's not some wacky scoping thing that catch.hpp does
+        // and it isn't.
+        //delete _nb2;
     }
 }
