@@ -117,13 +117,8 @@ TEST_CASE("iostreams", "[ios]")
         Chunk* c2 = nb2.allocate(nb2sz);
 
         nb2.chunks.push_front(*c1);
-        //c1->next(c2);
-        nb2.chunks.insert_after(nb2.chunks.begin(), *c2);
-
-        for(auto i : nb2.chunks)
-        {
-
-        }
+        c1->next(c2);
+        //nb2.chunks.insert_after(nb2.chunks.begin(), *c2);
     }
     SECTION("low-level-dynamic 2")
     {
@@ -139,13 +134,17 @@ TEST_CASE("iostreams", "[ios]")
     {
         INFO("examining");
 
-        mem::experimental::NetBufDynamic<>* _nb2 = new mem::experimental::NetBufDynamic<>();
-        mem::experimental::NetBufDynamic<>& nb2 = *_nb2;
+        struct NoMinimumPolicy
+        {
+            CONSTEXPR int minimum_allocation_size() const { return 1; }
+        };
 
-        // FIX: this breaks, something about intrusive list
+        typedef mem::experimental::NetBufDynamic< std::allocator<uint8_t>, NoMinimumPolicy > netbuf_type;
+
+        netbuf_type* _nb2 = new netbuf_type();
+        netbuf_type& nb2 = *_nb2;
+
         nb2.expand(nb2sz, false);
-
-        // any iteration thru the nb2 linked list dies
 
         SECTION("streambuf")
         {
@@ -194,7 +193,7 @@ TEST_CASE("iostreams", "[ios]")
             REQUIRE(memcmp(nb2.data(), v, nb2sz) == 0);
             v += nb2sz;
             REQUIRE(nb2.next());
-            REQUIRE(nb2.size() == 13);
+            REQUIRE(nb2.size() == test_str.size() - nb2sz + 1);
             REQUIRE(memcmp(nb2.data(), v, nb2.size()) == 0);
             v += nb2.size();
             REQUIRE(nb2.next());

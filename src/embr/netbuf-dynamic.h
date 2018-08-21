@@ -10,7 +10,8 @@ namespace experimental {
 
 struct NetBufDynamicDefaultPolicy
 {
-    CONSTEXPR int size_to_allocate() const { return 128; }
+    // represents minimum size to allocate
+    CONSTEXPR int minimum_allocation_size() const { return 128; }
 };
 
 struct NetBufDynamicChunk : estd::experimental::forward_node_base_base<NetBufDynamicChunk*>
@@ -27,20 +28,21 @@ struct NetBufDynamicChunk : estd::experimental::forward_node_base_base<NetBufDyn
 };
 
 // NOTE: Close, but not perfectly well suited, to our locking allocator scheme
-template <class TAllocator = std::allocator<uint8_t> >
+template <class TAllocator = std::allocator<uint8_t>,
+          class TPolicy = NetBufDynamicDefaultPolicy >
 class NetBufDynamic
 {
 public:
     typedef int size_type;
     typedef TAllocator allocator_type;
     typedef std::allocator_traits<TAllocator> allocator_traits;
-    typedef NetBufDynamicDefaultPolicy policy_type;
+    typedef TPolicy policy_type;
 
 private:
     policy_type get_policy() const { return policy_type(); }
 
-    CONSTEXPR size_type size_to_allocate() const
-    { return get_policy().size_to_allocate(); }
+    CONSTEXPR size_type minimum_allocation_size() const
+    { return get_policy().minimum_allocation_size(); }
 
     typedef NetBufDynamicChunk Chunk;
 
@@ -61,6 +63,9 @@ public:
     {
         TAllocator a = get_allocator();
 
+        if(sz < minimum_allocation_size())
+            sz = minimum_allocation_size();
+
         Chunk* chunk = (Chunk*) allocator_traits::allocate(a, sizeof(Chunk) + sz);
 
         if(chunk == NULLPTR) return NULLPTR;
@@ -68,6 +73,16 @@ public:
         new (chunk) Chunk(sz);
 
         return chunk;
+    }
+
+    static void deallocate(TAllocator& a, Chunk& chunk)
+    {
+        chunk.~Chunk();
+
+        allocator_traits::deallocate(a,
+                                     (uint8_t*)&chunk,
+                                     chunk.size +
+                                     sizeof(Chunk));
     }
 
 public:
@@ -80,16 +95,9 @@ public:
 
         while(it != chunks.end())
         {
-            Chunk& chunk = *it;
+            deallocate(a, *it);
 
             ++it;
-
-            chunk.~Chunk();
-
-            allocator_traits::deallocate(a,
-                                         (uint8_t*)&chunk,
-                                         chunk.size +
-                                         sizeof(Chunk));
         }
     }
 
