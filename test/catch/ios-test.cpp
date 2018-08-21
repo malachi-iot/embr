@@ -7,6 +7,8 @@
 #include <estd/string.h>
 #include <estd/ostream.h>
 
+#include <estd/string_view.h>
+
 #include <numeric>
 
 using namespace embr;
@@ -147,14 +149,17 @@ TEST_CASE("iostreams", "[ios]")
 
         SECTION("streambuf")
         {
+            estd::layer1::string<256> side_by_side;
             mem::netbuf_streambuf<char, decltype (nb2)&> sb(nb2);
 
             sb.sputc('a');
+            side_by_side += 'a';
 
             REQUIRE(nb2.size() == nb2sz);
             REQUIRE(nb2.total_size() == nb2sz);
 
             sb.sputn(test_str.data(), test_str.size());
+            side_by_side += test_str;
 
             REQUIRE(nb2.total_size() == test_str.size() + 1);
 
@@ -165,8 +170,36 @@ TEST_CASE("iostreams", "[ios]")
                 // FIX: Encounters a problem, can't resolve
                 //out << test_str;
                 out << test_str.data();
+                side_by_side += test_str;
             }
 
+            nb2.reset();
+
+            // FIX: string_view should be easier to ascertain
+            // not even this works
+            /*
+            estd::basic_string_view<char,
+                    estd::layer1::string<256>::traits_type,
+                    estd::layer1::string<256>::impl_type >
+                    v = side_by_side; */
+            {
+                estd::string_view v(side_by_side.data(), side_by_side.size());
+
+                // FIX: really could use substr and more advanced compares
+            }
+
+            const char* v = side_by_side.data();
+
+            REQUIRE(nb2.size() == nb2sz);
+            REQUIRE(memcmp(nb2.data(), v, nb2sz) == 0);
+            v += nb2sz;
+            REQUIRE(nb2.next());
+            REQUIRE(nb2.size() == 13);
+            REQUIRE(memcmp(nb2.data(), v, nb2.size()) == 0);
+            v += nb2.size();
+            REQUIRE(nb2.next());
+            REQUIRE(nb2.size() == test_str.size());
+            REQUIRE(memcmp(nb2.data(), v, nb2.size()) == 0);
         }
 
         // Just making sure it's not some wacky scoping thing that catch.hpp does
