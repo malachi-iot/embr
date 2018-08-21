@@ -6,12 +6,17 @@
 
 #include <estd/string.h>
 #include <estd/ostream.h>
+#include <estd/istream.h>
 
 #include <estd/string_view.h>
 
 #include <numeric>
 
 using namespace embr;
+
+using namespace estd;
+
+#include <estd/internal/istream_runtimearray.hpp>
 
 TEST_CASE("iostreams", "[ios]")
 {
@@ -40,7 +45,7 @@ TEST_CASE("iostreams", "[ios]")
     {
         using namespace estd::internal;
 
-        mem::netbuf_streambuf<char, mem::layer1::NetBuf<32>& > sb(nb);
+        mem::out_netbuf_streambuf<char, mem::layer1::NetBuf<32>& > sb(nb);
         estd::internal::basic_ostream<decltype(sb)&> out(sb);
 
         out << 'a';
@@ -132,8 +137,6 @@ TEST_CASE("iostreams", "[ios]")
     }
     SECTION("dynamic")
     {
-        INFO("examining");
-
         struct NoMinimumPolicy
         {
             CONSTEXPR int minimum_allocation_size() const { return 1; }
@@ -146,10 +149,10 @@ TEST_CASE("iostreams", "[ios]")
 
         nb2.expand(nb2sz, false);
 
-        SECTION("streambuf")
+        WHEN("streambuf out")
         {
             estd::layer1::string<256> side_by_side;
-            mem::netbuf_streambuf<char, decltype (nb2)&> sb(nb2);
+            mem::out_netbuf_streambuf<char, decltype (nb2)&> sb(nb2);
 
             sb.sputc('a');
             side_by_side += 'a';
@@ -162,7 +165,8 @@ TEST_CASE("iostreams", "[ios]")
 
             REQUIRE(nb2.total_size() == test_str.size() + 1);
 
-            SECTION("ostream")
+            //SECTION("ostream")
+            // disable this section so that stack magic doesn't revert our output
             {
                 estd::internal::basic_ostream<decltype (sb)&> out(sb);
 
@@ -172,34 +176,60 @@ TEST_CASE("iostreams", "[ios]")
                 side_by_side += test_str;
             }
 
+            // reset netbuf in preparation for reading out of it
             nb2.reset();
 
-            // FIX: string_view should be easier to ascertain
-            // not even this works
-            /*
-            estd::basic_string_view<char,
-                    estd::layer1::string<256>::traits_type,
-                    estd::layer1::string<256>::impl_type >
-                    v = side_by_side; */
+            WHEN("raw netbuf read")
             {
-                estd::string_view v(side_by_side.data(), side_by_side.size());
+                estd::string_view sv = side_by_side;
 
-                // FIX: really could use substr and more advanced compares
+                const char* v = side_by_side.data();
+
+                // read first full buffer
+                REQUIRE(nb2.size() == nb2sz);
+                REQUIRE(memcmp(nb2.data(), v, nb2sz) == 0);
+                v += nb2sz;
+
+                // read second full buffer (13 bytes)
+                REQUIRE(nb2.next());
+                REQUIRE(nb2.size() == test_str.size() - nb2sz + 1);
+                REQUIRE(memcmp(nb2.data(), v, nb2.size()) == 0);
+
+                // read third full buffer (expected to be 44 bytes)
+                v += nb2.size();
+                bool result = nb2.next();
+                REQUIRE(result);
+                REQUIRE(nb2.size() == test_str.size());
+                REQUIRE(memcmp(nb2.data(), v, nb2.size()) == 0);
+
+                REQUIRE(nb2.total_size() == test_str.size() * 2 + 1);
             }
+            AND_THEN("streambuf in")
+            {
+                char buf[256];
+                mem::in_netbuf_streambuf<char, decltype (nb2)&> in_sb(nb2);
 
-            const char* v = side_by_side.data();
+                int count = in_sb.sgetn(buf, sizeof(buf));
 
-            REQUIRE(nb2.size() == nb2sz);
-            REQUIRE(memcmp(nb2.data(), v, nb2sz) == 0);
-            v += nb2sz;
-            REQUIRE(nb2.next());
-            REQUIRE(nb2.size() == test_str.size() - nb2sz + 1);
-            REQUIRE(memcmp(nb2.data(), v, nb2.size()) == 0);
-            v += nb2.size();
-            REQUIRE(nb2.next());
-            REQUIRE(nb2.size() == test_str.size());
-            REQUIRE(memcmp(nb2.data(), v, nb2.size()) == 0);
+                REQUIRE(count == test_str.size() * 2 + 1);
+
+                buf[count] = 0;
+
+                REQUIRE(side_by_side.compare(buf) == 0);
+            }
+            AND_THEN("istream in")
+            {
+                //char buf[256];
+                layer1::string<256> buf;
+                mem::in_netbuf_streambuf<char, decltype (nb2)&> in_sb(nb2);
+                estd::internal::basic_istream<decltype (in_sb)&> in(in_sb);
+
+                in >> buf;
+            }
         }
+
+        // total_size() is only 32 here due to stack magic
+        //REQUIRE(nb2.total_size() == test_str.size() * 2 + 1);
 
         // Just making sure it's not some wacky scoping thing that catch.hpp does
         // and it isn't.
