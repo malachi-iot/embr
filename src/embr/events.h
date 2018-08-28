@@ -49,9 +49,9 @@ struct TransportSent : Base<TNetBuf, TAddr>
 
 // queued for send out over transport
 template <class TItem>
-struct SendQueued : ItemBase<TItem>
+struct SendQueued : ItemBase<const TItem>
 {
-    SendQueued(TItem& item) : ItemBase<TItem>(item) {}
+    SendQueued(const TItem& item) : ItemBase<const TItem>(item) {}
 };
 
 // about to send over transport
@@ -73,9 +73,9 @@ struct SendDequeued : ItemBase<TItem>
 
 // received from transport and now queued
 template <class TItem>
-struct ReceiveQueued : ItemBase<TItem>
+struct ReceiveQueued : ItemBase<const TItem>
 {
-    ReceiveQueued(TItem& item) : ItemBase<TItem>(item) {}
+    ReceiveQueued(const TItem& item) : ItemBase<const TItem>(item) {}
 };
 
 

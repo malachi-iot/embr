@@ -132,9 +132,7 @@ public:
             m_addr(addr)
         {}
 
-        // TODO: Make this explicit - auto-calling this by accident can cause real
-        // problems due to destruction of an inline netbuf
-        Item(const Item& copy_from) :
+        explicit Item(const Item& copy_from) :
             m_netbuf(copy_from.m_netbuf),
             m_addr(copy_from.m_addr)
         {
@@ -177,7 +175,7 @@ public:
     const Item& transport_in(
             netbuf_t&& in,
 #else
-    void transport_in(
+    const Item& transport_in(
             netbuf_t& in,
 #endif
             const addr_t& addr);

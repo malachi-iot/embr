@@ -10,11 +10,14 @@ auto DataPump<TTransportDescriptor, TPolicy>::transport_in(netbuf_t&& in, const 
     return incoming.emplace(std::move(in), addr);
 }
 #else
-void DataPump<TTransportDescriptor, TPolicy>::transport_in(netbuf_t& in, const addr_t& addr)
+const typename DataPump<TTransportDescriptor, TPolicy>::Item&
+    DataPump<TTransportDescriptor, TPolicy>::transport_in(netbuf_t& in, const addr_t& addr)
 {
     Item item(in, addr);
 
     incoming.push(item);
+
+    return incoming.back();
 }
 #endif
 
