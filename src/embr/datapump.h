@@ -160,6 +160,15 @@ public:
 #endif
         }
 
+        const netbuf_t* netbuf() const
+        {
+#ifdef FEATURE_EMBR_DATAPUMP_INLINE
+            return &m_netbuf;
+#else
+            return m_netbuf;
+#endif
+        }
+
     };
 
 
