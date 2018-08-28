@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 
-project(embr-netbuf-lib)
+project(embr-lib)
 
 set(ROOT_DIR ..)
 set(EXT_DIR ${ROOT_DIR}/ext)
