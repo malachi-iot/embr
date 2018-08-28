@@ -14,6 +14,13 @@ include_directories(${ESTDLIB_DIR})
 
 set(SOURCE_FILES
     main.cpp
+
+    embr/dataport.h
+    embr/dataport.hpp
+    embr/datapump.h
+    embr/datapump.hpp
+    embr/events.h
+
     embr/netbuf.h
     embr/netbuf-static.h
     embr/netbuf-dynamic.h
