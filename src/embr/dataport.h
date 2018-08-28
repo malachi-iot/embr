@@ -97,6 +97,8 @@ struct DatapumpSubject
     DatapumpSubject(TSubject& subject) :
         subject(subject) {}
 
+    // services just from-transport queue.  does not directly interact
+    // with transport itself
     void service();
 
     // FIX: Still need a graceful solution for wrapped/unwrapped
@@ -168,6 +170,10 @@ public:
         notify(dataport_initialized_event {});
     }
 
+    // FIX: eventually evaluates transport in
+    // currently evaluates to-transport queue and spits out to transport if present
+    // also evalutes from-transport queue, though presently counts on external party
+    // to populate that
     void service();
 };
 

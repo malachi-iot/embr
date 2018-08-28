@@ -7,6 +7,10 @@ set(CMAKE_CXX_STANDARD 11)
 
 add_definitions(-DUNIT_TESTING)
 
+# temporary while we migrate away from 'mc/opts.h' to a different location
+# (leaving mc behind at every convenient turn)
+add_definitions(-DFEATURE_EMBR_DATAPUMP_INLINE)
+
 set(ROOT_DIR ../..)
 set(EXT_DIR ${ROOT_DIR}/ext)
 set(ESTD_DIR ${EXT_DIR}/estdlib/src)
@@ -23,8 +27,9 @@ add_subdirectory(${ESTD_DIR} estd)
 set(SOURCE_FILES
     main.cpp
     basics-test.cpp
-    datapump-test.cpp
     dataport-test.cpp
+    datapump-test.cpp
+    datapump-test.h
     ios-test.cpp
     experimental-test.cpp
     reader-test.cpp
