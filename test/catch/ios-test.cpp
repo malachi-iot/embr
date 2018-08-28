@@ -116,6 +116,7 @@ TEST_CASE("iostreams", "[ios]")
     SECTION("low-level-dynamic 1")
     {
         typedef mem::experimental::NetBufDynamicChunk Chunk;
+        // FIX: Crash during destructor
         mem::experimental::NetBufDynamic<> nb2;
 
         Chunk* c1 = nb2.allocate(nb2sz);
