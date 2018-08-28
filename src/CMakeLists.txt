@@ -8,7 +8,9 @@ set(ESTDLIB_DIR ${EXT_DIR}/estdlib/src)
 
 include_directories(${ESTDLIB_DIR})
 
-add_subdirectory(${ESTDLIB_DIR} estdlib)
+# libs don't add subdirectories themselves, since it collides
+# with an add_subdirectory that a consuming app may issue
+#add_subdirectory(${ESTDLIB_DIR} estdlib)
 
 set(SOURCE_FILES
     main.cpp
