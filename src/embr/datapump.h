@@ -4,16 +4,6 @@
 #include <estd/queue.h>
 #include <estd/vector.h>
 
-//#include "coap-header.h"
-//#include "coap-token.h"
-//#include "coap/context.h"
-//#include "coap/decoder/netbuf.h"
-//#include "coap/encoder.h"
-//#include "coap/observable.h"
-
-//#include "../exp/datapump-observer.h"
-//#include "../exp/misc.h"
-
 // FIX: reliable messaging currently broken due to Observer-pattern
 // refactor
 #ifdef FEATURE_MCCOAP_RELIABLE
@@ -26,9 +16,6 @@
 
 namespace embr {
 
-// temporary as we decouple / redo retry logic
-//using namespace moducom::coap;
-
 #ifdef FEATURE_EMBR_DATAPUMP_INLINE
 #ifndef FEATURE_CPP_MOVESEMANTIC
 #error Move semantic necessary for inline datapump
@@ -37,8 +24,6 @@ namespace embr {
 #error Variadic/emplacement necessary for inline datapump
 #endif
 #endif
-
-#pragma once
 
 // bundle these two together, since they are paired all over the darned place
 template <class TNetBuf, class TAddr>
