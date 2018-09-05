@@ -101,6 +101,12 @@ struct OtherStatefulObserver
 
 TEST_CASE("observer")
 {
+    SECTION("void subject")
+    {
+        embr::void_subject vs;
+
+        vs.notify(3);
+    }
     SECTION("next-gen tuple based observer")
     {
         counter = 0;

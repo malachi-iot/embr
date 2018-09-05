@@ -11,6 +11,116 @@ namespace embr {
 
 namespace internal {
 
+// NOTE: yanked in from estd/exp/observer.h
+// FEATURE_EMBR_EXPLICIT_OBSERVER is helpful for enforcing < c++11 compliance or for
+// troubleshooting lost notifications (due to improper overloading of on_notify)
+#if defined(FEATURE_CPP_DECLTYPE) && !defined(FEATURE_EMBR_EXPLICIT_OBSERVER)
+// https://stackoverflow.com/questions/23987925/using-sfinae-to-select-function-based-on-whether-a-particular-overload-of-a-func
+// Used so that on_notify calls are optional
+// fallback one for when we just can't match the on_notify
+template <class TObserver, class TNotifier>
+static auto notify_helper(TObserver& observer, const TNotifier& n, int) -> bool
+{
+    return true;
+}
+
+
+// fallback for invocation with context where no on_notify is present
+template <class TObserver, class TNotifier, class TContext>
+static auto notify_helper(TObserver& observer, const TNotifier& n, TContext&, int) -> bool
+{
+    return true;
+}
+
+// bool gives this one precedence, since we call with (n, true)
+template <class TObserver, class TNotifier>
+static auto notify_helper(TObserver& observer, const TNotifier& n, bool)
+-> decltype(std::declval<TObserver>().on_notify(n), void(), bool{})
+{
+    observer.on_notify(n);
+
+    return true;
+}
+
+template <class TObserver, class TNotifier, class TContext>
+static auto notify_helper(TObserver& observer, const TNotifier& n, TContext& context, bool)
+-> decltype(std::declval<TObserver>().on_notify(n), void(), bool{})
+{
+    observer.on_notify(n);
+
+    return true;
+}
+
+// bool gives this one precedence, since we call with (n, true)
+template <class TObserver, class TNotifier, class TContext>
+static auto notify_helper(TObserver& observer, const TNotifier& n, TContext& context, bool)
+-> decltype(std::declval<TObserver>().on_notify(n, context), void(), bool{})
+{
+    observer.on_notify(n, context);
+
+    return true;
+}
+
+// stateless ones.  Probably we could use above ones but this way we can avoid
+// inline construction of an entity altogether
+// fallback one for when we just can't match the on_notify
+template <class TObserver, class TNotifier>
+static auto notify_helper(const TNotifier& n, int) -> bool
+{
+    return true;
+}
+
+// fallback for invocation with context where no on_notify is present
+template <class TObserver, class TNotifier, class TContext>
+static auto notify_helper(const TNotifier& n, TContext&, int) -> bool
+{
+    return true;
+}
+
+// bool gives this one precedence, since we call with (n, true)
+template <class TObserver, class TNotifier>
+static auto notify_helper(const TNotifier& n, bool)
+-> decltype(TObserver::on_notify(n), void(), bool{})
+{
+    TObserver::on_notify(n);
+
+    return true;
+}
+
+
+// bool gives this one precedence, since we call with (n, true)
+template <class TObserver, class TNotifier, class TContext>
+static auto notify_helper(const TNotifier& n, TContext& context, bool)
+-> decltype(TObserver::on_notify(n), void(), bool{})
+{
+    TObserver::on_notify(n);
+
+    return true;
+}
+
+// bool gives this one precedence, since we call with (n, true)
+template <class TObserver, class TNotifier, class TContext>
+static auto notify_helper(const TNotifier& n, TContext& context, bool)
+-> decltype(TObserver::on_notify(n, context), void(), bool{})
+{
+    TObserver::on_notify(n, context);
+
+    return true;
+}
+#else
+template <class TObserver, class TNotifier>
+static void notify_helper(TObserver& observer, const TNotifier& n, bool)
+{
+    observer.on_notify(n);
+}
+
+template <class TObserver, class TNotifier>
+static void notify_helper(const TNotifier& n, bool)
+{
+    TObserver::on_notify(n);
+}
+#endif
+
 template <class ...TObservers>
 class tuple_base
 {
@@ -162,6 +272,17 @@ subject<TObservers&&...> make_subject(TObservers&&...observers)
 
 
 }
+
+struct void_subject
+{
+    template <class TNotifier>
+    void notify(const TNotifier&) {}
+
+    template <class TNotifier, class TContext>
+    void notify(const TNotifier&, TContext&) {}
+};
+
+
 
 }
 
