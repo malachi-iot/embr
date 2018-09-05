@@ -91,13 +91,17 @@ public:
     ~NetBufDynamic()
     {
         iterator it = chunks.begin();
-        TAllocator a = get_allocator();
+        // FIX: going to need to do the ref/non ref dance here
+        // for stateful allocators
+        allocator_type a = get_allocator();
 
         while(it != chunks.end())
         {
-            deallocate(a, *it);
+            // have to use temporary because otherwise we are using
+            // a deleted iterator
+            iterator del_it = it++;
 
-            ++it;
+            deallocate(a, *del_it);
         }
     }
 
