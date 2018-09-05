@@ -1,6 +1,6 @@
 #pragma once
 
-#include <estd/exp/observer.h>
+//#include <estd/exp/observer.h>
 #include <estd/tuple.h>
 #include <estd/functional.h>
 
@@ -135,7 +135,7 @@ protected:
         estd::tuple_element_t<index, tuple_type>& observer =
                 estd::get<index>(observers);
 
-        estd::experimental::internal::notify_helper(observer, e, true);
+        notify_helper(observer, e, true);
     }
 
     template <int index, class TEvent, class TContext>
@@ -144,7 +144,7 @@ protected:
         estd::tuple_element_t<index, tuple_type>& observer =
                 estd::get<index>(observers);
 
-        estd::experimental::internal::notify_helper(observer, e, c, true);
+        notify_helper(observer, e, c, true);
     }
 
     tuple_base(TObservers&&...observers) :
@@ -170,7 +170,7 @@ protected:
         estd::tuple_element_t<index, tuple_type> observer;
 
         // SFINAE magic to call best matching on_notify function
-        estd::experimental::internal::notify_helper(
+        notify_helper(
                     observer,
                     e, true);
     }
