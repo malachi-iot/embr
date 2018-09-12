@@ -174,6 +174,19 @@ protected:
                     observer,
                     e, true);
     }
+
+    template <int index, class TEvent, class TContext>
+    void _notify_helper(const TEvent& e, TContext& c)
+    {
+        // allocate a purely temporary observer, as this has
+        // been explicitly set up as stateless
+        estd::tuple_element_t<index, tuple_type> observer;
+
+        // SFINAE magic to call best matching on_notify function
+        notify_helper(
+                    observer,
+                    e, c, true);
+    }
 };
 
 template <class TBase, class ...TObservers>
