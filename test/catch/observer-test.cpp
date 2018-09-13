@@ -21,6 +21,8 @@ struct event_3
     int data;
 };
 
+struct noop_event {};
+
 static int counter = 0;
 
 class StatelessObserver
@@ -161,11 +163,15 @@ TEST_CASE("observer")
                 StatelessObserver o1;
                 StatefulObserver o2;
 
-                /*
                 auto s = embr::layer1::make_subject(
                             o1,
                             o2);
-                */
+            }
+            SECTION("proxy")
+            {
+                embr::layer1::internal::observer_proxy<decltype(s)> op(s);
+
+                op.on_notify(noop_event{});
             }
         }
     }

@@ -1,3 +1,7 @@
+/**
+ * @file
+ * @author Malachi Burke
+ */
 #pragma once
 
 //#include <estd/exp/observer.h>
@@ -18,23 +22,23 @@ namespace internal {
 // https://stackoverflow.com/questions/23987925/using-sfinae-to-select-function-based-on-whether-a-particular-overload-of-a-func
 // Used so that on_notify calls are optional
 // fallback one for when we just can't match the on_notify
-template <class TObserver, class TNotifier>
-static auto notify_helper(TObserver& observer, const TNotifier& n, int) -> bool
+template <class TObserver, class TEvent>
+static auto notify_helper(TObserver& observer, const TEvent& n, int) -> bool
 {
     return true;
 }
 
 
 // fallback for invocation with context where no on_notify is present
-template <class TObserver, class TNotifier, class TContext>
-static auto notify_helper(TObserver& observer, const TNotifier& n, TContext&, int) -> bool
+template <class TObserver, class TEvent, class TContext>
+static auto notify_helper(TObserver& observer, const TEvent& n, TContext&, int) -> bool
 {
     return true;
 }
 
 // bool gives this one precedence, since we call with (n, true)
-template <class TObserver, class TNotifier>
-static auto notify_helper(TObserver& observer, const TNotifier& n, bool)
+template <class TObserver, class TEvent>
+static auto notify_helper(TObserver& observer, const TEvent& n, bool)
 -> decltype(std::declval<TObserver>().on_notify(n), void(), bool{})
 {
     observer.on_notify(n);
@@ -42,8 +46,8 @@ static auto notify_helper(TObserver& observer, const TNotifier& n, bool)
     return true;
 }
 
-template <class TObserver, class TNotifier, class TContext>
-static auto notify_helper(TObserver& observer, const TNotifier& n, TContext& context, bool)
+template <class TObserver, class TEvent, class TContext>
+static auto notify_helper(TObserver& observer, const TEvent& n, TContext& context, bool)
 -> decltype(std::declval<TObserver>().on_notify(n), void(), bool{})
 {
     observer.on_notify(n);
@@ -52,8 +56,8 @@ static auto notify_helper(TObserver& observer, const TNotifier& n, TContext& con
 }
 
 // bool gives this one precedence, since we call with (n, true)
-template <class TObserver, class TNotifier, class TContext>
-static auto notify_helper(TObserver& observer, const TNotifier& n, TContext& context, bool)
+template <class TObserver, class TEvent, class TContext>
+static auto notify_helper(TObserver& observer, const TEvent& n, TContext& context, bool)
 -> decltype(std::declval<TObserver>().on_notify(n, context), void(), bool{})
 {
     observer.on_notify(n, context);
@@ -64,22 +68,22 @@ static auto notify_helper(TObserver& observer, const TNotifier& n, TContext& con
 // stateless ones.  Probably we could use above ones but this way we can avoid
 // inline construction of an entity altogether
 // fallback one for when we just can't match the on_notify
-template <class TObserver, class TNotifier>
-static auto notify_helper(const TNotifier& n, int) -> bool
+template <class TObserver, class TEvent>
+static auto notify_helper(const TEvent& n, int) -> bool
 {
     return true;
 }
 
 // fallback for invocation with context where no on_notify is present
-template <class TObserver, class TNotifier, class TContext>
-static auto notify_helper(const TNotifier& n, TContext&, int) -> bool
+template <class TObserver, class TEvent, class TContext>
+static auto notify_helper(const TEvent& n, TContext&, int) -> bool
 {
     return true;
 }
 
 // bool gives this one precedence, since we call with (n, true)
-template <class TObserver, class TNotifier>
-static auto notify_helper(const TNotifier& n, bool)
+template <class TObserver, class TEvent>
+static auto notify_helper(const TEvent& n, bool)
 -> decltype(TObserver::on_notify(n), void(), bool{})
 {
     TObserver::on_notify(n);
@@ -89,8 +93,8 @@ static auto notify_helper(const TNotifier& n, bool)
 
 
 // bool gives this one precedence, since we call with (n, true)
-template <class TObserver, class TNotifier, class TContext>
-static auto notify_helper(const TNotifier& n, TContext& context, bool)
+template <class TObserver, class TEvent, class TContext>
+static auto notify_helper(const TEvent& n, TContext& context, bool)
 -> decltype(TObserver::on_notify(n), void(), bool{})
 {
     TObserver::on_notify(n);
@@ -99,8 +103,8 @@ static auto notify_helper(const TNotifier& n, TContext& context, bool)
 }
 
 // bool gives this one precedence, since we call with (n, true)
-template <class TObserver, class TNotifier, class TContext>
-static auto notify_helper(const TNotifier& n, TContext& context, bool)
+template <class TObserver, class TEvent, class TContext>
+static auto notify_helper(const TEvent& n, TContext& context, bool)
 -> decltype(TObserver::on_notify(n, context), void(), bool{})
 {
     TObserver::on_notify(n, context);
@@ -108,14 +112,14 @@ static auto notify_helper(const TNotifier& n, TContext& context, bool)
     return true;
 }
 #else
-template <class TObserver, class TNotifier>
-static void notify_helper(TObserver& observer, const TNotifier& n, bool)
+template <class TObserver, class TEvent>
+static void notify_helper(TObserver& observer, const TEvent& n, bool)
 {
     observer.on_notify(n);
 }
 
-template <class TObserver, class TNotifier>
-static void notify_helper(const TNotifier& n, bool)
+template <class TObserver, class TEvent>
+static void notify_helper(const TEvent& n, bool)
 {
     TObserver::on_notify(n);
 }
@@ -283,16 +287,49 @@ subject<TObservers&&...> make_subject(TObservers&&...observers)
 }
 
 
+namespace internal {
+
+// presents itself as an observer but is in fact a wrapper around a new
+// subject
+template <class TSubject>
+struct observer_proxy
+{
+    TSubject subject;
+
+    /// @brief pass on event to underlying subject to re-broadcast
+    /// \tparam TEvent
+    /// \param e
+    template <class TEvent>
+    void on_notify(const TEvent& e)
+    {
+        subject.notify(e);
+    }
+
+    observer_proxy(TSubject& s) : subject(s) {}
+
+#ifdef FEATURE_CPP_MOVESEMANTIC
+    observer_proxy(TSubject&& s) : subject(std::move(s)) {}
+#endif
+};
+
+}
+
+
 
 }
 
 struct void_subject
 {
-    template <class TNotifier>
-    void notify(const TNotifier&) {}
+    /// @brief noop notify
+    /// \tparam TEvent
+    template <class TEvent>
+    void notify(const TEvent&) {}
 
-    template <class TNotifier, class TContext>
-    void notify(const TNotifier&, TContext&) {}
+    /// @brief noop notify
+    /// \tparam TEvent
+    /// \tparam TContext
+    template <class TEvent, class TContext>
+    void notify(const TEvent&, TContext&) {}
 };
 
 
