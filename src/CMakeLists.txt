@@ -21,6 +21,8 @@ set(SOURCE_FILES
     embr/datapump.hpp
     embr/events.h
 
+    embr/exp/netbuf-alloc.h
+
     embr/netbuf.h
     embr/netbuf-static.h
     embr/netbuf-dynamic.h
@@ -31,7 +33,7 @@ set(SOURCE_FILES
 
 
     embr/streambuf.h
-    embr/exp/netbuf-alloc.h
+    embr/transport-descriptor.h
     )
 
 add_library(${PROJECT_NAME} ${SOURCE_FILES})

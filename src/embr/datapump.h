@@ -1,18 +1,17 @@
+/**
+ * @file
+ */
 #pragma once
 
 #include <estd/forward_list.h>
 #include <estd/queue.h>
 #include <estd/vector.h>
 
-// FIX: reliable messaging currently broken due to Observer-pattern
-// refactor
-#ifdef FEATURE_MCCOAP_RELIABLE
-//#include "../exp/retry.h"
-#endif
-
 #ifdef FEATURE_CPP_MOVESEMANTIC
 #include <estd/utility.h> // for std::forward
 #endif
+
+#include "transport-descriptor.h"
 
 namespace embr {
 
@@ -24,15 +23,6 @@ namespace embr {
 #error Variadic/emplacement necessary for inline datapump
 #endif
 #endif
-
-// bundle these two together, since they are paired all over the darned place
-template <class TNetBuf, class TAddr>
-struct TransportDescriptor
-{
-    typedef TNetBuf netbuf_t;
-    typedef TAddr addr_t;
-};
-
 
 namespace experimental {
 
