@@ -48,6 +48,7 @@ struct synthetic_transport
     void send(synthetic_netbuf_type&, int) {}
 };
 
+
 TEST_CASE("dataport")
 {
     synthetic_netbuf_type nb;
@@ -72,5 +73,11 @@ TEST_CASE("dataport")
         }
 
         dp.service();
+    }
+    SECTION("make_dataport")
+    {
+        auto s = void_subject();
+
+        auto dataport = embr::make_dataport<synthetic_transport>(s);
     }
 }
