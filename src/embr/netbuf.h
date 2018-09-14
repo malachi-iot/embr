@@ -1,3 +1,6 @@
+/**
+ *  @file
+ */
 #pragma once
 
 #include <estd/span.h>
@@ -38,6 +41,7 @@ enum ExpandResult
     ExpandOKChained = 0,
     // expanded in-place, or perhaps realloc style
     // always query data() again just to be sure after the expand
+    // remember you'll have to track your pos into data() yourself
     ExpandOKLinear = 1
 };
 

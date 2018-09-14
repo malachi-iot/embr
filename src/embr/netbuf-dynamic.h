@@ -1,3 +1,6 @@
+/**
+ *  @file
+ */
 #pragma once
 
 #include "netbuf.h"
@@ -59,11 +62,11 @@ public:
 
     bool empty() const { return current == NULLPTR; }
 
-    Chunk* allocate(size_type sz)
+    Chunk* allocate(size_type sz, bool override_minimum = false)
     {
         TAllocator a = get_allocator();
 
-        if(sz < minimum_allocation_size())
+        if(sz < minimum_allocation_size() && !override_minimum)
             sz = minimum_allocation_size();
 
         Chunk* chunk = (Chunk*) allocator_traits::allocate(a, sizeof(Chunk) + sz);
@@ -200,6 +203,34 @@ public:
         }
 
         return ExpandResult::ExpandOKChained;
+    }
+
+
+    ///
+    /// \brief shrinks last (current) chained buffer to specified size
+    /// \param to_size size to shrink to, or 0 to deallocate
+    ///
+    void shrink_experimental(size_type to_size)
+    {
+        iterator it = chunks.begin();
+        // FIX: going to need to do the ref/non ref dance here
+        // for stateful allocators
+        allocator_type a = get_allocator();
+
+        // TODO: We need a 'before begin' for this to work right
+        /*
+        while(it != chunks.end())
+        {
+            // have to use temporary because otherwise we are using
+            // a deleted iterator
+            iterator del_it = it++;
+            Chunk& _c = *del_it;
+
+            if(_c.next() == current)
+            {
+                _c.next(NULLPTR);
+            }
+        } */
     }
 
     bool last()

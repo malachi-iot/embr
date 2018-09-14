@@ -81,6 +81,13 @@ public:
             return ExpandResult::ExpandFailOutOfMemory;
     }
 
+    // shrink to a specified amount.  note our shrink differs from
+    // PBUF shrink in that it only applies to current data()
+    bool shrink_experimental(size_type to_amount)
+    {
+        return base::resize(to_amount);
+    }
+
     bool last() const { return true; }
 
     size_type size() const { return base::size(); }

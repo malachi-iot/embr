@@ -31,6 +31,7 @@ set(SOURCE_FILES
     datapump-test.cpp
     datapump-test.h
     ios-test.cpp
+    netbuf-test.cpp
     observer-test.cpp
     experimental-test.cpp
     reader-test.cpp
