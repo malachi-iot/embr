@@ -39,6 +39,36 @@ TEST_CASE("netbuf")
 
         REQUIRE(nb.size() == 512);
 
-        nb.shrink_experimental(64);
+        SECTION("shrink 1")
+        {
+            nb.shrink_experimental(64);
+
+            REQUIRE(nb.size() == 64);
+        }
+        SECTION("shrink exact")
+        {
+            nb.shrink_experimental(512);
+
+            REQUIRE(nb.size() == 512);
+        }
+        SECTION("double expand")
+        {
+            nb.expand(128, true);
+
+            REQUIRE(nb.total_size() == 512 + 128);
+
+            SECTION("shrink to 128")
+            {
+                nb.shrink_experimental(128);
+
+                REQUIRE(nb.total_size() == 128);
+            }
+            SECTION("shrink to 600")
+            {
+                nb.shrink_experimental(600);
+
+                REQUIRE(nb.total_size() == 600);
+            }
+        }
     }
 }

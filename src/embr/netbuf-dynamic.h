@@ -78,9 +78,10 @@ public:
         return chunk;
     }
 
-    static void deallocate(TAllocator& a, Chunk& chunk)
+    static void deallocate(TAllocator& a, Chunk& chunk, bool run_destructor = true)
     {
-        chunk.~Chunk();
+        if(run_destructor)
+            chunk.~Chunk();
 
         allocator_traits::deallocate(a,
                                      (uint8_t*)&chunk,
@@ -212,25 +213,68 @@ public:
     ///
     void shrink_experimental(size_type to_size)
     {
+        if(empty()) return;
+
         iterator it = chunks.begin();
+
+        size_type tally = (*it).size;
+
         // FIX: going to need to do the ref/non ref dance here
         // for stateful allocators
         allocator_type a = get_allocator();
 
         // TODO: We need a 'before begin' for this to work right
         /*
+        if((*it).next() == NULLPTR)
+        {
+            // fake before-begin version
+        } */
+
+        // only enter this loop while we have entire chunks to save
+        while(to_size > tally)
+        {
+            // since to_size is still larger than our current tally, we
+            // move forward through chunks (undefined behavior if to_size
+            // > total_size())
+            Chunk& c = *++it;
+
+            tally += c.size;
+        }
+
+        // we should only arrive here while still having a valid it, meaning we can it++
+        // safely.  we reassign current because shrinking means we are at the last
+        // valid chunk post-shrinkage
+        current = &(*it);
+
+        if(to_size == tally)
+        {
+            // don't need to shrink, exact match after
+        }
+        else
+        {
+            // FIX: this is not going to place nice with all deallocators, because
+            // it will be passing wrong size into deallocation.  What
+            // we really need to do is a realloc here, but that gets complicated
+            // because we have to potentially reinsert the item into the linked
+            // list (node + data allocated together and a realloc could change pointer
+            // location)
+            current->size -= tally - to_size;
+        }
+
+        iterator del_after = it++;
+
+        // now that we've skipped allocated chunks who fit, loop
+        // over ones who are gonna be deleted because of the shrink
         while(it != chunks.end())
         {
-            // have to use temporary because otherwise we are using
-            // a deleted iterator
-            iterator del_it = it++;
-            Chunk& _c = *del_it;
+            // NOTE: Should we expect destructor to run here? Hmm, that would be bad
+            // http://www.cplusplus.com/reference/forward_list/forward_list/erase_after/ indicates yes
+            chunks.erase_after(del_after++);
 
-            if(_c.next() == current)
-            {
-                _c.next(NULLPTR);
-            }
-        } */
+            iterator to_del = it++;
+
+            deallocate(a, *to_del);
+        }
     }
 
     bool last()
