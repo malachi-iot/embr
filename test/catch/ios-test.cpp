@@ -17,6 +17,7 @@ using namespace embr;
 using namespace estd;
 
 #include <estd/internal/istream_runtimearray.hpp>
+#include <estd/internal/ostream_basic_string.hpp>
 
 TEST_CASE("iostreams", "[ios]")
 {
@@ -32,14 +33,11 @@ TEST_CASE("iostreams", "[ios]")
 
         sb.xsputn("hi2u", 5); // cheat and include null termination also
 
-        // TODO: make typedef layer1::string include provision to specify null termination
-        // FIX: estd::layer2::string<> doesn't compile
-        //estd::layer2::string<> s((char*)nb.data());
-        char* helper = reinterpret_cast<char*>(nb.data());
-
-        estd::layer2::const_string s(helper);
+        estd::layer2::string<> s((char*)nb.data());
 
         REQUIRE(s == "hi2u");
+        // compares just pointers here
+        REQUIRE(s.data() == sb.pbase());
     }
     SECTION("proper netbuf_streambuf type (not impl) + ostream")
     {
@@ -171,9 +169,8 @@ TEST_CASE("iostreams", "[ios]")
             {
                 estd::internal::basic_ostream<decltype (sb)&> out(sb);
 
-                // FIX: Encounters a problem, can't resolve
-                //out << test_str;
-                out << test_str.data();
+                out << test_str;
+
                 side_by_side += test_str;
             }
 
