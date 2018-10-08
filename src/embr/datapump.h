@@ -130,6 +130,8 @@ public:
         addr_t m_addr;
 
     public:
+        typedef DataPump::addr_t addr_t;
+
         Item() {}
 
 #ifdef FEATURE_EMBR_DATAPUMP_INLINE

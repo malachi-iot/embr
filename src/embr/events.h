@@ -61,13 +61,18 @@ struct SendDequeuing : ItemBase<TItem>
     SendDequeuing(TItem& item) : ItemBase<TItem>(item) {}
 };
 
-// sent over transport, now removing from send queue
-// NOTE: retry logic keeps TNetBufs around, so a deallocation of netbuf
-// may or may not follow
-template <class TItem>
-struct SendDequeued : ItemBase<TItem>
+// sent over transport, and just now removed from send queue
+// NOTE: netbuf is not reliably available now.  use TransportSent
+// if that is needed
+template <class TAddr>
+struct SendDequeued
 {
-    SendDequeued(TItem& item) : ItemBase<TItem>(item) {}
+    const TAddr& addr;
+
+    // TODO: implement message_id tracking.  we can still match
+    // up things to the old netbuf via a unique message_id
+    template <class T>
+    SendDequeued(T message_id, const TAddr& addr) : addr(addr) {}
 };
 
 
@@ -130,7 +135,7 @@ struct Datapump
         receive_queued;
     typedef SendQueued<item_t>
         send_queued;
-    typedef SendDequeued<item_t>
+    typedef SendDequeued<typename item_t::addr_t>
         send_dequeued;
 };
 

@@ -63,6 +63,8 @@ void DataPort<TDatapump, TTransport, TSubject, wrapped>::service()
         notify(typename event::transport_sent(netbuf, addr));
 
         base_t::datapump.transport_pop();
+
+        notify(typename event::send_dequeued(0, addr));
     }
 }
 
