@@ -80,6 +80,24 @@ struct EmptyAppDataInlineQueuePolicy :
 };
 
 
+namespace experimental {
+
+// opportunity to specialize because some netbufs have innate ref counters
+// (like PBUF) while others we're gonna have to manage manually (through
+// some clever use of shared_ptr, no doubt)
+//
+// this will also have implications on inline mode ... likely inline will
+// become less used and non-inline will always be available
+template <class TNetBuf>
+struct DataPumpItem
+{
+
+};
+
+
+}
+
+
 // If this continues to be coap-inspecific, it would be reasonable to move this
 // datapump code out to mc-mem.  Until that decision is made, keeping this in
 // experimental area
@@ -104,7 +122,9 @@ public:
     // To track that and other non-core-datagram behavior, stuff everything into AppData
     // via (experimentally) TPolicy.  Deriving from it so that it resolves to truly 0
     // bytes if no AppData is desired
-    class Item : policy_type::template AppData<transport_descriptor_t>
+    class Item :
+            experimental::DataPumpItem<netbuf_t>,
+            policy_type::template AppData<transport_descriptor_t>
     {
         pnetbuf_t m_netbuf;
         addr_t m_addr;
