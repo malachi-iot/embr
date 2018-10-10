@@ -15,6 +15,9 @@
 
 namespace embr {
 
+// FEATURE_EMBR_DATAPUMP_INLINE may be better suited to a policy than a compile
+// type define.  Some 'netbuf' types could be a raw PBUF handle, in which case
+// we might neither treat it as a pointer or a move-semantic object
 #ifdef FEATURE_EMBR_DATAPUMP_INLINE
 #ifndef FEATURE_CPP_MOVESEMANTIC
 #error Move semantic necessary for inline datapump
@@ -34,6 +37,31 @@ struct address_traits
     {
         return from_addr == to_addr;
     }
+};
+
+
+// empty class, designed to be specialized
+// remember our embr netbufs are specifically:
+// a) underlying system-specific buffer - possibly chained
+// b) tracks which chain we are on. pbuf itself does not track this
+// also, it seems it would be convenient to have a pbuf-cpp wrapper which
+// interacted with move semantics so as to behave a tiny bit like a shared_ptr
+template <class TPBuf>
+struct pbuf_traits
+{
+    typedef TPBuf pbuf_type;
+
+    // NOTE: Not sure if we can utilize this 'use'/'unuse' paradigm with
+    // shared_ptr
+    static void use(pbuf_type&); // reference inc
+    static void unuse(pbuf_type&); // reference dec.  If reaching 0, it is expected pbuf self-deallocates
+
+    // same as existing embr netbuf type, but in theory we'd be tracking pbufs and
+    // netbufs would become incidental
+    typedef int netbuf_type;
+
+    // would lean heavily on RVO, created netbuf is expected to be incidental
+    static netbuf_type create_netbuf(pbuf_type&);
 };
 
 
@@ -98,10 +126,10 @@ struct DataPumpItem
 }
 
 
-// If this continues to be coap-inspecific, it would be reasonable to move this
-// datapump code out to mc-mem.  Until that decision is made, keeping this in
-// experimental area
 template <class TTransportDescriptor, class TPolicy = EmptyAppDataInlineQueuePolicy >
+/// @brief Contains input-from-transport and output-to-transport queues
+/// \tparam TTransportDescriptor
+/// \tparam TPolicy
 class DataPump
 {
 public:
