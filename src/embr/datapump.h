@@ -126,12 +126,14 @@ public:
             experimental::DataPumpItem<netbuf_t>,
             policy_type::template AppData<transport_descriptor_t>
     {
+    public:
+        typedef DataPump::addr_t addr_t;
+
+    private:
         pnetbuf_t m_netbuf;
         addr_t m_addr;
 
     public:
-        typedef DataPump::addr_t addr_t;
-
         Item() {}
 
 #ifdef FEATURE_EMBR_DATAPUMP_INLINE
