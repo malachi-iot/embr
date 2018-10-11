@@ -26,9 +26,11 @@ TEST_CASE("datapump")
     {
         using namespace embr::experimental;
 
+        typedef Datapump2<void*, int> datapump_type;
+
         SECTION("raw datapump")
         {
-            Datapump2<void*, int> datapump;
+            datapump_type datapump;
 
             datapump.enqueue_from_transport((void*) "test", 0);
 
@@ -42,9 +44,43 @@ TEST_CASE("datapump")
         }
         SECTION("dataport")
         {
-            Dataport2<Datapump2<void*, int> > dataport;
+            typedef Dataport2<datapump_type> dataport_type;
+            dataport_type dataport;
+            typedef dataport_type::State state_type;
+            typedef dataport_type::NotifyContext context_type;
 
-            dataport.process();
+            static state_type state_progression[]
+            {
+                state_type::TransportInQueueing,
+                state_type::TransportInQueued,
+                state_type::TransportInDequeuing,
+                state_type::TransportInDequeued,
+                state_type::RetryEvaluating
+            };
+
+            struct Context
+            {
+                int state_progression_counter = 0;
+
+                void evalutate()
+                {
+
+                }
+            };
+
+            Context context;
+
+            dataport.notifier = [](state_type state, context_type* context)
+            {
+                auto user = (Context*) context->user;
+                INFO(user->state_progression_counter);
+                REQUIRE(state_progression[user->state_progression_counter++] == state);
+            };
+
+            dataport.receive_from_transport((void*)"hi", 0, &context);
+            dataport.process(&context);
+
+            REQUIRE(context.state_progression_counter == 5);
         }
     }
 }

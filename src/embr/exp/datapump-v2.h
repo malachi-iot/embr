@@ -61,8 +61,17 @@ public:
         TPBuf pbuf;
         TAddr addr;
 
-        bool should_retry() { return RetryItem::is_confirmable(pbuf); }
+        /// @brief Reflects whether pbuf represents a confirmable message
+        /// does not specifically indicate whether we are *still* interested in retry tracking though
+        /// \return
+        bool is_confirmable() { return RetryItem::is_confirmable(pbuf); }
 
+        /// @brief Reflects whether we still want to retry this item
+        /// NOTE: this is clumsy and likely should be evaluated elsewhere
+        bool should_retry() { return is_confirmable(); }
+
+        /// @brief Reflects whether pbuf rpresents an ack message
+        /// does not specifically indicate whether retry tracking cares about *this particular* ack though
         bool is_acknowledgement() { return true; }
     };
 
@@ -144,13 +153,23 @@ public:
     {
     }
 
+
+    /// @brief inspects sent_item and decides whether we're still interested in it
+    /// if so, add to retry list
+    /// \param sent_item
+    /// @return true if we added this to retry list
+    bool evaluate_add_to_retry(Item* sent_item)
+    {
+
+    }
+
     /// @brief evaluates incoming item against any outstanding retries
     ///
     /// Specifically looking for ACKs to remove from retry list
     ///
     /// \param received_item buffer received over transport for inspection
     /// @returns Item* which was removed from retry list, or NULLPTR if none was found
-    Item* evaluate_against_retry(Item* received_item)
+    Item* evaluate_remove_from_retry(Item* received_item)
     {
         return NULLPTR;
     }
@@ -238,7 +257,7 @@ struct Dataport2
         state(s, &context);
     }
 
-    void state(State s, pbuf_type& pbuf, addr_type addr, void* user)
+    void state(State s, pbuf_type pbuf, addr_type addr, void* user)
     {
         NotifyContext context{ this, user };
 
@@ -254,13 +273,17 @@ struct Dataport2
     {
         if (datapump.from_transport_ready())
         {
-            state(TransportInDequeuing);
+            NotifyContext context { this, user };
+
+            state(TransportInDequeuing, &context);
             datapump_item* item = datapump.dequeue_from_transport();
             state(TransportInDequeued, item, user);
             if (item->is_acknowledgement())
             {
+                // FIX: Clean up this inconsistency where ACK processing has a special 'evaluating'
+                // event sort of in lieu of item->should_retry()
                 state(RetryEvaluating, item, user);
-                datapump_item* removed = datapump.evaluate_against_retry(item);
+                datapump_item* removed = datapump.evaluate_remove_from_retry(item);
                 if (removed != NULLPTR)
                     state(RetryDequeued, removed, user);
             }
@@ -271,10 +294,12 @@ struct Dataport2
     {
         if(datapump.to_transport_ready())
         {
-            state(TransportOutDequeuing);
+            NotifyContext context { this, user };
+
+            state(TransportOutDequeuing, &context);
             datapump_item* item = datapump.dequeue_to_transport();
             state(TransportOutDequeued, item, user);
-            if(item->should_retry())
+            if(item->is_confirmable() && item->should_retry())
             {
                 state(RetryQueuing, item, user);
                 datapump.add_to_retry(item);
@@ -294,22 +319,22 @@ struct Dataport2
     /// @brief Queue up for send to transport
     /// \param pbuf
     /// \param to_address
-    void send_to_transport(pbuf_type& pbuf, addr_type to_address)
+    void send_to_transport(pbuf_type& pbuf, addr_type to_address, void* user = NULLPTR)
     {
         // TODO: send pbuf & to_address over notification
-        state(TransportOutQueuing, pbuf, to_address);
+        state(TransportOutQueuing, pbuf, to_address, user);
         datapump.enqueue_to_transport(pbuf, to_address);
-        state(TransportOutQueued, pbuf, to_address);
+        state(TransportOutQueued, pbuf, to_address, user);
     }
 
     /// @brief called when transport receives data, to queue up in our datapump/dataport
     ///
     /// this is mainly for async calls.  Queues into from_transport queue
-    void receive_from_transport(pbuf_type& pbuf, addr_type from_address)
+    void receive_from_transport(pbuf_type pbuf, addr_type from_address, void* user = NULLPTR)
     {
-        status(TransportInQueueing, pbuf, from_address);
-        datapump.enqueue_to_transport(pbuf, from_address);
-        status(TransportInQueued, pbuf, from_address);
+        state(TransportInQueueing, pbuf, from_address, user);
+        datapump.enqueue_from_transport(pbuf, from_address);
+        state(TransportInQueued, pbuf, from_address, user);
     }
 };
 
