@@ -15,29 +15,27 @@ namespace embr { namespace experimental {
 
 struct empty {};
 
+template <class TPBuf, class TAddr>
+struct BasicRetry
+{
+
+};
+
 // Would use transport descriptor, but:
 // a) it's a little more unweildy than expected
 // b) it's netbuf based, and this needs to be PBuf based
 template <
         class TPBuf, class TAddr,
-        class TRetryImpl = empty,
+        class TRetryImpl = BasicRetry<TPBuf, TAddr>,
         class TItemBase = empty>
 class Datapump2
 {
+public:
     typedef typename estd::remove_reference<TPBuf>::type pbuf_type;
     typedef TAddr addr_type;
 
-    enum State
-    {
-        TransportInQueueing,
-        TransportInQueued,
-        TransportInDequeuing,
-        TransportInDequeued,
-        TransportOutQueuing,
-        TransportOutQueued,
-        TransportOutDequeuing,
-        TransportOutDequeued
-    };
+private:
+    TRetryImpl retry_impl;
 
     // TODO: Make this part of TRetryImpl
     struct RetryItem
@@ -48,6 +46,7 @@ class Datapump2
         static bool is_confirmable(pbuf_type& pbuf) { return true; }
     };
 
+public:
     struct Item :
             TItemBase,
             RetryItem
@@ -61,10 +60,13 @@ class Datapump2
 
         TPBuf pbuf;
         TAddr addr;
+
+        bool should_retry() { return RetryItem::is_confirmable(pbuf); }
+
+        bool is_acknowledgement() { return true; }
     };
 
-    typedef void (*notify_fn)(State state);
-
+private:
     // TODO: Right now, memory_pool_ll is going to impose its own linked list onto item
     // but it would be nice to instead bring our own 'next()' calls and have memory_pool_ll
     // be able to pick those up.  This should amount to refining memory_pool_ll's usage of
@@ -84,6 +86,12 @@ public:
     void deallocate(Item* item)
     {
         pool.deallocate(item);
+    }
+
+
+    bool to_transport_ready() const
+    {
+        return !to_transport.empty();
     }
 
     /// @brief enqueue item into transport output queue
@@ -132,9 +140,176 @@ public:
     /// @brief adds to retry list
     ///
     /// including a linear search to splice it into proper time slot
-    void add_to_retry(Item* item)
+    void add_to_retry(Item* sent_item)
     {
+    }
 
+    /// @brief evaluates incoming item against any outstanding retries
+    ///
+    /// Specifically looking for ACKs to remove from retry list
+    ///
+    /// \param received_item buffer received over transport for inspection
+    /// @returns Item* which was removed from retry list, or NULLPTR if none was found
+    Item* evaluate_against_retry(Item* received_item)
+    {
+        return NULLPTR;
+    }
+};
+
+template <class TDatapump>
+// simplified state-machine varient of megapowered Dataport, wired more specifically
+// to retry logic than before
+struct Dataport2
+{
+    TDatapump datapump;
+
+    // NOTE: TDatapump and TTransport must have matching pbuf & addr types
+    typedef typename TDatapump::pbuf_type pbuf_type;
+    typedef typename TDatapump::addr_type addr_type;
+    typedef typename TDatapump::Item datapump_item;
+
+    enum State
+    {
+        TransportInReceiving,
+        TransportInReceived,
+        TransportInQueueing,
+        TransportInQueued,
+        TransportInDequeuing,
+        // application code is expected to listen to this notification
+        TransportInDequeued,
+        TransportOutSending,
+        TransportOutSent,
+        TransportOutQueuing,
+        TransportOutQueued,
+        TransportOutDequeuing,
+        // transport code is expected to listen to this notification
+        // and respond by sending
+        TransportOutDequeued,
+        RetryQueuing,
+        RetryQueued,
+        RetryEvaluating,
+        RetryDequeued
+    };
+
+    // NOTE: Looking like we might not even need an instance field
+    // for state here
+    State _state;
+
+    struct NotifyContext
+    {
+        Dataport2* dataport;
+        void* user;
+
+        union
+        {
+            datapump_item* item;
+            struct
+            {
+                pbuf_type pbuf;
+                addr_type addr;
+            } buf_addr;
+        };
+    };
+
+    typedef void (*notify_fn)(State state, NotifyContext* context);
+
+    notify_fn notifier;
+
+    void notify(NotifyContext* context)
+    {
+        if(notifier != NULLPTR) notifier(_state, context);
+    }
+
+    // state also brings along notification, so pass in notification
+    // context when applicable
+    void state(State s, NotifyContext* context = NULLPTR)
+    {
+        if(s != _state)
+        {
+            _state = s;
+            notify(context);
+        }
+    }
+
+
+    void state(State s, datapump_item* item, void* user)
+    {
+        NotifyContext context{ this, user, item };
+        state(s, &context);
+    }
+
+    void state(State s, pbuf_type& pbuf, addr_type addr, void* user)
+    {
+        NotifyContext context{ this, user };
+
+        context.buf_addr.pbuf = pbuf;
+        context.buf_addr.addr = addr;
+
+        state(s, &context);
+    }
+
+    State state() const { return _state; }
+
+    void process_from_transport(void* user = NULLPTR)
+    {
+        if (datapump.from_transport_ready())
+        {
+            state(TransportInDequeuing);
+            datapump_item* item = datapump.dequeue_from_transport();
+            state(TransportInDequeued, item, user);
+            if (item->is_acknowledgement())
+            {
+                state(RetryEvaluating, item, user);
+                datapump_item* removed = datapump.evaluate_against_retry(item);
+                if (removed != NULLPTR)
+                    state(RetryDequeued, removed, user);
+            }
+        }
+    }
+
+    void process_to_transport(void* user = NULLPTR)
+    {
+        if(datapump.to_transport_ready())
+        {
+            state(TransportOutDequeuing);
+            datapump_item* item = datapump.dequeue_to_transport();
+            state(TransportOutDequeued, item, user);
+            if(item->should_retry())
+            {
+                state(RetryQueuing, item, user);
+                datapump.add_to_retry(item);
+                state(RetryQueued, item, user);
+            }
+        }
+    }
+
+
+    void process(void* user = NULLPTR)
+    {
+        process_from_transport(user);
+        process_to_transport(user);
+    }
+
+
+    /// @brief Queue up for send to transport
+    /// \param pbuf
+    /// \param to_address
+    void send_to_transport(pbuf_type& pbuf, addr_type to_address)
+    {
+        // TODO: send pbuf & to_address over notification
+        state(TransportOutQueuing, pbuf, to_address);
+        datapump.enqueue_to_transport(pbuf, to_address);
+        state(TransportOutQueued, pbuf, to_address);
+    }
+
+    /// @brief called when transport receives data, to queue up in our datapump/dataport
+    ///
+    /// this is mainly for async calls.  Queues into from_transport queue
+    void receive_from_transport(pbuf_type& pbuf, addr_type from_address)
+    {
+        status(TransportInQueueing, pbuf, from_address);
+        datapump.enqueue_to_transport(pbuf, from_address);
+        status(TransportInQueued, pbuf, from_address);
     }
 };
 
