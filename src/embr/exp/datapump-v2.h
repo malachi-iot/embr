@@ -15,10 +15,44 @@ namespace embr { namespace experimental {
 
 struct empty {};
 
+// a reference implementation.  likely too generic to be of any use to anyone, but
+// indicates what to do for a more specific scenario
 template <class TPBuf, class TAddr>
 struct BasicRetry
 {
+    typedef typename estd::remove_reference<TPBuf>::type pbuf_type;
+    typedef TAddr addr_type;
 
+    struct RetryItem
+    {
+        estd::chrono::steady_clock::time_point due;
+        int counter = 0;
+
+        // TODO: eventually do this via pbuf_traits
+        bool is_confirmable(pbuf_type& pbuf) { return true; }
+
+        bool is_acknowledge(pbuf_type& pbuf) { return true; }
+
+        // evaluate whether the incoming item is an ACK matching 'this' item
+        // expected to be a CON
+        bool retry_match(RetryItem* compare_against)
+        {
+            return true;
+        }
+    };
+
+    /// indicate that this item should be requeued
+    /// TODO: disambiguate whether this includes regular queuing or not
+    bool should_requeue(RetryItem* item, pbuf_type& pbuf)
+    {
+        return item->counter < 3;
+    }
+
+    /// indicate that this item should be dequeued (released and not retried again)
+    bool should_dequeue(RetryItem* item, pbuf_type& pbuf)
+    {
+        return true;
+    }
 };
 
 // Would use transport descriptor, but:
@@ -36,20 +70,13 @@ public:
 
 private:
     TRetryImpl retry_impl;
-
-    // TODO: Make this part of TRetryImpl
-    struct RetryItem
-    {
-        estd::chrono::steady_clock::time_point due;
-
-        // TODO: eventually do this via pbuf_traits
-        static bool is_confirmable(pbuf_type& pbuf) { return true; }
-    };
+    typedef typename estd::remove_reference<TRetryImpl>::type retry_impl_type;
+    typedef typename retry_impl_type::RetryItem retry_item;
 
 public:
     struct Item :
             TItemBase,
-            RetryItem
+            retry_item
     {
         // TODO: eventually clean up and use all those forward_node helpers
         Item* _next;
@@ -64,11 +91,7 @@ public:
         /// @brief Reflects whether pbuf represents a confirmable message
         /// does not specifically indicate whether we are *still* interested in retry tracking though
         /// \return
-        bool is_confirmable() { return RetryItem::is_confirmable(pbuf); }
-
-        /// @brief Reflects whether we still want to retry this item
-        /// NOTE: this is clumsy and likely should be evaluated elsewhere
-        bool should_retry() { return is_confirmable(); }
+        bool is_confirmable() { return retry_item::is_confirmable(pbuf); }
 
         /// @brief Reflects whether pbuf rpresents an ack message
         /// does not specifically indicate whether retry tracking cares about *this particular* ack though
@@ -82,9 +105,11 @@ private:
     // node_traits
     estd::experimental::memory_pool_ll<Item, 10> pool;
 
-    estd::intrusive_forward_list<Item> from_transport;
-    estd::intrusive_forward_list<Item> to_transport;
-    estd::intrusive_forward_list<Item> retry_list;
+    typedef estd::intrusive_forward_list<Item> list_type;
+
+    list_type from_transport;
+    list_type to_transport;
+    list_type retry_list;
 
 public:
     Item* allocate()
@@ -106,12 +131,26 @@ public:
     /// @brief enqueue item into transport output queue
     void enqueue_to_transport(Item* item)
     {
+        to_transport.push_front(*item);
+    }
+
+    void enqueue_to_transport(TPBuf pbuf, addr_type from_address)
+    {
+        Item* item = allocate();
+
+        item->pbuf = pbuf;
+        item->addr = from_address;
+
+        enqueue_to_transport(item);
     }
 
     /// @brief dequeue item from transport output queue
     Item* dequeue_to_transport()
     {
-
+        // FIX: should pull from 'back' (see dequeue_from_transport comments)
+        Item& item = to_transport.front();
+        to_transport.pop_front();
+        return &item;
     }
 
     /// @brief enqueue item into transport receive-from queue
@@ -151,6 +190,9 @@ public:
     /// including a linear search to splice it into proper time slot
     void add_to_retry(Item* sent_item)
     {
+        // TODO: likely want to embed this into retry_impl
+        // TODO: need to do requisite sort placement also
+        retry_list.push_front(*sent_item);
     }
 
 
@@ -160,7 +202,15 @@ public:
     /// @return true if we added this to retry list
     bool evaluate_add_to_retry(Item* sent_item)
     {
-
+        if(retry_impl.should_requeue(sent_item, sent_item->pbuf))
+        {
+            add_to_retry(sent_item);
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     /// @brief evaluates incoming item against any outstanding retries
@@ -171,7 +221,31 @@ public:
     /// @returns Item* which was removed from retry list, or NULLPTR if none was found
     Item* evaluate_remove_from_retry(Item* received_item)
     {
-        return NULLPTR;
+        if(retry_impl.should_dequeue(received_item, received_item->pbuf))
+        {
+            // TODO: scour through retry list looking for *associated with* received_item
+            // and remove that associated item - returning it here
+            typename list_type::iterator i = retry_list.begin();
+
+            for(;i != retry_list.end(); i++)
+            {
+                Item& current = *i;
+
+                // evaluate if received_item ACK matches up to retry_list CON
+                if(current.retry_match(received_item))
+                {
+                    // TODO: Need to remove the item still
+                    // if so, remove the retry-tracked item from
+                    // our retry list, then return the Item* so that
+                    // others may operate on it (i.e. explicitly free it)
+                    return &current;
+                }
+            }
+
+            return NULLPTR;
+        }
+        else
+            return NULLPTR;
     }
 };
 
@@ -209,6 +283,7 @@ struct Dataport2
         RetryQueuing,
         RetryQueued,
         RetryEvaluating,    ///< TEST
+        /// Indicates we no longer will attempt retries for this item
         RetryDequeued,
     };
 
@@ -302,11 +377,17 @@ struct Dataport2
             state(TransportOutDequeuing, &context);
             datapump_item* item = datapump.dequeue_to_transport();
             state(TransportOutDequeued, item, user);
-            if(item->is_confirmable() && item->should_retry())
+            // after we've definitely sent off the item, evaluate
+            // whether it's a confirmable/retryable one
+            if(item->is_confirmable())
             {
                 state(RetryQueuing, item, user);
-                datapump.add_to_retry(item);
-                state(RetryQueued, item, user);
+                if(datapump.evaluate_add_to_retry(item))
+                    state(RetryQueued, item, user);
+                else
+                    // It's assumed that in the past, this retry item was queued up
+                    // technically, RetryDequeued really means done attempting retries
+                    state(RetryDequeued, item, user);
             }
         }
     }
