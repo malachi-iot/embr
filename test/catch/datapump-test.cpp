@@ -75,6 +75,12 @@ TEST_CASE("datapump")
 
             Context context;
 
+            // Thinking notifier is where 3 things will happen:
+            // - direct interaction with transport
+            // - direct interaction with application entry point
+            // - cleanup of no-longer-used pbufs
+            // thinking also that these items are common enough that further framework support
+            // for them would be nice, but also risky of overengineering so holding off for now
             dataport.notifier = [](state_type state, context_type* context)
             {
                 auto user = (Context*) context->user;

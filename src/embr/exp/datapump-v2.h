@@ -178,6 +178,8 @@ public:
 template <class TDatapump>
 // simplified state-machine varient of megapowered Dataport, wired more specifically
 // to retry logic than before
+/// Notify mechanism surrounding a datapump
+/// \tparam TDatapump
 struct Dataport2
 {
     TDatapump datapump;
@@ -206,8 +208,8 @@ struct Dataport2
         TransportOutDequeued,
         RetryQueuing,
         RetryQueued,
-        RetryEvaluating,
-        RetryDequeued
+        RetryEvaluating,    ///< TEST
+        RetryDequeued,
     };
 
     // NOTE: Looking like we might not even need an instance field
@@ -232,6 +234,7 @@ struct Dataport2
 
     typedef void (*notify_fn)(State state, NotifyContext* context);
 
+    /// callback
     notify_fn notifier;
 
     void notify(NotifyContext* context)
