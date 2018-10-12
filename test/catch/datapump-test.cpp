@@ -1,5 +1,7 @@
 #include <catch.hpp>
 
+#include <estd/string.h>
+
 #include <embr/datapump.hpp>
 #include <embr/exp/datapump-v2.h>
 #include "datapump-test.h"
@@ -26,13 +28,16 @@ TEST_CASE("datapump")
     {
         using namespace embr::experimental;
 
-        typedef Datapump2<void*, int> datapump_type;
+        // Almost works, but messes up constructor for union scenario (const_string has no
+        // default constructor)
+        //typedef Datapump2<estd::layer2::const_string, int> datapump_type;
+        typedef Datapump2<const char*, int> datapump_type;
 
         SECTION("raw datapump")
         {
             datapump_type datapump;
 
-            datapump.enqueue_from_transport((void*) "test", 0);
+            datapump.enqueue_from_transport("test", 0);
 
             REQUIRE(datapump.from_transport_ready());
 
@@ -75,9 +80,19 @@ TEST_CASE("datapump")
                 auto user = (Context*) context->user;
                 INFO(user->state_progression_counter);
                 REQUIRE(state_progression[user->state_progression_counter++] == state);
+
+                switch(state)
+                {
+                    case state_type::TransportInDequeued:
+                        estd::layer2::const_string s = context->item->pbuf;
+
+                        REQUIRE(s == "hi");
+
+                        break;
+                }
             };
 
-            dataport.receive_from_transport((void*)"hi", 0, &context);
+            dataport.receive_from_transport("hi", 0, &context);
             dataport.process(&context);
 
             REQUIRE(context.state_progression_counter == 5);
