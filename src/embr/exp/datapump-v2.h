@@ -15,6 +15,9 @@ namespace embr { namespace experimental {
 
 struct empty {};
 
+template <class TRetryItem>
+struct retry_item_traits;
+
 // a reference implementation.  likely too generic to be of any use to anyone, but
 // indicates what to do for a more specific scenario
 template <class TPBuf, class TAddr>
@@ -52,6 +55,15 @@ struct BasicRetry
     bool should_dequeue(RetryItem* item, pbuf_type& pbuf)
     {
         return true;
+    }
+
+    /// @brief Indicate whether the specified retry item is ready for an actual resend
+    /// Generally meaning has item's due date passed
+    /// \param item
+    /// \return
+    bool ready_for_send(RetryItem* item)
+    {
+        return estd::chrono::steady_clock::now() >= item->due;
     }
 };
 
@@ -192,6 +204,14 @@ public:
     {
         // TODO: likely want to embed this into retry_impl
         // TODO: need to do requisite sort placement also
+        typename list_type::iterator i = retry_list.begin();
+
+
+        for(;i != retry_list.end(); i++)
+        {
+            Item& current = *i;
+        }
+
         retry_list.push_front(*sent_item);
     }
 
@@ -247,6 +267,23 @@ public:
         else
             return NULLPTR;
     }
+
+    /// @brief if the time is right, retrieve an Item* to send over transport as a retry
+    ///
+    /// if Item* indeed is ready, it is removed from the retry list and must be re-queued, if desired
+    ///
+    /// \return Item* or NULLPTR if nothing yet is ready
+    Item* dequeue_retry_ready()
+    {
+        Item* item = &retry_list.front();
+        if(item && retry_impl.ready_for_send(item))
+        {
+            retry_list.pop_front();
+            return item;
+        }
+        else
+            return NULLPTR;
+    }
 };
 
 template <class TDatapump>
@@ -282,6 +319,9 @@ struct Dataport2
         TransportOutDequeued,
         RetryQueuing,
         RetryQueued,
+        /// evaluating whether item should be permanantly removed from retry list
+        /// used right now specifically when about to process an ACK
+        /// TODO: Seems like we could combine this with 'temporary' removal from list while it's living in to_transport queue
         RetryEvaluating,    ///< TEST
         /// Indicates we no longer will attempt retries for this item
         RetryDequeued,
@@ -393,9 +433,27 @@ struct Dataport2
     }
 
 
+    void send_to_transport(datapump_item* item, void* user = NULLPTR)
+    {
+        state(TransportOutQueuing, item, user);
+        datapump.enqueue_to_transport(item);
+        state(TransportOutQueued, item, user);
+    }
+
+    void process_retry(void* user = NULLPTR)
+    {
+        datapump_item* item_to_send = datapump.dequeue_retry_ready();
+
+        if(item_to_send != NULLPTR)
+            // process_to_transport will handle requeuing portion
+            send_to_transport(item_to_send);
+    }
+
+
     void process(void* user = NULLPTR)
     {
         process_from_transport(user);
+        process_retry(user);
         process_to_transport(user);
     }
 
@@ -405,10 +463,10 @@ struct Dataport2
     /// \param to_address
     void send_to_transport(pbuf_type& pbuf, addr_type to_address, void* user = NULLPTR)
     {
-        // TODO: send pbuf & to_address over notification
-        state(TransportOutQueuing, pbuf, to_address, user);
-        datapump.enqueue_to_transport(pbuf, to_address);
-        state(TransportOutQueued, pbuf, to_address, user);
+        // FIX: resolve descrepency between formats of TransportOutQueuing
+        // by allocating an Item *here* instead of in the datapump helper function
+        datapump_item* item = datapump.allocate();
+        send_to_transport(item);
     }
 
     /// @brief called when transport receives data, to queue up in our datapump/dataport
