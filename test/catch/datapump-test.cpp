@@ -54,54 +54,55 @@ TEST_CASE("datapump")
             typedef dataport_type::State state_type;
             typedef dataport_type::NotifyContext context_type;
 
-            static state_type state_progression[]
-            {
-                state_type::TransportInQueueing,
-                state_type::TransportInQueued,
-                state_type::TransportInDequeuing,
-                state_type::TransportInDequeued,
-                state_type::RetryEvaluating
-            };
-
             struct Context
             {
                 int state_progression_counter = 0;
-
-                void evalutate()
-                {
-
-                }
             };
 
             Context context;
 
-            // Thinking notifier is where 3 things will happen:
-            // - direct interaction with transport
-            // - direct interaction with application entry point
-            // - cleanup of no-longer-used pbufs
-            // thinking also that these items are common enough that further framework support
-            // for them would be nice, but also risky of overengineering so holding off for now
-            dataport.notifier = [](state_type state, context_type* context)
+            SECTION("basic callback")
             {
-                auto user = (Context*) context->user;
-                INFO(user->state_progression_counter);
-                REQUIRE(state_progression[user->state_progression_counter++] == state);
+                static state_type state_progression[]
+                        {
+                                state_type::TransportInQueueing,
+                                state_type::TransportInQueued,
+                                state_type::TransportInDequeuing,
+                                state_type::TransportInDequeued,
+                                state_type::RetryEvaluating
+                        };
 
-                switch(state)
-                {
-                    case state_type::TransportInDequeued:
-                        estd::layer2::const_string s = context->item->pbuf;
+                // Thinking notifier is where 3 things will happen:
+                // - direct interaction with transport
+                // - direct interaction with application entry point
+                // - cleanup of no-longer-used pbufs
+                // thinking also that these items are common enough that further framework support
+                // for them would be nice, but also risky of overengineering so holding off for now
+                dataport.notifier = [](state_type state, context_type* context) {
+                    auto user = (Context*) context->user;
+                    INFO(user->state_progression_counter);
+                    REQUIRE(state_progression[user->state_progression_counter++] == state);
 
-                        REQUIRE(s == "hi");
+                    switch (state)
+                    {
+                        case state_type::TransportInDequeued:
+                            estd::layer2::const_string s = context->item->pbuf;
 
-                        break;
-                }
-            };
+                            REQUIRE(s == "hi");
 
-            dataport.receive_from_transport("hi", 0, &context);
-            dataport.process(&context);
+                            break;
+                    }
+                };
 
-            REQUIRE(context.state_progression_counter == 5);
+                dataport.receive_from_transport("hi", 0, &context);
+                dataport.process(&context);
+
+                REQUIRE(context.state_progression_counter == 5);
+            }
+            SECTION("retry")
+            {
+
+            }
         }
     }
 }

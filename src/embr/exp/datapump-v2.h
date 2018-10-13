@@ -9,6 +9,7 @@
 
 #include <estd/forward_list.h>
 #include <estd/chrono.h>
+#include <estd/optional.h>
 #include <estd/exp/memory_pool.h>
 
 namespace embr { namespace experimental {
@@ -18,6 +19,15 @@ struct empty {};
 template <class TRetryItem>
 struct retry_item_traits;
 
+// datapump-specific portion of its item.  specified out here mainly so
+// retry logic can pass it around a bit more easily
+template <class TPBuf, class TAddr>
+struct Datapump2CoreItem
+{
+    TPBuf pbuf;
+    TAddr addr;
+};
+
 // a reference implementation.  likely too generic to be of any use to anyone, but
 // indicates what to do for a more specific scenario
 template <class TPBuf, class TAddr>
@@ -26,35 +36,39 @@ struct BasicRetry
     typedef typename estd::remove_reference<TPBuf>::type pbuf_type;
     typedef TAddr addr_type;
 
+    // NOTE: playing some games explicitly stating this so that retry code doesn't
+    // have to couple quite so tightly with datapump code - mainly to aid in compile-time
+    // convenience of type checking
+    typedef Datapump2CoreItem<TPBuf, TAddr> datapump_item;
+
     struct RetryItem
     {
         estd::chrono::steady_clock::time_point due;
         int counter = 0;
 
-        // TODO: eventually do this via pbuf_traits
-        bool is_confirmable(pbuf_type& pbuf) { return true; }
+        bool is_confirmable(datapump_item&) { return true; }
 
-        bool is_acknowledge(pbuf_type& pbuf) { return true; }
+        bool is_acknowledge(datapump_item&) { return true; }
 
         // evaluate whether the incoming item is an ACK matching 'this' item
-        // expected to be a CON
-        bool retry_match(RetryItem* compare_against)
+        // expected to be a CON.  Comparing against something without retry metadata
+        // because a JUST RECEIVED ACK item won't have any retry metadata yet
+        bool retry_match(datapump_item* _this, datapump_item* compare_against)
         {
             return true;
         }
+
+        // TODO: probably replace this with a specialized operator <
+        bool less_than(const RetryItem& compare_to)
+        {
+            return due < compare_to.due;
+        }
     };
 
-    /// indicate that this item should be requeued
-    /// TODO: disambiguate whether this includes regular queuing or not
-    bool should_requeue(RetryItem* item, pbuf_type& pbuf)
+    /// @brief indicate that this item should be a part of retry list
+    bool should_queue(RetryItem* item, datapump_item* _item)
     {
         return item->counter < 3;
-    }
-
-    /// indicate that this item should be dequeued (released and not retried again)
-    bool should_dequeue(RetryItem* item, pbuf_type& pbuf)
-    {
-        return true;
     }
 
     /// @brief Indicate whether the specified retry item is ready for an actual resend
@@ -88,6 +102,7 @@ private:
 public:
     struct Item :
             TItemBase,
+            Datapump2CoreItem<TPBuf, TAddr>,
             retry_item
     {
         // TODO: eventually clean up and use all those forward_node helpers
@@ -97,17 +112,19 @@ public:
         void next(Item* n) { _next = n; }
 
 
+        /*
         TPBuf pbuf;
         TAddr addr;
+         */
 
         /// @brief Reflects whether pbuf represents a confirmable message
         /// does not specifically indicate whether we are *still* interested in retry tracking though
         /// \return
-        bool is_confirmable() { return retry_item::is_confirmable(pbuf); }
+        bool is_confirmable() { return retry_item::is_confirmable(*this); }
 
         /// @brief Reflects whether pbuf rpresents an ack message
         /// does not specifically indicate whether retry tracking cares about *this particular* ack though
-        bool is_acknowledgement() { return true; }
+        bool is_acknowledgement() { return retry_item::is_acknowledge(*this); }
     };
 
 private:
@@ -122,6 +139,21 @@ private:
     list_type from_transport;
     list_type to_transport;
     list_type retry_list;
+
+    typedef typename list_type::iterator iterator;
+
+protected:
+    // TODO: will very likely want preceding item also to do a more efficient delete
+    // internal call, removes the item *after* the specified preceding_item from retry list
+    void _remove_from_retry(estd::optional<iterator> preceding_item)
+    {
+        if(preceding_item)
+            retry_list.erase_after(*preceding_item);
+        else
+            // if there is no preceding item, it is assumed we're pulling off the front item
+            // another artifact of having no 'before begin'
+            retry_list.pop_front();
+    }
 
 public:
     Item* allocate()
@@ -205,24 +237,31 @@ public:
         // TODO: likely want to embed this into retry_impl
         // TODO: need to do requisite sort placement also
         typename list_type::iterator i = retry_list.begin();
+        estd::optional<iterator> previous;
 
 
         for(;i != retry_list.end(); i++)
         {
             Item& current = *i;
+
+            //current.less_than()
+
+            previous = i;
         }
 
         retry_list.push_front(*sent_item);
     }
 
-
-    /// @brief inspects sent_item and decides whether we're still interested in it
-    /// if so, add to retry list
+    ///
+    /// @brief inspects sent_item and decides whether we're interested in adding it
+    /// to the retry queue.
+    /// It is expected some simple filtering happens before we get here (i.e. non reliable
+    /// messages are not evaluated for placement in the retry list)
     /// \param sent_item
     /// @return true if we added this to retry list
     bool evaluate_add_to_retry(Item* sent_item)
     {
-        if(retry_impl.should_requeue(sent_item, sent_item->pbuf))
+        if(retry_impl.should_queue(sent_item, sent_item))
         {
             add_to_retry(sent_item);
             return true;
@@ -241,31 +280,34 @@ public:
     /// @returns Item* which was removed from retry list, or NULLPTR if none was found
     Item* evaluate_remove_from_retry(Item* received_item)
     {
-        if(retry_impl.should_dequeue(received_item, received_item->pbuf))
+        //if(retry_impl.should_dequeue(received_item, received_item->pbuf))
         {
-            // TODO: scour through retry list looking for *associated with* received_item
+            // scour through retry list looking for *associated with* received_item
             // and remove that associated item - returning it here
             typename list_type::iterator i = retry_list.begin();
+            // TODO: Not optimal/optimized, but convenient
+            typename estd::optional<typename list_type::iterator> previous;
 
             for(;i != retry_list.end(); i++)
             {
                 Item& current = *i;
 
                 // evaluate if received_item ACK matches up to retry_list CON
-                if(current.retry_match(received_item))
+                if(current.retry_match(&current, received_item))
                 {
-                    // TODO: Need to remove the item still
                     // if so, remove the retry-tracked item from
                     // our retry list, then return the Item* so that
                     // others may operate on it (i.e. explicitly free it)
+                    _remove_from_retry(previous);
+
                     return &current;
                 }
+
+                previous = i;
             }
 
             return NULLPTR;
         }
-        else
-            return NULLPTR;
     }
 
     /// @brief if the time is right, retrieve an Item* to send over transport as a retry
@@ -398,8 +440,6 @@ struct Dataport2
             state(TransportInDequeued, item, user);
             if (item->is_acknowledgement())
             {
-                // FIX: Clean up this inconsistency where ACK processing has a special 'evaluating'
-                // event sort of in lieu of item->should_retry()
                 state(RetryEvaluating, item, user);
                 datapump_item* removed = datapump.evaluate_remove_from_retry(item);
                 if (removed != NULLPTR)
