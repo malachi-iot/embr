@@ -38,6 +38,9 @@ struct Datapump2CoreItem
     // during internal datapump operations, whereas netbuf have positioning data
     TPBuf pbuf;
     TAddr addr;
+
+    typedef typename estd::remove_reference<TPBuf>::type pbuf_type;
+    typedef TAddr addr_type;
 };
 
 // a reference implementation.  likely too generic to be of any use to anyone, but
@@ -58,7 +61,7 @@ struct BasicRetry
     // NOTE: Make sure we don't HAVE to use RetryItemBase - specifically,
     // we'll probably want more fine grained counter control
     template <class TCounter = int>
-    struct RetryItemBase //: datapump_item
+    struct RetryItemBase : datapump_item
     {
         typename TClock::time_point _due;
 
@@ -86,6 +89,8 @@ struct BasicRetry
     // even on code bases that don't use RetryItemBase
     struct RetryItem : RetryItemBase<>
     {
+        typedef RetryItemBase<> base_type;
+
         bool is_confirmable(datapump_item&) { return true; }
 
         bool is_acknowledge(datapump_item&) { return true; }
@@ -93,7 +98,7 @@ struct BasicRetry
         // evaluate whether the incoming item is an ACK matching 'this' item
         // expected to be a CON.  Comparing against something without retry metadata
         // because a JUST RECEIVED ACK item won't have any retry metadata yet
-        bool retry_match(datapump_item* _this, datapump_item* compare_against)
+        bool retry_match(RetryItem* compare_against)
         {
             return true;
         }
@@ -102,7 +107,7 @@ struct BasicRetry
     /// @brief indicate that this item should be a part of retry list
     /// It's expected we've already filtered that this IS a CON/retry-wanting
     /// message by the time we get here
-    bool should_queue(RetryItem* item, datapump_item* _item)
+    bool should_queue(RetryItem* item)
     {
         return item->counter < 3;
     }
@@ -119,9 +124,12 @@ struct BasicRetry
 
 template <
         class TPBuf, class TAddr,
-        class TRetryImpl = BasicRetry<TPBuf, TAddr> >
+        class TRetryImpl = BasicRetry<TPBuf, TAddr>,
+        class TItem = typename TRetryImpl::RetryItem >
 class Retry2
 {
+    //TRetryImpl retry_impl;
+
 protected:
     // FIX: gonna have to do some tricks to track 'Item'
     //typedef estd::intrusive_forward_list<Item> list_type;
@@ -133,8 +141,8 @@ protected:
 template <
         class TPBuf, class TAddr,
         class TRetryImpl = BasicRetry<TPBuf, TAddr>,
-        class TItem = Datapump2CoreItem<TPBuf, TAddr> >
-class Datapump2 //: public Retry2<TPBuf, TAddr, TRetryImpl>
+        class TItem = typename TRetryImpl::RetryItem >
+class Datapump2 : public Retry2<TPBuf, TAddr, TRetryImpl, TItem>
 {
 public:
     typedef typename estd::remove_reference<TPBuf>::type pbuf_type;
@@ -146,10 +154,10 @@ private:
     typedef typename retry_impl_type::RetryItem retry_item;
 
 public:
-    struct Item :
-            //TItemBase,
-            Datapump2CoreItem<TPBuf, TAddr>,
-            retry_item
+    // NOTE: Be careful here, tempting to add lots of stuff but if we are to decouple
+    // Retry2 and Datapump2, then customization of Item needs to happen completely
+    // externally
+    struct Item : TItem
     {
         /// @brief Reflects whether pbuf represents a confirmable message
         /// does not specifically indicate whether we are *still* interested in retry tracking though
@@ -317,7 +325,7 @@ public:
     /// @return true if we added this to retry list
     bool evaluate_add_to_retry(Item* sent_item)
     {
-        if(retry_impl.should_queue(sent_item, sent_item))
+        if(retry_impl.should_queue(sent_item))
         {
             add_to_retry(sent_item);
             sent_item->queued();
@@ -350,7 +358,7 @@ public:
                 Item& current = *i;
 
                 // evaluate if received_item ACK matches up to retry_list CON
-                if(current.retry_match(&current, received_item))
+                if(current.retry_match(received_item))
                 {
                     // if so, remove the retry-tracked item from
                     // our retry list, then return the Item* so that

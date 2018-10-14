@@ -39,8 +39,10 @@ struct SyntheticRetry : BasicRetry<const char*, int>
 
     struct RetryItem : RetryItemBase<>
     {
+        typedef RetryItemBase<> base_type;
+
         // helper method, not called by Datapump code
-        static int seq(datapump_item& item) { return item.pbuf[1] - '0'; }
+        int seq() { return this->pbuf[1] - '0'; }
 
         static bool is_confirmable(datapump_item& item) { return item.pbuf[0] == 'C'; }
 
@@ -49,19 +51,19 @@ struct SyntheticRetry : BasicRetry<const char*, int>
         // evaluate whether the incoming item is an ACK matching 'this' item
         // expected to be a CON.  Comparing against something without retry metadata
         // because a JUST RECEIVED ACK item won't have any retry metadata yet
-        bool retry_match(datapump_item* _this, datapump_item* compare_against)
+        bool retry_match(RetryItem* compare_against)
         {
             // NOTE: so far have been proclaiming we do NOT check for proper ACK/CON here
             // as that is expected to be filtered elsewhere.  However, for unit test,
             // doing it here.  If we can localize that *entirely* here and phase out the is_xxx messages,
             // that would be better
             return is_acknowledge(*compare_against) &&
-                seq(*compare_against) == seq(*_this);
+                compare_against->seq() == seq();
         }
     };
 
     /// @brief indicate that this item should be a part of retry list
-    bool should_queue(RetryItem* item, datapump_item* _item)
+    bool should_queue(RetryItem* item)
     {
         return item->counter < 3;
     }
