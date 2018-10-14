@@ -17,6 +17,19 @@ struct FakeTransport
 
 };
 
+namespace embr { namespace experimental {
+
+template<>
+struct pbuf_traits<const char*>
+{
+    static estd::const_buffer raw(const char* pbuf)
+    {
+        return estd::const_buffer((const uint8_t*)pbuf, 100);
+    }
+};
+
+}}
+
 
 struct SyntheticRetry
 {

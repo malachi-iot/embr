@@ -24,6 +24,8 @@ struct retry_item_traits;
 template <class TPBuf, class TAddr>
 struct Datapump2CoreItem
 {
+    // major difference between PBUF and netbuf is PBUF state is not expected to change
+    // during internal datapump operations, whereas netbuf have positioning data
     TPBuf pbuf;
     TAddr addr;
 };
