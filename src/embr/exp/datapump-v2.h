@@ -24,6 +24,14 @@ struct retry_item_traits;
 template <class TPBuf, class TAddr>
 struct Datapump2CoreItem
 {
+    // TODO: eventually clean up and use all those forward_node helpers
+    Datapump2CoreItem* _next;
+
+    // node_traits will automatically forward cast for us.  Generally accepted
+    // practice, but be careful!
+    void* next() { return _next; }
+    void next(Datapump2CoreItem* n) { _next = n; }
+
     // major difference between PBUF and netbuf is PBUF state is not expected to change
     // during internal datapump operations, whereas netbuf have positioning data
     TPBuf pbuf;
@@ -43,14 +51,15 @@ struct BasicRetry
     // convenience of type checking
     typedef Datapump2CoreItem<TPBuf, TAddr> datapump_item;
 
-    struct RetryItem
+    // NOTE: Make sure we don't HAVE to use RetryItemBase - specifically,
+    // we'll probably want more fine grained counter control
+    template <class TTime, class TCounter = int>
+    struct RetryItemBase //: datapump_item
     {
+        // NOTE: Not all platforms have a steady clock.  This might cause compilation issues
+        // even on code bases that don't use RetryItemBase
         estd::chrono::steady_clock::time_point due;
         int counter = 0;
-
-        bool is_confirmable(datapump_item&) { return true; }
-
-        bool is_acknowledge(datapump_item&) { return true; }
 
         /// @brief called when this item is actually added to retry list
         void queued()
@@ -58,18 +67,26 @@ struct BasicRetry
             counter++;
         }
 
+        // TODO: probably replace this with a specialized operator <
+        bool less_than(const RetryItemBase& compare_to)
+        {
+            return due < compare_to.due;
+        }
+    };
+
+    struct RetryItem : RetryItemBase<
+            estd::chrono::steady_clock::time_point >
+    {
+        bool is_confirmable(datapump_item&) { return true; }
+
+        bool is_acknowledge(datapump_item&) { return true; }
+
         // evaluate whether the incoming item is an ACK matching 'this' item
         // expected to be a CON.  Comparing against something without retry metadata
         // because a JUST RECEIVED ACK item won't have any retry metadata yet
         bool retry_match(datapump_item* _this, datapump_item* compare_against)
         {
             return true;
-        }
-
-        // TODO: probably replace this with a specialized operator <
-        bool less_than(const RetryItem& compare_to)
-        {
-            return due < compare_to.due;
         }
     };
 
@@ -107,8 +124,8 @@ protected:
 template <
         class TPBuf, class TAddr,
         class TRetryImpl = BasicRetry<TPBuf, TAddr>,
-        class TItemBase = empty>
-class Datapump2 : public Retry2<TPBuf, TAddr, TRetryImpl>
+        class TItem = Datapump2CoreItem<TPBuf, TAddr> >
+class Datapump2 //: public Retry2<TPBuf, TAddr, TRetryImpl>
 {
 public:
     typedef typename estd::remove_reference<TPBuf>::type pbuf_type;
@@ -121,17 +138,10 @@ private:
 
 public:
     struct Item :
-            TItemBase,
+            //TItemBase,
             Datapump2CoreItem<TPBuf, TAddr>,
             retry_item
     {
-        // TODO: eventually clean up and use all those forward_node helpers
-        Item* _next;
-
-        Item* next() { return _next; }
-        void next(Item* n) { _next = n; }
-
-
         /// @brief Reflects whether pbuf represents a confirmable message
         /// does not specifically indicate whether we are *still* interested in retry tracking though
         /// \return

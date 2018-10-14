@@ -31,23 +31,15 @@ struct pbuf_traits<const char*>
 }}
 
 
-struct SyntheticRetry
+struct SyntheticRetry : BasicRetry<const char*, int>
 {
-    typedef Datapump2CoreItem<const char*, int> datapump_item;
+    typedef BasicRetry<const char*, int> base_type;
+    typedef typename base_type::datapump_item datapump_item;
 
-    struct RetryItem
+    struct RetryItem : RetryItemBase<estd::chrono::steady_clock::time_point>
     {
-        estd::chrono::steady_clock::time_point due;
-        int counter = 0;
-
-        void queued()
-        {
-            counter++;
-        }
-
         // helper method, not called by Datapump code
         static int seq(datapump_item& item) { return item.pbuf[1] - '0'; }
-
 
         static bool is_confirmable(datapump_item& item) { return item.pbuf[0] == 'C'; }
 
@@ -64,12 +56,6 @@ struct SyntheticRetry
             // that would be better
             return is_acknowledge(*compare_against) &&
                 seq(*compare_against) == seq(*_this);
-        }
-
-        // TODO: probably replace this with a specialized operator <
-        bool less_than(const RetryItem& compare_to)
-        {
-            return due < compare_to.due;
         }
     };
 
