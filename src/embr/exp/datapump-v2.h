@@ -12,6 +12,8 @@
 #include <estd/optional.h>
 #include <estd/exp/memory_pool.h>
 
+#include "pbuf.h"
+
 namespace embr { namespace experimental {
 
 struct empty {};
@@ -40,11 +42,13 @@ struct Datapump2CoreItem
 
 // a reference implementation.  likely too generic to be of any use to anyone, but
 // indicates what to do for a more specific scenario
-template <class TPBuf, class TAddr>
+template <class TPBuf, class TAddr, class TClock = estd::chrono::steady_clock>
 struct BasicRetry
 {
     typedef typename estd::remove_reference<TPBuf>::type pbuf_type;
     typedef TAddr addr_type;
+    typedef TClock clock_type;
+    typedef embr::experimental::pbuf_traits<pbuf_type> pbuf_traits;
 
     // NOTE: playing some games explicitly stating this so that retry code doesn't
     // have to couple quite so tightly with datapump code - mainly to aid in compile-time
@@ -53,29 +57,34 @@ struct BasicRetry
 
     // NOTE: Make sure we don't HAVE to use RetryItemBase - specifically,
     // we'll probably want more fine grained counter control
-    template <class TTime, class TCounter = int>
+    template <class TCounter = int>
     struct RetryItemBase //: datapump_item
     {
-        // NOTE: Not all platforms have a steady clock.  This might cause compilation issues
-        // even on code bases that don't use RetryItemBase
-        estd::chrono::steady_clock::time_point due;
-        int counter = 0;
+        typename TClock::time_point _due;
+
+        // putting this into accessor pattern so that optimized flavors of due
+        // tracking integrate more easily
+        typename TClock::time_point due() const { return _due; }
+
+        TCounter counter = 0;
 
         /// @brief called when this item is actually added to retry list
         void queued()
         {
+            // TODO: this is where we'll assign due as well
             counter++;
         }
 
         // TODO: probably replace this with a specialized operator <
         bool less_than(const RetryItemBase& compare_to)
         {
-            return due < compare_to.due;
+            return _due < compare_to.due();
         }
     };
 
-    struct RetryItem : RetryItemBase<
-            estd::chrono::steady_clock::time_point >
+    // NOTE: Not all platforms have a steady clock.  This might cause compilation issues
+    // even on code bases that don't use RetryItemBase
+    struct RetryItem : RetryItemBase<>
     {
         bool is_confirmable(datapump_item&) { return true; }
 
@@ -104,7 +113,7 @@ struct BasicRetry
     /// \return
     bool ready_for_send(RetryItem* item)
     {
-        return estd::chrono::steady_clock::now() >= item->due;
+        return clock_type::now() >= item->due();
     }
 };
 

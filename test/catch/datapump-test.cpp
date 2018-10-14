@@ -31,12 +31,13 @@ struct pbuf_traits<const char*>
 }}
 
 
+// TODO: bring in fake_chrono from coap lib and plug it in here
 struct SyntheticRetry : BasicRetry<const char*, int>
 {
     typedef BasicRetry<const char*, int> base_type;
     typedef typename base_type::datapump_item datapump_item;
 
-    struct RetryItem : RetryItemBase<estd::chrono::steady_clock::time_point>
+    struct RetryItem : RetryItemBase<>
     {
         // helper method, not called by Datapump code
         static int seq(datapump_item& item) { return item.pbuf[1] - '0'; }
