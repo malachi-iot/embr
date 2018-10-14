@@ -50,6 +50,12 @@ struct BasicRetry
 
         bool is_acknowledge(datapump_item&) { return true; }
 
+        /// @brief called when this item is actually added to retry list
+        void queued()
+        {
+            counter++;
+        }
+
         // evaluate whether the incoming item is an ACK matching 'this' item
         // expected to be a CON.  Comparing against something without retry metadata
         // because a JUST RECEIVED ACK item won't have any retry metadata yet
@@ -66,6 +72,8 @@ struct BasicRetry
     };
 
     /// @brief indicate that this item should be a part of retry list
+    /// It's expected we've already filtered that this IS a CON/retry-wanting
+    /// message by the time we get here
     bool should_queue(RetryItem* item, datapump_item* _item)
     {
         return item->counter < 3;
@@ -81,6 +89,16 @@ struct BasicRetry
     }
 };
 
+template <
+        class TPBuf, class TAddr,
+        class TRetryImpl = BasicRetry<TPBuf, TAddr> >
+class Retry2
+{
+protected:
+    // FIX: gonna have to do some tricks to track 'Item'
+    //typedef estd::intrusive_forward_list<Item> list_type;
+};
+
 // Would use transport descriptor, but:
 // a) it's a little more unweildy than expected
 // b) it's netbuf based, and this needs to be PBuf based
@@ -88,7 +106,7 @@ template <
         class TPBuf, class TAddr,
         class TRetryImpl = BasicRetry<TPBuf, TAddr>,
         class TItemBase = empty>
-class Datapump2
+class Datapump2 : public Retry2<TPBuf, TAddr, TRetryImpl>
 {
 public:
     typedef typename estd::remove_reference<TPBuf>::type pbuf_type;
@@ -112,11 +130,6 @@ public:
         void next(Item* n) { _next = n; }
 
 
-        /*
-        TPBuf pbuf;
-        TAddr addr;
-         */
-
         /// @brief Reflects whether pbuf represents a confirmable message
         /// does not specifically indicate whether we are *still* interested in retry tracking though
         /// \return
@@ -127,7 +140,11 @@ public:
         bool is_acknowledgement() { return retry_item::is_acknowledge(*this); }
     };
 
+#ifdef UNIT_TESTING
+public:
+#else
 private:
+#endif
     // TODO: Right now, memory_pool_ll is going to impose its own linked list onto item
     // but it would be nice to instead bring our own 'next()' calls and have memory_pool_ll
     // be able to pick those up.  This should amount to refining memory_pool_ll's usage of
@@ -153,6 +170,16 @@ protected:
             // if there is no preceding item, it is assumed we're pulling off the front item
             // another artifact of having no 'before begin'
             retry_list.pop_front();
+    }
+
+    // All this 'before begin' compensation is a little annoying, but at least we aren't
+    // polluting iterators with that extra information 100% of the time.
+    void _add_to_retry(estd::optional<iterator> preceding, Item* item)
+    {
+        if(preceding)
+            retry_list.insert_after(*preceding, *item);
+        else
+            retry_list.push_front(*item);
     }
 
 public:
@@ -244,12 +271,20 @@ public:
         {
             Item& current = *i;
 
-            //current.less_than()
+            // Look to insert sent_item in time slot just before item to be sent after it
+            // or in other words, insert just before first encounter of current.due >= sent_item.due,
+            if(!sent_item->less_than(current))
+            {
+                _add_to_retry(previous, sent_item);
+                return;
+            }
 
             previous = i;
         }
 
-        retry_list.push_front(*sent_item);
+        // If loop completed, that means every present item.due was < sent_item.due
+        // OR no items present at all.  In either case, we want to 'add to the end'
+        _add_to_retry(previous, sent_item);
     }
 
     ///
@@ -264,6 +299,7 @@ public:
         if(retry_impl.should_queue(sent_item, sent_item))
         {
             add_to_retry(sent_item);
+            sent_item->queued();
             return true;
         }
         else

@@ -6,6 +6,8 @@
 #include <embr/exp/datapump-v2.h>
 #include "datapump-test.h"
 
+using namespace embr::experimental;
+
 // specifically for v2 experimental datapump/dataport
 struct FakeTransport
 {
@@ -13,6 +15,56 @@ struct FakeTransport
     typedef int addr_type;
 
 
+};
+
+
+struct SyntheticRetry
+{
+    typedef Datapump2CoreItem<const char*, int> datapump_item;
+
+    struct RetryItem
+    {
+        estd::chrono::steady_clock::time_point due;
+        int counter = 0;
+
+        void queued()
+        {
+            counter++;
+        }
+
+        // helper method, not called by Datapump code
+        static int seq(datapump_item& item) { return item.pbuf[1] - '0'; }
+
+
+        static bool is_confirmable(datapump_item& item) { return item.pbuf[0] == 'C'; }
+
+        static bool is_acknowledge(datapump_item& item) { return item.pbuf[0] == 'A'; }
+
+        // evaluate whether the incoming item is an ACK matching 'this' item
+        // expected to be a CON.  Comparing against something without retry metadata
+        // because a JUST RECEIVED ACK item won't have any retry metadata yet
+        bool retry_match(datapump_item* _this, datapump_item* compare_against)
+        {
+            // NOTE: so far have been proclaiming we do NOT check for proper ACK/CON here
+            // as that is expected to be filtered elsewhere.  However, for unit test,
+            // doing it here.  If we can localize that *entirely* here and phase out the is_xxx messages,
+            // that would be better
+            return is_acknowledge(*compare_against) &&
+                seq(*compare_against) == seq(*_this);
+        }
+
+        // TODO: probably replace this with a specialized operator <
+        bool less_than(const RetryItem& compare_to)
+        {
+            return due < compare_to.due;
+        }
+    };
+
+    /// @brief indicate that this item should be a part of retry list
+    bool should_queue(RetryItem* item, datapump_item* _item)
+    {
+        return item->counter < 3;
+    }
 };
 
 TEST_CASE("datapump")
@@ -46,6 +98,43 @@ TEST_CASE("datapump")
             REQUIRE(item->addr == 0);
 
             datapump.deallocate(item);
+        }
+        SECTION("retry")
+        {
+            typedef Datapump2<const char*, int, SyntheticRetry> datapump_retry_type;
+            typedef datapump_retry_type::Item item_type;
+            datapump_retry_type datapump;
+            item_type item;
+
+            item.pbuf = "C0hi2u"; // C = CON, 0 = sequence
+
+            datapump.evaluate_add_to_retry(&item);
+
+            REQUIRE(item.counter == 1);
+            REQUIRE(estd::distance(datapump.retry_list.begin(), datapump.retry_list.end()) == 1);
+
+            // this 'item' contains a CON not an ACK, so we should get nothing for this
+            item_type* to_remove = datapump.evaluate_remove_from_retry(&item);
+
+            REQUIRE(to_remove == NULLPTR);
+
+            item_type ack_item;
+
+            ack_item.pbuf = "A1"; // A = ACK, 1 = sequence (won't match 0 from above)
+
+            // this 'item' contains an ACK, but sequence number doesn't match
+            // note also undecided if ACK filtering should happen during this evaluate
+            to_remove = datapump.evaluate_remove_from_retry(&ack_item);
+
+            REQUIRE(to_remove == NULLPTR);
+
+            ack_item.pbuf = "A0";
+
+            // Now we should get a match, ACK seq 0 will match item's CON seq 0
+            to_remove = datapump.evaluate_remove_from_retry(&ack_item);
+
+            // old item sitting in retry queue is now removed and returned
+            REQUIRE(to_remove == &item);
         }
         SECTION("dataport")
         {
@@ -98,10 +187,6 @@ TEST_CASE("datapump")
                 dataport.process(&context);
 
                 REQUIRE(context.state_progression_counter == 5);
-            }
-            SECTION("retry")
-            {
-
             }
         }
     }
