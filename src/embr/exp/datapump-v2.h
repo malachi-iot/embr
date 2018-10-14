@@ -91,9 +91,9 @@ struct BasicRetry
     {
         typedef RetryItemBase<> base_type;
 
-        bool is_confirmable(datapump_item&) { return true; }
+        bool is_confirmable() { return true; }
 
-        bool is_acknowledge(datapump_item&) { return true; }
+        bool is_acknowledge() { return true; }
 
         // evaluate whether the incoming item is an ACK matching 'this' item
         // expected to be a CON.  Comparing against something without retry metadata
@@ -128,67 +128,22 @@ template <
         class TItem = typename TRetryImpl::RetryItem >
 class Retry2
 {
-    //TRetryImpl retry_impl;
-
-protected:
-    // FIX: gonna have to do some tricks to track 'Item'
-    //typedef estd::intrusive_forward_list<Item> list_type;
-};
-
-// Would use transport descriptor, but:
-// a) it's a little more unweildy than expected
-// b) it's netbuf based, and this needs to be PBuf based
-template <
-        class TPBuf, class TAddr,
-        class TRetryImpl = BasicRetry<TPBuf, TAddr>,
-        class TItem = typename TRetryImpl::RetryItem >
-class Datapump2 : public Retry2<TPBuf, TAddr, TRetryImpl, TItem>
-{
-public:
-    typedef typename estd::remove_reference<TPBuf>::type pbuf_type;
-    typedef TAddr addr_type;
-
-private:
     TRetryImpl retry_impl;
+
+public:
     typedef typename estd::remove_reference<TRetryImpl>::type retry_impl_type;
     typedef typename retry_impl_type::RetryItem retry_item;
-
-public:
-    // NOTE: Be careful here, tempting to add lots of stuff but if we are to decouple
-    // Retry2 and Datapump2, then customization of Item needs to happen completely
-    // externally
-    struct Item : TItem
-    {
-        /// @brief Reflects whether pbuf represents a confirmable message
-        /// does not specifically indicate whether we are *still* interested in retry tracking though
-        /// \return
-        bool is_confirmable() { return retry_item::is_confirmable(*this); }
-
-        /// @brief Reflects whether pbuf rpresents an ack message
-        /// does not specifically indicate whether retry tracking cares about *this particular* ack though
-        bool is_acknowledgement() { return retry_item::is_acknowledge(*this); }
-    };
+    typedef TItem Item;
 
 #ifdef UNIT_TESTING
 public:
 #else
-private:
+protected:
 #endif
-    // TODO: Right now, memory_pool_ll is going to impose its own linked list onto item
-    // but it would be nice to instead bring our own 'next()' calls and have memory_pool_ll
-    // be able to pick those up.  This should amount to refining memory_pool_ll's usage of
-    // node_traits
-    estd::experimental::memory_pool_ll<Item, 10> pool;
-
     typedef estd::intrusive_forward_list<Item> list_type;
-
-    list_type from_transport;
-    list_type to_transport;
     list_type retry_list;
-
     typedef typename list_type::iterator iterator;
 
-protected:
     // TODO: will very likely want preceding item also to do a more efficient delete
     // internal call, removes the item *after* the specified preceding_item from retry list
     void _remove_from_retry(estd::optional<iterator> preceding_item)
@@ -212,110 +167,6 @@ protected:
     }
 
 public:
-    Item* allocate()
-    {
-        return pool.allocate();
-    }
-
-    void deallocate(Item* item)
-    {
-        pool.deallocate(item);
-    }
-
-
-    bool to_transport_ready() const
-    {
-        return !to_transport.empty();
-    }
-
-    /// @brief enqueue item into transport output queue
-    void enqueue_to_transport(Item* item)
-    {
-        to_transport.push_front(*item);
-    }
-
-    void enqueue_to_transport(TPBuf pbuf, addr_type from_address)
-    {
-        Item* item = allocate();
-
-        item->pbuf = pbuf;
-        item->addr = from_address;
-
-        enqueue_to_transport(item);
-    }
-
-    /// @brief dequeue item from transport output queue
-    Item* dequeue_to_transport()
-    {
-        // FIX: should pull from 'back' (see dequeue_from_transport comments)
-        Item& item = to_transport.front();
-        to_transport.pop_front();
-        return &item;
-    }
-
-    /// @brief enqueue item into transport receive-from queue
-    void enqueue_from_transport(Item* item)
-    {
-        // always push_front here, we want to capture receive data as fast as possible
-        from_transport.push_front(*item);
-    }
-
-
-    void enqueue_from_transport(TPBuf pbuf, addr_type from_address)
-    {
-        Item* item = allocate();
-
-        item->pbuf = pbuf;
-        item->addr = from_address;
-
-        enqueue_from_transport(item);
-    }
-
-    bool from_transport_ready() const
-    {
-        return !from_transport.empty();
-    }
-
-    /// @brief dequeue item from transport receive-from queue
-    Item* dequeue_from_transport()
-    {
-        // FIX: pull from 'back'.  Right now this is behaving as a LIFO buffer rather than FIFO
-        Item& item = from_transport.front();
-        from_transport.pop_front();
-        return &item;
-    }
-
-    /// @brief adds to retry list
-    ///
-    /// including a linear search to splice it into proper time slot
-    void add_to_retry(Item* sent_item)
-    {
-        // TODO: likely want to embed this into retry_impl
-        // TODO: need to do requisite sort placement also
-        typename list_type::iterator i = retry_list.begin();
-        estd::optional<iterator> previous;
-
-
-        for(;i != retry_list.end(); i++)
-        {
-            Item& current = *i;
-
-            // Look to insert sent_item in time slot just before item to be sent after it
-            // or in other words, insert just before first encounter of current.due >= sent_item.due,
-            if(!sent_item->less_than(current))
-            {
-                _add_to_retry(previous, sent_item);
-                return;
-            }
-
-            previous = i;
-        }
-
-        // If loop completed, that means every present item.due was < sent_item.due
-        // OR no items present at all.  In either case, we want to 'add to the end'
-        _add_to_retry(previous, sent_item);
-    }
-
     ///
     /// @brief inspects sent_item and decides whether we're interested in adding it
     /// to the retry queue.
@@ -391,6 +242,149 @@ public:
         else
             return NULLPTR;
     }
+
+    /// @brief adds to retry list
+    ///
+    /// including a linear search to splice it into proper time slot
+    void add_to_retry(Item* sent_item)
+    {
+        // TODO: likely want to embed this into retry_impl
+        // TODO: need to do requisite sort placement also
+        typename list_type::iterator i = retry_list.begin();
+        estd::optional<iterator> previous;
+
+
+        for(;i != retry_list.end(); i++)
+        {
+            Item& current = *i;
+
+            // Look to insert sent_item in time slot just before item to be sent after it
+            // or in other words, insert just before first encounter of current.due >= sent_item.due,
+            if(!sent_item->less_than(current))
+            {
+                _add_to_retry(previous, sent_item);
+                return;
+            }
+
+            previous = i;
+        }
+
+        // If loop completed, that means every present item.due was < sent_item.due
+        // OR no items present at all.  In either case, we want to 'add to the end'
+        _add_to_retry(previous, sent_item);
+    }
+};
+
+// Would use transport descriptor, but:
+// a) it's a little more unweildy than expected
+// b) it's netbuf based, and this needs to be PBuf based
+template <
+        class TPBuf, class TAddr,
+        class TRetryImpl = BasicRetry<TPBuf, TAddr>,
+        class TItem = typename TRetryImpl::RetryItem >
+class Datapump2 : public Retry2<TPBuf, TAddr, TRetryImpl, TItem>
+{
+public:
+    typedef typename estd::remove_reference<TPBuf>::type pbuf_type;
+    typedef TAddr addr_type;
+
+private:
+public:
+    // TODO: Do static asserts to make sure we have at least conformance to Datapool2CoreItem
+    typedef TItem Item;
+
+#ifdef UNIT_TESTING
+public:
+#else
+private:
+#endif
+    // TODO: Right now, memory_pool_ll is going to impose its own linked list onto item
+    // but it would be nice to instead bring our own 'next()' calls and have memory_pool_ll
+    // be able to pick those up.  This should amount to refining memory_pool_ll's usage of
+    // node_traits
+    estd::experimental::memory_pool_ll<Item, 10> pool;
+
+    typedef estd::intrusive_forward_list<Item> list_type;
+
+    list_type from_transport;
+    list_type to_transport;
+
+    typedef typename list_type::iterator iterator;
+
+public:
+    Item* allocate()
+    {
+        return pool.allocate();
+    }
+
+    void deallocate(Item* item)
+    {
+        pool.deallocate(item);
+    }
+
+
+    bool to_transport_ready() const
+    {
+        return !to_transport.empty();
+    }
+
+    /// @brief enqueue item into transport output queue
+    void enqueue_to_transport(Item* item)
+    {
+        to_transport.push_front(*item);
+    }
+
+    void enqueue_to_transport(TPBuf pbuf, addr_type from_address)
+    {
+        Item* item = allocate();
+
+        item->pbuf = pbuf;
+        item->addr = from_address;
+
+        enqueue_to_transport(item);
+    }
+
+    /// @brief dequeue item from transport output queue
+    Item* dequeue_to_transport()
+    {
+        // FIX: should pull from 'back' (see dequeue_from_transport comments)
+        Item& item = to_transport.front();
+        to_transport.pop_front();
+        return &item;
+    }
+
+    /// @brief enqueue item into transport receive-from queue
+    void enqueue_from_transport(Item* item)
+    {
+        // always push_front here, we want to capture receive data as fast as possible
+        from_transport.push_front(*item);
+    }
+
+
+    void enqueue_from_transport(TPBuf pbuf, addr_type from_address)
+    {
+        Item* item = allocate();
+
+        item->pbuf = pbuf;
+        item->addr = from_address;
+
+        enqueue_from_transport(item);
+    }
+
+    bool from_transport_ready() const
+    {
+        return !from_transport.empty();
+    }
+
+    /// @brief dequeue item from transport receive-from queue
+    Item* dequeue_from_transport()
+    {
+        // FIX: pull from 'back'.  Right now this is behaving as a LIFO buffer rather than FIFO
+        Item& item = from_transport.front();
+        from_transport.pop_front();
+        return &item;
+    }
+
 };
 
 template <class TDatapump>
@@ -503,7 +497,7 @@ struct Dataport2
             state(TransportInDequeuing, &context);
             datapump_item* item = datapump.dequeue_from_transport();
             state(TransportInDequeued, item, user);
-            if (item->is_acknowledgement())
+            if (item->is_acknowledge())
             {
                 state(RetryEvaluating, item, user);
                 datapump_item* removed = datapump.evaluate_remove_from_retry(item);

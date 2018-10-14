@@ -44,9 +44,9 @@ struct SyntheticRetry : BasicRetry<const char*, int>
         // helper method, not called by Datapump code
         int seq() { return this->pbuf[1] - '0'; }
 
-        static bool is_confirmable(datapump_item& item) { return item.pbuf[0] == 'C'; }
+        bool is_confirmable() { return this->pbuf[0] == 'C'; }
 
-        static bool is_acknowledge(datapump_item& item) { return item.pbuf[0] == 'A'; }
+        bool is_acknowledge() { return this->pbuf[0] == 'A'; }
 
         // evaluate whether the incoming item is an ACK matching 'this' item
         // expected to be a CON.  Comparing against something without retry metadata
@@ -57,7 +57,7 @@ struct SyntheticRetry : BasicRetry<const char*, int>
             // as that is expected to be filtered elsewhere.  However, for unit test,
             // doing it here.  If we can localize that *entirely* here and phase out the is_xxx messages,
             // that would be better
-            return is_acknowledge(*compare_against) &&
+            return compare_against->is_acknowledge() &&
                 compare_against->seq() == seq();
         }
     };
