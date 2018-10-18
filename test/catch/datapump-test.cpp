@@ -57,8 +57,10 @@ struct SyntheticRetry : BasicRetry<const char*, int>
             // as that is expected to be filtered elsewhere.  However, for unit test,
             // doing it here.  If we can localize that *entirely* here and phase out the is_xxx messages,
             // that would be better
+            // TODO: Need to use the addr comparison specializer
             return compare_against->is_acknowledge() &&
-                compare_against->seq() == seq();
+                compare_against->seq() == seq() &&
+                compare_against->addr == addr;
         }
     };
 
@@ -68,6 +70,11 @@ struct SyntheticRetry : BasicRetry<const char*, int>
         return item->counter < 3;
     }
 };
+
+
+static const char* CON_0 = "C0hi2u"; // C = CON, 0 = sequence
+static const char* ACK_0 = "A0"; // A = ACK, 0 = sequence
+static const char* ACK_1 = "A1"; // A = ACK, 1 = sequence (won't match 0 from above)
 
 TEST_CASE("datapump")
 {
@@ -108,7 +115,8 @@ TEST_CASE("datapump")
             datapump_retry_type datapump;
             item_type item;
 
-            item.pbuf = "C0hi2u"; // C = CON, 0 = sequence
+            item.addr = 0;
+            item.pbuf = CON_0; // C = CON, 0 = sequence
 
             datapump.evaluate_add_to_retry(&item);
 
@@ -122,7 +130,9 @@ TEST_CASE("datapump")
 
             item_type ack_item;
 
-            ack_item.pbuf = "A1"; // A = ACK, 1 = sequence (won't match 0 from above)
+            ack_item.addr = 0;
+
+            ack_item.pbuf = ACK_1; // A = ACK, 1 = sequence (won't match 0 from above)
 
             // this 'item' contains an ACK, but sequence number doesn't match
             // note also undecided if ACK filtering should happen during this evaluate
@@ -130,7 +140,16 @@ TEST_CASE("datapump")
 
             REQUIRE(to_remove == NULLPTR);
 
-            ack_item.pbuf = "A0";
+            ack_item.pbuf = ACK_0;
+            ack_item.addr = 1;
+
+            // Now we should get a match, ACK seq 0 will match item's CON seq 0
+            to_remove = datapump.evaluate_remove_from_retry(&ack_item);
+
+            // old item sitting in retry queue is now removed and returned
+            REQUIRE(to_remove == NULLPTR);
+
+            ack_item.addr = 0;
 
             // Now we should get a match, ACK seq 0 will match item's CON seq 0
             to_remove = datapump.evaluate_remove_from_retry(&ack_item);
@@ -189,6 +208,20 @@ TEST_CASE("datapump")
                 dataport.process(&context);
 
                 REQUIRE(context.state_progression_counter == 5);
+            }
+            SECTION("retry")
+            {
+                struct Context
+                {
+                    int state_progression_counter = 0;
+                };
+
+                // NOTE: May want to auto-initialize this to null, but for embedded scenarios that is
+                // a smidgen of overhead that we might not need
+                dataport.notifier = NULLPTR;
+
+                dataport.send_to_transport(CON_0, 0);
+                dataport.receive_from_transport(ACK_0, 0);
             }
         }
     }

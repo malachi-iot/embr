@@ -361,7 +361,7 @@ public:
     }
 
 
-    void enqueue_from_transport(TPBuf pbuf, addr_type from_address)
+    Item* enqueue_from_transport(TPBuf pbuf, addr_type from_address)
     {
         Item* item = allocate();
 
@@ -369,6 +369,8 @@ public:
         item->addr = from_address;
 
         enqueue_from_transport(item);
+
+        return item;
     }
 
     bool from_transport_ready() const
@@ -574,8 +576,8 @@ struct Dataport2
     void receive_from_transport(pbuf_type pbuf, addr_type from_address, void* user = NULLPTR)
     {
         state(TransportInQueueing, pbuf, from_address, user);
-        datapump.enqueue_from_transport(pbuf, from_address);
-        state(TransportInQueued, pbuf, from_address, user);
+        datapump_item* item = datapump.enqueue_from_transport(pbuf, from_address);
+        state(TransportInQueued, item, user);
     }
 };
 
