@@ -69,6 +69,7 @@ struct BasicRetry
         // tracking integrate more easily
         typename TClock::time_point due() const { return _due; }
 
+        /// Indicates number of retry/queue attempts made on this item so far
         TCounter counter = 0;
 
         /// @brief called when this item is actually added to retry list
@@ -134,6 +135,8 @@ public:
     typedef typename estd::remove_reference<TRetryImpl>::type retry_impl_type;
     typedef typename retry_impl_type::RetryItem retry_item;
     typedef TItem Item;
+    // FIX: using this until we clean up 'Item' type name - it has become too ambiguous
+    typedef TItem retry_item_type_exp;
 
 #ifdef UNIT_TESTING
 public:
@@ -275,14 +278,15 @@ public:
     }
 };
 
+
+
 // Would use transport descriptor, but:
 // a) it's a little more unweildy than expected
 // b) it's netbuf based, and this needs to be PBuf based
 template <
         class TPBuf, class TAddr,
-        class TRetryImpl = BasicRetry<TPBuf, TAddr>,
-        class TItem = typename TRetryImpl::RetryItem >
-class Datapump2 : public Retry2<TPBuf, TAddr, TRetryImpl, TItem>
+        class TItem = Datapump2CoreItem<TPBuf, TAddr> >
+class Datapump2
 {
 public:
     typedef typename estd::remove_reference<TPBuf>::type pbuf_type;
@@ -389,19 +393,33 @@ public:
 
 };
 
-template <class TDatapump>
+
+template <
+        class TPBuf, class TAddr,
+        class TRetryImpl = BasicRetry<TPBuf, TAddr>,
+        class TItem = typename TRetryImpl::RetryItem >
+class DatapumpWithRetry2 :
+        public Datapump2<TPBuf, TAddr, TItem>,
+        public Retry2<TPBuf, TAddr, TRetryImpl, TItem>
+{
+public:
+    // FIX: Need to clean up naming here too (should at least be datapump_item_type, or item_type)
+    typedef TItem datapump_item;
+};
+
+template <class TDatapumpWithRetry>
 // simplified state-machine varient of megapowered Dataport, wired more specifically
 // to retry logic than before
 /// Notify mechanism surrounding a datapump
-/// \tparam TDatapump
+/// \tparam TDatapumpWithRetry
 struct Dataport2
 {
-    TDatapump datapump;
+    TDatapumpWithRetry datapump;
 
-    // NOTE: TDatapump and TTransport must have matching pbuf & addr types
-    typedef typename TDatapump::pbuf_type pbuf_type;
-    typedef typename TDatapump::addr_type addr_type;
-    typedef typename TDatapump::Item datapump_item;
+    // NOTE: TDatapumpWithRetry and TTransport must have matching pbuf & addr types
+    typedef typename TDatapumpWithRetry::pbuf_type pbuf_type;
+    typedef typename TDatapumpWithRetry::addr_type addr_type;
+    typedef typename TDatapumpWithRetry::datapump_item datapump_item;
 
     enum State
     {

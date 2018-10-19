@@ -9,7 +9,7 @@ namespace embr {
 // DataPort events, specifically
 template <class TDatapump>
 struct DataPortEvents :
-    // Be careful, TDatapump is being used as transport description.  In this case, it's OK
+    // Be careful, TDatapumpWithRetry is being used as transport description.  In this case, it's OK
     event::Transport<TDatapump>,
     event::Datapump<typename TDatapump::Item> {};
 
@@ -38,7 +38,7 @@ struct DataPortVirtual
 
 // to virtualize the wrapper
 // we don't virtual by default because dataport extends its functionality through
-// composition (using alternate TDatapump, TTransport, etc) so as to resolve at
+// composition (using alternate TDatapumpWithRetry, TTransport, etc) so as to resolve at
 // compile time.
 // the situations that virtualized calls are needed are fewer, but present.  That's
 // what this wrapper class is for

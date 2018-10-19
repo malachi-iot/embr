@@ -91,8 +91,8 @@ TEST_CASE("datapump")
 
         // Almost works, but messes up constructor for union scenario (const_string has no
         // default constructor)
-        //typedef Datapump2<estd::layer2::const_string, int> datapump_type;
-        typedef Datapump2<const char*, int> datapump_type;
+        //typedef DatapumpWithRetry2<estd::layer2::const_string, int> datapump_type;
+        typedef DatapumpWithRetry2<const char*, int> datapump_type;
 
         SECTION("raw datapump")
         {
@@ -110,15 +110,28 @@ TEST_CASE("datapump")
         }
         SECTION("retry")
         {
-            typedef Datapump2<const char*, int, SyntheticRetry> datapump_retry_type;
-            typedef datapump_retry_type::Item item_type;
+            typedef Retry2<const char*, int, SyntheticRetry> retry_type;
+            typedef DatapumpWithRetry2<const char*, int, SyntheticRetry> datapump_retry_type;
+            //typedef datapump_retry_type::Item item_type;
+            typedef datapump_retry_type::retry_item_type_exp item_type;
+            retry_type retry;
             datapump_retry_type datapump;
             item_type item;
 
             item.addr = 0;
             item.pbuf = CON_0; // C = CON, 0 = sequence
 
-            datapump.evaluate_add_to_retry(&item);
+            bool should_add = datapump.evaluate_add_to_retry(&item);
+
+            REQUIRE(should_add);
+
+            should_add = retry.evaluate_add_to_retry(&item);
+
+            REQUIRE(should_add);
+            // NOTE: Don't normally do this. only because we're intermediately experimenting with dual
+            // retry queues at once on only one item
+            item.counter--;
+
 
             REQUIRE(item.counter == 1);
             REQUIRE(estd::distance(datapump.retry_list.begin(), datapump.retry_list.end()) == 1);
