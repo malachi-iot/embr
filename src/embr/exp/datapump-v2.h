@@ -60,8 +60,8 @@ struct BasicRetry
 
     // NOTE: Make sure we don't HAVE to use RetryItemBase - specifically,
     // we'll probably want more fine grained counter control
-    template <class TCounter = int>
-    struct RetryItemBase : datapump_item
+    template <class TCounter = int, class TBase = datapump_item>
+    struct RetryItemBase : TBase
     {
         typename TClock::time_point _due;
 
@@ -134,16 +134,16 @@ class Retry2
 public:
     typedef typename estd::remove_reference<TRetryImpl>::type retry_impl_type;
     typedef typename retry_impl_type::RetryItem retry_item;
-    typedef TItem Item;
-    // FIX: using this until we clean up 'Item' type name - it has become too ambiguous
-    typedef TItem retry_item_type_exp;
+    //typedef TItem Item;
+    typedef TItem item_type;
+    typedef item_type* pointer;
 
 #ifdef UNIT_TESTING
 public:
 #else
 protected:
 #endif
-    typedef estd::intrusive_forward_list<Item> list_type;
+    typedef estd::intrusive_forward_list<item_type> list_type;
     list_type retry_list;
     typedef typename list_type::iterator iterator;
 
@@ -161,7 +161,7 @@ protected:
 
     // All this 'before begin' compensation is a little annoying, but at least we aren't
     // polluting iterators with that extra information 100% of the time.
-    void _add_to_retry(estd::optional<iterator> preceding, Item* item)
+    void _add_to_retry(estd::optional<iterator> preceding, pointer item)
     {
         if(preceding)
             retry_list.insert_after(*preceding, *item);
@@ -177,7 +177,7 @@ public:
     /// messages are not evaluated for placement in the retry list)
     /// \param sent_item
     /// @return true if we added this to retry list
-    bool evaluate_add_to_retry(Item* sent_item)
+    bool evaluate_add_to_retry(pointer sent_item)
     {
         if(retry_impl.should_queue(sent_item))
         {
@@ -197,7 +197,7 @@ public:
     ///
     /// \param received_item buffer received over transport for inspection
     /// @returns Item* which was removed from retry list, or NULLPTR if none was found
-    Item* evaluate_remove_from_retry(Item* received_item)
+    pointer evaluate_remove_from_retry(pointer received_item)
     {
         //if(retry_impl.should_dequeue(received_item, received_item->pbuf))
         {
@@ -209,7 +209,7 @@ public:
 
             for(;i != retry_list.end(); i++)
             {
-                Item& current = *i;
+                item_type& current = *i;
 
                 // evaluate if received_item ACK matches up to retry_list CON
                 if(current.retry_match(received_item))
@@ -234,9 +234,9 @@ public:
     /// if Item* indeed is ready, it is removed from the retry list and must be re-queued, if desired
     ///
     /// \return Item* or NULLPTR if nothing yet is ready
-    Item* dequeue_retry_ready()
+    pointer dequeue_retry_ready()
     {
-        Item* item = &retry_list.front();
+        pointer item = &retry_list.front();
         if(item && retry_impl.ready_for_send(item))
         {
             retry_list.pop_front();
@@ -249,7 +249,7 @@ public:
     /// @brief adds to retry list
     ///
     /// including a linear search to splice it into proper time slot
-    void add_to_retry(Item* sent_item)
+    void add_to_retry(pointer sent_item)
     {
         // TODO: likely want to embed this into retry_impl
         // TODO: need to do requisite sort placement also
@@ -259,7 +259,7 @@ public:
 
         for(;i != retry_list.end(); i++)
         {
-            Item& current = *i;
+            item_type& current = *i;
 
             // Look to insert sent_item in time slot just before item to be sent after it
             // or in other words, insert just before first encounter of current.due >= sent_item.due,
@@ -296,6 +296,8 @@ private:
 public:
     // TODO: Do static asserts to make sure we have at least conformance to Datapool2CoreItem
     typedef TItem Item;
+    typedef TItem item_type;
+    typedef item_type* pointer;
 
 #ifdef UNIT_TESTING
 public:
@@ -306,9 +308,9 @@ private:
     // but it would be nice to instead bring our own 'next()' calls and have memory_pool_ll
     // be able to pick those up.  This should amount to refining memory_pool_ll's usage of
     // node_traits
-    estd::experimental::memory_pool_ll<Item, 10> pool;
+    estd::experimental::memory_pool_ll<item_type, 10> pool;
 
-    typedef estd::intrusive_forward_list<Item> list_type;
+    typedef estd::intrusive_forward_list<item_type> list_type;
 
     list_type from_transport;
     list_type to_transport;
@@ -316,12 +318,12 @@ private:
     typedef typename list_type::iterator iterator;
 
 public:
-    Item* allocate()
+    pointer allocate()
     {
         return pool.allocate();
     }
 
-    void deallocate(Item* item)
+    void deallocate(pointer item)
     {
         pool.deallocate(item);
     }
@@ -333,7 +335,7 @@ public:
     }
 
     /// @brief enqueue item into transport output queue
-    void enqueue_to_transport(Item* item)
+    void enqueue_to_transport(pointer item)
     {
         to_transport.push_front(*item);
     }
@@ -349,25 +351,25 @@ public:
     }
 
     /// @brief dequeue item from transport output queue
-    Item* dequeue_to_transport()
+    pointer dequeue_to_transport()
     {
         // FIX: should pull from 'back' (see dequeue_from_transport comments)
-        Item& item = to_transport.front();
+        item_type& item = to_transport.front();
         to_transport.pop_front();
         return &item;
     }
 
     /// @brief enqueue item into transport receive-from queue
-    void enqueue_from_transport(Item* item)
+    void enqueue_from_transport(pointer item)
     {
         // always push_front here, we want to capture receive data as fast as possible
         from_transport.push_front(*item);
     }
 
 
-    Item* enqueue_from_transport(TPBuf pbuf, addr_type from_address)
+    pointer enqueue_from_transport(TPBuf pbuf, addr_type from_address)
     {
-        Item* item = allocate();
+        pointer item = allocate();
 
         item->pbuf = pbuf;
         item->addr = from_address;
@@ -383,10 +385,10 @@ public:
     }
 
     /// @brief dequeue item from transport receive-from queue
-    Item* dequeue_from_transport()
+    pointer dequeue_from_transport()
     {
         // FIX: pull from 'back'.  Right now this is behaving as a LIFO buffer rather than FIFO
-        Item& item = from_transport.front();
+        item_type& item = from_transport.front();
         from_transport.pop_front();
         return &item;
     }
@@ -404,7 +406,8 @@ class DatapumpWithRetry2 :
 {
 public:
     // FIX: Need to clean up naming here too (should at least be datapump_item_type, or item_type)
-    typedef TItem datapump_item;
+    //typedef TItem datapump_item;
+    typedef TItem item_type;
 };
 
 template <class TDatapumpWithRetry>
@@ -419,7 +422,7 @@ struct Dataport2
     // NOTE: TDatapumpWithRetry and TTransport must have matching pbuf & addr types
     typedef typename TDatapumpWithRetry::pbuf_type pbuf_type;
     typedef typename TDatapumpWithRetry::addr_type addr_type;
-    typedef typename TDatapumpWithRetry::datapump_item datapump_item;
+    typedef typename TDatapumpWithRetry::item_type item_type;
 
     enum State
     {
@@ -459,7 +462,7 @@ struct Dataport2
 
         union
         {
-            datapump_item* item;
+            item_type* item;
             struct
             {
                 pbuf_type pbuf;
@@ -509,7 +512,7 @@ struct Dataport2
     }
 
 
-    void state(State s, datapump_item* item, void* user)
+    void state(State s, item_type* item, void* user)
     {
         NotifyContext context{ this, user, item };
         state(s, &context);
@@ -534,12 +537,12 @@ struct Dataport2
             NotifyContext context { this, user };
 
             state(TransportInDequeuing, &context);
-            datapump_item* item = datapump.dequeue_from_transport();
+            item_type* item = datapump.dequeue_from_transport();
             state(TransportInDequeued, item, user);
             if (item->is_acknowledge())
             {
                 state(RetryEvaluating, item, user);
-                datapump_item* removed = datapump.evaluate_remove_from_retry(item);
+                item_type* removed = datapump.evaluate_remove_from_retry(item);
                 if (removed != NULLPTR)
                     state(RetryDequeued, removed, user);
             }
@@ -553,7 +556,7 @@ struct Dataport2
             NotifyContext context { this, user };
 
             state(TransportOutDequeuing, &context);
-            datapump_item* item = datapump.dequeue_to_transport();
+            item_type* item = datapump.dequeue_to_transport();
             state(TransportOutDequeued, item, user);
             // after we've definitely sent off the item, evaluate
             // whether it's a confirmable/retryable one
@@ -571,7 +574,7 @@ struct Dataport2
     }
 
 
-    void send_to_transport(datapump_item* item, void* user = NULLPTR)
+    void send_to_transport(item_type* item, void* user = NULLPTR)
     {
         state(TransportOutQueuing, item, user);
         datapump.enqueue_to_transport(item);
@@ -580,7 +583,7 @@ struct Dataport2
 
     void process_retry(void* user = NULLPTR)
     {
-        datapump_item* item_to_send = datapump.dequeue_retry_ready();
+        item_type* item_to_send = datapump.dequeue_retry_ready();
 
         if(item_to_send != NULLPTR)
             // process_to_transport will handle requeuing portion
@@ -603,7 +606,7 @@ struct Dataport2
     {
         // FIX: resolve descrepency between formats of TransportOutQueuing
         // by allocating an Item *here* instead of in the datapump helper function
-        datapump_item* item = datapump.allocate();
+        item_type* item = datapump.allocate();
         send_to_transport(item);
     }
 
@@ -613,7 +616,7 @@ struct Dataport2
     void received_from_transport(pbuf_type pbuf, addr_type from_address, void* user = NULLPTR)
     {
         state(TransportInQueueing, pbuf, from_address, user);
-        datapump_item* item = datapump.enqueue_from_transport(pbuf, from_address);
+        item_type* item = datapump.enqueue_from_transport(pbuf, from_address);
         state(TransportInQueued, item, user);
     }
 };

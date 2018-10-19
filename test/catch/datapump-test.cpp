@@ -32,6 +32,8 @@ struct pbuf_traits<const char*>
 
 
 // TODO: bring in fake_chrono from coap lib and plug it in here
+// or maybe formalize it more into a 'manual_clock' which requires explicit
+// external participation to push it forward.  Same arch as the fake chrono really
 struct SyntheticRetry : BasicRetry<const char*, int>
 {
     typedef BasicRetry<const char*, int> base_type;
@@ -112,8 +114,7 @@ TEST_CASE("datapump")
         {
             typedef Retry2<const char*, int, SyntheticRetry> retry_type;
             typedef DatapumpWithRetry2<const char*, int, SyntheticRetry> datapump_retry_type;
-            //typedef datapump_retry_type::Item item_type;
-            typedef datapump_retry_type::retry_item_type_exp item_type;
+            typedef datapump_retry_type::item_type item_type;
             retry_type retry;
             datapump_retry_type datapump;
             item_type item;
