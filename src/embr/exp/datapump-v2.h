@@ -63,20 +63,28 @@ struct BasicRetry
     template <class TCounter = int, class TBase = datapump_item>
     struct RetryItemBase : TBase
     {
+#ifdef UNIT_TESTING
+    public:
+#else
+    private:
+#endif
         typename TClock::time_point _due;
+
+        /// Indicates number of retry/queue attempts made on this item so far
+        TCounter _counter = 0;
+
+    public:
+        TCounter counter() const { return _counter; }
 
         // putting this into accessor pattern so that optimized flavors of due
         // tracking integrate more easily
         typename TClock::time_point due() const { return _due; }
 
-        /// Indicates number of retry/queue attempts made on this item so far
-        TCounter counter = 0;
-
         /// @brief called when this item is actually added to retry list
         void queued()
         {
             // TODO: this is where we'll assign due as well
-            counter++;
+            _counter++;
         }
 
         // TODO: probably replace this with a specialized operator <
@@ -110,7 +118,7 @@ struct BasicRetry
     /// message by the time we get here
     bool should_queue(RetryItem* item)
     {
-        return item->counter < 3;
+        return item->counter() < 3;
     }
 
     /// @brief Indicate whether the specified retry item is ready for an actual resend
@@ -133,8 +141,7 @@ class Retry2
 
 public:
     typedef typename estd::remove_reference<TRetryImpl>::type retry_impl_type;
-    typedef typename retry_impl_type::RetryItem retry_item;
-    //typedef TItem Item;
+    //typedef typename retry_impl_type::RetryItem retry_item;
     typedef TItem item_type;
     typedef item_type* pointer;
 
@@ -295,7 +302,6 @@ public:
 private:
 public:
     // TODO: Do static asserts to make sure we have at least conformance to Datapool2CoreItem
-    typedef TItem Item;
     typedef TItem item_type;
     typedef item_type* pointer;
 
@@ -342,7 +348,7 @@ public:
 
     void enqueue_to_transport(TPBuf pbuf, addr_type from_address)
     {
-        Item* item = allocate();
+        pointer item = allocate();
 
         item->pbuf = pbuf;
         item->addr = from_address;
@@ -388,6 +394,7 @@ public:
     pointer dequeue_from_transport()
     {
         // FIX: pull from 'back'.  Right now this is behaving as a LIFO buffer rather than FIFO
+        // to facilitate that, work on a forward_list_with_tail or similar
         item_type& item = from_transport.front();
         from_transport.pop_front();
         return &item;

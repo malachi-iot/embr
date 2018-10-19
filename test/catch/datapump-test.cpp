@@ -69,7 +69,7 @@ struct SyntheticRetry : BasicRetry<const char*, int>
     /// @brief indicate that this item should be a part of retry list
     bool should_queue(RetryItem* item)
     {
-        return item->counter < 3;
+        return item->counter() < 3;
     }
 };
 
@@ -113,32 +113,22 @@ TEST_CASE("datapump")
         SECTION("retry")
         {
             typedef Retry2<const char*, int, SyntheticRetry> retry_type;
-            typedef DatapumpWithRetry2<const char*, int, SyntheticRetry> datapump_retry_type;
-            typedef datapump_retry_type::item_type item_type;
+            typedef retry_type::item_type item_type;
             retry_type retry;
-            datapump_retry_type datapump;
             item_type item;
 
             item.addr = 0;
             item.pbuf = CON_0; // C = CON, 0 = sequence
 
-            bool should_add = datapump.evaluate_add_to_retry(&item);
+            bool should_add = retry.evaluate_add_to_retry(&item);
 
             REQUIRE(should_add);
 
-            should_add = retry.evaluate_add_to_retry(&item);
-
-            REQUIRE(should_add);
-            // NOTE: Don't normally do this. only because we're intermediately experimenting with dual
-            // retry queues at once on only one item
-            item.counter--;
-
-
-            REQUIRE(item.counter == 1);
-            REQUIRE(estd::distance(datapump.retry_list.begin(), datapump.retry_list.end()) == 1);
+            REQUIRE(item.counter() == 1);
+            REQUIRE(estd::distance(retry.retry_list.begin(), retry.retry_list.end()) == 1);
 
             // this 'item' contains a CON not an ACK, so we should get nothing for this
-            item_type* to_remove = datapump.evaluate_remove_from_retry(&item);
+            item_type* to_remove = retry.evaluate_remove_from_retry(&item);
 
             REQUIRE(to_remove == NULLPTR);
 
@@ -150,7 +140,7 @@ TEST_CASE("datapump")
 
             // this 'item' contains an ACK, but sequence number doesn't match
             // note also undecided if ACK filtering should happen during this evaluate
-            to_remove = datapump.evaluate_remove_from_retry(&ack_item);
+            to_remove = retry.evaluate_remove_from_retry(&ack_item);
 
             REQUIRE(to_remove == NULLPTR);
 
@@ -158,7 +148,7 @@ TEST_CASE("datapump")
             ack_item.addr = 1;
 
             // Now we should get a match, ACK seq 0 will match item's CON seq 0
-            to_remove = datapump.evaluate_remove_from_retry(&ack_item);
+            to_remove = retry.evaluate_remove_from_retry(&ack_item);
 
             // old item sitting in retry queue is now removed and returned
             REQUIRE(to_remove == NULLPTR);
@@ -166,7 +156,7 @@ TEST_CASE("datapump")
             ack_item.addr = 0;
 
             // Now we should get a match, ACK seq 0 will match item's CON seq 0
-            to_remove = datapump.evaluate_remove_from_retry(&ack_item);
+            to_remove = retry.evaluate_remove_from_retry(&ack_item);
 
             // old item sitting in retry queue is now removed and returned
             REQUIRE(to_remove == &item);
