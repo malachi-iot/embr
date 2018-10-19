@@ -204,7 +204,7 @@ TEST_CASE("datapump")
                     }
                 };
 
-                dataport.receive_from_transport("hi", 0, &context);
+                dataport.received_from_transport("hi", 0, &context);
                 dataport.process(&context);
 
                 REQUIRE(context.state_progression_counter == 5);
@@ -221,7 +221,7 @@ TEST_CASE("datapump")
                 dataport.notifier = NULLPTR;
 
                 dataport.send_to_transport(CON_0, 0);
-                dataport.receive_from_transport(ACK_0, 0);
+                dataport.received_from_transport(ACK_0, 0);
             }
         }
     }

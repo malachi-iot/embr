@@ -448,6 +448,25 @@ struct Dataport2
                 addr_type addr;
             } buf_addr;
         };
+
+        /// \brief helper method just in case you aren't 100% sure how to get pbuf out of context
+        /// \param state
+        /// \return
+        pbuf_type& pbuf(State state)
+        {
+            switch(state)
+            {
+                default: return item->pbuf;
+            }
+        }
+
+        addr_type& addr(State state)
+        {
+            switch(state)
+            {
+                default: return item->addr;
+            }
+        }
     };
 
     typedef void (*notify_fn)(State state, NotifyContext* context);
@@ -573,7 +592,7 @@ struct Dataport2
     /// @brief called when transport receives data, to queue up in our datapump/dataport
     ///
     /// this is mainly for async calls.  Queues into from_transport queue
-    void receive_from_transport(pbuf_type pbuf, addr_type from_address, void* user = NULLPTR)
+    void received_from_transport(pbuf_type pbuf, addr_type from_address, void* user = NULLPTR)
     {
         state(TransportInQueueing, pbuf, from_address, user);
         datapump_item* item = datapump.enqueue_from_transport(pbuf, from_address);
