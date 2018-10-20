@@ -286,6 +286,10 @@ public:
 };
 
 
+// use this flag to indicate to add FIFO packets to the 'back' of
+// the container, and retrieve from the 'front'.  This is the efficient
+// wait to interact with 'forward_list_with_back'
+#define FEATURE_EMBR_DATAPUMP_ENQUEUE_BACK
 
 // Would use transport descriptor, but:
 // a) it's a little more unweildy than expected
@@ -316,7 +320,7 @@ private:
     // node_traits
     estd::experimental::memory_pool_ll<item_type, 10> pool;
 
-    typedef estd::intrusive_forward_list<item_type> list_type;
+    typedef estd::intrusive_forward_list_with_back<item_type> list_type;
 
     list_type from_transport;
     list_type to_transport;
@@ -343,7 +347,11 @@ public:
     /// @brief enqueue item into transport output queue
     void enqueue_to_transport(pointer item)
     {
+#ifdef FEATURE_EMBR_DATAPUMP_ENQUEUE_BACK
+        to_transport.push_back(*item);
+#else
         to_transport.push_front(*item);
+#endif
     }
 
     void enqueue_to_transport(TPBuf pbuf, addr_type from_address)
@@ -359,17 +367,25 @@ public:
     /// @brief dequeue item from transport output queue
     pointer dequeue_to_transport()
     {
-        // FIX: should pull from 'back' (see dequeue_from_transport comments)
+#ifdef FEATURE_EMBR_DATAPUMP_ENQUEUE_BACK
+        // enqueue to back, dequeue from front
         item_type& item = to_transport.front();
         to_transport.pop_front();
         return &item;
+#else
+        // FIX: should pull from 'back' (see dequeue_from_transport comments)
+#endif
     }
 
     /// @brief enqueue item into transport receive-from queue
     void enqueue_from_transport(pointer item)
     {
+#ifdef FEATURE_EMBR_DATAPUMP_ENQUEUE_BACK
+        from_transport.push_back(*item);
+#else
         // always push_front here, we want to capture receive data as fast as possible
         from_transport.push_front(*item);
+#endif
     }
 
 
@@ -393,11 +409,15 @@ public:
     /// @brief dequeue item from transport receive-from queue
     pointer dequeue_from_transport()
     {
-        // FIX: pull from 'back'.  Right now this is behaving as a LIFO buffer rather than FIFO
-        // to facilitate that, work on a forward_list_with_tail or similar
+#ifdef FEATURE_EMBR_DATAPUMP_ENQUEUE_BACK
         item_type& item = from_transport.front();
         from_transport.pop_front();
         return &item;
+#else
+        // FIX: pull from 'back'.  Right now this is behaving as a LIFO buffer rather than FIFO
+        // to facilitate that, work on a forward_list_with_tail or similar
+#error Not supported at this time.  Will need a doubly linked list, or reverse_list_with_back
+#endif
     }
 
 };
@@ -412,8 +432,6 @@ class DatapumpWithRetry2 :
         public Retry2<TPBuf, TAddr, TRetryImpl, TItem>
 {
 public:
-    // FIX: Need to clean up naming here too (should at least be datapump_item_type, or item_type)
-    //typedef TItem datapump_item;
     typedef TItem item_type;
 };
 
