@@ -34,6 +34,6 @@ set(SOURCE_FILES
 
     embr/streambuf.h
     embr/transport-descriptor.h
-        embr/exp/datapump-v2.h embr/exp/pbuf.h)
+        embr/exp/datapump-v2.h embr/exp/pbuf.h embr/exp/retry-v2.h embr/exp/datapump-core-v2.h embr/exp/dataport-v2.h)
 
 add_library(${PROJECT_NAME} ${SOURCE_FILES})
