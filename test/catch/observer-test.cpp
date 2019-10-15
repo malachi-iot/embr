@@ -161,11 +161,18 @@ TEST_CASE("observer")
             SECTION("make_subject")
             {
                 StatelessObserver o1;
-                StatefulObserver o2;
+                StatefulObserver o2(0x777);
+
+                event_1 e;
+
+                e.data = 0x777;
 
                 auto s = embr::layer1::make_subject(
                             o1,
                             o2);
+
+                // need to revise event_1 behavior or do an event_4
+                //s.notify(e);
             }
             SECTION("proxy")
             {
