@@ -21,6 +21,11 @@ struct event_3
     int data;
 };
 
+struct id_event
+{
+    int id;
+};
+
 struct noop_event {};
 
 static int counter = 0;
@@ -52,10 +57,11 @@ class StatefulObserver : public FakeBase
 {
 public:
     int id;
+    int counter = 0;
 
     StatefulObserver() : id(0x77) {}
 
-    StatefulObserver(int id) : id(id) {}
+    explicit StatefulObserver(int id) : id(id) {}
 
     void on_notify(int val)
     {
@@ -78,6 +84,11 @@ public:
     void on_notify(const event_2& e)
     {
         REQUIRE(e.data == expected);
+    }
+
+    void on_notify(id_event e)
+    {
+        REQUIRE(e.id == id);
     }
 };
 
@@ -163,22 +174,41 @@ TEST_CASE("observer")
                 StatelessObserver o1;
                 StatefulObserver o2(0x777);
 
-                event_1 e;
+                id_event e;
 
-                e.data = 0x777;
+                e.id = 0x777;
 
                 auto s = embr::layer1::make_subject(
                             o1,
                             o2);
 
-                // need to revise event_1 behavior or do an event_4
-                //s.notify(e);
+                // StatelessObserver will just ignore it
+                s.notify(e);
             }
             SECTION("proxy")
             {
                 embr::layer1::internal::observer_proxy<decltype(s)> op(s);
 
                 op.on_notify(noop_event{});
+            }
+            SECTION("proxy + make_subject")
+            {
+                embr::layer1::internal::observer_proxy<decltype(s)> op(s);
+                StatefulObserver o(0x77);
+
+                id_event e;
+
+                e.id = 0x77;
+
+                REQUIRE(o.counter == 0);
+
+                auto s = embr::layer1::make_subject(
+                        op,
+                        o);
+
+                // TODO: Because our tuple doesn't properly value-initialize (default constructor
+                // doesn't get called) this fails since s's StatefulObserver id is undefined/zeroed
+                //s.notify(e);
             }
         }
     }
