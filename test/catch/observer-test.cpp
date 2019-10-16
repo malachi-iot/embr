@@ -56,10 +56,12 @@ class FakeBase {};
 class StatefulObserver : public FakeBase
 {
 public:
+    static constexpr int default_id() { return 0x77; }
+
     int id;
     int counter = 0;
 
-    StatefulObserver() : id(0x77) {}
+    StatefulObserver() : id(default_id()) {}
 
     explicit StatefulObserver(int id) : id(id) {}
 
@@ -72,7 +74,7 @@ public:
     {
         REQUIRE(e.data == expected);
 
-        context.data = 77;
+        context.data = default_id();
     }
 
 
@@ -88,6 +90,8 @@ public:
 
     void on_notify(id_event e)
     {
+        counter++;
+
         REQUIRE(e.id == id);
     }
 };
@@ -167,7 +171,7 @@ TEST_CASE("observer")
 
             // context should be modified by stateful observer
 
-            REQUIRE(ctx.data == 77);
+            REQUIRE(ctx.data == StatefulObserver::default_id());
 
             SECTION("make_subject")
             {
@@ -194,21 +198,24 @@ TEST_CASE("observer")
             SECTION("proxy + make_subject")
             {
                 embr::layer1::internal::observer_proxy<decltype(s)> op(s);
-                StatefulObserver o(0x77);
+                StatefulObserver o;
 
                 id_event e;
 
-                e.id = 0x77;
+                e.id = StatefulObserver::default_id();
 
                 REQUIRE(o.counter == 0);
 
-                auto s = embr::layer1::make_subject(
+                auto s2 = embr::layer1::make_subject(
                         op,
                         o);
 
-                // TODO: Because our tuple doesn't properly value-initialize (default constructor
-                // doesn't get called) this fails since s's StatefulObserver id is undefined/zeroed
-                //s.notify(e);
+                s2.notify(e);
+
+                REQUIRE(o.counter == 1);
+
+                // TODO: Would be nice to do a expect-fails condition here, don't know if catch does that
+                // we'd look for s2.notify to fail if it's not default_id
             }
         }
     }

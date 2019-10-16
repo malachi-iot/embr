@@ -13,11 +13,13 @@ struct synthetic_context
 };
 
 
-struct StatefulObserver
+// Renamed from StatefulObserver because compiler picked it up as the same class as
+// from observer-test --- seems like a bug!
+struct DataportStatefulObserver
 {
     int counter;
 
-    StatefulObserver() : counter(0) {}
+    DataportStatefulObserver() : counter(0) {}
 
     typedef DataPortEvents<synthetic_datapump> event;
 
@@ -56,7 +58,7 @@ TEST_CASE("dataport")
     SECTION("synthetic dataport")
     {
         // make a 1-count subject/observer binding
-        auto s = layer1::make_subject(StatefulObserver());
+        auto s = layer1::make_subject(DataportStatefulObserver());
 
         typedef DataPort<synthetic_datapump, synthetic_transport, decltype (s)&> synthetic_dataport;
 
