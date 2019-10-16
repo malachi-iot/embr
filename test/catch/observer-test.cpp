@@ -153,6 +153,10 @@ TEST_CASE("observer")
                     StatelessObserver
                     > s;
 
+            const StatefulObserver& so = s.get<1>();
+
+            REQUIRE(so.id == StatefulObserver::default_id());
+
             int sz = sizeof(s);
 
             s.notify(3);
@@ -188,6 +192,8 @@ TEST_CASE("observer")
 
                 // StatelessObserver will just ignore it
                 s.notify(e);
+
+                REQUIRE(o2.counter == 1);
             }
             SECTION("proxy")
             {

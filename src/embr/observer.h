@@ -157,6 +157,20 @@ protected:
 
     tuple_base() {}
 
+public:
+    // TODO: Move these gets out into a tuple base/wrapper
+    // NOTE: Consider also making this into a tuple() call
+    template<int index>
+    estd::tuple_element_t<index, tuple_type >& get()
+    {
+        return estd::get<index>(observers);
+    }
+
+    template<int index>
+    const estd::tuple_element_t<index, tuple_type >& get() const
+    {
+        return estd::get<index>(observers);
+    }
 };
 
 // slightly abuses tuple type.  We pretend we have a tuple
@@ -194,7 +208,7 @@ protected:
 };
 
 template <class TBase, class ...TObservers>
-class subject : TBase
+class subject : public TBase
 {
     typedef TBase base_type;
     typedef typename base_type::tuple_type tuple_type;
