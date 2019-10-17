@@ -71,11 +71,13 @@ public:
         REQUIRE(val == expected);
     }
 
-    static void on_notify(event_3 e, event_3& context)
+    void on_notify(event_3 e, event_3& context)
     {
         REQUIRE(e.data == expected);
 
         context.data = default_id();
+
+        context_counter++;
     }
 
 
@@ -229,10 +231,10 @@ TEST_CASE("observer")
                 // TODO: Would be nice to do a expect-fails condition here, don't know if catch does that
                 // we'd look for s2.notify to fail if it's not default_id
 
-                event_1 e2;
-                int fake_context = 0;
+                event_3 e2;
+                void* ctx;
 
-                //s2.notify(e2, fake_context);
+                //s2.notify(e2, ctx);
             }
         }
     }

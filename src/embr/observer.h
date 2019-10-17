@@ -25,6 +25,7 @@ namespace internal {
 template <class TObserver, class TEvent>
 static auto notify_helper(TObserver& observer, const TEvent& n, int) -> bool
 {
+    // TODO: Perhaps put our "didn't fire" warning here - compile time would be best
     return true;
 }
 
@@ -33,22 +34,24 @@ static auto notify_helper(TObserver& observer, const TEvent& n, int) -> bool
 template <class TObserver, class TEvent, class TContext>
 static auto notify_helper(TObserver& observer, const TEvent& n, TContext&, int) -> bool
 {
+    // TODO: Perhaps put our "didn't fire" warning here - compile time would be best
     return true;
 }
 
 // bool gives this one precedence, since we call with (n, true)
 template <class TObserver, class TEvent>
 static auto notify_helper(TObserver& observer, const TEvent& n, bool)
--> decltype(std::declval<TObserver>().on_notify(n), void(), bool{})
+    -> decltype(std::declval<TObserver>().on_notify(n), void(), bool{})
 {
     observer.on_notify(n);
 
     return true;
 }
 
+// pseudo-fallback to invoke non-context on_notify, even when context is present
 template <class TObserver, class TEvent, class TContext>
 static auto notify_helper(TObserver& observer, const TEvent& n, TContext& context, bool)
--> decltype(std::declval<TObserver>().on_notify(n), void(), bool{})
+    -> decltype(std::declval<TObserver>().on_notify(n), void(), bool{})
 {
     observer.on_notify(n);
 
@@ -58,7 +61,7 @@ static auto notify_helper(TObserver& observer, const TEvent& n, TContext& contex
 // bool gives this one precedence, since we call with (n, true)
 template <class TObserver, class TEvent, class TContext>
 static auto notify_helper(TObserver& observer, const TEvent& n, TContext& context, bool)
--> decltype(std::declval<TObserver>().on_notify(n, context), void(), bool{})
+    -> decltype(std::declval<TObserver>().on_notify(n, context), void(), bool{})
 {
     observer.on_notify(n, context);
 
