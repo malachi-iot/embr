@@ -60,6 +60,7 @@ public:
 
     int id;
     int counter = 0;
+    int context_counter = 0;
 
     StatefulObserver() : id(default_id()) {}
 
@@ -93,6 +94,11 @@ public:
         counter++;
 
         REQUIRE(e.id == id);
+    }
+
+    static void on_notify(event_1 val, const int& context)
+    {
+
     }
 };
 
@@ -222,6 +228,11 @@ TEST_CASE("observer")
 
                 // TODO: Would be nice to do a expect-fails condition here, don't know if catch does that
                 // we'd look for s2.notify to fail if it's not default_id
+
+                event_1 e2;
+                int fake_context = 0;
+
+                //s2.notify(e2, fake_context);
             }
         }
     }

@@ -319,6 +319,12 @@ struct observer_proxy
         subject.notify(e);
     }
 
+    template <class TEvent, class TContext>
+    void on_notify(const TEvent& n, TContext& c)
+    {
+        subject.notify(n, c);
+    }
+
     observer_proxy(TSubject& s) : subject(s) {}
 
 #ifdef FEATURE_CPP_MOVESEMANTIC
