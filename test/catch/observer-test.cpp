@@ -19,6 +19,7 @@ struct event_2
 struct event_3
 {
     int data;
+    int output = 0;
 };
 
 struct id_event
@@ -53,11 +54,15 @@ public:
 
 class FakeBase {};
 
+static int unique_counter = 0;
+
+
 class StatefulObserver : public FakeBase
 {
 public:
     static constexpr int default_id() { return 0x77; }
 
+    int unique = unique_counter++;
     int id;
     int counter = 0;
     int context_counter = 0;
@@ -75,7 +80,7 @@ public:
     {
         REQUIRE(e.data == expected);
 
-        context.data = default_id();
+        context.output = default_id();
 
         context_counter++;
     }
@@ -183,7 +188,7 @@ TEST_CASE("observer")
 
             // context should be modified by stateful observer
 
-            REQUIRE(ctx.data == StatefulObserver::default_id());
+            REQUIRE(ctx.output == StatefulObserver::default_id());
 
             SECTION("make_subject")
             {
@@ -234,7 +239,16 @@ TEST_CASE("observer")
                 event_3 e2;
                 void* ctx;
 
-                //s2.notify(e2, ctx);
+                e2.data = expected;
+
+                REQUIRE(o.context_counter == 0);
+                // FIX: Following not working because 'so' got copied instead of referenced
+                //REQUIRE(so.context_counter == 0);
+
+                s2.notify(e2, e2);
+
+                REQUIRE(o.context_counter == 1);
+                REQUIRE(so.context_counter == 1);
             }
         }
     }

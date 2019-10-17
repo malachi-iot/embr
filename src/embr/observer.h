@@ -49,8 +49,11 @@ static auto notify_helper(TObserver& observer, const TEvent& n, bool)
 }
 
 // pseudo-fallback to invoke non-context on_notify, even when context is present
+// using 'long' so it doesn't collide with 'int' and falls even further down the line of preference.
+// a little concerned, since this is preferred over the non-existing on_notify flavors, but the
+// decltype seems to step in and boost precedence
 template <class TObserver, class TEvent, class TContext>
-static auto notify_helper(TObserver& observer, const TEvent& n, TContext& context, bool)
+static auto notify_helper(TObserver& observer, const TEvent& n, TContext& context, long)
     -> decltype(std::declval<TObserver>().on_notify(n), void(), bool{})
 {
     observer.on_notify(n);
