@@ -283,7 +283,34 @@ using subject = internal::subject<
 
 #endif
 
+// TODO: Make two varieties of observer_proxy:
+// 1.  Fully stateless subject wrapper
+// 2.  'Global' version binding to an existing global/static subject
+
+namespace experimental {
+
+// stateless variety
+template <class TSubject>
+class observer_proxy
+{
+    template <class TEvent>
+    static void on_notify(const TEvent& e)
+    {
+        TSubject().notify(e);
+    }
+
+    template <class TEvent, class TContext>
+    static void on_notify(const TEvent& n, TContext& c)
+    {
+        TSubject().notify(n, c);
+    }
+};
+
 }
+
+}
+
+
 namespace layer1 {
 
 #ifdef FEATURE_CPP_ALIASTEMPLATE
@@ -309,13 +336,14 @@ subject<TObservers&&...> make_subject(TObservers&&...observers)
 
 namespace internal {
 
-// presents itself as an observer but is in fact a wrapper around a new
-// subject
+// presents itself as an observer but is in fact a wrapper around a
+// subject reference
 template <class TSubject>
-struct observer_proxy
+class observer_proxy
 {
-    TSubject subject;
+    TSubject& subject;
 
+public:
     /// @brief pass on event to underlying subject to re-broadcast
     /// \tparam TEvent
     /// \param e
@@ -333,13 +361,27 @@ struct observer_proxy
 
     observer_proxy(TSubject& s) : subject(s) {}
 
+    // Proxy by nature operates on a TSubject reference, not a value - so no
+    // move semantic version
 #ifdef FEATURE_CPP_MOVESEMANTIC
-    observer_proxy(TSubject&& s) : subject(std::move(s)) {}
+    //observer_proxy(TSubject&& s) : subject(std::move(s)) {}
 #endif
 };
 
 }
 
+// TODO: Move observer_proxy out of internal altogether
+#ifdef FEATURE_CPP_ALIASTEMPLATE
+template <class TSubject>
+using observer_proxy = internal::observer_proxy<TSubject>;
+#endif
+
+
+template <class TSubject>
+internal::observer_proxy<TSubject> make_observer_proxy(TSubject& s)
+{
+    return internal::observer_proxy<TSubject>(s);
+}
 
 
 }

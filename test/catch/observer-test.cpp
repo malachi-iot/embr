@@ -166,6 +166,8 @@ TEST_CASE("observer")
                     StatelessObserver
                     > s;
 
+            typedef decltype(s) subject_type;
+
             const StatefulObserver& so = s.get<1>();
 
             REQUIRE(so.id == StatefulObserver::default_id());
@@ -199,6 +201,8 @@ TEST_CASE("observer")
 
                 e.id = 0x777;
 
+                REQUIRE(o2.counter == 0);
+
                 auto s = embr::layer1::make_subject(
                             o1,
                             o2);
@@ -210,13 +214,27 @@ TEST_CASE("observer")
             }
             SECTION("proxy")
             {
-                embr::layer1::internal::observer_proxy<decltype(s)> op(s);
+                embr::layer1::observer_proxy<decltype(s)> op(s);
 
                 op.on_notify(noop_event{});
             }
+            SECTION("make_observer_proxy")
+            {
+                auto op = embr::layer1::make_observer_proxy(s);
+
+                event_3 e;
+
+                e.data = expected;
+
+                REQUIRE(so.context_counter == 1);
+
+                op.on_notify(e, e);
+
+                REQUIRE(so.context_counter == 2);
+            }
             SECTION("proxy + make_subject")
             {
-                embr::layer1::internal::observer_proxy<decltype(s)> op(s);
+                embr::layer1::observer_proxy<subject_type> op(s);
                 StatefulObserver o;
 
                 id_event e;
@@ -237,18 +255,16 @@ TEST_CASE("observer")
                 // we'd look for s2.notify to fail if it's not default_id
 
                 event_3 e2;
-                void* ctx;
 
                 e2.data = expected;
 
                 REQUIRE(o.context_counter == 0);
-                // FIX: Following not working because 'so' got copied instead of referenced
-                //REQUIRE(so.context_counter == 0);
+                REQUIRE(so.context_counter == 1);
 
                 s2.notify(e2, e2);
 
                 REQUIRE(o.context_counter == 1);
-                REQUIRE(so.context_counter == 1);
+                REQUIRE(so.context_counter == 2);
             }
         }
     }
