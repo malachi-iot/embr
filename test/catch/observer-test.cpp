@@ -27,6 +27,8 @@ struct id_event
     int id;
 };
 
+struct sequence_event : id_event {};
+
 struct noop_event {};
 
 static int counter = 0;
@@ -101,6 +103,15 @@ public:
         counter++;
 
         REQUIRE(e.id == id);
+    }
+
+    void on_notify(sequence_event e, sequence_event& context)
+    {
+        counter++;
+
+        REQUIRE(unique > context.id);
+
+        context.id = unique;
     }
 
     static void on_notify(event_1 val, const int& context)
@@ -265,6 +276,23 @@ TEST_CASE("observer")
 
                 REQUIRE(o.context_counter == 1);
                 REQUIRE(so.context_counter == 2);
+            }
+            SECTION("Notification order")
+            {
+                StatefulObserver o1, o2, o3;
+
+                //auto s = embr::layer1::make_subject(o3, o2, o1);  // this should fail
+                auto s = embr::layer1::make_subject(o1, o2, o3);
+
+                sequence_event e;
+
+                e.id = 0;
+
+                s.notify(e, e);
+
+                REQUIRE(o1.counter == 1);
+                REQUIRE(o2.counter == 1);
+                REQUIRE(o3.counter == 1);
             }
         }
     }
