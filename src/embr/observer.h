@@ -22,6 +22,7 @@ namespace internal {
 // https://stackoverflow.com/questions/23987925/using-sfinae-to-select-function-based-on-whether-a-particular-overload-of-a-func
 // Used so that on_notify calls are optional
 // fallback one for when we just can't match the on_notify
+// Remember, trailing bool/int/long denotes priority with bool being best fit
 template <class TObserver, class TEvent>
 static auto notify_helper(TObserver& observer, const TEvent& n, long) -> bool
 {
@@ -49,9 +50,6 @@ static auto notify_helper(TObserver& observer, const TEvent& n, bool)
 }
 
 // pseudo-fallback to invoke non-context on_notify, even when context is present
-// using 'long' so it doesn't collide with 'int' and falls even further down the line of preference.
-// a little concerned, since this is preferred over the non-existing on_notify flavors, but the
-// decltype seems to step in and boost precedence
 template <class TObserver, class TEvent, class TContext>
 static auto notify_helper(TObserver& observer, const TEvent& n, TContext& context, int)
     -> decltype(std::declval<TObserver>().on_notify(n), void(), bool{})
@@ -75,14 +73,14 @@ static auto notify_helper(TObserver& observer, const TEvent& n, TContext& contex
 // inline construction of an entity altogether
 // fallback one for when we just can't match the on_notify
 template <class TObserver, class TEvent>
-static auto notify_helper(const TEvent& n, int) -> bool
+static auto notify_helper(const TEvent& n, long) -> bool
 {
     return true;
 }
 
 // fallback for invocation with context where no on_notify is present
 template <class TObserver, class TEvent, class TContext>
-static auto notify_helper(const TEvent& n, TContext&, int) -> bool
+static auto notify_helper(const TEvent& n, TContext&, long) -> bool
 {
     return true;
 }
