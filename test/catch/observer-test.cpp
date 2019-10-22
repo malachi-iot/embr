@@ -142,6 +142,12 @@ struct OtherStatefulObserver
 
 TEST_CASE("observer")
 {
+    SECTION("general compiler sanity checks")
+    {
+        // for debian x64 gcc
+        REQUIRE(sizeof(int) == 4);
+        REQUIRE(sizeof(StatefulObserver) == 16);
+    }
     SECTION("void subject")
     {
         embr::void_subject vs;
@@ -166,6 +172,8 @@ TEST_CASE("observer")
                 s.notify(3);
                 REQUIRE(counter == 2);
                 s.notify(event_1 { 3 }); // goes nowhere
+
+                REQUIRE(sz == 1);
             }
         }
         SECTION("layer1")
@@ -182,8 +190,6 @@ TEST_CASE("observer")
             const StatefulObserver& so = s.get<1>();
 
             REQUIRE(so.id == StatefulObserver::default_id());
-
-            int sz = sizeof(s);
 
             s.notify(3);
 
@@ -203,6 +209,14 @@ TEST_CASE("observer")
 
             REQUIRE(ctx.output == StatefulObserver::default_id());
 
+            SECTION("size evaluation")
+            {
+                int sz = sizeof(s);
+
+                // for debian x64
+                // Stateful = 16, 3 others add up to 8 somehow
+                REQUIRE(sz == 24);
+            }
             SECTION("make_subject")
             {
                 StatelessObserver o1;
@@ -222,6 +236,14 @@ TEST_CASE("observer")
                 s.notify(e);
 
                 REQUIRE(o2.counter == 1);
+
+                SECTION("size evaluation")
+                {
+                    int sz = sizeof(s);
+
+                    // for debian x64
+                    REQUIRE(sz == 16);
+                }
             }
             SECTION("proxy")
             {
