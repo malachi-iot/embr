@@ -211,38 +211,66 @@ class subject : public TBase
     typedef TBase base_type;
     typedef typename base_type::tuple_type tuple_type;
 
+    // EXPERIMENTAL: TPolicy usage/propagation.  May indeed be better behaved as a simpler 'traits'
+    // since so far its core value would be to mutate to different contexts during a single notify
     // using slightly clumsy index >= 0 so that Qt tabbing doesn't get confused
-    template <int index, class TEvent,
-              class TEnabled = typename estd::enable_if <!(index >= 0), bool>::type >
+    template <int index,
+            class TPolicy,
+            class TEvent,
+            class TEnabled = typename estd::enable_if <!(index >= 0), bool>::type >
     void notify_helper(const TEvent&) const
     {
 
     }
 
-    template <int index, class TEvent, class TContext,
-              class TEnabled = typename estd::enable_if <!(index >= 0), bool>::type >
+    template <int index,
+            class TPolicy,
+            class TEvent, class TContext,
+            class TEnabled = typename estd::enable_if <!(index >= 0), bool>::type >
     void notify_c_helper(const TEvent&, TContext&) const
     {
 
     }
 
-    template <int index, class TEvent,
-              class TEnabled = typename estd::enable_if<(index >= 0), void>::type >
+    template <int index,
+            class TPolicy,
+            class TEvent,
+            class TEnabled = typename estd::enable_if<(index >= 0), void>::type >
     void notify_helper(const TEvent& e, bool = true)
     {
-        notify_helper<index - 1>(e);
+        notify_helper<index - 1, TPolicy>(e);
 
         base_type::template _notify_helper<index>(e);
     }
 
-    template <int index, class TEvent, class TContext,
-              class TEnabled = typename estd::enable_if<(index >= 0), void>::type >
+    template <int index,
+                class TPolicy,
+                class TEvent, class TContext,
+                class TEnabled = typename estd::enable_if<(index >= 0), void>::type >
     void notify_c_helper(const TEvent& e, TContext& c, bool = true)
     {
-        notify_c_helper<index - 1>(e, c);
+        notify_c_helper<index - 1, TPolicy>(e, c);
 
         base_type::template _notify_helper<index>(e, c);
     }
+
+    // NOTE: Only used while building out/experimenting with policy.  Replace with something more
+    // descriptive/usable (having static members)
+    // NOTE: 'Policy' is my own term for something like 'traits' but is expected to also have a stateful instance
+    // all its own sometimes
+    struct fake_policy
+    {
+        // TODO: Scare up C++ docs which describe using exactly this technique, it is a standard of sorts
+        // i.e. https://www.boost.org/community/generic_programming.html
+        // tags as a policy so we can know which parameter appearing is actually a policy
+        typedef void policy_tag;
+
+        static CONSTEXPR bool is_forward_order() { return true; }
+
+        template <class TContext>
+        static TContext& mutate_context(TContext& context) { return context; }
+    };
+
 public:
     constexpr subject(TObservers&&...observers) :
             base_type(std::forward<TObservers>(observers)...)
@@ -253,13 +281,15 @@ public:
     template <class TEvent>
     void notify(const TEvent& e)
     {
-        notify_helper<sizeof... (TObservers) - 1>(e);
+        notify_helper<sizeof... (TObservers) - 1, fake_policy>(e);
     }
 
     template <class TEvent, class TContext>
     void notify(const TEvent& e, TContext& c)
     {
-        notify_c_helper<sizeof... (TObservers) - 1>(e, c);
+        auto& mutated_context = fake_policy::mutate_context(c);
+
+        notify_c_helper<sizeof... (TObservers) - 1, fake_policy>(e, mutated_context);
     }
 };
 
