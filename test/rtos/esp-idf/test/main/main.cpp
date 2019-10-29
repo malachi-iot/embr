@@ -2,6 +2,9 @@
 #include <string.h>
 #include "unity.h"
 
+#include <embr/streambuf.h>
+
+
 static void print_banner(const char* text);
 
 extern "C" void app_main()

@@ -1,6 +1,10 @@
 set(COMPONENT_SRCS "dummy.cpp")
 #set(COMPONENT_ADD_INCLUDEDIRS "include")
 
-set(COMPONENT_REQUIRES unity testable)
+# Include the components directory of the main application:
+#
+set(EXTRA_COMPONENT_DIRS "../components/embr")
+
+set(COMPONENT_REQUIRES embr unity testable)
 
 register_component()
