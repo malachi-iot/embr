@@ -204,7 +204,7 @@ public:
 
     // for netbuf flavor we can actually implement these but remember
     // xsgetn at will can change all of these values
-    char_type* gbase() const { return data(); }
+    char_type* gbase() const { return data(); }     // FIX: Change this to 'eback' 
     char_type* gptr() const { return data() + pos; }
     char_type* egptr() const { return data() + size(); }
 
