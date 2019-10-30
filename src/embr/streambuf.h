@@ -21,7 +21,8 @@ struct netbuf_streambuf_base
     // netbuf represents 'put area' in this context
     TNetbuf netbuf;
 
-    char_type* data() const { return reinterpret_cast<char_type*>(netbuf.data()); }
+    char_type* data() { return reinterpret_cast<char_type*>(netbuf.data()); }
+    const char_type* data() const { return reinterpret_cast<char_type*>(netbuf.data()); }
     size_type size() const { return netbuf.size(); }
 
     template <class TParam1>
@@ -53,9 +54,11 @@ private:
     // how far into current netbuf chunk we are (for put operations)
     size_type pos;
 
-    char_type* data() const { return base_type::data(); }
+    char_type* data() { return base_type::data(); }
+    const char_type* data() const { return base_type::data(); }
     size_type size() const { return base_type::size(); }
-    netbuf_type& netbuf() const { return base_type::netbuf; }
+    netbuf_type& netbuf() { return base_type::netbuf; }
+    const netbuf_type& netbuf() const { return base_type::netbuf; }
 
     // end of particular chunk has been reached
     bool eol() const { return pos == size(); }

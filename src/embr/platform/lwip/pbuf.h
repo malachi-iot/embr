@@ -15,16 +15,51 @@ extern "C" {
 
 }
 
+#include <estd/internal/platform.h>
+#include <embr/netbuf.h>
+
 #undef putchar
 #undef puts
 #undef putc
 
 namespace embr { namespace lwip {
 
+// netbuf-mk2 managing a lwip pbuf
 struct PbufNetbuf
 {
-    typedef struct pbuf* pbuf_type;
+    typedef struct pbuf pbuf_type;
     typedef pbuf_type* pbuf_pointer;
+    typedef unsigned short size_type;
+
+private:
+    pbuf_pointer p; 
+
+public:
+    PbufNetbuf(size_type size)
+    {
+        p = pbuf_alloc(PBUF_TRANSPORT, size, PBUF_RAM);
+    }
+
+    ~PbufNetbuf()
+    {
+        if(p != NULLPTR)
+            // remember, pbufs are reference counted so this may or may not actually
+            // deallocate pbuf memory
+            pbuf_free(p);
+    }
+
+    size_type size() const { return 0; }
+
+    uint8_t* data() { return (uint8_t*) p->payload; }
+
+    const uint8_t* data() const { return (const uint8_t*) p->payload; }
+
+    bool next() { return false; }
+
+    embr::mem::ExpandResult expand(size_type by_size, bool move_to_next)
+    { 
+        return embr::mem::ExpandFailFixedSize;
+    }
 };
 
 }}

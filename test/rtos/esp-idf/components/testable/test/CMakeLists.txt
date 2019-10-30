@@ -1,4 +1,4 @@
-set(COMPONENT_SRCS "dummy.cpp")
+set(COMPONENT_SRCS "dummy.cpp" "pbuf.cpp")
 #set(COMPONENT_ADD_INCLUDEDIRS "include")
 
 # Include the components directory of the main application:
