@@ -4,6 +4,8 @@
 
 #include "unity.h"
 
+#include "esp_log.h"
+
 using namespace embr;
 using namespace embr::mem;
 
@@ -13,6 +15,8 @@ constexpr int netbuf_size = 128;
 
 TEST_CASE("lwip pbuf embr-netbuf", "[lwip-pbuf]")
 {
+    const char* TAG = "lwip-pbuf";
+
     // Needing to do reference version since:
     // a) it's the more likely short term use case
     // b) move constructors aren't in place yet, causing havoc with pbuf alloc/free
@@ -30,10 +34,15 @@ TEST_CASE("lwip pbuf embr-netbuf", "[lwip-pbuf]")
     TEST_ASSERT(sz == s1_size);
 
     // FIX: None of these work
-    //estd::layer2::string<s1_size, false> s((char*)_netbuf.data());
-    //estd::layer2::string<s1_size, false> s(sb.pbase());
-    //estd::layer2::string<s1_size> s(s1);
-    //estd::layer2::basic_string<const char, s1_size> s((char*)_netbuf.data());
+    //estd::layer2::string<s1_size, false> _s((char*)_netbuf.data());
+    estd::layer2::string<s1_size, false> _s(sb.pbase());
+    //estd::layer2::string<s1_size> _s(s1);
+    //estd::layer2::basic_string<const char, s1_size> _s((char*)_netbuf.data());
+
+    ESP_LOGI(TAG, "sz = %d, _s.size() = %d", sz, _s.size());
+
+    // FIX: _s.size() comes out to 0 somehow
+    //TEST_ASSERT(_s.size() == s1_size);
 
     estd::layer3::const_string s(sb.pbase(), s1_size);
     //estd::layer2::const_string s(s1);
