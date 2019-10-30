@@ -48,7 +48,9 @@ public:
             pbuf_free(p);
     }
 
-    size_type size() const { return 0; }
+    // p->len represents length of current pbuf, if a chain is involved
+    // look at tot_len
+    size_type size() const { return p->len; }
 
     uint8_t* data() { return (uint8_t*) p->payload; }
 

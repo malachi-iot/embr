@@ -72,8 +72,10 @@ public:
 
     // for netbuf flavor we can actually implement these but remember
     // xsputn at will can change all of these values
-    char_type* pbase() const { return data(); }
-    char_type* pptr() const { return data() + pos; }
+    char_type* pbase() { return data(); }
+    const char_type* pbase() const { return data(); }
+    char_type* pptr() { return data() + pos; }
+    const char_type* pptr() const { return data() + pos; }
     char_type* epptr() const { return data() + size(); }
 
     // as per documentation, no bounds checking is performed on count
