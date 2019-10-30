@@ -22,11 +22,20 @@ struct netbuf_streambuf_base
     TNetbuf netbuf;
 
     char_type* data() { return reinterpret_cast<char_type*>(netbuf.data()); }
-    const char_type* data() const { return reinterpret_cast<char_type*>(netbuf.data()); }
+    const char_type* data() const { return reinterpret_cast<const char_type*>(netbuf.data()); }
     size_type size() const { return netbuf.size(); }
 
     template <class TParam1>
     netbuf_streambuf_base(TParam1& p) : netbuf(p) {}
+
+#ifdef FEATURE_CPP_MOVESEMANTIC
+    template <class ...TArgs>
+    netbuf_streambuf_base(TArgs... args) :
+        netbuf(std::forward<TArgs>(args)...) {}
+
+    netbuf_streambuf_base(netbuf_type&& netbuf) :
+        netbuf(std::move(netbuf)) {}
+#endif
 };
 
 // EXPERIMENTAL - copy/moved from estd ios branch
@@ -64,11 +73,20 @@ private:
     bool eol() const { return pos == size(); }
 
 public:
-    out_netbuf_streambuf(size_type pos = 0) : pos(pos) {}
+    //out_netbuf_streambuf(size_type pos = 0) : pos(pos) {}
 
     template <class TParam1>
     out_netbuf_streambuf(TParam1& p) :
         base_type(p), pos(0) {}
+
+#ifdef FEATURE_CPP_MOVESEMANTIC
+    template <class ...TArgs>
+    out_netbuf_streambuf(TArgs... args) :
+        base_type(std::forward<TArgs>(args)...), pos(0) {}
+
+    out_netbuf_streambuf(netbuf_type&& netbuf) :
+        base_type(std::move(netbuf)), pos(0) {}
+#endif
 
     // for netbuf flavor we can actually implement these but remember
     // xsputn at will can change all of these values

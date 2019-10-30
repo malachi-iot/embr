@@ -40,6 +40,14 @@ public:
         p = pbuf_alloc(PBUF_TRANSPORT, size, PBUF_RAM);
     }
 
+#ifdef FEATURE_CPP_MOVESEMANTIC
+    PbufNetbuf(PbufNetbuf&& move_from) :
+        p(move_from.p)
+    {
+        move_from.p = NULLPTR;
+    }
+#endif
+
     ~PbufNetbuf()
     {
         if(p != NULLPTR)
