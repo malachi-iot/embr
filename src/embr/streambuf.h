@@ -222,6 +222,23 @@ protected:
     // as per documentation, no bounds checking is performed on count
     void gbump(int count) { pos += count; }
 
+    // remember, 'underflow' does not advance character forward and only moves
+    // netbuf forward if current buffer is exhausted
+    // UNTESTED
+    int_type underflow()
+    {
+        if(eol())
+        {
+            // if we can't get anything more out of our netbuf
+            if(!netbuf().next())
+                // return eof.  If netbuf can't provide us any further data, we're done
+                return traits_type::eof();
+        }
+
+        // otherwise, yank out current character (without advancing)
+        return traits_type::to_int_type(gptr());
+    }
+
 public:
     template <class TParam1>
     in_netbuf_streambuf(TParam1& p) :
@@ -287,10 +304,12 @@ public:
         while(count > remaining)
         {
             count -= remaining;
-            while(remaining--) *d++ = *s++;
+            d = estd::copy_n(s, remaining, d);
 
             pos = 0;
 
+            // NOTE: Consider 'underflow' here since count > remaining means we always have at least 1
+            // more character to read here
             if(netbuf().next())
             {
                 s = data();
@@ -308,7 +327,7 @@ public:
         // we get here when count <= remaining, and don't need
         // to issue a 'next'
         pos += count;
-        while(count--) *d++ = *s++;
+        estd::copy_n(s, count, d);
 
         return orig_count;
     }
