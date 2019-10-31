@@ -224,7 +224,7 @@ protected:
 
     // remember, 'underflow' does not advance character forward and only moves
     // netbuf forward if current buffer is exhausted
-    // UNTESTED
+    // Interesting.... I rewrote sgetc...
     int_type underflow()
     {
         if(eol())
@@ -233,10 +233,12 @@ protected:
             if(!netbuf().next())
                 // return eof.  If netbuf can't provide us any further data, we're done
                 return traits_type::eof();
+
+            pos = 0;
         }
 
         // otherwise, yank out current character (without advancing)
-        return traits_type::to_int_type(gptr());
+        return traits_type::to_int_type(*gptr());
     }
 
 public:
@@ -263,6 +265,9 @@ public:
 
     int_type sgetc()
     {
+        return underflow();
+        // keep the follow pre-underflow version around since it has good comments
+#ifdef UNUSED
         // TODO: do a next() here in a nonblocking way
         // to try to get at more data if available.  Unclear how to do this
         // right now because sgetc is supposed to not advance the pointer
@@ -278,6 +283,7 @@ public:
 
         // we arrive here if we're pointing at non-eol of a valid chunk
         return traits_type::to_int_type(*gptr());
+#endif
     }
 
     // TODO: Consolidate this into estd::internal::streambuf as a SFINAE

@@ -49,7 +49,7 @@ private:
 #endif
 
 public:
-#ifdef FEATURE_EMBR_PBUF_CHAIN_EXP
+#ifdef FEATURE_CPP_DECLTYPE
     typedef decltype(p->len) size_type;
 #else
     typedef uint16_t size_type;
