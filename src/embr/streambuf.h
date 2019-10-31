@@ -4,6 +4,11 @@
 
 #include "netbuf.h"
 
+// At time of writing, FEATURE_ESTD_IOSTREAM_STRICT_CONST is invented.  It's more experimental, since it's not
+// fully functional.  The idea is that additional const-ness than stock std performs for the pbase, pptr, etc.
+// could be useful.  This may have additional consequence when we get into more advanced memory buffers which
+// can't be const'd up as much (virtual memory, etc - any memory which has side effects when utilizing it)
+
 namespace embr { namespace mem {
 
 namespace impl {
@@ -21,8 +26,12 @@ struct netbuf_streambuf_base
     // netbuf represents 'put area' in this context
     TNetbuf netbuf;
 
+#ifdef FEATURE_ESTD_IOSTREAM_STRICT_CONST
     char_type* data() { return reinterpret_cast<char_type*>(netbuf.data()); }
     const char_type* data() const { return reinterpret_cast<const char_type*>(netbuf.data()); }
+#else
+    char_type* data() const { return reinterpret_cast<char_type*>(netbuf.data()); }
+#endif
     size_type size() const { return netbuf.size(); }
 
     template <class TParam1>
@@ -63,9 +72,15 @@ private:
     // how far into current netbuf chunk we are (for put operations)
     size_type pos;
 
+    size_type size() const { return base_type::size(); }
+
+#ifdef FEATURE_ESTD_IOSTREAM_STRICT_CONST
     char_type* data() { return base_type::data(); }
     const char_type* data() const { return base_type::data(); }
-    size_type size() const { return base_type::size(); }
+#else
+    char_type* data() const { return base_type::data(); }
+#endif
+
     netbuf_type& netbuf() { return base_type::netbuf; }
     const netbuf_type& netbuf() const { return base_type::netbuf; }
 
@@ -90,11 +105,17 @@ public:
 
     // for netbuf flavor we can actually implement these but remember
     // xsputn at will can change all of these values
+#ifdef FEATURE_ESTD_IOSTREAM_STRICT_CONST
     char_type* pbase() { return data(); }
     const char_type* pbase() const { return data(); }
     char_type* pptr() { return data() + pos; }
     const char_type* pptr() const { return data() + pos; }
     char_type* epptr() const { return data() + size(); }
+#else
+    char_type* pbase() const { return data(); }
+    char_type* pptr() const { return data() + pos; }
+    char_type* epptr() const { return data() + size(); }
+#endif
 
     // as per documentation, no bounds checking is performed on count
     void pbump(int count) { pos += count; }
@@ -190,7 +211,9 @@ private:
 
     char_type* data() const { return base_type::data(); }
     size_type size() const { return base_type::size(); }
-    netbuf_type& netbuf() const { return base_type::netbuf; }
+
+    netbuf_type& netbuf() { return base_type::netbuf; }
+    const netbuf_type& netbuf() const { return base_type::netbuf; }
 
     // end of particular chunk has been reached
     bool eol() const { return pos == size(); }
@@ -204,7 +227,7 @@ public:
 
     // for netbuf flavor we can actually implement these but remember
     // xsgetn at will can change all of these values
-    char_type* gbase() const { return data(); }     // FIX: Change this to 'eback' 
+    char_type* eback() const { return data(); }
     char_type* gptr() const { return data() + pos; }
     char_type* egptr() const { return data() + size(); }
 

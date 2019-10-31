@@ -60,9 +60,7 @@ public:
     // look at tot_len
     size_type size() const { return p->len; }
 
-    uint8_t* data() { return (uint8_t*) p->payload; }
-
-    const uint8_t* data() const { return (const uint8_t*) p->payload; }
+    uint8_t* data() const { return (uint8_t*) p->payload; }
 
     bool next() { return false; }
 
