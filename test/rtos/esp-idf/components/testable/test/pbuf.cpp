@@ -3,6 +3,9 @@
 
 #include <estd/string.h>
 #include <estd/ostream.h>
+#include <estd/istream.h>
+
+//#include <estd/iostream.h>    // FIX: This fails rather badly, look into why
 
 #include "unity.h"
 
@@ -18,9 +21,11 @@ constexpr int netbuf_size = 128;
 static const char* TAG = "lwip-pbuf";
 
 typedef out_netbuf_streambuf<char, embr::lwip::PbufNetbuf> out_pbuf_streambuf;
+typedef in_netbuf_streambuf<char, embr::lwip::PbufNetbuf> in_pbuf_streambuf;
 typedef estd::internal::basic_ostream<out_pbuf_streambuf> pbuf_ostream;
+typedef estd::internal::basic_istream<in_pbuf_streambuf> pbuf_istream;
 
-TEST_CASE("lwip pbuf embr-netbuf: streambuf", "[lwip-pbuf]")
+TEST_CASE("lwip pbuf embr-netbuf: out streambuf", "[lwip-pbuf]")
 {
     // NOTE: Not tested with move constructor, only tested with reference version
     embr::lwip::PbufNetbuf _netbuf(netbuf_size);
@@ -69,4 +74,10 @@ TEST_CASE("lwip pbuf embr-netbuf: ostream", "[lwip-pbuf]")
     ESP_LOGI(TAG, "sz = %d", sb->pptr() - sb->pbase());
 
     TEST_ASSERT(s == s1);
+}
+
+
+TEST_CASE("lwip pbuf embr-netbuf: in streambuf", "[lwip-pbuf]")
+{
+    in_pbuf_streambuf sb(netbuf_size);
 }

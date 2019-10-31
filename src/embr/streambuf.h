@@ -225,6 +225,15 @@ public:
         pos(0)
     {}
 
+#ifdef FEATURE_CPP_MOVESEMANTIC
+    template <class ...TArgs>
+    in_netbuf_streambuf(TArgs... args) :
+        base_type(std::forward<TArgs>(args)...), pos(0) {}
+
+    in_netbuf_streambuf(netbuf_type&& netbuf) :
+        base_type(std::move(netbuf)), pos(0) {}
+#endif
+
     // for netbuf flavor we can actually implement these but remember
     // xsgetn at will can change all of these values
     char_type* eback() const { return data(); }

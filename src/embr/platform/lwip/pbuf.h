@@ -29,15 +29,25 @@ struct PbufNetbuf
 {
     typedef struct pbuf pbuf_type;
     typedef pbuf_type* pbuf_pointer;
-    typedef unsigned short size_type;
 
 private:
     pbuf_pointer p; 
 
 public:
+#ifdef FEATURE_CPP_DECLTYPE
+    typedef decltype(p->len) size_type;
+#else
+    typedef uint16_t size_type;
+#endif
+
     PbufNetbuf(size_type size)
     {
         p = pbuf_alloc(PBUF_TRANSPORT, size, PBUF_RAM);
+    }
+
+    PbufNetbuf(pbuf_pointer p, bool bump_reference = true) : p(p)
+    {
+        if(bump_reference) pbuf_ref(p);
     }
 
 #ifdef FEATURE_CPP_MOVESEMANTIC
