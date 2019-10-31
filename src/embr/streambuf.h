@@ -218,6 +218,10 @@ private:
     // end of particular chunk has been reached
     bool eol() const { return pos == size(); }
 
+protected:
+    // as per documentation, no bounds checking is performed on count
+    void gbump(int count) { pos += count; }
+
 public:
     template <class TParam1>
     in_netbuf_streambuf(TParam1& p) :
@@ -239,9 +243,6 @@ public:
     char_type* eback() const { return data(); }
     char_type* gptr() const { return data() + pos; }
     char_type* egptr() const { return data() + size(); }
-
-    // as per documentation, no bounds checking is performed on count
-    void gbump(int count) { pos += count; }
 
     int_type sgetc()
     {
@@ -278,7 +279,7 @@ public:
 
     streamsize xsgetn(char_type* d, streamsize count)
     {
-        const char_type* s = data() + pos;
+        const char_type* s = gptr();
         streamsize orig_count = count;
         // remaining = number of bytes available to read out of this chunk
         size_type remaining = size() - pos;
@@ -310,6 +311,20 @@ public:
         while(count--) *d++ = *s++;
 
         return orig_count;
+    }
+
+    streamsize in_avail()
+    {
+        // TODO: May want to utilize 'showmanyc'
+        return size() - pos;
+    }
+
+    streamsize showmanyc()
+    {
+        // FIX: What we'll need to do for showmanyc in a netbuf is:
+        // a) know what our meta-position is, across chained netbufs
+        // b) subtract *that* from total_size()
+        return netbuf().total_size();
     }
 };
 
