@@ -62,7 +62,10 @@ TEST_CASE("lwip pbuf embr-netbuf: out streambuf", "[lwip-pbuf]")
 TEST_CASE("lwip pbuf embr-netbuf: ostream", "[lwip-pbuf]")
 {
     // NOTE: Compiles, not runtime tested at all
-    estd::internal::basic_ostream<out_netbuf_streambuf<char, embr::lwip::PbufNetbuf>> 
+    typedef estd::internal::streambuf<
+        out_netbuf_streambuf<char, embr::lwip::PbufNetbuf> > streambuf_type;
+
+    estd::internal::basic_ostream<streambuf_type> 
         out(netbuf_size);
 
     out << s1;
@@ -80,4 +83,10 @@ TEST_CASE("lwip pbuf embr-netbuf: ostream", "[lwip-pbuf]")
 TEST_CASE("lwip pbuf embr-netbuf: in streambuf", "[lwip-pbuf]")
 {
     in_pbuf_streambuf sb(netbuf_size);
+}
+
+
+TEST_CASE("lwip pbuf embr-netbuf: istream", "[lwip-pbuf]")
+{
+    pbuf_istream in(netbuf_size);
 }
