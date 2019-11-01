@@ -98,5 +98,17 @@ TEST_CASE("lwip pbuf embr-netbuf: in streambuf", "[lwip-pbuf]")
 
 TEST_CASE("lwip pbuf embr-netbuf: istream", "[lwip-pbuf]")
 {
+    using namespace estd;
+
     pbuf_istream in(netbuf_size);
+    char buf[netbuf_size];
+
+    // FIX: readsome has bug where it copies the streambuf, no bueno
+    //int read_back = in.readsome(buf, netbuf_size / 2);
+    in.read(buf, netbuf_size / 2);
+
+    /* NOTE: estd doesn't have these input >> operators built out yet
+    int throwaway;
+
+    in >> throwaway; */
 }
