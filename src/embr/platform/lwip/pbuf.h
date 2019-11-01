@@ -111,6 +111,18 @@ public:
     { 
         return embr::mem::ExpandFailFixedSize;
     }
+
+    // EXPERIMENTAL
+    void shrink(size_type to_size)
+    {
+        pbuf_realloc(
+#ifdef FEATURE_EMBR_PBUF_CHAIN_EXP
+            p_start, 
+#else
+            p,
+#endif
+            to_size);
+    }
 };
 
 }}

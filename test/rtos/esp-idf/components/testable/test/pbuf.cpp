@@ -82,7 +82,17 @@ TEST_CASE("lwip pbuf embr-netbuf: ostream", "[lwip-pbuf]")
 
 TEST_CASE("lwip pbuf embr-netbuf: in streambuf", "[lwip-pbuf]")
 {
+    // NOTE: Initializing an empty input pbuf with a large size like this is
+    // a little unusual.  Generally the system provides us with an incoming
+    // pbuf already populated.  We'd only populate the pbuf if we ourselves
+    // were handling the transport
     in_pbuf_streambuf sb(netbuf_size);
+    char buf[netbuf_size];
+
+    // reads a bunch of uninitialized characters back
+    int read_back = sb.sgetn(buf, netbuf_size / 2);
+
+    TEST_ASSERT(read_back == netbuf_size / 2);
 }
 
 
