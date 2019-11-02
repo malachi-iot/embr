@@ -14,6 +14,9 @@
 
 static void print_banner(const char* text);
 
+// TODO: Move a bunch of this out into a support area, ala the old
+// "user_main.c"
+
 // even though 'esp_event_loop_create_default' exists in previous
 // versions, something appears to be off about it
 // https://www.gitmemory.com/issue/espressif/esp-idf/3838/515464313
@@ -72,9 +75,23 @@ static esp_err_t event_handler(void* ctx, system_event_t* event)
 }
 #endif
 
+void init_flash()
+{
+    esp_err_t ret = nvs_flash_init();
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+      ESP_ERROR_CHECK(nvs_flash_erase());
+      ret = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK(ret);
+}
+
 // largely copy/paste from
 // https://github.com/espressif/esp-idf/blob/v3.3/examples/wifi/getting_started/station/main/station_example_main.c
+#ifdef FEATURE_IDF_DEFAULT_EVENT_LOOP
 void wifi_init_sta()
+#else
+void wifi_init_sta(system_event_cb_t event_handler)
+#endif
 {
     static const char *TAG = "wifi_init_sta";
 
@@ -93,6 +110,7 @@ void wifi_init_sta()
     // for ssid/password config via C++
     wifi_config_t wifi_config = {};
 
+    // TODO: May do these elsewhere once everything is organized
 #ifdef FEATURE_IDF_DEFAULT_EVENT_LOOP
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL));
@@ -114,15 +132,14 @@ extern "C" void app_main()
 {
     static const char *TAG = "app_main";
 
-    esp_err_t ret = nvs_flash_init();
-    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-      ESP_ERROR_CHECK(nvs_flash_erase());
-      ret = nvs_flash_init();
-    }
-    ESP_ERROR_CHECK(ret);
+    init_flash();
     
     ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
+#ifdef FEATURE_IDF_DEFAULT_EVENT_LOOP
     wifi_init_sta();
+#else
+    wifi_init_sta(event_handler);
+#endif
 
     // --------
 
