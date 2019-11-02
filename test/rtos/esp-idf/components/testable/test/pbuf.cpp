@@ -103,12 +103,34 @@ TEST_CASE("lwip pbuf embr-netbuf: istream", "[lwip-pbuf]")
     pbuf_istream in(netbuf_size);
     char buf[netbuf_size];
 
-    // FIX: readsome has bug where it copies the streambuf, no bueno
-    //int read_back = in.readsome(buf, netbuf_size / 2);
-    in.read(buf, netbuf_size / 2);
+    int read_back = in.readsome(buf, netbuf_size / 2);
+
+    TEST_ASSERT(read_back == netbuf_size / 2);
+
+    //in.read(buf, netbuf_size / 2);
 
     /* NOTE: estd doesn't have these input >> operators built out yet
     int throwaway;
 
     in >> throwaway; */
+
+    auto* p = pbuf_alloc(PBUF_TRANSPORT, 1, PBUF_RAM);
+
+    TEST_ASSERT(p->ref == 1);
+    {
+        // these parameters mean spin up istream using existing pbuf
+        // and increases ref counter
+        pbuf_istream temp(p);
+        TEST_ASSERT(p->ref == 2);
+    }
+    TEST_ASSERT(p->ref == 1);
+    {
+        // these parameters mean spin up istream using existing pbuf
+        // and DON'T increase ref counter
+        pbuf_istream temp(p, false);
+        TEST_ASSERT(p->ref == 1);
+    }
+    // WARNING: p may in fact be deallocated at this point, so if
+    // we get failures here, comment out this line
+    TEST_ASSERT(p->ref == 0);
 }
