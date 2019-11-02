@@ -24,9 +24,9 @@ void wifi_init_sta()
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
     wifi_config_t wifi_config;
-    
-    //wifi_config.sta.ssid = CONFIG_WIFI_SSID;
-    //wifi_config.sta.password = CONFIG_WIFI_PASSWORD;
+
+    strcpy((char*)wifi_config.sta.ssid, CONFIG_WIFI_SSID);
+    strcpy((char*)wifi_config.sta.password, CONFIG_WIFI_PASSWORD);
 
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA) );
     ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config) );
