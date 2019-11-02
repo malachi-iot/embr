@@ -31,11 +31,43 @@ static void print_banner(const char* text);
 static void event_handler(void* arg, esp_event_base_t event_base,
                             int32_t event_id, void* event_data)
 {
-
+    static const char* TAG = "event_handler";
 }
 #else
 static esp_err_t event_handler(void* ctx, system_event_t* event)
 {
+    static int station_retry_num = 0;
+    static const char* TAG = "event_handler";
+
+    switch(event->event_id)
+    {
+        case SYSTEM_EVENT_STA_START:
+            esp_wifi_connect();
+            break;
+
+        case SYSTEM_EVENT_STA_GOT_IP:
+            // doing LOGD since global system event fires off an
+            // informational level ip report log
+            ESP_LOGD(TAG, "got ip:%s",
+                 ip4addr_ntoa(&event->event_info.got_ip.ip_info.ip));
+            station_retry_num = 0;
+            break;
+
+
+        case SYSTEM_EVENT_STA_DISCONNECTED:
+            if(station_retry_num++ < 5)
+            {
+                ESP_LOGI(TAG, "STA_DISCONNECTED: Retrying");
+                esp_wifi_connect();
+            }
+            else
+                ESP_LOGW(TAG, "STA_DISCONNECTED: Giving up");
+
+            break;
+
+        default:
+            break;
+    }
     return ESP_OK;
 }
 #endif
@@ -57,7 +89,9 @@ void wifi_init_sta()
 
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-    wifi_config_t wifi_config;
+    // https://esp32.com/viewtopic.php?t=1317
+    // for ssid/password config via C++
+    wifi_config_t wifi_config = {};
 
 #ifdef FEATURE_IDF_DEFAULT_EVENT_LOOP
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
