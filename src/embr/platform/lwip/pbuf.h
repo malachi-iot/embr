@@ -107,9 +107,20 @@ public:
 
     bool next() { return false; }
 
+    // EXPERIMETNAL and UNTESTED
     embr::mem::ExpandResult expand(size_type by_size, bool move_to_next)
     { 
-        return embr::mem::ExpandFailFixedSize;
+        pbuf_pointer new_p = pbuf_alloc(PBUF_TRANSPORT, by_size, PBUF_RAM);
+
+        if(new_p == NULLPTR) return embr::mem::ExpandFailOutOfMemory;
+
+        // assumes we called expand while at the end of p chain
+
+        pbuf_cat(p, new_p);
+
+        if(move_to_next) p = p->next;
+        
+        return embr::mem::ExpandOKChained;
     }
 
     // EXPERIMENTAL
