@@ -5,8 +5,6 @@
 #include "esp_log.h"
 #include "nvs_flash.h"
 
-#include <estd/internal/platform.h>
-
 #include "esp-helper.h"
 
 // lifting from my own user_main and from
@@ -59,12 +57,18 @@ esp_err_t event_handler(void* ctx, system_event_t* event)
 
 void init_flash()
 {
+    static const char *TAG = "init_flash";
+
+    ESP_LOGD(TAG, "begin");
+    
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
       ESP_ERROR_CHECK(nvs_flash_erase());
       ret = nvs_flash_init();
     }
     ESP_ERROR_CHECK(ret);
+
+    ESP_LOGI(TAG, "done");
 }
 
 // largely copy/paste from

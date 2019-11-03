@@ -1,5 +1,7 @@
 #pragma once
 
+#include <estd/internal/platform.h>
+
 #include "esp_event.h"
 #include "esp_event_loop.h"
 
