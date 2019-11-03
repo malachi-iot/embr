@@ -5,10 +5,34 @@
 #include "lwip/api.h"
 #include "lwip/udp.h"
 
+#include "esp_log.h"
+
+//#define RAW_LWIP_STYLE
+#include <embr/platform/lwip/pbuf.h>
+#include <embr/streambuf.h>
+
+#include <estd/string.h>
+#include <estd/ostream.h>
+#include <estd/istream.h>
+
+using namespace embr;
+using namespace embr::mem;
+
+typedef out_netbuf_streambuf<char, embr::lwip::PbufNetbuf> out_pbuf_streambuf;
+typedef in_netbuf_streambuf<char, embr::lwip::PbufNetbuf> in_pbuf_streambuf;
+typedef estd::internal::basic_ostream<out_pbuf_streambuf> pbuf_ostream;
+typedef estd::internal::basic_istream<in_pbuf_streambuf> pbuf_istream;
+
+#define RAW_LWIP_STYLE
+
 void udp_echo_recv(void *arg, 
     struct udp_pcb *pcb, struct pbuf *p,  
     const ip_addr_t *addr, u16_t port)
 {
+    const char* TAG = "udp_echo_recv";
+
+    ESP_LOGI(TAG, "entry");
+
     if (p != NULL) {
 
         // brute force copy
@@ -17,8 +41,23 @@ void udp_echo_recv(void *arg,
         // probably making this a PBUF_TRANSPORT is what fixes things
         pbuf_alloc(PBUF_TRANSPORT, p->tot_len, PBUF_RAM);
 
+        // having some serious issues with ref counting
+        pbuf_istream in(p);
+
+        // specifically:
+        /*
+        assertion "p->ref == 1" failed: file "/home/malachi/Projects/ext/esp-idf/components/lwip/lwip/src/core/ipv4/ip4.c", line 889, function: ip4_output_if_opt_src
+        abort() was called at PC 0x400d367f on core 1
+         */
+        // Does this mean ref count must == 1 when issuing a sendto?
+        //pbuf_ostream out(copied_p);
+
+#ifdef RAW_LWIP_STYLE
         // TODO: Just for testing purposes, do this with our istream/ostream
         pbuf_copy(copied_p, p);
+#else
+
+#endif
 
         /* send received packet back to sender */
         udp_sendto(pcb, copied_p, addr, port);
@@ -28,6 +67,8 @@ void udp_echo_recv(void *arg,
         /* free the pbuf */
         pbuf_free(p);
     }
+    else
+        ESP_LOGW(TAG, "p == null");
 }
 
 
