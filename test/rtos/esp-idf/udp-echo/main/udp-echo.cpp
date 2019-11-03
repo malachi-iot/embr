@@ -23,7 +23,7 @@ typedef in_netbuf_streambuf<char, embr::lwip::PbufNetbuf> in_pbuf_streambuf;
 typedef estd::internal::basic_ostream<out_pbuf_streambuf> pbuf_ostream;
 typedef estd::internal::basic_istream<in_pbuf_streambuf> pbuf_istream;
 
-#define RAW_LWIP_STYLE
+//#define RAW_LWIP_STYLE
 
 void udp_echo_recv(void *arg, 
     struct udp_pcb *pcb, struct pbuf *p,  
@@ -31,9 +31,8 @@ void udp_echo_recv(void *arg,
 {
     const char* TAG = "udp_echo_recv";
 
-    ESP_LOGI(TAG, "entry");
-
     if (p != NULL) {
+        ESP_LOGI(TAG, "entry: p->len=%d", p->len);
 
         // brute force copy
         struct pbuf* copied_p =
@@ -50,14 +49,23 @@ void udp_echo_recv(void *arg,
         abort() was called at PC 0x400d367f on core 1
          */
         // Does this mean ref count must == 1 when issuing a sendto?
-        //pbuf_ostream out(copied_p);
+        // according to mapped source code,
+        // https://github.com/espressif/esp-lwip/blob/3ed39f27981e7738c0a454f9e83b8e5164b7078b/src/core/ipv4/ip4.c
+        // it sure seems to.  That's a surprise
+        {
+            // since above seems to be true, scope this so ref count goes back down to 1
+            pbuf_ostream out(copied_p);
 
 #ifdef RAW_LWIP_STYLE
         // TODO: Just for testing purposes, do this with our istream/ostream
-        pbuf_copy(copied_p, p);
+            pbuf_copy(copied_p, p);
 #else
+            char* inbuf = in.rdbuf()->gptr();
 
+            out.write(inbuf, p->len);
+            //out.rdbuf()->sputn(inbuf, p->len);
 #endif
+        }
 
         /* send received packet back to sender */
         udp_sendto(pcb, copied_p, addr, port);
