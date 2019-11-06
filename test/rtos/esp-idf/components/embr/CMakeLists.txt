@@ -1,1 +1,1 @@
-include($ENV{EMBR_ROOT_DIR}/conf/esp-idf.cmake)
+include($ENV{EMBR_ROOT_DIR}/tools/esp-idf/component.cmake)
