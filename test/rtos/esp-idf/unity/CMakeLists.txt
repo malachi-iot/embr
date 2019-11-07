@@ -12,7 +12,5 @@ set(EXTRA_COMPONENT_DIRS "../components")
 #
 set(TEST_COMPONENTS "testable" CACHE STRING "List of components to test")
 
-set(ENV{EMBR_ROOT_DIR} ../../../../..)
-
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 project(unit_test_test)
