@@ -13,14 +13,20 @@ namespace embr { namespace mem {
 
 namespace impl {
 
+// TODO: move the pos_streambuf_base to instead be double-inherited from the other in/out so we can
+// use in_pos_streambuf base etc
 template <class TChar, class TNetbuf, class CharTraits>
-struct netbuf_streambuf_base
+struct netbuf_streambuf_base : 
+    estd::internal::impl::pos_streambuf_base<
+        typename estd::remove_reference<TNetbuf>::type::size_type>
 {
     typedef TChar char_type;
     typedef CharTraits traits_type;
     typedef typename estd::remove_reference<TNetbuf>::type netbuf_type;
     typedef typename netbuf_type::size_type size_type;
     typedef estd::streamsize streamsize;
+    typedef estd::internal::impl::pos_streambuf_base<
+        typename estd::remove_reference<TNetbuf>::type::size_type> base_type;
 
     // Spot for shared netbuf, if we ever actually need it
     // netbuf represents 'put area' in this context
@@ -35,14 +41,18 @@ struct netbuf_streambuf_base
     size_type size() const { return netbuf.size(); }
 
     template <class TParam1>
-    netbuf_streambuf_base(TParam1& p) : netbuf(p) {}
+    netbuf_streambuf_base(TParam1& p) : 
+        base_type(0),
+        netbuf(p) {}
 
 #ifdef FEATURE_CPP_MOVESEMANTIC
     template <class ...TArgs>
     netbuf_streambuf_base(TArgs... args) :
+        base_type(0),
         netbuf(std::forward<TArgs>(args)...) {}
 
     netbuf_streambuf_base(netbuf_type&& netbuf) :
+        base_type(0),
         netbuf(std::move(netbuf)) {}
 #endif
 };

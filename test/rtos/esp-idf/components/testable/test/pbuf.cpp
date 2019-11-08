@@ -59,6 +59,18 @@ TEST_CASE("lwip pbuf embr-netbuf: out streambuf", "[lwip-pbuf]")
     TEST_ASSERT(s == s1);
 }
 
+TEST_CASE("lwip pbuf embr-netbuf: out streambuf chain", "[lwip-pbuf]")
+{
+    constexpr int netbuf_size = 64;
+
+    out_pbuf_streambuf sb(netbuf_size);
+    
+    for(int i = 0; i < netbuf_size * 3; i += s1_size)
+    {
+        sb.sputn(s1, s1_size);
+    }
+}
+
 TEST_CASE("lwip pbuf embr-netbuf: ostream", "[lwip-pbuf]")
 {
     // NOTE: Compiles, not runtime tested at all
