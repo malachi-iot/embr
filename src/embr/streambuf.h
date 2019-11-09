@@ -16,17 +16,13 @@ namespace impl {
 // TODO: move the pos_streambuf_base to instead be double-inherited from the other in/out so we can
 // use in_pos_streambuf base etc
 template <class TChar, class TNetbuf, class CharTraits>
-struct netbuf_streambuf_base : 
-    estd::internal::impl::pos_streambuf_base<
-        typename estd::remove_reference<TNetbuf>::type::size_type>
+struct netbuf_streambuf_base
 {
     typedef TChar char_type;
     typedef CharTraits traits_type;
     typedef typename estd::remove_reference<TNetbuf>::type netbuf_type;
     typedef typename netbuf_type::size_type size_type;
     typedef estd::streamsize streamsize;
-    typedef estd::internal::impl::pos_streambuf_base<
-        typename estd::remove_reference<TNetbuf>::type::size_type> base_type;
 
     // Spot for shared netbuf, if we ever actually need it
     // netbuf represents 'put area' in this context
@@ -42,17 +38,14 @@ struct netbuf_streambuf_base :
 
     template <class TParam1>
     netbuf_streambuf_base(TParam1& p) : 
-        base_type(0),
         netbuf(p) {}
 
 #ifdef FEATURE_CPP_MOVESEMANTIC
     template <class ...TArgs>
     netbuf_streambuf_base(TArgs... args) :
-        base_type(0),
         netbuf(std::forward<TArgs>(args)...) {}
 
     netbuf_streambuf_base(netbuf_type&& netbuf) :
-        base_type(0),
         netbuf(std::move(netbuf)) {}
 #endif
 };
@@ -67,9 +60,13 @@ struct netbuf_streambuf_base :
 template <class TChar, class TNetbuf,
           class CharTraits = std::char_traits<TChar>,
           class TBase = netbuf_streambuf_base<TChar, TNetbuf, CharTraits> >
-struct out_netbuf_streambuf : TBase
+struct out_netbuf_streambuf : 
+    // TODO: Need to fix out_pos_streambuf_base to take CharTraits
+    estd::internal::impl::out_pos_streambuf_base<int>,
+    TBase
 {
     typedef TBase base_type;
+    typedef estd::internal::impl::out_pos_streambuf_base<int> in_pos_base_type;
     typedef TChar char_type;
     typedef CharTraits traits_type;
     typedef typename estd::remove_reference<TNetbuf>::type netbuf_type;
@@ -78,11 +75,8 @@ struct out_netbuf_streambuf : TBase
     typedef estd::streamsize streamsize;
 
 private:
-
-    // how far into current netbuf chunk we are (for put operations)
-    size_type pos;
-
     size_type size() const { return base_type::size(); }
+    size_type pos() const { return in_pos_base_type::pos(); }
 
 #ifdef FEATURE_ESTD_IOSTREAM_STRICT_CONST
     char_type* data() { return base_type::data(); }
@@ -95,22 +89,22 @@ private:
     const netbuf_type& netbuf() const { return base_type::netbuf; }
 
     // end of particular chunk has been reached
-    bool eol() const { return pos == size(); }
+    bool eol() const { return pos() == size(); }
 
 public:
     //out_netbuf_streambuf(size_type pos = 0) : pos(pos) {}
 
     template <class TParam1>
     out_netbuf_streambuf(TParam1& p) :
-        base_type(p), pos(0) {}
+        base_type(p) {}
 
 #ifdef FEATURE_CPP_MOVESEMANTIC
     template <class ...TArgs>
     out_netbuf_streambuf(TArgs... args) :
-        base_type(std::forward<TArgs>(args)...), pos(0) {}
+        base_type(std::forward<TArgs>(args)...) {}
 
     out_netbuf_streambuf(netbuf_type&& netbuf) :
-        base_type(std::move(netbuf)), pos(0) {}
+        base_type(std::move(netbuf)) {}
 #endif
 
     // for netbuf flavor we can actually implement these but remember
@@ -123,13 +117,9 @@ public:
     char_type* epptr() const { return data() + size(); }
 #else
     char_type* pbase() const { return data(); }
-    char_type* pptr() const { return data() + pos; }
+    char_type* pptr() const { return data() + pos(); }
     char_type* epptr() const { return data() + size(); }
 #endif
-
-    // as per documentation, no bounds checking is performed on count
-    void pbump(int count) { pos += count; }
-
 
     // TODO: We need to figure out our interaction with device itself (i.e. output sequence)
     // which is supposed
@@ -149,9 +139,9 @@ public:
     // since this is the first time I've put it in a truly standard place
     streamsize xsputn(const char_type* s, streamsize count)
     {
-        char_type* d = data() + pos;
+        char_type* d = pptr();
         streamsize orig_count = count;
-        size_type remaining = size() - pos;
+        size_type remaining = size() - pos();
 
         // if we have more to write than fits in the current netbuf.data()
         while(count > remaining)
@@ -166,7 +156,7 @@ public:
             // whether or not has_next succeeds, pos is reset here
             // this means if it fails, the next write operation will overwrite the contents
             // so keep an eye on your return streamsize
-            pos = 0;
+            this->_pos = 0;
 
             if(has_next)
             {
@@ -194,7 +184,9 @@ public:
             }
         }
 
-        pos += count;
+        // FIX: compile bug in pbump
+        this->_pos += count;
+        //this->pbump(count);
 
         while(count--) *d++ = *s++;
 
@@ -205,20 +197,23 @@ public:
 template <class TChar, class TNetbuf,
           class CharTraits = std::char_traits<TChar>,
           class TBase = netbuf_streambuf_base<TChar, TNetbuf, CharTraits> >
-struct in_netbuf_streambuf : TBase
+struct in_netbuf_streambuf : 
+    estd::internal::impl::in_pos_streambuf_base<CharTraits>,
+    TBase
 {
     typedef TBase base_type;
+    typedef estd::internal::impl::in_pos_streambuf_base<CharTraits> in_pos_base_type;
     typedef typename base_type::char_type char_type;
     typedef typename base_type::size_type size_type;
     typedef typename base_type::traits_type traits_type;
     typedef typename traits_type::int_type int_type;
+    typedef typename traits_type::pos_type pos_type;
     typedef typename base_type::netbuf_type netbuf_type;
     typedef typename base_type::streamsize streamsize;
 
-private:
-    // how far into current netbuf chunk we are (for get operations)
-    size_type pos;
+    pos_type pos() const { return in_pos_base_type::pos(); }
 
+private:
     char_type* data() const { return base_type::data(); }
     size_type size() const { return base_type::size(); }
 
@@ -226,11 +221,10 @@ private:
     const netbuf_type& netbuf() const { return base_type::netbuf; }
 
     // end of particular chunk has been reached
-    bool eol() const { return pos == size(); }
+    bool eol() const { return pos() == size(); }
 
 protected:
-    // as per documentation, no bounds checking is performed on count
-    void gbump(int count) { pos += count; }
+    void pos(pos_type p) { in_pos_base_type::pos(p); }
 
     // remember, 'underflow' does not advance character forward and only moves
     // netbuf forward if current buffer is exhausted
@@ -254,23 +248,22 @@ protected:
 public:
     template <class TParam1>
     in_netbuf_streambuf(TParam1& p) :
-        base_type(p),
-        pos(0)
+        base_type(p)
     {}
 
 #ifdef FEATURE_CPP_MOVESEMANTIC
     template <class ...TArgs>
     in_netbuf_streambuf(TArgs... args) :
-        base_type(std::forward<TArgs>(args)...), pos(0) {}
+        base_type(std::forward<TArgs>(args)...) {}
 
     in_netbuf_streambuf(netbuf_type&& netbuf) :
-        base_type(std::move(netbuf)), pos(0) {}
+        base_type(std::move(netbuf)) {}
 #endif
 
     // for netbuf flavor we can actually implement these but remember
     // xsgetn at will can change all of these values
     char_type* eback() const { return data(); }
-    char_type* gptr() const { return data() + pos; }
+    char_type* gptr() const { return data() + pos(); }
     char_type* egptr() const { return data() + size(); }
 
     int_type sgetc()
@@ -305,7 +298,7 @@ public:
 
         // if ret_value is not eof, then by definition we have at least
         // one pos we can advance.
-        if(ret_value != traits_type::eof()) pos++;
+        if(ret_value != traits_type::eof()) this->gbump(1);;
 
         return ret_value;
     }
@@ -315,14 +308,14 @@ public:
         const char_type* s = gptr();
         streamsize orig_count = count;
         // remaining = number of bytes available to read out of this chunk
-        size_type remaining = size() - pos;
+        size_type remaining = size() - pos();
 
         while(count > remaining)
         {
             count -= remaining;
             d = estd::copy_n(s, remaining, d);
 
-            pos = 0;
+            this->_pos = 0;
 
             // NOTE: Consider 'underflow' here since count > remaining means we always have at least 1
             // more character to read here
@@ -342,7 +335,8 @@ public:
 
         // we get here when count <= remaining, and don't need
         // to issue a 'next'
-        pos += count;
+        this->gbump(count);
+
         estd::copy_n(s, count, d);
 
         return orig_count;
@@ -351,7 +345,7 @@ public:
     streamsize in_avail()
     {
         // TODO: May want to utilize 'showmanyc'
-        return size() - pos;
+        return size() - pos();
     }
 
     streamsize showmanyc()
