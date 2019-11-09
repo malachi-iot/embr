@@ -101,7 +101,14 @@ public:
     // look at tot_len
     size_type size() const { return p->len; }
 
-    size_type total_size() const { return p->tot_len; }
+    size_type total_size() const 
+    {
+#ifdef FEATURE_EMBR_PBUF_CHAIN_EXP
+        return p_start->tot_len;
+#else
+        return p->tot_len;
+#endif
+    }
 
     uint8_t* data() const { return (uint8_t*) p->payload; }
 
@@ -110,6 +117,7 @@ public:
     // EXPERIMETNAL and UNTESTED
     embr::mem::ExpandResult expand(size_type by_size, bool move_to_next)
     {
+#ifdef FEATURE_EMBR_PBUF_CHAIN_EXP
         const size_type threshold_size = 32;
 
         if(by_size < threshold_size)
@@ -126,6 +134,9 @@ public:
         if(move_to_next) p = p->next;
         
         return embr::mem::ExpandOKChained;
+#else
+        return embr::mem::ExpandFailFixedSize;
+#endif
     }
 
     // EXPERIMENTAL
