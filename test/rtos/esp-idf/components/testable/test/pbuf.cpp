@@ -20,8 +20,9 @@ constexpr int netbuf_size = 128;
 
 static const char* TAG = "lwip-pbuf";
 
-typedef out_netbuf_streambuf<char, embr::lwip::PbufNetbuf> out_pbuf_streambuf;
-typedef in_netbuf_streambuf<char, embr::lwip::PbufNetbuf> in_pbuf_streambuf;
+typedef embr::lwip::PbufNetbuf netbuf_type;
+typedef out_netbuf_streambuf<char, netbuf_type> out_pbuf_streambuf;
+typedef in_netbuf_streambuf<char, netbuf_type> in_pbuf_streambuf;
 typedef estd::internal::basic_ostream<out_pbuf_streambuf> pbuf_ostream;
 typedef estd::internal::basic_istream<in_pbuf_streambuf> pbuf_istream;
 
@@ -65,10 +66,19 @@ TEST_CASE("lwip pbuf embr-netbuf: out streambuf chain", "[lwip-pbuf]")
 
     out_pbuf_streambuf sb(netbuf_size);
     
+    const netbuf_type& netbuf = sb.cnetbuf();
+
+    ESP_LOGI(TAG, "#1 total_size = %d", netbuf.total_size());
+    TEST_ASSERT(netbuf.total_size() == netbuf_size);
+
     for(int i = 0; i < netbuf_size * 3; i += s1_size)
     {
         sb.sputn(s1, s1_size);
     }
+
+    ESP_LOGI(TAG, "#2 total_size = %d", netbuf.total_size());
+    //TEST_ASSERT(netbuf.total_size() == s1_size * 3);
+    //struct pbuf* pb = sb.netbuf().p;
 }
 
 TEST_CASE("lwip pbuf embr-netbuf: ostream", "[lwip-pbuf]")

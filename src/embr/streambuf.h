@@ -74,6 +74,9 @@ struct out_netbuf_streambuf :
     typedef typename traits_type::int_type int_type;
     typedef estd::streamsize streamsize;
 
+    // FIX: ugly naming
+    const netbuf_type& cnetbuf() const { return base_type::netbuf; }
+
 private:
     size_type size() const { return base_type::size(); }
     size_type pos() const { return in_pos_base_type::pos(); }
@@ -86,7 +89,6 @@ private:
 #endif
 
     netbuf_type& netbuf() { return base_type::netbuf; }
-    const netbuf_type& netbuf() const { return base_type::netbuf; }
 
     // end of particular chunk has been reached
     bool eol() const { return pos() == size(); }
@@ -213,12 +215,13 @@ struct in_netbuf_streambuf :
 
     pos_type pos() const { return in_pos_base_type::pos(); }
 
+    const netbuf_type& netbuf() const { return base_type::netbuf; }
+
 private:
     char_type* data() const { return base_type::data(); }
     size_type size() const { return base_type::size(); }
 
     netbuf_type& netbuf() { return base_type::netbuf; }
-    const netbuf_type& netbuf() const { return base_type::netbuf; }
 
     // end of particular chunk has been reached
     bool eol() const { return pos() == size(); }
