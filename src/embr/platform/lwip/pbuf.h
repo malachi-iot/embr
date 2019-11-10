@@ -97,6 +97,10 @@ public:
 #endif
     }
 
+#ifdef FEATURE_EMBR_PBUF_CHAIN_EXP
+    static CONSTEXPR size_type threshold_size = 32;
+#endif
+
     // p->len represents length of current pbuf, if a chain is involved
     // look at tot_len
     size_type size() const { return p->len; }
@@ -129,8 +133,6 @@ public:
     embr::mem::ExpandResult expand(size_type by_size, bool move_to_next)
     {
 #ifdef FEATURE_EMBR_PBUF_CHAIN_EXP
-        const size_type threshold_size = 32;
-
         if(by_size < threshold_size)
             by_size = threshold_size;
             
