@@ -73,28 +73,49 @@ public:
 #endif
     }
 
+    PbufNetbuf(const PbufNetbuf& copy_from, bool bump_reference = true) :
+        p(copy_from.p)
+#ifdef FEATURE_EMBR_PBUF_CHAIN_EXP
+        ,p_start(copy_from.p_start)
+#endif
+    {
+        pbuf_pointer p_to_bump =
+#ifdef FEATURE_EMBR_PBUF_CHAIN_EXP
+            p_start;
+#else
+            p;
+#endif
+
+        if(bump_reference) pbuf_ref(p_to_bump);
+    }
+
 #ifdef FEATURE_CPP_MOVESEMANTIC
     PbufNetbuf(PbufNetbuf&& move_from) :
         p(move_from.p)
+#ifdef FEATURE_EMBR_PBUF_CHAIN_EXP
+        ,p_start(move_from.p_start)
+#endif
     {
         move_from.p = NULLPTR;
 #ifdef FEATURE_EMBR_PBUF_CHAIN_EXP
-        p_start = p;
+        move_from.p_start = NULLPTR;
 #endif
     }
 #endif
 
     ~PbufNetbuf()
     {
-        if(p != NULLPTR)
+        pbuf_pointer p_to_free =
+#ifdef FEATURE_EMBR_PBUF_CHAIN_EXP
+            p_start;
+#else
+            p;
+#endif
+
+        if(p_to_free != NULLPTR)
             // remember, pbufs are reference counted so this may or may not actually
             // deallocate pbuf memory
-#ifdef FEATURE_EMBR_PBUF_CHAIN_EXP
-            // NOTE: Unsure how pbuf_free works on a chain of pbufs
-            pbuf_free(p_start);
-#else
-            pbuf_free(p);
-#endif
+            pbuf_free(p_to_free);
     }
 
 #ifdef FEATURE_EMBR_PBUF_CHAIN_EXP

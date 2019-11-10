@@ -77,11 +77,8 @@ TEST_CASE("lwip pbuf embr-netbuf: out streambuf chain", "[lwip-pbuf]")
         sb.sputn(s1, s1_size);
     }
 
-    // FIX: Only 96, expecting more like ~192
-    // what if tot_size doesn't recalculate past the first chained item?
     ESP_LOGI(TAG, "#2 total_size = %d", netbuf.total_size());
     TEST_ASSERT(netbuf.total_size() == ((netbuf_size * 3) + netbuf_type::threshold_size));
-    //struct pbuf* pb = sb.netbuf().p;
 }
 #endif
 
@@ -121,6 +118,35 @@ TEST_CASE("lwip pbuf embr-netbuf: in streambuf", "[lwip-pbuf]")
     TEST_ASSERT(read_back == netbuf_size / 2);
 }
 
+
+#ifdef FEATURE_EMBR_PBUF_CHAIN_EXP
+// discere input vs output streambufs
+TEST_CASE("lwip pbuf embr-netbuf: in streambuf chain 1", "[lwip-pbuf]")
+{
+    constexpr int netbuf_size = 64;
+
+    out_pbuf_streambuf sb_out(netbuf_size);
+    
+    const netbuf_type& netbuf = sb_out.cnetbuf();
+
+    for(int i = 0; i < 1 + (netbuf_size * 3); i += s1_size)
+    {
+        sb_out.sputn(s1, s1_size);
+    }
+
+    // NOTE: Initializing an empty input pbuf with a large size like this is
+    // a little unusual.  Generally the system provides us with an incoming
+    // pbuf already populated.  We'd only populate the pbuf if we ourselves
+    // were handling the transport
+    in_pbuf_streambuf sb(netbuf);
+    char buf[netbuf_size];
+
+    // reads a bunch of uninitialized characters back
+    int read_back = sb.sgetn(buf, netbuf_size / 2);
+
+    TEST_ASSERT(read_back == netbuf_size / 2);
+}
+#endif
 
 TEST_CASE("lwip pbuf embr-netbuf: istream", "[lwip-pbuf]")
 {
