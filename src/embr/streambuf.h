@@ -241,7 +241,7 @@ protected:
                 // return eof.  If netbuf can't provide us any further data, we're done
                 return traits_type::eof();
 
-            pos = 0;
+            pos(0);
         }
 
         // otherwise, yank out current character (without advancing)
