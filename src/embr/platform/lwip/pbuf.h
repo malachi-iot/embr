@@ -73,7 +73,9 @@ public:
 #endif
     }
 
-    PbufNetbuf(const PbufNetbuf& copy_from, bool bump_reference = true) :
+    // FIX: Don't want to do reset here, but until seekoff gets sorted out,
+    // we need this for testing
+    PbufNetbuf(const PbufNetbuf& copy_from, bool reset, bool bump_reference = true) :
         p(copy_from.p)
 #ifdef FEATURE_EMBR_PBUF_CHAIN_EXP
         ,p_start(copy_from.p_start)
@@ -87,6 +89,8 @@ public:
 #endif
 
         if(bump_reference) pbuf_ref(p_to_bump);
+
+        if(reset) this->reset();
     }
 
 #ifdef FEATURE_CPP_MOVESEMANTIC
@@ -185,6 +189,15 @@ public:
             p,
 #endif
             to_size);
+    }
+
+    // EXPERIMENTAL
+    // moves pbuf chain back to beginning
+    void reset()
+    {
+#ifdef FEATURE_EMBR_PBUF_CHAIN_EXP
+        p = p_start;
+#endif
     }
 };
 

@@ -42,7 +42,7 @@ struct netbuf_streambuf_base
 
 #ifdef FEATURE_CPP_MOVESEMANTIC
     template <class ...TArgs>
-    netbuf_streambuf_base(TArgs... args) :
+    netbuf_streambuf_base(TArgs&&... args) :
         netbuf(std::forward<TArgs>(args)...) {}
 
     netbuf_streambuf_base(netbuf_type&& netbuf) :
@@ -102,7 +102,7 @@ public:
 
 #ifdef FEATURE_CPP_MOVESEMANTIC
     template <class ...TArgs>
-    out_netbuf_streambuf(TArgs... args) :
+    out_netbuf_streambuf(TArgs&&... args) :
         base_type(std::forward<TArgs>(args)...) {}
 
     out_netbuf_streambuf(netbuf_type&& netbuf) :
@@ -256,7 +256,7 @@ public:
 
 #ifdef FEATURE_CPP_MOVESEMANTIC
     template <class ...TArgs>
-    in_netbuf_streambuf(TArgs... args) :
+    in_netbuf_streambuf(TArgs&&... args) :
         base_type(std::forward<TArgs>(args)...) {}
 
     in_netbuf_streambuf(netbuf_type&& netbuf) :

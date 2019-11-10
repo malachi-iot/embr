@@ -134,19 +134,18 @@ TEST_CASE("lwip pbuf embr-netbuf: out+in streambuf chain 1", "[lwip-pbuf]")
         sb_out.sputn(s1, s1_size);
     }
 
-    in_pbuf_streambuf sb(out_netbuf);
+    in_pbuf_streambuf sb(out_netbuf, true);
 
     const netbuf_type& in_netbuf = sb_out.cnetbuf();
 
-    TEST_ASSERT(sb.pos() == 0);
-    TEST_ASSERT(in_netbuf.size() == netbuf_size);
+    TEST_ASSERT_EQUAL_INT(0, sb.pos());
+    TEST_ASSERT_EQUAL_INT(netbuf_size, in_netbuf.size());
 
     char buf[netbuf_size];
 
     // NOTE: Still figuring out if this is total size or chunk size
     // at the moment, it's total size
-    ESP_LOGI(TAG, "sb.in_avail = %d", sb.in_avail());
-    TEST_ASSERT(sb.in_avail() == 224);
+    TEST_ASSERT_EQUAL_INT(224, sb.in_avail());
 
     int read_back = sb.sbumpc();
 
