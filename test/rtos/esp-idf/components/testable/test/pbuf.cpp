@@ -136,7 +136,7 @@ TEST_CASE("lwip pbuf embr-netbuf: out+in streambuf chain 1", "[lwip-pbuf]")
 
     in_pbuf_streambuf sb(out_netbuf, true);
 
-    const netbuf_type& in_netbuf = sb_out.cnetbuf();
+    const netbuf_type& in_netbuf = sb.cnetbuf();
 
     TEST_ASSERT_EQUAL_INT(0, sb.pos());
     TEST_ASSERT_EQUAL_INT(netbuf_size, in_netbuf.size());
@@ -155,10 +155,14 @@ TEST_CASE("lwip pbuf embr-netbuf: out+in streambuf chain 1", "[lwip-pbuf]")
 
     read_back = sb.sgetn(buf, netbuf_size / 2);
 
-    // FIX: This is coming back 31, expecting 32
-    // If sgetn above doesn't run, then we get 32
-    ESP_LOGI(TAG, "read_back = %d", read_back);
+    TEST_ASSERT_EQUAL_INT(1 + netbuf_size / 2, sb.pos());
+
     TEST_ASSERT(read_back == netbuf_size / 2);
+
+    // TODO: put this test in its own discrete area
+    sb.pubseekoff(1, estd::ios_base::cur);
+
+    TEST_ASSERT_EQUAL_INT(2 + netbuf_size / 2, sb.pos());
 }
 #endif
 

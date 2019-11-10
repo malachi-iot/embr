@@ -210,12 +210,15 @@ struct in_netbuf_streambuf :
     typedef typename base_type::traits_type traits_type;
     typedef typename traits_type::int_type int_type;
     typedef typename traits_type::pos_type pos_type;
+    typedef typename traits_type::off_type off_type;
     typedef typename base_type::netbuf_type netbuf_type;
     typedef typename base_type::streamsize streamsize;
+    typedef estd::ios_base ios_base;
 
     pos_type pos() const { return in_pos_base_type::pos(); }
 
-    const netbuf_type& netbuf() const { return base_type::netbuf; }
+    // FIX: ugly naming
+    const netbuf_type& cnetbuf() const { return base_type::netbuf; }
 
 private:
     char_type* data() const { return base_type::data(); }
@@ -228,6 +231,35 @@ private:
 
 protected:
     void pos(pos_type p) { in_pos_base_type::pos(p); }
+
+    // TODO: Try to consolidate this into a netbuf_streambuf_base - impediment
+    // is that that one doesn't implement the pos base
+    // TODO: want this to be for beg/end based on true absolute netbuf sizing, for now
+    // it's only current chunk
+    pos_type seekoff(off_type off, ios_base::seekdir way, ios_base::openmode which)
+    {
+        // openmode MUST include 'out' in this instance, otherwise error or ignore
+        if(!(which & ios_base::in)) return -1;
+
+        switch(way)
+        {
+            case ios_base::cur:
+                this->gbump(off);
+                break;
+
+            case ios_base::beg:
+                pos(off);
+                break;
+
+            case ios_base::end:
+                // UNTESTED
+                pos(size() + off);
+                break;
+        }
+
+        // TODO: after doing above legwork, this pos() will be more complex
+        return pos();
+    }
 
     // remember, 'underflow' does not advance character forward and only moves
     // netbuf forward if current buffer is exhausted
