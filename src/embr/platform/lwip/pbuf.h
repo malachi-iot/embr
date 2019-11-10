@@ -112,7 +112,18 @@ public:
 
     uint8_t* data() const { return (uint8_t*) p->payload; }
 
-    bool next() { return false; }
+    bool next() 
+    {
+        // TODO: Look into whether there's a particular pbuf API
+        // call that's appropriate (probably not)
+        if(p->next != NULLPTR)
+        {
+            p = p->next;
+            return true;
+        }
+
+        return false;
+    }
 
     // EXPERIMETNAL and lightly tested
     embr::mem::ExpandResult expand(size_type by_size, bool move_to_next)

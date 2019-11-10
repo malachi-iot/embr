@@ -79,7 +79,7 @@ TEST_CASE("lwip pbuf embr-netbuf: out streambuf chain", "[lwip-pbuf]")
     // FIX: Only 96, expecting more like ~192
     // what if tot_size doesn't recalculate past the first chained item?
     ESP_LOGI(TAG, "#2 total_size = %d", netbuf.total_size());
-    //TEST_ASSERT(netbuf.total_size() == netbuf_size * 3);
+    TEST_ASSERT(netbuf.total_size() == netbuf_size * 3);
     //struct pbuf* pb = sb.netbuf().p;
 }
 
