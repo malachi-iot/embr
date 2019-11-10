@@ -121,20 +121,25 @@ TEST_CASE("lwip pbuf embr-netbuf: in streambuf", "[lwip-pbuf]")
 
 #ifdef FEATURE_EMBR_PBUF_CHAIN_EXP
 // discere input vs output streambufs
-TEST_CASE("lwip pbuf embr-netbuf: in streambuf chain 1", "[lwip-pbuf]")
+TEST_CASE("lwip pbuf embr-netbuf: out+in streambuf chain 1", "[lwip-pbuf]")
 {
     constexpr int netbuf_size = 64;
 
     out_pbuf_streambuf sb_out(netbuf_size);
     
-    const netbuf_type& netbuf = sb_out.cnetbuf();
+    const netbuf_type& out_netbuf = sb_out.cnetbuf();
 
     for(int i = 0; i < 1 + (netbuf_size * 3); i += s1_size)
     {
         sb_out.sputn(s1, s1_size);
     }
 
-    in_pbuf_streambuf sb(netbuf);
+    in_pbuf_streambuf sb(out_netbuf);
+
+    const netbuf_type& in_netbuf = sb_out.cnetbuf();
+
+    TEST_ASSERT(sb.pos() == 0);
+    TEST_ASSERT(in_netbuf.size() == netbuf_size);
 
     char buf[netbuf_size];
 
@@ -144,13 +149,15 @@ TEST_CASE("lwip pbuf embr-netbuf: in streambuf chain 1", "[lwip-pbuf]")
     TEST_ASSERT(sb.in_avail() == 224);
 
     int read_back = sb.sbumpc();
+
+    TEST_ASSERT(sb.pos() == 1);
     
     TEST_ASSERT(read_back == s1[0]);
 
     read_back = sb.sgetn(buf, netbuf_size / 2);
 
-    // FIX: This is coming back 31, expecting 64
-    // If sgetn above doesn't run, then we get 64
+    // FIX: This is coming back 31, expecting 32
+    // If sgetn above doesn't run, then we get 32
     ESP_LOGI(TAG, "read_back = %d", read_back);
     TEST_ASSERT(read_back == netbuf_size / 2);
 }

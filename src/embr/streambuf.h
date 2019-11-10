@@ -321,7 +321,7 @@ public:
             count -= remaining;
             d = estd::copy_n(s, remaining, d);
 
-            this->_pos = 0;
+            pos(0);
 
             // NOTE: Consider 'underflow' here since count > remaining means we always have at least 1
             // more character to read here
