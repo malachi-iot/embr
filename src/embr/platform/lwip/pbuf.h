@@ -114,7 +114,7 @@ public:
 
     bool next() { return false; }
 
-    // EXPERIMETNAL and UNTESTED
+    // EXPERIMETNAL and lightly tested
     embr::mem::ExpandResult expand(size_type by_size, bool move_to_next)
     {
 #ifdef FEATURE_EMBR_PBUF_CHAIN_EXP
@@ -129,8 +129,10 @@ public:
 
         // assumes we called expand while at the end of p chain
 
-        pbuf_cat(p, new_p);
+        // UNTESTED
+        pbuf_cat(p_start, new_p);
 
+        // TODO: Might just assign p to new_p
         if(move_to_next) p = p->next;
         
         return embr::mem::ExpandOKChained;
