@@ -345,12 +345,6 @@ public:
         return orig_count;
     }
 
-    streamsize in_avail()
-    {
-        // TODO: May want to utilize 'showmanyc'
-        return size() - pos();
-    }
-
     streamsize showmanyc()
     {
         // FIX: What we'll need to do for showmanyc in a netbuf is:

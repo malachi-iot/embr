@@ -134,12 +134,14 @@ TEST_CASE("lwip pbuf embr-netbuf: in streambuf chain 1", "[lwip-pbuf]")
         sb_out.sputn(s1, s1_size);
     }
 
-    // NOTE: Initializing an empty input pbuf with a large size like this is
-    // a little unusual.  Generally the system provides us with an incoming
-    // pbuf already populated.  We'd only populate the pbuf if we ourselves
-    // were handling the transport
     in_pbuf_streambuf sb(netbuf);
+
     char buf[netbuf_size];
+
+    // NOTE: Still figuring out if this is total size or chunk size
+    // at the moment, it's total size
+    ESP_LOGI(TAG, "sb.in_avail = %d", sb.in_avail());
+    TEST_ASSERT(sb.in_avail() == 224);
 
     // reads a bunch of uninitialized characters back
     int read_back = sb.sgetn(buf, netbuf_size / 2);
