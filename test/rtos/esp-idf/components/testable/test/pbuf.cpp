@@ -143,9 +143,15 @@ TEST_CASE("lwip pbuf embr-netbuf: in streambuf chain 1", "[lwip-pbuf]")
     ESP_LOGI(TAG, "sb.in_avail = %d", sb.in_avail());
     TEST_ASSERT(sb.in_avail() == 224);
 
-    // reads a bunch of uninitialized characters back
-    int read_back = sb.sgetn(buf, netbuf_size / 2);
+    int read_back = sb.sbumpc();
+    
+    TEST_ASSERT(read_back == s1[0]);
 
+    read_back = sb.sgetn(buf, netbuf_size / 2);
+
+    // FIX: This is coming back 31, expecting 64
+    // If sgetn above doesn't run, then we get 64
+    ESP_LOGI(TAG, "read_back = %d", read_back);
     TEST_ASSERT(read_back == netbuf_size / 2);
 }
 #endif

@@ -292,9 +292,12 @@ public:
 #endif
     }
 
+/*
     // TODO: Consolidate this into estd::internal::streambuf as a SFINAE
     // selection if sgetc is available and sbumpc is NOT explicitly implemented
-    // in Impl
+    // in Impl.
+    // NOTE: Commented, but keeping here since this implementation slightly
+    // better than what's in estd::internal::streambuf
     int_type sbumpc()
     {
         int_type ret_value = sgetc();
@@ -304,7 +307,7 @@ public:
         if(ret_value != traits_type::eof()) this->gbump(1);;
 
         return ret_value;
-    }
+    } */
 
     streamsize xsgetn(char_type* d, streamsize count)
     {
