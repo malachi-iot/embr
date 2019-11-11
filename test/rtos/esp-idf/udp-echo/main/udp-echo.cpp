@@ -28,10 +28,31 @@ typedef estd::internal::basic_istream<in_pbuf_streambuf> pbuf_istream;
 
 void process_out(pbuf_istream& in, pbuf_ostream& out)
 {
+    const char* TAG = "process_out";
+
     in_pbuf_streambuf& in_rdbuf = *in.rdbuf();
+    int tot_len = in_rdbuf.cnetbuf().total_size();
+
+    if(in.peek() == '!')
+    {
+        in.ignore();
+        switch(in.get())
+        {
+            case '1':
+                out << "123";
+                break;
+
+            case '2':
+                break;
+
+            default:
+                break;
+        }
+    }
+
     char* inbuf = in_rdbuf.gptr();
 
-    out.write(inbuf, in_rdbuf.cnetbuf().size());
+    out.write(inbuf, tot_len);
 }
 
 void udp_echo_recv(void *arg, 
@@ -43,6 +64,8 @@ void udp_echo_recv(void *arg,
     if (p != NULL) {
         ESP_LOGI(TAG, "entry: p->len=%d", p->len);
 
+        pbuf_istream in(p);
+
         // brute force copy
         struct pbuf* outgoing_p =
 
@@ -50,8 +73,6 @@ void udp_echo_recv(void *arg,
         pbuf_alloc(PBUF_TRANSPORT, p->tot_len, PBUF_RAM);
 
         // having some serious issues with ref counting
-        pbuf_istream in(p);
-
         // specifically:
         /*
         assertion "p->ref == 1" failed: file "/home/malachi/Projects/ext/esp-idf/components/lwip/lwip/src/core/ipv4/ip4.c", line 889, function: ip4_output_if_opt_src
@@ -71,6 +92,19 @@ void udp_echo_recv(void *arg,
             process_out(in, out);
 
             //out.rdbuf()->sputn(inbuf, p->len);
+
+            int tot_len_exp = out.rdbuf()->total_size_experimental();
+            int num_chains = out.rdbuf()->cnetbuf().chain_counter();
+
+            // FIX: glitch in total_size_experimental, returning 2 too many
+            // so when I expect we're outputting 7, we get a count of 9
+            ESP_LOGI(TAG, "tot_len_exp = %d", tot_len_exp);
+            ESP_LOGI(TAG, "# of chains = %d", num_chains);
+
+            // FIX: exposing way too many innards to achieve this pbuf_realloc
+            // however, calling the experimental 'shrink' so far is proving tricky
+            // also
+            pbuf_realloc(outgoing_p, tot_len_exp);
 #endif
         }
 

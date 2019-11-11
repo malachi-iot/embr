@@ -51,6 +51,22 @@ struct netbuf_streambuf_base
 #endif
 
 protected:
+    // resets netbuf and then repositions back to the current chunk/chain pos
+    // counting how far in the current chunk/chain represents in absolute pos
+    pos_type absolute_finder()
+    {
+        pos_type position = 0;
+        char_type* current = data();
+        netbuf.reset();
+
+        while(current != data())
+        {
+            position += size();
+            netbuf.next();
+        }
+
+        return position;
+    }
 
     pos_type seekoffhelper(pos_type new_pos)
     {
@@ -100,6 +116,14 @@ struct out_netbuf_streambuf :
 public:
     size_type size() const { return base_type::size(); }
     size_type pos() const { return out_pos_base_type::pos(); }
+
+    // needed for pbuf shrink (realloc) operation
+    size_type total_size_experimental()
+    {
+        size_type absolute_pos = base_type::absolute_finder();
+
+        return absolute_pos + pos();
+    }
 
 private:
 #ifdef FEATURE_ESTD_IOSTREAM_STRICT_CONST

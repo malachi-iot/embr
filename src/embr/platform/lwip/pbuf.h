@@ -199,6 +199,26 @@ public:
         p = p_start;
 #endif
     }
+
+
+    // DEBUG ONLY
+    // counts number of active chains
+    // does not (always) check for null pbuf
+    int chain_counter() const
+    {
+#ifdef FEATURE_EMBR_PBUF_CHAIN_EXP
+        pbuf_pointer p_counter = p_start;
+        int counter = 0;
+        while(p_counter)
+        {
+            counter++;
+            p_counter = p_counter->next;
+        }
+        return counter;
+#else
+        return 1;
+#endif
+    }
 };
 
 }}
