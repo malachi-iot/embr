@@ -65,6 +65,29 @@ void udp_echo_recv(void *arg,
 {
     const char* TAG = "udp_echo_recv";
 
+    if (p != NULL)
+    {
+        ESP_LOGI(TAG, "entry: p->len=%d", p->len);
+
+        pbuf_istream in(p, false); // will auto-free p since it's not bumping reference
+        pbuf_ostream out(p->tot_len);
+
+        process_out(in, out);
+
+        const netbuf_type& netbuf = out.rdbuf()->cnetbuf();
+
+        out.rdbuf()->shrink_to_fit_experimental();
+
+        udp_sendto(pcb, netbuf.pbuf(), addr, port);
+    }
+}
+
+void udp_echo_recv_old(void *arg, 
+    struct udp_pcb *pcb, struct pbuf *p,  
+    const ip_addr_t *addr, u16_t port)
+{
+    const char* TAG = "udp_echo_recv";
+
     if (p != NULL) {
         ESP_LOGI(TAG, "entry: p->len=%d", p->len);
 
