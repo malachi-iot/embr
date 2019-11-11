@@ -22,6 +22,7 @@ struct netbuf_streambuf_base
     typedef CharTraits traits_type;
     typedef typename estd::remove_reference<TNetbuf>::type netbuf_type;
     typedef typename netbuf_type::size_type size_type;
+    typedef typename traits_type::pos_type pos_type;
     typedef estd::streamsize streamsize;
 
     // Spot for shared netbuf, if we ever actually need it
@@ -48,6 +49,24 @@ struct netbuf_streambuf_base
     netbuf_streambuf_base(netbuf_type&& netbuf) :
         netbuf(std::move(netbuf)) {}
 #endif
+
+protected:
+
+    pos_type seekoffhelper(pos_type new_pos)
+    {
+        bool has_next = true;
+
+        // FIX: handle pos past end somehow
+        while(new_pos > size() && has_next)
+        {
+            size_type sz = size();
+            has_next = netbuf.next();
+
+            new_pos -= sz;
+        }
+
+        return new_pos;
+    }    
 };
 
 // EXPERIMENTAL - copy/moved from estd ios branch
@@ -66,21 +85,24 @@ struct out_netbuf_streambuf :
     TBase
 {
     typedef TBase base_type;
-    typedef estd::internal::impl::out_pos_streambuf_base<int> in_pos_base_type;
+    typedef estd::internal::impl::out_pos_streambuf_base<int> out_pos_base_type;
     typedef TChar char_type;
     typedef CharTraits traits_type;
     typedef typename estd::remove_reference<TNetbuf>::type netbuf_type;
     typedef typename netbuf_type::size_type size_type;
     typedef typename traits_type::int_type int_type;
+    typedef typename traits_type::off_type off_type;
     typedef estd::streamsize streamsize;
+    typedef estd::ios_base ios_base;
 
     // FIX: ugly naming
     const netbuf_type& cnetbuf() const { return base_type::netbuf; }
 
-private:
+public:
     size_type size() const { return base_type::size(); }
-    size_type pos() const { return in_pos_base_type::pos(); }
+    size_type pos() const { return out_pos_base_type::pos(); }
 
+private:
 #ifdef FEATURE_ESTD_IOSTREAM_STRICT_CONST
     char_type* data() { return base_type::data(); }
     const char_type* data() const { return base_type::data(); }
@@ -92,6 +114,37 @@ private:
 
     // end of particular chunk has been reached
     bool eol() const { return pos() == size(); }
+
+protected:
+    void pos(size_type p) { out_pos_base_type::pos(p); }
+
+    pos_type seekoff(off_type off, ios_base::seekdir way, ios_base::openmode which)
+    {
+        if(!(which & ios_base::out)) return -1;
+
+        switch(way)
+        {
+            case ios_base::beg:
+                break;
+
+            case ios_base::cur:
+                if(off + pos() < size())
+                    //this->pbump(off);
+                    this->_pos += off;
+                else
+                {
+                    pos(base_type::seekoffhelper(off + pos()));
+                }
+                break;
+
+            case ios_base::end:
+                // UNTESTED
+                while(netbuf().next()) {}
+                pos(size() + off);
+                break;
+        }
+    }
+
 
 public:
     //out_netbuf_streambuf(size_type pos = 0) : pos(pos) {}
@@ -246,19 +299,7 @@ protected:
                     this->gbump(off);
                 else
                 {
-                    bool has_next = true;
-                    pos_type relative_pos = off + pos();
-
-                    // FIX: handle pos past end somehow
-                    while(relative_pos > size() && has_next)
-                    {
-                        size_type sz = size();
-                        bool has_next = netbuf().next();
-
-                        relative_pos -= sz;
-                    }
-
-                    pos(relative_pos);
+                    pos(base_type::seekoffhelper(off + pos()));
                 }
                 break;
 
@@ -268,19 +309,7 @@ protected:
                     pos(off);
                 else
                 {
-                    bool has_next = true;
-                    pos_type absolute_pos = off;
-
-                    // FIX: handle pos past end somehow
-                    while(absolute_pos > size() && has_next)
-                    {
-                        size_type sz = size();
-                        has_next = netbuf().next();
-
-                        absolute_pos -= sz;
-                    }
-
-                    pos(absolute_pos);
+                    pos(base_type::seekoffhelper(off));
                 }
                 break;
 
