@@ -69,7 +69,6 @@ protected:
     }    
 };
 
-// EXPERIMENTAL - copy/moved from estd ios branch
 // output streambuf whose output destination is a netbuf
 // also trying to crowbar internal-pos tracking out of netbuf.  This is a good mechanism for it
 // (i.e. 'processed' vs 'unprocessed' netbuf contents)
@@ -80,7 +79,6 @@ template <class TChar, class TNetbuf,
           class CharTraits = std::char_traits<TChar>,
           class TBase = netbuf_streambuf_base<TChar, TNetbuf, CharTraits> >
 struct out_netbuf_streambuf : 
-    // TODO: Need to fix out_pos_streambuf_base to take CharTraits
     estd::internal::impl::out_pos_streambuf_base<CharTraits>,
     TBase
 {
@@ -126,12 +124,18 @@ protected:
         switch(way)
         {
             case ios_base::beg:
+                netbuf().reset();
+                if(off < size())
+                    this->pbump(off);
+                else
+                {
+                    pos(base_type::seekoffhelper(off));
+                }
                 break;
 
             case ios_base::cur:
                 if(off + pos() < size())
-                    //this->pbump(off);
-                    this->_pos += off;
+                    this->pbump(off);
                 else
                 {
                     pos(base_type::seekoffhelper(off + pos()));
@@ -144,6 +148,9 @@ protected:
                 pos(size() + off);
                 break;
         }
+
+        // FIX: not adequate, need to compensate for movement over netbuf chains
+        return pos();
     }
 
 

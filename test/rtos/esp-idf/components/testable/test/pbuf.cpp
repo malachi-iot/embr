@@ -183,7 +183,6 @@ TEST_CASE("lwip pbuf embr-netbuf: out seekoff", "[lwip-pbuf]")
     char buf[netbuf_size];
     out_pbuf_streambuf sb(netbuf_size);
 
-/*
     sb.pubseekoff(1, estd::ios_base::cur);
 
     TEST_ASSERT_EQUAL_INT(1, sb.pos());
@@ -191,7 +190,6 @@ TEST_CASE("lwip pbuf embr-netbuf: out seekoff", "[lwip-pbuf]")
     int read_back = sb.sputn(buf, netbuf_size / 2);
 
     TEST_ASSERT_EQUAL_INT(1 + netbuf_size / 2, sb.pos());
-    */
 }
 
 TEST_CASE("lwip pbuf embr-netbuf: istream", "[lwip-pbuf]")
