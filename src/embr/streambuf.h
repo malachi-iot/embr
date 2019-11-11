@@ -81,17 +81,18 @@ template <class TChar, class TNetbuf,
           class TBase = netbuf_streambuf_base<TChar, TNetbuf, CharTraits> >
 struct out_netbuf_streambuf : 
     // TODO: Need to fix out_pos_streambuf_base to take CharTraits
-    estd::internal::impl::out_pos_streambuf_base<int>,
+    estd::internal::impl::out_pos_streambuf_base<CharTraits>,
     TBase
 {
     typedef TBase base_type;
-    typedef estd::internal::impl::out_pos_streambuf_base<int> out_pos_base_type;
+    typedef estd::internal::impl::out_pos_streambuf_base<CharTraits> out_pos_base_type;
     typedef TChar char_type;
     typedef CharTraits traits_type;
     typedef typename estd::remove_reference<TNetbuf>::type netbuf_type;
     typedef typename netbuf_type::size_type size_type;
     typedef typename traits_type::int_type int_type;
     typedef typename traits_type::off_type off_type;
+    typedef typename traits_type::pos_type pos_type;
     typedef estd::streamsize streamsize;
     typedef estd::ios_base ios_base;
 
