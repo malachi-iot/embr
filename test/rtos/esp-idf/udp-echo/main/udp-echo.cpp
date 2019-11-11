@@ -18,12 +18,21 @@
 using namespace embr;
 using namespace embr::mem;
 
-typedef out_netbuf_streambuf<char, embr::lwip::PbufNetbuf> out_pbuf_streambuf;
-typedef in_netbuf_streambuf<char, embr::lwip::PbufNetbuf> in_pbuf_streambuf;
+typedef embr::lwip::PbufNetbuf netbuf_type;
+typedef out_netbuf_streambuf<char, netbuf_type> out_pbuf_streambuf;
+typedef in_netbuf_streambuf<char, netbuf_type> in_pbuf_streambuf;
 typedef estd::internal::basic_ostream<out_pbuf_streambuf> pbuf_ostream;
 typedef estd::internal::basic_istream<in_pbuf_streambuf> pbuf_istream;
 
 //#define RAW_LWIP_STYLE
+
+void process_out(pbuf_istream& in, pbuf_ostream& out)
+{
+    in_pbuf_streambuf& in_rdbuf = *in.rdbuf();
+    char* inbuf = in_rdbuf.gptr();
+
+    out.write(inbuf, in_rdbuf.cnetbuf().size());
+}
 
 void udp_echo_recv(void *arg, 
     struct udp_pcb *pcb, struct pbuf *p,  
@@ -35,7 +44,7 @@ void udp_echo_recv(void *arg,
         ESP_LOGI(TAG, "entry: p->len=%d", p->len);
 
         // brute force copy
-        struct pbuf* copied_p =
+        struct pbuf* outgoing_p =
 
         // probably making this a PBUF_TRANSPORT is what fixes things
         pbuf_alloc(PBUF_TRANSPORT, p->tot_len, PBUF_RAM);
@@ -53,24 +62,22 @@ void udp_echo_recv(void *arg,
         // https://github.com/espressif/esp-lwip/blob/3ed39f27981e7738c0a454f9e83b8e5164b7078b/src/core/ipv4/ip4.c
         // it sure seems to.  That's a surprise
         {
-            // since above seems to be true, scope this so ref count goes back down to 1
-            pbuf_ostream out(copied_p);
-
 #ifdef RAW_LWIP_STYLE
-        // TODO: Just for testing purposes, do this with our istream/ostream
-            pbuf_copy(copied_p, p);
+            pbuf_copy(outgoing_p, p);
 #else
-            char* inbuf = in.rdbuf()->gptr();
+            // since above seems to be true, scope this so ref count goes back down to 1
+            pbuf_ostream out(outgoing_p);
 
-            out.write(inbuf, p->len);
+            process_out(in, out);
+
             //out.rdbuf()->sputn(inbuf, p->len);
 #endif
         }
 
         /* send received packet back to sender */
-        udp_sendto(pcb, copied_p, addr, port);
+        udp_sendto(pcb, outgoing_p, addr, port);
 
-        pbuf_free(copied_p);
+        pbuf_free(outgoing_p);
 
         /* free the pbuf */
         pbuf_free(p);
