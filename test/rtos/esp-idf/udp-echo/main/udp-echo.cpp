@@ -31,7 +31,7 @@ void process_out(pbuf_istream& in, pbuf_ostream& out)
     const char* TAG = "process_out";
 
     in_pbuf_streambuf& in_rdbuf = *in.rdbuf();
-    int tot_len = in_rdbuf.cnetbuf().total_size();
+    //int tot_len = in_rdbuf.cnetbuf().total_size();
 
     if(in.peek() == '!')
     {
@@ -51,8 +51,12 @@ void process_out(pbuf_istream& in, pbuf_ostream& out)
     }
 
     char* inbuf = in_rdbuf.gptr();
+    int in_avail = in_rdbuf.in_avail();
 
-    out.write(inbuf, tot_len);
+    ESP_LOGD(TAG, "in_avail = %d", in_avail);
+
+    // FIX: almost definitly in_avail() does not address input chaining
+    out.write(inbuf, in_avail);
 }
 
 void udp_echo_recv(void *arg, 
@@ -96,15 +100,14 @@ void udp_echo_recv(void *arg,
             int tot_len_exp = out.rdbuf()->total_size_experimental();
             int num_chains = out.rdbuf()->cnetbuf().chain_counter();
 
-            // FIX: glitch in total_size_experimental, returning 2 too many
-            // so when I expect we're outputting 7, we get a count of 9
             ESP_LOGI(TAG, "tot_len_exp = %d", tot_len_exp);
             ESP_LOGI(TAG, "# of chains = %d", num_chains);
 
             // FIX: exposing way too many innards to achieve this pbuf_realloc
             // however, calling the experimental 'shrink' so far is proving tricky
             // also
-            pbuf_realloc(outgoing_p, tot_len_exp);
+            //pbuf_realloc(outgoing_p, tot_len_exp);
+            out.rdbuf()->shrink_to_fit_experimental();
 #endif
         }
 

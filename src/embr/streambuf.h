@@ -279,6 +279,11 @@ public:
 
         return orig_count;
     }
+
+    void shrink_to_fit_experimental()
+    {
+        netbuf().shrink(total_size_experimental());
+    }
 };
 
 template <class TChar, class TNetbuf,
@@ -480,7 +485,7 @@ public:
         // FIX: What we'll need to do for showmanyc in a netbuf is:
         // a) know what our meta-position is, across chained netbufs
         // b) subtract *that* from total_size()
-        return netbuf().total_size();
+        return netbuf().total_size() - pos();
     }
 };
 
