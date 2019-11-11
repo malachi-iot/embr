@@ -234,8 +234,6 @@ protected:
 
     // TODO: Try to consolidate this into a netbuf_streambuf_base - impediment
     // is that that one doesn't implement the pos base
-    // TODO: want this to be for beg/end based on true absolute netbuf sizing, for now
-    // it's only current chunk
     pos_type seekoff(off_type off, ios_base::seekdir way, ios_base::openmode which)
     {
         // openmode MUST include 'out' in this instance, otherwise error or ignore
@@ -244,15 +242,51 @@ protected:
         switch(way)
         {
             case ios_base::cur:
-                this->gbump(off);
+                if(off + pos() < size())
+                    this->gbump(off);
+                else
+                {
+                    bool has_next = true;
+                    pos_type relative_pos = off + pos();
+
+                    // FIX: handle pos past end somehow
+                    while(relative_pos > size() && has_next)
+                    {
+                        size_type sz = size();
+                        bool has_next = netbuf().next();
+
+                        relative_pos -= sz;
+                    }
+
+                    pos(relative_pos);
+                }
                 break;
 
             case ios_base::beg:
-                pos(off);
+                netbuf().reset();
+                if(off < size())
+                    pos(off);
+                else
+                {
+                    bool has_next = true;
+                    pos_type absolute_pos = off;
+
+                    // FIX: handle pos past end somehow
+                    while(absolute_pos > size() && has_next)
+                    {
+                        size_type sz = size();
+                        has_next = netbuf().next();
+
+                        absolute_pos -= sz;
+                    }
+
+                    pos(absolute_pos);
+                }
                 break;
 
             case ios_base::end:
                 // UNTESTED
+                while(netbuf().next()) {}
                 pos(size() + off);
                 break;
         }

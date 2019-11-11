@@ -158,13 +158,41 @@ TEST_CASE("lwip pbuf embr-netbuf: out+in streambuf chain 1", "[lwip-pbuf]")
     TEST_ASSERT_EQUAL_INT(1 + netbuf_size / 2, sb.pos());
 
     TEST_ASSERT(read_back == netbuf_size / 2);
-
-    // TODO: put this test in its own discrete area
-    sb.pubseekoff(1, estd::ios_base::cur);
-
-    TEST_ASSERT_EQUAL_INT(2 + netbuf_size / 2, sb.pos());
 }
 #endif
+
+TEST_CASE("lwip pbuf embr-netbuf: in seekoff", "[lwip-pbuf]")
+{
+    constexpr int netbuf_size = 64;
+    
+    char buf[netbuf_size];
+    in_pbuf_streambuf sb(netbuf_size);
+
+    sb.pubseekoff(1, estd::ios_base::cur);
+
+    TEST_ASSERT_EQUAL_INT(1, sb.pos());
+
+    int read_back = sb.sgetn(buf, netbuf_size / 2);
+
+    TEST_ASSERT_EQUAL_INT(1 + netbuf_size / 2, sb.pos());
+
+}
+
+TEST_CASE("lwip pbuf embr-netbuf: out seekoff", "[lwip-pbuf]")
+{
+    char buf[netbuf_size];
+    out_pbuf_streambuf sb(netbuf_size);
+
+/*
+    sb.pubseekoff(1, estd::ios_base::cur);
+
+    TEST_ASSERT_EQUAL_INT(1, sb.pos());
+
+    int read_back = sb.sgetn(buf, netbuf_size / 2);
+
+    TEST_ASSERT_EQUAL_INT(1 + netbuf_size / 2, sb.pos());
+*/
+}
 
 TEST_CASE("lwip pbuf embr-netbuf: istream", "[lwip-pbuf]")
 {
