@@ -124,6 +124,10 @@ public:
 
 #ifdef FEATURE_EMBR_PBUF_CHAIN_EXP
     static CONSTEXPR size_type threshold_size = 32;
+
+    pbuf_pointer pbuf() const { return p_start; }
+#else
+    pbuf_pointer pbuf() const { return p; }
 #endif
 
     // p->len represents length of current pbuf, if a chain is involved

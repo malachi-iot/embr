@@ -76,6 +76,8 @@ void udp_echo_recv(void *arg,
         // probably making this a PBUF_TRANSPORT is what fixes things
         pbuf_alloc(PBUF_TRANSPORT, p->tot_len, PBUF_RAM);
 
+        struct pbuf* outgoing_p_test = NULLPTR;
+
         // having some serious issues with ref counting
         // specifically:
         /*
@@ -97,8 +99,9 @@ void udp_echo_recv(void *arg,
 
             //out.rdbuf()->sputn(inbuf, p->len);
 
+            const netbuf_type& netbuf = out.rdbuf()->cnetbuf();
             int tot_len_exp = out.rdbuf()->total_size_experimental();
-            int num_chains = out.rdbuf()->cnetbuf().chain_counter();
+            int num_chains = netbuf.chain_counter();
 
             ESP_LOGI(TAG, "tot_len_exp = %d", tot_len_exp);
             ESP_LOGI(TAG, "# of chains = %d", num_chains);
@@ -108,13 +111,15 @@ void udp_echo_recv(void *arg,
             // also
             //pbuf_realloc(outgoing_p, tot_len_exp);
             out.rdbuf()->shrink_to_fit_experimental();
+
+            outgoing_p_test = netbuf.pbuf();
 #endif
         }
 
         /* send received packet back to sender */
-        udp_sendto(pcb, outgoing_p, addr, port);
+        udp_sendto(pcb, outgoing_p_test, addr, port);
 
-        pbuf_free(outgoing_p);
+        pbuf_free(outgoing_p_test);
 
         /* free the pbuf */
         pbuf_free(p);
