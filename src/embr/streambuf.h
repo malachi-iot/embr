@@ -15,18 +15,16 @@ namespace impl {
 
 // TODO: move the pos_streambuf_base to instead be double-inherited from the other in/out so we can
 // use in_pos_streambuf base etc
-template <class TChar, class TNetbuf, class CharTraits>
+template <class TNetbuf, class CharTraits>
 struct netbuf_streambuf_base
 {
-    typedef TChar char_type;
     typedef CharTraits traits_type;
+    typedef typename traits_type::char_type char_type;
+    typedef typename traits_type::pos_type pos_type;
     typedef typename estd::remove_reference<TNetbuf>::type netbuf_type;
     typedef typename netbuf_type::size_type size_type;
-    typedef typename traits_type::pos_type pos_type;
     typedef estd::streamsize streamsize;
 
-    // Spot for shared netbuf, if we ever actually need it
-    // netbuf represents 'put area' in this context
     TNetbuf netbuf;
 
 #ifdef FEATURE_ESTD_IOSTREAM_STRICT_CONST
@@ -93,7 +91,7 @@ protected:
 // to an actual consuming device somehow.  Not a terrible idea, but not doing that for now
 template <class TChar, class TNetbuf,
           class CharTraits = std::char_traits<TChar>,
-          class TBase = netbuf_streambuf_base<TChar, TNetbuf, CharTraits> >
+          class TBase = netbuf_streambuf_base<TNetbuf, CharTraits> >
 struct out_netbuf_streambuf : 
     estd::internal::impl::out_pos_streambuf_base<CharTraits>,
     TBase
@@ -243,7 +241,7 @@ public:
             // whether or not has_next succeeds, pos is reset here
             // this means if it fails, the next write operation will overwrite the contents
             // so keep an eye on your return streamsize
-            this->_pos = 0;
+            pos(0);
 
             if(has_next)
             {
@@ -271,9 +269,7 @@ public:
             }
         }
 
-        // FIX: compile bug in pbump
-        this->_pos += count;
-        //this->pbump(count);
+        this->pbump(count);
 
         while(count--) *d++ = *s++;
 
@@ -288,7 +284,7 @@ public:
 
 template <class TChar, class TNetbuf,
           class CharTraits = std::char_traits<TChar>,
-          class TBase = netbuf_streambuf_base<TChar, TNetbuf, CharTraits> >
+          class TBase = netbuf_streambuf_base<TNetbuf, CharTraits> >
 struct in_netbuf_streambuf : 
     estd::internal::impl::in_pos_streambuf_base<CharTraits>,
     TBase
