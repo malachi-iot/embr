@@ -81,14 +81,7 @@ public:
         ,p_start(copy_from.p_start)
 #endif
     {
-        pbuf_pointer p_to_bump =
-#ifdef FEATURE_EMBR_PBUF_CHAIN_EXP
-            p_start;
-#else
-            p;
-#endif
-
-        if(bump_reference) pbuf_ref(p_to_bump);
+        if(bump_reference) pbuf_ref(pbuf());
 
         if(reset) this->reset();
     }
@@ -109,12 +102,7 @@ public:
 
     ~PbufNetbuf()
     {
-        pbuf_pointer p_to_free =
-#ifdef FEATURE_EMBR_PBUF_CHAIN_EXP
-            p_start;
-#else
-            p;
-#endif
+        pbuf_pointer p_to_free = pbuf();
 
         if(p_to_free != NULLPTR)
             // remember, pbufs are reference counted so this may or may not actually
@@ -136,19 +124,14 @@ public:
 
     size_type total_size() const 
     {
-#ifdef FEATURE_EMBR_PBUF_CHAIN_EXP
-        return p_start->tot_len;
-#else
-        return p->tot_len;
-#endif
+        return pbuf()->tot_len;
     }
 
     uint8_t* data() const { return (uint8_t*) p->payload; }
 
+    // Move pbuf forward to next in chain, if present
     bool next() 
     {
-        // TODO: Look into whether there's a particular pbuf API
-        // call that's appropriate (probably not)
         if(p->next != NULLPTR)
         {
             p = p->next;
@@ -158,7 +141,7 @@ public:
         return false;
     }
 
-    // EXPERIMETNAL and lightly tested
+    // lightly tested
     embr::mem::ExpandResult expand(size_type by_size, bool move_to_next)
     {
 #ifdef FEATURE_EMBR_PBUF_CHAIN_EXP
@@ -183,19 +166,12 @@ public:
 #endif
     }
 
-    // EXPERIMENTAL
+    // EXPERIMENTAL and lightly tested
     void shrink(size_type to_size)
     {
-        pbuf_realloc(
-#ifdef FEATURE_EMBR_PBUF_CHAIN_EXP
-            p_start, 
-#else
-            p,
-#endif
-            to_size);
+        pbuf_realloc(pbuf(), to_size);
     }
 
-    // EXPERIMENTAL
     // moves pbuf chain back to beginning
     void reset()
     {
