@@ -127,7 +127,7 @@ public:
         return pbuf()->tot_len;
     }
 
-    uint8_t* data() const { return (uint8_t*) p->payload; }
+    void* data() const { return p->payload; }
 
     // Move pbuf forward to next in chain, if present
     bool next() 

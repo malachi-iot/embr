@@ -30,10 +30,10 @@ struct netbuf_streambuf_base
     TNetbuf netbuf;
 
 #ifdef FEATURE_ESTD_IOSTREAM_STRICT_CONST
-    char_type* data() { return reinterpret_cast<char_type*>(netbuf.data()); }
-    const char_type* data() const { return reinterpret_cast<const char_type*>(netbuf.data()); }
+    char_type* data() { return static_cast<char_type*>(netbuf.data()); }
+    const char_type* data() const { return static_cast<const char_type*>(netbuf.data()); }
 #else
-    char_type* data() const { return reinterpret_cast<char_type*>(netbuf.data()); }
+    char_type* data() const { return static_cast<char_type*>(netbuf.data()); }
 #endif
     size_type size() const { return netbuf.size(); }
 
