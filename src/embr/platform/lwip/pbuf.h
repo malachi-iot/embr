@@ -129,16 +129,19 @@ public:
 
     void* data() const { return p->payload; }
 
+    bool last() const
+    {
+        return p->next == NULLPTR;
+    }
+
     // Move pbuf forward to next in chain, if present
     bool next() 
     {
-        if(p->next != NULLPTR)
-        {
-            p = p->next;
-            return true;
-        }
+        if(last()) return false;
 
-        return false;
+        p = p->next;
+
+        return true;
     }
 
     // lightly tested

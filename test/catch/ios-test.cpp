@@ -48,7 +48,7 @@ TEST_CASE("iostreams", "[ios]")
 
         out << 'a';
 
-        REQUIRE(nb.data()[0] == 'a');
+        REQUIRE(nb.raw()[0] == 'a');
 
         // NOTE: Odd that this doesn't work.  no usings seem to clear it up either
         out << " nice day";
@@ -129,7 +129,8 @@ TEST_CASE("iostreams", "[ios]")
         mem::experimental::NetBufDynamic<> nb2;
 
         nb2.expand(nb2sz, true);
-        std::iota(nb2.data(), nb2.data() + nb2sz, 0);
+        auto d = (uint8_t*) nb2.data();
+        std::iota(d, d + nb2sz, 0);
         nb2.expand(nb2sz, true);
         //std::iota(nb2.data(), nb2.data() + nb2sz, 0);
 

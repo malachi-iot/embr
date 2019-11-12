@@ -31,6 +31,7 @@ struct NetBufDynamicChunk : estd::experimental::forward_node_base_base<NetBufDyn
 };
 
 // NOTE: Close, but not perfectly well suited, to our locking allocator scheme
+// this is a mk2 compliant netbuf
 template <class TAllocator = std::allocator<uint8_t>,
           class TPolicy = NetBufDynamicDefaultPolicy >
 class NetBufDynamic
@@ -109,7 +110,7 @@ public:
         }
     }
 
-    uint8_t* data() const
+    void* data() const
     {
         if(empty()) return NULLPTR;
         /*

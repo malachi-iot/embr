@@ -17,6 +17,8 @@ class NetBuf : estd::array<uint8_t, N>
     typedef estd::array<uint8_t, N> base;
 
 public:
+    const uint8_t* raw() const { return base::data(); }
+
     typedef typename base::value_type value_type;
     typedef typename base::size_type size_type;
 
@@ -41,9 +43,9 @@ public:
     size_type total_size() const { return N; }
     size_type size() const { return base::size(); }
 
-    const uint8_t* data() const { return base::data(); }
+    const void* data() const { return base::data(); }
 
-    uint8_t* data() { return base::data(); }
+    void* data() { return base::data(); }
 
     // position back at the beginning
     void reset() {}

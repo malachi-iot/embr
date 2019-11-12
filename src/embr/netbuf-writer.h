@@ -70,6 +70,7 @@ public:
 
     bool write(const estd::const_buffer& b)
     {
+        return false;
     }
 };
 
