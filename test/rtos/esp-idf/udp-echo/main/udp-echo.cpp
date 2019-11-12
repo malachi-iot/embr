@@ -36,16 +36,15 @@ void process_out(pbuf_istream& in, pbuf_ostream& out)
     if(in.peek() == '!')
     {
         in.ignore();
-        switch(in.get())
+        switch(char ch = in.get())
         {
             case '1':
                 out << "123";
                 break;
 
-            case '2':
-                break;
-
             default:
+                out << '!';
+                out.put(ch);
                 break;
         }
     }
