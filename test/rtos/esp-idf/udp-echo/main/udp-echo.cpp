@@ -55,8 +55,10 @@ void process_out(pbuf_istream& in, pbuf_ostream& out)
 
     ESP_LOGD(TAG, "in_avail = %d", in_avail);
 
-    // FIX: almost definitly in_avail() does not address input chaining
+    // DEBT: in_avail() does not address input chaining
     out.write(inbuf, in_avail);
+
+    in.ignore(in_avail);
 }
 
 void udp_echo_recv(void *arg, 
