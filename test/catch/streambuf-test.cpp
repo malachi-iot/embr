@@ -12,18 +12,26 @@ struct test_streambuf_observer
     int counter = 0;
     int counter_sbumpc = 0;
 
+    typedef embr::experimental::_streambuf::event::type type;
+
+    /*
     // Doesn't work as smoothly, and not sure we want it to anyway (look how verbose)
     void on_notify(generic_event_base<TChar, event_type, event_type::sbumpc> e)
     {
         counter_sbumpc++;
+    } */
+
+    void on_notify(embr::experimental::_streambuf::event::event<TChar, type::sbumpc> e)
+    {
+        counter_sbumpc++;
     }
 
-    void on_notify(sget_event<TChar> e)
+    void on_notify(embr::experimental::_streambuf::event::sget<TChar> e)
     {
         //counter--;
     }
 
-    void on_notify(generic_event<TChar, event_type::sgetn> e)
+    void on_notify(embr::experimental::_streambuf::event::event<TChar, type::sgetn> e)
     {
         counter++;
     }

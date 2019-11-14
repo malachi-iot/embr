@@ -500,16 +500,20 @@ using in_netbuf_streambuf = estd::internal::streambuf<impl::in_netbuf_streambuf<
 
 namespace experimental {
 
+namespace _streambuf {
+
+namespace event {
+
 // FIX: using enums this way IIRC is a C++11 only thing.  Even though subject-observer largely is that, I think
 // this advanced enum-as-a-scopable-type thing doesn't come with the C++03 'preview' of C++11 features.  Needs testing,
 // it certainly seems like that one woulda been an easier one for them to do
-enum event_phase
+enum phase
 {
     begin,
     end
 };
 
-enum event_type
+enum type
 {
     sbumpc,
     sgetn,
@@ -532,59 +536,67 @@ struct char_event_base
 };
 
 
-template <typename TChar, typename TEventType, TEventType event, event_phase phase = event_phase::end>
+template <typename TChar, typename TEventType, TEventType event, phase phase = phase::end>
 struct generic_event_base;
 
-template <class TChar, event_type event, event_phase phase = event_phase::end>
-struct generic_event : generic_event_base<TChar, event_type, event, phase> {};
+template <class TChar, type, phase phase = phase::end>
+struct event;// : generic_event_base<TChar, type, event, phase> {};
 
-template <class TChar, event_phase phase>
-struct generic_event<TChar, event_type::sbumpc, phase> // : generic_event_base<TChar, event_type, event_type::sbumpc, phase>
+template <class TChar, phase phase>
+struct event<TChar, type::sbumpc, phase> // : generic_event_base<TChar, event_type, event_type::sbumpc, phase>
 {
 
 };
 
 
-template <class TChar, event_phase phase>
-struct generic_event<TChar, event_type::sgetn, phase>
+template <class TChar, phase phase>
+struct event<TChar, type::sgetn, phase>
 {
 
 };
 
-template <class TChar, event_phase phase>
-struct generic_event<TChar, event_type::sputn, phase>
+template <class TChar, phase phase>
+struct event<TChar, type::sputn, phase>
 {
 
 };
 
 template <class TChar>
-struct sget_end_exp_event : generic_event<TChar, event_type::sgetn, event_phase::end> {};
+struct sget2 : event<TChar, type::sgetn, phase::end> {};
 
 
-template <class TChar, event_phase phase = event_phase::end>
-struct sput_event : span_event_base<TChar>
+template <class TChar, phase phase = phase::end>
+struct sput : span_event_base<TChar>
 {
     typedef span_event_base<TChar> base_type;
     typedef TChar char_type;
 
     int retval;
 
-    sput_event(estd::span<TChar> buffer) : base_type(buffer) {}
+    sput(estd::span<TChar> buffer) : base_type(buffer) {}
 
-    sput_event(char_type* data, int size, int retval = -1) :
-        base_type(estd::span<char_type>(data, size)),
-        retval(retval) {}
+    sput(char_type* data, int size, int retval = -1) :
+            base_type(estd::span<char_type>(data, size)),
+            retval(retval) {}
 };
 
 
-template <class TChar, event_phase phase = event_phase::end>
-struct sget_event : span_event_base<TChar>
+
+template <class TChar, phase phase = phase::end>
+struct sget : span_event_base<TChar>
 {
     typedef span_event_base<TChar> base_type;
 
-    sget_event(estd::span<TChar> buffer) : base_type(buffer) {}
+    sget(estd::span<TChar> buffer) : base_type(buffer) {}
 };
 
+
+
+}
+
+}
+
+namespace _test = embr::experimental::_streambuf::event;
 
 // wrapper of sorts which fires off various events via TSubject during streambuf
 // operations
@@ -594,7 +606,13 @@ class subject_streambuf
     TSubject subject;
     TStreambuf streambuf;
 
+    //using embr::experimental::_streambuf::event::event;
+
     typedef typename estd::remove_reference<TStreambuf>::type streambuf_type;
+
+    typedef typename _streambuf::event::type event_type;
+    typedef typename _streambuf::event::phase phase;
+
 public:
 
     // consider doing this all the way down
@@ -608,39 +626,47 @@ public:
 
     int_type sbumpc()
     {
-        subject.notify(generic_event<char_type, event_type::sbumpc, event_phase::begin>());
+        using _test::event;
+
+        subject.notify(event<char_type, event_type::sbumpc, phase::begin>());
 
         int_type ret = streambuf.sbumpc();
 
-        subject.notify(generic_event<char_type, event_type::sbumpc, event_phase::end>());
+        subject.notify(event<char_type, event_type::sbumpc, phase::end>());
 
         return ret;
     }
 
     streamsize sputn(const char_type *s, streamsize count)
     {
-        subject.notify(sput_event<char, event_phase::begin>((char*)s, count));
+        using _test::event;
+        using _test::sput;
+
+        subject.notify(sput<char, phase::begin>((char*)s, count));
 
         streamsize ret = streambuf.sputn(s, count);
 
-        subject.notify(sput_event<char, event_phase::end>((char*)s, count));
-        subject.notify(generic_event<char, event_type::sputn>());
+        subject.notify(sput<char, phase::end>((char*)s, count));
+        subject.notify(event<char, event_type::sputn>());
 
         return ret;
     }
 
     streamsize sgetn(char_type *s, streamsize count)
     {
+        using _test::event;
+        using _test::sget;
+
         streamsize ret = streambuf.sgetn(s, count);
 
         estd::span<char_type> buffer(s, count);
 
-        sget_event<char_type> e { buffer };
-        generic_event<char_type, event_type::sgetn, event_phase::end> e2;
-        sget_end_exp_event<char_type> e3;
+        sget<char_type> e { buffer };
+        event<char_type, event_type::sgetn, phase::end> e2;
+        //sget<char_type> e3;
 
         subject.notify(e);
-        subject.notify(e3);
+        subject.notify(e2);
 
         return ret;
     }
