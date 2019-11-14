@@ -500,7 +500,7 @@ using in_netbuf_streambuf = estd::internal::streambuf<impl::in_netbuf_streambuf<
 
 namespace experimental {
 
-namespace _streambuf {
+namespace streambuf {
 
 namespace event {
 
@@ -546,6 +546,18 @@ template <class TChar, phase phase>
 struct event<TChar, type::sbumpc, phase> // : generic_event_base<TChar, event_type, event_type::sbumpc, phase>
 {
 
+};
+
+
+//template <typename TChar>
+struct observer_base
+{
+    /*
+    template <type t, phase p>
+    using e = event<TChar, t, p>; */
+
+    typedef embr::experimental::streambuf::event::type type;
+    typedef embr::experimental::streambuf::event::phase phase_type;
 };
 
 
@@ -596,8 +608,6 @@ struct sget : span_event_base<TChar>
 
 }
 
-namespace _test = embr::experimental::_streambuf::event;
-
 // wrapper of sorts which fires off various events via TSubject during streambuf
 // operations
 template <class TStreambuf, class TSubject>
@@ -610,8 +620,8 @@ class subject_streambuf
 
     typedef typename estd::remove_reference<TStreambuf>::type streambuf_type;
 
-    typedef typename _streambuf::event::type event_type;
-    typedef typename _streambuf::event::phase phase;
+    typedef typename streambuf::event::type event_type;
+    typedef typename streambuf::event::phase phase;
 
 public:
 
@@ -626,7 +636,7 @@ public:
 
     int_type sbumpc()
     {
-        using _test::event;
+        using streambuf::event::event;
 
         subject.notify(event<char_type, event_type::sbumpc, phase::begin>());
 
@@ -639,8 +649,8 @@ public:
 
     streamsize sputn(const char_type *s, streamsize count)
     {
-        using _test::event;
-        using _test::sput;
+        using streambuf::event::event;
+        using streambuf::event::sput;
 
         subject.notify(sput<char, phase::begin>((char*)s, count));
 
@@ -654,8 +664,8 @@ public:
 
     streamsize sgetn(char_type *s, streamsize count)
     {
-        using _test::event;
-        using _test::sget;
+        using streambuf::event::event;
+        using streambuf::event::sget;
 
         streamsize ret = streambuf.sgetn(s, count);
 

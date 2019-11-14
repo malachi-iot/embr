@@ -7,12 +7,15 @@
 using namespace embr::experimental;
 
 template <class TChar>
-struct test_streambuf_observer
+struct test_streambuf_observer : streambuf::event::observer_base
 {
     int counter = 0;
     int counter_sbumpc = 0;
 
-    typedef embr::experimental::_streambuf::event::type type;
+    //typedef streambuf::event::observer_base<TChar> base_type;
+
+    template <type t, phase_type p = phase_type::end>
+    using event = streambuf::event::event<TChar, t, p>;
 
     /*
     // Doesn't work as smoothly, and not sure we want it to anyway (look how verbose)
@@ -21,17 +24,23 @@ struct test_streambuf_observer
         counter_sbumpc++;
     } */
 
-    void on_notify(embr::experimental::_streambuf::event::event<TChar, type::sbumpc> e)
+    /*
+    void on_notify(embr::experimental::streambuf::event::event<TChar, type::sbumpc> e)
+    {
+        counter_sbumpc++;
+    } */
+
+    void on_notify(event<type::sbumpc> _e)
     {
         counter_sbumpc++;
     }
 
-    void on_notify(embr::experimental::_streambuf::event::sget<TChar> e)
+    void on_notify(embr::experimental::streambuf::event::sget<TChar> e)
     {
         //counter--;
     }
 
-    void on_notify(embr::experimental::_streambuf::event::event<TChar, type::sgetn> e)
+    void on_notify(event<type::sgetn> e)
     {
         counter++;
     }
