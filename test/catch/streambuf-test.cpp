@@ -10,6 +10,13 @@ template <class TChar>
 struct test_streambuf_observer
 {
     int counter = 0;
+    int counter_sbumpc = 0;
+
+    // Doesn't work as smoothly, and not sure we want it to anyway (look how verbose)
+    void on_notify(generic_event_base<TChar, event_type, event_type::sbumpc> e)
+    {
+        counter_sbumpc++;
+    }
 
     void on_notify(sget_event<TChar> e)
     {
@@ -21,11 +28,11 @@ struct test_streambuf_observer
         counter++;
     }
 
-
+/*
     void on_notify(sget_end_exp_event<TChar> e)
     {
         counter++;
-    }
+    } */
 };
 
 TEST_CASE("streambuf test", "[streambuf]")
@@ -44,9 +51,14 @@ TEST_CASE("streambuf test", "[streambuf]")
         typedef subject_streambuf<streambuf_base, decltype(subject)> streambuf_type;
         streambuf_type sb(subject, test);
 
+        int ch = sb.sbumpc();
+
         int read_back = sb.sgetn(buf, 128);
 
-        REQUIRE(read_back == 5);
+        REQUIRE(read_back == 4);
         REQUIRE(o.counter == 1);
+        REQUIRE(o.counter_sbumpc == 1);
+
+        //sb.sputn("hi2u", 4);
     }
 }

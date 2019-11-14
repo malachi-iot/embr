@@ -532,11 +532,14 @@ struct char_event_base
 };
 
 
+template <typename TChar, typename TEventType, TEventType event, event_phase phase = event_phase::end>
+struct generic_event_base;
+
 template <class TChar, event_type event, event_phase phase = event_phase::end>
-struct generic_event;
+struct generic_event : generic_event_base<TChar, event_type, event, phase> {};
 
 template <class TChar, event_phase phase>
-struct generic_event<TChar, event_type::sbumpc, phase>
+struct generic_event<TChar, event_type::sbumpc, phase> // : generic_event_base<TChar, event_type, event_type::sbumpc, phase>
 {
 
 };
@@ -544,6 +547,12 @@ struct generic_event<TChar, event_type::sbumpc, phase>
 
 template <class TChar, event_phase phase>
 struct generic_event<TChar, event_type::sgetn, phase>
+{
+
+};
+
+template <class TChar, event_phase phase>
+struct generic_event<TChar, event_type::sputn, phase>
 {
 
 };
@@ -597,13 +606,25 @@ public:
     typedef typename traits_type::off_type off_type;
     typedef estd::streamsize streamsize;
 
+    int_type sbumpc()
+    {
+        subject.notify(generic_event<char_type, event_type::sbumpc, event_phase::begin>());
+
+        int_type ret = streambuf.sbumpc();
+
+        subject.notify(generic_event<char_type, event_type::sbumpc, event_phase::end>());
+
+        return ret;
+    }
+
     streamsize sputn(const char_type *s, streamsize count)
     {
-        subject.notify(sput_event<char_type, event_phase::begin>(s, count));
+        subject.notify(sput_event<char, event_phase::begin>((char*)s, count));
 
-        streamsize ret = streambuf.sgetn(s, count);
+        streamsize ret = streambuf.sputn(s, count);
 
-        subject.notify(sput_event<char_type, event_phase::end>(s, count));
+        subject.notify(sput_event<char, event_phase::end>((char*)s, count));
+        subject.notify(generic_event<char, event_type::sputn>());
 
         return ret;
     }
@@ -616,9 +637,10 @@ public:
 
         sget_event<char_type> e { buffer };
         generic_event<char_type, event_type::sgetn, event_phase::end> e2;
+        sget_end_exp_event<char_type> e3;
 
         subject.notify(e);
-        subject.notify(e2);
+        subject.notify(e3);
 
         return ret;
     }
