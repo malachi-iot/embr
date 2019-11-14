@@ -9,9 +9,11 @@ using namespace embr::experimental;
 template <class TChar>
 struct test_streambuf_observer
 {
+    int counter = 0;
+
     void on_notify(sget_event<TChar> e)
     {
-        
+
     }
 };
 

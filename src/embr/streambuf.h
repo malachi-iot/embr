@@ -1,6 +1,7 @@
 #pragma once
 
 #include <estd/streambuf.h>
+#include <estd/optional.h>
 
 #include "netbuf.h"
 
@@ -499,11 +500,44 @@ using in_netbuf_streambuf = estd::internal::streambuf<impl::in_netbuf_streambuf<
 
 namespace experimental {
 
+enum event_phase
+{
+    begin,
+    end
+};
+
 template <class TChar>
-struct sget_event
+struct span_event_base
 {
     estd::span<TChar> buffer;
+
+    span_event_base(estd::span<TChar> buffer) : buffer(buffer) {}
 };
+
+template <class TChar, event_phase phase = event_phase::end>
+struct sput_event : span_event_base<TChar>
+{
+    typedef span_event_base<TChar> base_type;
+    typedef TChar char_type;
+
+    int retval;
+
+    sput_event(estd::span<TChar> buffer) : base_type(buffer) {}
+
+    sput_event(char_type* data, int size, int retval = -1) :
+        base_type(estd::span<char_type>(data, size)),
+        retval(retval) {}
+};
+
+
+template <class TChar, event_phase phase = event_phase::end>
+struct sget_event : span_event_base<TChar>
+{
+    typedef span_event_base<TChar> base_type;
+
+    sget_event(estd::span<TChar> buffer) : base_type(buffer) {}
+};
+
 
 // wrapper of sorts which fires off various events via TSubject during streambuf
 // operations
@@ -524,6 +558,17 @@ public:
     typedef typename traits_type::pos_type pos_type;
     typedef typename traits_type::off_type off_type;
     typedef estd::streamsize streamsize;
+
+    streamsize sputn(const char_type *s, streamsize count)
+    {
+        subject.notify(sput_event<char_type, event_phase::begin>(s, count));
+
+        streamsize ret = streambuf.sgetn(s, count);
+
+        subject.notify(sput_event<char_type, event_phase::end>(s, count));
+
+        return ret;
+    }
 
     streamsize sgetn(char_type *s, streamsize count)
     {
