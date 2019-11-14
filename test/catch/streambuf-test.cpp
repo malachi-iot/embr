@@ -13,7 +13,18 @@ struct test_streambuf_observer
 
     void on_notify(sget_event<TChar> e)
     {
+        //counter--;
+    }
 
+    void on_notify(generic_event<TChar, event_type::sgetn> e)
+    {
+        counter++;
+    }
+
+
+    void on_notify(sget_end_exp_event<TChar> e)
+    {
+        counter++;
     }
 };
 
@@ -36,5 +47,6 @@ TEST_CASE("streambuf test", "[streambuf]")
         int read_back = sb.sgetn(buf, 128);
 
         REQUIRE(read_back == 5);
+        REQUIRE(o.counter == 1);
     }
 }

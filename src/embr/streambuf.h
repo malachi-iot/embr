@@ -500,10 +500,21 @@ using in_netbuf_streambuf = estd::internal::streambuf<impl::in_netbuf_streambuf<
 
 namespace experimental {
 
+// FIX: using enums this way IIRC is a C++11 only thing.  Even though subject-observer largely is that, I think
+// this advanced enum-as-a-scopable-type thing doesn't come with the C++03 'preview' of C++11 features.  Needs testing,
+// it certainly seems like that one woulda been an easier one for them to do
 enum event_phase
 {
     begin,
     end
+};
+
+enum event_type
+{
+    sbumpc,
+    sgetn,
+    sputn,
+    pubseekoff
 };
 
 template <class TChar>
@@ -513,6 +524,33 @@ struct span_event_base
 
     span_event_base(estd::span<TChar> buffer) : buffer(buffer) {}
 };
+
+template <class TChar>
+struct char_event_base
+{
+    TChar ch;
+};
+
+
+template <class TChar, event_type event, event_phase phase = event_phase::end>
+struct generic_event;
+
+template <class TChar, event_phase phase>
+struct generic_event<TChar, event_type::sbumpc, phase>
+{
+
+};
+
+
+template <class TChar, event_phase phase>
+struct generic_event<TChar, event_type::sgetn, phase>
+{
+
+};
+
+template <class TChar>
+struct sget_end_exp_event : generic_event<TChar, event_type::sgetn, event_phase::end> {};
+
 
 template <class TChar, event_phase phase = event_phase::end>
 struct sput_event : span_event_base<TChar>
@@ -577,8 +615,10 @@ public:
         estd::span<char_type> buffer(s, count);
 
         sget_event<char_type> e { buffer };
+        generic_event<char_type, event_type::sgetn, event_phase::end> e2;
 
         subject.notify(e);
+        subject.notify(e2);
 
         return ret;
     }
