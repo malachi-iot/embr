@@ -36,6 +36,7 @@ set(SOURCE_FILES
     experimental-test.cpp
     reader-test.cpp
     writer-test.cpp
+    streambuf-test.cpp
     )
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})

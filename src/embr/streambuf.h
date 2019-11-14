@@ -495,4 +495,57 @@ using out_netbuf_streambuf = estd::internal::streambuf<impl::out_netbuf_streambu
 template <class CharT, class TNetbuf, class CharTraits = std::char_traits<CharT> >
 using in_netbuf_streambuf = estd::internal::streambuf<impl::in_netbuf_streambuf<CharT, TNetbuf> >;
 #endif
-}}
+}
+
+namespace experimental {
+
+template <class TChar>
+struct sget_event
+{
+    estd::span<TChar> buffer;
+};
+
+// wrapper of sorts which fires off various events via TSubject during streambuf
+// operations
+template <class TStreambuf, class TSubject>
+class subject_streambuf
+{
+    TSubject subject;
+    TStreambuf streambuf;
+
+    typedef typename estd::remove_reference<TStreambuf>::type streambuf_type;
+public:
+
+    // consider doing this all the way down
+    //typedef typename estd::remove_const<typename streambuf_type::char_type>::type char_type;
+    typedef typename streambuf_type::char_type char_type;
+    typedef typename streambuf_type::traits_type traits_type;
+    typedef typename traits_type::int_type int_type;
+    typedef typename traits_type::pos_type pos_type;
+    typedef typename traits_type::off_type off_type;
+    typedef estd::streamsize streamsize;
+
+    streamsize sgetn(char_type *s, streamsize count)
+    {
+        streamsize ret = streambuf.sgetn(s, count);
+
+        estd::span<char_type> buffer(s, count);
+
+        sget_event<char_type> e { buffer };
+
+        subject.notify(e);
+
+        return ret;
+    }
+
+#ifdef FEATURE_CPP_MOVESEMANTIC
+        template <class ...TArgs>
+        subject_streambuf(TSubject& subject, TArgs&&... args) :
+                subject(subject),
+                streambuf(std::forward<TArgs>(args)...) {}
+#endif
+};
+
+}
+
+}
