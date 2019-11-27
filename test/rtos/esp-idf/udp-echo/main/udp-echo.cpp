@@ -19,6 +19,7 @@ using namespace embr;
 using namespace embr::mem;
 
 typedef embr::lwip::PbufNetbuf netbuf_type;
+typedef struct pbuf* pbuf_pointer;
 typedef out_netbuf_streambuf<char, netbuf_type> out_pbuf_streambuf;
 typedef in_netbuf_streambuf<char, netbuf_type> in_pbuf_streambuf;
 typedef estd::internal::basic_ostream<out_pbuf_streambuf> pbuf_ostream;
@@ -91,6 +92,7 @@ void udp_echo_recv(void *arg,
         //netbuf_type& netbuf = out.rdbuf()->netbuf();
         // Must do const flavor at the moment as netbuf() is private
         const netbuf_type& netbuf = out.rdbuf()->cnetbuf();
+        pbuf_pointer pbuf = const_cast<pbuf_pointer>(netbuf.pbuf());
         
         /*
         int total_size = netbuf.total_size();
@@ -117,13 +119,13 @@ void udp_echo_recv(void *arg,
         //out.rdbuf()->shrink_to_fit_experimental2();
         
         // low level call, totally acceptable
-        pbuf_realloc(netbuf, total_size);
+        pbuf_realloc(pbuf, total_size);
 
         //netbuf.shrink(total_size);
 
         ESP_LOGI(TAG, "pbuf tot_len=%d", netbuf.total_size());
 
-        udp_sendto(pcb, netbuf, addr, port);
+        udp_sendto(pcb, pbuf, addr, port);
     }
 }
 
@@ -144,7 +146,7 @@ void udp_echo_recv_old(void *arg,
         // probably making this a PBUF_TRANSPORT is what fixes things
         pbuf_alloc(PBUF_TRANSPORT, p->tot_len, PBUF_RAM);
 
-        struct pbuf* outgoing_p_test = NULLPTR;
+        pbuf_pointer outgoing_p_test = NULLPTR;
 
         // having some serious issues with ref counting
         // specifically:
@@ -180,7 +182,8 @@ void udp_echo_recv_old(void *arg,
             //pbuf_realloc(outgoing_p, tot_len_exp);
             out.rdbuf()->shrink_to_fit_experimental();
 
-            outgoing_p_test = netbuf.pbuf();
+            // FIX: better if we exposed non-const netbuf
+            outgoing_p_test = const_cast<pbuf_pointer>(netbuf.pbuf());
 #endif
         }
 

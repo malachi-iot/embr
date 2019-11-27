@@ -34,6 +34,7 @@ struct PbufNetbufBase
 {
     typedef struct pbuf pbuf_type;
     typedef pbuf_type* pbuf_pointer;
+    typedef const pbuf_type* const_pbuf_pointer;
 
 private:
 };
@@ -113,12 +114,14 @@ public:
 #ifdef FEATURE_EMBR_PBUF_CHAIN_EXP
     static CONSTEXPR size_type threshold_size = 32;
 
-    pbuf_pointer pbuf() const { return p_start; }
+    const_pbuf_pointer pbuf() const { return p_start; }
+    pbuf_pointer pbuf() { return p_start; }
 #else
-    pbuf_pointer pbuf() const { return p; }
+    const_pbuf_pointer pbuf() const { return p; }
+    pbuf_pointer pbuf() { return p; }
 #endif
 
-    operator pbuf_pointer() const { return pbuf(); }
+    operator const_pbuf_pointer() const { return pbuf(); }
 
     // p->len represents length of current pbuf, if a chain is involved
     // look at tot_len
