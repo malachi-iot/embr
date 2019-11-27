@@ -102,6 +102,7 @@ struct out_netbuf_streambuf :
     typedef TChar char_type;
     typedef CharTraits traits_type;
     typedef typename estd::remove_reference<TNetbuf>::type netbuf_type;
+    typedef const netbuf_type& const_netbuf_reference;
     typedef typename netbuf_type::size_type size_type;
     typedef typename traits_type::int_type int_type;
     typedef typename traits_type::off_type off_type;
@@ -143,15 +144,16 @@ public:
         return total_size;
     }
 
+    netbuf_type& netbuf() { return base_type::netbuf; }
+
 private:
+
 #ifdef FEATURE_ESTD_IOSTREAM_STRICT_CONST
     char_type* data() { return base_type::data(); }
     const char_type* data() const { return base_type::data(); }
 #else
     char_type* data() const { return base_type::data(); }
 #endif
-
-    netbuf_type& netbuf() { return base_type::netbuf; }
 
     // end of particular chunk has been reached
     bool eol() const { return pos() == size(); }
@@ -334,13 +336,15 @@ struct in_netbuf_streambuf :
     pos_type pos() const { return in_pos_base_type::pos(); }
 
     // FIX: ugly naming
+    // We need cnetbuf naming because streambuf itself is rarely const
     const netbuf_type& cnetbuf() const { return base_type::netbuf; }
+
+    const netbuf_type& netbuf() const { return base_type::netbuf; }
+    netbuf_type& netbuf() { return base_type::netbuf; }
 
 private:
     char_type* data() const { return base_type::data(); }
     size_type size() const { return base_type::size(); }
-
-    netbuf_type& netbuf() { return base_type::netbuf; }
 
     // end of particular chunk has been reached
     bool eol() const { return pos() == size(); }

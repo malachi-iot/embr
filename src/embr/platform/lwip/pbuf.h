@@ -18,6 +18,7 @@ extern "C" {
 #include <estd/internal/platform.h>
 #include <embr/netbuf.h>
 
+// FIX: To be proper, we need to redefine these at the end if we can
 #undef putchar
 #undef puts
 #undef putc
