@@ -87,6 +87,9 @@ void udp_echo_recv(void *arg,
 
         process_out(in, out);
 
+        // Not doing const flavor because we're experimenting with "shrink" call
+        //netbuf_type& netbuf = out.rdbuf()->netbuf();
+        // Must do const flavor at the moment as netbuf() is private
         const netbuf_type& netbuf = out.rdbuf()->cnetbuf();
         
         /*
@@ -104,11 +107,23 @@ void udp_echo_recv(void *arg,
 
         out.rdbuf()->shrink_to_fit_experimental(); */
 
-        out.rdbuf()->shrink_to_fit_experimental2();
+        // Less bothered to have a total_size call than a shrink call in streambuf
+        size_type total_size = out.rdbuf()->total_size_experimental2();
+
+        ESP_LOGI(TAG, "experimental total_size=%d, p->tot_len=%d", total_size, netbuf.total_size()); 
+
+        // This works pretty well, just something still bugs me about having a direct shrink call
+        // in streambuf
+        //out.rdbuf()->shrink_to_fit_experimental2();
+        
+        // low level call, totally acceptable
+        pbuf_realloc(netbuf, total_size);
+
+        //netbuf.shrink(total_size);
 
         ESP_LOGI(TAG, "pbuf tot_len=%d", netbuf.total_size());
 
-        udp_sendto(pcb, netbuf.pbuf(), addr, port);
+        udp_sendto(pcb, netbuf, addr, port);
     }
 }
 

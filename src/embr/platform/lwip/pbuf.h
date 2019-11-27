@@ -118,6 +118,8 @@ public:
     pbuf_pointer pbuf() const { return p; }
 #endif
 
+    operator pbuf_pointer() const { return pbuf(); }
+
     // p->len represents length of current pbuf, if a chain is involved
     // look at tot_len
     size_type size() const { return p->len; }
