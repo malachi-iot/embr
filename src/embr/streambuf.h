@@ -117,11 +117,30 @@ public:
     size_type pos() const { return out_pos_base_type::pos(); }
 
     // needed for pbuf shrink (realloc) operation
+    // stateful flavor of total_size - depends on pos() being at the 'end'
+    // (i.e. performing a seekoff beforehand will create undefined results)
+    // this seems like it could be more resilient to pos() not being at end, but
+    // in reality probably no more so than 'experimental2' flavor
     size_type total_size_experimental()
     {
         size_type absolute_pos = base_type::absolute_finder();
 
         return absolute_pos + pos();
+    }
+
+    // stateless flavor of total_size - depends on pos() being at the 'end'
+    // (i.e. performing a seekoff beforehand will create undefined results)
+    size_type total_size_experimental2() const
+    {
+        const netbuf_type& netbuf = cnetbuf();
+        size_type total_size = netbuf.total_size();
+
+        // take cream off the top which is the total position - size of current pbuf/netbuf chunk
+        total_size -= netbuf.size();
+        // now, re-add where our streambuf-managed position is to get true 'processed' size
+        total_size += pos();
+
+        return total_size;
     }
 
 private:
@@ -277,9 +296,19 @@ public:
         return orig_count;
     }
 
+    // This flavor in theory can shrink no matter where 'pos' is, but in reality it depends on
+    // pos being at the end, so is no better than 'experimental2' variety.  Keeping around
+    // until experimentation is complete, just in case I'm wrong
     void shrink_to_fit_experimental()
     {
         netbuf().shrink(total_size_experimental());
+    }
+
+    // This flavor is much more efficient, however it depends on 'pos' being positioned exactly
+    // where you'd like things shrunk to
+    void shrink_to_fit_experimental2()
+    {
+        netbuf().shrink(total_size_experimental2());
     }
 };
 

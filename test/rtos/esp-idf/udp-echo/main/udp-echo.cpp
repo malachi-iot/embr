@@ -88,7 +88,8 @@ void udp_echo_recv(void *arg,
         process_out(in, out);
 
         const netbuf_type& netbuf = out.rdbuf()->cnetbuf();
-
+        
+        /*
         int total_size = netbuf.total_size();
         int size = netbuf.size();
         int pos = out.rdbuf()->pos();
@@ -101,7 +102,9 @@ void udp_echo_recv(void *arg,
             pos,
             size);
 
-        out.rdbuf()->shrink_to_fit_experimental();
+        out.rdbuf()->shrink_to_fit_experimental(); */
+
+        out.rdbuf()->shrink_to_fit_experimental2();
 
         ESP_LOGI(TAG, "pbuf tot_len=%d", netbuf.total_size());
 
