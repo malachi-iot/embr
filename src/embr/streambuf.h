@@ -81,7 +81,12 @@ protected:
         }
 
         return new_pos;
-    }    
+    }
+
+public:
+    // FIX: ugly naming
+    // We need cnetbuf naming because streambuf itself is rarely const
+    const netbuf_type& cnetbuf() const { return netbuf; }
 };
 
 // output streambuf whose output destination is a netbuf
@@ -110,10 +115,10 @@ struct out_netbuf_streambuf :
     typedef estd::streamsize streamsize;
     typedef estd::ios_base ios_base;
 
-    // FIX: ugly naming
-    const netbuf_type& cnetbuf() const { return base_type::netbuf; }
-
 public:
+    const netbuf_type& netbuf() const { return base_type::netbuf; }
+    netbuf_type& netbuf() { return base_type::netbuf; }
+
     size_type size() const { return base_type::size(); }
     size_type pos() const { return out_pos_base_type::pos(); }
 
@@ -133,18 +138,16 @@ public:
     // (i.e. performing a seekoff beforehand will create undefined results)
     size_type total_size_experimental2() const
     {
-        const netbuf_type& netbuf = cnetbuf();
-        size_type total_size = netbuf.total_size();
+        const netbuf_type& nb = netbuf();
+        size_type total_size = nb.total_size();
 
         // take cream off the top which is the total position - size of current pbuf/netbuf chunk
-        total_size -= netbuf.size();
+        total_size -= nb.size();
         // now, re-add where our streambuf-managed position is to get true 'processed' size
         total_size += pos();
 
         return total_size;
     }
-
-    netbuf_type& netbuf() { return base_type::netbuf; }
 
 private:
 
@@ -334,10 +337,6 @@ struct in_netbuf_streambuf :
     typedef estd::ios_base ios_base;
 
     pos_type pos() const { return in_pos_base_type::pos(); }
-
-    // FIX: ugly naming
-    // We need cnetbuf naming because streambuf itself is rarely const
-    const netbuf_type& cnetbuf() const { return base_type::netbuf; }
 
     const netbuf_type& netbuf() const { return base_type::netbuf; }
     netbuf_type& netbuf() { return base_type::netbuf; }
