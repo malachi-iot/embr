@@ -66,12 +66,24 @@ void udp_echo_recv(void *arg,
 {
     const char* TAG = "udp_echo_recv";
 
+    typedef netbuf_type::size_type size_type;
+
     if (p != NULL)
     {
-        ESP_LOGI(TAG, "entry: p->len=%d", p->len);
+#ifdef FEATURE_EMBR_PBUF_CHAIN_EXP
+        // NOTE: We must place this out in a temporary "variable" or use size_type() around it
+        // due to https://stackoverflow.com/questions/40690260/undefined-reference-error-for-static-constexpr-member
+        // this is because min takes const T&, which semi-demands an address
+        size_type constexpr threshold_size = netbuf_type::threshold_size;
+        size_type out_len = estd::min(p->tot_len, threshold_size);
+#else
+        size_type out_len = p->tot_len;
+#endif
+
+        ESP_LOGI(TAG, "entry: p->len=%d, out_len=%d", p->len, out_len);
 
         pbuf_istream in(p, false); // will auto-free p since it's not bumping reference
-        pbuf_ostream out(p->tot_len);
+        pbuf_ostream out(out_len);
 
         process_out(in, out);
 
@@ -84,7 +96,10 @@ void udp_echo_recv(void *arg,
         total_size -= size;
         total_size += pos;
 
-        ESP_LOGI(TAG, "experimental total_size=%d", total_size);
+        ESP_LOGI(TAG, "experimental total_size=%d, pos=%d, size=%d", 
+            total_size,
+            pos,
+            size);
 
         out.rdbuf()->shrink_to_fit_experimental();
 
