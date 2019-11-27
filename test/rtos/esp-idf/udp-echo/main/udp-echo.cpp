@@ -77,7 +77,18 @@ void udp_echo_recv(void *arg,
 
         const netbuf_type& netbuf = out.rdbuf()->cnetbuf();
 
+        int total_size = netbuf.total_size();
+        int size = netbuf.size();
+        int pos = out.rdbuf()->pos();
+
+        total_size -= size;
+        total_size += pos;
+
+        ESP_LOGI(TAG, "experimental total_size=%d", total_size);
+
         out.rdbuf()->shrink_to_fit_experimental();
+
+        ESP_LOGI(TAG, "pbuf tot_len=%d", netbuf.total_size());
 
         udp_sendto(pcb, netbuf.pbuf(), addr, port);
     }
