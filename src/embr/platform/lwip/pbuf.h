@@ -154,6 +154,7 @@ public:
     embr::mem::ExpandResult expand(size_type by_size, bool move_to_next)
     {
 #ifdef FEATURE_EMBR_PBUF_CHAIN_EXP
+        // threshold tells us minimum size to allocate by
         if(by_size < threshold_size)
             by_size = threshold_size;
             
@@ -163,7 +164,7 @@ public:
 
         // assumes we called expand while at the end of p chain
 
-        // UNTESTED
+        // lightly tested
         pbuf_cat(p_start, new_p);
 
         // TODO: Might just assign p to new_p

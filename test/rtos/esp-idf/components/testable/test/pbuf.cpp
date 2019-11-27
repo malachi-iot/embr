@@ -21,6 +21,7 @@ constexpr int netbuf_size = 128;
 static const char* TAG = "lwip-pbuf";
 
 typedef embr::lwip::PbufNetbuf netbuf_type;
+typedef netbuf_type::size_type size_type;
 typedef out_netbuf_streambuf<char, netbuf_type> out_pbuf_streambuf;
 typedef in_netbuf_streambuf<char, netbuf_type> in_pbuf_streambuf;
 typedef estd::internal::basic_ostream<out_pbuf_streambuf> pbuf_ostream;
@@ -230,3 +231,19 @@ TEST_CASE("lwip pbuf embr-netbuf: istream", "[lwip-pbuf]")
     // we get failures here, comment out this line
     TEST_ASSERT(p->ref == 0);
 }
+
+
+#ifdef FEATURE_EMBR_PBUF_CHAIN_EXP
+TEST_CASE("lwip pbuf embr-netbuf: netbuf shrink", "[lwip-pbuf]")
+{
+    // UNFINISHED
+    size_type constexpr threshold_size = netbuf_type::threshold_size;
+
+    pbuf_ostream out(threshold_size / 2);
+
+    // assumes ASCII
+    char ch = '0';
+
+    out.put(ch);
+}
+#endif
