@@ -136,9 +136,15 @@ public:
 
     // stateless flavor of total_size - depends on pos() being at the 'end'
     // (i.e. performing a seekoff beforehand will create undefined results)
-    size_type total_size_experimental2() const
+    size_type absolute_pos() const
     {
         const netbuf_type& nb = netbuf();
+
+        // TODO: wrap this in a strict/diagnostic #ifdef
+        // if we're not on the last netbuf chain when inquiring absolute_pos,
+        // undefined/unhandled
+        if(!nb.last()) return -1;
+
         size_type total_size = nb.total_size();
 
         // take cream off the top which is the total position - size of current pbuf/netbuf chunk

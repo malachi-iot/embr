@@ -254,7 +254,7 @@ TEST_CASE("lwip pbuf embr-netbuf: netbuf shrink", "[lwip-pbuf]")
     netbuf_type& netbuf = out.rdbuf()->netbuf();
 
     size_type total_size = netbuf.total_size();
-    size_type actual_size = out.rdbuf()->total_size_experimental2();
+    size_type actual_size = out.rdbuf()->absolute_pos();
 
     TEST_ASSERT_EQUAL((rotation_size * rotations), actual_size);
     TEST_ASSERT_LESS_OR_EQUAL(total_size, actual_size);
