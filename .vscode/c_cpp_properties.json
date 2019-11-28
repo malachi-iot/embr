@@ -4,6 +4,7 @@
             "${env:IDF_PATH}/components/esp32/include/**",
             "${env:IDF_PATH}/components/log/include/**",
             "${env:IDF_PATH}/components/lwip/include/**",
+            "${env:IDF_PATH}/components/unity/unity/src",
             "${env:IDF_PATH}/components/lwip/lwip/src/include/**",
             "${env:IDF_PATH}/components/freertos/include/**"            
         ],

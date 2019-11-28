@@ -26,6 +26,7 @@ typedef out_netbuf_streambuf<char, netbuf_type> out_pbuf_streambuf;
 typedef in_netbuf_streambuf<char, netbuf_type> in_pbuf_streambuf;
 typedef estd::internal::basic_ostream<out_pbuf_streambuf> pbuf_ostream;
 typedef estd::internal::basic_istream<in_pbuf_streambuf> pbuf_istream;
+typedef in_pbuf_streambuf::traits_type traits_type;
 
 TEST_CASE("lwip pbuf embr-netbuf: out streambuf", "[lwip-pbuf]")
 {
@@ -238,12 +239,40 @@ TEST_CASE("lwip pbuf embr-netbuf: netbuf shrink", "[lwip-pbuf]")
 {
     // UNFINISHED
     size_type constexpr threshold_size = netbuf_type::threshold_size;
+    int rotation_size = 50;
+    int rotations = 6; // presuming these are gonna be bigger than threshold size, for now
 
-    pbuf_ostream out(threshold_size / 2);
+    pbuf_ostream out(threshold_size);
 
     // assumes ASCII
-    char ch = '0';
+    const char ch = '0';
 
-    out.put(ch);
+    for(int count = 0; count < rotations; count++)
+        for(int r = 0; r < rotation_size; r++)
+            out.put(ch + r);
+
+    netbuf_type& netbuf = out.rdbuf()->netbuf();
+
+    size_type total_size = netbuf.total_size();
+    size_type actual_size = out.rdbuf()->total_size_experimental2();
+
+    TEST_ASSERT_EQUAL((rotation_size * rotations), actual_size);
+    TEST_ASSERT_LESS_OR_EQUAL(total_size, actual_size);
+
+    netbuf.shrink(actual_size);
+    netbuf.reset();
+
+    pbuf_istream in(netbuf.pbuf());
+
+    for(int count = 0; count < rotations; count++)
+        for(int r = 0; r < rotation_size; r++)
+        {
+            char ch_expected = ch + r;
+            char ch_actual = in.get();
+
+            TEST_ASSERT_EQUAL(ch_expected, ch_actual);
+        }
+
+    TEST_ASSERT_EQUAL(traits_type::eof(), in.get());
 }
 #endif
