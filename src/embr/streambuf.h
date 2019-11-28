@@ -192,7 +192,7 @@ protected:
                 {
                     // not positioning anywhere, just a kind of helper for tellp()
                     // NOTE: unsure if absolute pos is a good precedent here
-                    return total_size_experimental2();
+                    return absolute_pos();
                 }
                 else if(off + pos() < size())
                     this->pbump(off);
@@ -326,7 +326,7 @@ public:
     // where you'd like things shrunk to
     void shrink_to_fit_experimental2()
     {
-        netbuf().shrink(total_size_experimental2());
+        netbuf().shrink(absolute_pos());
     }
 };
 
