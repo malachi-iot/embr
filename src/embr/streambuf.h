@@ -181,7 +181,14 @@ protected:
                 break;
 
             case ios_base::cur:
-                if(off + pos() < size())
+                // TODO: Check for negative, positive or 0 value
+                if(off == 0)
+                {
+                    // not positioning anywhere, just a kind of helper for tellp()
+                    // NOTE: unsure if absolute pos is a good precedent here
+                    return total_size_experimental2();
+                }
+                else if(off + pos() < size())
                     this->pbump(off);
                 else
                 {
