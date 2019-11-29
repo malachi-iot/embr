@@ -88,11 +88,8 @@ void udp_echo_recv(void *arg,
 
         process_out(in, out);
 
-        // Not doing const flavor because we're experimenting with "shrink" call
-        //netbuf_type& netbuf = out.rdbuf()->netbuf();
-        // Must do const flavor at the moment as netbuf() is private
-        const netbuf_type& netbuf = out.rdbuf()->cnetbuf();
-        pbuf_pointer pbuf = const_cast<pbuf_pointer>(netbuf.pbuf());
+        netbuf_type& netbuf = out.rdbuf()->netbuf();
+        pbuf_pointer pbuf = netbuf.pbuf();
         
         /*
         int total_size = netbuf.total_size();
@@ -110,7 +107,7 @@ void udp_echo_recv(void *arg,
         out.rdbuf()->shrink_to_fit_experimental(); */
 
         // Less bothered to have a total_size call than a shrink call in streambuf
-        size_type total_size = out.rdbuf()->total_size_experimental2();
+        size_type total_size = out.rdbuf()->absolute_pos();
 
         ESP_LOGI(TAG, "experimental total_size=%d, p->tot_len=%d", total_size, netbuf.total_size()); 
 
