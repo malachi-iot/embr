@@ -95,8 +95,8 @@ public:
 // note also netbuf architecture is such that it is decoupled from its consumer, so sync/emit
 // calls to this streambuf would have diminished meaning unless we also connected this streambuf
 // to an actual consuming device somehow.  Not a terrible idea, but not doing that for now
-template <class TChar, class TNetbuf,
-          class CharTraits = std::char_traits<TChar>,
+template <class TNetbuf,
+          class CharTraits,
           class TBase = netbuf_streambuf_base<TNetbuf, CharTraits> >
 struct out_netbuf_streambuf : 
     estd::internal::impl::out_pos_streambuf_base<CharTraits>,
@@ -104,8 +104,8 @@ struct out_netbuf_streambuf :
 {
     typedef TBase base_type;
     typedef estd::internal::impl::out_pos_streambuf_base<CharTraits> out_pos_base_type;
-    typedef TChar char_type;
     typedef CharTraits traits_type;
+    typedef typename traits_type::char_type char_type;
     typedef typename estd::remove_reference<TNetbuf>::type netbuf_type;
     typedef const netbuf_type& const_netbuf_reference;
     typedef typename netbuf_type::size_type size_type;
@@ -330,8 +330,8 @@ public:
     }
 };
 
-template <class TChar, class TNetbuf,
-          class CharTraits = std::char_traits<TChar>,
+template <class TNetbuf,
+          class CharTraits,
           class TBase = netbuf_streambuf_base<TNetbuf, CharTraits> >
 struct in_netbuf_streambuf : 
     estd::internal::impl::in_pos_streambuf_base<CharTraits>,
@@ -536,10 +536,10 @@ public:
 
 #ifdef FEATURE_CPP_ALIASTEMPLATE
 template <class CharT, class TNetbuf, class CharTraits = std::char_traits<CharT> >
-using out_netbuf_streambuf = estd::internal::streambuf<impl::out_netbuf_streambuf<CharT, TNetbuf> >;
+using out_netbuf_streambuf = estd::internal::streambuf<impl::out_netbuf_streambuf<TNetbuf, CharTraits> >;
 
 template <class CharT, class TNetbuf, class CharTraits = std::char_traits<CharT> >
-using in_netbuf_streambuf = estd::internal::streambuf<impl::in_netbuf_streambuf<CharT, TNetbuf> >;
+using in_netbuf_streambuf = estd::internal::streambuf<impl::in_netbuf_streambuf<TNetbuf, CharTraits> >;
 #endif
 }
 
