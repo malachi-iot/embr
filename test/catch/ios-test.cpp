@@ -29,11 +29,11 @@ TEST_CASE("iostreams", "[ios]")
 
     SECTION("basic output netbuf+streambuf impl")
     {
-        mem::impl::out_netbuf_streambuf<char, mem::layer1::NetBuf<32>& > sb(nb);
+        mem::impl::out_netbuf_streambuf<mem::layer1::NetBuf<32>&, std::char_traits<char> > sb(nb);
 
         sb.xsputn("hi2u", 5); // cheat and include null termination also
 
-        estd::layer2::string<> s((char*)nb.data());
+        estd::layer2::const_string s((char*)nb.data());
 
         REQUIRE(s == "hi2u");
         // compares just pointers here

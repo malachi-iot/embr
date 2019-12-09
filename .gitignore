@@ -38,6 +38,7 @@ cmake-build-debug/
 
 # Qt specific
 build/
+test/build-catch-*
 *.user
 
 # Visual Studio specific
