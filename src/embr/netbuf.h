@@ -1,5 +1,6 @@
 /**
  *  @file
+ * mk. 2 netbuf
  */
 #pragma once
 
@@ -16,7 +17,7 @@
  *      and tracks its own pos filling it up so that subsequent buffer() calls always
  *      present empty, writeable buffer space
  * NetBuf signature (concept) is:
- *      uint8* data() = raw available bytes in this chunk/chain
+ *      void* data() = raw available bytes in this chunk/chain
  *      size_type size() = number of available bytes in chunk/chain
  *      expand(size_type by_amount, bool auto_next) = attempt to expand netbuf size
  *      bool last() = check to see if this is the last nextbuf

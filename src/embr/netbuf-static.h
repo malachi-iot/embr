@@ -1,3 +1,8 @@
+/**
+ *  @file
+ * mk. 2 netbuf
+ */
+
 #pragma once
 
 #include <estd/span.h>
@@ -95,9 +100,9 @@ public:
     size_type size() const { return base::size(); }
     size_type total_size() const { return base::size(); }
 
-    const uint8_t* data() const { return base::data(); }
+    const void* data() const { return base::data(); }
 
-    uint8_t* data() { return base::data(); }
+    void* data() { return base::data(); }
 
     // position back at the beginning
     void reset() {}

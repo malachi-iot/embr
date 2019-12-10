@@ -26,10 +26,11 @@ TEST_CASE("reader test", "[reader]")
         SECTION("byte >> operator")
         {
             uint8_t value;
+            const uint8_t* data = reinterpret_cast<const uint8_t*>(netbuf.data());
 
             reader >> value;
 
-            REQUIRE(value == netbuf.data()[0]);
+            REQUIRE(value == data[0]);
         }
     }
 }

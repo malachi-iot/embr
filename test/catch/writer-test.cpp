@@ -17,6 +17,7 @@ TEST_CASE("writer test", "[writer]")
     {
         embr::mem::layer2::NetBuf<128> netbuf;
         embr::mem::NetBufWriter<decltype(netbuf)&> writer(netbuf);
+        auto netbuf_data = reinterpret_cast<const uint8_t*>(netbuf.data());
 
         // NOTE: it's 0 because the vector has not been added to yet
         // a bit peculiar, but perhaps after getting use to it it'll
@@ -38,10 +39,10 @@ TEST_CASE("writer test", "[writer]")
             sprintf((char*)b.data(), "Hi2u");
 #endif
 
-            REQUIRE(netbuf.data()[0] == 'H');
-            REQUIRE(netbuf.data()[1] == 'i');
-            REQUIRE(netbuf.data()[2] == '2');
-            REQUIRE(netbuf.data()[3] == 'u');
+            REQUIRE(netbuf_data[0] == 'H');
+            REQUIRE(netbuf_data[1] == 'i');
+            REQUIRE(netbuf_data[2] == '2');
+            REQUIRE(netbuf_data[3] == 'u');
         }
         // FIX: These all actually should be failing since we didn't expand
         // but because bounds checking is currently so weak, it works
@@ -52,7 +53,7 @@ TEST_CASE("writer test", "[writer]")
             writer << buffer;
 
             for(int i = 0; i < sizeof(buffer); i++)
-                REQUIRE(buffer[i] == netbuf.data()[i]);
+                REQUIRE(buffer[i] == netbuf_data[i]);
         }
         SECTION("string(ish) << operator")
         {
@@ -62,7 +63,7 @@ TEST_CASE("writer test", "[writer]")
             writer << buffer;
 
             for(int i = 0; i < buffer.size(); i++)
-                REQUIRE(buffer[i] == netbuf.data()[i]);
+                REQUIRE(buffer[i] == netbuf_data[i]);
         }
         SECTION("byte << operator")
         {
@@ -70,7 +71,7 @@ TEST_CASE("writer test", "[writer]")
 
             writer << value;
 
-            REQUIRE(0xFF == netbuf.data()[0]);
+            REQUIRE(0xFF == netbuf_data[0]);
         }
         SECTION("chunked write")
         {
@@ -82,10 +83,10 @@ TEST_CASE("writer test", "[writer]")
             {
                 embr::mem::experimental::itoa(writer, 500);
 
-                REQUIRE('5' == netbuf.data()[0]);
-                REQUIRE('0' == netbuf.data()[1]);
-                REQUIRE(0 != netbuf.data()[2]);
-                REQUIRE('0' == netbuf.data()[2]);
+                REQUIRE('5' == netbuf_data[0]);
+                REQUIRE('0' == netbuf_data[1]);
+                REQUIRE(0 != netbuf_data[2]);
+                REQUIRE('0' == netbuf_data[2]);
             }
         }
     }
