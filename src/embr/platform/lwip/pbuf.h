@@ -8,14 +8,8 @@
 
 #pragma once
 
-extern "C" {
+#include "udp.h"
 
-#include <lwip/api.h>
-#include <lwip/udp.h>
-
-}
-
-#include <estd/internal/platform.h>
 #include <embr/netbuf.h>
 
 // FIX: To be proper, we need to redefine these at the end if we can
@@ -31,17 +25,69 @@ extern "C" {
 
 namespace embr { namespace lwip {
 
-struct PbufNetbufBase
+struct PbufBase
 {
     typedef struct pbuf pbuf_type;
     typedef pbuf_type* pbuf_pointer;
     typedef const pbuf_type* const_pbuf_pointer;
-
-private:
 };
 
+
+struct Pbuf : PbufBase
+{
+protected:
+    pbuf_pointer p;
+
+public:
+    const_pbuf_pointer pbuf() const { return p; }
+    pbuf_pointer pbuf() { return p; }
+
+#ifdef FEATURE_CPP_DECLTYPE
+    typedef decltype(p->len) size_type;
+#else
+    typedef uint16_t size_type;
+#endif
+
+    Pbuf(size_type size)
+    {
+        p = pbuf_alloc(PBUF_TRANSPORT, size, PBUF_RAM);
+    }
+
+    Pbuf(pbuf_pointer p, bool bump_reference = true) : p(p)
+    {
+        if(bump_reference) pbuf_ref(p);
+    }
+
+    Pbuf(const Pbuf& copy_from, bool bump_reference = true) :
+        p(copy_from.p)
+    {
+        if(bump_reference) pbuf_ref(pbuf());
+    }
+
+#ifdef FEATURE_CPP_MOVESEMANTIC
+    Pbuf(Pbuf&& move_from) :
+        p(move_from.p)
+    {
+        move_from.p = NULLPTR;
+    }
+#endif
+
+    ~Pbuf()
+    {
+        pbuf_pointer p_to_free = pbuf();
+
+        if(p_to_free != NULLPTR)
+            // remember, pbufs are reference counted so this may or may not actually
+            // deallocate pbuf memory
+            pbuf_free(p_to_free);
+    }
+};
+
+
 // netbuf-mk2 managing a lwip pbuf
-struct PbufNetbuf : PbufNetbufBase
+// TODO: Extend from Pbuf, once I am in position to do regression
+// testing
+struct PbufNetbuf : PbufBase
 {
 
 private:
