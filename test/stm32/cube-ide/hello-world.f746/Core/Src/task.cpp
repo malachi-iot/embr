@@ -7,24 +7,23 @@
  */
 
 // Reference: http://shawnhymel.com/1795/getting-started-with-stm32-nucleo-usb-virtual-com-port/
+// Good guidance here: https://stackoverflow.com/questions/33549084/stm32cubemx-usb-cdc-vcp/33555364#33555364
+// (we want to do device and not host mode, for now)
 
-#include "usbh_cdc.h"
-
-extern USBH_HandleTypeDef hUsbHostFS;
+#include "usbd_cdc_if.h"
+#include "cmsis_os.h"
+#include "usb_device.h"
 
 extern "C" void hello_task()
 {
     uint8_t buffer[] = "Hello, World!\r\n";
 
-    // Not necessary, as MX_USB_HOST_Init does this for us
-    //USBH_Start(&hUsbHostFS);
-
     /* Infinite loop */
     for(;;)
     {
-        USBH_StatusTypeDef usb_status;
-
-        usb_status = USBH_CDC_Transmit(&hUsbHostFS, buffer, sizeof(buffer));
+        // Verified works after a few seconds of bringup, miniterm.py in debian
+        // can see our Hello, World! though there's some junk inbetween
+        CDC_Transmit_FS(buffer, sizeof(buffer));
 
         osDelay(3000);
     }
