@@ -14,8 +14,17 @@
 #include "cmsis_os.h"
 #include "usb_device.h"
 
+// wouldn't it be nice if...
+// http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0491i/BABJFEFG.html
+//#if defined(__TARGET_CPU_CORTEX_M7) || defined(__TARGET_CPU_CORTEX_M4) ||
+#if defined(__ARM_ARCH_7EM__)
+// Does get here, that's cool.  Not referenced on above link...
+//#error Would love to see this error
+#endif
+
+
 // Just to test we're in fact getting *something* -- but looking good
-//#include <estd/string.h>
+#include <estd/string.h>
 // OK, these *were* working but symlinking lied to me and I accidentally deleted the
 // support code.  The changes are:
 // 1. add a platform-detector in estd
