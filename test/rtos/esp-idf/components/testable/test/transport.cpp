@@ -11,7 +11,23 @@
 
 #include "esp_log.h"
 
+using namespace embr::lwip;
+using namespace embr::lwip::experimental;
+
+int constexpr pbuf_size = 128;
+
+volatile bool always_false_but_compiler_doesnt_know = false;
+
 TEST_CASE("lwip transport: basic", "[lwip-transport]")
 {
+    typedef TransportUdp transport_type;
+    
+    transport_type::endpoint_type endpoint;
 
+    out_pbuf_streambuf<char> streambuf(128);
+    
+    transport_type t(nullptr);
+
+    if(always_false_but_compiler_doesnt_know)
+        t.send(streambuf, endpoint);
 }
