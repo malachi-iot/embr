@@ -194,7 +194,29 @@ void udp_echo_recv_old(void *arg,
         ESP_LOGW(TAG, "p == null");
 }
 
+#define USE_AUTOPCB
+#ifdef USE_AUTOPCB
+void udp_echo_init(void)
+{
+    embr::lwip::Pcb pcb;
 
+    // get new pcb
+    if (!pcb.alloc()) {
+        LWIP_DEBUGF(UDP_DEBUG, ("pcb.alloc failed!\n"));
+        return;
+    }
+
+    /* bind to any IP address on port 7 */
+    if (pcb.bind(7) != ERR_OK) {
+        LWIP_DEBUGF(UDP_DEBUG, ("pcb.bind failed!\n"));
+        return;
+    }
+
+    /* set udp_echo_recv() as callback function
+       for received packets */
+    pcb.recv(udp_echo_recv);
+}
+#else
 void udp_echo_init(void)
 {
     struct udp_pcb * pcb;
@@ -216,3 +238,4 @@ void udp_echo_init(void)
        for received packets */
     udp_recv(pcb, udp_echo_recv, NULL);
 }
+#endif
