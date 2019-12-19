@@ -14,6 +14,7 @@ using basic_opbuf_streambuf = embr::mem::out_netbuf_streambuf<CharT, PbufNetbuf,
 
 template <class CharT, class CharTraits = std::char_traits<CharT> >
 using basic_ipbuf_streambuf = embr::mem::in_netbuf_streambuf<CharT, PbufNetbuf, CharTraits>;
+
 #endif
 
 typedef embr::mem::out_netbuf_streambuf<char, PbufNetbuf> opbuf_streambuf;

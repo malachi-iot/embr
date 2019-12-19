@@ -8,7 +8,7 @@
 #include "esp_log.h"
 
 //#define RAW_LWIP_STYLE
-#include <embr/platform/lwip/streambuf.h>
+#include <embr/platform/lwip/iostream.h>
 
 #include <estd/string.h>
 #include <estd/ostream.h>
@@ -19,8 +19,8 @@ using namespace embr::mem;
 
 typedef embr::lwip::PbufNetbuf netbuf_type;
 typedef struct pbuf* pbuf_pointer;
-typedef embr::lwip::in_pbuf_streambuf<char> in_pbuf_streambuf;
-typedef estd::internal::basic_ostream<embr::lwip::out_pbuf_streambuf<char> > pbuf_ostream;
+typedef embr::lwip::ipbuf_streambuf in_pbuf_streambuf;
+typedef estd::internal::basic_ostream<embr::lwip::opbuf_streambuf > pbuf_ostream;
 typedef estd::internal::basic_istream<in_pbuf_streambuf> pbuf_istream;
 
 //#define RAW_LWIP_STYLE
