@@ -7,9 +7,9 @@ namespace embr { namespace lwip {
 
 #ifdef FEATURE_CPP_ALIASTEMPLATE
 template <class CharT, class CharTraits = std::char_traits<CharT> >
-using basic_ipbuf_stream = estd::internal::basic_istream<basic_ipbuf_streambuf<CharT, CharTraits> >;
+using basic_ipbufstream = estd::internal::basic_istream<basic_ipbuf_streambuf<CharT, CharTraits> >;
 #endif
 
-typedef estd::internal::basic_istream<ipbuf_streambuf> ipbuf_stream;
+typedef estd::internal::basic_istream<ipbuf_streambuf> ipbufstream;
 
 }}

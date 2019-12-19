@@ -1,4 +1,4 @@
-#include <embr/platform/lwip/pbuf.h>
+#include <embr/platform/lwip/iostream.h>
 #include <embr/streambuf.h>
 
 #include <estd/string.h>
@@ -22,10 +22,13 @@ static const char* TAG = "lwip-pbuf";
 
 typedef embr::lwip::PbufNetbuf netbuf_type;
 typedef netbuf_type::size_type size_type;
-typedef out_netbuf_streambuf<char, netbuf_type> out_pbuf_streambuf;
-typedef in_netbuf_streambuf<char, netbuf_type> in_pbuf_streambuf;
-typedef estd::internal::basic_ostream<out_pbuf_streambuf> pbuf_ostream;
-typedef estd::internal::basic_istream<in_pbuf_streambuf> pbuf_istream;
+
+using embr::lwip::opbufstream;
+using embr::lwip::ipbufstream;
+
+typedef embr::lwip::opbuf_streambuf out_pbuf_streambuf;
+typedef embr::lwip::ipbuf_streambuf in_pbuf_streambuf;
+
 typedef in_pbuf_streambuf::traits_type traits_type;
 
 TEST_CASE("lwip pbuf embr-netbuf: out streambuf", "[lwip-pbuf]")
@@ -198,7 +201,7 @@ TEST_CASE("lwip pbuf embr-netbuf: istream", "[lwip-pbuf]")
 {
     using namespace estd;
 
-    pbuf_istream in(netbuf_size);
+    ipbufstream in(netbuf_size);
     char buf[netbuf_size];
 
     int read_back = in.readsome(buf, netbuf_size / 2);
@@ -218,14 +221,14 @@ TEST_CASE("lwip pbuf embr-netbuf: istream", "[lwip-pbuf]")
     {
         // these parameters mean spin up istream using existing pbuf
         // and increases ref counter
-        pbuf_istream temp(p);
+        ipbufstream temp(p);
         TEST_ASSERT(p->ref == 2);
     }
     TEST_ASSERT(p->ref == 1);
     {
         // these parameters mean spin up istream using existing pbuf
         // and DON'T increase ref counter
-        pbuf_istream temp(p, false);
+        ipbufstream temp(p, false);
         TEST_ASSERT(p->ref == 1);
     }
     // WARNING: p may in fact be deallocated at this point, so if
@@ -242,7 +245,7 @@ TEST_CASE("lwip pbuf embr-netbuf: netbuf shrink", "[lwip-pbuf]")
     int rotation_size = 50;
     int rotations = 6; // presuming these are gonna be bigger than threshold size, for now
 
-    pbuf_ostream out(threshold_size);
+    opbufstream out(threshold_size);
 
     // assumes ASCII
     const char ch = '0';
@@ -263,7 +266,7 @@ TEST_CASE("lwip pbuf embr-netbuf: netbuf shrink", "[lwip-pbuf]")
     netbuf.shrink(actual_size);
     netbuf.reset();
 
-    pbuf_istream in(netbuf.pbuf());
+    ipbufstream in(netbuf.pbuf());
 
     // read same pbuf out via istream looking for same ASCII
     for(int count = 0; count < rotations; count++)

@@ -24,7 +24,7 @@ TEST_CASE("lwip transport: basic", "[lwip-transport]")
     
     transport_type::endpoint_type endpoint;
 
-    out_pbuf_streambuf<char> streambuf(128);
+    opbuf_streambuf streambuf(128);
     
     transport_type t(nullptr);
 

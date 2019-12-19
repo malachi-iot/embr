@@ -31,13 +31,15 @@ struct TransportUdp :
     TransportUdp(TArgs&& ...args) : pcb(std::forward<TArgs>(args)...) {}
 #endif
 
+#ifdef FEATURE_CPP_ALIASTEMPLATE
     template <class TChar>
-    void send(out_pbuf_streambuf<TChar>& streambuf, const endpoint_type& endpoint)
+    void send(basic_opbuf_streambuf<TChar>& streambuf, const endpoint_type& endpoint)
     {
         pcb.send(streambuf.netbuf().pbuf(), 
             endpoint.address,
             endpoint.port);
     }
+#endif
 };
 
 }}}

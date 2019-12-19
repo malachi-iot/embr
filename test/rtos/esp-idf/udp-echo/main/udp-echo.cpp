@@ -19,17 +19,16 @@ using namespace embr::mem;
 
 typedef embr::lwip::PbufNetbuf netbuf_type;
 typedef struct pbuf* pbuf_pointer;
-typedef embr::lwip::ipbuf_streambuf in_pbuf_streambuf;
-typedef estd::internal::basic_ostream<embr::lwip::opbuf_streambuf > pbuf_ostream;
-typedef estd::internal::basic_istream<in_pbuf_streambuf> pbuf_istream;
+using embr::lwip::opbufstream;
+using embr::lwip::ipbufstream;
 
 //#define RAW_LWIP_STYLE
 
-void process_out(pbuf_istream& in, pbuf_ostream& out)
+void process_out(ipbufstream& in, opbufstream& out)
 {
     const char* TAG = "process_out";
 
-    in_pbuf_streambuf& in_rdbuf = *in.rdbuf();
+    embr::lwip::ipbuf_streambuf& in_rdbuf = *in.rdbuf();
     //int tot_len = in_rdbuf.cnetbuf().total_size();
 
     if(in.peek() == '!')
@@ -81,8 +80,8 @@ void udp_echo_recv(void *arg,
 
         ESP_LOGI(TAG, "entry: p->len=%d, out_len=%d", p->len, out_len);
 
-        pbuf_istream in(p, false); // will auto-free p since it's not bumping reference
-        pbuf_ostream out(out_len);
+        ipbufstream in(p, false); // will auto-free p since it's not bumping reference
+        opbufstream out(out_len);
 
         process_out(in, out);
 
