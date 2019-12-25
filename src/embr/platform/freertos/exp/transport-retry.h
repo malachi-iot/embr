@@ -6,6 +6,8 @@
  *  Presumes datagram-style behavior:
  *  1) sessionless, no inbuilt sequence mechanism
  *  2) non blocking/async
+ * 
+ *  Also depends heavily on estd::streambuf
  */
 
 #include <estd/internal/platform.h>
@@ -29,15 +31,20 @@ struct RetryManager
     TRetryPolicyImpl policy_impl;
 
     typedef typename TTransport::endpoint_type endpoint_type;
+    typedef typename TTransport::ostreambuf_type ostreambuf_type;
 
     struct QueuedItem
     {
         endpoint_type endpoint;
+        ostreambuf_type& streambuf;
         unsigned retry_count;
     };
 
 
-    void add();
+    void add(ostreambuf_type& streambuf, const endpoint_type& endpoint)
+    {
+
+    }
 };
 
 

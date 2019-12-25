@@ -10,6 +10,8 @@ struct TransportBase
 {
     typedef const ip_addr_t* addr_pointer;
     typedef struct pbuf* pbuf_pointer;
+    typedef opbuf_streambuf ostreambuf_type;
+    typedef ipbuf_streambuf istreambuf_type;
 
     struct Endpoint
     {
