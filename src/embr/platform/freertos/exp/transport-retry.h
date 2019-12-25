@@ -38,10 +38,18 @@ struct RetryManager
         endpoint_type endpoint;
         ostreambuf_type& streambuf;
         unsigned retry_count;
+
+        QueuedItem(const endpoint_type& endpoint, ostreambuf_type& streambuf) :
+            endpoint(endpoint),
+            streambuf(streambuf),
+            retry_count(0)
+        {
+
+        }
     };
 
 
-    void add(ostreambuf_type& streambuf, const endpoint_type& endpoint)
+    void add(const endpoint_type& endpoint, ostreambuf_type& streambuf)
     {
 
     }
