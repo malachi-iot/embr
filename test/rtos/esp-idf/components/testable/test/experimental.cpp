@@ -1,4 +1,5 @@
 #include <experimental/observer-event-handler.hpp>
+#include <embr/platform/freertos/exp/transport-retry.h>
 
 //#include <estd/iostream.h>    // FIX: This fails rather badly, look into why
 #include <embr/observer.h>
