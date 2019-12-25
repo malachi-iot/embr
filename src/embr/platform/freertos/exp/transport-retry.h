@@ -44,6 +44,13 @@ struct RetryManager
         return policy_impl.extract_key(streambuf);
     }
 
+    // NOTE: one bummer about splitting streambufs into in/out is
+    // this non-reuse as we see here
+    key_type extract_key(ostreambuf_type& streambuf)
+    {
+        return policy_impl.extract_key(streambuf);
+    }
+
     struct QueuedItem : 
         estd::experimental::forward_node_base_base<QueuedItem*>,
         item_policy_impl_type
@@ -56,18 +63,15 @@ struct RetryManager
         // NOTE: may or may not want to cache this here, but probably yes
         key_type key;
 
-        // IDEA: may be convenient to pass in key from outside app
-        QueuedItem(const endpoint_type& endpoint, ostreambuf_type& streambuf) :
+        QueuedItem(const endpoint_type& endpoint, 
+            ostreambuf_type& streambuf,
+            key_type key) :
             endpoint(endpoint),
             streambuf(streambuf),
+            key(key),
             retry_count(0)
         {
 
-        }
-
-        bool match(const endpoint_type& endpoint, const key_type& key)
-        {
-            return false;
         }
     };
 
@@ -75,7 +79,15 @@ struct RetryManager
 
     void send(const endpoint_type& to, ostreambuf_type& streambuf)
     {
+        key_type key = extract_key(streambuf);
 
+        // NOTE: Don't like dynamic allocation, it's kinda the norm for
+        // FreeRTOS apparently.  
+        // TODO: At least use allocator_traits and friends so that we can sub in
+        // memory pools and the like
+        QueuedItem* item = new QueuedItem(to, streambuf, key);
+
+        items.push_front(item);
     }
 
 
