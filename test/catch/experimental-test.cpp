@@ -92,14 +92,16 @@ TEST_CASE("experimental test", "[experimental]")
     {
         // stringbufs still a mess, so using span variety
         //typedef estd::experimental::ostringstream<128> ostream_type;
+        typedef estd::experimental::ospanstream ostream_type;
+        typedef estd::experimental::ispanstream istream_type;
 
         struct Transport
         {
             typedef int endpoint_type;
 
-            typedef estd::layer1::stringbuf<128> ostreambuf_type;
-            //typedef ostream_type::streambuf_type ostreambuf_type;
-            typedef estd::layer1::stringbuf<128> istreambuf_type;
+            //typedef estd::layer1::stringbuf<128> ostreambuf_type;
+            typedef ostream_type::streambuf_type ostreambuf_type;
+            typedef istream_type::streambuf_type istreambuf_type;
         };
 
         struct RetryImpl
@@ -110,12 +112,17 @@ TEST_CASE("experimental test", "[experimental]")
             struct item_policy_impl_type {};
         };
 
-        //ostream_type out;
+        char buf[128];
+        estd::span<char> span(buf);
+
+        ostream_type out(span);
+
         int fake_endpoint = 7;
-        //auto sb = out.rdbuf();
+        auto sb = out.rdbuf();
 
         embr::experimental::RetryManager<Transport, RetryImpl> rm;
 
-        //rm.send(fake_endpoint, sb);
+        // FIX: In its current state, this generates a memory leak since send does a 'new'
+        rm.send(fake_endpoint, *sb, 0);
     }
 }

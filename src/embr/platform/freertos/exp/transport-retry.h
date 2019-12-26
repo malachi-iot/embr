@@ -66,10 +66,11 @@ struct RetryManager
         QueuedItem(const endpoint_type& endpoint, 
             ostreambuf_type& streambuf,
             key_type key) :
+            estd::experimental::forward_node_base_base<QueuedItem*>(nullptr),
             endpoint(endpoint),
             streambuf(streambuf),
-            key(key),
-            retry_count(0)
+            retry_count(0),
+            key(key)
         {
 
         }
@@ -79,19 +80,24 @@ struct RetryManager
     typedef typename list_type::iterator list_iterator;
     list_type items;
 
-    void send(const endpoint_type& to, ostreambuf_type& streambuf)
+    void send(const endpoint_type& to, ostreambuf_type& streambuf, key_type key)
     {
-        key_type key = extract_key(streambuf);
-
         // NOTE: Don't like dynamic allocation, it's kinda the norm for
         // FreeRTOS apparently.  
         // TODO: At least use allocator_traits and friends so that we can sub in
         // memory pools and the like
         QueuedItem* item = new QueuedItem(to, streambuf, key);
 
-        items.push_front(item);
+        items.push_front(*item);
     }
 
+
+    void send(const endpoint_type& to, ostreambuf_type& streambuf)
+    {
+        key_type key = extract_key(streambuf);
+
+        send(to, streambuf, key);
+    }
 
     // Shall need an app-specific identifier, endpoint alone is not enough
     // (generally) to distinguish whether this is the specific item in question
