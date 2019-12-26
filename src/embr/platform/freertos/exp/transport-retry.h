@@ -10,6 +10,7 @@
  *  Also depends heavily on estd::streambuf, and depends it having
  *  a netbuf-style 'reset' capability (perhaps done through pubseekoff)
  */
+#pragma once
 
 #include <estd/internal/platform.h>
 #include <estd/forward_list.h>
@@ -19,7 +20,11 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/timers.h>
 #else
+#if defined(UNIT_TESTING) and !defined(ESTD_FREERTOS)
+// do nothing here, for GNU testing of this FreeRTOS specific area
+#else
 #include <timers.h>
+#endif
 #endif
 
 namespace embr { namespace experimental {
@@ -45,12 +50,6 @@ struct RetryManager
         return policy_impl.extract_key(streambuf);
     }
 
-    // NOTE: one bummer about splitting streambufs into in/out is
-    // this non-reuse as we see here
-    key_type extract_key(ostreambuf_type& streambuf)
-    {
-        return policy_impl.extract_key(streambuf);
-    }
 
     struct QueuedItem : 
         estd::experimental::forward_node_base_base<QueuedItem*>,
@@ -101,7 +100,12 @@ struct RetryManager
     {
         key_type key = extract_key(streambuf);
 
-        list_iterator found = estd::find_if(items.first(), items.last(), 
+        evaluate_received(from, key);
+    }
+
+    void evaluate_received(const endpoint_type& from, key_type key)
+    {
+        list_iterator found = estd::find_if(items.first(), items.last(),
             [&](const QueuedItem& item)  
             {
                 // policy impl helps for IP to compare only addr part, not port part

@@ -8,6 +8,11 @@
 #include <estd/string.h>
 #include <estd/string_view.h>
 
+// NOTE: At this time, not yet freertos specific, so test it here in regular GNU area
+#include <embr/platform/freertos/exp/transport-retry.h>
+#include <embr/streambuf.hpp>
+#include <estd/sstream.h>
+
 using namespace embr::experimental;
 
 template <class TAllocator>
@@ -82,5 +87,35 @@ TEST_CASE("experimental test", "[experimental]")
 
         // this works, but destructor seems to be a bit squirrely
         test(a);
+    }
+    SECTION("Retry v3")
+    {
+        // stringbufs still a mess, so using span variety
+        //typedef estd::experimental::ostringstream<128> ostream_type;
+
+        struct Transport
+        {
+            typedef int endpoint_type;
+
+            typedef estd::layer1::stringbuf<128> ostreambuf_type;
+            //typedef ostream_type::streambuf_type ostreambuf_type;
+            typedef estd::layer1::stringbuf<128> istreambuf_type;
+        };
+
+        struct RetryImpl
+        {
+            typedef Transport transport_type;
+            typedef int key_type;
+
+            struct item_policy_impl_type {};
+        };
+
+        //ostream_type out;
+        int fake_endpoint = 7;
+        //auto sb = out.rdbuf();
+
+        embr::experimental::RetryManager<Transport, RetryImpl> rm;
+
+        //rm.send(fake_endpoint, sb);
     }
 }
