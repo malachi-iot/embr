@@ -13,6 +13,7 @@
 
 #include <estd/internal/platform.h>
 #include <estd/forward_list.h>
+#include <estd/algorithm.h>
 
 #ifdef ESP_PLATFORM
 #include <freertos/FreeRTOS.h>
@@ -57,7 +58,7 @@ struct RetryManager
     {
         // endpoint that we want to send to.  For ipv4 this is IP address and port
         endpoint_type endpoint;
-        // streambuf to be (repeatedly) send to aforementioned endpoint
+        // streambuf to (repeatedly) send to aforementioned endpoint
         ostreambuf_type& streambuf;
         unsigned retry_count;
         // NOTE: may or may not want to cache this here, but probably yes
@@ -75,7 +76,9 @@ struct RetryManager
         }
     };
 
-    estd::intrusive_forward_list<QueuedItem> items;
+    typedef estd::intrusive_forward_list<QueuedItem> list_type;
+    typedef typename list_type::iterator list_iterator;
+    list_type items;
 
     void send(const endpoint_type& to, ostreambuf_type& streambuf)
     {
@@ -97,6 +100,14 @@ struct RetryManager
     void evaluate_received(const endpoint_type& from, istreambuf_type& streambuf)
     {
         key_type key = extract_key(streambuf);
+
+        list_iterator found = estd::find_if(items.first(), items.last(), 
+            [&](const QueuedItem& item)  
+            {
+                // policy impl helps for IP to compare only addr part, not port part
+                bool addr_match = policy_impl.match(from, item.endpoint);
+                return addr_match && item.key == key; 
+            });
     }
 };
 

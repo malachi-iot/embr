@@ -49,3 +49,9 @@ TEST_CASE("observer event handler", "[experimental]")
 
     TEST_ASSERT_EQUAL(1, context.got_ip_counter);
 }
+
+
+TEST_CASE("freertos retry", "[experimental]")
+{
+    
+}
