@@ -1,5 +1,6 @@
 #include <experimental/observer-event-handler.hpp>
 #include <embr/platform/freertos/exp/transport-retry.h>
+#include <embr/platform/lwip/transport.h>
 
 //#include <estd/iostream.h>    // FIX: This fails rather badly, look into why
 #include <embr/observer.h>
@@ -51,7 +52,24 @@ TEST_CASE("observer event handler", "[experimental]")
 }
 
 
+struct DummyReplyPolicy
+{
+    typedef int key_type;
+    typedef embr::lwip::experimental::TransportBase transport_type;
+    typedef transport_type::endpoint_type endpoint_type;
+
+    struct item_policy_impl_type {};
+
+    bool match(const endpoint_type& incoming, const endpoint_type& outgoing)
+    {
+        return incoming.address == outgoing.address;
+    }
+};
+
+
 TEST_CASE("freertos retry", "[experimental]")
 {
-    
+    using namespace embr::experimental;
+
+    RetryManager<embr::lwip::experimental::TransportBase, DummyReplyPolicy> rm;
 }
