@@ -108,8 +108,26 @@ TEST_CASE("experimental test", "[experimental]")
         {
             typedef Transport transport_type;
             typedef int key_type;
+            typedef unsigned timebase_type;
 
             struct item_policy_impl_type {};
+
+            timebase_type get_relative_expiry(item_policy_impl_type& item)
+            {
+                return 100;
+            }
+        };
+
+
+        struct TimerImpl
+        {
+            typedef unsigned timebase_type;
+            typedef int handle_type;
+
+            handle_type create(timebase_type expiry, void* arg)
+            {
+                return 0;
+            }
         };
 
         char buf[128];
@@ -120,7 +138,7 @@ TEST_CASE("experimental test", "[experimental]")
         int fake_endpoint = 7;
         auto sb = out.rdbuf();
 
-        embr::experimental::RetryManager<Transport, RetryImpl> rm;
+        embr::experimental::RetryManager<Transport, RetryImpl, TimerImpl> rm;
 
         // FIX: In its current state, this generates a memory leak since send does a 'new'
         rm.send(fake_endpoint, *sb, 0);

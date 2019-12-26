@@ -29,21 +29,30 @@
 
 namespace embr { namespace experimental {
 
+struct FreeRTOSTimer
+{
+
+};
+
 // We expect TTransport to be conforming to something like ../lwip/transport.h
 //    an important component of that is that it accepts a TStreambuf for input
 // We expect TRetryPolicyImpl to help us choose how long retry delays are as well
 //    as how many times to retry, and how to compare our streambuf to incoming
 //    streambuf to make sure it's an app-specific match (e.g. matching on CoAP MID)
-template <class TTransport, class TRetryPolicyImpl>
+template <class TTransport, class TRetryPolicyImpl, class TTimer = FreeRTOSTimer>
 struct RetryManager
 {
     TRetryPolicyImpl policy_impl;
+    TTimer timer_impl;
 
-    typedef typename TRetryPolicyImpl::key_type key_type;
-    typedef typename TTransport::endpoint_type endpoint_type;
-    typedef typename TTransport::ostreambuf_type ostreambuf_type;
-    typedef typename TTransport::istreambuf_type istreambuf_type;
-    typedef typename TRetryPolicyImpl::item_policy_impl_type item_policy_impl_type;
+    typedef typename estd::remove_reference_t<TRetryPolicyImpl> retry_policy;
+    typedef typename retry_policy::key_type key_type;
+    typedef TTransport transport_type;
+    typedef typename transport_type::endpoint_type endpoint_type;
+    typedef typename transport_type::ostreambuf_type ostreambuf_type;
+    typedef typename transport_type::istreambuf_type istreambuf_type;
+    typedef typename retry_policy::item_policy_impl_type item_policy_impl_type;
+    typedef typename retry_policy::timebase_type timebase_type;
 
     key_type extract_key(istreambuf_type& streambuf)
     {
@@ -80,6 +89,13 @@ struct RetryManager
     typedef typename list_type::iterator list_iterator;
     list_type items;
 
+#ifdef ESTD_FREERTOS
+    static void timer_callback(TimerHandle_t xTimer)
+    {
+        QueuedItem* item = (QueuedItem*) pvTimerGetTimerID(xTimer);
+    }
+#endif
+
     void send(const endpoint_type& to, ostreambuf_type& streambuf, key_type key)
     {
         // NOTE: Don't like dynamic allocation, it's kinda the norm for
@@ -89,6 +105,14 @@ struct RetryManager
         QueuedItem* item = new QueuedItem(to, streambuf, key);
 
         items.push_front(*item);
+
+        timebase_type relative_expiry = policy_impl.get_relative_expiry(*item);
+
+#if defined(UNIT_TESTING) and !defined(ESTD_FREERTOS)
+        timer_impl.create(relative_expiry, item);
+#else
+        xTimerCreate("retry", relative_expiry, pdFALSE, item, timer_callback)
+#endif
     }
 
 
