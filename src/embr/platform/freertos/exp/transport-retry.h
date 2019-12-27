@@ -90,9 +90,30 @@ struct RetryManager
     list_type items;
 
 #ifdef ESTD_FREERTOS
+    // TODO: Do "anchoring" so that timebase is yanked back from drifting
     static void timer_callback(TimerHandle_t xTimer)
     {
         QueuedItem* item = (QueuedItem*) pvTimerGetTimerID(xTimer);
+
+        item->process_timeout();
+
+        if(item->retry_done())
+        {
+            xTimerDelete(xTimer, 10);
+            delete item;
+            return;
+        }
+
+        // in ms
+        timebase_type expiry = item->get_new_expiry();
+
+        BaseType_t result = xTimerChangePeriod(xTimer, pdMS_TO_TICKS(expiry), 10);
+
+        if(result == pdFALSE)
+        {
+            // TODO: alert to failure
+            return;
+        }
     }
 #endif
 
@@ -106,12 +127,19 @@ struct RetryManager
 
         items.push_front(*item);
 
-        timebase_type relative_expiry = policy_impl.get_relative_expiry(*item);
+        //timebase_type relative_expiry = policy_impl.get_relative_expiry(*item);
+        timebase_type relative_expiry = item->get_new_expiry();
 
 #if defined(UNIT_TESTING) and !defined(ESTD_FREERTOS)
         timer_impl.create(relative_expiry, item);
 #else
-        xTimerCreate("retry", relative_expiry, pdFALSE, item, timer_callback)
+        TimerHandle_t timer = xTimerCreate("retry",
+            relative_expiry,
+            pdFALSE,
+            item,
+            timer_callback);
+
+        BaseType_t result = xTimerStart(timer, 0);
 #endif
     }
 

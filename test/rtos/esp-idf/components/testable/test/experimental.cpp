@@ -57,8 +57,39 @@ struct DummyReplyPolicy
     typedef int key_type;
     typedef embr::lwip::experimental::TransportBase transport_type;
     typedef transport_type::endpoint_type endpoint_type;
+    typedef uint32_t timebase_type;
 
-    struct item_policy_impl_type {};
+    static constexpr const char* TAG = "DummyReplyPolicy";
+
+    struct item_policy_impl_type
+    {
+        static constexpr const char* TAG = "DummyReplyPolicy::item_policy_type";
+
+        int count;
+
+        item_policy_impl_type()
+        {
+            count = 0;
+        }
+
+        bool retry_done() const { return count != 0; }
+
+        timebase_type get_new_expiry() const
+        {
+            return 100;
+        }
+
+        void process_timeout()
+        { 
+            ESP_LOGI(TAG, "process_timeout");
+            count++;
+        }
+
+        ~item_policy_impl_type()
+        {
+            ESP_LOGI(TAG, "dtor");
+        }
+    };
 
     bool match(const endpoint_type& incoming, const endpoint_type& outgoing)
     {
@@ -71,5 +102,11 @@ TEST_CASE("freertos retry", "[experimental]")
 {
     using namespace embr::experimental;
 
-    RetryManager<embr::lwip::experimental::TransportBase, DummyReplyPolicy> rm;
+    typedef embr::lwip::experimental::TransportBase transport_type;
+    RetryManager<transport_type, DummyReplyPolicy> rm;
+
+    transport_type::ostreambuf_type out(128);
+    transport_type::endpoint_type endpoint;
+
+    rm.send(endpoint, out, 7);
 }
