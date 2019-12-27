@@ -5,6 +5,13 @@
 //#include <estd/iostream.h>    // FIX: This fails rather badly, look into why
 #include <embr/observer.h>
 
+// ESTD needs this to know to to include FreeRTOS .h ESP-style
+#define ESP32
+
+#include <estd/chrono.h>
+// FIX: Not quite ready for prime time, test in estd area not here
+//#include <estd/thread.h>
+
 #include "unity.h"
 
 #include "esp_log.h"
@@ -52,6 +59,8 @@ TEST_CASE("observer event handler", "[experimental]")
 }
 
 
+static int dummy_item_count = 0;
+
 struct DummyReplyPolicy
 {
     typedef int key_type;
@@ -66,6 +75,8 @@ struct DummyReplyPolicy
         static constexpr const char* TAG = "DummyReplyPolicy::item_policy_type";
 
         int count;
+
+        SemaphoreHandle_t semaphore;
 
         item_policy_impl_type()
         {
@@ -83,6 +94,7 @@ struct DummyReplyPolicy
         { 
             ESP_LOGI(TAG, "process_timeout");
             count++;
+            dummy_item_count++;
         }
 
         ~item_policy_impl_type()
@@ -109,4 +121,17 @@ TEST_CASE("freertos retry", "[experimental]")
     transport_type::endpoint_type endpoint;
 
     rm.send(endpoint, out, 7);
+
+    //estd::chrono::freertos_clock clock;
+    //estd::this_thread::sleep_for(0.1s);
+    int ms_left_to_wait = 1000;
+    constexpr int ms_wait_period = 100;
+
+    while(ms_left_to_wait > 0 && dummy_item_count == 0)
+    {
+        vTaskDelay(pdMS_TO_TICKS(ms_wait_period));
+        ms_left_to_wait -= ms_wait_period;
+    }
+
+    TEST_ASSERT_EQUAL(1, dummy_item_count);
 }

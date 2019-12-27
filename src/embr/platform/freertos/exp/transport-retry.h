@@ -142,7 +142,7 @@ struct RetryManager
         timer_impl.create(relative_expiry, item);
 #else
         TimerHandle_t timer = xTimerCreate("retry",
-            relative_expiry,
+            pdMS_TO_TICKS(relative_expiry),
             pdFALSE,
             item,
             timer_callback);
