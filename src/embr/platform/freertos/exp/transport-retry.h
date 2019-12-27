@@ -85,6 +85,11 @@ struct RetryManager
         }
     };
 
+    typedef std::allocator_traits<std::allocator<QueuedItem> > allocator_traits;
+
+    static std::allocator<QueuedItem> stub;
+    static std::allocator<QueuedItem>& allocator() { return stub; }
+
     typedef estd::intrusive_forward_list<QueuedItem> list_type;
     typedef typename list_type::iterator list_iterator;
     list_type items;
@@ -100,7 +105,8 @@ struct RetryManager
         if(item->retry_done())
         {
             xTimerDelete(xTimer, 10);
-            delete item;
+            //delete item;
+            allocator_traits::destroy(allocator(), item);
             return;
         }
 
@@ -123,7 +129,9 @@ struct RetryManager
         // FreeRTOS apparently.  
         // TODO: At least use allocator_traits and friends so that we can sub in
         // memory pools and the like
-        QueuedItem* item = new QueuedItem(to, streambuf, key);
+        //QueuedItem* item = new QueuedItem(to, streambuf, key);
+        QueuedItem* item = allocator_traits::allocate(allocator(), 1);
+        allocator_traits::construct(allocator(), item, to, streambuf, key);
 
         items.push_front(*item);
 
