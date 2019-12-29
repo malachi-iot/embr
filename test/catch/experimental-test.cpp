@@ -15,6 +15,10 @@
 
 using namespace embr::experimental;
 
+template <class TTransport, class TRetryPolicyImpl, class TTimer>
+std::allocator<typename RetryManager<TTransport, TRetryPolicyImpl, TTimer>::QueuedItem>
+        RetryManager<TTransport, TRetryPolicyImpl, TTimer>::stub;
+
 template <class TAllocator>
 class test_string : public estd::basic_string<
         char,
@@ -110,7 +114,13 @@ TEST_CASE("experimental test", "[experimental]")
             typedef int key_type;
             typedef unsigned timebase_type;
 
-            struct item_policy_impl_type {};
+            struct item_policy_impl_type
+            {
+                timebase_type get_new_expiry()
+                {
+                    return 100;
+                }
+            };
 
             timebase_type get_relative_expiry(item_policy_impl_type& item)
             {
