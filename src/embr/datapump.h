@@ -41,30 +41,23 @@ struct InlineQueuePolicy
         // so that we can actually have uninitialized chunks
         typedef TItem value_type;
 #ifdef FEATURE_CPP_ALIGN
-        typedef typename estd::aligned_storage<sizeof(TItem), alignof(TItem)>::type aligned_type;
-        typedef estd::layer1::queue<aligned_type, queue_depth> queue_type;
-
-        static value_type& front(queue_type& queue)
-        {
-            return reinterpret_cast<TItem&>(queue.front());
-        }
-
+        typedef estd::queue<value_type,
+            estd::layer1::deque<value_type, queue_depth,
+            estd::experimental::aligned_storage_array_policy> > queue_type;
 #else
         typedef estd::layer1::queue<value_type, queue_depth> queue_type;
+#endif
 
         static value_type& front(queue_type& queue)
         {
             return queue.front();
         }
-#endif
 
-#ifdef FEATURE_CPP_VARIADIC
         template <class ...TArgs>
         static value_type& emplace(queue_type& queue, TArgs&&... args)
         {
             return queue.emplace(std::forward<TArgs&&>(args)...);
         }
-#endif
     };
 };
 
