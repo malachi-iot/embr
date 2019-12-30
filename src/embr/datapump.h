@@ -39,17 +39,24 @@ struct InlineQueuePolicy
     {
         // guidance from https://en.cppreference.com/w/cpp/types/aligned_storage
         // so that we can actually have uninitialized chunks
-#ifdef FEATURE_CPP_ALIGN
-#else
-#endif
-
         typedef TItem value_type;
+#ifdef FEATURE_CPP_ALIGN
+        typedef typename estd::aligned_storage<sizeof(TItem), alignof(TItem)>::type aligned_type;
+        typedef estd::layer1::queue<aligned_type, queue_depth> queue_type;
+
+        static value_type& front(queue_type& queue)
+        {
+            return reinterpret_cast<TItem&>(queue.front());
+        }
+
+#else
         typedef estd::layer1::queue<value_type, queue_depth> queue_type;
 
         static value_type& front(queue_type& queue)
         {
             return queue.front();
         }
+#endif
 
 #ifdef FEATURE_CPP_VARIADIC
         template <class ...TArgs>
