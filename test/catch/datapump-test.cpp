@@ -85,7 +85,10 @@ TEST_CASE("datapump")
 
     SECTION("A")
     {
+        dp.enqueue_out(std::move(nb), -1);
+        auto& item = dp.transport_front();
 
+        REQUIRE(item.addr() == -1);
     }
     SECTION("v2 (experimental)")
     {

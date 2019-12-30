@@ -32,10 +32,32 @@ namespace embr {
 template <size_t queue_depth = 10>
 struct InlineQueuePolicy
 {
+    // Utilizing front/emplace helpers so that we can use aligned_storage more
+    // transparently and only if necessary (some containers may not require it)
     template <class TItem>
     struct Queue
     {
-        typedef estd::layer1::queue<TItem, queue_depth> queue_type;
+        // guidance from https://en.cppreference.com/w/cpp/types/aligned_storage
+        // so that we can actually have uninitialized chunks
+#ifdef FEATURE_CPP_ALIGN
+#else
+#endif
+
+        typedef TItem value_type;
+        typedef estd::layer1::queue<value_type, queue_depth> queue_type;
+
+        static value_type& front(queue_type& queue)
+        {
+            return queue.front();
+        }
+
+#ifdef FEATURE_CPP_VARIADIC
+        template <class ...TArgs>
+        static value_type& emplace(queue_type& queue, TArgs&&... args)
+        {
+            return queue.emplace(std::forward<TArgs&&>(args)...);
+        }
+#endif
     };
 };
 
@@ -153,6 +175,7 @@ public:
 
 #endif
 
+        // NOTE: more of an endpoint than an address
         const addr_t& addr() const { return m_addr; }
 
         netbuf_t* netbuf()
@@ -177,7 +200,8 @@ public:
 
 
 private:
-    typedef typename policy_type::template Queue<Item>::queue_type queue_type;
+    typedef typename policy_type::template Queue<Item> queue_policy;
+    typedef typename queue_policy::queue_type queue_type;
 
     queue_type incoming;
     queue_type outgoing;
@@ -201,7 +225,7 @@ public:
 
     Item& transport_front()
     {
-        return outgoing.front();
+        return queue_policy::front(outgoing);
     }
 
     void transport_pop()
@@ -213,7 +237,7 @@ public:
     // enqueue complete netbuf for outgoing transport to pick up
     const Item& enqueue_out(netbuf_t&& out, const addr_t& addr_out)
     {
-        return outgoing.emplace(std::move(out), addr_out);
+        return queue_policy::emplace(outgoing, std::move(out), addr_out);
     }
 #else
     // enqueue complete netbuf for outgoing transport to pick up
@@ -226,7 +250,7 @@ public:
     // see if any netbufs were queued from transport in
     bool dequeue_empty() const { return incoming.empty(); }
 
-    Item& dequeue_front() { return incoming.front(); }
+    Item& dequeue_front() { return queue_policy::front(incoming); }
 
     // TODO: deprecated
     // dequeue complete netbuf which was queued from transport in
@@ -234,7 +258,7 @@ public:
     {
         if(incoming.empty()) return NULLPTR;
 
-        Item& f = incoming.front();
+        Item& f = queue_policy::front(incoming);
         netbuf_t* netbuf = f.netbuf();
         *addr_in = f.addr();
 
