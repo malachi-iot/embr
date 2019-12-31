@@ -119,9 +119,9 @@ class DataPump
 public:
     typedef TTransportDescriptor transport_descriptor_t;
     typedef typename transport_descriptor_t::addr_t addr_t;
-    typedef typename transport_descriptor_t::netbuf_t netbuf_t;
+    typedef typename transport_descriptor_t::netbuf_type netbuf_type;
 #ifdef FEATURE_EMBR_DATAPUMP_INLINE
-    typedef netbuf_t pnetbuf_t;
+    typedef netbuf_type pnetbuf_t;
 #else
     typedef netbuf_t* pnetbuf_t;
 #endif
@@ -135,7 +135,7 @@ public:
     // via (experimentally) TPolicy.  Deriving from it so that it resolves to truly 0
     // bytes if no AppData is desired
     class Item :
-            experimental::DataPumpItem<netbuf_t>,
+            experimental::DataPumpItem<netbuf_type>,
             policy_type::template AppData<transport_descriptor_t>
     {
     public:
@@ -149,7 +149,7 @@ public:
         Item() {}
 
 #ifdef FEATURE_EMBR_DATAPUMP_INLINE
-        Item(netbuf_t&& netbuf, const addr_t& addr) :
+        Item(netbuf_type&& netbuf, const addr_t& addr) :
             m_netbuf(std::move(netbuf)),
 #else
         Item(netbuf_t& netbuf, const addr_t& addr) :
@@ -178,7 +178,7 @@ public:
         // NOTE: more of an endpoint than an address
         const addr_t& addr() const { return m_addr; }
 
-        netbuf_t* netbuf()
+        netbuf_type* netbuf()
         {
 #ifdef FEATURE_EMBR_DATAPUMP_INLINE
             return &m_netbuf;
@@ -187,7 +187,7 @@ public:
 #endif
         }
 
-        const netbuf_t* netbuf() const
+        const netbuf_type* netbuf() const
         {
 #ifdef FEATURE_EMBR_DATAPUMP_INLINE
             return &m_netbuf;
@@ -210,7 +210,7 @@ public:
     // process data coming in from transport into coap queue
 #ifdef FEATURE_EMBR_DATAPUMP_INLINE
     const Item& transport_in(
-            netbuf_t&& in,
+            netbuf_type&& in,
 #else
     const Item& transport_in(
             netbuf_t& in,
@@ -235,7 +235,7 @@ public:
 
 #ifdef FEATURE_EMBR_DATAPUMP_INLINE
     // enqueue complete netbuf for outgoing transport to pick up
-    const Item& enqueue_out(netbuf_t&& out, const addr_t& addr_out)
+    const Item& enqueue_out(netbuf_type&& out, const addr_t& addr_out)
     {
         return queue_policy::emplace(outgoing, std::move(out), addr_out);
     }
@@ -254,12 +254,12 @@ public:
 
     // TODO: deprecated
     // dequeue complete netbuf which was queued from transport in
-    netbuf_t* dequeue_in(addr_t* addr_in)
+    netbuf_type* dequeue_in(addr_t* addr_in)
     {
         if(incoming.empty()) return NULLPTR;
 
         Item& f = queue_policy::front(incoming);
-        netbuf_t* netbuf = f.netbuf();
+        netbuf_type* netbuf = f.netbuf();
         *addr_in = f.addr();
 
         return netbuf;

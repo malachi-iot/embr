@@ -13,9 +13,9 @@ void DatapumpSubject<TDatapump, TTransportDescriptor, TSubject>::service()
         notify(typename event::receive_dequeuing(item));
 
 #ifndef FEATURE_EMBR_DATAPUMP_INLINE
-        typedef typename datapump_t::netbuf_t netbuf_t;
+        typedef typename datapump_t::netbuf_type netbuf_type;
         // FIX: Need a much more cohesive way of doing this
-        netbuf_t* netbuf = item.netbuf();
+        netbuf_type* netbuf = item.netbuf();
         delete netbuf;
 #endif
 
@@ -33,7 +33,7 @@ void DataPort<TDatapump, TTransport, TSubject, wrapped>::service()
     base_t::service();
 
     {
-        netbuf_t* nb;
+        netbuf_type* nb;
         addr_t addr;
 
         // polled transport mode
@@ -53,7 +53,7 @@ void DataPort<TDatapump, TTransport, TSubject, wrapped>::service()
     if(!base_t::datapump.transport_empty())
     {
         item_t& item = base_t::datapump.transport_front();
-        netbuf_t& netbuf = *item.netbuf();
+        netbuf_type& netbuf = *item.netbuf();
         const addr_t& addr = item.addr();
 
         notify(typename event::transport_sending(netbuf, addr));
@@ -70,7 +70,7 @@ void DataPort<TDatapump, TTransport, TSubject, wrapped>::service()
 
 template <class TDatapump, class TTransportDescriptor, class TSubject>
 void DatapumpSubject<TDatapump, TTransportDescriptor, TSubject>::enqueue_for_send(
-    netbuf_t&& nb,
+    netbuf_type&& nb,
     const addr_t& addr)
 {
     const item_t& item = datapump.enqueue_out(std::move(nb), addr);
@@ -81,7 +81,7 @@ void DatapumpSubject<TDatapump, TTransportDescriptor, TSubject>::enqueue_for_sen
 
 template <class TDatapump, class TTransportDescriptor, class TSubject>
 void DatapumpSubject<TDatapump, TTransportDescriptor, TSubject>::enqueue_from_receive(
-    netbuf_t&& nb,
+    netbuf_type&& nb,
     const addr_t& addr)
 {
     // think of datapump as a application-level queue, while

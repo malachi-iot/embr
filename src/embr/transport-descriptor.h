@@ -9,7 +9,7 @@ namespace embr {
 template <class TNetBuf, class TAddr>
 struct TransportDescriptor
 {
-    typedef TNetBuf netbuf_t;
+    typedef TNetBuf netbuf_type;
     typedef TAddr addr_t;
 };
 

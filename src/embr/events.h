@@ -104,19 +104,19 @@ struct ReceiveDequeued : ItemBase<TItem>
 template <class TTransportDescriptor>
 struct Transport
 {
-    typedef typename TTransportDescriptor::netbuf_t netbuf_t;
+    typedef typename TTransportDescriptor::netbuf_type netbuf_type;
     typedef typename TTransportDescriptor::addr_t addr_t;
 
-    typedef Base<netbuf_t, addr_t> base;
+    typedef Base<netbuf_type, addr_t> base;
 
-    typedef TransportReceived<netbuf_t, addr_t>
+    typedef TransportReceived<netbuf_type, addr_t>
         transport_received;
-    typedef TransportSent<netbuf_t, addr_t>
+    typedef TransportSent<netbuf_type, addr_t>
         transport_sent;
 
     struct transport_sending : base
     {
-        transport_sending(netbuf_t& nb, const addr_t& addr) : base(nb, addr) {}
+        transport_sending(netbuf_type& nb, const addr_t& addr) : base(nb, addr) {}
     };
 };
 
