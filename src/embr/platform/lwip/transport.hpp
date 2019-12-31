@@ -3,7 +3,7 @@
 namespace embr { namespace lwip { namespace experimental {
 
 template <class TDataPort>
-UdpDataportTransport::UdpDataportTransport(TDataPort* dataport, int port)
+UdpDataportTransport::UdpDataportTransport(TDataPort* dataport, uint16_t port)
 {
     /* get new pcb */
     struct udp_pcb* pcb = udp_new();

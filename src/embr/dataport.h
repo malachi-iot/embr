@@ -148,6 +148,8 @@ struct DataPort : DatapumpSubject<
     typedef typename base_t::netbuf_type netbuf_type;
     typedef typename base_t::addr_t addr_t;
 
+    // Embedded dataport-transport helper required at this time.
+    // Eventually perhaps consider making this reference-friendly
     TTransport transport;
 
     template <class TEvent>
@@ -163,9 +165,11 @@ public:
         notify(dataport_initialized_event {});
     } */
 
-    DataPort(TSubject& subject) :
+    template <class ...TArgs>
+    DataPort(TSubject& subject, TArgs&&...args) :
         base_t(subject),
-        transport(this, 5683) // FIX: this transport+CoAP specifitiy is definitely not wanted
+        // NOTE: Transport init *must* take dataport pointer as 1st parameter
+        transport(this, std::forward<TArgs&&>(args)...)
     {
         notify(dataport_initialized_event {});
     }
@@ -178,20 +182,25 @@ public:
 };
 
 
-// TODO: Figure out/remember that trailing return -> decltype typedef
-// trick so that I don't have to declare that TDataPort twice.
-// Then, remove it as a template parameter and instead put in variadic so that
-// we can push initialization to transport constructor
-template <class TTransport, class TSubject,
-            class TDataPort = DataPort<
+/// Makes a dataport using default policies for datapump
+template <class TTransport, class TSubject, class ...TArgs>
+DataPort<
+    embr::DataPump<
+        typename TTransport::transport_descriptor_t
+        >,
+    TTransport,
+    TSubject> 
+make_dataport(TSubject& s, TArgs&&...args)
+{
+    return DataPort<
                 embr::DataPump<
                     typename TTransport::transport_descriptor_t
                     >,
                 TTransport,
-                TSubject> >
-TDataPort make_dataport(TSubject& s)
-{
-    return TDataPort(s);
+                TSubject>
+            (s, std::forward<TArgs&&>(args)...);
 }
+
+
 
 }

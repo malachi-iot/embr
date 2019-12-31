@@ -110,8 +110,9 @@ struct UdpDataportTransport : embr::lwip::experimental::TransportUdp<false>
     // and tag template class TSubject on data_recv itself
     // Consider also doing that with TDatapump and making actual queing done
     // in response to a notification
+    // NOTE: Convention is that TDataPort* must always be first parameter
     template <class TDataPort>
-    UdpDataportTransport(TDataPort* dataport, int port);
+    UdpDataportTransport(TDataPort* dataport, uint16_t port);
 
     template <class TDataPort>
     static void data_recv(void *arg, 
