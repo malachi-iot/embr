@@ -11,7 +11,7 @@ auto DataPump<TTransportDescriptor, TPolicy>::transport_in(netbuf_type&& in, con
 }
 #else
 const typename DataPump<TTransportDescriptor, TPolicy>::Item&
-    DataPump<TTransportDescriptor, TPolicy>::transport_in(netbuf_t& in, const addr_t& addr)
+    DataPump<TTransportDescriptor, TPolicy>::transport_in(netbuf_type& in, const addr_t& addr)
 {
     Item item(in, addr);
 

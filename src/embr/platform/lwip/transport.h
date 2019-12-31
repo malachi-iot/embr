@@ -93,4 +93,33 @@ struct TransportUdp : TransportBase
     }
 };
 
+
+
+// interaction point for DataPort class which glues raw udp lwip to
+// datapump.  DataPort is datagram/connectionless leaning
+// FIX: As is often the case, clean up naming if we can
+struct UdpDataportTransport : embr::lwip::experimental::TransportUdp<false>
+{
+    typedef embr::lwip::experimental::TransportUdp<false> base_type;
+    typedef endpoint_type addr_t;
+    // This is because DataPort reaches back in to deduce some things about
+    // our transport netbuf/address structure
+    typedef UdpDataportTransport transport_descriptor_t;
+
+    // NOTE: Consider making the constructor what also receives the TSubject
+    // and tag template class TSubject on data_recv itself
+    // Consider also doing that with TDatapump and making actual queing done
+    // in response to a notification
+    template <class TDataPort>
+    UdpDataportTransport(TDataPort* dataport, int port);
+
+    template <class TDataPort>
+    static void data_recv(void *arg, 
+        struct udp_pcb *pcb, pbuf_pointer p,  
+        addr_pointer addr, u16_t port);
+};
+
+
+
+
 }}}

@@ -70,7 +70,7 @@ struct CoapAppDataPolicy
     template <class TTransportDescriptor>
     struct AppData
     {
-        typedef typename TTransportDescriptor::netbuf_t netbuf_t;
+        typedef typename TTransportDescriptor::netbuf_type netbuf_type;
         typedef typename TTransportDescriptor::addr_t addr_t;
 
         // NOTE: Not yet used, and not bad but working on decoupling DataPump from coap altogether
@@ -123,7 +123,7 @@ public:
 #ifdef FEATURE_EMBR_DATAPUMP_INLINE
     typedef netbuf_type pnetbuf_t;
 #else
-    typedef netbuf_t* pnetbuf_t;
+    typedef netbuf_type* pnetbuf_t;
 #endif
     //typedef NetBufDecoder<netbuf_t&> decoder_t;
     typedef TPolicy policy_type;
@@ -152,7 +152,7 @@ public:
         Item(netbuf_type&& netbuf, const addr_t& addr) :
             m_netbuf(std::move(netbuf)),
 #else
-        Item(netbuf_t& netbuf, const addr_t& addr) :
+        Item(netbuf_type& netbuf, const addr_t& addr) :
             m_netbuf(&netbuf),
 #endif
             m_addr(addr)
@@ -213,7 +213,7 @@ public:
             netbuf_type&& in,
 #else
     const Item& transport_in(
-            netbuf_t& in,
+            netbuf_type& in,
 #endif
             const addr_t& addr);
 
@@ -241,9 +241,10 @@ public:
     }
 #else
     // enqueue complete netbuf for outgoing transport to pick up
-    bool enqueue_out(netbuf_t& out, const addr_t& addr_out)
+    const Item& enqueue_out(netbuf_type& out, const addr_t& addr_out)
     {
-        return outgoing.push(Item(out, addr_out));
+        outgoing.push(Item(out, addr_out));
+        return outgoing.back();
     }
 #endif
 

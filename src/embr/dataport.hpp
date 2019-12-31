@@ -78,7 +78,12 @@ void DatapumpSubject<TDatapump, TTransportDescriptor, TSubject>::enqueue_for_sen
     netbuf_type&& nb,
     const addr_t& addr)
 {
+#ifdef FEATURE_EMBR_DATAPUMP_INLINE
     const item_t& item = datapump.enqueue_out(std::move(nb), addr);
+#else
+    const item_t& item = datapump.enqueue_out(nb, addr);
+    // FIX: probably needs additional housekeeping for non-inline flavor
+#endif
 
     notify(typename event::send_queued(item));
 }
@@ -91,7 +96,12 @@ void DatapumpSubject<TDatapump, TTransportDescriptor, TSubject>::enqueue_from_re
 {
     // think of datapump as a application-level queue, while
     // udp_data_recv sorta responds to a system-level queue
+#ifdef FEATURE_EMBR_DATAPUMP_INLINE
     const item_t& item = datapump.transport_in(std::move(nb), addr);
+#else
+    const item_t& item = datapump.transport_in(nb, addr);
+    // FIX: probably needs additional housekeeping for non-inline flavor
+#endif
 
     notify(typename event::receive_queued(item));
 }
