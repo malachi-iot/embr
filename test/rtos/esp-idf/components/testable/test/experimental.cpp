@@ -64,7 +64,7 @@ static int dummy_item_count = 0;
 struct DummyReplyPolicy
 {
     typedef int key_type;
-    typedef embr::lwip::experimental::TransportBase transport_type;
+    typedef embr::lwip::experimental::TransportUdp<> transport_type;
     typedef transport_type::endpoint_type endpoint_type;
     typedef uint32_t timebase_type;
 
@@ -105,7 +105,8 @@ struct DummyReplyPolicy
 
     bool match(const endpoint_type& incoming, const endpoint_type& outgoing)
     {
-        return incoming.address == outgoing.address;
+        // NOTE: this is a pointer compare, so be very careful here
+        return incoming.address() == outgoing.address();
     }
 };
 
@@ -114,11 +115,11 @@ TEST_CASE("freertos retry", "[experimental]")
 {
     using namespace embr::experimental;
 
-    typedef embr::lwip::experimental::TransportBase transport_type;
+    typedef embr::lwip::experimental::TransportUdp<> transport_type;
     RetryManager<transport_type, DummyReplyPolicy> rm;
 
     transport_type::ostreambuf_type out(128);
-    transport_type::endpoint_type endpoint;
+    transport_type::endpoint_type endpoint(nullptr, 0);
 
     rm.send(endpoint, out, 7);
 

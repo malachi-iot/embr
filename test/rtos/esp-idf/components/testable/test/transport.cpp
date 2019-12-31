@@ -20,9 +20,9 @@ volatile bool always_false_but_compiler_doesnt_know = false;
 
 TEST_CASE("lwip transport: basic", "[lwip-transport]")
 {
-    typedef TransportUdp transport_type;
+    typedef TransportUdp<> transport_type;
     
-    transport_type::endpoint_type endpoint;
+    transport_type::endpoint_type endpoint(nullptr, 0);
 
     opbuf_streambuf streambuf(128);
     
