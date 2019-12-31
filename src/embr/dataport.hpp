@@ -32,6 +32,10 @@ void DataPort<TDatapump, TTransport, TSubject, wrapped>::service()
 {
     base_t::service();
 
+    // FIX: For now, recv must happen in TTransport itself async/out-of-band
+    // revise this so that we can indeed poll.  Disabled since 'addr'
+    // requires initialization
+/*
     {
         netbuf_type* nb;
         addr_t addr;
@@ -48,6 +52,7 @@ void DataPort<TDatapump, TTransport, TSubject, wrapped>::service()
             //subject.notify(0); // queued into receive queue event
         }
     }
+*/
 
     // anything queued for transport out?
     if(!base_t::datapump.transport_empty())
