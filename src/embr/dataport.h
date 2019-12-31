@@ -25,7 +25,7 @@ struct DataPortVirtual
 {
     typedef TTransportDescription transport_descriptor_t;
     typedef typename TTransportDescription::netbuf_type netbuf_type;
-    typedef typename TTransportDescription::addr_t addr_t;
+    typedef typename TTransportDescription::endpoint_type addr_t;
 
     // for now, not overpromising since the virtual version if this would be broken
     // (would only service datapump, not dataport)
@@ -201,6 +201,7 @@ make_dataport(TSubject& s, TArgs&&...args)
             (s, std::forward<TArgs&&>(args)...);
 }
 
-
+// TODO: Make a make_dataport which accepts an explicit DataPump policy
+// (perhaps through tagging)
 
 }

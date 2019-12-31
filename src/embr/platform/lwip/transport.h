@@ -101,7 +101,6 @@ struct TransportUdp : TransportBase
 struct UdpDataportTransport : embr::lwip::experimental::TransportUdp<false>
 {
     typedef embr::lwip::experimental::TransportUdp<false> base_type;
-    typedef endpoint_type addr_t;
     // This is because DataPort reaches back in to deduce some things about
     // our transport netbuf/address structure
     typedef UdpDataportTransport transport_descriptor_t;
@@ -114,6 +113,7 @@ struct UdpDataportTransport : embr::lwip::experimental::TransportUdp<false>
     template <class TDataPort>
     UdpDataportTransport(TDataPort* dataport, uint16_t port);
 
+private:
     template <class TDataPort>
     static void data_recv(void *arg, 
         struct udp_pcb *pcb, pbuf_pointer p,  
