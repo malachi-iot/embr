@@ -1,4 +1,5 @@
 #include "transport.h"
+#include "../../events.h"
 
 namespace embr { namespace lwip { namespace experimental {
 
@@ -52,33 +53,34 @@ void UdpDataportTransport::data_recv(void *arg,
 
 
 template <class TSubject>
-bool UdpSubjectTransport::recv(TSubject& subject, pcb_pointer pcb, uint16_t port)
+Pcb UdpSubjectTransport::recv(TSubject& subject, uint16_t port)
 {
+    Pcb pcb;
+    
+    /* get new pcb */
+    if (!pcb.alloc()) {
+        LWIP_DEBUGF(UDP_DEBUG, ("udp_new failed!\n"));
+        return pcb;
+    }
+
     /* bind to any IP address on specified port */
-    if (udp_bind(pcb, IP_ADDR_ANY, port) != ERR_OK) {
+    if (pcb.bind(port) != ERR_OK) {
         LWIP_DEBUGF(UDP_DEBUG, ("udp_bind failed!\n"));
-        return false;
+        pcb.free();
+        return pcb;
     }
 
     /* set data_recv() as callback function
        for received packets */
-    udp_recv(pcb, data_recv<TSubject>, &subject);
+    pcb.recv(data_recv<TSubject>, &subject);
 
-    return true;
+    return pcb;
 }
 
 template <class TSubject>
 UdpSubjectTransport::UdpSubjectTransport(TSubject& subject, uint16_t port)
 {
-    /* get new pcb */
-    struct udp_pcb* pcb = udp_new();
-    
-    if (pcb == NULL) {
-        LWIP_DEBUGF(UDP_DEBUG, ("udp_new failed!\n"));
-        return;
-    }
-
-    recv(subject, pcb, port);
+    recv(subject, port);
 
     // allocate second one exclusively for send operations
     this->pcb.alloc();

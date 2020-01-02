@@ -1,9 +1,11 @@
-#include <embr/platform/lwip/transport.h>
+#include <embr/platform/lwip/transport.hpp>
 #include <embr/streambuf.h>
 
 #include <estd/string.h>
 #include <estd/ostream.h>
 #include <estd/istream.h>
+
+#include <embr/observer.h>
 
 //#include <estd/iostream.h>    // FIX: This fails rather badly, look into why
 
@@ -41,5 +43,7 @@ TEST_CASE("lwip subject transport: basic", "[lwip-transport]")
 
     pcb.alloc();
 
-    //transport.recv(embr::void_subject, pcb.pcb(), 0);
+    // 
+    embr::void_subject s;
+    transport.recv(s, 0);
 }

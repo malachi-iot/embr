@@ -131,10 +131,10 @@ struct UdpSubjectTransport : embr::lwip::experimental::TransportUdp<false>
 {
     typedef embr::lwip::experimental::TransportUdp<false> base_type;
 
-    // FIX: Temporarily passing in pcb just because we haven't organized
-    // a send vs receive pcb tracking mechanism yet
+    // TODO: Probably move this upward into TransportUdp itself, or maybe even
+    // Pcb
     template <class TSubject>
-    bool recv(TSubject& subject, pcb_pointer pcb, uint16_t port);
+    static Pcb recv(TSubject& subject, uint16_t port);
 
     // NOTE: Phase this out, be better do be more pcb-like and explicitly 
     // bind/recv
