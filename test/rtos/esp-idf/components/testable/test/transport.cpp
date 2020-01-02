@@ -31,3 +31,15 @@ TEST_CASE("lwip transport: basic", "[lwip-transport]")
     if(always_false_but_compiler_doesnt_know)
         t.send(streambuf, endpoint);
 }
+
+
+TEST_CASE("lwip subject transport: basic", "[lwip-transport]")
+{
+    UdpSubjectTransport transport;
+
+    embr::lwip::Pcb pcb;
+
+    pcb.alloc();
+
+    //transport.recv(embr::void_subject, pcb.pcb(), 0);
+}

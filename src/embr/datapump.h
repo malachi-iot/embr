@@ -118,6 +118,7 @@ class DataPump
 {
 public:
     typedef TTransportDescriptor transport_descriptor_t;
+    typedef typename transport_descriptor_t::endpoint_type endpoint_type;
     typedef typename transport_descriptor_t::endpoint_type addr_t;
     typedef typename transport_descriptor_t::netbuf_type netbuf_type;
 #ifdef FEATURE_EMBR_DATAPUMP_INLINE
@@ -139,7 +140,7 @@ public:
             policy_type::template AppData<transport_descriptor_t>
     {
     public:
-        typedef DataPump::addr_t addr_t;
+        typedef endpoint_type addr_t;
 
     private:
         pnetbuf_t m_netbuf;

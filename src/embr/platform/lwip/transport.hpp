@@ -50,4 +50,60 @@ void UdpDataportTransport::data_recv(void *arg,
     }    
 }
 
+
+template <class TSubject>
+bool UdpSubjectTransport::recv(TSubject& subject, pcb_pointer pcb, uint16_t port)
+{
+    /* bind to any IP address on specified port */
+    if (udp_bind(pcb, IP_ADDR_ANY, port) != ERR_OK) {
+        LWIP_DEBUGF(UDP_DEBUG, ("udp_bind failed!\n"));
+        return false;
+    }
+
+    /* set data_recv() as callback function
+       for received packets */
+    udp_recv(pcb, data_recv<TSubject>, &subject);
+
+    return true;
+}
+
+template <class TSubject>
+UdpSubjectTransport::UdpSubjectTransport(TSubject& subject, uint16_t port)
+{
+    /* get new pcb */
+    struct udp_pcb* pcb = udp_new();
+    
+    if (pcb == NULL) {
+        LWIP_DEBUGF(UDP_DEBUG, ("udp_new failed!\n"));
+        return;
+    }
+
+    recv(subject, pcb, port);
+
+    // allocate second one exclusively for send operations
+    this->pcb.alloc();
+}
+
+
+template <class TSubject>
+void UdpSubjectTransport::data_recv(void *arg, 
+    pcb_pointer pcb, pbuf_pointer p,  
+    addr_pointer addr, u16_t port)
+{
+    if (p != NULL) 
+    {
+        typedef embr::event::Transport<base_type> event;
+
+        auto subject = static_cast<TSubject*>(arg);
+
+        endpoint_type a(addr, port);
+        // TODO: Be sure our PbufNetbuf aligns with transport_policy
+        // Not bumping ref.  If pbuf is desired to be kept past end of this
+        // data_recv, the observer must bump the reference
+        embr::lwip::PbufNetbuf netbuf(p, false);
+
+        subject->notify(typename event::transport_received(netbuf, a));
+    }    
+}
+
 }}}

@@ -58,6 +58,7 @@ struct TransportBase
 {
     typedef embr::lwip::experimental::addr_pointer addr_pointer;
     typedef struct pbuf* pbuf_pointer;
+    typedef struct udp_pcb* pcb_pointer;
     typedef opbuf_streambuf ostreambuf_type;
     typedef ipbuf_streambuf istreambuf_type;
     typedef ostreambuf_type::netbuf_type netbuf_type;
@@ -121,6 +122,34 @@ private:
 };
 
 
+// like dataport flavor , but decoupled to only directly fire off
+// TransportReceived events
+// NOTE: At this time I think dataport also fires off transport events.
+// not bad, but could be confusing so be careful.  
+// Doesn't need/expect DatapumpSubject to be used
+struct UdpSubjectTransport : embr::lwip::experimental::TransportUdp<false>
+{
+    typedef embr::lwip::experimental::TransportUdp<false> base_type;
+
+    // FIX: Temporarily passing in pcb just because we haven't organized
+    // a send vs receive pcb tracking mechanism yet
+    template <class TSubject>
+    bool recv(TSubject& subject, pcb_pointer pcb, uint16_t port);
+
+    // NOTE: Phase this out, be better do be more pcb-like and explicitly 
+    // bind/recv
+    // for a better transport abstraction
+    template <class TSubject>
+    UdpSubjectTransport(TSubject& subject, uint16_t port);
+
+    UdpSubjectTransport() {}
+
+private:
+    template <class TSubject>
+    static void data_recv(void *arg, 
+        struct udp_pcb *pcb, pbuf_pointer p,  
+        addr_pointer addr, u16_t port);
+};
 
 
 }}}
