@@ -39,10 +39,6 @@ TEST_CASE("lwip subject transport: basic", "[lwip-transport]")
 {
     UdpSubjectTransport transport;
 
-    embr::lwip::Pcb pcb;
-
-    pcb.alloc();
-
     // 
     embr::void_subject s;
     transport.recv(s, 0);
