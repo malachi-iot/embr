@@ -20,6 +20,9 @@
 // CONFIG_PBUF_CHAIN could be coming from esp-idf
 #ifdef CONFIG_PBUF_CHAIN
 #define FEATURE_EMBR_PBUF_CHAIN_EXP
+// NOTE: Holding off spreading this around because we have a pending
+// experimental merge that this would conflict with (exp/cleanup-pbuf)
+#define ENABLE_EMBR_PBUF_CHAIN true
 #endif
 
 
