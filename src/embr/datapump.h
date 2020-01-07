@@ -9,6 +9,17 @@
 
 #ifdef FEATURE_CPP_MOVESEMANTIC
 #include <estd/utility.h> // for std::forward
+
+#ifdef FEATURE_CPP_VARIADIC
+#ifndef ENABLE_EMBR_DATAPUMP_INLINE
+#define ENABLE_EMBR_DATAPUMP_INLINE true
+// NOTE: FEATURE_EMBR_DATAPUMP_INLINE is legacy behavior in process of being phased out
+// we use alternate ENABLE_ paradigm so that we can have tri state:
+// default (starts blank and becomes 1 or 0 depending on feature) , on (true), off (false)
+#define FEATURE_EMBR_DATAPUMP_INLINE
+#endif
+#endif
+
 #endif
 
 namespace embr {
@@ -16,7 +27,7 @@ namespace embr {
 // FEATURE_EMBR_DATAPUMP_INLINE may be better suited to a policy than a compile
 // type define.  Some 'netbuf' types could be a raw PBUF handle, in which case
 // we might neither treat it as a pointer or a move-semantic object
-#ifdef FEATURE_EMBR_DATAPUMP_INLINE
+#if ENABLE_EMBR_DATAPUMP_INLINE
 #ifndef FEATURE_CPP_MOVESEMANTIC
 #error Move semantic necessary for inline datapump
 #endif
@@ -117,7 +128,7 @@ public:
     typedef typename transport_descriptor_t::endpoint_type endpoint_type;
     typedef typename transport_descriptor_t::endpoint_type addr_t;
     typedef typename transport_descriptor_t::netbuf_type netbuf_type;
-#ifdef FEATURE_EMBR_DATAPUMP_INLINE
+#if ENABLE_EMBR_DATAPUMP_INLINE
     typedef netbuf_type pnetbuf_t;
 #else
     typedef netbuf_type* pnetbuf_t;
@@ -145,7 +156,7 @@ public:
     public:
         Item() {}
 
-#ifdef FEATURE_EMBR_DATAPUMP_INLINE
+#if ENABLE_EMBR_DATAPUMP_INLINE
         Item(netbuf_type&& netbuf, const addr_t& addr) :
             m_netbuf(std::move(netbuf)),
 #else
@@ -162,7 +173,8 @@ public:
 
         }
 
-#if defined(FEATURE_CPP_MOVESEMANTIC) && defined(FEATURE_EMBR_DATAPUMP_INLINE)
+#if ENABLE_EMBR_DATAPUMP_INLINE
+
         Item(Item&& move_from) :
             m_netbuf(std::move(move_from.m_netbuf)),
             m_addr(std::move(move_from.m_addr))
@@ -177,7 +189,7 @@ public:
 
         netbuf_type* netbuf()
         {
-#ifdef FEATURE_EMBR_DATAPUMP_INLINE
+#if ENABLE_EMBR_DATAPUMP_INLINE
             return &m_netbuf;
 #else
             return m_netbuf;
@@ -186,7 +198,7 @@ public:
 
         const netbuf_type* netbuf() const
         {
-#ifdef FEATURE_EMBR_DATAPUMP_INLINE
+#if ENABLE_EMBR_DATAPUMP_INLINE
             return &m_netbuf;
 #else
             return m_netbuf;
@@ -205,7 +217,7 @@ private:
 
 public:
     // process data coming in from transport into coap queue
-#ifdef FEATURE_EMBR_DATAPUMP_INLINE
+#if ENABLE_EMBR_DATAPUMP_INLINE
     const Item& transport_in(
             netbuf_type&& in,
 #else
@@ -230,7 +242,7 @@ public:
         outgoing.pop();
     }
 
-#ifdef FEATURE_EMBR_DATAPUMP_INLINE
+#if ENABLE_EMBR_DATAPUMP_INLINE
     // enqueue complete netbuf for outgoing transport to pick up
     const Item& enqueue_out(netbuf_type&& out, const addr_t& addr_out)
     {
