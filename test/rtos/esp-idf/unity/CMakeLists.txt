@@ -5,10 +5,9 @@ SET(EMBR_ROOT_DIR ${CMAKE_CURRENT_LIST_DIR}/../../../..)
 
 # Include the components directory of the main application:
 #
-set(EXTRA_COMPONENT_DIRS
-    "${EMBR_ROOT_DIR}/ext/estdlib/tools/esp-idf/components"
-    "../components"
-    )
+set(EXTRA_COMPONENT_DIRS "../components")
+
+include(${EMBR_ROOT_DIR}/tools/esp-idf/set-component-dirs.cmake)
 
 # Set the components to include the tests for.
 # This can be overriden from CMake cache:
