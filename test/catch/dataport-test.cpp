@@ -43,8 +43,7 @@ struct synthetic_transport
 {
     typedef synthetic_transport_descriptor transport_descriptor_t;
 
-    // FIX: dummy initializer to accomodate current coap hard-wiredness
-    synthetic_transport(void*, int) {}
+    synthetic_transport(void*) {}
 
     bool recv(synthetic_netbuf_type**, int*) { return false; }
     void send(synthetic_netbuf_type&, int) {}

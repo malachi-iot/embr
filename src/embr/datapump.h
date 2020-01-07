@@ -7,13 +7,9 @@
 #include <estd/queue.h>
 #include <estd/vector.h>
 
-#include "exp/pbuf.h"
-
 #ifdef FEATURE_CPP_MOVESEMANTIC
 #include <estd/utility.h> // for std::forward
 #endif
-
-#include "transport-descriptor.h"
 
 namespace embr {
 

@@ -6,11 +6,11 @@
 namespace embr {
 
 // bundle these two together, since they are paired all over the darned place
-template <class TNetBuf, class TAddr>
+template <class TNetBuf, class TEndpoint>
 struct TransportDescriptor
 {
     typedef TNetBuf netbuf_type;
-    typedef TAddr addr_t;
+    typedef TEndpoint endpoint_type;
 };
 
 
