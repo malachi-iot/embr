@@ -45,6 +45,31 @@ typedef base<SYSTEM_EVENT_STA_GOT_IP> got_ip;
 
 }
 
+namespace wifi {
+
+template <int32_t id>
+struct base;
+
+#ifdef FEATURE_IDF_DEFAULT_EVENT_LOOP
+template <>
+struct base<WIFI_EVENT_STA_START>
+{
+
+};
+
+template <>
+struct base<WIFI_EVENT_STA_DISCONNECTED> : wifi_event_sta_disconnected_t
+{
+
+};
+
+typedef base<WIFI_EVENT_STA_START> sta_start;
+typedef base<WIFI_EVENT_STA_DISCONNECTED> sta_disconnected;
+
+#endif
+
+}
+
 }
 
 
@@ -77,28 +102,14 @@ static void _event_handler()
 // stateless observers
 #ifdef FEATURE_IDF_DEFAULT_EVENT_LOOP
 template <class TSubject, class TContext>
-static void event_handler(void* arg, 
+inline void ip_event_handler(void* arg, 
     esp_event_base_t event_base, int32_t event_id, void* event_data)
 {
     TContext* context = (TContext*) arg;
     // Limited to a semi-singleton instance of a subject
     static TSubject subject;
 
-    // UNTESTED
-    if(event_base == WIFI_EVENT)
-    {
-        switch(event_id)
-        {
-            case WIFI_EVENT_STA_START:
-            {
-                break;
-            }
-
-            default:
-                break;
-        }
-    }
-    else if(event_base == IP_EVENT)
+    if(event_base == IP_EVENT)
     {
         switch(event_id)
         {
@@ -122,6 +133,52 @@ static void event_handler(void* arg,
         }
     }
 }
+
+template <class TSubject, class TContext>
+inline void wifi_event_handler(void* arg, 
+    esp_event_base_t event_base, int32_t event_id, void* event_data)
+{
+    TContext* context = (TContext*) arg;
+    // Limited to a semi-singleton instance of a subject
+    static TSubject subject;
+
+    if(event_base == WIFI_EVENT)
+    {
+        switch(event_id)
+        {
+            case WIFI_EVENT_STA_START:
+            {
+                events::wifi::sta_start e;
+                subject.notify(e, *context);
+
+                break;
+            }
+
+            default:
+                break;
+        }
+    }
+}
+
+// Unfortunately, because esp_event_base_t is not constexpr-ish,
+// we can't do all this through specialization
+template <class TSubject, class TContext>
+esp_err_t event_handler_register(esp_event_base_t event_base, TContext& context)
+{
+    if(event_base == IP_EVENT)
+    {
+        return esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, 
+            &ip_event_handler<TSubject, TContext>, &context);
+    }
+    else if(event_base == WIFI_EVENT)
+    {
+        return esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, 
+            &wifi_event_handler<TSubject, TContext>, &context);
+    }
+
+    return -1;
+}
+
 #else
 template <class TSubject, class TContext>
 esp_err_t event_handler(void* ctx, system_event_t* event)

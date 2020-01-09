@@ -16,16 +16,33 @@
 #ifdef FEATURE_IDF_DEFAULT_EVENT_LOOP
 struct Diagnostic
 {
-    static constexpr const char* TAG = "Diagnostic";
+    static constexpr const char* TAG = "embr::diag";
 
-    void on_notify(embr::experimental::esp_idf::events::ip::got_ip e)
+    static void on_notify(embr::experimental::esp_idf::events::ip::got_ip e)
     {
-        ESP_LOGD(TAG, "got ip");
+        ESP_LOGI(TAG, "got ip:%s",
+                ip4addr_ntoa(&e.ip_info.ip));
     }
 };
 
 
-typedef embr::layer0::subject<Diagnostic> test_subject_type;
+struct ConnectionMaintenance
+{
+    static constexpr const char* TAG = "embr::wifi";
+
+    // NOTE: Not yet getting here because singular "event_handler_register" even though
+    // it's passed both observers in the subject, it only is registered for IP events
+    static void on_notify(embr::experimental::esp_idf::events::wifi::sta_start e)
+    {
+        ESP_LOGI(TAG, "sta_start");
+        esp_wifi_connect();
+    }
+};
+
+
+typedef embr::layer0::subject<
+    Diagnostic, 
+    ConnectionMaintenance> test_subject_type;
 
 
 void event_handler(void* arg, esp_event_base_t event_base,
@@ -142,9 +159,11 @@ void wifi_init_sta(system_event_cb_t event_handler)
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL));
     
-    // mostly a noop currently
-    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, 
-        &embr::experimental::esp_idf::event_handler<test_subject_type, int>, NULL));
+    int fake_context = 0;
+    auto retval = embr::experimental::esp_idf::event_handler_register<test_subject_type>(
+        IP_EVENT, fake_context);
+
+    ESP_ERROR_CHECK(retval);
 #endif
 
     strcpy((char*)wifi_config.sta.ssid, CONFIG_WIFI_SSID);

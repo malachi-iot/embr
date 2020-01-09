@@ -44,7 +44,7 @@ TEST_CASE("observer event handler", "[experimental]")
 #else
     system_event_cb_t test =
 #endif
-        embr::experimental::esp_idf::event_handler<subject_type, Context>;
+        embr::experimental::esp_idf::ip_event_handler<subject_type, Context>;
 
 #ifdef FEATURE_IDF_DEFAULT_EVENT_LOOP
     ip_event_got_ip_t dummy_data;
