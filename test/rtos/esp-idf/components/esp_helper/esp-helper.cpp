@@ -7,6 +7,8 @@
 
 #include "esp-helper.h"
 
+#include "experimental/observer-event-handler.hpp"
+
 // lifting from my own user_main and from
 // https://github.com/espressif/esp-idf/blob/v3.3/examples/wifi/getting_started/station/main/station_example_main.c
 // https://github.com/espressif/esp-idf/blob/v4.0-beta2/examples/wifi/getting_started/station/main/station_example_main.c
@@ -15,6 +17,30 @@ void event_handler(void* arg, esp_event_base_t event_base,
                             int32_t event_id, void* event_data)
 {
     static const char* TAG = "event_handler";
+
+    if(event_base == WIFI_EVENT)
+    {
+        switch(event_id)
+        {
+            case WIFI_EVENT_STA_START:
+                esp_wifi_connect();
+                break;
+
+            default:
+                break;
+        }
+    }
+    else if(event_base == IP_EVENT)
+    {
+        switch(event_id)
+        {
+            case IP_EVENT_STA_GOT_IP:
+                break;
+
+            default:
+                break;
+        }
+    }
 }
 #else
 esp_err_t event_handler(void* ctx, system_event_t* event)
