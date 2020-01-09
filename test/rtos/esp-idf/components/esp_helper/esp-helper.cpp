@@ -8,11 +8,26 @@
 #include "esp-helper.h"
 
 #include "experimental/observer-event-handler.hpp"
+#include <embr/observer.h>
 
 // lifting from my own user_main and from
 // https://github.com/espressif/esp-idf/blob/v3.3/examples/wifi/getting_started/station/main/station_example_main.c
 // https://github.com/espressif/esp-idf/blob/v4.0-beta2/examples/wifi/getting_started/station/main/station_example_main.c
 #ifdef FEATURE_IDF_DEFAULT_EVENT_LOOP
+struct Diagnostic
+{
+    static constexpr const char* TAG = "Diagnostic";
+
+    void on_notify(embr::experimental::esp_idf::events::ip::got_ip e)
+    {
+        ESP_LOGD(TAG, "got ip");
+    }
+};
+
+
+typedef embr::layer0::subject<Diagnostic> test_subject_type;
+
+
 void event_handler(void* arg, esp_event_base_t event_base,
                             int32_t event_id, void* event_data)
 {
@@ -126,6 +141,10 @@ void wifi_init_sta(system_event_cb_t event_handler)
 #ifdef FEATURE_IDF_DEFAULT_EVENT_LOOP
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL));
+    
+    // mostly a noop currently
+    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, 
+        &embr::experimental::esp_idf::event_handler<test_subject_type, int>, NULL));
 #endif
 
     strcpy((char*)wifi_config.sta.ssid, CONFIG_WIFI_SSID);

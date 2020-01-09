@@ -24,7 +24,11 @@ struct base;
 
 #ifdef FEATURE_IDF_DEFAULT_EVENT_LOOP
 template <>
-struct base<IP_EVENT_STA_GOT_IP> : ip_event_got_ip_t {};
+struct base<IP_EVENT_STA_GOT_IP> : ip_event_got_ip_t
+{
+    base(const ip_event_got_ip_t& copy_from) :
+        ip_event_got_ip_t(copy_from) {}
+};
 
 typedef base<IP_EVENT_STA_GOT_IP> got_ip;
 #else
@@ -65,14 +69,20 @@ static void _event_handler()
     _event_handler<TSubject>(context);
 }
 
-// FIX: This isn't a feature of default event loop.  It's a feature of the revised
+// NOTE: This isn't a feature of default event loop.  It's a feature of the revised
 // event system present in v4.0
+// We call it FEATURE_IDF_DEFAULT_EVENT_LOOP since esp-idf confusingly refers to
+// old one as "legacy", but only from 4.0 forward
+// TODO: See if we can specialize and not even do static TSubject for truly
+// stateless observers
 #ifdef FEATURE_IDF_DEFAULT_EVENT_LOOP
 template <class TSubject, class TContext>
 static void event_handler(void* arg, 
     esp_event_base_t event_base, int32_t event_id, void* event_data)
 {
     TContext* context = (TContext*) arg;
+    // Limited to a semi-singleton instance of a subject
+    static TSubject subject;
 
     // UNTESTED
     if(event_base == WIFI_EVENT)
@@ -80,7 +90,9 @@ static void event_handler(void* arg,
         switch(event_id)
         {
             case WIFI_EVENT_STA_START:
+            {
                 break;
+            }
 
             default:
                 break;
@@ -91,7 +103,19 @@ static void event_handler(void* arg,
         switch(event_id)
         {
             case IP_EVENT_STA_GOT_IP:
+            {
+                auto data = (ip_event_got_ip_t*) event_data;
+                events::ip::got_ip e(*data);
+                //data->ip_info.ip
+
+                // TODO: Optimize this by putting in a separate event_handler function
+                if(context == nullptr)
+                    subject.notify(e);
+                else
+                    subject.notify(e, *context);
+
                 break;
+            }
 
             default:
                 break;
