@@ -47,8 +47,8 @@ TEST_CASE("observer event handler", "[experimental]")
         embr::experimental::esp_idf::event_handler<subject_type, Context>;
 
 #ifdef FEATURE_IDF_DEFAULT_EVENT_LOOP
-    ip_event_sta_got_ip_t dummy_data
-    test(context, IP_EVENT, IP_EVENT_STA_GOT_IP, )
+    ip_event_got_ip_t dummy_data;
+    test(&context, IP_EVENT, IP_EVENT_STA_GOT_IP, &dummy_data);
 #else
     system_event_t dummy_data;
     dummy_data.event_id = SYSTEM_EVENT_STA_GOT_IP;
