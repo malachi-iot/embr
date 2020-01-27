@@ -1,3 +1,8 @@
+/**
+ *  @file
+ * mk. 2 netbuf
+ */
+
 #pragma once
 
 #include <estd/span.h>
@@ -17,6 +22,8 @@ class NetBuf : estd::array<uint8_t, N>
     typedef estd::array<uint8_t, N> base;
 
 public:
+    const uint8_t* raw() const { return base::data(); }
+
     typedef typename base::value_type value_type;
     typedef typename base::size_type size_type;
 
@@ -41,9 +48,9 @@ public:
     size_type total_size() const { return N; }
     size_type size() const { return base::size(); }
 
-    const uint8_t* data() const { return base::data(); }
+    const void* data() const { return base::data(); }
 
-    uint8_t* data() { return base::data(); }
+    void* data() { return base::data(); }
 
     // position back at the beginning
     void reset() {}
@@ -81,14 +88,21 @@ public:
             return ExpandResult::ExpandFailOutOfMemory;
     }
 
+    // shrink to a specified amount.  note our shrink differs from
+    // PBUF shrink in that it only applies to current data()
+    bool shrink_experimental(size_type to_amount)
+    {
+        return base::resize(to_amount);
+    }
+
     bool last() const { return true; }
 
     size_type size() const { return base::size(); }
     size_type total_size() const { return base::size(); }
 
-    const uint8_t* data() const { return base::data(); }
+    const void* data() const { return base::data(); }
 
-    uint8_t* data() { return base::data(); }
+    void* data() { return base::data(); }
 
     // position back at the beginning
     void reset() {}

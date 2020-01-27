@@ -1,0 +1,18 @@
+menu "Embr Configuration"
+
+    menu "Network"
+        config WIFI_SSID
+            string "WiFi SSID Name"
+
+        config WIFI_PASSWORD
+            string "WiFi Password"
+
+        config PBUF_CHAIN
+            bool "Utilize PBUF chaining for embr::lwip::PbufNetbuf"
+            default "y"
+            help
+                Turn this off only if you are 100% positive no PBUF chains are
+                going to appear
+    endmenu
+
+endmenu

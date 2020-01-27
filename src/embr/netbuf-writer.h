@@ -25,6 +25,7 @@ class NetBufWriter : public internal::NetBufWrapper<TNetBuf>
 public:
     typedef typename base::netbuf_type netbuf_type;
     typedef typename base::size_type size_type;
+    typedef typename estd::span<uint8_t> mutable_buffer;
 
 protected:
     netbuf_type& netbuf() { return base::m_netbuf; }
@@ -37,10 +38,10 @@ public:
     {}
 #endif
 
-    estd::mutable_buffer buffer()
+    mutable_buffer buffer()
     {
-        uint8_t* data = netbuf().data();
-        return estd::mutable_buffer(data + base::m_pos,
+        uint8_t* data = reinterpret_cast<uint8_t*>(netbuf().data());
+        return mutable_buffer(data + base::m_pos,
                                   netbuf().size() - base::m_pos);
     }
 
@@ -70,6 +71,7 @@ public:
 
     bool write(const estd::const_buffer& b)
     {
+        return false;
     }
 };
 
@@ -112,7 +114,9 @@ NetBufWriter<TNetBuf>& operator <<(NetBufWriter<TNetBuf>& writer, const estd::co
 template <class TNetBuf>
 NetBufWriter<TNetBuf>& operator <<(NetBufWriter<TNetBuf>& writer, uint8_t value)
 {
-    writer.netbuf().data()[0] = value;
+    // FIX: Not ready for prime time, notice how we don't bump pos forward
+    uint8_t* data = reinterpret_cast<uint8_t*>(writer.netbuf().data());
+    data[0] = value;
     return writer;
 }
 

@@ -1,0 +1,34 @@
+{
+    "env": {
+        "idfIncludePath": [
+            "${env:IDF_PATH}/components/esp32/include/**",
+            "${env:IDF_PATH}/components/log/include/**",
+            "${env:IDF_PATH}/components/lwip/include/**",
+            "${env:IDF_PATH}/components/unity/unity/src",
+            "${env:IDF_PATH}/components/lwip/lwip/src/include/**",
+            "${env:IDF_PATH}/components/freertos/include/**"            
+        ],
+        "myDefaultIncludePath": [
+            "${workspaceFolder}", 
+            "${workspaceFolder}/src", 
+            "${workspaceFolder}/include",
+            "${workspaceFolder}/ext/estdlib/src"
+        ],
+        "myCompilerPathExample": "/usr/local/bin/gcc-7"
+    },
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${myDefaultIncludePath}",
+                "${idfIncludePath}"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c11",
+            "cppStandard": "c++11",
+            "intelliSenseMode": "clang-x64"
+        }
+    ],
+    "version": 4
+}

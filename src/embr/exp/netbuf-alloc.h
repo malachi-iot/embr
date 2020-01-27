@@ -19,6 +19,12 @@ class NetBufAllocator
     TNetBuf netbuf;
 
 public:
+    // notifies support logic to treat this as stateful/an instance
+    typedef void is_stateful_tag;
+    typedef void is_singular_tag;
+    typedef void is_locking_tag;
+    typedef void has_size_tag;
+
     typedef const void* const_void_pointer;
     typedef typename estd::remove_reference<TNetBuf>::type netbuf_type;
     typedef bool handle_type; //single-allocator
@@ -40,8 +46,9 @@ public:
     NetBufAllocator(TNetBuf&& nb) :
         netbuf(std::move(nb)) {} */
 
-    NetBufAllocator(const TNetBuf& nb) :
-        netbuf(nb) {}
+    NetBufAllocator(TNetBuf& nb) :
+        netbuf(nb),
+        absolute_pos(0) {}
 
     /*
 #ifdef FEATURE_CPP_MOVESEMANTIC
@@ -61,6 +68,9 @@ public:
 
     static CONSTEXPR bool is_singular() { return true; }
 
+    // NOTE: Since we're using tags now, consider
+    // tag to be is_noncontiguous since default tag state (nonexistant)
+    // is false
     static CONSTEXPR bool is_contiguous() { return false; }
 
     static CONSTEXPR bool has_size() { return true; }
@@ -92,12 +102,14 @@ public:
 
                 if(netbuf.last())
                 {
-                    embr::mem::ExpandResult r = netbuf.expand(pos, false);
+                    // FIX: Just commented this out, we shouldn't be expanding
+                    // inside a lock operation... that's what realloc is for
+                    /*embr::mem::ExpandResult r = netbuf.expand(pos, false);
 
                     if(r < 0)
                     {
                         // TODO: Report error, couldn't expand to requested position
-                    }
+                    } */
                 }
 
                 absolute_pos += netbuf.size();
@@ -123,6 +135,8 @@ public:
         return handle_with_offset(h, pos);
     }
 
+    handle_type allocate(size_type) { return invalid(); }
+
     handle_with_size allocate_ext(size_type size)
     {
         // already allocated, shouldn't do it again
@@ -141,17 +155,76 @@ public:
 
     handle_type reallocate(handle_type h, size_t len)
     {
+        using namespace embr::mem;
+
+        // FIX: Doublecheck and make sure this really is an expand
+        len -= netbuf.total_size();
+
+        ExpandResult r = netbuf.expand(len, true);
+
+        if(r < 0)
+        {
+            // FIX: do something about a failure
+        }
+
+        /*
         // Not yet supported operation, but netbufs (usually)
         // can do this
-        assert(false);
+        assert(false); */
 
         return h;
     }
 
 
-    typedef typename estd::nothing_allocator<T>::lock_counter lock_counter;
+    //typedef typename estd::nothing_allocator<T>::lock_counter lock_counter;
 };
 
+
 }
 
 }
+
+namespace estd { namespace internal { namespace impl {
+
+#ifdef UNUSED
+// NOTE: The generic one in impl/dynamic_array.h is not suitable because it doesn't (can't)
+// know that we're always preallocated.  The smart-specialized one in allocators/handle_desc.h
+// hopefully will participate, and would be nice if a similar notion applied to dynamic_array
+// itself to auto deduce new types
+template <class T, class TNetBuf, class TPolicy>
+class dynamic_array<embr::experimental::NetBufAllocator<T, TNetBuf>, TPolicy > :
+        public dynamic_array_base<embr::experimental::NetBufAllocator<T, TNetBuf>, false >
+{
+    typedef dynamic_array_base<embr::experimental::NetBufAllocator<T, TNetBuf>, false > base;
+
+public:
+#if defined(FEATURE_CPP_MOVESEMANTIC) && defined(FEATURE_CPP_VARIADIC)
+    template <class ... TArgs>
+    dynamic_array(TArgs&&...args) : base(std::forward<TArgs>(args)...)
+    { }
+#endif
+};
+
+// FIX: Very annoying to explicitly define reference version
+// NOTE: Doesn't compile well, due to const inconsistencies through string/allocated_array/impl
+// chains.  That needs to be ironed out
+template <class T, class TNetBuf, class TPolicy>
+class dynamic_array<embr::experimental::NetBufAllocator<T, TNetBuf>&, TPolicy > :
+        public dynamic_array_base<embr::experimental::NetBufAllocator<T, TNetBuf>&, false >
+{
+    typedef dynamic_array_base<embr::experimental::NetBufAllocator<T, TNetBuf>&, false > base;
+
+public:
+#if defined(FEATURE_CPP_MOVESEMANTIC) && defined(FEATURE_CPP_VARIADIC)
+    template <class ... TArgs>
+    dynamic_array(TArgs&&...args) : base(std::forward<TArgs>(args)...)
+    { }
+#endif
+
+    typedef typename std::remove_reference<typename base::allocator_type>::type allocator_type;
+    // TODO: A lof of 'allocator_traits<TAllocator>' floating around, still need to weed that out
+    typedef typename estd::allocator_traits<allocator_type> allocator_traits;
+};
+#endif
+
+}}}
