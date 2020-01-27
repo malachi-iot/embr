@@ -17,15 +17,30 @@ struct AppObserver
     template <class TDatapump, class TSubject>
     using DataPort = embr::DataPort<
         TDatapump, 
-        typename TDatapump::transport_definition_t, 
+        typename TDatapump::transport_descriptor_t, 
         TSubject>;
 
     //template <class TDatapump> //, class TSubject>
     //void on_notify(typename event<TDatapump>::receive_dequeuing e)
-    void on_notify(typename event<datapump_type>::receive_dequeuing e)
+    //template <class TSubject>
+    // FIX: Though free form TContext compiles and functions, we don't
+    // like it since it isn't reflecting strong typing the way it could be.
+    template <class TContext>
+    void on_notify(typename event<datapump_type>::receive_dequeuing e,
+        //DataPort<datapump_type, TSubject>& context)
         //DataPort<TDatapump, TSubject>& dataport)
+        TContext& context)
     {
         ESP_LOGI(TAG, "Got here");
+
+        // FIX: unable to do this because apparently TContext is subject iself
+        // and not the dataport as expected
+        /*
+        typedef typename TContext::ostreambuf_type ostreambuf_type;
+
+        ostreambuf_type out;
+
+        context.send(out, e.item.addr()); */
     }
 };
 
