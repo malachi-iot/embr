@@ -94,6 +94,14 @@ struct RetryManager
     typedef typename list_type::iterator list_iterator;
     list_type items;
 
+    // call this when we want to deallocate item
+    // be careful this does NOT currently remove from list, but probably should
+    static void housekeep_done(QueuedItem* item)
+    {
+        //delete item;
+        allocator_traits::destroy(allocator(), item);
+    }
+
 #ifdef ESTD_FREERTOS
     // TODO: Do "anchoring" so that timebase is yanked back from drifting
     static void timer_callback(TimerHandle_t xTimer)
@@ -104,15 +112,17 @@ struct RetryManager
 
         if(item->retry_done())
         {
+            // max retries reached, delete timer and housekeep (deallocate) QueuedItem
             xTimerDelete(xTimer, 10);
-            //delete item;
-            allocator_traits::destroy(allocator(), item);
+            housekeep_done(item);
             return;
         }
 
         // in ms
         timebase_type expiry = item->get_new_expiry();
 
+        // restarts a "dormant" timer which presumably is the same as a one-shot which has fired,
+        // but not deleted
         BaseType_t result = xTimerChangePeriod(xTimer, pdMS_TO_TICKS(expiry), 10);
 
         if(result == pdFALSE)
@@ -143,7 +153,7 @@ struct RetryManager
 #else
         TimerHandle_t timer = xTimerCreate("retry",
             pdMS_TO_TICKS(relative_expiry),
-            pdFALSE,
+            pdFALSE,    // set to one shot mode
             item,
             timer_callback);
 
@@ -169,15 +179,29 @@ struct RetryManager
         evaluate_received(from, key);
     }
 
-    void evaluate_received(const endpoint_type& from, key_type key)
+    // Looking for the equivalent of an ACK
+    bool evaluate_received(const endpoint_type& from, key_type key)
     {
-        list_iterator found = estd::find_if(items.first(), items.last(),
+        list_iterator found = estd::find_if(items.begin(), items.end(),
             [&](const QueuedItem& item)  
             {
                 // policy impl helps for IP to compare only addr part, not port part
                 bool addr_match = policy_impl.match(from, item.endpoint);
                 return addr_match && item.key == key; 
             });
+
+        if(found != items.end())
+        {
+            // TODO: FIX: vastly prefer an erase_after, though that does couple us to a forward linked list
+            // also, .remove doesn't work yet since we didn't overload == for QueuedItem yet (easily could, based
+            // probably on 'key')
+            //items.remove(*found);
+            QueuedItem& f = *found;
+            housekeep_done(&f);
+            return true;
+        }
+
+        return false;
     }
 };
 

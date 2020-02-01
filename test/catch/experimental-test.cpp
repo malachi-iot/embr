@@ -111,6 +111,7 @@ TEST_CASE("experimental test", "[experimental]")
         struct RetryImpl
         {
             typedef Transport transport_type;
+            typedef typename transport_type::endpoint_type endpoint_type;
             typedef int key_type;
             typedef unsigned timebase_type;
 
@@ -125,6 +126,11 @@ TEST_CASE("experimental test", "[experimental]")
             timebase_type get_relative_expiry(item_policy_impl_type& item)
             {
                 return 100;
+            }
+
+            bool match(endpoint_type incoming_endpoint, endpoint_type tracked_endpoint)
+            {
+                return incoming_endpoint == tracked_endpoint;
             }
         };
 
@@ -146,11 +152,16 @@ TEST_CASE("experimental test", "[experimental]")
         ostream_type out(span);
 
         int fake_endpoint = 7;
+        int key = 77;
         auto sb = out.rdbuf();
 
         embr::experimental::RetryManager<Transport, RetryImpl, TimerImpl> rm;
 
         // FIX: In its current state, this generates a memory leak since send does a 'new'
-        rm.send(fake_endpoint, *sb, 0);
+        rm.send(fake_endpoint, *sb, key);
+
+        bool found = rm.evaluate_received(fake_endpoint, key);
+
+        REQUIRE(found);
     }
 }
