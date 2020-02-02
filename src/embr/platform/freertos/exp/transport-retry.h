@@ -39,6 +39,7 @@ struct FreeRTOSTimer
 // We expect TRetryPolicyImpl to help us choose how long retry delays are as well
 //    as how many times to retry, and how to compare our streambuf to incoming
 //    streambuf to make sure it's an app-specific match (e.g. matching on CoAP MID)
+// TODO: Consider using netbuf directly instead of streambuf, or, have a "create_istreambuf"
 template <class TTransport, class TRetryPolicyImpl, class TTimer = FreeRTOSTimer>
 struct RetryManager
 {
@@ -62,8 +63,7 @@ struct RetryManager
         return policy_impl.extract_key(streambuf);
     }
 
-
-    struct QueuedItem : 
+    struct QueuedItem :
         estd::experimental::forward_node_base_base<QueuedItem*>,
         item_policy_impl_type
     {
@@ -94,6 +94,12 @@ struct RetryManager
         bool operator ==(const QueuedItem& compare_to)
         {
             return key == compare_to.key;
+        }
+
+        // Presumes we aren't modifying outgoing streambuf per retry
+        void send()
+        {
+            parent->transport.send(streambuf, endpoint);
         }
     };
 
@@ -130,7 +136,7 @@ struct RetryManager
             return;
         }
 
-        this_type* _this = item->parent;
+        item->send();
 
         // in ms
         timebase_type expiry = item->get_new_expiry();
@@ -159,7 +165,7 @@ struct RetryManager
 
         items.push_front(*item);
 
-        transport.send(streambuf, to);
+        item->send();
 
         //timebase_type relative_expiry = policy_impl.get_relative_expiry(*item);
         timebase_type relative_expiry = item->get_new_expiry();
