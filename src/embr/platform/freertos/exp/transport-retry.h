@@ -27,6 +27,13 @@
 #endif
 #endif
 
+#if configSUPPORT_STATIC_ALLOCATION
+// FIX: Untested
+#define ENABLE_EMBR_FREERTOS_STATIC_TIMER 1
+#else
+#define ENABLE_EMBR_FREERTOS_STATIC_TIMER 0
+#endif
+
 namespace embr { namespace experimental {
 
 struct FreeRTOSTimer
@@ -67,6 +74,11 @@ struct RetryManager
         estd::experimental::forward_node_base_base<QueuedItem*>,
         item_policy_impl_type
     {
+#if ENABLE_EMBR_FREERTOS_STATIC_TIMER
+        // FreeRTOS specific, avoid some dynamic allocation if we can
+        StaticTimer_t timerBuffer;
+#endif
+
         // endpoint that we want to send to.  For ipv4 this is IP address and port
         endpoint_type endpoint;
         // streambuf to (repeatedly) send to aforementioned endpoint
@@ -132,8 +144,16 @@ struct RetryManager
         // A const call to see if we are done with our retries
         if(item->retry_done())
         {
+#if ENABLE_EMBR_FREERTOS_STATIC_TIMER
+            // 90% sure we don't call delete on static timers, however it's hard to be sure
+            // Best info is https://www.freertos.org/xTimerCreateStatic.html makes no reference to delete
+            // and https://www.freertos.org/FreeRTOS-timers-xTimerDelete.html says:
+            // "xTimerDelete() deletes a timer that was previously created using the xTimerCreate() API function."
+            // (not xTimerCreateStatic)
+#else
             // max retries reached, delete timer and housekeep (deallocate) QueuedItem
             xTimerDelete(xTimer, 10);
+#endif
             housekeep_done(item);
             return;
         }
@@ -175,11 +195,20 @@ struct RetryManager
 #if defined(UNIT_TESTING) and !defined(ESTD_FREERTOS)
         timer_impl.create(relative_expiry, item);
 #else
+#if ENABLE_EMBR_FREERTOS_STATIC_TIMER
+        TimerHandle_t timer = xTimerCreateStatic("retry",
+            pdMS_TO_TICKS(relative_expiry),
+            pdFALSE,    // set to one shot mode
+            item,
+            timer_callback,
+            &item->timerBuffer);
+#else
         TimerHandle_t timer = xTimerCreate("retry",
             pdMS_TO_TICKS(relative_expiry),
             pdFALSE,    // set to one shot mode
             item,
             timer_callback);
+#endif
 
         BaseType_t result = xTimerStart(timer, 0);
 
