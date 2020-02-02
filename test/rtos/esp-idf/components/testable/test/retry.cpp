@@ -19,7 +19,7 @@ struct RetryImpl
 
         timebase_type get_new_expiry()
         {
-            return 100;
+            return pdMS_TO_TICKS(100);
         }
 
         bool retry_done() const { return true; }
@@ -30,6 +30,8 @@ struct RetryImpl
     // specific kind of address match)
     bool match(endpoint_type incoming_endpoint, endpoint_type tracked_endpoint)
     {
+        // FIX: This is actually a pointer compare, likely troublesome.  Dig into
+        // lwip to find a proper IPv4 address value compare
         return incoming_endpoint.address() == tracked_endpoint.address();
     }
 };
