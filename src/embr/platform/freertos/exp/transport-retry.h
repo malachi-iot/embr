@@ -83,6 +83,11 @@ struct RetryManager
         {
 
         }
+
+        bool operator ==(const QueuedItem& compare_to)
+        {
+            return key == compare_to.key;
+        }
     };
 
     typedef std::allocator_traits<std::allocator<QueuedItem> > allocator_traits;
@@ -195,7 +200,7 @@ struct RetryManager
             // TODO: FIX: vastly prefer an erase_after, though that does couple us to a forward linked list
             // also, .remove doesn't work yet since we didn't overload == for QueuedItem yet (easily could, based
             // probably on 'key')
-            //items.remove(*found);
+            items.remove(*found);
             QueuedItem& f = *found;
             housekeep_done(&f);
             return true;
