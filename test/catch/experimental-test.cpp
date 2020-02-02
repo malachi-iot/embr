@@ -106,6 +106,11 @@ TEST_CASE("experimental test", "[experimental]")
             //typedef estd::layer1::stringbuf<128> ostreambuf_type;
             typedef ostream_type::streambuf_type ostreambuf_type;
             typedef istream_type::streambuf_type istreambuf_type;
+
+            void send(endpoint_type, const ostreambuf_type&)
+            {
+                
+            }
         };
 
         struct RetryImpl

@@ -54,6 +54,8 @@ struct RetryManager
     typedef typename retry_policy::item_policy_impl_type item_policy_impl_type;
     typedef typename retry_policy::timebase_type timebase_type;
 
+    transport_type transport;
+
     key_type extract_key(istreambuf_type& streambuf)
     {
         return policy_impl.extract_key(streambuf);
@@ -149,6 +151,9 @@ struct RetryManager
         allocator_traits::construct(allocator(), item, to, streambuf, key);
 
         items.push_front(*item);
+
+        // TODO: Still need to actually do send operation
+        //transport.send(to, streambuf);
 
         //timebase_type relative_expiry = policy_impl.get_relative_expiry(*item);
         timebase_type relative_expiry = item->get_new_expiry();
