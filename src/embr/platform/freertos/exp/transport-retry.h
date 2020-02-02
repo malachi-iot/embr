@@ -126,8 +126,10 @@ struct RetryManager
     {
         QueuedItem* item = (QueuedItem*) pvTimerGetTimerID(xTimer);
 
+        // Do any pre math housekeeping, bumping forward retry logic, if necessary
         item->process_timeout();
 
+        // A const call to see if we are done with our retries
         if(item->retry_done())
         {
             // max retries reached, delete timer and housekeep (deallocate) QueuedItem
@@ -153,7 +155,7 @@ struct RetryManager
     }
 #endif
 
-    void send(const endpoint_type& to, ostreambuf_type& streambuf, key_type key)
+    void send(ostreambuf_type& streambuf, const endpoint_type& to, key_type key)
     {
         // NOTE: Don't like dynamic allocation, it's kinda the norm for
         // FreeRTOS apparently.  
@@ -180,15 +182,21 @@ struct RetryManager
             timer_callback);
 
         BaseType_t result = xTimerStart(timer, 0);
+
+        if(result == pdFALSE)
+        {
+            // TODO: alert to failure
+            return;
+        }
 #endif
     }
 
 
-    void send(const endpoint_type& to, ostreambuf_type& streambuf)
+    void send(ostreambuf_type& streambuf, const endpoint_type& to)
     {
         key_type key = extract_key(streambuf);
 
-        send(to, streambuf, key);
+        send(streambuf, to, key);
     }
 
     // Shall need an app-specific identifier, endpoint alone is not enough

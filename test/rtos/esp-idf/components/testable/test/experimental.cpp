@@ -122,7 +122,7 @@ TEST_CASE("freertos retry", "[experimental]")
     transport_type::ostreambuf_type out(128);
     transport_type::endpoint_type endpoint(nullptr, 0);
 
-    rm.send(endpoint, out, 7);
+    rm.send(out, endpoint, 7);
 
     //estd::chrono::freertos_clock clock;
     //estd::this_thread::sleep_for(0.1s);

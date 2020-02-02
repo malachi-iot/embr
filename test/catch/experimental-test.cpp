@@ -163,7 +163,7 @@ TEST_CASE("experimental test", "[experimental]")
         embr::experimental::RetryManager<Transport, RetryImpl, TimerImpl> rm;
 
         // FIX: In its current state, this generates a memory leak since send does a 'new'
-        rm.send(fake_endpoint, *sb, key);
+        rm.send(*sb, fake_endpoint, key);
 
         bool found = rm.evaluate_received(fake_endpoint, key);
 

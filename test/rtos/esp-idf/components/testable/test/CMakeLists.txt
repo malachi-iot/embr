@@ -3,7 +3,8 @@ set(COMPONENT_SRCS
     "pbuf.cpp"
     "transport.cpp"
     "experimental.cpp"
-    "dataport.cpp")
+    "dataport.cpp"
+    "retry.cpp")
 
 set(COMPONENT_REQUIRES estdlib embr unity testable esp_helper)
 
