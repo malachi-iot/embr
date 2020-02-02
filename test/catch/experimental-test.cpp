@@ -107,7 +107,7 @@ TEST_CASE("experimental test", "[experimental]")
             typedef ostream_type::streambuf_type ostreambuf_type;
             typedef istream_type::streambuf_type istreambuf_type;
 
-            void send(endpoint_type, const ostreambuf_type&)
+            void send(const ostreambuf_type&, endpoint_type)
             {
                 
             }

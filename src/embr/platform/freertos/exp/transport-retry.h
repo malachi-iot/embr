@@ -46,6 +46,7 @@ struct RetryManager
     TTimer timer_impl;
 
     typedef typename estd::remove_reference_t<TRetryPolicyImpl> retry_policy;
+    typedef RetryManager<TTransport, TRetryPolicyImpl, TTimer> this_type;
     typedef typename retry_policy::key_type key_type;
     typedef TTransport transport_type;
     typedef typename transport_type::endpoint_type endpoint_type;
@@ -73,15 +74,19 @@ struct RetryManager
         unsigned retry_count;
         // NOTE: may or may not want to cache this here, but probably yes
         key_type key;
+        this_type* const parent;
 
-        QueuedItem(const endpoint_type& endpoint, 
+        QueuedItem(
+            this_type* parent,
+            const endpoint_type& endpoint,
             ostreambuf_type& streambuf,
             key_type key) :
             estd::experimental::forward_node_base_base<QueuedItem*>(nullptr),
             endpoint(endpoint),
             streambuf(streambuf),
             retry_count(0),
-            key(key)
+            key(key),
+            parent(parent)
         {
 
         }
@@ -125,6 +130,8 @@ struct RetryManager
             return;
         }
 
+        this_type* _this = item->parent;
+
         // in ms
         timebase_type expiry = item->get_new_expiry();
 
@@ -148,12 +155,11 @@ struct RetryManager
         // memory pools and the like
         //QueuedItem* item = new QueuedItem(to, streambuf, key);
         QueuedItem* item = allocator_traits::allocate(allocator(), 1);
-        allocator_traits::construct(allocator(), item, to, streambuf, key);
+        allocator_traits::construct(allocator(), item, this, to, streambuf, key);
 
         items.push_front(*item);
 
-        // TODO: Still need to actually do send operation
-        //transport.send(to, streambuf);
+        transport.send(streambuf, to);
 
         //timebase_type relative_expiry = policy_impl.get_relative_expiry(*item);
         timebase_type relative_expiry = item->get_new_expiry();
