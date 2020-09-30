@@ -168,8 +168,6 @@ private:
     bool eol() const { return pos() == size(); }
 
 protected:
-    void pos(size_type p) { out_pos_base_type::pos(p); }
-
     pos_type seekoff(off_type off, ios_base::seekdir way, ios_base::openmode which)
     {
         if(!(which & ios_base::out)) return -1;
@@ -182,7 +180,7 @@ protected:
                     this->pbump(off);
                 else
                 {
-                    pos(base_type::seekoffhelper(off));
+                    this->seekpos(base_type::seekoffhelper(off));
                 }
                 break;
 
@@ -198,14 +196,14 @@ protected:
                     this->pbump(off);
                 else
                 {
-                    pos(base_type::seekoffhelper(off + pos()));
+                    this->seekpos(base_type::seekoffhelper(off + pos()));
                 }
                 break;
 
             case ios_base::end:
                 // UNTESTED
                 while(netbuf().next()) {}
-                pos(size() + off);
+                this->seekpos(size() + off);
                 break;
         }
 
@@ -279,7 +277,7 @@ public:
             // whether or not has_next succeeds, pos is reset here
             // this means if it fails, the next write operation will overwrite the contents
             // so keep an eye on your return streamsize
-            pos(0);
+            this->seekpos(0);
 
             if(has_next)
             {
@@ -362,8 +360,6 @@ private:
     bool eol() const { return pos() == size(); }
 
 protected:
-    void pos(pos_type p) { in_pos_base_type::pos(p); }
-
     // TODO: Try to consolidate this into a netbuf_streambuf_base - impediment
     // is that that one doesn't implement the pos base
     pos_type seekoff(off_type off, ios_base::seekdir way, ios_base::openmode which)
@@ -378,24 +374,24 @@ protected:
                     this->gbump(off);
                 else
                 {
-                    pos(base_type::seekoffhelper(off + pos()));
+                    this->seekpos(base_type::seekoffhelper(off + pos()));
                 }
                 break;
 
             case ios_base::beg:
                 netbuf().reset();
                 if(off < size())
-                    pos(off);
+                    this->seekpos(off);
                 else
                 {
-                    pos(base_type::seekoffhelper(off));
+                    this->seekpos(base_type::seekoffhelper(off));
                 }
                 break;
 
             case ios_base::end:
                 // UNTESTED
                 while(netbuf().next()) {}
-                pos(size() + off);
+                this->seekpos(size() + off);
                 break;
         }
 
@@ -495,7 +491,7 @@ public:
             count -= remaining;
             d = estd::copy_n(s, remaining, d);
 
-            pos(0);
+            this->seekpos(0);
 
             // NOTE: Consider 'underflow' here since count > remaining means we always have at least 1
             // more character to read here

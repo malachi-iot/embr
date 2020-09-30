@@ -90,8 +90,7 @@ TEST_CASE("lwip pbuf embr-netbuf: out streambuf chain", "[lwip-pbuf]")
 TEST_CASE("lwip pbuf embr-netbuf: ostream", "[lwip-pbuf]")
 {
     // NOTE: Compiles, not runtime tested at all
-    typedef estd::internal::streambuf<
-        out_netbuf_streambuf<char, embr::lwip::PbufNetbuf> > streambuf_type;
+    typedef out_netbuf_streambuf<char, embr::lwip::PbufNetbuf> streambuf_type;
 
     estd::internal::basic_ostream<streambuf_type> 
         out(netbuf_size);
