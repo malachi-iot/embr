@@ -24,13 +24,16 @@ typedef embr::mem::in_netbuf_streambuf<char, PbufNetbuf> ipbuf_streambuf;
 // going away and replaced by more straightforward estd::streambuf capabilities
 namespace upgrading {
 
+namespace impl {
+
 template <class TCharTraits>
 class pbuf_streambuf_base
 {
-public:
     typedef TCharTraits traits_type;
     typedef typename traits_type::char_type char_type;
-    typedef typename traits_type::size_type size_type;
+
+public:
+    typedef Pbuf::size_type size_type;
 
 protected:
     Pbuf pbuf;
@@ -43,6 +46,12 @@ protected:
 #endif
     size_type size() const { return pbuf.length(); }
 
+#ifdef FEATURE_CPP_MOVESEMANTIC
+        template <class ...TArgs>
+        pbuf_streambuf_base(TArgs&&... args) :
+                pbuf(std::forward<TArgs>(args)...) {}
+#endif
+
 public:
 };
 
@@ -54,8 +63,8 @@ struct opbuf_streambuf :
     typedef estd::internal::impl::out_pos_streambuf_base<TCharTraits> base_type;
     typedef TCharTraits traits_type;
 
-    using typename base_type::char_type;
-    using typename base_type::int_type;
+    typedef typename traits_type::char_type char_type;
+    typedef typename traits_type::int_type int_type;
 
     typedef Pbuf::pbuf_pointer pbuf_pointer;
 
@@ -108,6 +117,12 @@ public:
         this->pbump(1);
         return _ch;
     }
+
+#ifdef FEATURE_CPP_MOVESEMANTIC
+        template <class ...TArgs>
+        opbuf_streambuf(TArgs&&... args) :
+                pbuf_streambuf_base<TCharTraits>(std::forward<TArgs>(args)...) {}
+#endif
 };
 
 template <class TCharTraits>
@@ -119,8 +134,8 @@ struct ipbuf_streambuf :
     typedef TCharTraits traits_type;
     typedef Pbuf::pbuf_pointer pbuf_pointer;
 
-    using typename base_type::char_type;
-    using typename base_type::int_type;
+    typedef typename traits_type::char_type char_type;
+    typedef typename traits_type::int_type int_type;
 
 protected:
     char_type* eback() const { return this->data(); }
@@ -146,6 +161,19 @@ public:
         return xsgetc();
     }
 };
+}
+
+#ifdef FEATURE_CPP_ALIASTEMPLATE
+template <class CharT, class CharTraits = std::char_traits<CharT> >
+using basic_opbuf_streambuf = estd::internal::streambuf<impl::opbuf_streambuf<CharTraits> >;
+
+template <class CharT, class CharTraits = std::char_traits<CharT> >
+using basic_ipbuf_streambuf = estd::internal::streambuf<impl::ipbuf_streambuf<CharTraits> >;
+
+#endif
+
+//typedef embr::mem::out_netbuf_streambuf<char, PbufNetbuf> opbuf_streambuf;
+//typedef embr::mem::in_netbuf_streambuf<char, PbufNetbuf> ipbuf_streambuf;
 
 
 }

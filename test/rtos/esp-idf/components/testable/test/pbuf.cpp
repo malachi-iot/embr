@@ -280,3 +280,8 @@ TEST_CASE("lwip pbuf embr-netbuf: netbuf shrink", "[lwip-pbuf]")
     TEST_ASSERT_EQUAL(traits_type::eof(), in.get());
 }
 #endif
+
+TEST_CASE("lwip upgraded streambuf", "[lwip-strembuf]")
+{
+    embr::lwip::upgrading::basic_opbuf_streambuf<char> out(128);
+}
