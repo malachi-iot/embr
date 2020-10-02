@@ -68,7 +68,6 @@ struct opbuf_streambuf :
 
     typedef Pbuf::pbuf_pointer pbuf_pointer;
 
-protected:
 #ifdef FEATURE_ESTD_IOSTREAM_STRICT_CONST
     char_type* pbase() { return this->data(); }
     const char_type* pbase() const { return this->data(); }
@@ -81,6 +80,7 @@ protected:
     char_type* epptr() const { return pbase() + this->size(); }
 #endif
 
+private:
     // amount of buffer space left we can write to for this particular pbuf chain portion
     int_type xout_avail() const { return this->size() - this->pos(); }
 
@@ -97,13 +97,12 @@ public:
 
             // DEBT: See below placement new usage
             new (&this->pbuf) Pbuf(next, false);
+
+            // it's presumed that next buf in pbuf chain can fit at least one character
         }
 
         if(ch != traits_type::eof())
-        {
-            // it's presumed that next buf in pbuf chain can fit at least one character
-            *pbase() = ch;
-        }
+            *pptr() = ch;
 
         // DEBT: We can do better than this.  Can't return ch since sometimes it's eof
         // even when we do have more buffer space

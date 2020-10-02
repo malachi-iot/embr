@@ -7,6 +7,8 @@
 
 //#include <estd/iostream.h>    // FIX: This fails rather badly, look into why
 
+#define ESP_IDF_TESTING
+
 #include "unity.h"
 
 #include "esp_log.h"
@@ -283,7 +285,23 @@ TEST_CASE("lwip pbuf embr-netbuf: netbuf shrink", "[lwip-pbuf]")
 
 TEST_CASE("lwip upgraded streambuf", "[lwip-strembuf2]")
 {
-    embr::lwip::upgrading::basic_opbuf_streambuf<char> out(128);
+    embr::lwip::Pbuf pbuf(128);
+    embr::lwip::upgrading::basic_opbuf_streambuf<char> out(std::move(pbuf));
 
     out.sputn(s1, s1_size);
+
+    TEST_ASSERT_EQUAL(s1_size, out.pos());
+    char* payload = out.pbase();
+    TEST_ASSERT(payload != nullptr);
+#ifndef ESP_IDF_TESTING
+    TEST_ASSERT_EQUAL_CHAR_ARRAY(s1, payload, s1_size);
+#else
+    TEST_ASSERT_EQUAL(s1[0], *payload);
+#endif
+
+    int r = out.sputc('A');
+
+    TEST_ASSERT_EQUAL(s1_size + 1, out.pos());
+    TEST_ASSERT(r != -1);
+    TEST_ASSERT_EQUAL('A', payload[s1_size]);
 }
