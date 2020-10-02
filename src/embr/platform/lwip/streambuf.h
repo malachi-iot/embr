@@ -24,26 +24,29 @@ typedef embr::mem::in_netbuf_streambuf<char, PbufNetbuf> ipbuf_streambuf;
 // going away and replaced by more straightforward estd::streambuf capabilities
 namespace upgrading {
 
-struct pbuf_streambuf_base
+class pbuf_streambuf_base
 {
+protected:
+    //Pbuf p;
 
+public:
 };
 
 template <class TCharTraits>
 struct opbuf_streambuf : 
     pbuf_streambuf_base,
-    estd::internal::out_pos_streambuf_base<TCharTraits>
+    estd::internal::impl::out_pos_streambuf_base<TCharTraits>
 {
-    typedef estd::internal::out_pos_streambuf_base<TCharTraits> base_type;
+    typedef estd::internal::impl::out_pos_streambuf_base<TCharTraits> base_type;
     typedef TCharTraits traits_type;
 };
 
 template <class TCharTraits>
 struct ipbuf_streambuf : 
     pbuf_streambuf_base,
-    estd::internal::in_pos_streambuf_base<TCharTraits>
+    estd::internal::impl::in_pos_streambuf_base<TCharTraits>
 {
-    typedef estd::internal::in_pos_streambuf_base<TCharTraits> base_type;
+    typedef estd::internal::impl::in_pos_streambuf_base<TCharTraits> base_type;
     typedef TCharTraits traits_type;
 };
 

@@ -326,6 +326,10 @@ public:
     {
         netbuf().shrink(absolute_pos());
     }
+
+    // DEBT: Only to make things compile in this temp branch.  Whole class
+    // is to be displaced with non-netbuf variety
+    int_type sputc(char_type) { return traits_type::eof(); }
 };
 
 template <class TNetbuf,
@@ -399,6 +403,8 @@ protected:
         return pos();
     }
 
+    char_type xsgetc() const { return *gptr(); }
+
     // remember, 'underflow' does not advance character forward and only moves
     // netbuf forward if current buffer is exhausted
     // Interesting.... I rewrote sgetc...
@@ -411,7 +417,7 @@ protected:
                 // return eof.  If netbuf can't provide us any further data, we're done
                 return traits_type::eof();
 
-            pos(0);
+            this->seekpos(0);
         }
 
         // otherwise, yank out current character (without advancing)
