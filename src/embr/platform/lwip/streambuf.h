@@ -78,13 +78,34 @@ struct ipbuf_streambuf :
 {
     typedef estd::internal::impl::in_pos_streambuf_base<TCharTraits> base_type;
     typedef TCharTraits traits_type;
+    typedef Pbuf::pbuf_pointer pbuf_pointer;
 
     using typename base_type::char_type;
+    using typename base_type::int_type;
 
 protected:
     char_type* eback() const { return this->data(); }
     char_type* gptr() const { return eback() + base_type::pos(); }
     char_type* egptr() const { return eback() + this->size(); }
+
+    int_type xin_avail() const { return this->size() - base_type::pos(); }
+
+    char_type xsgetc() const { return *gptr(); }
+
+public:
+    int_type underflow()
+    {
+        pbuf_pointer next = this->pbuf.pbuf()->next;
+
+        if(next == NULLPTR)  traits_type::eof();
+
+        // DEBT: Kind of a cheezy way around a mutator, but not wrong
+        // reinitialize our pbuf and don't bump reference since we're moving through
+        // existing one as a read-only operation
+        new (&this->pbuf) Pbuf(next, false);
+
+        return xsgetc();
+    }
 };
 
 
