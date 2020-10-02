@@ -84,6 +84,15 @@ public:
             // deallocate pbuf memory
             pbuf_free(p_to_free);
     }
+
+    void* payload() const { return p->payload; }
+
+    size_type length() const { return p->len; }
+
+    size_type total_length() const 
+    {
+        return pbuf()->tot_len;
+    }
 };
 
 
