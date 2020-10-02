@@ -81,6 +81,7 @@ protected:
     char_type* epptr() const { return pbase() + this->size(); }
 #endif
 
+    // amount of buffer space left we can write to for this particular pbuf chain portion
     int_type xout_avail() const { return this->size() - this->pos(); }
 
 public:
@@ -116,6 +117,20 @@ public:
         if(result == traits_type::eof()) return traits_type::eof();
         this->pbump(1);
         return _ch;
+    }
+
+    // NOTE: Remember, semi-nonstandard, wrapping sputn does all the overflow trickery
+    estd::streamsize xsputn(const char_type* s, estd::streamsize count)
+    {
+        int_type avail = xout_avail();
+        estd::streamsize remaining = avail - count;
+        
+        if(remaining < 0)
+            count = avail;
+
+        memcpy(pptr(), s, count);
+        this->pbump(count);
+        return count;
     }
 
 #ifdef FEATURE_CPP_MOVESEMANTIC

@@ -281,7 +281,9 @@ TEST_CASE("lwip pbuf embr-netbuf: netbuf shrink", "[lwip-pbuf]")
 }
 #endif
 
-TEST_CASE("lwip upgraded streambuf", "[lwip-strembuf]")
+TEST_CASE("lwip upgraded streambuf", "[lwip-strembuf2]")
 {
     embr::lwip::upgrading::basic_opbuf_streambuf<char> out(128);
+
+    out.sputn(s1, s1_size);
 }
