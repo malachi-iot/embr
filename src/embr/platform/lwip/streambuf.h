@@ -55,6 +55,9 @@ struct opbuf_streambuf :
     typedef TCharTraits traits_type;
 
     using typename base_type::char_type;
+    using typename base_type::int_type;
+
+    typedef Pbuf::pbuf_pointer pbuf_pointer;
 
 protected:
 #ifdef FEATURE_ESTD_IOSTREAM_STRICT_CONST
@@ -69,6 +72,42 @@ protected:
     char_type* epptr() const { return pbase() + this->size(); }
 #endif
 
+    int_type xout_avail() const { return this->size() - this->pos(); }
+
+public:
+    // NOTE: Not saving to output sequence, because for most of our implementations, this one
+    // included, we treat pbase() buffer and output sequence as the same
+    int_type overflow(int_type ch = traits_type::eof())
+    {
+        if(xout_avail() == 0)
+        {
+            pbuf_pointer next = this->pbuf.pbuf()->next;
+
+            if(next == NULLPTR) return traits_type::eof();
+
+            // DEBT: See below placement new usage
+            new (&this->pbuf) Pbuf(next, false);
+        }
+
+        if(ch != traits_type::eof())
+        {
+            // it's presumed that next buf in pbuf chain can fit at least one character
+            *pbase() = ch;
+        }
+
+        // DEBT: We can do better than this.  Can't return ch since sometimes it's eof
+        // even when we do have more buffer space
+        return traits_type::eof() - 1;
+    }
+
+    int_type sputc(char_type ch)
+    {
+        int_type _ch = traits_type::to_int_type(ch);
+        int_type result = overflow(_ch);
+        if(result == traits_type::eof()) return traits_type::eof();
+        this->pbump(1);
+        return _ch;
+    }
 };
 
 template <class TCharTraits>
