@@ -283,7 +283,7 @@ TEST_CASE("lwip pbuf embr-netbuf: netbuf shrink", "[lwip-pbuf]")
 }
 #endif
 
-TEST_CASE("lwip upgraded streambuf", "[lwip-strembuf2]")
+TEST_CASE("lwip upgraded streambuf: output", "[lwip-strembuf]")
 {
     embr::lwip::Pbuf pbuf(128);
     embr::lwip::upgrading::basic_opbuf_streambuf<char> out(std::move(pbuf));
@@ -304,4 +304,24 @@ TEST_CASE("lwip upgraded streambuf", "[lwip-strembuf2]")
     TEST_ASSERT_EQUAL(s1_size + 1, out.pos());
     TEST_ASSERT(r != -1);
     TEST_ASSERT_EQUAL('A', payload[s1_size]);
+}
+
+
+TEST_CASE("lwip upgraded streambuf: input", "[lwip-strembuf]")
+{
+    // remember, pbufs are assumed to have the entire content populated.  This
+    // test we only actually populate s1_size amount
+    embr::lwip::Pbuf pbuf(128);
+    
+    char* payload = (char*)pbuf.payload();
+    strcpy(payload, s1);
+
+    embr::lwip::upgrading::ipbuf_streambuf in(std::move(pbuf));
+
+    TEST_ASSERT_EQUAL(0, in.pubseekoff(0, estd::ios_base::cur));
+    TEST_ASSERT_EQUAL(payload, in.eback());
+    // DEBT: If showmanyc doesn't get called properly, a full recompile
+    // may be necessary.  Debt because that is a cmake/.h file detection
+    // problem
+    TEST_ASSERT_EQUAL(128, in.in_avail());
 }

@@ -151,14 +151,40 @@ struct ipbuf_streambuf :
     typedef typename traits_type::char_type char_type;
     typedef typename traits_type::int_type int_type;
 
-protected:
     char_type* eback() const { return this->data(); }
     char_type* gptr() const { return eback() + base_type::pos(); }
     char_type* egptr() const { return eback() + this->size(); }
 
+protected:
     int_type xin_avail() const { return this->size() - base_type::pos(); }
 
     char_type xsgetc() const { return *gptr(); }
+
+    estd::streamsize showmanyc()
+    {
+        int_type in_avail = xin_avail();
+
+        if(in_avail == 0)
+        {
+            if(underflow() == traits_type::eof()) return -1;
+
+            // we trust that the next pbuf we got is always bigger than 0
+            in_avail = xin_avail();
+        }
+
+        return in_avail;
+
+        /*
+         * We don't do total here so that eback, gptr and egptr are usable without any
+         * fancy stuff
+        pbuf_pointer next = this->pbuf.pbuf()->next;
+
+        while(next != nullptr)
+        {
+            in_avail += next->len;
+            next = 
+        } */
+    }
 
 public:
     int_type underflow()
@@ -174,6 +200,12 @@ public:
 
         return xsgetc();
     }
+
+#ifdef FEATURE_CPP_MOVESEMANTIC
+        template <class ...TArgs>
+        ipbuf_streambuf(TArgs&&... args) :
+                pbuf_streambuf_base<TCharTraits>(std::forward<TArgs>(args)...) {}
+#endif
 };
 }
 
