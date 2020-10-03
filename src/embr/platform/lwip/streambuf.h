@@ -186,8 +186,8 @@ using basic_ipbuf_streambuf = estd::internal::streambuf<impl::ipbuf_streambuf<Ch
 
 #endif
 
-//typedef embr::mem::out_netbuf_streambuf<char, PbufNetbuf> opbuf_streambuf;
-//typedef embr::mem::in_netbuf_streambuf<char, PbufNetbuf> ipbuf_streambuf;
+typedef basic_opbuf_streambuf<char> opbuf_streambuf;
+typedef basic_ipbuf_streambuf<char> ipbuf_streambuf;
 
 
 }
