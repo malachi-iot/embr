@@ -324,4 +324,11 @@ TEST_CASE("lwip upgraded streambuf: input", "[lwip-strembuf]")
     // may be necessary.  Debt because that is a cmake/.h file detection
     // problem
     TEST_ASSERT_EQUAL(128, in.in_avail());
+
+    char buf[128];
+
+    // TODO: Still need an xsgetn
+    //in.sgetn(buf, s1_size + 1);
+
+    //TEST_ASSERT_EQUAL(s1[0], buf[0]);
 }
