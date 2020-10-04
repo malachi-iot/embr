@@ -33,15 +33,13 @@ struct PbufBase
     typedef struct pbuf pbuf_type;
     typedef pbuf_type* pbuf_pointer;
     typedef const pbuf_type* const_pbuf_pointer;
-};
 
-
-struct Pbuf : PbufBase
-{
 protected:
     pbuf_pointer p;
 
 public:
+    PbufBase(pbuf_pointer p) : p(p) {}
+
     const_pbuf_pointer pbuf() const { return p; }
     pbuf_pointer pbuf() { return p; }
 
@@ -51,25 +49,39 @@ public:
     typedef uint16_t size_type;
 #endif
 
-    Pbuf(size_type size)
+    void* payload() const { return p->payload; }
+
+    size_type length() const { return p->len; }
+
+    size_type total_length() const 
     {
-        p = pbuf_alloc(PBUF_TRANSPORT, size, PBUF_RAM);
+        return pbuf()->tot_len;
+    }
+};
+
+
+struct Pbuf : PbufBase
+{
+    Pbuf(size_type size) : 
+        PbufBase(pbuf_alloc(PBUF_TRANSPORT, size, PBUF_RAM))
+    {
     }
 
-    Pbuf(pbuf_pointer p, bool bump_reference = true) : p(p)
+    Pbuf(pbuf_pointer p, bool bump_reference = true) : 
+        PbufBase(p)
     {
         if(bump_reference) pbuf_ref(p);
     }
 
     Pbuf(const Pbuf& copy_from, bool bump_reference = true) :
-        p(copy_from.p)
+        PbufBase(copy_from.p)
     {
         if(bump_reference) pbuf_ref(pbuf());
     }
 
 #ifdef FEATURE_CPP_MOVESEMANTIC
     Pbuf(Pbuf&& move_from) :
-        p(move_from.p)
+        PbufBase(move_from.p)
     {
         move_from.p = NULLPTR;
     }
@@ -84,15 +96,6 @@ public:
             // deallocate pbuf memory
             pbuf_free(p_to_free);
     }
-
-    void* payload() const { return p->payload; }
-
-    size_type length() const { return p->len; }
-
-    size_type total_length() const 
-    {
-        return pbuf()->tot_len;
-    }
 };
 
 
@@ -101,9 +104,6 @@ public:
 // testing
 struct PbufNetbuf : PbufBase
 {
-
-private:
-    pbuf_pointer p;
 #ifdef FEATURE_EMBR_PBUF_CHAIN_EXP
     pbuf_pointer p_start;
 #endif
@@ -115,16 +115,16 @@ public:
     typedef uint16_t size_type;
 #endif
 
-    PbufNetbuf(size_type size)
+    PbufNetbuf(size_type size) : 
+        PbufBase(pbuf_alloc(PBUF_TRANSPORT, size, PBUF_RAM))
     {
-        p = pbuf_alloc(PBUF_TRANSPORT, size, PBUF_RAM);
-
 #ifdef FEATURE_EMBR_PBUF_CHAIN_EXP
         p_start = p;
 #endif
     }
 
-    PbufNetbuf(pbuf_pointer p, bool bump_reference = true) : p(p)
+    PbufNetbuf(pbuf_pointer p, bool bump_reference = true) : 
+        PbufBase(p)
     {
         if(bump_reference) pbuf_ref(p);
 
@@ -136,7 +136,7 @@ public:
     // FIX: Don't want to do reset here, but until seekoff gets sorted out,
     // we need this for testing
     PbufNetbuf(const PbufNetbuf& copy_from, bool reset, bool bump_reference = true) :
-        p(copy_from.p)
+        PbufBase(copy_from.p)
 #ifdef FEATURE_EMBR_PBUF_CHAIN_EXP
         ,p_start(copy_from.p_start)
 #endif
@@ -148,7 +148,7 @@ public:
 
 #ifdef FEATURE_CPP_MOVESEMANTIC
     PbufNetbuf(PbufNetbuf&& move_from) :
-        p(move_from.p)
+        PbufBase(move_from.p)
 #ifdef FEATURE_EMBR_PBUF_CHAIN_EXP
         ,p_start(move_from.p_start)
 #endif
