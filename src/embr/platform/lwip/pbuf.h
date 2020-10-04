@@ -28,6 +28,8 @@
 
 namespace embr { namespace lwip {
 
+// If using this directly, know this is just a thin wrapper around
+// pbuf itself
 struct PbufBase
 {
     typedef struct pbuf pbuf_type;
@@ -61,6 +63,8 @@ public:
 };
 
 
+// This wraps pbuf + assists with allocation and reference
+// management
 struct Pbuf : PbufBase
 {
     Pbuf(size_type size) : 

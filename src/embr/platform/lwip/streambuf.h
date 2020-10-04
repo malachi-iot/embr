@@ -106,8 +106,8 @@ public:
     char_type* pbase() { return current_data(); }
     const char_type* pbase() const { return current_data(); }
     char_type* pptr() { return pbase() + pos; }
-    const char_type* pptr() const { return data() + pos; }
-    char_type* epptr() const { return pbase() + size(); }
+    const char_type* pptr() const { return pbase() + pos; }
+    char_type* epptr() const { return pbase() + current_size(); }
 #else
     char_type* pbase() const { return current_data(); }
     char_type* pptr() const { return pbase() + this->pos(); }
@@ -129,8 +129,7 @@ public:
 
             if(next == NULLPTR) return traits_type::eof();
 
-            // DEBT: See below placement new usage
-            new (&pbuf_current) Pbuf(next, false);
+            pbuf_current = next;
 
             // it's presumed that next buf in pbuf chain can fit at least one character
         }
@@ -171,8 +170,9 @@ public:
         opbuf_streambuf(TArgs&&... args) :
                 pbuf_base_type(std::forward<TArgs>(args)...)
         {
-            // DEBT: Sloppy way to initialize this
-            new (&pbuf_current) PbufBase(pbuf_base_type::pbuf.pbuf());
+            // DEBT: Slightly sloppy way to initialize this.
+            // initalizer list preferred
+            pbuf_current = pbuf_base_type::pbuf.pbuf();
         }
 #endif
 };
@@ -242,10 +242,7 @@ public:
 
         if(next == NULLPTR)  traits_type::eof();
 
-        // DEBT: Kind of a cheezy way around a mutator, but not wrong
-        // reinitialize our pbuf and don't bump reference since we're moving through
-        // existing one as a read-only operation
-        new (&pbuf_current) Pbuf(next, false);
+        pbuf_current = next;
 
         return xsgetc();
     }
@@ -255,8 +252,9 @@ public:
         ipbuf_streambuf(TArgs&&... args) :
                 pbuf_base_type(std::forward<TArgs>(args)...)
         {
-            // DEBT: Sloppy way to initialize this
-            new (&pbuf_current) PbufBase(pbuf_base_type::pbuf.pbuf());
+            // DEBT: Slightly sloppy way to initialize this.
+            // initalizer list preferred
+            pbuf_current = pbuf_base_type::pbuf.pbuf();
         }
 #endif
 };
