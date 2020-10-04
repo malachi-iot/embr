@@ -206,6 +206,19 @@ private:
     char_type* current_data() const
     { return static_cast<char_type*>(pbuf_current.payload()); }
     size_type current_size() const { return pbuf_current.length(); }
+    
+    bool move_next()
+    {
+        pbuf_pointer next = pbuf_current.pbuf()->next;
+
+        if(next == NULLPTR) return false;
+
+        // the pos base type does nothing fancy, it's not absolute pos
+        base_type::seekpos(0);
+
+        pbuf_current = next;
+        return true;
+    }
 
 public:
     char_type* eback() const { return current_data(); }
@@ -217,7 +230,36 @@ protected:
 
     char_type xsgetc() const { return *gptr(); }
 
-    // TODO: xsgetn using pbuf_copy_partial
+    estd::streamsize xsgetn(char_type* dest, estd::streamsize count)
+    {
+        // not using pbuf_copy_partial since it's a little *too* convenient and
+        // doesn't tell us what pbuf we leave off on
+
+        int_type avail = xin_avail();
+        estd::streamsize written = 0;
+
+        while(count >= avail)
+        {
+            memcpy(dest, gptr(), avail);
+            count -= avail;
+            dest += avail;
+            written += avail;
+
+            if(!move_next()) return written;
+
+            avail = current_size();
+        }
+
+        // only arrive here when count < avail
+        if(count > 0)
+        {
+            memcpy(dest, gptr(), count);
+            written += count;
+            this->gbump(count);
+        }
+
+        return written;
+    }
 
     estd::streamsize showmanyc()
     {

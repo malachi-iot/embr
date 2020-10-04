@@ -327,8 +327,8 @@ TEST_CASE("lwip upgraded streambuf: input", "[lwip-strembuf]")
 
     char buf[128];
 
-    // TODO: Still need an xsgetn
-    //in.sgetn(buf, s1_size + 1);
+    int size = in.sgetn(buf, s1_size + 1);
 
-    //TEST_ASSERT_EQUAL(s1[0], buf[0]);
+    TEST_ASSERT_EQUAL(s1_size + 1, size);
+    TEST_ASSERT_EQUAL(s1[0], buf[0]);
 }
