@@ -57,6 +57,22 @@ protected:
 public:
 };
 
+/*
+class pbuf_current_base
+{
+protected:
+    PbufBase pbuf_current;
+
+#ifdef FEATURE_ESTD_IOSTREAM_STRICT_CONST
+    char_type* current_data() { return static_cast<char_type*>(netbuf.data()); }
+    const char_type* current_data() const { return static_cast<const char_type*>(netbuf.data()); }
+#else
+    char_type* current_data() const
+    { return static_cast<char_type*>(pbuf_current.payload()); }
+#endif
+    size_type current_size() const { return pbuf.length(); }
+}; */
+
 template <class TCharTraits>
 struct opbuf_streambuf : 
     pbuf_streambuf_base<TCharTraits>,
@@ -70,27 +86,37 @@ struct opbuf_streambuf :
     typedef typename traits_type::int_type int_type;
 
     typedef Pbuf::pbuf_pointer pbuf_pointer;
+    typedef Pbuf::size_type size_type;
 
 private:
     PbufBase pbuf_current;
 
+#ifdef FEATURE_ESTD_IOSTREAM_STRICT_CONST
+    char_type* current_data() { return static_cast<char_type*>(netbuf.data()); }
+    const char_type* current_data() const { return static_cast<const char_type*>(netbuf.data()); }
+#else
+    char_type* current_data() const
+    { return static_cast<char_type*>(pbuf_current.payload()); }
+#endif
+    size_type current_size() const { return pbuf_current.length(); }
+
 public:
 
 #ifdef FEATURE_ESTD_IOSTREAM_STRICT_CONST
-    char_type* pbase() { return this->data(); }
-    const char_type* pbase() const { return this->data(); }
+    char_type* pbase() { return current_data(); }
+    const char_type* pbase() const { return current_data(); }
     char_type* pptr() { return pbase() + pos; }
     const char_type* pptr() const { return data() + pos; }
     char_type* epptr() const { return pbase() + size(); }
 #else
-    char_type* pbase() const { return this->data(); }
+    char_type* pbase() const { return current_data(); }
     char_type* pptr() const { return pbase() + this->pos(); }
-    char_type* epptr() const { return pbase() + this->size(); }
+    char_type* epptr() const { return pbase() + current_size(); }
 #endif
 
 private:
     // amount of buffer space left we can write to for this particular pbuf chain portion
-    int_type xout_avail() const { return this->size() - this->pos(); }
+    int_type xout_avail() const { return current_size() - this->pos(); }
 
 public:
     // NOTE: Not saving to output sequence, because for most of our implementations, this one
@@ -159,20 +185,27 @@ struct ipbuf_streambuf :
     typedef pbuf_streambuf_base<TCharTraits> pbuf_base_type;
     typedef estd::internal::impl::in_pos_streambuf_base<TCharTraits> base_type;
     typedef TCharTraits traits_type;
+
     typedef Pbuf::pbuf_pointer pbuf_pointer;
+    typedef Pbuf::size_type size_type;
 
     typedef typename traits_type::char_type char_type;
     typedef typename traits_type::int_type int_type;
 
-    char_type* eback() const { return this->data(); }
-    char_type* gptr() const { return eback() + base_type::pos(); }
-    char_type* egptr() const { return eback() + this->size(); }
-
 private:
     PbufBase pbuf_current;
 
+    char_type* current_data() const
+    { return static_cast<char_type*>(pbuf_current.payload()); }
+    size_type current_size() const { return pbuf_current.length(); }
+
+public:
+    char_type* eback() const { return current_data(); }
+    char_type* gptr() const { return eback() + base_type::pos(); }
+    char_type* egptr() const { return eback() + current_size(); }
+
 protected:
-    int_type xin_avail() const { return this->size() - base_type::pos(); }
+    int_type xin_avail() const { return current_size() - base_type::pos(); }
 
     char_type xsgetc() const { return *gptr(); }
 
