@@ -49,7 +49,9 @@ protected:
 #ifdef FEATURE_CPP_MOVESEMANTIC
         template <class ...TArgs>
         pbuf_streambuf_base(TArgs&&... args) :
-                pbuf(std::forward<TArgs>(args)...) {}
+                pbuf(std::forward<TArgs>(args)...)
+        {
+        }
 #endif
 
 public:
@@ -60,6 +62,7 @@ struct opbuf_streambuf :
     pbuf_streambuf_base<TCharTraits>,
     estd::internal::impl::out_pos_streambuf_base<TCharTraits>
 {
+    typedef pbuf_streambuf_base<TCharTraits> pbuf_base_type;
     typedef estd::internal::impl::out_pos_streambuf_base<TCharTraits> base_type;
     typedef TCharTraits traits_type;
 
@@ -67,6 +70,11 @@ struct opbuf_streambuf :
     typedef typename traits_type::int_type int_type;
 
     typedef Pbuf::pbuf_pointer pbuf_pointer;
+
+private:
+    PbufBase pbuf_current;
+
+public:
 
 #ifdef FEATURE_ESTD_IOSTREAM_STRICT_CONST
     char_type* pbase() { return this->data(); }
@@ -91,12 +99,12 @@ public:
     {
         if(xout_avail() == 0)
         {
-            pbuf_pointer next = this->pbuf.pbuf()->next;
+            pbuf_pointer next = pbuf_current.pbuf()->next;
 
             if(next == NULLPTR) return traits_type::eof();
 
             // DEBT: See below placement new usage
-            new (&this->pbuf) Pbuf(next, false);
+            new (&pbuf_current) Pbuf(next, false);
 
             // it's presumed that next buf in pbuf chain can fit at least one character
         }
@@ -135,7 +143,11 @@ public:
 #ifdef FEATURE_CPP_MOVESEMANTIC
         template <class ...TArgs>
         opbuf_streambuf(TArgs&&... args) :
-                pbuf_streambuf_base<TCharTraits>(std::forward<TArgs>(args)...) {}
+                pbuf_base_type(std::forward<TArgs>(args)...)
+        {
+            // DEBT: Sloppy way to initialize this
+            new (&pbuf_current) PbufBase(pbuf_base_type::pbuf.pbuf());
+        }
 #endif
 };
 
@@ -144,6 +156,7 @@ struct ipbuf_streambuf :
     pbuf_streambuf_base<TCharTraits>,
     estd::internal::impl::in_pos_streambuf_base<TCharTraits>
 {
+    typedef pbuf_streambuf_base<TCharTraits> pbuf_base_type;
     typedef estd::internal::impl::in_pos_streambuf_base<TCharTraits> base_type;
     typedef TCharTraits traits_type;
     typedef Pbuf::pbuf_pointer pbuf_pointer;
@@ -154,6 +167,9 @@ struct ipbuf_streambuf :
     char_type* eback() const { return this->data(); }
     char_type* gptr() const { return eback() + base_type::pos(); }
     char_type* egptr() const { return eback() + this->size(); }
+
+private:
+    PbufBase pbuf_current;
 
 protected:
     int_type xin_avail() const { return this->size() - base_type::pos(); }
@@ -189,14 +205,14 @@ protected:
 public:
     int_type underflow()
     {
-        pbuf_pointer next = this->pbuf.pbuf()->next;
+        pbuf_pointer next = pbuf_current.pbuf()->next;
 
         if(next == NULLPTR)  traits_type::eof();
 
         // DEBT: Kind of a cheezy way around a mutator, but not wrong
         // reinitialize our pbuf and don't bump reference since we're moving through
         // existing one as a read-only operation
-        new (&this->pbuf) Pbuf(next, false);
+        new (&pbuf_current) Pbuf(next, false);
 
         return xsgetc();
     }
@@ -204,7 +220,11 @@ public:
 #ifdef FEATURE_CPP_MOVESEMANTIC
         template <class ...TArgs>
         ipbuf_streambuf(TArgs&&... args) :
-                pbuf_streambuf_base<TCharTraits>(std::forward<TArgs>(args)...) {}
+                pbuf_base_type(std::forward<TArgs>(args)...)
+        {
+            // DEBT: Sloppy way to initialize this
+            new (&pbuf_current) PbufBase(pbuf_base_type::pbuf.pbuf());
+        }
 #endif
 };
 }

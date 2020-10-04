@@ -39,6 +39,7 @@ protected:
 
 public:
     PbufBase(pbuf_pointer p) : p(p) {}
+    PbufBase() {}
 
     const_pbuf_pointer pbuf() const { return p; }
     pbuf_pointer pbuf() { return p; }
