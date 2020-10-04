@@ -152,6 +152,8 @@ public:
     }
 
     // NOTE: Remember, semi-nonstandard, wrapping sputn does all the overflow trickery
+    // TODO: Should we be using pbuf_take?  Seems like pbuf_take always does tot_len, which
+    //       would make that a no.  But that also would make no sense
     estd::streamsize xsputn(const char_type* s, estd::streamsize count)
     {
         int_type avail = xout_avail();
@@ -165,15 +167,21 @@ public:
         return count;
     }
 
+    void shrink()
+    {
+        this->pbuf.realloc(
+            this->pbuf.total_length() - xout_avail());
+    }
+
 #ifdef FEATURE_CPP_MOVESEMANTIC
-        template <class ...TArgs>
-        opbuf_streambuf(TArgs&&... args) :
-                pbuf_base_type(std::forward<TArgs>(args)...)
-        {
-            // DEBT: Slightly sloppy way to initialize this.
-            // initalizer list preferred
-            pbuf_current = pbuf_base_type::pbuf.pbuf();
-        }
+    template <class ...TArgs>
+    opbuf_streambuf(TArgs&&... args) :
+            pbuf_base_type(std::forward<TArgs>(args)...)
+    {
+        // DEBT: Slightly sloppy way to initialize this.
+        // initalizer list preferred
+        pbuf_current = pbuf_base_type::pbuf.pbuf();
+    }
 #endif
 };
 
@@ -208,6 +216,8 @@ protected:
     int_type xin_avail() const { return current_size() - base_type::pos(); }
 
     char_type xsgetc() const { return *gptr(); }
+
+    // TODO: xsgetn using pbuf_copy_partial
 
     estd::streamsize showmanyc()
     {

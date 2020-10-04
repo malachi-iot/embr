@@ -60,6 +60,11 @@ public:
     {
         return pbuf()->tot_len;
     }
+
+    void realloc(size_type to_size)
+    {
+        pbuf_realloc(p, to_size);
+    }
 };
 
 
