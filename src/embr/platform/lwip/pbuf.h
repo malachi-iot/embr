@@ -71,27 +71,51 @@ public:
         return pbuf_copy_partial(p, s, len, offset);
     }
 
-
-    size_type partial_length(const_pbuf_pointer length_to) const
-    {
-        const_pbuf_pointer p = pbuf();
-        size_type len = p->len;
-
-        p = p->next;
-
-        while(p != NULLPTR)
-        {
-            len += p->len;
-
-            p = p->next;
-        }
-
-        return len;
-    }
-
     // TODO: Do 'pbuf_at' for counterpoint to partial_length
 };
 
+// returns size between the start of two pbufs
+PbufBase::size_type delta_length(PbufBase from, PbufBase to)
+{
+    PbufBase::const_pbuf_pointer p = from.pbuf();
+    PbufBase::size_type len = 0;
+
+    while(p != to.pbuf())
+    {
+        len += p->len;
+
+        p = p->next;
+    }
+
+    return len;
+}
+
+
+/*
+ * FIX: Something is wrong with tuple, so can't do this here
+ * TODO: tuple may not work with C++98 anyway, though a simplistic implementation 
+ * (enough for this use case) is possible
+// returns pbuf and pbuf-relative offset at specified absolute position away from start
+estd::tuple<PbufBase, PbufBase::size_type> delta_length(PbufBase start, PbufBase::size_type offset)
+{
+    PbufBase::pbuf_pointer p = start.pbuf();
+    
+    while(p != NULLPTR)
+    {
+        if(offset < p->len)
+        {
+            // return at this point, offset is within this pbuf
+            return estd::tuple<PbufBase, PbufBase::size_type>(p, offset);
+        }
+
+        offset -= p->len;
+
+        p = p->next;
+    }
+
+    return estd::tuple<PbufBase, PbufBase::size_type>(NULLPTR, 0);
+}
+*/
 
 // This wraps pbuf + assists with allocation and reference
 // management
