@@ -57,38 +57,20 @@ protected:
 public:
 };
 
-/*
-class pbuf_current_base
-{
-protected:
-    PbufBase pbuf_current;
 
-#ifdef FEATURE_ESTD_IOSTREAM_STRICT_CONST
-    char_type* current_data() { return static_cast<char_type*>(netbuf.data()); }
-    const char_type* current_data() const { return static_cast<const char_type*>(netbuf.data()); }
-#else
-    char_type* current_data() const
-    { return static_cast<char_type*>(pbuf_current.payload()); }
-#endif
-    size_type current_size() const { return pbuf.length(); }
-}; */
 
 template <class TCharTraits>
-struct opbuf_streambuf : 
-    pbuf_streambuf_base<TCharTraits>,
-    estd::internal::impl::out_pos_streambuf_base<TCharTraits>
+class pbuf_current_base
 {
-    typedef pbuf_streambuf_base<TCharTraits> pbuf_base_type;
-    typedef estd::internal::impl::out_pos_streambuf_base<TCharTraits> base_type;
     typedef TCharTraits traits_type;
 
     typedef typename traits_type::char_type char_type;
     typedef typename traits_type::int_type int_type;
 
-    typedef Pbuf::pbuf_pointer pbuf_pointer;
-    typedef Pbuf::size_type size_type;
+    typedef PbufBase::pbuf_pointer pbuf_pointer;
+    typedef PbufBase::size_type size_type;
 
-private:
+protected:
     PbufBase pbuf_current;
 
 #ifdef FEATURE_ESTD_IOSTREAM_STRICT_CONST
@@ -100,23 +82,60 @@ private:
 #endif
     size_type current_size() const { return pbuf_current.length(); }
 
+    bool move_next()
+    {
+        pbuf_pointer next = pbuf_current.pbuf()->next;
+
+        if(next == NULLPTR) return false;
+
+        pbuf_current = next;
+        return true;
+    }
+};
+
+
+template <class TCharTraits>
+struct opbuf_streambuf : 
+    pbuf_streambuf_base<TCharTraits>,
+    pbuf_current_base<TCharTraits>,
+    estd::internal::impl::out_pos_streambuf_base<TCharTraits>
+{
+    typedef pbuf_streambuf_base<TCharTraits> pbuf_base_type;
+    typedef estd::internal::impl::out_pos_streambuf_base<TCharTraits> base_type;
+    typedef pbuf_current_base<TCharTraits> pbuf_current_base_type;
+    typedef TCharTraits traits_type;
+
+    typedef typename traits_type::char_type char_type;
+    typedef typename traits_type::int_type int_type;
+
+    typedef Pbuf::pbuf_pointer pbuf_pointer;
+    typedef Pbuf::size_type size_type;
+
+    bool move_next()
+    {
+        if(!pbuf_current_base_type::move_next()) return false;
+
+        base_type::seekpos(0);
+        return true;
+    }
+
 public:
 
 #ifdef FEATURE_ESTD_IOSTREAM_STRICT_CONST
-    char_type* pbase() { return current_data(); }
-    const char_type* pbase() const { return current_data(); }
+    char_type* pbase() { return this->current_data(); }
+    const char_type* pbase() const { return this->current_data(); }
     char_type* pptr() { return pbase() + pos; }
     const char_type* pptr() const { return pbase() + pos; }
-    char_type* epptr() const { return pbase() + current_size(); }
+    char_type* epptr() const { return pbase() + this->current_size(); }
 #else
-    char_type* pbase() const { return current_data(); }
+    char_type* pbase() const { return this->current_data(); }
     char_type* pptr() const { return pbase() + this->pos(); }
-    char_type* epptr() const { return pbase() + current_size(); }
+    char_type* epptr() const { return pbase() + this->current_size(); }
 #endif
 
 private:
     // amount of buffer space left we can write to for this particular pbuf chain portion
-    int_type xout_avail() const { return current_size() - this->pos(); }
+    int_type xout_avail() const { return this->current_size() - this->pos(); }
 
 public:
     // NOTE: Not saving to output sequence, because for most of our implementations, this one
@@ -125,11 +144,7 @@ public:
     {
         if(xout_avail() == 0)
         {
-            pbuf_pointer next = pbuf_current.pbuf()->next;
-
-            if(next == NULLPTR) return traits_type::eof();
-
-            pbuf_current = next;
+            if(!this->move_next()) return traits_type::eof();
 
             // it's presumed that next buf in pbuf chain can fit at least one character
         }
@@ -180,7 +195,7 @@ public:
     {
         // DEBT: Slightly sloppy way to initialize this.
         // initalizer list preferred
-        pbuf_current = pbuf_base_type::pbuf.pbuf();
+        this->pbuf_current = pbuf_base_type::pbuf.pbuf();
     }
 #endif
 };
@@ -188,10 +203,12 @@ public:
 template <class TCharTraits>
 struct ipbuf_streambuf : 
     pbuf_streambuf_base<TCharTraits>,
+    pbuf_current_base<TCharTraits>,
     estd::internal::impl::in_pos_streambuf_base<TCharTraits>
 {
     typedef pbuf_streambuf_base<TCharTraits> pbuf_base_type;
     typedef estd::internal::impl::in_pos_streambuf_base<TCharTraits> base_type;
+    typedef pbuf_current_base<TCharTraits> pbuf_current_base_type;
     typedef TCharTraits traits_type;
 
     typedef Pbuf::pbuf_pointer pbuf_pointer;
@@ -200,33 +217,21 @@ struct ipbuf_streambuf :
     typedef typename traits_type::char_type char_type;
     typedef typename traits_type::int_type int_type;
 
-private:
-    PbufBase pbuf_current;
+    char_type* eback() const { return this->current_data(); }
+    char_type* gptr() const { return eback() + base_type::pos(); }
+    char_type* egptr() const { return eback() + this->current_size(); }
 
-    char_type* current_data() const
-    { return static_cast<char_type*>(pbuf_current.payload()); }
-    size_type current_size() const { return pbuf_current.length(); }
-    
+protected:
     bool move_next()
     {
-        pbuf_pointer next = pbuf_current.pbuf()->next;
+        if(!pbuf_current_base_type::move_next()) return false;
 
-        if(next == NULLPTR) return false;
-
-        // the pos base type does nothing fancy, it's not absolute pos
         base_type::seekpos(0);
-
-        pbuf_current = next;
         return true;
     }
 
-public:
-    char_type* eback() const { return current_data(); }
-    char_type* gptr() const { return eback() + base_type::pos(); }
-    char_type* egptr() const { return eback() + current_size(); }
 
-protected:
-    int_type xin_avail() const { return current_size() - base_type::pos(); }
+    int_type xin_avail() const { return this->current_size() - base_type::pos(); }
 
     char_type xsgetc() const { return *gptr(); }
 
@@ -245,9 +250,9 @@ protected:
             dest += avail;
             written += avail;
 
-            if(!move_next()) return written;
+            if(!this->move_next()) return written;
 
-            avail = current_size();
+            avail = this->current_size();
         }
 
         // only arrive here when count < avail
@@ -290,11 +295,7 @@ protected:
 public:
     int_type underflow()
     {
-        pbuf_pointer next = pbuf_current.pbuf()->next;
-
-        if(next == NULLPTR)  traits_type::eof();
-
-        pbuf_current = next;
+        if(!this->move_next()) return traits_type::eof();
 
         return xsgetc();
     }
@@ -306,7 +307,7 @@ public:
         {
             // DEBT: Slightly sloppy way to initialize this.
             // initalizer list preferred
-            pbuf_current = pbuf_base_type::pbuf.pbuf();
+            this->pbuf_current = pbuf_base_type::pbuf.pbuf();
         }
 #endif
 };
