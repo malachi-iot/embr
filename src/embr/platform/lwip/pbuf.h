@@ -40,17 +40,21 @@ protected:
     pbuf_pointer p;
 
 public:
-    PbufBase(pbuf_pointer p) : p(p) {}
-    PbufBase() {}
-
-    const_pbuf_pointer pbuf() const { return p; }
-    pbuf_pointer pbuf() { return p; }
-
 #ifdef FEATURE_CPP_DECLTYPE
     typedef decltype(p->len) size_type;
 #else
     typedef uint16_t size_type;
 #endif
+
+    PbufBase(pbuf_pointer p) : p(p) {}
+    PbufBase() {}
+    PbufBase(size_type size, pbuf_layer layer = PBUF_TRANSPORT) : 
+        p(pbuf_alloc(layer, size, PBUF_RAM))
+    {
+    }
+
+    const_pbuf_pointer pbuf() const { return p; }
+    pbuf_pointer pbuf() { return p; }
 
     void* payload() const { return p->payload; }
 
@@ -71,11 +75,18 @@ public:
         return pbuf_copy_partial(p, s, len, offset);
     }
 
-    // TODO: Do 'pbuf_at' for counterpoint to partial_length
+    void concat(pbuf_pointer t)
+    {
+        pbuf_cat(p, t);
+    }
+
+    bool valid() const { return p != NULLPTR; }
+
+    operator pbuf_pointer() { return p; }
 };
 
 // returns size between the start of two pbufs
-PbufBase::size_type delta_length(PbufBase from, PbufBase to)
+inline PbufBase::size_type delta_length(PbufBase from, PbufBase to)
 {
     PbufBase::const_pbuf_pointer p = from.pbuf();
     PbufBase::size_type len = 0;
@@ -121,8 +132,7 @@ estd::tuple<PbufBase, PbufBase::size_type> delta_length(PbufBase start, PbufBase
 // management
 struct Pbuf : PbufBase
 {
-    Pbuf(size_type size) : 
-        PbufBase(pbuf_alloc(PBUF_TRANSPORT, size, PBUF_RAM))
+    Pbuf(size_type size) : PbufBase(size)
     {
     }
 

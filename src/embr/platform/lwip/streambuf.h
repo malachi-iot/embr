@@ -144,8 +144,20 @@ public:
     {
         if(xout_avail() == 0)
         {
-            // TODO: Look into allocating and chaining more pbuf here
-            if(!this->move_next()) return traits_type::eof();
+            if(!this->move_next())
+            {
+                // UNTESTED
+                // DEBT: Need a way to specify app-specific values, not hardcode 256
+                PbufBase appended(256);
+
+                // TODO: Might want to check appended.valid() to be sure, though
+                // pretty sure concat of a null pbuf will yield similar results in the end
+
+                this->pbuf_current.concat(appended);
+
+                if(!this->move_next())
+                    return traits_type::eof();
+            }
 
             // it's presumed that next buf in pbuf chain can fit at least one character
         }
