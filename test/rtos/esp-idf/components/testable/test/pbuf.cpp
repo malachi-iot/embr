@@ -283,9 +283,23 @@ TEST_CASE("lwip pbuf embr-netbuf: netbuf shrink", "[lwip-pbuf]")
 }
 #endif
 
-TEST_CASE("lwip upgraded streambuf: output", "[lwip-strembuf]")
+TEST_CASE("lwip upgraded streambuf: helpers", "[lwip-helpers]")
 {
-    embr::lwip::Pbuf pbuf(128);
+    CONSTEXPR unsigned pbuf_size = 32;
+    embr::lwip::Pbuf pbuf(pbuf_size);
+    embr::lwip::PbufBase pbuf2(pbuf_size);
+
+    pbuf.concat(pbuf2);
+
+    unsigned size = embr::lwip::delta_length(pbuf, pbuf2);
+
+    TEST_ASSERT_EQUAL(pbuf_size, size);
+}
+
+TEST_CASE("lwip upgraded streambuf: output", "[lwip-streambuf]")
+{
+    CONSTEXPR unsigned pbuf_size = 32;
+    embr::lwip::Pbuf pbuf(pbuf_size);
     embr::lwip::upgrading::basic_opbuf_streambuf<char> out(std::move(pbuf));
 
     out.sputn(s1, s1_size);
@@ -307,7 +321,7 @@ TEST_CASE("lwip upgraded streambuf: output", "[lwip-strembuf]")
 }
 
 
-TEST_CASE("lwip upgraded streambuf: input", "[lwip-strembuf]")
+TEST_CASE("lwip upgraded streambuf: input", "[lwip-streambuf]")
 {
     // remember, pbufs are assumed to have the entire content populated.  This
     // test we only actually populate s1_size amount
