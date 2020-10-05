@@ -294,6 +294,13 @@ TEST_CASE("lwip upgraded streambuf: helpers", "[lwip-helpers]")
     unsigned size = embr::lwip::delta_length(pbuf, pbuf2);
 
     TEST_ASSERT_EQUAL(pbuf_size, size);
+
+    pbuf.concat(pbuf2 = embr::lwip::PbufBase(pbuf_size));
+
+    size = embr::lwip::delta_length(pbuf, pbuf2);
+
+    TEST_ASSERT_EQUAL(pbuf_size * 2, size);
+    TEST_ASSERT_EQUAL(pbuf_size * 3, pbuf.total_length());
 }
 
 TEST_CASE("lwip upgraded streambuf: output", "[lwip-streambuf]")
