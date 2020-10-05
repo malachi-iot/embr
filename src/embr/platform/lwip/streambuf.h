@@ -201,7 +201,9 @@ public:
             pbuf_base_type::pbuf.total_length() - xout_avail());
     }
 
-    pbuf_pointer pbuf() { return pbuf_base_type::pbuf.pbuf(); }
+    PbufBase& pbuf() { return pbuf_base_type::pbuf; }
+
+    const PbufBase pbuf() const { return pbuf_base_type::pbuf; }
 
 #ifdef FEATURE_CPP_MOVESEMANTIC
     template <class ...TArgs>
@@ -210,7 +212,7 @@ public:
     {
         // DEBT: Slightly sloppy way to initialize this.
         // initalizer list preferred
-        this->pbuf_current = pbuf_base_type::pbuf.pbuf();
+        this->pbuf_current = pbuf();
     }
 #endif
 };

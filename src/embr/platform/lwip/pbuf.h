@@ -82,7 +82,7 @@ public:
 
     bool valid() const { return p != NULLPTR; }
 
-    operator pbuf_pointer() { return p; }
+    operator pbuf_pointer() const { return p; }
 };
 
 // returns size between the start of two pbufs

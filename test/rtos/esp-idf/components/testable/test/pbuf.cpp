@@ -325,6 +325,10 @@ TEST_CASE("lwip upgraded streambuf: output", "[lwip-streambuf]")
     TEST_ASSERT_EQUAL(s1_size + 1, out.pos());
     TEST_ASSERT(r != -1);
     TEST_ASSERT_EQUAL('A', payload[s1_size]);
+    
+    out.shrink();
+
+    TEST_ASSERT_EQUAL(s1_size + 1, out.pbuf().total_length());
 }
 
 
