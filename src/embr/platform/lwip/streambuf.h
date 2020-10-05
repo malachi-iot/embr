@@ -272,7 +272,7 @@ protected:
 
         if(in_avail == 0)
         {
-            if(underflow() == traits_type::eof()) return -1;
+            if(!this->move_next()) return -1;
 
             // we trust that the next pbuf we got is always bigger than 0
             in_avail = xin_avail();
@@ -295,6 +295,7 @@ protected:
 public:
     int_type underflow()
     {
+        // DEBT: Technically we need to check xin_avail first
         if(!this->move_next()) return traits_type::eof();
 
         return xsgetc();
