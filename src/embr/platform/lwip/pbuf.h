@@ -80,6 +80,14 @@ public:
         pbuf_cat(p, t);
     }
 
+    /// "Skip a number of bytes at the start of a pbuf"
+    /// @returns the pbuf in the queue where the offset is
+    /// @link https://www.nongnu.org/lwip/2_1_x/group__pbuf.html#ga6a961522d81f0327aaf4d4ee6d96c583
+    PbufBase skip(size_type in_offset, size_type* out_offset)
+    {
+        return pbuf_skip(p, in_offset, out_offset);
+    }
+
     bool valid() const { return p != NULLPTR; }
 
     operator pbuf_pointer() const { return p; }

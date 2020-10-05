@@ -291,7 +291,7 @@ TEST_CASE("lwip upgraded streambuf: helpers", "[lwip-helpers]")
 
     pbuf.concat(pbuf2);
 
-    unsigned size = embr::lwip::delta_length(pbuf, pbuf2);
+    embr::lwip::Pbuf::size_type size = embr::lwip::delta_length(pbuf, pbuf2);
 
     TEST_ASSERT_EQUAL(pbuf_size, size);
 
@@ -301,6 +301,11 @@ TEST_CASE("lwip upgraded streambuf: helpers", "[lwip-helpers]")
 
     TEST_ASSERT_EQUAL(pbuf_size * 2, size);
     TEST_ASSERT_EQUAL(pbuf_size * 3, pbuf.total_length());
+
+    embr::lwip::PbufBase pbuf3 = pbuf.skip(pbuf_size * 2, &size);
+
+    TEST_ASSERT(pbuf2 == pbuf3);
+    TEST_ASSERT_EQUAL(size, 0);
 }
 
 TEST_CASE("lwip upgraded streambuf: output", "[lwip-streambuf]")
