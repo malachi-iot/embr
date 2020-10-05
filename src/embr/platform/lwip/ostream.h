@@ -12,4 +12,10 @@ using basic_opbufstream = estd::internal::basic_ostream<basic_opbuf_streambuf<Ch
 
 typedef estd::internal::basic_ostream<opbuf_streambuf> opbufstream;
 
+namespace upgrade {
+
+typedef estd::internal::basic_ostream<embr::lwip::upgrading::opbuf_streambuf> opbufstream;
+
+}
+
 }}

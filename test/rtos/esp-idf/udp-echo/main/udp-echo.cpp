@@ -19,8 +19,13 @@ using namespace embr::mem;
 
 typedef embr::lwip::PbufNetbuf netbuf_type;
 typedef struct pbuf* pbuf_pointer;
+#ifdef LEGACY
 using embr::lwip::opbufstream;
 using embr::lwip::ipbufstream;
+#else
+using embr::lwip::upgrade::opbufstream;
+using embr::lwip::upgrade::ipbufstream;
+#endif
 
 //#define RAW_LWIP_STYLE
 
@@ -28,7 +33,8 @@ void process_out(ipbufstream& in, opbufstream& out)
 {
     const char* TAG = "process_out";
 
-    embr::lwip::ipbuf_streambuf& in_rdbuf = *in.rdbuf();
+    //embr::lwip::ipbuf_streambuf& in_rdbuf = *in.rdbuf();
+    auto& in_rdbuf = *in.rdbuf();
     //int tot_len = in_rdbuf.cnetbuf().total_size();
 
     if(in.peek() == '!')
@@ -68,6 +74,7 @@ void udp_echo_recv(void *arg,
 
     if (p != NULL)
     {
+#ifdef LEGACY
 #ifdef FEATURE_EMBR_PBUF_CHAIN_EXP
         // NOTE: We must place this out in a temporary "variable" or use size_type() around it
         // due to https://stackoverflow.com/questions/40690260/undefined-reference-error-for-static-constexpr-member
@@ -119,6 +126,21 @@ void udp_echo_recv(void *arg,
 
         ESP_LOGI(TAG, "pbuf tot_len=%d", netbuf.total_size());
 
+#else
+        // TODO: Need to make expanding pbuf chain here like we (I think) do above
+        size_type out_len = 128;
+
+        ipbufstream in(p, false); // will auto-free p since it's not bumping reference
+        opbufstream out(out_len);
+
+        process_out(in, out);
+
+        out.rdbuf()->shrink();
+
+        pbuf_pointer pbuf = out.rdbuf()->pbuf();
+
+        ESP_LOGI(TAG, "pbuf tot_len=%d", pbuf->tot_len);
+#endif
         udp_sendto(pcb, pbuf, addr, port);
     }
 }

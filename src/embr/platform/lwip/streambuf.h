@@ -144,6 +144,7 @@ public:
     {
         if(xout_avail() == 0)
         {
+            // TODO: Look into allocating and chaining more pbuf here
             if(!this->move_next()) return traits_type::eof();
 
             // it's presumed that next buf in pbuf chain can fit at least one character
@@ -184,9 +185,11 @@ public:
 
     void shrink()
     {
-        this->pbuf.realloc(
-            this->pbuf.total_length() - xout_avail());
+        pbuf_base_type::pbuf.realloc(
+            pbuf_base_type::pbuf.total_length() - xout_avail());
     }
+
+    pbuf_pointer pbuf() { return pbuf_base_type::pbuf.pbuf(); }
 
 #ifdef FEATURE_CPP_MOVESEMANTIC
     template <class ...TArgs>

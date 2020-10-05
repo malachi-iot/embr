@@ -12,4 +12,10 @@ using basic_ipbufstream = estd::internal::basic_istream<basic_ipbuf_streambuf<Ch
 
 typedef estd::internal::basic_istream<ipbuf_streambuf> ipbufstream;
 
+namespace upgrade {
+
+typedef estd::internal::basic_istream<embr::lwip::upgrading::ipbuf_streambuf> ipbufstream;
+
+}
+
 }}
