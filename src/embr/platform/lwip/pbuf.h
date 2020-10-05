@@ -70,6 +70,26 @@ public:
     {
         return pbuf_copy_partial(p, s, len, offset);
     }
+
+
+    size_type partial_length(const_pbuf_pointer length_to) const
+    {
+        const_pbuf_pointer p = pbuf();
+        size_type len = p->len;
+
+        p = p->next;
+
+        while(p != NULLPTR)
+        {
+            len += p->len;
+
+            p = p->next;
+        }
+
+        return len;
+    }
+
+    // TODO: Do 'pbuf_at' for counterpoint to partial_length
 };
 
 
