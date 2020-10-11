@@ -362,3 +362,17 @@ TEST_CASE("lwip upgraded streambuf: input", "[lwip-streambuf]")
     TEST_ASSERT_EQUAL(s1_size + 1, size);
     TEST_ASSERT_EQUAL(s1[0], buf[0]);
 }
+
+TEST_CASE("lwip upgraded istream", "[lwip-ios]")
+{
+    embr::lwip::Pbuf pbuf(128);
+
+    embr::lwip::upgrading::ipbufstream in(std::move(pbuf));
+}
+
+TEST_CASE("lwip upgraded ostream", "[lwip-ios]")
+{
+    embr::lwip::Pbuf pbuf(128);
+
+    embr::lwip::upgrading::opbufstream in(std::move(pbuf));
+}
