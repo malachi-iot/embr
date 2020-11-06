@@ -367,6 +367,9 @@ TEST_CASE("lwip upgraded istream", "[lwip-ios]")
 {
     embr::lwip::Pbuf pbuf(128);
 
+    char* payload = (char*)pbuf.payload();
+    char buf[128];
+
     embr::lwip::upgrading::ipbufstream in(std::move(pbuf));
 }
 
@@ -374,5 +377,12 @@ TEST_CASE("lwip upgraded ostream", "[lwip-ios]")
 {
     embr::lwip::Pbuf pbuf(128);
 
-    embr::lwip::upgrading::opbufstream in(std::move(pbuf));
+    char* payload = (char*)pbuf.payload();
+
+    embr::lwip::upgrading::opbufstream out(std::move(pbuf));
+
+    out << s1 << estd::endl;
+
+    TEST_ASSERT_EQUAL(s1_size + 1, out.tellp());
+    TEST_ASSERT_EQUAL(s1[0], *payload);
 }
