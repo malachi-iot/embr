@@ -39,6 +39,9 @@ TEST_CASE("iostreams", "[ios]")
         // compares just pointers here
         REQUIRE(s.data() == sb.pbase());
     }
+    // FIX: netbufs are phased out.  This unit test fails.  It's likely time to just
+    // remove it, but I want to remove (or move to 'obsolete' area) netbuf code before
+    // just disabling the unit tests
     SECTION("proper netbuf_streambuf type (not impl) + ostream")
     {
         using namespace estd::internal;
