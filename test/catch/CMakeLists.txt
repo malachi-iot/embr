@@ -1,6 +1,6 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.0)
 
-project(embr-unit-test)
+project(embr-unit-test VERSION 1.0.0)
 
 # necessary for Catch2
 set(CMAKE_CXX_STANDARD 11)
@@ -26,7 +26,6 @@ set(SOURCE_FILES
     dataport-test.cpp
     datapump-test.cpp
     datapump-test.h
-    ios-test.cpp
     netbuf-test.cpp
     observer-test.cpp
     experimental-test.cpp
