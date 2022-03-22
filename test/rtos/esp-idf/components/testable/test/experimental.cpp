@@ -49,6 +49,8 @@ TEST_CASE("observer event handler", "[experimental]")
 
 #ifdef FEATURE_IDF_DEFAULT_EVENT_LOOP
     ip_event_got_ip_t dummy_data;
+    // dummy assignment to hold off uninitialized variable warning/errors
+    dummy_data.ip_info.ip = esp_ip4_addr();
     test(&context, IP_EVENT, IP_EVENT_STA_GOT_IP, &dummy_data);
 #else
     system_event_t dummy_data;

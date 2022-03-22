@@ -20,8 +20,10 @@ struct Diagnostic
 
     static void on_notify(embr::experimental::esp_idf::events::ip::got_ip e)
     {
+        char buffer[32];
+
         ESP_LOGI(TAG, "got ip:%s",
-                ip4addr_ntoa(&e.ip_info.ip));
+            esp_ip4addr_ntoa(&e.ip_info.ip, buffer, sizeof(buffer)));
     }
 };
 
@@ -170,7 +172,11 @@ void wifi_init_sta(system_event_cb_t event_handler)
     strcpy((char*)wifi_config.sta.password, CONFIG_WIFI_PASSWORD);
 
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA) );
+#ifdef FEATURE_IDF_DEFAULT_EVENT_LOOP
+    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config) );
+#else
     ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config) );
+#endif
     ESP_ERROR_CHECK(esp_wifi_start() );
 
     ESP_LOGI(TAG, "finished.");
