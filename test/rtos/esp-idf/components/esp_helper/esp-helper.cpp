@@ -141,11 +141,12 @@ void wifi_init_sta(system_event_cb_t event_handler)
 {
     static const char *TAG = "wifi_init_sta";
 
-    tcpip_adapter_init();
 #ifdef FEATURE_IDF_DEFAULT_EVENT_LOOP
+    esp_netif_init();
     ESP_LOGI(TAG, "create default event loop");
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 #else
+    tcpip_adapter_init();
     ESP_LOGI(TAG, "init event loop");
     ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
 #endif

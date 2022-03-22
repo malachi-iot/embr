@@ -3,7 +3,6 @@
 #include <estd/internal/platform.h>
 
 #include "esp_event.h"
-#include "esp_event_loop.h"
 
 // even though 'esp_event_loop_create_default' exists in previous
 // versions, something appears to be off about it
@@ -21,6 +20,8 @@
 // naming this as such because both are named event, with previous
 // one being legacy
 #define FEATURE_IDF_DEFAULT_EVENT_LOOP
+#else
+#include "esp_event_loop.h"
 #endif
 
 #define ENABLE_IDF_LEGACY_EVENT ESTD_IDF_VER < ESTD_IDF_VER_3_3_0
