@@ -40,7 +40,7 @@ void process_out(ipbufstream& in, opbufstream& out)
     if(in.peek() == '!')
     {
         in.ignore();
-        switch(char ch = in.get())
+        switch(int ch = in.get())
         {
             case '1':
                 out << "123";
@@ -53,15 +53,21 @@ void process_out(ipbufstream& in, opbufstream& out)
         }
     }
 
-    char* inbuf = in_rdbuf.gptr();
     int in_avail = in_rdbuf.in_avail();
 
+    // NOTE: Stack crash on this line sometimes, may need sdkconfig adjustment
+    // or perhaps from an lwip callback we are expected to use LWIP_DEBUGF ?
     ESP_LOGD(TAG, "in_avail = %d", in_avail);
 
-    // DEBT: in_avail() does not address input chaining
-    out.write(inbuf, in_avail);
+    if(in_avail > 0)
+    {
+        char* inbuf = in_rdbuf.gptr();
 
-    in.ignore(in_avail);
+        // DEBT: in_avail() does not address input chaining
+        out.write(inbuf, in_avail);
+
+        in.ignore(in_avail);
+    }
 }
 
 void udp_echo_recv(void *arg, 
