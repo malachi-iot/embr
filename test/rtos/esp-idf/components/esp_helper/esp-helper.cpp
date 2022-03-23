@@ -52,6 +52,8 @@ void event_handler(void* arg, esp_event_base_t event_base,
 {
     static const char* TAG = "event_handler";
 
+    ESP_LOGV(TAG, "event_base=%s, event_id=%d", event_base, event_id);
+
     if(event_base == WIFI_EVENT)
     {
         switch(event_id)

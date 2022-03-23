@@ -23,8 +23,8 @@ typedef struct pbuf* pbuf_pointer;
 using embr::lwip::opbufstream;
 using embr::lwip::ipbufstream;
 #else
-using embr::lwip::upgrade::opbufstream;
-using embr::lwip::upgrade::ipbufstream;
+using embr::lwip::upgrading::opbufstream;
+using embr::lwip::upgrading::ipbufstream;
 #endif
 
 //#define RAW_LWIP_STYLE
