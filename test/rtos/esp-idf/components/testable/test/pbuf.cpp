@@ -371,6 +371,12 @@ TEST_CASE("lwip upgraded istream", "[lwip-ios]")
     char buf[128];
 
     embr::lwip::upgrading::ipbufstream in(std::move(pbuf));
+
+    in.ignore(128);
+
+    int val = in.get();
+
+    TEST_ASSERT_EQUAL(-1, val);
 }
 
 TEST_CASE("lwip upgraded ostream", "[lwip-ios]")
