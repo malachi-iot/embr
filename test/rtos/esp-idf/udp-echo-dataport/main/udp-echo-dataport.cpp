@@ -5,6 +5,8 @@
 
 #include "esp_log.h"
 
+#include "../../udp-echo/main/process.h"
+
 typedef embr::DataPump<embr::lwip::experimental::UdpDataportTransport> datapump_type;
 
 struct AppObserver
@@ -31,9 +33,29 @@ struct AppObserver
         //DataPort<TDatapump, TSubject>& dataport)
         TContext& context)
     {
-        ESP_LOGI(TAG, "Got here");
+        ESP_LOGI(TAG, "on_notify: entry");
 
-        // FIX: unable to do this because apparently TContext is subject iself
+        typedef datapump_type::transport_descriptor_t::istreambuf_type istreambuf_type;
+        typedef datapump_type::transport_descriptor_t::ostreambuf_type ostreambuf_type;
+
+#if UNUSED
+        //istreambuf_type in(*e.item.netbuf());
+        //ostreambuf_type out(128);
+
+        //estd::internal::basic_istream<istreambuf_type> _in(in);
+#endif
+
+        estd::internal::basic_istream<istreambuf_type> _in(*e.item.netbuf());
+        estd::internal::basic_ostream<ostreambuf_type> _out(128);
+
+        // FIX: Doing our process out magic results in a crash
+        //process_out(_in, _out);
+
+        context.enqueue_for_send(
+            std::move(*e.item.netbuf()),
+            e.item.addr());
+
+        // FIX: unable to do this because apparently TContext is DatapumpSubject
         // and not the dataport as expected
         /*
         typedef typename TContext::ostreambuf_type ostreambuf_type;
@@ -41,6 +63,8 @@ struct AppObserver
         ostreambuf_type out;
 
         context.send(out, e.item.addr()); */
+
+        ESP_LOGI(TAG, "on_notify: exit");
     }
 };
 
