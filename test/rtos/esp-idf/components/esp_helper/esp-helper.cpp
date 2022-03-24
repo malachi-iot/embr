@@ -83,6 +83,7 @@ esp_err_t event_handler(void* ctx, system_event_t* event)
 {
     static int station_retry_num = 0;
     static const char* TAG = "event_handler";
+    char buffer[32];
 
     switch(event->event_id)
     {
@@ -94,7 +95,9 @@ esp_err_t event_handler(void* ctx, system_event_t* event)
             // doing LOGD since global system event fires off an
             // informational level ip report log
             ESP_LOGD(TAG, "got ip:%s",
-                 ip4addr_ntoa(&event->event_info.got_ip.ip_info.ip));
+                 esp_ip4addr_ntoa(
+                     &event->event_info.got_ip.ip_info.ip,
+                    buffer, sizeof(buffer)));
             station_retry_num = 0;
             break;
 
@@ -179,7 +182,7 @@ void wifi_init_sta(system_event_cb_t event_handler)
 #ifdef FEATURE_IDF_DEFAULT_EVENT_LOOP
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config) );
 #else
-    ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config) );
+    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config) );
 #endif
     ESP_ERROR_CHECK(esp_wifi_start() );
 
