@@ -40,10 +40,14 @@ void UdpDataportTransport::data_recv(void *arg,
         auto dataport = static_cast<dataport_t*>(arg);
 
         endpoint_type a(addr, port);
+#if FEATURE_EMBR_NETBUF_STREAMBUF
         // TODO: Be sure our PbufNetbuf aligns with transport_policy
         // not bumping ref because our 'move' later means we won't be deallocating
         // here, but rather when we dequeue
         embr::lwip::PbufNetbuf netbuf(p, false);
+#else
+        embr::lwip::Pbuf netbuf(p, false);
+#endif
 
         dataport->notify(typename dataport_t::event::transport_received(netbuf, a));
 
@@ -102,7 +106,11 @@ void UdpSubjectTransport::data_recv(void *arg,
         // TODO: Be sure our PbufNetbuf aligns with transport_policy
         // Not bumping ref.  If pbuf is desired to be kept past end of this
         // data_recv, the observer must bump the reference
+#if FEATURE_EMBR_NETBUF_STREAMBUF
         embr::lwip::PbufNetbuf netbuf(p, false);
+#else
+        embr::lwip::Pbuf netbuf(p, false);
+#endif
 
         subject->notify(typename event::transport_received(netbuf, a));
     }    

@@ -179,6 +179,8 @@ struct Pbuf : PbufBase
 // netbuf-mk2 managing a lwip pbuf
 // TODO: Extend from Pbuf, once I am in position to do regression
 // testing
+// NOTE: Obsolete, though potentially still useable.  Is underpinning of
+// legacy netbuf-streambuf code which is obsolete and should not be used
 struct PbufNetbuf : PbufBase
 {
 #ifdef FEATURE_EMBR_PBUF_CHAIN_EXP

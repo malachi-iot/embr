@@ -53,15 +53,31 @@ public:
     uint16_t port() const { return _port; }
 };
 
+// FEATURE_ESTD_NETBUF_STREAMBUF represents the legacy netbuf-style
+// approach of gluing streambuf to lwip/pbufs.  The new way goes direct
+// from streambuf to pbuf
+// TODO: Move this into a features.h
+#ifndef FEATURE_EMBR_NETBUF_STREAMBUF
+#define FEATURE_EMBR_NETBUF_STREAMBUF 0
+#endif
 
 struct TransportBase
 {
     typedef embr::lwip::experimental::addr_pointer addr_pointer;
     typedef struct pbuf* pbuf_pointer;
     typedef struct udp_pcb* pcb_pointer;
+#if FEATURE_EMBR_NETBUF_STREAMBUF
     typedef legacy::opbuf_streambuf ostreambuf_type;
     typedef legacy::ipbuf_streambuf istreambuf_type;
     typedef ostreambuf_type::netbuf_type netbuf_type;
+#else
+    typedef upgrading::opbuf_streambuf ostreambuf_type;
+    typedef upgrading::ipbuf_streambuf istreambuf_type;
+    // DEBT: Stop-gap, almost definitely we'd prefer outsiders to use
+    // actual stream and not the "netbuf" (which has always mapped to
+    // a pbuf gracefully, by design)
+    typedef Pbuf netbuf_type;
+#endif
 };
 
 template <bool use_address_ptr = true>
@@ -76,6 +92,7 @@ struct TransportUdp : TransportBase
     TransportUdp(TArgs&& ...args) : pcb(std::forward<TArgs>(args)...) {}
 #endif
 
+#if FEATURE_EMBR_NETBUF_STREAMBUF
 #ifdef FEATURE_CPP_ALIASTEMPLATE
     template <class TChar>
     void send(legacy::basic_opbuf_streambuf<TChar>& streambuf, const endpoint_type& endpoint)
@@ -89,6 +106,22 @@ struct TransportUdp : TransportBase
     void send(netbuf_type& netbuf, const endpoint_type& endpoint)
     {
         pcb.send(netbuf.pbuf(),
+            endpoint.address(),
+            endpoint.port());
+    }
+#else
+    template <class TChar>
+    void send(upgrading::basic_opbuf_streambuf<TChar>& streambuf, const endpoint_type& endpoint)
+    {
+        pcb.send(streambuf.pbuf(), 
+            endpoint.address(),
+            endpoint.port());
+    }
+#endif
+
+    void send(Pbuf& pbuf, const endpoint_type& endpoint)
+    {
+        pcb.send(pbuf.pbuf(),
             endpoint.address(),
             endpoint.port());
     }
