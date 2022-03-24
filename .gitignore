@@ -35,6 +35,7 @@
 cmake-build-debug/
 **/.idea/workspace.xml
 **/.idea/vcs.xml
+**/.idea/deployment.xml
 
 # Qt specific
 build/

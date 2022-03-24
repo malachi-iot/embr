@@ -25,11 +25,11 @@ static const char* TAG = "lwip-pbuf";
 typedef embr::lwip::PbufNetbuf netbuf_type;
 typedef netbuf_type::size_type size_type;
 
-using embr::lwip::opbufstream;
-using embr::lwip::ipbufstream;
+using embr::lwip::legacy::opbufstream;
+using embr::lwip::legacy::ipbufstream;
 
-typedef embr::lwip::opbuf_streambuf out_pbuf_streambuf;
-typedef embr::lwip::ipbuf_streambuf in_pbuf_streambuf;
+typedef embr::lwip::legacy::opbuf_streambuf out_pbuf_streambuf;
+typedef embr::lwip::legacy::ipbuf_streambuf in_pbuf_streambuf;
 
 typedef in_pbuf_streambuf::traits_type traits_type;
 

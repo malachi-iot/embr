@@ -5,6 +5,8 @@
 
 namespace embr { namespace lwip {
 
+namespace legacy {
+
 // FIX: Doesn't match std type signature.  std uses basic_XXXXbuf for <TChar>
 // flavors and XXXXbuf for common type char, so if we did that, ours would look something like:
 // out_basic_pbuf_streambuf<char> and out_pbuf_streambuf (no char)
@@ -19,6 +21,8 @@ using basic_ipbuf_streambuf = embr::mem::in_netbuf_streambuf<CharT, PbufNetbuf, 
 
 typedef embr::mem::out_netbuf_streambuf<char, PbufNetbuf> opbuf_streambuf;
 typedef embr::mem::in_netbuf_streambuf<char, PbufNetbuf> ipbuf_streambuf;
+
+}
 
 // NOTE: Not ready for prime time yet.  Will displace all my netbuf abstractions, they are finally
 // going away and replaced by more straightforward estd::streambuf capabilities

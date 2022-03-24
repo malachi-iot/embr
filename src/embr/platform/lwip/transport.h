@@ -59,8 +59,8 @@ struct TransportBase
     typedef embr::lwip::experimental::addr_pointer addr_pointer;
     typedef struct pbuf* pbuf_pointer;
     typedef struct udp_pcb* pcb_pointer;
-    typedef opbuf_streambuf ostreambuf_type;
-    typedef ipbuf_streambuf istreambuf_type;
+    typedef legacy::opbuf_streambuf ostreambuf_type;
+    typedef legacy::ipbuf_streambuf istreambuf_type;
     typedef ostreambuf_type::netbuf_type netbuf_type;
 };
 
@@ -78,7 +78,7 @@ struct TransportUdp : TransportBase
 
 #ifdef FEATURE_CPP_ALIASTEMPLATE
     template <class TChar>
-    void send(basic_opbuf_streambuf<TChar>& streambuf, const endpoint_type& endpoint)
+    void send(legacy::basic_opbuf_streambuf<TChar>& streambuf, const endpoint_type& endpoint)
     {
         pcb.send(streambuf.netbuf().pbuf(), 
             endpoint.address(),
