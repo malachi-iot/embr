@@ -25,14 +25,14 @@ struct DataPortVirtual
 {
     typedef TTransportDescription transport_descriptor_t;
     typedef typename TTransportDescription::netbuf_type netbuf_type;
-    typedef typename TTransportDescription::endpoint_type addr_t;
+    typedef typename TTransportDescription::endpoint_type endpoint_type;
 
     // for now, not overpromising since the virtual version if this would be broken
     // (would only service datapump, not dataport)
     //virtual void service() = 0;
 
-    virtual void enqueue_for_send(netbuf_type&& nb, const addr_t& addr) = 0;
-    virtual void enqueue_from_receive(netbuf_type&& nb, const addr_t& addr) = 0;
+    virtual void enqueue_for_send(netbuf_type&& nb, const endpoint_type& addr) = 0;
+    virtual void enqueue_from_receive(netbuf_type&& nb, const endpoint_type& addr) = 0;
 };
 
 
@@ -52,19 +52,19 @@ struct DataPortWrapper :
 
     //typedef typename dataport_t::datapump_t transport_description_t;
     typedef typename dataport_t::netbuf_type netbuf_type;
-    typedef typename dataport_t::addr_t addr_t;
+    typedef typename dataport_t::endpoint_type endpoint_type;
 
     DataPortWrapper(dataport_t& dataport) :
         dataport(dataport) {}
 
     //virtual void service() override { dataport.service(); }
 
-    virtual void enqueue_for_send(netbuf_type&& nb, const addr_t& addr) override
+    virtual void enqueue_for_send(netbuf_type&& nb, const endpoint_type& addr) override
     {
         dataport.enqueue_for_send(std::move(nb), addr);
     }
 
-    virtual void enqueue_from_receive(netbuf_type&& nb, const addr_t& addr) override
+    virtual void enqueue_from_receive(netbuf_type&& nb, const endpoint_type& addr) override
     {
         dataport.enqueue_from_receive(std::move(nb), addr);
     }
@@ -84,7 +84,7 @@ struct DatapumpSubject
     typedef typename std::remove_reference<TDatapump>::type datapump_t;
     typedef typename datapump_t::Item item_t;
     typedef typename datapump_t::netbuf_type netbuf_type;
-    typedef typename datapump_t::addr_t addr_t;
+    typedef typename datapump_t::endpoint_type endpoint_type;
     // we do, however, need specifics about our netbuf and addr structure
     // since datapump uses those.  Right now datapump 'supplies its own' but
     // eventually want to hang that off transport descriptor
@@ -122,9 +122,9 @@ struct DatapumpSubject
 
 
     // application send out -> datapump -> (eventual transport send)
-    void enqueue_for_send(netbuf_type&& nb, const addr_t& addr);
+    void enqueue_for_send(netbuf_type&& nb, const endpoint_type& addr);
     // transport receive in -> datapump -> (eventual application process)
-    void enqueue_from_receive(netbuf_type&& nb, const addr_t& addr);
+    void enqueue_from_receive(netbuf_type&& nb, const endpoint_type& addr);
 };
 
 // DataPump and Transport combined, plus a subject to send out
@@ -146,7 +146,7 @@ struct DataPort : DatapumpSubject<
     typedef DataPortEvents<TDatapump> event;
     typedef typename base_t::item_t item_t;
     typedef typename base_t::netbuf_type netbuf_type;
-    typedef typename base_t::addr_t addr_t;
+    typedef typename base_t::endpoint_type endpoint_type;
 
     // Embedded dataport-transport helper required at this time.
     // Eventually perhaps consider making this reference-friendly

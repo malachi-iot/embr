@@ -126,7 +126,6 @@ class DataPump
 public:
     typedef TTransportDescriptor transport_descriptor_t;
     typedef typename transport_descriptor_t::endpoint_type endpoint_type;
-    typedef typename transport_descriptor_t::endpoint_type addr_t;
     typedef typename transport_descriptor_t::netbuf_type netbuf_type;
 #if ENABLE_EMBR_DATAPUMP_INLINE
     typedef netbuf_type pnetbuf_t;
@@ -151,16 +150,16 @@ public:
 
     private:
         pnetbuf_t m_netbuf;
-        addr_t m_addr;
+        endpoint_type m_addr;
 
     public:
         Item() {}
 
 #if ENABLE_EMBR_DATAPUMP_INLINE
-        Item(netbuf_type&& netbuf, const addr_t& addr) :
+        Item(netbuf_type&& netbuf, const endpoint_type& addr) :
             m_netbuf(std::move(netbuf)),
 #else
-        Item(netbuf_type& netbuf, const addr_t& addr) :
+        Item(netbuf_type& netbuf, const endpoint_type& addr) :
             m_netbuf(&netbuf),
 #endif
             m_addr(addr)
@@ -185,7 +184,7 @@ public:
 #endif
 
         // NOTE: more of an endpoint than an address
-        const addr_t& addr() const { return m_addr; }
+        const endpoint_type& addr() const { return m_addr; }
 
         netbuf_type* netbuf()
         {
@@ -224,7 +223,7 @@ public:
     const Item& transport_in(
             netbuf_type& in,
 #endif
-            const addr_t& addr);
+            const endpoint_type& addr);
 
     // ascertain whether any -> transport outgoing netbufs are present
     bool transport_empty() const
@@ -244,7 +243,7 @@ public:
 
 #if ENABLE_EMBR_DATAPUMP_INLINE
     // enqueue complete netbuf for outgoing transport to pick up
-    const Item& enqueue_out(netbuf_type&& out, const addr_t& addr_out)
+    const Item& enqueue_out(netbuf_type&& out, const endpoint_type& addr_out)
     {
         return queue_policy::emplace(outgoing, std::move(out), addr_out);
     }
@@ -264,7 +263,7 @@ public:
 
     // TODO: deprecated
     // dequeue complete netbuf which was queued from transport in
-    netbuf_type* dequeue_in(addr_t* addr_in)
+    netbuf_type* dequeue_in(endpoint_type* addr_in)
     {
         if(incoming.empty()) return NULLPTR;
 

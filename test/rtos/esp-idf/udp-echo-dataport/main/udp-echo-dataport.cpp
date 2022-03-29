@@ -51,6 +51,8 @@ struct AppObserver
         // FIX: Doing our process out magic results in a crash
         //process_out(_in, _out);
 
+        // FIX: Although this works, it prematurely moves e.item.netbuf -
+        // In theory other observers might want to pick it up
         context.enqueue_for_send(
             std::move(*e.item.netbuf()),
             e.item.addr());
