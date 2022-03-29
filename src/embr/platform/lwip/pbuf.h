@@ -29,7 +29,7 @@
 namespace embr { namespace lwip {
 
 // If using this directly, know this is just a thin wrapper around
-// pbuf itself
+// pbuf itself.  No auto-reference magic
 struct PbufBase
 {
     typedef struct pbuf pbuf_type;
@@ -47,7 +47,7 @@ public:
 #endif
 
     PbufBase(pbuf_pointer p) : p(p) {}
-    PbufBase() {}
+    PbufBase() = delete;
     PbufBase(size_type size, pbuf_layer layer = PBUF_TRANSPORT) : 
         p(pbuf_alloc(layer, size, PBUF_RAM))
     {

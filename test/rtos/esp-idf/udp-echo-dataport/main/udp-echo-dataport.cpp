@@ -8,6 +8,7 @@
 #include "../../udp-echo/main/process.h"
 
 typedef embr::DataPump<embr::lwip::experimental::UdpDataportTransport> datapump_type;
+typedef struct pbuf* pbuf_pointer;
 
 struct AppObserver
 {
@@ -46,16 +47,26 @@ struct AppObserver
 #endif
 
         estd::internal::basic_istream<istreambuf_type> _in(*e.item.netbuf());
-        estd::internal::basic_ostream<ostreambuf_type> _out(128);
+        {
+            estd::internal::basic_ostream<ostreambuf_type> _out(128);
 
-        // FIX: Doing our process out magic results in a crash
-        //process_out(_in, _out);
+            pbuf_pointer pbuf = _out.rdbuf()->pbuf();
+
+            ESP_LOGD(TAG, "pbuf tot_len=%d", pbuf->tot_len);
+
+            // FIX: Doing our process out magic results in a stack overflow crash, and if
+            // it doesn't crash, xsputn dies at memcpy
+            process_out(_in, _out);
+
+            ESP_LOGD(TAG, "on_notify: phase 1");
+        }
 
         // FIX: Although this works, it prematurely moves e.item.netbuf -
         // In theory other observers might want to pick it up
+        /*
         context.enqueue_for_send(
             std::move(*e.item.netbuf()),
-            e.item.addr());
+            e.item.addr()); */
 
         // FIX: unable to do this because apparently TContext is DatapumpSubject
         // and not the dataport as expected

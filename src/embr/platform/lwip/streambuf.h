@@ -95,6 +95,13 @@ protected:
         pbuf_current = next;
         return true;
     }
+
+public:
+    pbuf_current_base(const PbufBase& pbuf) :
+        pbuf_current(pbuf)
+    {
+
+    }
 };
 
 
@@ -212,11 +219,9 @@ public:
 #ifdef FEATURE_CPP_MOVESEMANTIC
     template <class ...TArgs>
     opbuf_streambuf(TArgs&&... args) :
-            pbuf_base_type(std::forward<TArgs>(args)...)
+        pbuf_base_type(std::forward<TArgs>(args)...),
+        pbuf_current_base_type(pbuf_base_type::pbuf)
     {
-        // DEBT: Slightly sloppy way to initialize this.
-        // initalizer list preferred
-        this->pbuf_current = pbuf();
     }
 #endif
 };
@@ -325,11 +330,9 @@ public:
 #ifdef FEATURE_CPP_MOVESEMANTIC
         template <class ...TArgs>
         ipbuf_streambuf(TArgs&&... args) :
-                pbuf_base_type(std::forward<TArgs>(args)...)
+            pbuf_base_type(std::forward<TArgs>(args)...),
+            pbuf_current_base_type(pbuf_base_type::pbuf)
         {
-            // DEBT: Slightly sloppy way to initialize this.
-            // initalizer list preferred
-            this->pbuf_current = pbuf_base_type::pbuf.pbuf();
         }
 #endif
 };
