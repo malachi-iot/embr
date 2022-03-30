@@ -50,12 +50,17 @@ struct AppObserver
         {
             estd::internal::basic_ostream<ostreambuf_type> _out(128);
 
-            pbuf_pointer pbuf = _out.rdbuf()->pbuf();
+            pbuf_pointer pbuf = e.item.netbuf()->pbuf();
 
-            ESP_LOGD(TAG, "pbuf tot_len=%d", pbuf->tot_len);
+            ESP_LOGD(TAG, "pbuf in tot_len=%d, ref=%d", pbuf->tot_len, pbuf->ref);
 
-            // FIX: Doing our process out magic results in a stack overflow crash, and if
-            // it doesn't crash, xsputn dies at memcpy
+            pbuf = _out.rdbuf()->pbuf();
+
+            ESP_LOGD(TAG, "pbuf out tot_len=%d, ref=%d", pbuf->tot_len, pbuf->ref);
+
+            // FIX: Doing process_out results in a stack overflow crash, and if
+            // it doesn't crash, xsputn dies at memcpy or during 'ignore'.  Note also
+            // that bumping up stack size doesn't always make a difference
             process_out(_in, _out);
 
             ESP_LOGD(TAG, "on_notify: phase 1");
