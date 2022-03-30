@@ -73,6 +73,10 @@ public:
     /**
      * @brief wrapper around udp_recv
      * 
+     * "Specifies a callback function that should be called when a UDP datagram
+     * is received on the specified connection. The callback function is
+     * responsible for deallocating the pbuf." [1]
+     * 
      * @param recv_f 
      * @param recv_arg 
      */
@@ -81,8 +85,16 @@ public:
         udp_recv(pcb, recv_f, recv_arg);
     }
 
-    // connected only receives data from the connected address,
-    // unconnected receive from any address
+    /**
+     * @brief 
+     * 
+     * connected only receives data from the connected address,
+     * unconnected receive from any address
+     * 
+     * @param ipaddr 
+     * @param port 
+     * @return err_t 
+     */
     err_t connect(addr_pointer ipaddr, u16_t port)
     {
         return udp_connect(pcb, ipaddr, port);
