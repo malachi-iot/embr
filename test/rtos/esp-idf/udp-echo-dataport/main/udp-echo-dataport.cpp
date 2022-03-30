@@ -46,6 +46,11 @@ struct AppObserver
         //estd::internal::basic_istream<istreambuf_type> _in(in);
 #endif
 
+        // this will autobump the pbuf reference to 2, and we want that because
+        // on destruction it will decrement it back to 1, which is appropriate
+        // since others may want to evaluate the pbuf in general.  It just so
+        // happens in this case (and frequently) nobody else is observing after
+        // us
         estd::internal::basic_istream<istreambuf_type> _in(*e.item.netbuf());
         {
             estd::internal::basic_ostream<ostreambuf_type> _out(128);
@@ -54,15 +59,16 @@ struct AppObserver
 
             ESP_LOGD(TAG, "pbuf in tot_len=%d, ref=%d", pbuf->tot_len, pbuf->ref);
 
-            pbuf = _out.rdbuf()->pbuf();
-
             // FIX: Doing process_out results in a stack overflow crash, and if
             // it doesn't crash, xsputn dies at memcpy or during 'ignore'.  Note also
             // that bumping up stack size doesn't always make a difference
             process_out(_in, _out);
 
             _out.rdbuf()->shrink();
-            auto& pbuf2 = _out.rdbuf()->pbuf_exp();
+            
+            auto& pbuf2 = _out.rdbuf()->pbuf();
+
+            pbuf = pbuf2;
 
             ESP_LOGD(TAG, "pbuf out tot_len=%d, ref=%d", pbuf->tot_len, pbuf->ref);
 
