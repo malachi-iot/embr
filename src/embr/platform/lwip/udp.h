@@ -1,3 +1,10 @@
+/**
+ * 
+ * References:
+ * 
+ * 1. https://lwip.fandom.com/wiki/Raw/UDP
+ * 2. https://www.nongnu.org/lwip/2_0_x/group__udp__raw.html#gaa4546c43981f043c0ae4514d625cc3fc
+ */
 #pragma once
 
 extern "C" {
@@ -30,6 +37,16 @@ public:
 
     bool has_pcb() const { return pcb != NULLPTR; }
 
+    /**
+     * @brief wrapper around udp_sendto
+     * 
+     * As per [1], "pbuf is not deallocated" as per [2]
+     * 
+     * @param pbuf 
+     * @param addr 
+     * @param port 
+     * @return err_t 
+     */
     err_t send(pbuf_pointer pbuf, 
         addr_pointer addr,
         uint16_t port)
@@ -40,12 +57,25 @@ public:
             port);
     }
 
-    // as per https://www.nongnu.org/lwip/2_0_x/group__udp__raw.html#gaa4546c43981f043c0ae4514d625cc3fc
+    /**
+     * @brief wrapper around udp_send
+     * 
+     * As per [1], "pbuf is not deallocated" as per [2]
+     * 
+     * @param pbuf 
+     * @return err_t 
+     */
     err_t send(pbuf_pointer pbuf)
     {
         return udp_send(pcb, pbuf);
     }
 
+    /**
+     * @brief wrapper around udp_recv
+     * 
+     * @param recv_f 
+     * @param recv_arg 
+     */
     void recv(udp_recv_fn recv_f, void* recv_arg = NULLPTR)
     {
         udp_recv(pcb, recv_f, recv_arg);
