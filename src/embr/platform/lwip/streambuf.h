@@ -214,6 +214,9 @@ public:
 
     PbufBase& pbuf() { return pbuf_base_type::pbuf; }
 
+    // DEBT: I think I can consolidate these 2
+    Pbuf& pbuf_exp() { return pbuf_base_type::pbuf; }
+
     const PbufBase pbuf() const { return pbuf_base_type::pbuf; }
 
 #ifdef FEATURE_CPP_MOVESEMANTIC
