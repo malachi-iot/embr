@@ -22,6 +22,7 @@ namespace embr { namespace lwip {
 
 class Netconn
 {
+protected:
     typedef struct netconn value_type;
     typedef value_type* pointer;
     typedef struct netbuf netbuf_type;
@@ -78,6 +79,11 @@ public:
         return netconn_disconnect(conn);
     }
 
+    err_t getaddr(ip_addr_t* addr, uint16_t* port, bool local)
+    {
+        return netconn_getaddr(conn, addr, port, local);
+    }
+
     err_t recv(netbuf_type** buf)
     {
         return netconn_recv(conn, buf);
@@ -117,14 +123,43 @@ public:
     {
         return netconn_sendto(conn, buf, e.address(), e.port());
     }
+
+    /**
+     * @brief "Shut down one or both sides of a TCP netconn (doesn't delete it)" [3]
+     * 
+     * @param shut_rx 
+     * @param shut_tx 
+     * @return err_t 
+     */
+    err_t shutdown(bool shut_rx, bool shut_tx)
+    {
+        return netconn_shutdown(conn, shut_rx, shut_tx);
+    }
+
+    bool nonblocking() const
+    {
+        return netconn_is_nonblocking(conn);
+    }
+
+    void nonblocking(bool val)
+    {
+        netconn_set_nonblocking(conn, val);
+    }
 };
 
 namespace experimental {
 
 class AutoNetconn : public Netconn
 {
+    err_t err;
+
 public:
-    AutoNetconn(netconn_type t, uint8_t proto, netconn_callback callback)
+    AutoNetconn(netconn_type t, netconn_callback callback = NULLPTR)
+    {
+        new_with_proto_and_callback(t, 0, callback);
+    }
+
+    AutoNetconn(netconn_type t, uint8_t proto, netconn_callback callback = NULLPTR)
     {
         new_with_proto_and_callback(t, proto, callback);
     }
@@ -134,6 +169,23 @@ public:
         if(has_conn())
             del();
     }
+
+
+    err_t bind(uint16_t port)
+    {
+        return err = netconn_bind(conn, NULLPTR, port);
+    }
+
+    err_t last_err() const { return err; }
+
+
+    AutoNetbuf recv()
+    {
+        netbuf_type* buf;
+        err = netconn_recv(conn, &buf);
+        return AutoNetbuf(buf);
+    }
+
 };
 
 }

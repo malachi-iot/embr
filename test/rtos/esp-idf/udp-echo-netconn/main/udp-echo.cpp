@@ -29,33 +29,30 @@ void _netconn_callback(struct netconn* conn, netconn_evt e, uint16_t len)
 
 void udp_echo_init()
 {
-    experimental::AutoNetconn c(NETCONN_UDP, 0, _netconn_callback);
+    experimental::AutoNetconn c(NETCONN_UDP, _netconn_callback);
 
-    err_t err;
+    err_t err = c.bind(7);
 
-    err = c.bind(7);
-
-    if(err == ERR_OK)
+    if(err != ERR_OK)
     {
-        for(;;)
-        {
-            Netbuf buf;
-            err = c.recv(&buf);
+        return;
+    }
 
+    for(;;)
+    {
+        experimental::AutoNetbuf buf = c.recv();
+
+        if(c.last_err() == ERR_OK)
+        {
             Endpoint e = buf.fromendpoint();
 
-            uint16_t len;
-            void* payload_data;
-
-            buf.data(&payload_data, &len);
+            estd::span<estd::byte> payload = buf.data();
 
             experimental::AutoNetbuf buf_send;
 
-            void* data = buf_send.alloc(len);
-            memcpy(data, payload_data, len);
+            void* data = buf_send.alloc(payload.size());
+            memcpy(data, payload.data(), payload.size());
             c.send(buf_send, e);
-
-            buf.del();
         }
     }
 }

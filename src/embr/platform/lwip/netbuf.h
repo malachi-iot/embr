@@ -24,6 +24,7 @@ class Netconn;
 
 class Netbuf
 {
+protected:
     typedef struct netbuf value_type;
     typedef value_type* pointer;
 
@@ -109,6 +110,15 @@ namespace experimental {
 
 class AutoNetbuf : public Netbuf
 {
+    friend class AutoNetconn;
+
+    err_t err;
+    
+    AutoNetbuf(pointer netbuf)
+    {
+        buf = netbuf;
+    }
+
 public:
     AutoNetbuf()
     {
@@ -120,6 +130,23 @@ public:
     {
         del();
     }
+
+    err_t data(void** dataptr, uint16_t* len)
+    {
+        return err = Netbuf::data(dataptr, len);
+    }
+
+    estd::span<estd::byte> data()
+    {
+        estd::byte* d;
+        uint16_t len;
+
+        data((void**)&d, &len);
+
+        return estd::span<estd::byte>(d, len);
+    }  
+
+    err_t last_err() const { return err; }
 };
 
 }
