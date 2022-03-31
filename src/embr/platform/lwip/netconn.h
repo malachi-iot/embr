@@ -60,6 +60,16 @@ public:
         return netconn_disconnect(conn);
     }
 
+    err_t recv(netbuf_type** buf)
+    {
+        return netconn_recv(conn, buf);
+    }
+
+    err_t recv(Netbuf& buf)
+    {
+        return netconn_recv(conn, &buf.buf);
+    }
+
     /**
      * @brief "Send data over a UDP or RAW netconn (that is already connected)." [3]
      * 

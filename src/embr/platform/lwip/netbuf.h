@@ -17,14 +17,20 @@ extern "C" {
 
 namespace embr { namespace lwip {
 
+class Netconn;
+
 class Netbuf
 {
     typedef struct netbuf value_type;
     typedef value_type* pointer;
 
+    friend class Netconn;
+
     pointer buf;
 
 public:
+    pointer b() const { return buf; }
+
     void _new()
     {
         buf = netbuf_new();
@@ -48,6 +54,11 @@ public:
     void del()
     {
         netbuf_delete(buf);
+    }
+
+    err_t data(void** dataptr, uint16_t* len)
+    {
+        return netbuf_data(buf, dataptr, len);
     }
 
     void first()
