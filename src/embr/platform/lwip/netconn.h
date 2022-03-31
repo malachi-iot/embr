@@ -65,9 +65,9 @@ public:
         return netconn_recv(conn, buf);
     }
 
-    err_t recv(Netbuf& buf)
+    err_t recv(Netbuf* buf)
     {
-        return netconn_recv(conn, &buf.buf);
+        return netconn_recv(conn, &buf->buf);
     }
 
     /**
@@ -93,6 +93,11 @@ public:
     err_t send(netbuf_type* buf, const ip_addr_t* addr, uint16_t port)
     {
         return netconn_sendto(conn, buf, addr, port);
+    }
+
+    err_t send(netbuf_type* buf, Endpoint e)
+    {
+        return netconn_sendto(conn, buf, e.address(), e.port());
     }
 };
 

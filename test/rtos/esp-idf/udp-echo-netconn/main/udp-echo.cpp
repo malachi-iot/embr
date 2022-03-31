@@ -26,10 +26,9 @@ void udp_echo_init()
     {
         for(;;)
         {
-            err = c.recv(buf);
+            err = c.recv(&buf);
 
-            const ip_addr_t* const addr = netbuf_fromaddr(buf.b());
-            const uint16_t port = netbuf_fromport(buf.b());
+            Endpoint e = buf.fromendpoint();
 
             uint16_t len;
             void* payload_data;
@@ -39,7 +38,7 @@ void udp_echo_init()
             buf_send._new();
             void* data = buf_send.alloc(len);
             memcpy(data, payload_data, len);
-            c.send(buf_send.b(), addr, port);
+            c.send(buf_send, e);
 
             buf_send.del();
             buf.del();

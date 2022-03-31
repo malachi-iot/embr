@@ -14,6 +14,9 @@ extern "C" {
 }
 
 #include <estd/internal/platform.h>
+#include <estd/span.h>
+
+#include "endpoint.h"
 
 namespace embr { namespace lwip {
 
@@ -82,6 +85,23 @@ public:
     {
         return netbuf_ref(buf, dataptr, size);
     }
+
+    const ip_addr_t* fromaddr() const
+    {
+        return netbuf_fromaddr(buf);
+    }
+
+    uint16_t fromport() const
+    {
+        return netbuf_fromport(buf);
+    }
+
+    Endpoint fromendpoint() const
+    {
+        return Endpoint(fromaddr(), fromport());
+    }
+
+    operator pointer() { return buf; }
 };
 
 }}
