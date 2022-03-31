@@ -1,3 +1,9 @@
+/**
+ * 
+ * References:
+ * 
+ * 1. https://www.nongnu.org/lwip/2_0_x/group__netbuf.html
+ */
 #pragma once
 
 extern "C" {
@@ -19,13 +25,27 @@ class Netbuf
     pointer buf;
 
 public:
-    bool alloc(uint16_t size)
+    void _new()
     {
-        buf = netbuf_alloc(size);
-        return buf != NULLPTR;
+        buf = netbuf_new();
     }
 
-    void delete()
+    void* alloc(uint16_t size)
+    {
+        return netbuf_alloc(buf, size);
+    }
+
+    /**
+     * @brief "Chain one netbuf to another" [1]
+     * 
+     * @param tail 
+     */
+    void chain(pointer tail)
+    {
+        return netbuf_chain(buf, tail);
+    }
+
+    void del()
     {
         netbuf_delete(buf);
     }
@@ -51,6 +71,6 @@ public:
     {
         return netbuf_ref(buf, dataptr, size);
     }
-}
+};
 
 }}
