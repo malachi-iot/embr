@@ -104,4 +104,24 @@ public:
     operator pointer() { return buf; }
 };
 
+
+namespace experimental {
+
+class AutoNetbuf : public Netbuf
+{
+public:
+    AutoNetbuf()
+    {
+        _new();
+    }
+
+
+    ~AutoNetbuf()
+    {
+        del();
+    }
+};
+
+}
+
 }}

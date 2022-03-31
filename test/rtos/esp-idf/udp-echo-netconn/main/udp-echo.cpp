@@ -8,24 +8,38 @@ using namespace embr::lwip;
 
 void _netconn_callback(struct netconn* conn, netconn_evt e, uint16_t len)
 {
+    switch(e)
+    {
+        case NETCONN_EVT_RCVPLUS:
+            break;
 
+        case NETCONN_EVT_RCVMINUS:
+            break;
+
+        case NETCONN_EVT_SENDPLUS:
+            break;
+
+        case NETCONN_EVT_SENDMINUS:
+            break;
+
+        case NETCONN_EVT_ERROR:
+            break;
+    }
 }
 
 void udp_echo_init()
 {
-    Netconn c;
-    Netbuf buf, buf_send;
-
-    c.new_with_proto_and_callback(NETCONN_UDP, 0, _netconn_callback);
+    experimental::AutoNetconn c(NETCONN_UDP, 0, _netconn_callback);
 
     err_t err;
 
-    err = c.bind(NULLPTR, 7);
+    err = c.bind(7);
 
     if(err == ERR_OK)
     {
         for(;;)
         {
+            Netbuf buf;
             err = c.recv(&buf);
 
             Endpoint e = buf.fromendpoint();
@@ -35,15 +49,13 @@ void udp_echo_init()
 
             buf.data(&payload_data, &len);
 
-            buf_send._new();
+            experimental::AutoNetbuf buf_send;
+
             void* data = buf_send.alloc(len);
             memcpy(data, payload_data, len);
             c.send(buf_send, e);
 
-            buf_send.del();
             buf.del();
         }
     }
-
-    c.del();
 }

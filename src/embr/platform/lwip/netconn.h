@@ -29,15 +29,33 @@ class Netconn
     pointer conn;
 
 public:
+    bool has_conn() const { return conn != NULLPTR; }
+
     bool new_with_proto_and_callback(netconn_type t, uint8_t proto, netconn_callback callback)
     {
         conn = netconn_new_with_proto_and_callback(t, proto, callback);
-        return conn != NULLPTR;
+        return has_conn();;
     }
 
     err_t del()
     {
         return netconn_delete(conn);
+    }
+
+    /**
+     * @brief "Accept a new connection on a TCP listening netconn." [3]
+     * 
+     * @param new_conn "pointer where the new connection is stored" [3]
+     * @return err_t 
+     */
+    err_t accept(value_type** new_conn)
+    {
+        return netconn_accept(conn, new_conn);
+    }
+
+    err_t bind(uint16_t port)
+    {
+        return netconn_bind(conn, NULLPTR, port);
     }
 
     err_t bind(const ip_addr_t* addr, uint16_t port)
@@ -100,5 +118,25 @@ public:
         return netconn_sendto(conn, buf, e.address(), e.port());
     }
 };
+
+namespace experimental {
+
+class AutoNetconn : public Netconn
+{
+public:
+    AutoNetconn(netconn_type t, uint8_t proto, netconn_callback callback)
+    {
+        new_with_proto_and_callback(t, proto, callback);
+    }
+
+    ~AutoNetconn()
+    {
+        if(has_conn())
+            del();
+    }
+};
+
+}
+
 
 }}
