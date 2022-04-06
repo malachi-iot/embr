@@ -31,6 +31,7 @@ set(SOURCE_FILES
 
     embr/observer.h
 
+    embr/scheduler.h
 
     embr/streambuf.h
     embr/transport-descriptor.h

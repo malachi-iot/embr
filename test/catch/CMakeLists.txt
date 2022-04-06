@@ -31,6 +31,7 @@ set(SOURCE_FILES
     experimental-test.cpp
     reader-test.cpp
     writer-test.cpp
+    scheduler-test.cpp
     streambuf-test.cpp
     )
 
