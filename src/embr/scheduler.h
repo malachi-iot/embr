@@ -47,7 +47,8 @@ class Scheduler
     };
 
     typedef estd::priority_queue<value_type, container_type, Comparer> priority_queue_type;
-    typedef typename priority_queue_type::accessor  accessor;
+    typedef typename priority_queue_type::accessor accessor;
+    typedef typename priority_queue_type::size_type size_type;
 
     priority_queue_type event_queue;
 
@@ -62,6 +63,26 @@ public:
     void schedule(const value_type& value)
     {
         event_queue.push(value);
+    }
+
+#ifdef FEATURE_CPP_MOVESEMANTIC
+    void schedule(value_type&& value)
+    {
+        event_queue.push(std::move(value));
+    }
+#endif
+
+#ifdef FEATURE_CPP_VARIADIC
+    template <class ...TArgs>
+    void schedule(TArgs&&...args)
+    {
+        event_queue.emplace(std::forward<TArgs>(args)...);
+    }
+#endif
+
+    size_type size() const
+    {
+        return event_queue.size();
     }
 
     accessor top() const
