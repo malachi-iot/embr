@@ -10,8 +10,11 @@ namespace embr {
 
 namespace internal {
 
+template <class TLockable, bool const_lock = false>
+class scoped_lock;
+
 template <class TLockable>
-class scoped_lock
+class scoped_lock<TLockable, false>
 {
     TLockable lockable;
 
@@ -19,20 +22,29 @@ public:
     typedef typename TLockable::value_type value_type;
 
 private:
-    value_type value;
+    value_type& value;
 
 public:
 #ifdef FEATURE_CPP_MOVESEMANTIC
-    scoped_lock(TLockable&& lockable) : lockable(std::move)
+    scoped_lock(TLockable&& lockable) :
+        lockable(std::move(lockable)),
+        value(lockable.lock())
     {
-        value = lockable.lock();
+    }
+#endif
+
+    scoped_lock(TLockable& lockable) :
+        lockable(lockable),
+        value(lockable.lock())
+    {
     }
 
     ~scoped_lock()
     {
         lockable.unlock();
     }
-#endif
+
+    value_type& operator*() { return value; }
 };
 
 template <class T>
@@ -126,22 +138,17 @@ public:
     {
         while(!event_queue.empty())
         {
-            accessor _top = top();
-            value_type* t = &_top.lock();
+            scoped_lock<accessor> t(top());
             time_point eval_time = traits_type::get_time_point(*t);
 
             if(current_time >= eval_time)
             {
                 traits_type::process(*t);
 
-                _top.unlock();
                 event_queue.pop();
             }
             else
-            {
-                _top.unlock();
                 return;
-            }
         }
     }
 };
