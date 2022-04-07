@@ -10,6 +10,31 @@ namespace embr {
 
 namespace internal {
 
+template <class TLockable>
+class scoped_lock
+{
+    TLockable lockable;
+
+public:
+    typedef typename TLockable::value_type value_type;
+
+private:
+    value_type value;
+
+public:
+#ifdef FEATURE_CPP_MOVESEMANTIC
+    scoped_lock(TLockable&& lockable) : lockable(std::move)
+    {
+        value = lockable.lock();
+    }
+
+    ~scoped_lock()
+    {
+        lockable.unlock();
+    }
+#endif
+};
+
 template <class T>
 struct schedule_item_traits
 {
@@ -99,27 +124,25 @@ public:
 
     void process(time_point current_time)
     {
-        if(event_queue.empty()) return;
-
-        accessor _top = top();
-        value_type* t = &_top.lock();
-        time_point eval_time = traits_type::get_time_point(*t);
-
-        while(current_time >= eval_time && !event_queue.empty())
+        while(!event_queue.empty())
         {
-            traits_type::process(*t);
+            accessor _top = top();
+            value_type* t = &_top.lock();
+            time_point eval_time = traits_type::get_time_point(*t);
 
-            event_queue.pop();
-            if(!event_queue.empty())
+            if(current_time >= eval_time)
+            {
+                traits_type::process(*t);
+
+                _top.unlock();
+                event_queue.pop();
+            }
+            else
             {
                 _top.unlock();
-                _top = top();
-                t = &_top.lock();
-                eval_time = traits_type::get_time_point(*t);
+                return;
             }
         }
-
-        _top.unlock();
     }
 };
 
