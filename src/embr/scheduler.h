@@ -23,30 +23,47 @@ struct schedule_item_traits
     }
 };
 
-template <class TContainer>
+template <class TContainer, class TTraits = schedule_item_traits<typename TContainer::value_type>>
 class Scheduler
 {
     typedef TContainer container_type;
     typedef typename container_type::value_type value_type;
     typedef value_type& reference;
 
-    typedef schedule_item_traits<value_type> traits_type;
+    typedef TTraits traits_type;
     typedef typename traits_type::time_point time_point;
 
-    static bool compare(const reference left, const reference right)
+    struct Comparer
     {
-        time_point l_tp = traits_type::get_time_point(left);
-        time_point r_tp = traits_type::get_time_point(right);
+        bool operator ()(const reference left, const reference right)
+        {
+            time_point l_tp = traits_type::get_time_point(left);
+            time_point r_tp = traits_type::get_time_point(right);
 
-        return estd::less<time_point>(l_tp, r_tp);
-    }
+            return l_tp > r_tp;
+        }
+    };
 
-    estd::priority_queue<value_type, container_type, decltype(&compare)> event_queue;
+    typedef estd::priority_queue<value_type, container_type, Comparer> priority_queue_type;
+    typedef typename priority_queue_type::accessor  accessor;
+
+    priority_queue_type event_queue;
 
 public:
     void schedule(const value_type& value)
     {
         event_queue.push(value);
+    }
+
+    accessor top() const
+    {
+        return event_queue.top();
+    }
+
+    void pop()
+    {
+        event_queue.top().unlock();
+        event_queue.pop();
     }
 };
 

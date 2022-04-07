@@ -2,17 +2,36 @@
 
 #include <embr/scheduler.h>
 
+struct Item
+{
+    int event_due;
+};
+
+struct ItemTraits
+{
+    typedef int time_point;
+
+    static time_point get_time_point(const Item& item) { return item.event_due; }
+};
+
 TEST_CASE("scheduler test", "[scheduler]")
 {
     SECTION("a")
     {
         // doesn't have 'accessor', and maybe array isn't a good fit for priority_queue anyway
         //typedef estd::array<int, 4> container_type;
-        typedef estd::layer1::vector<int, 20> container_type;
-        embr::internal::Scheduler<container_type> scheduler;
+        typedef estd::layer1::vector<Item, 20> container_type;
+        embr::internal::Scheduler<container_type, ItemTraits> scheduler;
 
-        // this crashes, presumably due to a glitch in Compare handling
-        //scheduler.schedule(5);
-        //scheduler.schedule(6);
+        scheduler.schedule(Item{5});
+        scheduler.schedule(Item{6});
+
+        auto top = scheduler.top();
+
+        const Item& value = top.lock();
+
+        REQUIRE(value.event_due == 5);
+
+        top.unlock();
     }
 }
