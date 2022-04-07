@@ -12,6 +12,7 @@ struct ItemTraits
     typedef int time_point;
 
     static time_point get_time_point(const Item& item) { return item.event_due; }
+    static void process(Item& item) {}
 };
 
 TEST_CASE("scheduler test", "[scheduler]")
@@ -28,10 +29,12 @@ TEST_CASE("scheduler test", "[scheduler]")
 
         auto top = scheduler.top();
 
-        const Item& value = top.lock();
+        const Item& value = top.clock();
 
         REQUIRE(value.event_due == 5);
 
-        top.unlock();
+        top.cunlock();
+
+        scheduler.process(10);
     }
 }

@@ -21,6 +21,8 @@ struct schedule_item_traits
     {
         return value.event_due;
     }
+
+    static void process(T& value) {}
 };
 
 template <class TContainer, class TTraits = schedule_item_traits<typename TContainer::value_type>>
@@ -49,6 +51,13 @@ class Scheduler
 
     priority_queue_type event_queue;
 
+    time_point top_time() const
+    {
+        time_point t = traits_type::get_time_point(event_queue.top().lock());
+        event_queue.top().unlock();
+        return t;
+    }
+
 public:
     void schedule(const value_type& value)
     {
@@ -60,10 +69,36 @@ public:
         return event_queue.top();
     }
 
+    /*
     void pop()
     {
         event_queue.top().unlock();
         event_queue.pop();
+    } */
+
+    void process(time_point current_time)
+    {
+        if(event_queue.empty()) return;
+
+        accessor _top = top();
+        value_type* t = &_top.lock();
+        time_point eval_time = traits_type::get_time_point(*t);
+
+        while(current_time >= eval_time && !event_queue.empty())
+        {
+            traits_type::process(*t);
+
+            event_queue.pop();
+            if(!event_queue.empty())
+            {
+                _top.unlock();
+                _top = top();
+                t = &_top.lock();
+                eval_time = traits_type::get_time_point(*t);
+            }
+        }
+
+        _top.unlock();
     }
 };
 
