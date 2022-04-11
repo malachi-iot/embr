@@ -51,7 +51,7 @@ public:
 };
 
 /// Reference scheduler item traits
-/// \tparam T
+/// \tparam T consider this the system + app data structure
 template <class T>
 struct schedule_item_traits
 {
@@ -59,6 +59,9 @@ struct schedule_item_traits
 
     typedef estd::chrono::steady_clock::time_point time_point;
 
+    /// Retrieve specialized wake up time from T
+    /// \param value
+    /// \return
     static time_point get_time_point(const T& value)
     {
         return value.event_due;
@@ -78,7 +81,7 @@ namespace events {
 template<class TTraits>
 struct Scheduler
 {
-
+    typedef TTraits traits_type;
 };
 
 
