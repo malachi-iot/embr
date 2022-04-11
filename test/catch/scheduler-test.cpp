@@ -16,7 +16,8 @@ struct ItemTraits
     static time_point get_time_point(const Item& item) { return item.event_due; }
     static bool process(Item& item, time_point)
     {
-        ++(*item.counter);
+        if(item.counter != nullptr)
+            ++(*item.counter);
 
         return false;
     }
@@ -115,6 +116,8 @@ TEST_CASE("scheduler test", "[scheduler]")
     SECTION("events")
     {
         int counter = 0;
+        int _counter = 0;
+
         typedef estd::layer1::vector<Item, 20> container_type;
         auto o1 = embr::experimental::make_delegate_observer([&counter](
             const embr::internal::events::Scheduled<ItemTraits>& scheduled)
@@ -128,7 +131,7 @@ TEST_CASE("scheduler test", "[scheduler]")
             });
 
         // NOTE: May be wanting a ref evaporator not a struct evaporator for scheduler
-        auto s = embr::layer1::make_subject(o1); //, o2);
+        auto s = embr::layer1::make_subject(o1, o2);
         typedef decltype(s) subject_type;
         embr::internal::Scheduler<container_type, ItemTraits, subject_type> scheduler(std::move(s));
 
@@ -140,6 +143,9 @@ TEST_CASE("scheduler test", "[scheduler]")
 
         REQUIRE(counter == 2);
 
-        //scheduler.process(6);
+        scheduler.process(6);
+
+        // process removes one, so that will bump down our counter
+        REQUIRE(counter == 1);
     }
 }

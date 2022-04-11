@@ -305,7 +305,7 @@ class observer_proxy
 
 namespace experimental {
 
-template <typename F>
+template <typename F, class TEvent>
 struct delegate_observer
 {
     F f;
@@ -314,18 +314,51 @@ struct delegate_observer
 
     // FIX: Needs harder event type here otherwise we get cross-wiring on argument types
     // when calling f
-    // see https://stackoverflow.com/questions/22632236/how-is-possible-to-deduce-function-argument-type-in-c
-    template <class TEvent>
+    // see
     void on_notify(const TEvent& e)
     {
         f(e);
     }
 };
 
-template <typename F>
-struct delegate_observer<F> make_delegate_observer(F&& f)
+// Guidance for argument type deduction from:
+// https://stackoverflow.com/questions/22632236/how-is-possible-to-deduce-function-argument-type-in-c
+// https://stackoverflow.com/questions/8711855/get-lambda-parameter-type
+// https://github.com/steinwurf/boost/blob/master/boost/type_traits/function_traits.hpp
+template <class F> struct ArgType;
+
+template <class R, class A1>
+struct ArgType<R(*)(A1)>
 {
-    return delegate_observer<F>(std::move(f));
+    typedef A1 arg1;
+    typedef R result_type;
+    typedef R type(A1);
+};
+
+template <class R, class C, class A1>
+struct ArgType<R(C::*)(A1)>
+{
+    typedef A1 arg1;
+    typedef R result_type;
+    typedef R type(A1);
+};
+
+template <class R, class C, class A1>
+struct ArgType<R(C::*)(A1) const>
+{
+    typedef A1 arg1;
+    typedef R result_type;
+    typedef R type(A1);
+};
+
+template <class T>
+typename ArgType<T>::type* ArgHelper(T);
+
+
+template <typename F, typename Arg1 = typename ArgType<decltype(ArgHelper(&F::operator())) >::arg1 >
+struct delegate_observer<F, Arg1> make_delegate_observer(F&& f)
+{
+    return delegate_observer<F, Arg1>(std::move(f));
 }
 
 }
