@@ -318,4 +318,23 @@ TEST_CASE("observer")
             }
         }
     }
+    SECTION("experimental")
+    {
+        SECTION("from delegate")
+        {
+            int counter = 0;
+
+            auto o = embr::experimental::make_delegate_observer([&counter](int e)
+            {
+                counter += e;
+            });
+
+            auto s = embr::layer1::make_subject(o);
+
+            s.notify(1);
+            s.notify(3);
+
+            REQUIRE(counter == 4);
+        }
+    }
 }

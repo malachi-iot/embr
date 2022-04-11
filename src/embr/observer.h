@@ -159,13 +159,13 @@ protected:
 public:
     // TODO: Move these gets out into a tuple base/wrapper
     // NOTE: Consider also making this into a tuple() call
-    template<int index>
+    template <int index>
     estd::tuple_element_t<index, tuple_type >& get()
     {
         return estd::get<index>(observers);
     }
 
-    template<int index>
+    template <int index>
     const estd::tuple_element_t<index, tuple_type >& get() const
     {
         return estd::get<index>(observers);
@@ -303,6 +303,32 @@ class observer_proxy
 
 }
 
+namespace experimental {
+
+template <typename F>
+struct delegate_observer
+{
+    F f;
+
+    delegate_observer(F&& f) : f(std::move(f)) {}
+
+    // FIX: Needs harder event type here otherwise we get cross-wiring on argument types
+    // when calling f
+    // see https://stackoverflow.com/questions/22632236/how-is-possible-to-deduce-function-argument-type-in-c
+    template <class TEvent>
+    void on_notify(const TEvent& e)
+    {
+        f(e);
+    }
+};
+
+template <typename F>
+struct delegate_observer<F> make_delegate_observer(F&& f)
+{
+    return delegate_observer<F>(std::move(f));
+}
+
+}
 
 namespace layer1 {
 

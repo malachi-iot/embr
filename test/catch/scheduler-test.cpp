@@ -112,4 +112,34 @@ TEST_CASE("scheduler test", "[scheduler]")
         // Should wake up 5 times at 5, 15, 25, 35 and 45
         REQUIRE(v.counter == 5);
     }
+    SECTION("events")
+    {
+        int counter = 0;
+        typedef estd::layer1::vector<Item, 20> container_type;
+        auto o1 = embr::experimental::make_delegate_observer([&counter](
+            const embr::internal::events::Scheduled<ItemTraits>& scheduled)
+            {
+                ++counter;
+            });
+        auto o2 = embr::experimental::make_delegate_observer([&counter](
+            const embr::internal::events::Removed<ItemTraits>& removed)
+            {
+                --counter;
+            });
+
+        // NOTE: May be wanting a ref evaporator not a struct evaporator for scheduler
+        auto s = embr::layer1::make_subject(o1); //, o2);
+        typedef decltype(s) subject_type;
+        embr::internal::Scheduler<container_type, ItemTraits, subject_type> scheduler(std::move(s));
+
+        scheduler.schedule(Item{5});
+
+        REQUIRE(counter == 1);
+
+        scheduler.schedule(Item{7});
+
+        REQUIRE(counter == 2);
+
+        //scheduler.process(6);
+    }
 }

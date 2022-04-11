@@ -166,6 +166,10 @@ class Scheduler : protected estd::internal::struct_evaporator<TSubject>
     }
 
 public:
+    Scheduler() = default;
+    Scheduler(TSubject subject) : subject_provider(subject) {}
+
+
     void schedule(const value_type& value)
     {
         event_queue.push(value);
