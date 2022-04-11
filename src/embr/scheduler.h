@@ -12,6 +12,7 @@ namespace embr {
 
 namespace internal {
 
+// TODO: Move this out to estd
 template <class TLockable, bool const_lock = false>
 class scoped_lock;
 
@@ -49,6 +50,8 @@ public:
     value_type& operator*() { return value; }
 };
 
+/// Reference scheduler item traits
+/// \tparam T
 template <class T>
 struct schedule_item_traits
 {
@@ -61,7 +64,13 @@ struct schedule_item_traits
         return value.event_due;
     }
 
-    static void process(T& value) {}
+    ///
+    /// \param value
+    /// \return true = reschedule requested, false = one shot
+    static bool process(T& value)
+    {
+        return false;
+    }
 };
 
 namespace events {
@@ -210,11 +219,20 @@ public:
 
             if(current_time >= eval_time)
             {
-                traits_type::process(*t);
+                bool reschedule_requested = traits_type::process(*t);
 
                 event_queue.pop();
 
                 subject_provider::value().notify(removed_event_type (*t));
+
+                if(reschedule_requested)
+                {
+                    // FIX: Doesn't handle move variant
+                    // FIX: May be badly behaved since 'pop' above may deallocate some things
+                    event_queue.push(*t);
+
+                    subject_provider::value().notify(scheduled_event_type (*t));
+                }
             }
             else
                 return;
