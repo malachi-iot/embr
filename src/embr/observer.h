@@ -8,10 +8,11 @@
 #include <estd/tuple.h>
 #include <estd/functional.h>
 
-#ifdef FEATURE_CPP_VARIADIC
-
 // NOTE: Not otherwise labeled as such but this file's naming is experimental
 namespace embr {
+
+#ifdef FEATURE_CPP_VARIADIC
+#define FEATURE_EMBR_OBSERVER 1
 
 namespace internal {
 
@@ -378,6 +379,8 @@ internal::observer_proxy<TSubject> make_observer_proxy(TSubject& s)
 
 }
 
+#endif
+
 struct void_subject
 {
     /// @brief noop notify
@@ -395,6 +398,4 @@ struct void_subject
 
 
 }
-
-#endif
 

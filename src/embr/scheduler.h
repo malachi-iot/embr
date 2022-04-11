@@ -6,6 +6,8 @@
 #include <estd/queue.h>
 #include <estd/chrono.h>
 
+#include "observer.h"
+
 namespace embr {
 
 namespace internal {
@@ -62,8 +64,58 @@ struct schedule_item_traits
     static void process(T& value) {}
 };
 
-template <class TContainer, class TTraits = schedule_item_traits<typename TContainer::value_type>>
-class Scheduler
+namespace events {
+
+template<class TTraits>
+struct Scheduler
+{
+
+};
+
+
+template<class TTraits>
+struct ValueBase : Scheduler<TTraits>
+{
+    typedef typename TTraits::value_type value_type;
+
+    // DEBT: Needs better name, this represents the control/meta structure going in
+    // the sorted heap.  Be advised the heap one may be a copy of this
+    value_type& value;
+
+    ValueBase(value_type& value) : value(value) {}
+};
+
+template<class TTraits>
+struct Scheduled : ValueBase<TTraits>
+{
+    typedef ValueBase<TTraits> base_type;
+
+    Scheduled(typename base_type::value_type& value) : base_type(value) {}
+};
+
+
+template<class TTraits>
+struct Removed : ValueBase<TTraits>
+{
+    typedef ValueBase<TTraits> base_type;
+
+    Removed(typename base_type::value_type& value) : base_type(value) {}
+};
+
+}
+
+/**
+ *
+ * @tparam TContainer raw container for priority_queue usage.  Its value_type must be
+ * copyable as indeed priority_queue stores each of these entries by value
+ * @tparam TTraits
+ * @tparam TSubject optional observer which can listen for schedule and remove events
+ */
+template <class TContainer,
+    class TTraits = schedule_item_traits<typename TContainer::value_type>,
+    class TSubject = embr::void_subject
+    >
+class Scheduler : protected estd::internal::struct_evaporator<TSubject>
 {
     typedef TContainer container_type;
     typedef typename container_type::value_type value_type;
@@ -71,6 +123,10 @@ class Scheduler
 
     typedef TTraits traits_type;
     typedef typename traits_type::time_point time_point;
+
+    typedef estd::internal::struct_evaporator<TSubject> subject_provider;
+    typedef events::Scheduled<traits_type> scheduled_event_type;
+    typedef events::Removed<traits_type> removed_event_type;
 
     struct Comparer
     {
@@ -100,12 +156,16 @@ public:
     void schedule(const value_type& value)
     {
         event_queue.push(value);
+
+        subject_provider::value().notify(scheduled_event_type());
     }
 
 #ifdef FEATURE_CPP_MOVESEMANTIC
     void schedule(value_type&& value)
     {
         event_queue.push(std::move(value));
+
+        subject_provider::value().notify(scheduled_event_type(value));
     }
 #endif
 
@@ -113,7 +173,11 @@ public:
     template <class ...TArgs>
     void schedule(TArgs&&...args)
     {
-        event_queue.emplace(std::forward<TArgs>(args)...);
+        accessor value = event_queue.emplace(std::forward<TArgs>(args)...);
+
+        subject_provider::value().notify(scheduled_event_type(value.lock()));
+
+        value.unlock();
     }
 #endif
 
@@ -130,8 +194,11 @@ public:
     /*
     void pop()
     {
-        event_queue.top().unlock();
+        scoped_lock<accessor> t(top());
+
         event_queue.pop();
+
+        subject_provider::value().notify(removed_event_type (*t));
     } */
 
     void process(time_point current_time)
@@ -146,6 +213,8 @@ public:
                 traits_type::process(*t);
 
                 event_queue.pop();
+
+                subject_provider::value().notify(removed_event_type (*t));
             }
             else
                 return;

@@ -10,6 +10,7 @@ struct Item
 
 struct ItemTraits
 {
+    typedef Item value_type;
     typedef int time_point;
 
     static time_point get_time_point(const Item& item) { return item.event_due; }
