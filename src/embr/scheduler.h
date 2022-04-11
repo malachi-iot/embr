@@ -231,14 +231,14 @@ public:
 
                 event_queue.pop();
 
-                subject_provider::value().notify(removed_event_type (*t));
+                subject_provider::value().notify(removed_event_type (copied));
 
                 if(reschedule_requested)
                 {
-                    // FIX: Doesn't handle move variant
+                    // DEBT: Doesn't handle move variant
                     event_queue.push(copied);
 
-                    subject_provider::value().notify(scheduled_event_type (*t));
+                    subject_provider::value().notify(scheduled_event_type (copied));
                 }
             }
             else

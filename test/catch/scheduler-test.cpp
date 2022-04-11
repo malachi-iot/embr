@@ -43,7 +43,14 @@ struct Item2Traits
 
         value_type(time_point wakeup) : wakeup{wakeup} {}
         value_type(const value_type&) = default;
-        //value_type(value_type&&) = default;
+
+        /* although enabling all the following works, it hits me we prefer to lean heavily towards
+         * copy-only because move operations imply greater short term overhead and we want this struct
+         * as lightweight as possible
+        value_type(value_type&&) = default;
+
+        value_type& operator=(const value_type&) = default;
+        value_type& operator=(value_type&&) = default; */
     };
 
     static time_point get_time_point(const value_type& v) { return v.wakeup; }
