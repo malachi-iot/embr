@@ -69,8 +69,9 @@ struct schedule_item_traits
 
     ///
     /// \param value
+    /// \param current_time actual current time
     /// \return true = reschedule requested, false = one shot
-    static bool process(T& value)
+    static bool process(T& value, time_point current_time)
     {
         return false;
     }
@@ -222,7 +223,11 @@ public:
 
             if(current_time >= eval_time)
             {
-                bool reschedule_requested = traits_type::process(*t);
+                bool reschedule_requested = traits_type::process(*t, current_time);
+
+                // Need to do this because *t is a pointer into event_queue and the pop moves
+                // items around.
+                value_type copied = *t;
 
                 event_queue.pop();
 
@@ -231,8 +236,7 @@ public:
                 if(reschedule_requested)
                 {
                     // FIX: Doesn't handle move variant
-                    // FIX: May be badly behaved since 'pop' above may deallocate some things
-                    event_queue.push(*t);
+                    event_queue.push(copied);
 
                     subject_provider::value().notify(scheduled_event_type (*t));
                 }

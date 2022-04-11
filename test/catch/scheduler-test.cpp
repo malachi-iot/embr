@@ -14,7 +14,7 @@ struct ItemTraits
     typedef int time_point;
 
     static time_point get_time_point(const Item& item) { return item.event_due; }
-    static bool process(Item& item)
+    static bool process(Item& item, time_point)
     {
         ++(*item.counter);
 
@@ -27,6 +27,9 @@ struct Item2Traits
 {
     typedef unsigned time_point;
 
+    // NOTE: It's preferred to keep app state such as counter off in a pointed to struct
+    // somewhere, since value_type here is copied around a lot during heap sorts.  That said,
+    // it's not any kind of specific violation to keep app data in here
     struct value_type
     {
         int counter = 0;
@@ -45,7 +48,7 @@ struct Item2Traits
 
     static time_point get_time_point(const value_type& v) { return v.wakeup; }
 
-    static bool process(value_type& v)
+    static bool process(value_type& v, time_point)
     {
         v.wakeup += 10;
         ++v.counter;
@@ -89,14 +92,14 @@ TEST_CASE("scheduler test", "[scheduler]")
         embr::internal::Scheduler<container_type, Item2Traits> scheduler;
 
         scheduler.schedule(5);
+        scheduler.schedule(99); // should never reach this one
 
         for(Item2Traits::time_point i = 0; i < 50; i++)
         {
             scheduler.process(i);
         }
 
-        // being that we continually reschedule and this is the only item being scheduled,
-        // we'll always be at the top
+        // being that we continually reschedule, we'll always be at the top
         auto& v = scheduler.top().clock();
 
         // Should wake up 5 times at 5, 15, 25, 35 and 45
