@@ -1,0 +1,4 @@
+#!/bin/sh
+
+openocd -f board/esp32-wrover-kit-3.3v.cfg
+

@@ -1,0 +1,5 @@
+#!/bin/sh
+
+export GDBINIT=../tools/gdbinit
+
+xtensa-esp32-elf-gdb -x $GDBINIT build/unit_test_test.elf
