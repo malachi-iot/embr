@@ -2,6 +2,9 @@
 
 #include <embr/scheduler.h>
 
+// Not available because we test against C++11
+//using namespace std::literals::chrono_literals;
+
 struct Item
 {
     int event_due;
@@ -69,19 +72,48 @@ struct Item3Traits
 {
     typedef estd::chrono::steady_clock::time_point time_point;
 
-    struct value_type
+    struct control_structure
     {
+        typedef Item3Traits::time_point time_point;
+
         time_point t;
 
-        virtual bool process(time_point current_time)
-        {
-            return false;
-        }
+        virtual bool process(time_point current_time) = 0;
     };
 
-    static time_point get_time_point(const value_type& v) { return v.t; }
+    typedef control_structure* value_type;
 
-    static bool process(value_type& v, time_point t) { return v.process(t); }
+    static time_point get_time_point(value_type v) { return v->t; }
+
+    static bool process(value_type v, time_point t)
+    {
+        return v->process(t);
+    }
+};
+
+struct Item3ControlStructure1 : Item3Traits::control_structure
+{
+    int counter = 0;
+
+    virtual bool process(time_point current_time)
+    {
+        ++counter;
+        // DEBT: Looks like estd::chrono doesn't have these overloads sorted yet
+        t += std::chrono::seconds(10);
+        return true;
+    }
+};
+
+struct Item3ControlStructure2 : Item3Traits::control_structure
+{
+    int counter = 0;
+
+    virtual bool process(time_point current_time)
+    {
+        ++counter;
+        //t += std::chrono::seconds(5);
+        return false;
+    }
 };
 
 
@@ -223,6 +255,22 @@ TEST_CASE("scheduler test", "[scheduler]")
     {
         embr::internal::layer1::Scheduler<Item3Traits, 5> scheduler;
 
+        Item3ControlStructure1 schedule1;
+        Item3ControlStructure2 schedule2;
+
+        scheduler.schedule(&schedule1);
+        scheduler.schedule(&schedule2);
+
+        estd::chrono::steady_clock::time_point now;
+        estd::chrono::steady_clock::time_point end = now + std::chrono::seconds(60);
+
+        for(; now < end; now += std::chrono::seconds(2))
+        {
+            scheduler.process(now);
+        }
+
+        REQUIRE(schedule1.counter == 6);
+        REQUIRE(schedule2.counter == 1);
     }
     SECTION("traditional")
     {
