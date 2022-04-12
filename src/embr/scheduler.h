@@ -269,6 +269,18 @@ public:
     }
 };
 
+// DEBT: Putting this here under internal to reflect we're still fleshing things out
+namespace layer1 {
+
+template <class TTraits, int count, class TSubject = void_subject>
+struct Scheduler :
+    internal::Scheduler<estd::layer1::vector<typename TTraits::value_type, count>, TTraits, TSubject>
+{
+
+};
+
+}
+
 }
 
 

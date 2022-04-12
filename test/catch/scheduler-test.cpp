@@ -168,10 +168,7 @@ TEST_CASE("scheduler test", "[scheduler]")
     }
     SECTION("repeating")
     {
-        // doesn't have 'accessor', and maybe array isn't a good fit for priority_queue anyway
-        //typedef estd::array<int, 4> container_type;
-        typedef estd::layer1::vector<Item2Traits::value_type, 20> container_type;
-        embr::internal::Scheduler<container_type, Item2Traits> scheduler;
+        embr::internal::layer1::Scheduler<Item2Traits, 5> scheduler;
 
         scheduler.schedule(5);
         scheduler.schedule(99); // should never reach this one
@@ -224,8 +221,7 @@ TEST_CASE("scheduler test", "[scheduler]")
     }
     SECTION("virtual")
     {
-        typedef estd::layer1::vector<Item3Traits::value_type, 20> container_type;
-        embr::internal::Scheduler<container_type, Item3Traits> scheduler;
+        embr::internal::layer1::Scheduler<Item3Traits, 5> scheduler;
 
     }
     SECTION("traditional")
@@ -234,10 +230,9 @@ TEST_CASE("scheduler test", "[scheduler]")
         {
             typedef TraditionalTraits<true> traits_type;
             typedef traits_type::value_type value_type;
-            typedef estd::layer1::vector<value_type, 20> container_type;
             int counter = 0;
 
-            embr::internal::Scheduler<container_type, traits_type> scheduler;
+            embr::internal::layer1::Scheduler<traits_type, 5> scheduler;
 
             scheduler.schedule(value_type{10, traditional_handler, &counter});
             scheduler.schedule(value_type{20, traditional_handler, &counter});
@@ -253,10 +248,9 @@ TEST_CASE("scheduler test", "[scheduler]")
         {
             typedef TraditionalTraits<false> traits_type;
             typedef traits_type::value_type value_type;
-            typedef estd::layer1::vector<value_type, 20> container_type;
             int counter = 0;
 
-            embr::internal::Scheduler<container_type, traits_type> scheduler;
+            embr::internal::layer1::Scheduler<traits_type, 5> scheduler;
 
             traits_type::control_structure
                 scheduled1{10, traditional_handler, &counter},
