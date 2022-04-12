@@ -64,6 +64,26 @@ struct Item2Traits
     }
 };
 
+
+struct Item3Traits
+{
+    typedef estd::chrono::steady_clock::time_point time_point;
+
+    struct value_type
+    {
+        time_point t;
+
+        virtual bool process(time_point current_time)
+        {
+            return false;
+        }
+    };
+
+    static time_point get_time_point(const value_type& v) { return v.t; }
+
+    static bool process(value_type& v, time_point t) { return v.process(t); }
+};
+
 TEST_CASE("scheduler test", "[scheduler]")
 {
     SECTION("one-shot")
@@ -147,5 +167,11 @@ TEST_CASE("scheduler test", "[scheduler]")
 
         // process removes one, so that will bump down our counter
         REQUIRE(counter == 1);
+    }
+    SECTION("virtual")
+    {
+        typedef estd::layer1::vector<Item3Traits::value_type, 20> container_type;
+        embr::internal::Scheduler<container_type, Item3Traits> scheduler;
+
     }
 }
