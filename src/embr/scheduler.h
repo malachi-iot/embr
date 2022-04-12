@@ -98,7 +98,7 @@ struct ValueBase : Scheduler<TTraits>
     ValueBase(value_type& value) : value(value) {}
 };
 
-template<class TTraits>
+template <class TTraits>
 struct Scheduled : ValueBase<TTraits>
 {
     typedef ValueBase<TTraits> base_type;
@@ -107,12 +107,26 @@ struct Scheduled : ValueBase<TTraits>
 };
 
 
-template<class TTraits>
+template <class TTraits>
 struct Removed : ValueBase<TTraits>
 {
     typedef ValueBase<TTraits> base_type;
 
     Removed(typename base_type::value_type& value) : base_type(value) {}
+};
+
+
+template <class TTraits>
+struct Processing : ValueBase<TTraits>
+{
+    typedef ValueBase<TTraits> base_type;
+    typedef typename base_type::traits_type::time_point time_point;
+
+    const time_point current_time;
+
+    Processing(typename base_type::value_type& value, time_point current_time) :
+        base_type(value), current_time(current_time)
+    {}
 };
 
 }
@@ -138,8 +152,10 @@ class Scheduler : protected estd::internal::struct_evaporator<TSubject>
     typedef typename traits_type::time_point time_point;
 
     typedef estd::internal::struct_evaporator<TSubject> subject_provider;
+
     typedef events::Scheduled<traits_type> scheduled_event_type;
     typedef events::Removed<traits_type> removed_event_type;
+    typedef events::Processing<traits_type> processing_event_type;
 
     struct Comparer
     {
@@ -227,6 +243,8 @@ public:
 
             if(current_time >= eval_time)
             {
+                subject_provider::value().notify(processing_event_type (*t, current_time));
+
                 bool reschedule_requested = traits_type::process(*t, current_time);
 
                 // Need to do this because *t is a pointer into event_queue and the pop moves
