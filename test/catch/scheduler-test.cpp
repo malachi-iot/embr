@@ -84,6 +84,60 @@ struct Item3Traits
     static bool process(value_type& v, time_point t) { return v.process(t); }
 };
 
+
+struct TraditionalTraitsBase
+{
+    typedef unsigned long time_point;
+
+    struct control_structure
+    {
+        typedef bool (*handler_type)(control_structure* c, time_point current_time);
+
+        time_point wake_time;
+        handler_type handler;
+
+        void* data;
+    };
+};
+
+template <bool is_inline>
+struct TraditionalTraits;
+
+template <>
+struct TraditionalTraits<true> : TraditionalTraitsBase
+{
+    typedef control_structure value_type;
+
+    static time_point get_time_point(const value_type& v) { return v.wake_time; }
+
+    static bool process(value_type& v, time_point current_time)
+    {
+        return v.handler(&v, current_time);
+    }
+};
+
+template <>
+struct TraditionalTraits<false> : TraditionalTraitsBase
+{
+    typedef control_structure* value_type;
+
+    static time_point get_time_point(value_type v) { return v->wake_time; }
+
+    static bool process(value_type v, time_point current_time)
+    {
+        return v->handler(v, current_time);
+    }
+};
+
+bool traditional_handler(
+    TraditionalTraitsBase::control_structure* c,
+    unsigned long current_time)
+{
+    ++(*(int*)c->data);
+    return false;
+}
+
+
 TEST_CASE("scheduler test", "[scheduler]")
 {
     SECTION("one-shot")
@@ -173,5 +227,50 @@ TEST_CASE("scheduler test", "[scheduler]")
         typedef estd::layer1::vector<Item3Traits::value_type, 20> container_type;
         embr::internal::Scheduler<container_type, Item3Traits> scheduler;
 
+    }
+    SECTION("traditional")
+    {
+        SECTION("inline")
+        {
+            typedef TraditionalTraits<true> traits_type;
+            typedef traits_type::value_type value_type;
+            typedef estd::layer1::vector<value_type, 20> container_type;
+            int counter = 0;
+
+            embr::internal::Scheduler<container_type, traits_type> scheduler;
+
+            scheduler.schedule(value_type{10, traditional_handler, &counter});
+            scheduler.schedule(value_type{20, traditional_handler, &counter});
+
+            scheduler.process(5);
+            scheduler.process(10);
+            scheduler.process(19);
+            scheduler.process(21);
+
+            REQUIRE(counter == 2);
+        }
+        SECTION("user allocated")
+        {
+            typedef TraditionalTraits<false> traits_type;
+            typedef traits_type::value_type value_type;
+            typedef estd::layer1::vector<value_type, 20> container_type;
+            int counter = 0;
+
+            embr::internal::Scheduler<container_type, traits_type> scheduler;
+
+            traits_type::control_structure
+                scheduled1{10, traditional_handler, &counter},
+                scheduled2{20, traditional_handler, &counter};
+
+            scheduler.schedule(&scheduled1);
+            scheduler.schedule(&scheduled2);
+
+            scheduler.process(5);
+            scheduler.process(10);
+            scheduler.process(19);
+            scheduler.process(21);
+
+            REQUIRE(counter == 2);
+        }
     }
 }
