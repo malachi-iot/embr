@@ -53,7 +53,7 @@ public:
 /// Reference scheduler item traits
 /// \tparam T consider this the system + app data structure
 template <class T>
-struct schedule_item_traits
+struct SchedulerImpl
 {
     typedef T value_type;
 
@@ -139,19 +139,22 @@ struct Processing : ValueBase<TTraits>
  * @tparam TSubject optional observer which can listen for schedule and remove events
  */
 template <class TContainer,
-    class TTraits = schedule_item_traits<typename TContainer::value_type>,
+    class TImpl = SchedulerImpl<typename TContainer::value_type>,
     class TSubject = embr::void_subject
     >
-class Scheduler : protected estd::internal::struct_evaporator<TSubject>
+class Scheduler :
+    protected estd::internal::struct_evaporator<TSubject>,
+    protected estd::internal::struct_evaporator<TImpl>
 {
     typedef TContainer container_type;
     typedef typename container_type::value_type value_type;
     typedef value_type& reference;
 
-    typedef TTraits traits_type;
+    typedef TImpl traits_type;
     typedef typename traits_type::time_point time_point;
 
     typedef estd::internal::struct_evaporator<TSubject> subject_provider;
+    typedef estd::internal::struct_evaporator<TImpl> impl_provider;
 
     typedef events::Scheduled<traits_type> scheduled_event_type;
     typedef events::Removed<traits_type> removed_event_type;
@@ -245,7 +248,7 @@ public:
             {
                 subject_provider::value().notify(processing_event_type (*t, current_time));
 
-                bool reschedule_requested = traits_type::process(*t, current_time);
+                bool reschedule_requested = impl_provider::value().process(*t, current_time);
 
                 // Need to do this because *t is a pointer into event_queue and the pop moves
                 // items around.
