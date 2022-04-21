@@ -190,7 +190,7 @@ struct FunctorTraits
         // it doesn't have the full-function concept of an empty function
         //function_type func;
 
-        function_type* func;
+        function_type func;
 
         /*
         control_structure(time_point wake, function_type::concept& c) :
@@ -206,7 +206,7 @@ struct FunctorTraits
             func(c)
         {} */
 
-        control_structure(time_point wake, function_type* func) :
+        control_structure(time_point wake, function_type func) :
             wake(wake),
             func(func)
         {}
@@ -221,8 +221,7 @@ struct FunctorTraits
 
     static bool process(value_type& v, time_point current_time)
     {
-        //return v.func();
-        return (*(v.func))(&v.wake, current_time);
+        return v.func(&v.wake, current_time);
     }
 };
 
@@ -392,13 +391,13 @@ TEST_CASE("scheduler test", "[scheduler]")
                 auto f_set_and_repeat = FunctorTraits::make_function([&arrived](unsigned* wake, unsigned current_time)
                 {
                     arrived.set(*wake);
-                    *wake = *wake + 2;
+                    *wake += 2;
                     return true;
                 });
 
-                scheduler.schedule(11, &f_set_and_repeat);
-                scheduler.schedule(3, &f_set_only);
-                scheduler.schedule(9, &f_set_only);
+                scheduler.schedule(11, f_set_and_repeat);
+                scheduler.schedule(3, f_set_only);
+                scheduler.schedule(9, f_set_only);
 
                 scheduler.process(0);
                 scheduler.process(4);
@@ -433,9 +432,9 @@ TEST_CASE("scheduler test", "[scheduler]")
                     });
                 estd::experimental::function_base<bool(unsigned*, unsigned)> f(&_f);
 
-                scheduler.schedule(11, &f);
-                scheduler.schedule(3, &f);
-                scheduler.schedule(9, &f);
+                scheduler.schedule(11, f);
+                scheduler.schedule(3, f);
+                scheduler.schedule(9, f);
 
                 scheduler.process(0);
                 REQUIRE(!arrived[0]);
