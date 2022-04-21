@@ -174,7 +174,13 @@ bool traditional_handler(
 struct FunctorTraits
 {
     typedef unsigned time_point;
-    typedef estd::experimental::function_base<bool, time_point*, time_point> function_type;
+    typedef estd::experimental::function_base<bool(time_point*, time_point)> function_type;
+
+    template <class F>
+    static estd::experimental::inline_function<F, bool(time_point*, time_point)> make_function(F&& f)
+    {
+        return estd::experimental::function<bool(time_point*, time_point)>::make_inline2(std::move(f));
+    }
 
     struct control_structure
     {
@@ -375,39 +381,78 @@ TEST_CASE("scheduler test", "[scheduler]")
             std::bitset<32> arrived;
             embr::internal::layer1::Scheduler<FunctorTraits, 5> scheduler;
 
-            auto _f = estd::experimental::function<bool(unsigned*, unsigned)>::make_inline(
-                [&arrived](unsigned* wake, unsigned current_time)
+            SECTION("trivial scheduling")
+            {
+                auto f_set_only = FunctorTraits::make_function([&arrived](unsigned* wake, unsigned current_time)
                 {
                     arrived.set(*wake);
-                    if(*wake < 11)
-                        return false;
-                    else
-                    {
-                        *wake = *wake + 2;
-                        return true;
-                    }
+                    return false;
                 });
-            estd::experimental::function_base<bool, unsigned*, unsigned> f(&_f);
 
-            scheduler.schedule(11, &f);
-            scheduler.schedule(3, &f);
-            scheduler.schedule(9, &f);
+                auto f_set_and_repeat = FunctorTraits::make_function([&arrived](unsigned* wake, unsigned current_time)
+                {
+                    arrived.set(*wake);
+                    *wake = *wake + 2;
+                    return true;
+                });
 
-            scheduler.process(0);
-            REQUIRE(!arrived[0]);
-            scheduler.process(4);
-            REQUIRE(arrived[3]);
-            REQUIRE(!arrived[9]);
-            scheduler.process(9);
-            REQUIRE(arrived[9]);
-            scheduler.process(11);
-            REQUIRE(arrived[11]);
-            scheduler.process(20);
-            REQUIRE(!arrived[12]);
-            REQUIRE(arrived[13]);
-            REQUIRE(!arrived[14]);
-            REQUIRE(arrived[15]);
-            REQUIRE(!arrived[16]);
+                scheduler.schedule(11, &f_set_and_repeat);
+                scheduler.schedule(3, &f_set_only);
+                scheduler.schedule(9, &f_set_only);
+
+                scheduler.process(0);
+                scheduler.process(4);
+                scheduler.process(9);
+                scheduler.process(11);
+                scheduler.process(20);
+
+                REQUIRE(!arrived[0]);
+                REQUIRE(arrived[3]);
+                REQUIRE(!arrived[4]);
+                REQUIRE(arrived[9]);
+                REQUIRE(arrived[11]);
+                REQUIRE(!arrived[12]);
+                REQUIRE(arrived[13]);
+                REQUIRE(arrived[15]);
+                REQUIRE(arrived[17]);
+                REQUIRE(!arrived[18]);
+                REQUIRE(arrived[19]);
+            }
+            SECTION("overly smart scheduling")
+            {
+                auto _f = estd::experimental::function<bool(unsigned*, unsigned)>::make_inline(
+                    [&arrived](unsigned* wake, unsigned current_time) {
+                        arrived.set(*wake);
+                        if (*wake < 11 || *wake > 20)
+                            return false;
+                        else
+                        {
+                            *wake = *wake + 2;
+                            return true;
+                        }
+                    });
+                estd::experimental::function_base<bool(unsigned*, unsigned)> f(&_f);
+
+                scheduler.schedule(11, &f);
+                scheduler.schedule(3, &f);
+                scheduler.schedule(9, &f);
+
+                scheduler.process(0);
+                REQUIRE(!arrived[0]);
+                scheduler.process(4);
+                REQUIRE(arrived[3]);
+                REQUIRE(!arrived[9]);
+                scheduler.process(9);
+                REQUIRE(arrived[9]);
+                scheduler.process(11);
+                REQUIRE(arrived[11]);
+                scheduler.process(20);
+                REQUIRE(!arrived[12]);
+                REQUIRE(arrived[13]);
+                REQUIRE(!arrived[14]);
+                REQUIRE(arrived[15]);
+                REQUIRE(!arrived[16]);
+            }
         }
     }
 }
