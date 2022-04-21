@@ -225,6 +225,12 @@ struct FunctorTraits
     }
 };
 
+struct StatefulFunctorTraits : FunctorTraits
+{
+    time_point now_ = 0;
+
+    time_point now() { return now_++; }
+};
 
 TEST_CASE("scheduler test", "[scheduler]")
 {
@@ -452,6 +458,25 @@ TEST_CASE("scheduler test", "[scheduler]")
                 REQUIRE(arrived[15]);
                 REQUIRE(!arrived[16]);
             }
+        }
+        SECTION("stateful")
+        {
+            std::bitset<32> arrived;
+            embr::internal::layer1::Scheduler<StatefulFunctorTraits, 5> scheduler;
+
+            auto f = StatefulFunctorTraits::make_function(
+                [&](unsigned* wake, unsigned current)
+            {
+                arrived.set(*wake);
+                return false;
+            });
+
+            scheduler.schedule_now(f);
+
+            scheduler.process(10);
+
+            REQUIRE(arrived.count() == 1);
+            REQUIRE(arrived[0]);
         }
     }
 }

@@ -215,6 +215,17 @@ public:
 
         value.unlock();
     }
+
+
+    /// Presumes that TImpl::value_type's first parameter is wakeup time
+    /// \tparam TArgs
+    /// \param args
+    template <class ...TArgs>
+    void schedule_now(TArgs&&...args)
+    {
+        time_point now = impl_provider::value().now();
+        schedule(now, std::forward<TArgs>(args)...);
+    }
 #endif
 
     size_type size() const
