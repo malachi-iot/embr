@@ -8,34 +8,26 @@
 #include <estd/thread.h>
 
 #include <embr/observer.h>
-#include <embr/scheduler.h>
+#include <embr/platform/arduino/scheduler.h>
 
-using FunctorTraits = embr::internal::experimental::FunctorTraits<decltype(millis())>;
+using FunctorTraits = embr::experimental::ArduinoSchedulerTraits;
 using time_point = FunctorTraits::time_point;
 
 CONSTEXPR int LED_PIN = LED_BUILTIN;
-CONSTEXPR time_point DELAY = 500;
 
 embr::internal::layer1::Scheduler<FunctorTraits, 5> scheduler;
 
 void setup()
 {
-    static auto f_on = FunctorTraits::make_function([](time_point* wake, time_point current)
+    static bool on = false;
+    static auto f = FunctorTraits::make_function([](time_point* wake, time_point current)
     {
-        digitalWrite(LED_PIN, LOW);
-        *wake += DELAY * 2;
+        digitalWrite(LED_PIN, on ? LOW : HIGH);
+        on = !on;
+        *wake += 500;
     });
 
-    static auto f_off = FunctorTraits::make_function([](time_point* wake, time_point current)
-    {
-        digitalWrite(LED_PIN, HIGH);
-        *wake += DELAY * 2;
-    });
-
-    time_point start = millis() + 1000;
-
-    scheduler.schedule(start, f_on);
-    scheduler.schedule(start + DELAY, f_off);
+    scheduler.schedule_now(f);
    
     pinMode(LED_PIN, OUTPUT);
 }
@@ -43,5 +35,5 @@ void setup()
 
 void loop()
 {
-    scheduler.process(millis());
+    scheduler.process();
 }

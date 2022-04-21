@@ -281,6 +281,14 @@ public:
                 return;
         }
     }
+
+
+    /// Processes current_time as 'now' as reported by traits
+    void process()
+    {
+        time_point current_time = impl_provider::value().now();
+        process(current_time);
+    }
 };
 
 namespace experimental {
