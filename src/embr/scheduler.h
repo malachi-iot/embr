@@ -283,6 +283,51 @@ public:
     }
 };
 
+namespace experimental {
+
+template <typename TTimePoint>
+struct FunctorTraits
+{
+    typedef TTimePoint time_point;
+    typedef estd::experimental::function_base<void(time_point*, time_point)> function_type;
+
+    template <class F>
+    static estd::experimental::inline_function<F, void(time_point*, time_point)> make_function(F&& f)
+    {
+        return estd::experimental::function<void(time_point*, time_point)>::make_inline2(std::move(f));
+    }
+
+    struct control_structure
+    {
+        time_point wake;
+
+        function_type func;
+
+        control_structure(time_point wake, function_type func) :
+            wake(wake),
+            func(func)
+        {}
+
+        // DEBT: See Item2Traits
+        control_structure() = default;
+    };
+
+    typedef control_structure value_type;
+
+    static time_point get_time_point(const value_type& v) { return v.wake; }
+
+    static bool process(value_type& v, time_point current_time)
+    {
+        time_point origin = v.wake;
+
+        v.func(&v.wake, current_time);
+
+        return origin != v.wake;
+    }
+};
+
+}
+
 // DEBT: Putting this here under internal to reflect we're still fleshing things out
 namespace layer1 {
 
