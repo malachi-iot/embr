@@ -174,12 +174,12 @@ bool traditional_handler(
 struct FunctorTraits
 {
     typedef unsigned time_point;
-    typedef estd::experimental::function_base<bool(time_point*, time_point)> function_type;
+    typedef estd::experimental::function_base<void(time_point*, time_point)> function_type;
 
     template <class F>
-    static estd::experimental::inline_function<F, bool(time_point*, time_point)> make_function(F&& f)
+    static estd::experimental::inline_function<F, void(time_point*, time_point)> make_function(F&& f)
     {
-        return estd::experimental::function<bool(time_point*, time_point)>::make_inline2(std::move(f));
+        return estd::experimental::function<void(time_point*, time_point)>::make_inline2(std::move(f));
     }
 
     struct control_structure
@@ -221,7 +221,11 @@ struct FunctorTraits
 
     static bool process(value_type& v, time_point current_time)
     {
-        return v.func(&v.wake, current_time);
+        time_point origin = v.wake;
+
+        v.func(&v.wake, current_time);
+
+        return origin != v.wake;
     }
 };
 
@@ -391,14 +395,12 @@ TEST_CASE("scheduler test", "[scheduler]")
                 auto f_set_only = FunctorTraits::make_function([&arrived](unsigned* wake, unsigned current_time)
                 {
                     arrived.set(*wake);
-                    return false;
                 });
 
                 auto f_set_and_repeat = FunctorTraits::make_function([&arrived](unsigned* wake, unsigned current_time)
                 {
                     arrived.set(*wake);
                     *wake += 2;
-                    return true;
                 });
 
                 scheduler.schedule(11, f_set_and_repeat);
@@ -425,18 +427,20 @@ TEST_CASE("scheduler test", "[scheduler]")
             }
             SECTION("overly smart scheduling")
             {
-                auto _f = estd::experimental::function<bool(unsigned*, unsigned)>::make_inline(
-                    [&arrived](unsigned* wake, unsigned current_time) {
+                auto _f = estd::experimental::function<void(unsigned*, unsigned)>::make_inline(
+                    [&arrived](unsigned* wake, unsigned current_time)
+                    {
                         arrived.set(*wake);
                         if (*wake < 11 || *wake > 20)
-                            return false;
+                        {
+
+                        }
                         else
                         {
                             *wake = *wake + 2;
-                            return true;
                         }
                     });
-                estd::experimental::function_base<bool(unsigned*, unsigned)> f(&_f);
+                estd::experimental::function_base<void(unsigned*, unsigned)> f(&_f);
 
                 scheduler.schedule(11, f);
                 scheduler.schedule(3, f);
@@ -468,7 +472,6 @@ TEST_CASE("scheduler test", "[scheduler]")
                 [&](unsigned* wake, unsigned current)
             {
                 arrived.set(*wake);
-                return false;
             });
 
             scheduler.schedule_now(f);
