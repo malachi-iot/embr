@@ -19,6 +19,8 @@ embr::internal::layer1::Scheduler<FunctorTraits, 5> scheduler;
 
 void setup()
 {
+    Serial.begin(9600);
+
     static bool on = false;
     static auto f = FunctorTraits::make_function([](time_point* wake, time_point current)
     {
@@ -27,7 +29,15 @@ void setup()
         *wake += 500;
     });
 
+    static auto f2 = FunctorTraits::make_function([](time_point* wake, time_point current)
+    {
+        static int counter = 0;
+        *wake += 5000;
+        Serial.println(++counter);
+    });
+
     scheduler.schedule_now(f);
+    scheduler.schedule_now(f2);
    
     pinMode(LED_PIN, OUTPUT);
 }
