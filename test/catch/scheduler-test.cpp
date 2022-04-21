@@ -1,5 +1,7 @@
 #include <catch.hpp>
 
+#include <bitset>
+
 #include <embr/scheduler.h>
 
 // Not available because we test against C++11
@@ -169,6 +171,55 @@ bool traditional_handler(
     return false;
 }
 
+struct FunctorTraits
+{
+    typedef unsigned time_point;
+    typedef estd::experimental::function_base<bool, time_point*, time_point> function_type;
+
+    struct control_structure
+    {
+        time_point wake;
+
+        // DEBT: back to vector thing, function_base needs to be initialized with something
+        // it doesn't have the full-function concept of an empty function
+        //function_type func;
+
+        function_type* func;
+
+        /*
+        control_structure(time_point wake, function_type::concept& c) :
+            wake(wake),
+            func(&c)
+        {} */
+
+        // DEBT: Have to do it this way because ::concept is protected still
+        /*
+        template <class TConcept>
+        control_structure(time_point wake, TConcept c) :
+            wake(wake),
+            func(c)
+        {} */
+
+        control_structure(time_point wake, function_type* func) :
+            wake(wake),
+            func(func)
+        {}
+
+        // DEBT: See Item2Traits
+        control_structure() = default;
+    };
+
+    typedef control_structure value_type;
+
+    static time_point get_time_point(const value_type& v) { return v.wake; }
+
+    static bool process(value_type& v, time_point current_time)
+    {
+        //return v.func();
+        return (*(v.func))(&v.wake, current_time);
+    }
+};
+
 
 TEST_CASE("scheduler test", "[scheduler]")
 {
@@ -216,7 +267,7 @@ TEST_CASE("scheduler test", "[scheduler]")
         // Should wake up 5 times at 5, 15, 25, 35 and 45
         REQUIRE(v.counter == 5);
     }
-    SECTION("events")
+    SECTION("events (aux)")
     {
         int counter = 0;
         int _counter = 0;
@@ -313,6 +364,50 @@ TEST_CASE("scheduler test", "[scheduler]")
             scheduler.process(21);
 
             REQUIRE(counter == 2);
+        }
+    }
+    SECTION("experimental")
+    {
+        // Works well, but overly verbose on account of estd::experimental::function
+        // indeed being in progress and experimental
+        SECTION("estd::function style")
+        {
+            std::bitset<32> arrived;
+            embr::internal::layer1::Scheduler<FunctorTraits, 5> scheduler;
+
+            auto _f = estd::experimental::function<bool(unsigned*, unsigned)>::make_inline(
+                [&arrived](unsigned* wake, unsigned current_time)
+                {
+                    arrived.set(*wake);
+                    if(*wake < 11)
+                        return false;
+                    else
+                    {
+                        *wake = *wake + 2;
+                        return true;
+                    }
+                });
+            estd::experimental::function_base<bool, unsigned*, unsigned> f(&_f);
+
+            scheduler.schedule(11, &f);
+            scheduler.schedule(3, &f);
+            scheduler.schedule(9, &f);
+
+            scheduler.process(0);
+            REQUIRE(!arrived[0]);
+            scheduler.process(4);
+            REQUIRE(arrived[3]);
+            REQUIRE(!arrived[9]);
+            scheduler.process(9);
+            REQUIRE(arrived[9]);
+            scheduler.process(11);
+            REQUIRE(arrived[11]);
+            scheduler.process(20);
+            REQUIRE(!arrived[12]);
+            REQUIRE(arrived[13]);
+            REQUIRE(!arrived[14]);
+            REQUIRE(arrived[15]);
+            REQUIRE(!arrived[16]);
         }
     }
 }
