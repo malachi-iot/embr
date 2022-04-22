@@ -17,9 +17,15 @@ CONSTEXPR int LED_PIN = LED_BUILTIN;
 
 embr::internal::layer1::Scheduler<FunctorTraits, 5> scheduler;
 
+#ifndef ENABLE_SERIAL
+#define ENABLE_SERIAL 1
+#endif
+
 void setup()
 {
+#if ENABLE_SERIAL
     Serial.begin(9600);
+#endif
 
     static bool on = false;
     static auto f = FunctorTraits::make_function([](time_point* wake, time_point current)
@@ -29,16 +35,19 @@ void setup()
         *wake += 500;
     });
 
+#if ENABLE_SERIAL
     static auto f2 = FunctorTraits::make_function([](time_point* wake, time_point current)
     {
         static int counter = 0;
         *wake += 5000;
         Serial.println(++counter);
     });
+#endif
 
     scheduler.schedule_now(f);
+#if ENABLE_SERIAL
     scheduler.schedule_now(f2);
-   
+#endif   
     pinMode(LED_PIN, OUTPUT);
 }
 
