@@ -42,7 +42,7 @@ struct TransportUdp : TransportBase
 {
     typedef Endpoint<use_address_ptr> endpoint_type;
 
-    Pcb pcb;
+    lwip::udp::Pcb pcb;
 
 #ifdef FEATURE_CPP_VARIADIC
     template <class ...TArgs>
@@ -102,7 +102,8 @@ struct UdpDataportTransport : embr::lwip::experimental::TransportUdp<false>
     // in response to a notification
     // NOTE: Convention is that TDataPort* must always be first parameter
     template <class TDataPort>
-    UdpDataportTransport(TDataPort* dataport, uint16_t port);
+    UdpDataportTransport(TDataPort* dataport, uint16_t port,
+        uint16_t sourcePort = 0);
 
 private:
     template <class TDataPort>
@@ -124,7 +125,7 @@ struct UdpSubjectTransport : embr::lwip::experimental::TransportUdp<false>
     // TODO: Probably move this upward into TransportUdp itself, or maybe even
     // Pcb
     template <class TSubject>
-    static Pcb recv(TSubject& subject, uint16_t port);
+    static udp::Pcb recv(TSubject& subject, uint16_t port);
 
     // NOTE: Phase this out, be better do be more pcb-like and explicitly 
     // bind/recv

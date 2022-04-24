@@ -16,9 +16,10 @@ extern "C" {
 
 #include <estd/internal/platform.h>
 
-namespace embr { namespace lwip {
+namespace embr { namespace lwip { namespace udp {
 
-// NOTE: Alternate universe version of udh.hpp/lwipcpp's UDP struct
+// Wrapper for
+// https://www.nongnu.org/lwip/2_0_x/structudp__pcb.html
 struct Pcb
 {
     typedef struct udp_pcb* pcb_pointer;
@@ -121,6 +122,11 @@ public:
     {
         return bind(IP_ADDR_ANY, port);
     }
+
+    void local_port(uint16_t value)
+    {
+        pcb->local_port = value;
+    }
 };
 
 namespace experimental {
@@ -139,6 +145,14 @@ struct AutoPcb : Pcb
     }
 };
 
+
 }
+
+} // namespace udp
+
+#if __has_cpp_attribute(deprecated)
+[[deprecated("Use lwip::embr::udp::Pcb instead")]]
+#endif
+typedef udp::Pcb Pcb;
 
 }}

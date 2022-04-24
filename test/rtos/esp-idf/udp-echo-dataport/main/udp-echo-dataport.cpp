@@ -116,7 +116,7 @@ void udp_echo_handler(void*)
     // FIX: Doesn't work for some reason
     //auto subject = embr::layer1::make_subject(AppObserver());
 
-    static auto dataport = embr::lwip::make_udp_dataport(subject, 7);
+    static auto dataport = embr::lwip::make_udp_dataport(subject, 7, 7);
 
     // 29MAR22
     // subject=8, dataport=676
