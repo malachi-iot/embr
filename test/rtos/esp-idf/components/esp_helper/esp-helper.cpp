@@ -139,7 +139,7 @@ void init_flash()
 // largely copy/paste from
 // https://github.com/espressif/esp-idf/blob/v3.3/examples/wifi/getting_started/station/main/station_example_main.c
 #ifdef FEATURE_IDF_DEFAULT_EVENT_LOOP
-void wifi_init_sta()
+esp_netif_t* wifi_init_sta(bool with_compile_time_credentials)
 #else
 void wifi_init_sta(system_event_cb_t event_handler)
 #endif
@@ -150,18 +150,19 @@ void wifi_init_sta(system_event_cb_t event_handler)
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_LOGI(TAG, "create default event loop");
     ESP_ERROR_CHECK(esp_event_loop_create_default());
-    esp_netif_create_default_wifi_sta();
+    esp_netif_t* wifi_netif = esp_netif_create_default_wifi_sta();
 #else
     tcpip_adapter_init();
     ESP_LOGI(TAG, "init event loop");
     ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
+
+    constexpr bool with_compile_time_credentials = true;
 #endif
 
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
     // https://esp32.com/viewtopic.php?t=1317
     // for ssid/password config via C++
-    wifi_config_t wifi_config = {};
 
     // TODO: May do these elsewhere once everything is organized
 #ifdef FEATURE_IDF_DEFAULT_EVENT_LOOP
@@ -175,18 +176,25 @@ void wifi_init_sta(system_event_cb_t event_handler)
     ESP_ERROR_CHECK(retval);
 #endif
 
-    strcpy((char*)wifi_config.sta.ssid, CONFIG_WIFI_SSID);
-    strcpy((char*)wifi_config.sta.password, CONFIG_WIFI_PASSWORD);
-
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA) );
-#ifdef FEATURE_IDF_DEFAULT_EVENT_LOOP
-    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config) );
-#else
-    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config) );
-#endif
+
+    if(with_compile_time_credentials)
+    {
+        ESP_LOGD(TAG, "Hard wire connection to: " CONFIG_WIFI_SSID);
+
+        wifi_config_t wifi_config = {};
+
+        strcpy((char*)wifi_config.sta.ssid, CONFIG_WIFI_SSID);
+        strcpy((char*)wifi_config.sta.password, CONFIG_WIFI_PASSWORD);
+
+        ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config) );
+    }
+
     ESP_ERROR_CHECK(esp_wifi_start() );
 
     ESP_LOGI(TAG, "finished.");
     ESP_LOGI(TAG, "connect to ap SSID:%s password:%s",
              CONFIG_WIFI_SSID, CONFIG_WIFI_PASSWORD);
+
+    return wifi_netif;
 }

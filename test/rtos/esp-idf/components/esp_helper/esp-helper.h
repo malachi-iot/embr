@@ -12,7 +12,7 @@ esp_err_t event_handler(void* ctx, system_event_t* event);
 void init_flash();
 
 #ifdef FEATURE_IDF_DEFAULT_EVENT_LOOP
-void wifi_init_sta();
+esp_netif_t* wifi_init_sta(bool with_compile_time_credentials = true);
 #else
 void wifi_init_sta(system_event_cb_t event_handler);
 #endif
