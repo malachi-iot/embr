@@ -188,13 +188,16 @@ void wifi_init_sta(system_event_cb_t event_handler)
         strcpy((char*)wifi_config.sta.password, CONFIG_WIFI_PASSWORD);
 
         ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config) );
+
+        ESP_LOGD(TAG, "attempting connect to ap SSID:%s password:%s",
+                CONFIG_WIFI_SSID, CONFIG_WIFI_PASSWORD);
     }
 
     ESP_ERROR_CHECK(esp_wifi_start() );
 
     ESP_LOGI(TAG, "finished.");
-    ESP_LOGI(TAG, "connect to ap SSID:%s password:%s",
-             CONFIG_WIFI_SSID, CONFIG_WIFI_PASSWORD);
 
+#ifdef FEATURE_IDF_DEFAULT_EVENT_LOOP
     return wifi_netif;
+#endif
 }

@@ -151,7 +151,7 @@ struct AutoPcb : Pcb
 } // namespace udp
 
 #if __has_cpp_attribute(deprecated)
-[[deprecated("Use lwip::embr::udp::Pcb instead")]]
+[[deprecated("Use embr::lwip::udp::Pcb instead")]]
 #endif
 typedef udp::Pcb Pcb;
 

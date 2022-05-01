@@ -12,7 +12,7 @@
 // so until that's all worked out, we feature flag it
 // Also, it appears the events it connects to aren't fully defined
 // until 4.0.0 anyway, which is awkward
-#if ESTD_IDF_VER >= ESTD_IDF_VER_4_0_0
+#if (ESTD_IDF_VER >= ESTD_IDF_VER_4_0_0) || (ESP_IDF_VERSION > ESP_IDF_VERSION_VAL(4, 0, 0))
 // represents 3.3.0+ "recommended" event loop
 // esp_event_loop_create_default / esp_event_loop_create
 // vs
