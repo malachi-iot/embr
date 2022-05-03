@@ -25,7 +25,7 @@ namespace internal {
 // fallback one for when we just can't match the on_notify
 // Remember, trailing bool/int/long denotes priority with bool being best fit
 template <class TObserver, class TEvent>
-static auto notify_helper(TObserver& observer, const TEvent& n, long) -> bool
+inline static auto notify_helper(TObserver& observer, const TEvent& n, long) -> bool
 {
     // TODO: Perhaps put our "didn't fire" warning here - compile time would be best
     return true;
@@ -34,7 +34,7 @@ static auto notify_helper(TObserver& observer, const TEvent& n, long) -> bool
 
 // fallback for invocation with context where no on_notify is present
 template <class TObserver, class TEvent, class TContext>
-static auto notify_helper(TObserver& observer, const TEvent& n, TContext&, long) -> bool
+inline static auto notify_helper(TObserver& observer, const TEvent& n, TContext&, long) -> bool
 {
     // TODO: Perhaps put our "didn't fire" warning here - compile time would be best
     return true;
@@ -42,7 +42,7 @@ static auto notify_helper(TObserver& observer, const TEvent& n, TContext&, long)
 
 // bool gives this one precedence, since we call with (n, true)
 template <class TObserver, class TEvent>
-static auto notify_helper(TObserver& observer, const TEvent& n, bool)
+inline static auto notify_helper(TObserver& observer, const TEvent& n, bool)
     -> decltype(std::declval<TObserver>().on_notify(n), void(), bool{})
 {
     observer.on_notify(n);
@@ -52,7 +52,7 @@ static auto notify_helper(TObserver& observer, const TEvent& n, bool)
 
 // pseudo-fallback to invoke non-context on_notify, even when context is present
 template <class TObserver, class TEvent, class TContext>
-static auto notify_helper(TObserver& observer, const TEvent& n, TContext& context, int)
+inline static auto notify_helper(TObserver& observer, const TEvent& n, TContext& context, int)
     -> decltype(std::declval<TObserver>().on_notify(n), void(), bool{})
 {
     observer.on_notify(n);
@@ -62,7 +62,7 @@ static auto notify_helper(TObserver& observer, const TEvent& n, TContext& contex
 
 // bool gives this one precedence, since we call with (n, true)
 template <class TObserver, class TEvent, class TContext>
-static auto notify_helper(TObserver& observer, const TEvent& n, TContext& context, bool)
+inline static auto notify_helper(TObserver& observer, const TEvent& n, TContext& context, bool)
     -> decltype(std::declval<TObserver>().on_notify(n, context), void(), bool{})
 {
     observer.on_notify(n, context);
@@ -88,8 +88,8 @@ static auto notify_helper(const TEvent& n, TContext&, long) -> bool
 
 // bool gives this one precedence, since we call with (n, true)
 template <class TObserver, class TEvent>
-static auto notify_helper(const TEvent& n, bool)
--> decltype(TObserver::on_notify(n), void(), bool{})
+inline static auto notify_helper(const TEvent& n, bool)
+    -> decltype(TObserver::on_notify(n), void(), bool{})
 {
     TObserver::on_notify(n);
 
@@ -99,8 +99,8 @@ static auto notify_helper(const TEvent& n, bool)
 
 // bool gives this one precedence, since we call with (n, true)
 template <class TObserver, class TEvent, class TContext>
-static auto notify_helper(const TEvent& n, TContext& context, bool)
--> decltype(TObserver::on_notify(n), void(), bool{})
+inline static auto notify_helper(const TEvent& n, TContext& context, bool)
+    -> decltype(TObserver::on_notify(n), void(), bool{})
 {
     TObserver::on_notify(n);
 
@@ -109,8 +109,8 @@ static auto notify_helper(const TEvent& n, TContext& context, bool)
 
 // bool gives this one precedence, since we call with (n, true)
 template <class TObserver, class TEvent, class TContext>
-static auto notify_helper(const TEvent& n, TContext& context, bool)
--> decltype(TObserver::on_notify(n, context), void(), bool{})
+inline static auto notify_helper(const TEvent& n, TContext& context, bool)
+    -> decltype(TObserver::on_notify(n, context), void(), bool{})
 {
     TObserver::on_notify(n, context);
 
@@ -118,13 +118,13 @@ static auto notify_helper(const TEvent& n, TContext& context, bool)
 }
 #else
 template <class TObserver, class TEvent>
-static void notify_helper(TObserver& observer, const TEvent& n, bool)
+inline static void notify_helper(TObserver& observer, const TEvent& n, bool)
 {
     observer.on_notify(n);
 }
 
 template <class TObserver, class TEvent>
-static void notify_helper(const TEvent& n, bool)
+inline static void notify_helper(const TEvent& n, bool)
 {
     TObserver::on_notify(n);
 }
