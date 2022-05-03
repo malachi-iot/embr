@@ -107,7 +107,7 @@ void udp_echo_recv(void *arg,
 #ifdef USE_AUTOPCB
 void udp_echo_init(void)
 {
-    embr::lwip::Pcb pcb;
+    embr::lwip::udp::Pcb pcb;
 
     // get new pcb
     if (!pcb.alloc()) {
