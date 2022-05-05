@@ -151,35 +151,7 @@ private:
 public:
     // NOTE: Not saving to output sequence, because for most of our implementations, this one
     // included, we treat pbase() buffer and output sequence as the same
-    int_type overflow(int_type ch = traits_type::eof())
-    {
-        if(xout_avail() == 0)
-        {
-            if(!this->move_next())
-            {
-                // UNTESTED
-                // DEBT: Need a way to specify app-specific values, not hardcode 256
-                PbufBase appended(256);
-
-                // TODO: Might want to check appended.valid() to be sure, though
-                // pretty sure concat of a null pbuf will yield similar results in the end
-
-                this->pbuf_current.concat(appended);
-
-                if(!this->move_next())
-                    return traits_type::eof();
-            }
-
-            // it's presumed that next buf in pbuf chain can fit at least one character
-        }
-
-        if(ch != traits_type::eof())
-            *pptr() = ch;
-
-        // DEBT: We can do better than this.  Can't return ch since sometimes it's eof
-        // even when we do have more buffer space
-        return traits_type::eof() - 1;
-    }
+    int_type overflow(int_type ch = traits_type::eof());
 
     int_type sputc(char_type ch)
     {
@@ -225,6 +197,41 @@ public:
     }
 #endif
 };
+
+
+// Placing non-inline because it's kinda bulky
+template <class TCharTraits>
+typename TCharTraits::int_type opbuf_streambuf<TCharTraits>::overflow(int_type ch)
+{
+    if(xout_avail() == 0)
+    {
+        if(!this->move_next())
+        {
+            // UNTESTED
+            // DEBT: Need a way to specify app-specific values, not hardcode 256
+            PbufBase appended(256);
+
+            // TODO: Might want to check appended.valid() to be sure, though
+            // pretty sure concat of a null pbuf will yield similar results in the end
+
+            this->pbuf_current.concat(appended);
+
+            if(!this->move_next())
+                return traits_type::eof();
+        }
+
+        // it's presumed that next buf in pbuf chain can fit at least one character
+    }
+
+    if(ch != traits_type::eof())
+        *pptr() = ch;
+
+    // DEBT: We can do better than this.  Can't return ch since sometimes it's eof
+    // even when we do have more buffer space
+    return traits_type::eof() - 1;
+}
+
+
 
 template <class TCharTraits>
 struct ipbuf_streambuf : 
