@@ -1,0 +1,3 @@
+void twai_init()
+{
+}
