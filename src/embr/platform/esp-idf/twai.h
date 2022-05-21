@@ -124,6 +124,8 @@ public:
 
     inline void pbump(int count) { message().data_length_code += count; }
 
+    inline bool end() const { return pos() >= maximum(); }
+
     estd::streamsize xsputn(const char_type* s, estd::streamsize count)
     {
         /*
@@ -146,9 +148,12 @@ public:
         return count;
     }
 
+    // NOTE: Might be able to put this into helper-realm, though it's a bit of
+    // the cure being worse than the disease -- may be more confusing to have
+    // those helpers around rather than copy/paste this little chunk of code here
     inline int_type sputc(char_type c)
     {
-        if(pos() >= maximum()) return traits_type::eof();
+        if(end()) return traits_type::eof();
 
         int_type r = *pptr();
         pbump(1);
