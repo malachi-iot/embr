@@ -26,6 +26,11 @@ protected:
     {
         return const_cast<uint8_t*>(message.data);
     }
+
+public:
+    inline bool extd() const { return message.extd; }
+    inline bool rtr() const { return message.rtr; }
+    uint32_t identifier() const { return message.identifier; }
 };
 
 template <class TCharTraits, class TBase = twai_streambuf_base<TCharTraits> >
@@ -54,11 +59,12 @@ public:
 
     constexpr itwai_streambuf() = default;
 
+    /*
     constexpr itwai_streambuf(const twai_message_t& message) :
         base_type(message)
-    {}
+    {} */
 
-    //inline unsigned xin_avail() const { return data_length() - pos(); }
+    inline unsigned xin_avail() const { return data_length() - pos(); }
 
     inline char_type* eback() const { return reinterpret_cast<char_type*>(base_type::data()); }
     inline char_type* gptr() const { return eback() + pos(); }
@@ -66,7 +72,21 @@ public:
 
     inline char_type xsgetc() const { return *gptr(); }
 
+    // UNTESTED
     inline void gbump(int count) { message().data_length_code += count << 4; }
+
+    // NOTE: Leaning a bit more towards a 'Transport' type object, but a
+    // wrapper API here is pretty harmless
+    inline esp_err_t receive(TickType_t ticks_to_wait)
+    {
+        return twai_receive(&base_type::message, ticks_to_wait);
+    }
+
+    // UNTESTED
+    inline esp_err_t receive(estd::chrono::freertos_clock::duration d)
+    {
+        return receive(d.count());
+    }
 };
 
 template <class TCharTraits, class TBase = twai_streambuf_base<TCharTraits> >
@@ -78,7 +98,7 @@ class otwai_streambuf : public TBase
     inline const twai_message_t& message() const { return base_type::message; }
 
     inline uint8_t pos() const { return message().data_length_code; }
-    inline void pos(uint8_t v) { return message().data_length_code = v; }
+    inline void pos(uint8_t v) { message().data_length_code = v; }
     inline uint8_t maximum() const { return sizeof(base_type::message.data); }
 
 public:
@@ -86,11 +106,17 @@ public:
     typedef typename base_type::int_type int_type;
     typedef typename base_type::char_type char_type;
 
-    constexpr otwai_streambuf() = default;
+    otwai_streambuf()
+    {
+        // Deprecated, but very convenient way to initialize
+        base_type::message.flags = 0;
+        pos(0);
+    }
 
+    /*
     constexpr otwai_streambuf(const twai_message_t& message) :
         base_type(message)
-    {}
+    {} */
 
     inline char_type* pbase() const { return reinterpret_cast<char_type*>(base_type::data()); }
     inline char_type* pptr() const { return pbase() + pos(); }
@@ -127,6 +153,22 @@ public:
         int_type r = *pptr();
         pbump(1);
         return r;
+    }
+
+    void ss(bool v) { message().ss = v; }
+    void identifier(uint32_t v) { message().identifier = v; }
+
+    // NOTE: Leaning a bit more towards a 'Transport' type object, but a
+    // wrapper API here is pretty harmless
+    inline esp_err_t transmit(TickType_t ticks_to_wait)
+    {
+        return twai_receive(&base_type::message, ticks_to_wait);
+    }
+
+    // UNTESTED
+    inline esp_err_t transmit(estd::chrono::freertos_clock::duration d)
+    {
+        return transmit(d.count());
     }
 };
 
