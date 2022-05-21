@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 
-project(embr-lib VERSION 0.1.0)
+project(embr-lib VERSION 0.1.1 LANGUAGES CXX)
 
 set(ROOT_DIR ..)
 set(EXT_DIR ${ROOT_DIR}/ext)
@@ -13,8 +13,6 @@ include_directories(${ESTDLIB_DIR})
 #add_subdirectory(${ESTDLIB_DIR} estdlib)
 
 set(SOURCE_FILES
-    main.cpp
-
     embr/dataport.h
     embr/dataport.hpp
     embr/datapump.h
@@ -38,3 +36,6 @@ set(SOURCE_FILES
         embr/exp/datapump-v2.h embr/exp/pbuf.h embr/exp/retry-v2.h embr/exp/datapump-core-v2.h embr/exp/dataport-v2.h)
 
 add_library(${PROJECT_NAME} ${SOURCE_FILES})
+
+set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
+

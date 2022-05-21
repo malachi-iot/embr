@@ -1,5 +1,7 @@
 #include <catch.hpp>
 
+#include <bitset>
+
 #include <embr/scheduler.h>
 
 // Not available because we test against C++11
@@ -170,6 +172,15 @@ bool traditional_handler(
 }
 
 
+using FunctorTraits = embr::internal::experimental::FunctorTraits<unsigned>;
+
+struct StatefulFunctorTraits : FunctorTraits
+{
+    time_point now_ = 0;
+
+    time_point now() { return now_++; }
+};
+
 TEST_CASE("scheduler test", "[scheduler]")
 {
     SECTION("one-shot")
@@ -216,7 +227,7 @@ TEST_CASE("scheduler test", "[scheduler]")
         // Should wake up 5 times at 5, 15, 25, 35 and 45
         REQUIRE(v.counter == 5);
     }
-    SECTION("events")
+    SECTION("events (aux)")
     {
         int counter = 0;
         int _counter = 0;
@@ -313,6 +324,107 @@ TEST_CASE("scheduler test", "[scheduler]")
             scheduler.process(21);
 
             REQUIRE(counter == 2);
+        }
+    }
+    SECTION("experimental")
+    {
+        // Works well, but overly verbose on account of estd::experimental::function
+        // indeed being in progress and experimental
+        SECTION("estd::function style")
+        {
+            std::bitset<32> arrived;
+            embr::internal::layer1::Scheduler<FunctorTraits, 5> scheduler;
+
+            SECTION("trivial scheduling")
+            {
+                auto f_set_only = FunctorTraits::make_function([&arrived](unsigned* wake, unsigned current_time)
+                {
+                    arrived.set(*wake);
+                });
+
+                auto f_set_and_repeat = FunctorTraits::make_function([&arrived](unsigned* wake, unsigned current_time)
+                {
+                    arrived.set(*wake);
+                    *wake += 2;
+                });
+
+                scheduler.schedule(11, f_set_and_repeat);
+                scheduler.schedule(3, f_set_only);
+                scheduler.schedule(9, f_set_only);
+
+                scheduler.process(0);
+                scheduler.process(4);
+                scheduler.process(9);
+                scheduler.process(11);
+                scheduler.process(20);
+
+                REQUIRE(!arrived[0]);
+                REQUIRE(arrived[3]);
+                REQUIRE(!arrived[4]);
+                REQUIRE(arrived[9]);
+                REQUIRE(arrived[11]);
+                REQUIRE(!arrived[12]);
+                REQUIRE(arrived[13]);
+                REQUIRE(arrived[15]);
+                REQUIRE(arrived[17]);
+                REQUIRE(!arrived[18]);
+                REQUIRE(arrived[19]);
+            }
+            SECTION("overly smart scheduling")
+            {
+                auto _f = estd::experimental::function<void(unsigned*, unsigned)>::make_inline(
+                    [&arrived](unsigned* wake, unsigned current_time)
+                    {
+                        arrived.set(*wake);
+                        if (*wake < 11 || *wake > 20)
+                        {
+
+                        }
+                        else
+                        {
+                            *wake = *wake + 2;
+                        }
+                    });
+                estd::experimental::function_base<void(unsigned*, unsigned)> f(&_f);
+
+                scheduler.schedule(11, f);
+                scheduler.schedule(3, f);
+                scheduler.schedule(9, f);
+
+                scheduler.process(0);
+                REQUIRE(!arrived[0]);
+                scheduler.process(4);
+                REQUIRE(arrived[3]);
+                REQUIRE(!arrived[9]);
+                scheduler.process(9);
+                REQUIRE(arrived[9]);
+                scheduler.process(11);
+                REQUIRE(arrived[11]);
+                scheduler.process(20);
+                REQUIRE(!arrived[12]);
+                REQUIRE(arrived[13]);
+                REQUIRE(!arrived[14]);
+                REQUIRE(arrived[15]);
+                REQUIRE(!arrived[16]);
+            }
+        }
+        SECTION("stateful")
+        {
+            std::bitset<32> arrived;
+            embr::internal::layer1::Scheduler<StatefulFunctorTraits, 5> scheduler;
+
+            auto f = StatefulFunctorTraits::make_function(
+                [&](unsigned* wake, unsigned current)
+            {
+                arrived.set(*wake);
+            });
+
+            scheduler.schedule_now(f);
+
+            scheduler.process(10);
+
+            REQUIRE(arrived.count() == 1);
+            REQUIRE(arrived[0]);
         }
     }
 }
