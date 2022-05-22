@@ -4,36 +4,27 @@
  */
 #pragma once
 
+#include "features.h"
 #include "endpoint.h"
 #include "udp.h"
 #include "streambuf.h"
 
 namespace embr { namespace lwip { namespace experimental {
 
-// FEATURE_ESTD_NETBUF_STREAMBUF represents the legacy netbuf-style
-// approach of gluing streambuf to lwip/pbufs.  The new way goes direct
-// from streambuf to pbuf
-// TODO: Move this into a features.h
-#ifndef FEATURE_EMBR_NETBUF_STREAMBUF
-#define FEATURE_EMBR_NETBUF_STREAMBUF 0
-#endif
-
 struct TransportBase
 {
-    typedef embr::lwip::experimental::addr_pointer addr_pointer;
     typedef struct pbuf* pbuf_pointer;
-    typedef struct udp_pcb* pcb_pointer;
 #if FEATURE_EMBR_NETBUF_STREAMBUF
     typedef legacy::opbuf_streambuf ostreambuf_type;
     typedef legacy::ipbuf_streambuf istreambuf_type;
-    typedef ostreambuf_type::netbuf_type netbuf_type;
+    typedef ostreambuf_type::netbuf_type buffer_type;
 #else
     typedef upgrading::opbuf_streambuf ostreambuf_type;
     typedef upgrading::ipbuf_streambuf istreambuf_type;
     // DEBT: Stop-gap, almost definitely we'd prefer outsiders to use
-    // actual stream and not the "netbuf" (which has always mapped to
+    // actual stream and not the raw "buffer_type" (which has always mapped to
     // a pbuf gracefully, by design)
-    typedef Pbuf netbuf_type;
+    typedef Pbuf buffer_type;
 #endif
 };
 
@@ -43,6 +34,8 @@ struct TransportUdp : TransportBase
     typedef Endpoint<use_address_ptr> endpoint_type;
 
     lwip::udp::Pcb pcb;
+
+    typedef struct udp_pcb* pcb_pointer;
 
 #ifdef FEATURE_CPP_VARIADIC
     template <class ...TArgs>
@@ -60,7 +53,7 @@ struct TransportUdp : TransportBase
     }
 #endif
 
-    void send(netbuf_type& netbuf, const endpoint_type& endpoint)
+    void send(buffer_type& netbuf, const endpoint_type& endpoint)
     {
         pcb.send(netbuf.pbuf(),
             endpoint.address(),

@@ -24,7 +24,7 @@ template <class TTransportDescription>
 struct DataPortVirtual
 {
     typedef TTransportDescription transport_descriptor_t;
-    typedef typename TTransportDescription::netbuf_type netbuf_type;
+    typedef typename TTransportDescription::buffer_type netbuf_type;
     typedef typename TTransportDescription::endpoint_type endpoint_type;
 
     // for now, not overpromising since the virtual version if this would be broken
