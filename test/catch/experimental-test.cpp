@@ -61,8 +61,10 @@ void test(TAllocator& a)
 // For v4 retry testing
 struct SyntheticProtocol
 {
+    typedef int ack_id_type;
+
     template <class TImpl>
-    static bool is_ack(estd::internal::streambuf<TImpl>& streambuf)
+    static bool is_ack(estd::internal::streambuf<TImpl>& streambuf, ack_id_type* ack_id)
     {
         typedef estd::internal::streambuf<TImpl> streambuf_type;
         typedef typename streambuf_type::traits_type traits_type;
@@ -70,7 +72,16 @@ struct SyntheticProtocol
 
         int_type c = streambuf.snextc();
 
-        return c == '1';
+        bool _is_ack = c == '1';
+
+        if(_is_ack)
+        {
+            c = streambuf.sgetc();
+            if(c == traits_type::eof()) return false;
+            *ack_id = c;
+        }
+
+        return _is_ack;
     }
 };
 
@@ -195,6 +206,8 @@ TEST_CASE("experimental test", "[experimental]")
 
         char buf[128];
         estd::span<char> span(buf);
+        char buf2[128];
+        estd::span<char> span_send(buf2);
 
         struct Transport
         {
@@ -215,11 +228,26 @@ TEST_CASE("experimental test", "[experimental]")
         // FIX: Need struct_provider to behave itself with Transport& here
         embr::experimental::mk4::RetryManager<Transport, SyntheticProtocol> rm(transport);
 
-        istream_type in(span);
+        ostream_type outgoing(span_send);
+
+        outgoing << 'x'; // dummy character, ignored
+        outgoing << '0'; // "regular" non ACK
+        outgoing << "hi2u"; // arbitrary payload
+
+        rm.send(outgoing.rdbuf()->value(), 0);
+
+        estd::chrono::steady_clock::time_point _current;
+
+        rm.process(_current);
+
+        ostream_type incoming(span);
+
+        incoming << 'x'; // dummy character, ignored
+        incoming << '1' << '5'; // ACK mode (1), ACK ID (5)
 
         // DEBT: This underlying 'value' accessor is only accidentally available.  We instead need
         // a proper 'span()' accessor for those that really know how and need to get to it
-        auto v1 = in.rdbuf();
+        auto v1 = incoming.rdbuf();
         auto v2 = v1->value();
         rm.process_incoming(v2, 0);
     }

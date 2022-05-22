@@ -8,6 +8,20 @@
 
 namespace embr { namespace experimental { namespace mk4 {
 
+template <class TSchedulerImpl>
+struct RetryListener
+{
+    static void on_notify(internal::events::Scheduled<TSchedulerImpl> e)
+    {
+
+    }
+
+    static void on_notify(internal::events::Removed<TSchedulerImpl> e)
+    {
+
+    }
+};
+
 template <class TTransport, class TProtocol>
 class RetryManager :
     protected estd::internal::struct_evaporator<TTransport>
@@ -21,6 +35,8 @@ class RetryManager :
     typedef typename transport_type::istreambuf_type istreambuf_type;
 
     _transport_type transport() { return transport_provider::value(); }
+
+    typedef estd::chrono::steady_clock::time_point time_point;
 
     struct SchedulerImpl
     {
@@ -47,7 +63,6 @@ class RetryManager :
 
     struct retry_item : SchedulerImpl::control_structure
     {
-        typedef typename SchedulerImpl::time_point time_point;
         int retries;
         buffer_type buffer;
         const endpoint_type endpoint;
@@ -67,7 +82,22 @@ class RetryManager :
     };
 
 
+    // IDEA: To aid in auto deletion on 'removed' event, after changing scheduler::process to only
+    // fire that event when item is truly removed, rather than rescheduled.  Note that this would
+    // probably make this code c++11 dependent.  Alternative is to add a 'process_one' to scheduler
+    // which returns what item it processed and a flag about whether it's still scheduled
+    //embr::internal::layer1::Scheduler<SchedulerImpl, 10, RetryListener<SchedulerImpl> > scheduler;
     embr::internal::layer1::Scheduler<SchedulerImpl, 10> scheduler;
+
+    void process_incoming(istreambuf_type& s, const endpoint_type& endpoint)
+    {
+        typename protocol_type::ack_id_type id;
+        if(protocol_type::is_ack(s, &id))
+        {
+            // Evaluate to see if this particular buffer is an ACK that we are looking for
+            // NOTE: With current architecture that's a brute force search through our scheduler.  Bummer.
+        }
+    }
 
 public:
     void send(const buffer_type& buffer, const endpoint_type& endpoint)
@@ -77,20 +107,14 @@ public:
         scheduler.schedule(new retry_item(buffer, endpoint));
     }
 
-    void process()
+    void process(time_point current)
     {
-
+        scheduler.process(current);
     }
 
-    void process_incoming(istreambuf_type& s, const endpoint_type& endpoint)
-    {
-        if(protocol_type::is_ack(s))
-        {
-            // Evaluate to see if this particular buffer is an ACK that we are looking for
-            // NOTE: With current architecture that's a brute force search through our scheduler.  Bummer.
-        }
-    }
-
+    ///
+    /// \param buffer
+    /// \param endpoint endpoint from which this packet originated
     void process_incoming(const buffer_type& buffer, const endpoint_type& endpoint)
     {
         istreambuf_type s(buffer);
@@ -98,8 +122,14 @@ public:
         return process_incoming(s, endpoint);
     }
 
-    RetryManager(TTransport&& transport) : transport_provider(std::move(transport)) {}
-    RetryManager(const TTransport& transport) : transport_provider(transport) {}
+    RetryManager(TTransport&& transport) :
+        transport_provider(std::move(transport))
+        //scheduler(*this)
+        {}
+    RetryManager(const TTransport& transport) :
+        transport_provider(transport)
+        //scheduler(*this)
+    {}
     RetryManager() = default;
 };
 
