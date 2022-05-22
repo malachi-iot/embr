@@ -13,6 +13,8 @@
 #include <embr/streambuf.hpp>
 #include <estd/sstream.h>
 
+#include <embr/exp/retry-v4.h>
+
 using namespace embr::experimental;
 
 template <class TTransport, class TRetryPolicyImpl, class TTimer>
@@ -55,6 +57,23 @@ void test(TAllocator& a)
 
     REQUIRE(s == "hello world!");
 }
+
+// For v4 retry testing
+struct SyntheticProtocol
+{
+    template <class TImpl>
+    static bool is_ack(estd::internal::streambuf<TImpl>& streambuf)
+    {
+        typedef estd::internal::streambuf<TImpl> streambuf_type;
+        typedef typename streambuf_type::traits_type traits_type;
+        typedef typename traits_type::int_type int_type;
+
+        int_type c = streambuf.snextc();
+
+        return c == '1';
+    }
+};
+
 
 TEST_CASE("experimental test", "[experimental]")
 {
@@ -168,5 +187,40 @@ TEST_CASE("experimental test", "[experimental]")
         bool found = rm.evaluate_received(fake_endpoint, key);
 
         REQUIRE(found);
+    }
+    SECTION("Retry v4")
+    {
+        typedef estd::experimental::ospanstream ostream_type;
+        typedef estd::experimental::ispanstream istream_type;
+
+        char buf[128];
+        estd::span<char> span(buf);
+
+        struct Transport
+        {
+            typedef ostream_type::streambuf_type ostreambuf_type;
+            typedef istream_type::streambuf_type istreambuf_type;
+
+            typedef int endpoint_type;
+            typedef ostreambuf_type::span_type buffer_type;
+
+            void send(const ostreambuf_type&, endpoint_type)
+            {
+
+            }
+        };
+
+        Transport transport;
+
+        // FIX: Need struct_provider to behave itself with Transport& here
+        embr::experimental::mk4::RetryManager<Transport, SyntheticProtocol> rm(transport);
+
+        istream_type in(span);
+
+        // DEBT: This underlying 'value' accessor is only accidentally available.  We instead need
+        // a proper 'span()' accessor for those that really know how and need to get to it
+        auto v1 = in.rdbuf();
+        auto v2 = v1->value();
+        rm.process_incoming(v2, 0);
     }
 }
