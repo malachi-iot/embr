@@ -7,6 +7,8 @@
 
 //#include <estd/iostream.h>    // FIX: This fails rather badly, look into why
 
+#define ESP_IDF_TESTING
+
 #include "unity.h"
 
 #include "esp_log.h"
@@ -23,11 +25,11 @@ static const char* TAG = "lwip-pbuf";
 typedef embr::lwip::PbufNetbuf netbuf_type;
 typedef netbuf_type::size_type size_type;
 
-using embr::lwip::opbufstream;
-using embr::lwip::ipbufstream;
+using embr::lwip::upgrading::opbufstream;
+using embr::lwip::upgrading::ipbufstream;
 
-typedef embr::lwip::opbuf_streambuf out_pbuf_streambuf;
-typedef embr::lwip::ipbuf_streambuf in_pbuf_streambuf;
+typedef embr::lwip::upgrading::opbuf_streambuf out_pbuf_streambuf;
+typedef embr::lwip::upgrading::ipbuf_streambuf in_pbuf_streambuf;
 
 typedef in_pbuf_streambuf::traits_type traits_type;
 
@@ -90,8 +92,7 @@ TEST_CASE("lwip pbuf embr-netbuf: out streambuf chain", "[lwip-pbuf]")
 TEST_CASE("lwip pbuf embr-netbuf: ostream", "[lwip-pbuf]")
 {
     // NOTE: Compiles, not runtime tested at all
-    typedef estd::internal::streambuf<
-        out_netbuf_streambuf<char, embr::lwip::PbufNetbuf> > streambuf_type;
+    typedef out_netbuf_streambuf<char, embr::lwip::PbufNetbuf> streambuf_type;
 
     estd::internal::basic_ostream<streambuf_type> 
         out(netbuf_size);
@@ -183,7 +184,23 @@ TEST_CASE("lwip pbuf embr-netbuf: in seekoff", "[lwip-pbuf]")
 
 }
 
-TEST_CASE("lwip pbuf embr-netbuf: out seekoff", "[lwip-pbuf]")
+TEST_CASE("lwip pbuf out stream: shrink", "[lwip-pbuf]")
+{
+    char buf[netbuf_size];
+    out_pbuf_streambuf sb(netbuf_size);
+
+    int read_back = sb.sputn(buf, netbuf_size / 2);
+
+    TEST_ASSERT_EQUAL_INT(netbuf_size / 2, read_back);
+
+    sb.shrink();
+
+    embr::lwip::Pbuf& pbuf = sb.pbuf();
+
+    TEST_ASSERT_EQUAL_INT(read_back, pbuf.total_length());
+}
+
+TEST_CASE("lwip pbuf stream: out seekoff", "[lwip-pbuf]")
 {
     char buf[netbuf_size];
     out_pbuf_streambuf sb(netbuf_size);
@@ -195,9 +212,10 @@ TEST_CASE("lwip pbuf embr-netbuf: out seekoff", "[lwip-pbuf]")
     int read_back = sb.sputn(buf, netbuf_size / 2);
 
     TEST_ASSERT_EQUAL_INT(1 + netbuf_size / 2, sb.pos());
+    TEST_ASSERT_EQUAL_INT(netbuf_size / 2, read_back);
 }
 
-TEST_CASE("lwip pbuf embr-netbuf: istream", "[lwip-pbuf]")
+TEST_CASE("lwip pbuf stream: istream", "[lwip-pbuf]")
 {
     using namespace estd;
 
@@ -281,3 +299,113 @@ TEST_CASE("lwip pbuf embr-netbuf: netbuf shrink", "[lwip-pbuf]")
     TEST_ASSERT_EQUAL(traits_type::eof(), in.get());
 }
 #endif
+
+TEST_CASE("lwip upgraded streambuf: helpers", "[lwip-helpers]")
+{
+    CONSTEXPR unsigned pbuf_size = 32;
+    embr::lwip::Pbuf pbuf(pbuf_size);
+    embr::lwip::PbufBase pbuf2(pbuf_size);
+
+    pbuf.concat(pbuf2);
+
+    embr::lwip::Pbuf::size_type size = embr::lwip::delta_length(pbuf, pbuf2);
+
+    TEST_ASSERT_EQUAL(pbuf_size, size);
+
+    pbuf.concat(pbuf2 = embr::lwip::PbufBase(pbuf_size));
+
+    size = embr::lwip::delta_length(pbuf, pbuf2);
+
+    TEST_ASSERT_EQUAL(pbuf_size * 2, size);
+    TEST_ASSERT_EQUAL(pbuf_size * 3, pbuf.total_length());
+
+    embr::lwip::PbufBase pbuf3 = pbuf.skip(pbuf_size * 2, &size);
+
+    TEST_ASSERT(pbuf2 == pbuf3);
+    TEST_ASSERT_EQUAL(size, 0);
+}
+
+TEST_CASE("lwip upgraded streambuf: output", "[lwip-streambuf]")
+{
+    CONSTEXPR unsigned pbuf_size = 32;
+    embr::lwip::Pbuf pbuf(pbuf_size);
+    embr::lwip::upgrading::basic_opbuf_streambuf<char> out(std::move(pbuf));
+
+    out.sputn(s1, s1_size);
+
+    TEST_ASSERT_EQUAL(s1_size, out.pos());
+    char* payload = out.pbase();
+    TEST_ASSERT(payload != nullptr);
+#ifndef ESP_IDF_TESTING
+    TEST_ASSERT_EQUAL_CHAR_ARRAY(s1, payload, s1_size);
+#else
+    TEST_ASSERT_EQUAL(s1[0], *payload);
+#endif
+
+    int r = out.sputc('A');
+
+    TEST_ASSERT_EQUAL(s1_size + 1, out.pos());
+    TEST_ASSERT(r != -1);
+    TEST_ASSERT_EQUAL('A', payload[s1_size]);
+    
+    out.shrink();
+
+    TEST_ASSERT_EQUAL(s1_size + 1, out.pbuf().total_length());
+}
+
+
+TEST_CASE("lwip upgraded streambuf: input", "[lwip-streambuf]")
+{
+    // remember, pbufs are assumed to have the entire content populated.  This
+    // test we only actually populate s1_size amount
+    embr::lwip::Pbuf pbuf(128);
+    
+    char* payload = (char*)pbuf.payload();
+    strcpy(payload, s1);
+
+    embr::lwip::upgrading::ipbuf_streambuf in(std::move(pbuf));
+
+    TEST_ASSERT_EQUAL(0, in.pubseekoff(0, estd::ios_base::cur));
+    TEST_ASSERT_EQUAL(payload, in.eback());
+    // DEBT: If showmanyc doesn't get called properly, a full recompile
+    // may be necessary.  Debt because that is a cmake/.h file detection
+    // problem
+    TEST_ASSERT_EQUAL(128, in.in_avail());
+
+    char buf[128];
+
+    int size = in.sgetn(buf, s1_size + 1);
+
+    TEST_ASSERT_EQUAL(s1_size + 1, size);
+    TEST_ASSERT_EQUAL(s1[0], buf[0]);
+}
+
+TEST_CASE("lwip upgraded istream", "[lwip-ios]")
+{
+    embr::lwip::Pbuf pbuf(128);
+
+    char* payload = (char*)pbuf.payload();
+    char buf[128];
+
+    embr::lwip::upgrading::ipbufstream in(std::move(pbuf));
+
+    in.ignore(128);
+
+    int val = in.get();
+
+    TEST_ASSERT_EQUAL(-1, val);
+}
+
+TEST_CASE("lwip upgraded ostream", "[lwip-ios]")
+{
+    embr::lwip::Pbuf pbuf(128);
+
+    char* payload = (char*)pbuf.payload();
+
+    embr::lwip::upgrading::opbufstream out(std::move(pbuf));
+
+    out << s1 << estd::endl;
+
+    TEST_ASSERT_EQUAL(s1_size + 1, out.tellp());
+    TEST_ASSERT_EQUAL(s1[0], *payload);
+}

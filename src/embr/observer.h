@@ -8,10 +8,11 @@
 #include <estd/tuple.h>
 #include <estd/functional.h>
 
-#ifdef FEATURE_CPP_VARIADIC
-
 // NOTE: Not otherwise labeled as such but this file's naming is experimental
 namespace embr {
+
+#ifdef FEATURE_CPP_VARIADIC
+#define FEATURE_EMBR_OBSERVER 1
 
 namespace internal {
 
@@ -24,7 +25,7 @@ namespace internal {
 // fallback one for when we just can't match the on_notify
 // Remember, trailing bool/int/long denotes priority with bool being best fit
 template <class TObserver, class TEvent>
-static auto notify_helper(TObserver& observer, const TEvent& n, long) -> bool
+inline static auto notify_helper(TObserver& observer, const TEvent& n, long) -> bool
 {
     // TODO: Perhaps put our "didn't fire" warning here - compile time would be best
     return true;
@@ -33,7 +34,7 @@ static auto notify_helper(TObserver& observer, const TEvent& n, long) -> bool
 
 // fallback for invocation with context where no on_notify is present
 template <class TObserver, class TEvent, class TContext>
-static auto notify_helper(TObserver& observer, const TEvent& n, TContext&, long) -> bool
+inline static auto notify_helper(TObserver& observer, const TEvent& n, TContext&, long) -> bool
 {
     // TODO: Perhaps put our "didn't fire" warning here - compile time would be best
     return true;
@@ -41,7 +42,7 @@ static auto notify_helper(TObserver& observer, const TEvent& n, TContext&, long)
 
 // bool gives this one precedence, since we call with (n, true)
 template <class TObserver, class TEvent>
-static auto notify_helper(TObserver& observer, const TEvent& n, bool)
+inline static auto notify_helper(TObserver& observer, const TEvent& n, bool)
     -> decltype(std::declval<TObserver>().on_notify(n), void(), bool{})
 {
     observer.on_notify(n);
@@ -51,7 +52,7 @@ static auto notify_helper(TObserver& observer, const TEvent& n, bool)
 
 // pseudo-fallback to invoke non-context on_notify, even when context is present
 template <class TObserver, class TEvent, class TContext>
-static auto notify_helper(TObserver& observer, const TEvent& n, TContext& context, int)
+inline static auto notify_helper(TObserver& observer, const TEvent& n, TContext& context, int)
     -> decltype(std::declval<TObserver>().on_notify(n), void(), bool{})
 {
     observer.on_notify(n);
@@ -61,7 +62,7 @@ static auto notify_helper(TObserver& observer, const TEvent& n, TContext& contex
 
 // bool gives this one precedence, since we call with (n, true)
 template <class TObserver, class TEvent, class TContext>
-static auto notify_helper(TObserver& observer, const TEvent& n, TContext& context, bool)
+inline static auto notify_helper(TObserver& observer, const TEvent& n, TContext& context, bool)
     -> decltype(std::declval<TObserver>().on_notify(n, context), void(), bool{})
 {
     observer.on_notify(n, context);
@@ -87,8 +88,8 @@ static auto notify_helper(const TEvent& n, TContext&, long) -> bool
 
 // bool gives this one precedence, since we call with (n, true)
 template <class TObserver, class TEvent>
-static auto notify_helper(const TEvent& n, bool)
--> decltype(TObserver::on_notify(n), void(), bool{})
+inline static auto notify_helper(const TEvent& n, bool)
+    -> decltype(TObserver::on_notify(n), void(), bool{})
 {
     TObserver::on_notify(n);
 
@@ -98,8 +99,8 @@ static auto notify_helper(const TEvent& n, bool)
 
 // bool gives this one precedence, since we call with (n, true)
 template <class TObserver, class TEvent, class TContext>
-static auto notify_helper(const TEvent& n, TContext& context, bool)
--> decltype(TObserver::on_notify(n), void(), bool{})
+inline static auto notify_helper(const TEvent& n, TContext& context, bool)
+    -> decltype(TObserver::on_notify(n), void(), bool{})
 {
     TObserver::on_notify(n);
 
@@ -108,8 +109,8 @@ static auto notify_helper(const TEvent& n, TContext& context, bool)
 
 // bool gives this one precedence, since we call with (n, true)
 template <class TObserver, class TEvent, class TContext>
-static auto notify_helper(const TEvent& n, TContext& context, bool)
--> decltype(TObserver::on_notify(n, context), void(), bool{})
+inline static auto notify_helper(const TEvent& n, TContext& context, bool)
+    -> decltype(TObserver::on_notify(n, context), void(), bool{})
 {
     TObserver::on_notify(n, context);
 
@@ -117,13 +118,13 @@ static auto notify_helper(const TEvent& n, TContext& context, bool)
 }
 #else
 template <class TObserver, class TEvent>
-static void notify_helper(TObserver& observer, const TEvent& n, bool)
+inline static void notify_helper(TObserver& observer, const TEvent& n, bool)
 {
     observer.on_notify(n);
 }
 
 template <class TObserver, class TEvent>
-static void notify_helper(const TEvent& n, bool)
+inline static void notify_helper(const TEvent& n, bool)
 {
     TObserver::on_notify(n);
 }
@@ -158,13 +159,13 @@ protected:
 public:
     // TODO: Move these gets out into a tuple base/wrapper
     // NOTE: Consider also making this into a tuple() call
-    template<int index>
+    template <int index>
     estd::tuple_element_t<index, tuple_type >& get()
     {
         return estd::get<index>(observers);
     }
 
-    template<int index>
+    template <int index>
     const estd::tuple_element_t<index, tuple_type >& get() const
     {
         return estd::get<index>(observers);
@@ -302,6 +303,65 @@ class observer_proxy
 
 }
 
+namespace experimental {
+
+template <typename F, class TEvent>
+struct delegate_observer
+{
+    F f;
+
+    delegate_observer(F&& f) : f(std::move(f)) {}
+
+    // FIX: Needs harder event type here otherwise we get cross-wiring on argument types
+    // when calling f
+    // see
+    void on_notify(const TEvent& e)
+    {
+        f(e);
+    }
+};
+
+// Guidance for argument type deduction from:
+// https://stackoverflow.com/questions/22632236/how-is-possible-to-deduce-function-argument-type-in-c
+// https://stackoverflow.com/questions/8711855/get-lambda-parameter-type
+// https://github.com/steinwurf/boost/blob/master/boost/type_traits/function_traits.hpp
+template <class F> struct ArgType;
+
+template <class R, class A1>
+struct ArgType<R(*)(A1)>
+{
+    typedef A1 arg1;
+    typedef R result_type;
+    typedef R type(A1);
+};
+
+template <class R, class C, class A1>
+struct ArgType<R(C::*)(A1)>
+{
+    typedef A1 arg1;
+    typedef R result_type;
+    typedef R type(A1);
+};
+
+template <class R, class C, class A1>
+struct ArgType<R(C::*)(A1) const>
+{
+    typedef A1 arg1;
+    typedef R result_type;
+    typedef R type(A1);
+};
+
+template <class T>
+typename ArgType<T>::type* ArgHelper(T);
+
+
+template <typename F, typename Arg1 = typename ArgType<decltype(ArgHelper(&F::operator())) >::arg1 >
+struct delegate_observer<F, Arg1> make_delegate_observer(F&& f)
+{
+    return delegate_observer<F, Arg1>(std::move(f));
+}
+
+}
 
 namespace layer1 {
 
@@ -378,23 +438,23 @@ internal::observer_proxy<TSubject> make_observer_proxy(TSubject& s)
 
 }
 
+#endif
+
 struct void_subject
 {
     /// @brief noop notify
     /// \tparam TEvent
     template <class TEvent>
-    void notify(const TEvent&) {}
+    void notify(const TEvent&) const {}
 
     /// @brief noop notify
     /// \tparam TEvent
     /// \tparam TContext
     template <class TEvent, class TContext>
-    void notify(const TEvent&, TContext&) {}
+    void notify(const TEvent&, TContext&) const {}
 };
 
 
 
 }
-
-#endif
 

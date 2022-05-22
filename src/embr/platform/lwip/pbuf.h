@@ -28,48 +28,137 @@
 
 namespace embr { namespace lwip {
 
+// If using this directly, know this is just a thin wrapper around
+// pbuf itself.  No auto-reference magic
 struct PbufBase
 {
     typedef struct pbuf pbuf_type;
     typedef pbuf_type* pbuf_pointer;
     typedef const pbuf_type* const_pbuf_pointer;
-};
 
-
-struct Pbuf : PbufBase
-{
 protected:
     pbuf_pointer p;
 
 public:
-    const_pbuf_pointer pbuf() const { return p; }
-    pbuf_pointer pbuf() { return p; }
-
 #ifdef FEATURE_CPP_DECLTYPE
     typedef decltype(p->len) size_type;
 #else
     typedef uint16_t size_type;
 #endif
 
-    Pbuf(size_type size)
+    PbufBase(pbuf_pointer p) : p(p) {}
+    PbufBase() = delete;
+    PbufBase(size_type size, pbuf_layer layer = PBUF_TRANSPORT) : 
+        p(pbuf_alloc(layer, size, PBUF_RAM))
     {
-        p = pbuf_alloc(PBUF_TRANSPORT, size, PBUF_RAM);
     }
 
-    Pbuf(pbuf_pointer p, bool bump_reference = true) : p(p)
+    const_pbuf_pointer pbuf() const { return p; }
+    pbuf_pointer pbuf() { return p; }
+
+    void* payload() const { return p->payload; }
+
+    size_type length() const { return p->len; }
+
+    size_type total_length() const 
+    {
+        return pbuf()->tot_len;
+    }
+
+    void realloc(size_type to_size)
+    {
+        pbuf_realloc(p, to_size);
+    }
+
+    size_type copy_partial(void* s, size_type len, size_type offset) const
+    {
+        return pbuf_copy_partial(p, s, len, offset);
+    }
+
+    void concat(pbuf_pointer t)
+    {
+        pbuf_cat(p, t);
+    }
+
+    /// "Skip a number of bytes at the start of a pbuf"
+    /// @returns the pbuf in the queue where the offset is
+    /// @link https://www.nongnu.org/lwip/2_1_x/group__pbuf.html#ga6a961522d81f0327aaf4d4ee6d96c583
+    PbufBase skip(size_type in_offset, size_type* out_offset)
+    {
+        return pbuf_skip(p, in_offset, out_offset);
+    }
+
+    bool valid() const { return p != NULLPTR; }
+
+    operator pbuf_pointer() const { return p; }
+};
+
+// returns size between the start of two pbufs
+inline PbufBase::size_type delta_length(PbufBase from, PbufBase to)
+{
+    PbufBase::const_pbuf_pointer p = from.pbuf();
+    PbufBase::size_type len = 0;
+
+    while(p != to.pbuf())
+    {
+        len += p->len;
+
+        p = p->next;
+    }
+
+    return len;
+}
+
+
+/*
+ * FIX: Something is wrong with tuple, so can't do this here
+ * TODO: tuple may not work with C++98 anyway, though a simplistic implementation 
+ * (enough for this use case) is possible
+// returns pbuf and pbuf-relative offset at specified absolute position away from start
+estd::tuple<PbufBase, PbufBase::size_type> delta_length(PbufBase start, PbufBase::size_type offset)
+{
+    PbufBase::pbuf_pointer p = start.pbuf();
+    
+    while(p != NULLPTR)
+    {
+        if(offset < p->len)
+        {
+            // return at this point, offset is within this pbuf
+            return estd::tuple<PbufBase, PbufBase::size_type>(p, offset);
+        }
+
+        offset -= p->len;
+
+        p = p->next;
+    }
+
+    return estd::tuple<PbufBase, PbufBase::size_type>(NULLPTR, 0);
+}
+*/
+
+// This wraps pbuf + assists with allocation and reference
+// management
+struct Pbuf : PbufBase
+{
+    Pbuf(size_type size) : PbufBase(size)
+    {
+    }
+
+    Pbuf(pbuf_pointer p, bool bump_reference = true) : 
+        PbufBase(p)
     {
         if(bump_reference) pbuf_ref(p);
     }
 
     Pbuf(const Pbuf& copy_from, bool bump_reference = true) :
-        p(copy_from.p)
+        PbufBase(copy_from.p)
     {
         if(bump_reference) pbuf_ref(pbuf());
     }
 
 #ifdef FEATURE_CPP_MOVESEMANTIC
     Pbuf(Pbuf&& move_from) :
-        p(move_from.p)
+        PbufBase(move_from.p)
     {
         move_from.p = NULLPTR;
     }
@@ -90,11 +179,10 @@ public:
 // netbuf-mk2 managing a lwip pbuf
 // TODO: Extend from Pbuf, once I am in position to do regression
 // testing
+// NOTE: Obsolete, though potentially still useable.  Is underpinning of
+// legacy netbuf-streambuf code which is obsolete and should not be used
 struct PbufNetbuf : PbufBase
 {
-
-private:
-    pbuf_pointer p;
 #ifdef FEATURE_EMBR_PBUF_CHAIN_EXP
     pbuf_pointer p_start;
 #endif
@@ -106,16 +194,16 @@ public:
     typedef uint16_t size_type;
 #endif
 
-    PbufNetbuf(size_type size)
+    PbufNetbuf(size_type size) : 
+        PbufBase(pbuf_alloc(PBUF_TRANSPORT, size, PBUF_RAM))
     {
-        p = pbuf_alloc(PBUF_TRANSPORT, size, PBUF_RAM);
-
 #ifdef FEATURE_EMBR_PBUF_CHAIN_EXP
         p_start = p;
 #endif
     }
 
-    PbufNetbuf(pbuf_pointer p, bool bump_reference = true) : p(p)
+    PbufNetbuf(pbuf_pointer p, bool bump_reference = true) : 
+        PbufBase(p)
     {
         if(bump_reference) pbuf_ref(p);
 
@@ -127,7 +215,7 @@ public:
     // FIX: Don't want to do reset here, but until seekoff gets sorted out,
     // we need this for testing
     PbufNetbuf(const PbufNetbuf& copy_from, bool reset, bool bump_reference = true) :
-        p(copy_from.p)
+        PbufBase(copy_from.p)
 #ifdef FEATURE_EMBR_PBUF_CHAIN_EXP
         ,p_start(copy_from.p_start)
 #endif
@@ -139,7 +227,7 @@ public:
 
 #ifdef FEATURE_CPP_MOVESEMANTIC
     PbufNetbuf(PbufNetbuf&& move_from) :
-        p(move_from.p)
+        PbufBase(move_from.p)
 #ifdef FEATURE_EMBR_PBUF_CHAIN_EXP
         ,p_start(move_from.p_start)
 #endif

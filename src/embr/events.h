@@ -104,7 +104,7 @@ struct ReceiveDequeued : ItemBase<TItem>
 template <class TTransportDescriptor>
 struct Transport
 {
-    typedef typename TTransportDescriptor::netbuf_type netbuf_type;
+    typedef typename TTransportDescriptor::buffer_type netbuf_type;
     typedef typename TTransportDescriptor::endpoint_type addr_t;
 
     typedef Base<netbuf_type, addr_t> base;

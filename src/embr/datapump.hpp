@@ -4,7 +4,7 @@ namespace embr {
 
 template <class TTransportDescriptor, class TPolicy>
 #ifdef FEATURE_EMBR_DATAPUMP_INLINE
-auto DataPump<TTransportDescriptor, TPolicy>::transport_in(netbuf_type&& in, const addr_t& addr) ->
+auto DataPump<TTransportDescriptor, TPolicy>::transport_in(netbuf_type&& in, const endpoint_type& addr) ->
     const Item&
 {
     return incoming.emplace(std::move(in), addr);

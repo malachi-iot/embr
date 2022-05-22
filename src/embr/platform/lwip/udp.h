@@ -1,3 +1,10 @@
+/**
+ * 
+ * References:
+ * 
+ * 1. https://lwip.fandom.com/wiki/Raw/UDP
+ * 2. https://www.nongnu.org/lwip/2_0_x/group__udp__raw.html#gaa4546c43981f043c0ae4514d625cc3fc
+ */
 #pragma once
 
 extern "C" {
@@ -9,9 +16,10 @@ extern "C" {
 
 #include <estd/internal/platform.h>
 
-namespace embr { namespace lwip {
+namespace embr { namespace lwip { namespace udp {
 
-// NOTE: Alternate universe version of udh.hpp/lwipcpp's UDP struct
+// Wrapper for
+// https://www.nongnu.org/lwip/2_0_x/structudp__pcb.html
 struct Pcb
 {
     typedef struct udp_pcb* pcb_pointer;
@@ -30,6 +38,16 @@ public:
 
     bool has_pcb() const { return pcb != NULLPTR; }
 
+    /**
+     * @brief wrapper around udp_sendto
+     * 
+     * As per [1], "pbuf is not deallocated" as per [2]
+     * 
+     * @param pbuf 
+     * @param addr 
+     * @param port 
+     * @return err_t 
+     */
     err_t send(pbuf_pointer pbuf, 
         addr_pointer addr,
         uint16_t port)
@@ -40,19 +58,44 @@ public:
             port);
     }
 
-    // as per https://www.nongnu.org/lwip/2_0_x/group__udp__raw.html#gaa4546c43981f043c0ae4514d625cc3fc
+    /**
+     * @brief wrapper around udp_send
+     * 
+     * As per [1], "pbuf is not deallocated" as per [2]
+     * 
+     * @param pbuf 
+     * @return err_t 
+     */
     err_t send(pbuf_pointer pbuf)
     {
         return udp_send(pcb, pbuf);
     }
 
+    /**
+     * @brief wrapper around udp_recv
+     * 
+     * "Specifies a callback function that should be called when a UDP datagram
+     * is received on the specified connection. The callback function is
+     * responsible for deallocating the pbuf." [1]
+     * 
+     * @param recv_f 
+     * @param recv_arg 
+     */
     void recv(udp_recv_fn recv_f, void* recv_arg = NULLPTR)
     {
         udp_recv(pcb, recv_f, recv_arg);
     }
 
-    // connected only receives data from the connected address,
-    // unconnected receive from any address
+    /**
+     * @brief 
+     * 
+     * connected only receives data from the connected address,
+     * unconnected receive from any address
+     * 
+     * @param ipaddr 
+     * @param port 
+     * @return err_t 
+     */
     err_t connect(addr_pointer ipaddr, u16_t port)
     {
         return udp_connect(pcb, ipaddr, port);
@@ -79,6 +122,11 @@ public:
     {
         return bind(IP_ADDR_ANY, port);
     }
+
+    void local_port(uint16_t value)
+    {
+        pcb->local_port = value;
+    }
 };
 
 namespace experimental {
@@ -97,6 +145,14 @@ struct AutoPcb : Pcb
     }
 };
 
+
 }
+
+} // namespace udp
+
+#if __has_cpp_attribute(deprecated)
+[[deprecated("Use embr::lwip::udp::Pcb instead")]]
+#endif
+typedef udp::Pcb Pcb;
 
 }}

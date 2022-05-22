@@ -4,64 +4,28 @@
  */
 #pragma once
 
+#include "features.h"
+#include "endpoint.h"
 #include "udp.h"
 #include "streambuf.h"
 
 namespace embr { namespace lwip { namespace experimental {
 
-typedef const ip_addr_t* addr_pointer;
-
-// be advised, addr_pointer can go out of scope and get deallocated as per
-// https://www.nongnu.org/lwip/2_1_x/udp_8h.html#af0ec7feb31acdb6e11b928f438c8a64b
-template <bool use_address_ptr>
-struct EndpointAddress;
-
-template <>
-class EndpointAddress<true>
-{
-    addr_pointer _address;
-
-public:
-    EndpointAddress(addr_pointer _address) : _address(_address) {}
-
-    addr_pointer address() const { return _address; }
-};
-
-template <>
-class EndpointAddress<false>
-{
-    ip_addr_t _address;
-
-public:
-    EndpointAddress(addr_pointer _address) : _address(*_address) {}
-
-    addr_pointer address() const { return &_address; }
-};
-
-
-template <bool use_address_ptr = true>
-class Endpoint : public EndpointAddress<use_address_ptr>
-{
-    uint16_t _port;
-
-public:
-    Endpoint(addr_pointer address, uint16_t port) :
-        EndpointAddress<use_address_ptr>(address),
-        _port(port)
-    {}
-
-    uint16_t port() const { return _port; }
-};
-
-
 struct TransportBase
 {
-    typedef embr::lwip::experimental::addr_pointer addr_pointer;
     typedef struct pbuf* pbuf_pointer;
-    typedef struct udp_pcb* pcb_pointer;
-    typedef opbuf_streambuf ostreambuf_type;
-    typedef ipbuf_streambuf istreambuf_type;
-    typedef ostreambuf_type::netbuf_type netbuf_type;
+#if FEATURE_EMBR_NETBUF_STREAMBUF
+    typedef legacy::opbuf_streambuf ostreambuf_type;
+    typedef legacy::ipbuf_streambuf istreambuf_type;
+    typedef ostreambuf_type::netbuf_type buffer_type;
+#else
+    typedef upgrading::opbuf_streambuf ostreambuf_type;
+    typedef upgrading::ipbuf_streambuf istreambuf_type;
+    // DEBT: Stop-gap, almost definitely we'd prefer outsiders to use
+    // actual stream and not the raw "buffer_type" (which has always mapped to
+    // a pbuf gracefully, by design)
+    typedef Pbuf buffer_type;
+#endif
 };
 
 template <bool use_address_ptr = true>
@@ -69,16 +33,19 @@ struct TransportUdp : TransportBase
 {
     typedef Endpoint<use_address_ptr> endpoint_type;
 
-    Pcb pcb;
+    lwip::udp::Pcb pcb;
+
+    typedef struct udp_pcb* pcb_pointer;
 
 #ifdef FEATURE_CPP_VARIADIC
     template <class ...TArgs>
     TransportUdp(TArgs&& ...args) : pcb(std::forward<TArgs>(args)...) {}
 #endif
 
+#if FEATURE_EMBR_NETBUF_STREAMBUF
 #ifdef FEATURE_CPP_ALIASTEMPLATE
     template <class TChar>
-    void send(basic_opbuf_streambuf<TChar>& streambuf, const endpoint_type& endpoint)
+    void send(legacy::basic_opbuf_streambuf<TChar>& streambuf, const endpoint_type& endpoint)
     {
         pcb.send(streambuf.netbuf().pbuf(), 
             endpoint.address(),
@@ -86,9 +53,25 @@ struct TransportUdp : TransportBase
     }
 #endif
 
-    void send(netbuf_type& netbuf, const endpoint_type& endpoint)
+    void send(buffer_type& netbuf, const endpoint_type& endpoint)
     {
         pcb.send(netbuf.pbuf(),
+            endpoint.address(),
+            endpoint.port());
+    }
+#else
+    template <class TChar>
+    void send(upgrading::basic_opbuf_streambuf<TChar>& streambuf, const endpoint_type& endpoint)
+    {
+        pcb.send(streambuf.pbuf(), 
+            endpoint.address(),
+            endpoint.port());
+    }
+#endif
+
+    void send(Pbuf& pbuf, const endpoint_type& endpoint)
+    {
+        pcb.send(pbuf.pbuf(),
             endpoint.address(),
             endpoint.port());
     }
@@ -112,7 +95,8 @@ struct UdpDataportTransport : embr::lwip::experimental::TransportUdp<false>
     // in response to a notification
     // NOTE: Convention is that TDataPort* must always be first parameter
     template <class TDataPort>
-    UdpDataportTransport(TDataPort* dataport, uint16_t port);
+    UdpDataportTransport(TDataPort* dataport, uint16_t port,
+        uint16_t sourcePort = 0);
 
 private:
     template <class TDataPort>
@@ -134,7 +118,7 @@ struct UdpSubjectTransport : embr::lwip::experimental::TransportUdp<false>
     // TODO: Probably move this upward into TransportUdp itself, or maybe even
     // Pcb
     template <class TSubject>
-    static Pcb recv(TSubject& subject, uint16_t port);
+    static udp::Pcb recv(TSubject& subject, uint16_t port);
 
     // NOTE: Phase this out, be better do be more pcb-like and explicitly 
     // bind/recv

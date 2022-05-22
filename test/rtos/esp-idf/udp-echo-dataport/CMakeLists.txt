@@ -11,6 +11,9 @@ set(EXTRA_COMPONENT_DIRS "../components"
     ${EMBR_ROOT_DIR}/tools/esp-idf/components
     )
 
+# Remember, component compiler settings are cordoned off so we have to 
+# expressly yank in version finder
+include(${EMBR_ROOT_DIR}/ext/estdlib/tools/esp-idf/version_finder.cmake)
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 
 project(udp-echo-dataport)

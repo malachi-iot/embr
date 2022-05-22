@@ -59,7 +59,7 @@ void DataPort<TDatapump, TTransport, TSubject, wrapped>::service()
     {
         item_t& item = base_t::datapump.transport_front();
         netbuf_type& netbuf = *item.netbuf();
-        const addr_t& addr = item.addr();
+        const endpoint_type& addr = item.addr();
 
         notify(typename event::transport_sending(netbuf, addr));
 
@@ -76,7 +76,7 @@ void DataPort<TDatapump, TTransport, TSubject, wrapped>::service()
 template <class TDatapump, class TTransportDescriptor, class TSubject>
 void DatapumpSubject<TDatapump, TTransportDescriptor, TSubject>::enqueue_for_send(
     netbuf_type&& nb,
-    const addr_t& addr)
+    const endpoint_type& addr)
 {
 #ifdef FEATURE_EMBR_DATAPUMP_INLINE
     const item_t& item = datapump.enqueue_out(std::move(nb), addr);
@@ -92,7 +92,7 @@ void DatapumpSubject<TDatapump, TTransportDescriptor, TSubject>::enqueue_for_sen
 template <class TDatapump, class TTransportDescriptor, class TSubject>
 void DatapumpSubject<TDatapump, TTransportDescriptor, TSubject>::enqueue_from_receive(
     netbuf_type&& nb,
-    const addr_t& addr)
+    const endpoint_type& addr)
 {
     // think of datapump as a application-level queue, while
     // udp_data_recv sorta responds to a system-level queue
