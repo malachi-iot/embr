@@ -21,6 +21,7 @@ void lcd_spi_pre_transfer_callback(spi_transaction_t *t)
 }
 
 static spi::bus bus(LCD_HOST);
+static spi::device* device;
 
 
 void spi_init()
@@ -49,11 +50,16 @@ void spi_init()
     //Initialize the SPI bus
     ret=bus.initialize(buscfg, SPI_DMA_CH_AUTO);
     ESP_ERROR_CHECK(ret);
-    spi_master_ostreambuf s(spi::device(bus, devcfg));
+    static spi::device _device(bus, devcfg);
+    // DEBT: Clunky, but will get us through the short term OK
+    device = &_device;
 }
 
 void spi_loop()
 {
+    spi_master_ostreambuf out(*device);
+    spi_master_istreambuf in(*device);
+
     // Surprisingly, these are not available
     //using namespace std::chrono_literals;
 
@@ -65,6 +71,15 @@ void spi_loop()
     static int counter = 0;
 
     ESP_LOGI(TAG, "Loop: counter=%d", ++counter);
+
+    out.user((void*) 1);    // D/C command mode
+    out.sputc(0x04);
+
+    //in.sbumpc();
+    uint32_t lcd_id = 0;
+    in.sgetn((char*)&lcd_id, 3);
+
+    ESP_LOGI(TAG, "LCD ID =%d", lcd_id);
 
     estd::this_thread::sleep_for(delay);
 }
