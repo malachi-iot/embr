@@ -5,33 +5,20 @@
 #pragma once
 
 // esp-idf include
+#include <esp_log.h>
 #include <driver/spi_master.h>
 
 namespace embr { namespace esp_idf { namespace spi {
 
-class device
+class device_base
 {
+protected:
+    //constexpr static const char* TAG = "spi::device";
+
     spi_device_handle_t handle_;
 
 public:
-    device(const device& copy_from) = default;
-    device(device&& move_from)
-    {
-        handle_ = move_from.handle_;
-        move_from.handle_ = nullptr;
-    }
-    device(const spi_host_device_t host_id, const spi_device_interface_config_t& dev_config)
-    {
-        ESP_ERROR_CHECK(spi_bus_add_device(host_id, &dev_config, &handle_));
-    }
-
-    ~device()
-    {
-        if(handle_ != nullptr)
-            ESP_ERROR_CHECK(spi_bus_remove_device(handle_));
-    }
-
-    inline spi_device_handle_t handle() const { return handle_; }
+    //inline spi_device_handle_t handle() const { return handle_; }
 
     inline esp_err_t polling_start(spi_transaction_t* trans_desc, TickType_t ticks_to_wait)
     {
@@ -49,6 +36,65 @@ public:
     }
 
     inline operator spi_device_handle_t() const { return handle_; }
+
+    inline esp_err_t add(const spi_host_device_t host_id, const spi_device_interface_config_t& dev_config)
+    {
+        return spi_bus_add_device(host_id, &dev_config, &handle_);
+    }
+
+    inline esp_err_t remove()
+    {
+        return spi_bus_remove_device(handle_);
+    }
 };
+
+struct device : device_base
+{
+    device() = default;
+    inline device(const device& copy_from) = default;
+    inline device(spi_device_handle_t handle)
+    {
+        handle_ = handle;
+    }
+};
+
+struct managed_device : device_base
+{
+    managed_device(const managed_device& copy_from) = default;
+    managed_device(managed_device&& move_from)
+    {
+        handle_ = move_from.handle_;
+        move_from.handle_ = nullptr;
+    }
+    managed_device(const spi_host_device_t host_id, const spi_device_interface_config_t& dev_config)
+    {
+        ESP_ERROR_CHECK(add(host_id, dev_config));
+    }
+
+    ~managed_device()
+    {
+        if(handle_ != nullptr)
+            ESP_ERROR_CHECK(remove());
+    }
+
+    operator device() const { return device(handle_); }
+};
+
+/*
+template <bool managed>
+class device;
+
+template <>
+class device<true> : public managed_device
+{
+public:
+};
+
+template <>
+class device<false> : public device_base
+{
+public:
+    device(const device& copy_from) = default;
+}; */
 
 }}}

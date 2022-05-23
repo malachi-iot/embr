@@ -12,6 +12,7 @@
 #include "device.h"
 
 // esp-idf include
+#include <esp_log.h>
 #include <driver/spi_master.h>
 
 namespace embr { namespace esp_idf {
@@ -103,6 +104,8 @@ class spi_master_istreambuf : public spi_master_streambuf_base,
     public estd::internal::impl::streambuf_base<TCharTraits>,
     public estd::internal::streambuf_sbumpc_tag
 {
+    constexpr static char* TAG = "spi_master_istreambuf";
+
     typedef spi_master_streambuf_base base_type;
 
     spi_transaction_t t;
@@ -119,37 +122,60 @@ public:
 
     int_type sbumpc()
     {
-        /*
         memset(&t, 0, sizeof(t));
-        t.length=8*3;
+        t.user = user_;
+        t.length=8*sizeof(char_type);
         t.flags = SPI_TRANS_USE_RXDATA;
-        t.user = (void*)1;
 
-        esp_err_t ret = spi_device_polling_transmit(spi, &t);
-        assert( ret == ESP_OK );
-
-        return *(uint32_t*)t.rx_data; */
-        return traits_type::eof();
+        esp_err_t ret = spi.polling_transmit(&t);
+        //assert( ret == ESP_OK );
+        if(ret != ESP_OK)
+        {
+            ESP_LOGD(TAG, "sbumpc encountered bus error");
+            return traits_type::eof();
+        }
+        if(sizeof(char_type) == 1)
+            return traits_type::to_int_type(t.rx_data[0]);
+        else
+            return traits_type::to_int_type(*(char_type*)t.rx_data);
     }
 
     void user(void* v) { user_ = v; }
 
     estd::streamsize xsgetn(char_type* s, estd::streamsize count)
     {
+        memset(&t, 0, sizeof(t));
+        t.length=8*count;
+        t.user = user_;
+
+        /*
+         * This is nifty, but the way we do things in xsgetn it's doubtful it will ever be more efficient
         if(count <= 4)
         {
-            memset(&t, 0, sizeof(t));
-            t.length=8*count;
             t.flags = SPI_TRANS_USE_RXDATA;
-            t.user = user_;
 
-            esp_err_t ret = spi_device_polling_transmit(spi, &t);
-            assert( ret == ESP_OK );
+            esp_err_t ret = spi.polling_transmit(&t);
+            //assert( ret == ESP_OK );
+            if(ret != ESP_OK)
+            {
+                ESP_LOGD(TAG, "xsgetn encountered bus error");
+                return traits_type::eof();
+            }
+            memcpy(s, t.rx_data, count);
             return count;
         }
-        else
+        else */
         {
-            return -1;
+            t.rx_buffer = s;
+
+            esp_err_t ret = spi.polling_transmit(&t);
+            //assert( ret == ESP_OK );
+            if(ret != ESP_OK)
+            {
+                ESP_LOGD(TAG, "xsgetn encountered bus error");
+                return traits_type::eof();
+            }
+            return count;
         }
     }
 };
