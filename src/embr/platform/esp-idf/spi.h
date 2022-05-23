@@ -4,6 +4,14 @@
 
 namespace embr { namespace esp_idf {
 
+namespace spi {
 
+/*
+struct bus
+{
+    esp_err_t initialize()
+}; */
+
+}
 
 }}

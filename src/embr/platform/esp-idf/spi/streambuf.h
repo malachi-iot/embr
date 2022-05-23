@@ -53,6 +53,21 @@ public:
 
 namespace impl {
 
+enum class spi_flags : uint16_t
+{
+    StandardBuffer = 1,
+    DMA = 2,
+
+    MemtypeMask = 3,
+
+    Polled = 4,
+    Interrupt = 8,
+
+    TechniqueMask = 12,
+
+    Default = spi_flags::StandardBuffer | spi_flags::Polled
+};
+
 class spi_master_streambuf_base
 {
 protected:
@@ -62,6 +77,29 @@ protected:
     spi_master_streambuf_base(spi::device&& spi) : spi(std::move(spi)) {}
 };
 
+
+template <class TCharTraits, spi_flags flags = spi_flags::Default>
+class spi_master_ostreambuf :
+    public spi_master_streambuf_base,
+    public estd::internal::impl::streambuf_base<TCharTraits>
+{
+    typedef spi_master_streambuf_base base_type;
+
+public:
+    typedef TCharTraits traits_type;
+    typedef typename traits_type::char_type char_type;
+
+    spi_master_ostreambuf(const spi::device& spi) : base_type(spi) {}
+    spi_master_ostreambuf(spi::device&& spi) : base_type(std::move(spi)) {}
+};
+
+
+
 }
+
+template <class TChar, class TCharTraits = estd::char_traits<TChar> >
+using basic_spi_master_ostreambuf = estd::internal::streambuf<impl::spi_master_ostreambuf<TCharTraits> >;
+
+typedef basic_spi_master_ostreambuf<char> spi_master_ostreambuf;
 
 }}
