@@ -31,6 +31,8 @@ enum class spi_flags : uint16_t
 
     TechniqueMask = 12,
 
+    Buffered = 16,
+
     Default = spi_flags::StandardBuffer | spi_flags::Polled
 };
 
@@ -78,8 +80,12 @@ public:
         t.length=8;                     // Hard-wired to 8 bits
         t.tx_buffer=&c;
         t.user=user_;
-        ret=spi_device_polling_transmit(spi, &t);  //Transmit!
-        assert(ret==ESP_OK);            //Should have had no issues.
+        ret=spi.polling_transmit(&t);  //Transmit!
+        if(ret != ESP_OK)
+        {
+            ESP_ERROR_CHECK_WITHOUT_ABORT(ret);
+            return traits_type::eof();
+        }
         return traits_type::to_int_type(c);
     }
 
@@ -92,8 +98,12 @@ public:
         t.length=count*8;                 //Len is in bytes, transaction length is in bits.
         t.tx_buffer=s;               //Data
         t.user=user_;
-        ret=spi_device_polling_transmit(spi, &t);  //Transmit!
-        assert(ret==ESP_OK);            //Should have had no issues.
+        ret=spi.polling_transmit(&t);  //Transmit!
+        if(ret != ESP_OK)
+        {
+            ESP_ERROR_CHECK_WITHOUT_ABORT(ret);
+            count = 0;
+        }
         return count;
     }
 };
@@ -131,7 +141,7 @@ public:
         //assert( ret == ESP_OK );
         if(ret != ESP_OK)
         {
-            ESP_LOGD(TAG, "sbumpc encountered bus error");
+            ESP_ERROR_CHECK_WITHOUT_ABORT(ret);
             return traits_type::eof();
         }
         if(sizeof(char_type) == 1)
@@ -172,7 +182,7 @@ public:
             //assert( ret == ESP_OK );
             if(ret != ESP_OK)
             {
-                ESP_LOGD(TAG, "xsgetn encountered bus error");
+                ESP_ERROR_CHECK_WITHOUT_ABORT(ret);
                 return traits_type::eof();
             }
             return count;
