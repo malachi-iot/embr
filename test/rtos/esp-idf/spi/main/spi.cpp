@@ -1,7 +1,14 @@
+#include <estd/chrono.h>
+#include <estd/thread.h>
+
+//#include <chrono>
+
 #include <embr/platform/esp-idf/spi.h>
 
 #include "spi.h"
-#include "driver/gpio.h"
+
+#include <esp_log.h>
+#include <driver/gpio.h>
 
 using namespace embr::esp_idf;
 
@@ -12,6 +19,8 @@ void lcd_spi_pre_transfer_callback(spi_transaction_t *t)
     int dc=(int)t->user;
     gpio_set_level((gpio_num_t)PIN_NUM_DC, dc);
 }
+
+static spi::bus bus(LCD_HOST);
 
 
 void spi_init()
@@ -38,11 +47,24 @@ void spi_init()
         .pre_cb=lcd_spi_pre_transfer_callback,  //Specify pre-transfer callback to handle D/C line
     };
     //Initialize the SPI bus
-    ret=spi_bus_initialize(LCD_HOST, &buscfg, SPI_DMA_CH_AUTO);
+    ret=bus.initialize(buscfg, SPI_DMA_CH_AUTO);
     ESP_ERROR_CHECK(ret);
-    spi_master_ostreambuf s(spi::device(LCD_HOST, devcfg));
+    spi_master_ostreambuf s(spi::device(bus, devcfg));
 }
 
 void spi_loop()
 {
+    // Surprisingly, these are not available
+    //using namespace std::chrono_literals;
+
+    // This one is not ready yet
+    //using namespace estd::literals::chrono_literals;
+    constexpr estd::chrono::milliseconds delay(1000);
+
+    const char* TAG = "spi_loop";
+    static int counter = 0;
+
+    ESP_LOGI(TAG, "Loop: counter=%d", ++counter);
+
+    estd::this_thread::sleep_for(delay);
 }

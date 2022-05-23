@@ -4,6 +4,7 @@
 #include "esp_wifi.h"
 
 void spi_init();
+void spi_loop();
 
 extern "C" void app_main()
 {
@@ -16,5 +17,7 @@ extern "C" void app_main()
 #endif
 
     spi_init();
+
+    for(;;) spi_loop();
 }
 

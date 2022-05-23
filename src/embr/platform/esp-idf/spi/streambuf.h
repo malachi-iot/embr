@@ -1,55 +1,20 @@
+/**
+ *
+ * References:
+ *
+ * 1. https://github.com/espressif/esp-idf/blob/v4.4.1/examples/peripherals/spi_master/lcd/main/spi_master_example_main.c
+ */
 #pragma once
 
 #include <estd/internal/impl/streambuf.h>
 #include <estd/streambuf.h>
 
-#include "driver/spi_master.h"
+#include "device.h"
+
+// esp-idf include
+#include <driver/spi_master.h>
 
 namespace embr { namespace esp_idf {
-
-namespace spi {
-
-class device
-{
-    spi_device_handle_t handle_;
-
-public:
-    device(const device& copy_from) = default;
-    device(device&& move_from)
-    {
-        handle_ = move_from.handle_;
-        move_from.handle_ = nullptr;
-    }
-    device(const spi_host_device_t host_id, const spi_device_interface_config_t& dev_config)
-    {
-        ESP_ERROR_CHECK(spi_bus_add_device(host_id, &dev_config, &handle_));
-    }
-
-    ~device()
-    {
-        if(handle_ != nullptr)
-            ESP_ERROR_CHECK(spi_bus_remove_device(handle_));
-    }
-
-    inline spi_device_handle_t handle() const { return handle_; }
-
-    inline esp_err_t polling_start(spi_transaction_t* trans_desc, TickType_t ticks_to_wait)
-    {
-        return spi_device_polling_start(handle_, trans_desc, ticks_to_wait);
-    }
-
-    inline esp_err_t polling_end(TickType_t ticks_to_wait)
-    {
-        return spi_device_polling_end(handle_, ticks_to_wait);
-    }
-
-    inline esp_err_t polling_transmit(spi_transaction_t* trans_desc)
-    {
-        return spi_device_polling_transmit(handle_, trans_desc);
-    }
-};
-
-}
 
 namespace impl {
 
@@ -78,6 +43,8 @@ protected:
 };
 
 
+// Starting out as blocking polled version, to make life easy
+// Be careful because estd really expects streambufs to be nonblocking
 template <class TCharTraits, spi_flags flags = spi_flags::Default>
 class spi_master_ostreambuf :
     public spi_master_streambuf_base,
@@ -88,9 +55,26 @@ class spi_master_ostreambuf :
 public:
     typedef TCharTraits traits_type;
     typedef typename traits_type::char_type char_type;
+    typedef typename traits_type::int_type int_type;
 
     spi_master_ostreambuf(const spi::device& spi) : base_type(spi) {}
     spi_master_ostreambuf(spi::device&& spi) : base_type(std::move(spi)) {}
+
+    // DEBT: This actually only works for int8_t/uint8_t compatible char_type.
+    // Later on do some footwork to either expand that support or compiler-time
+    // limit it
+    int_type sputc(char_type c)
+    {
+        // Copy/pasted from [1] lcd_cmd
+        esp_err_t ret;
+        spi_transaction_t t;
+        memset(&t, 0, sizeof(t));       //Zero out the transaction
+        t.length=8;                     //Command is 8 bits
+        t.tx_buffer=&c;               //The data is the cmd itself
+        t.user=(void*)0;                //D/C needs to be set to 0
+        ret=spi_device_polling_transmit(spi, &t);  //Transmit!
+        assert(ret==ESP_OK);            //Should have had no issues.
+    }
 };
 
 
