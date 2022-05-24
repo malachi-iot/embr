@@ -23,6 +23,13 @@ struct bus
         return spi_bus_free(host_id);
     }
 
+    inline device add(const spi_device_interface_config_t& dev_config)
+    {
+        device d;
+        ESP_ERROR_CHECK(d.add(host_id, dev_config));
+        return d;
+    }
+
     constexpr operator spi_host_device_t() const { return host_id; }
 };
 

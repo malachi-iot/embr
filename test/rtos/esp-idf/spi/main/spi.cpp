@@ -10,6 +10,8 @@
 #include <esp_log.h>
 #include <driver/gpio.h>
 
+#include <esp_lcd_panel_commands.h>
+
 using namespace embr::esp_idf;
 
 //This function is called (in irq context!) just before a transmission starts. It will
@@ -22,6 +24,26 @@ void lcd_spi_pre_transfer_callback(spi_transaction_t *t)
 
 static spi::bus bus(LCD_HOST);
 static spi::device device;
+
+void lcd_init(spi::device device);
+
+static void exp1()
+{
+    // This is known to be pretty large since it houses a circular queue of transactions
+    static test_interrupt_ostreambuf test(device);
+
+    // Both compile - need a different way to test though this will confuse the ILI9341
+    // Still needs lots of work, including listening to post callback to pop queue... hopefully
+    // it doesn't happen out of order!!
+    //test.sputc('h');
+    //test.sputn("ello", 4);
+
+    spi_master_ostreambuf out(device);
+    out.user((void*) 0);    // D/C command mode
+
+    out.sputc(LCD_CMD_DISPON);
+    out.sputc(LCD_CMD_SLPOUT);
+}
 
 
 void spi_init()
@@ -61,18 +83,12 @@ void spi_init()
     //Initialize the SPI bus
     ret=bus.initialize(buscfg, SPI_DMA_CH_AUTO);
     ESP_ERROR_CHECK(ret);
-    static spi::managed_device _device(bus, devcfg);
+
     // DEBT: Clunky, but will get us through the short term OK
-    device = _device;
+    ESP_ERROR_CHECK(device.add(bus, devcfg));
 
-    // This is known to be pretty large since it houses a circular queue of transactions
-    static test_interrupt_ostreambuf test(device);
-
-    // Both compile - need a different way to test though this will confuse the ILI9341
-    // Still needs lots of work, including listening to post callback to pop queue... hopefully
-    // it doesn't happen out of order!!
-    //test.sputc('h');
-    //test.sputn("ello", 4);
+    lcd_init(device);
+    exp1();
 }
 
 void spi_loop()
@@ -89,14 +105,29 @@ void spi_loop()
 
     const char* TAG = "spi_loop";
     static int counter = 0;
-
-    ESP_LOGI(TAG, "Loop: counter=%d", ++counter);
+    uint8_t brightness = counter % 16 * 0xF;
+    uint8_t brightness_in;
 
     out.user((void*) 0);    // D/C command mode
-    out.sputc(0x04);
+    in.user((void*) 1);     // D/C data mode (separate input streambuf is pretty much always in this mode)
+
+    out.sputc(LCD_CMD_RDDISBV);
+    brightness_in = in.sbumpc();
+
+    ESP_LOGI(TAG, "Loop: counter=%d, brightness=%d, brightness_in=%d", ++counter, brightness, brightness_in);
+
+    out.sputc(0x04);    // ID request
     out.pubsync();
 
-    in.user((void*) 1);     // D/C data mode
+    out.sputc(0x54);    // Read CTRL Display
+    brightness_in = in.sbumpc();
+    ESP_LOGD(TAG, "Read CTRL Display: %08X", brightness_in);
+
+    out.sputc(LCD_CMD_WRDISBV);
+    out.user((void*) 1);    // D/C data mode
+    out.sputc(brightness);
+    out.pubsync();
+
     if(counter % 2 == 0)
     {
         uint32_t lcd_id = 0xFFFF;
@@ -104,6 +135,9 @@ void spi_loop()
         // NOTE: We may get fancy at some point and lcd_id might not actually get populated until
         // sync finishes
         in.pubsync();
+
+        //out.sputc(LCD_CMD_DISPOFF);
+        //out.sputc(LCD_CMD_SLPIN);
 
         ESP_LOGI(TAG, "LCD ID=%08X - sgetn", lcd_id);
     }
@@ -117,7 +151,9 @@ void spi_loop()
         lcd_id |= in.sbumpc();
         lcd_id <<= 8;
         lcd_id |= in.sbumpc();
-        lcd_id <<= 8;
+
+        //out.sputc(LCD_CMD_DISPON);
+        //out.sputc(LCD_CMD_SLPOUT);
 
         ESP_LOGI(TAG, "LCD ID=%08X - sbumpc", lcd_id);
     }

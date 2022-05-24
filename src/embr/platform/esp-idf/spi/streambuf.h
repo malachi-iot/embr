@@ -56,6 +56,8 @@ class spi_master_ostreambuf<TCharTraits, spi_flags::Default> :
     public spi_master_streambuf_base,
     public estd::internal::impl::streambuf_base<TCharTraits>
 {
+    constexpr static char* TAG = "spi_master_ostreambuf";
+
     typedef spi_master_streambuf_base base_type;
 
     spi_transaction_t t;
@@ -84,6 +86,7 @@ public:
         t.tx_buffer=&c;
         t.user=user_;
         ret=spi.polling_transmit(&t);  //Transmit!
+        //ESP_LOGD(TAG, "sputc: %d characters sent", t.length);
         if(ret != ESP_OK)
         {
             ESP_ERROR_CHECK_WITHOUT_ABORT(ret);
@@ -130,6 +133,8 @@ public:
     typedef typename traits_type::char_type char_type;
     typedef typename traits_type::int_type int_type;
 
+    constexpr static unsigned char_bitcount = 8 * sizeof(char_type);
+
     spi_master_istreambuf(const spi::device& spi) : base_type(spi) {}
     spi_master_istreambuf(spi::device&& spi) : base_type(std::move(spi)) {}
 
@@ -137,11 +142,13 @@ public:
     {
         memset(&t, 0, sizeof(t));
         t.user = user_;
-        t.length=8*sizeof(char_type);
+        t.length=char_bitcount;
         t.flags = SPI_TRANS_USE_RXDATA;
 
         esp_err_t ret = spi.polling_transmit(&t);
-        //assert( ret == ESP_OK );
+
+        ESP_LOGV(TAG, "sbumpc: %d characters received", t.rxlength / char_bitcount);
+
         if(ret != ESP_OK)
         {
             ESP_ERROR_CHECK_WITHOUT_ABORT(ret);
@@ -200,6 +207,8 @@ class spi_master_ostreambuf<TCharTraits, spi_flags::Interrupt> :
     public spi_master_streambuf_base,
     public estd::internal::impl::streambuf_base<TCharTraits>
 {
+    constexpr static char* TAG = "spi_master_ostreambuf";
+
     typedef spi_master_streambuf_base base_type;
 
     estd::layer1::deque<spi_transaction_t, 6> queue;
@@ -226,8 +235,9 @@ public:
         spi_transaction_t& t = queue.emplace_back();
 
         memset(&t, 0, sizeof(t));       //Zero out the transaction
+        t.flags = SPI_TRANS_USE_TXDATA;
         t.length=8;                     // Hard-wired to 8 bits
-        t.tx_buffer=&c;
+        t.tx_data[0] = c;
         t.user=user_;
 
         // Non blocking variety
