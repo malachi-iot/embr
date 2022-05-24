@@ -13,9 +13,13 @@ does it is necessary
 
 ## Results
 
-| Date    | esp-idf | Platform | Result |
-|---------| ------- | -------- | ------ |
-| 23MAY21 | v4.4.1  | ESP32-WROVER-KIT E | Pass* |
+| Date    | esp-idf | Platform           | Result    |
+|---------|---------|--------------------|-----------|
+| 23MAY21 | v4.4.1  | ESP32-WROVER-KIT E | Unknown   |
 
-Asterisk because it's unclear whether we *really* got the
-right data back, since ILI9341 always reports a zero here
+It looks like we're failing.  The status bytes we read back are 0xFF, and indeed after our init phase
+we read infinite 0xFF's until something mysterious pops us out into reading infinite 0x00's.
+
+No errors are reported from `esp-idf` API, and it even indicates we're getting real characters back.
+
+I've clocked about 4 hours trying to diagnose this one behavior so far.
