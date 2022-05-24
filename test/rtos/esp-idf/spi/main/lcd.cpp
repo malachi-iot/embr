@@ -82,7 +82,7 @@ void lcd_cmd(spi::device device, uint8_t cmd)
 {
     spi_master_ostreambuf s(device);
 
-    s.user((void*)0);
+    s.user((void*)0);   // command mode
     s.sputc(cmd);
 }
 
@@ -92,7 +92,7 @@ void lcd_data(spi::device device, const uint8_t* data, unsigned len)
 
     spi_master_ostreambuf s(device);
 
-    s.user((void*)1);
+    s.user((void*)1);   // data mode
     s.sputn((const char*)data, len);
 }
 
@@ -114,6 +114,7 @@ void lcd_init(spi::device device)
 
     const lcd_init_cmd_t* lcd_init_cmds = ili_init_cmds;
 
+
     //Send all the commands
     while (lcd_init_cmds->databytes!=0xff) {
         lcd_cmd(device, lcd_init_cmds->cmd);
@@ -123,6 +124,41 @@ void lcd_init(spi::device device)
         }
         ++lcd_init_cmds;
     }
+
+    // Diagnostic area
+    spi_master_ostreambuf out(device);
+    spi_master_istreambuf s(device);
+
+    constexpr auto eof = spi_master_ostreambuf::traits_type::eof();
+
+    out.user((void*) 0);    // cmd mode
+    s.user((void*)1);   // data mode (always on for istreambuf it seems)
+
+    // Let possible residual traffic settle down, I think it's polluting my results.
+    // Looks like we're getting a zillion 0xFF's.  Not EOFs though.  If we comment out
+    // lcd_init_cmds area, then we get all 0's.
+    int counter = 0;
+    for(; counter < 1000 && s.sbumpc() != eof; ++counter)
+    {
+        estd::this_thread::yield();
+    }
+
+    //vTaskDelay(1000 / portTICK_RATE_MS);
+
+    // Makes no difference in diagnostic input results, but does interrupt
+    // pulsing backlight trick, presumably due to SLPIN config
+    /*
+    out.sputc(LCD_CMD_DISPOFF);
+    out.sputc(LCD_CMD_SLPIN); */
+
+    out.sputc(LCD_CMD_RDDPM);
+    int power_mode = s.sbumpc();
+    out.sputc( LCD_CMD_RDDSR); // Self diagnostic
+    int diag = s.sbumpc();
+    int badbyte = s.sbumpc();
+    ESP_LOGI(TAG, "counter=%d, power_mode=%x, diag=%x, badbyte=%x, eof=%d",
+             counter, power_mode, diag, badbyte, eof);
+
 
     ///Enable backlight
     gpio_set_level((gpio_num_t)PIN_NUM_BCKL, 0);

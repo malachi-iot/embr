@@ -56,7 +56,7 @@ class spi_master_ostreambuf<TCharTraits, spi_flags::Default> :
     public spi_master_streambuf_base,
     public estd::internal::impl::streambuf_base<TCharTraits>
 {
-    constexpr static char* TAG = "spi_master_ostreambuf";
+    constexpr static const char* TAG = "spi_master_ostreambuf";
 
     typedef spi_master_streambuf_base base_type;
 
@@ -120,7 +120,7 @@ class spi_master_istreambuf : public spi_master_streambuf_base,
     public estd::internal::impl::streambuf_base<TCharTraits>,
     public estd::internal::streambuf_sbumpc_tag
 {
-    constexpr static char* TAG = "spi_master_istreambuf";
+    constexpr static const char* TAG = "spi_master_istreambuf";
 
     typedef spi_master_streambuf_base base_type;
 
@@ -154,6 +154,9 @@ public:
             ESP_ERROR_CHECK_WITHOUT_ABORT(ret);
             return traits_type::eof();
         }
+
+        if(t.rxlength == 0) return traits_type::eof();
+
         if(sizeof(char_type) == 1)
             return traits_type::to_int_type(t.rx_data[0]);
         else
@@ -165,7 +168,7 @@ public:
     estd::streamsize xsgetn(char_type* s, estd::streamsize count)
     {
         memset(&t, 0, sizeof(t));
-        t.length=8*count;
+        t.length=char_bitcount*count;
         t.user = user_;
 
         /*
@@ -207,7 +210,7 @@ class spi_master_ostreambuf<TCharTraits, spi_flags::Interrupt> :
     public spi_master_streambuf_base,
     public estd::internal::impl::streambuf_base<TCharTraits>
 {
-    constexpr static char* TAG = "spi_master_ostreambuf";
+    constexpr static const char* TAG = "spi_master_ostreambuf";
 
     typedef spi_master_streambuf_base base_type;
 
