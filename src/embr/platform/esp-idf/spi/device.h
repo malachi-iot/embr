@@ -12,12 +12,26 @@
 
 namespace embr { namespace esp_idf { namespace spi {
 
+struct bus;
+
 class device_base
 {
+    friend struct bus;
+
 protected:
     //constexpr static const char* TAG = "spi::device";
 
     spi_device_handle_t handle_;
+
+    inline esp_err_t add(const spi_host_device_t host_id, const spi_device_interface_config_t& dev_config)
+    {
+        return spi_bus_add_device(host_id, &dev_config, &handle_);
+    }
+
+    inline esp_err_t remove()
+    {
+        return spi_bus_remove_device(handle_);
+    }
 
 public:
     //inline spi_device_handle_t handle() const { return handle_; }
@@ -49,19 +63,22 @@ public:
 
     inline operator spi_device_handle_t() const { return handle_; }
 
-    inline esp_err_t add(const spi_host_device_t host_id, const spi_device_interface_config_t& dev_config)
+    // wait "Currently MUST set to portMAX_DELAY."
+    inline esp_err_t acquire_bus(TickType_t wait = portMAX_DELAY)
     {
-        return spi_bus_add_device(host_id, &dev_config, &handle_);
+        return spi_device_acquire_bus(handle_, wait);
     }
 
-    inline esp_err_t remove()
+    inline void release_bus()
     {
-        return spi_bus_remove_device(handle_);
+        spi_device_release_bus(handle_);
     }
 };
 
 struct device : device_base
 {
+    friend struct bus;
+
     device() = default;
     inline device(const device& copy_from) = default;
     inline device(spi_device_handle_t handle)
@@ -70,6 +87,12 @@ struct device : device_base
     }
 
     device& operator=(const device& copy_from) = default;
+
+private:
+    device(const spi_host_device_t host_id, const spi_device_interface_config_t& dev_config)
+    {
+        ESP_ERROR_CHECK(add(host_id, dev_config));
+    }
 };
 
 struct managed_device : device_base

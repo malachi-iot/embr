@@ -37,6 +37,8 @@ void spi_init()
         .intr_flags=0
     };
 
+    bus.initialize(buscfg, SPI_DMA_CH_AUTO);
+
     spi_device_interface_config_t devcfg={
         .mode=0,                                //SPI mode 0
         .clock_speed_hz=1*1000*1000,            //Clock out at 1 MHz
@@ -45,19 +47,18 @@ void spi_init()
 
         // bookend
         .post_cb=nullptr
+        //.post_cb = test_interrupt_ostreambuf::post_cb
     };
 
-    bus.initialize(buscfg, SPI_DMA_CH_AUTO);
     device = bus.add(devcfg);
 }
 
 static const char msg[] {"Hello World!"};
+static int counter = 0;
 
 void spi_loop()
 {
     static const char* TAG = "spi_loop";
-
-    static int counter = 0;
 
     spi_master_ostreambuf out(device);
 

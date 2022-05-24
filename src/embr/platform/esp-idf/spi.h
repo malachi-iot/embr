@@ -25,9 +25,12 @@ struct bus
 
     inline device add(const spi_device_interface_config_t& dev_config)
     {
-        device d;
-        ESP_ERROR_CHECK(d.add(host_id, dev_config));
-        return d;
+        return device(host_id, dev_config);
+    }
+
+    inline void remove(const device& d)
+    {
+        spi_bus_remove_device(d);
     }
 
     constexpr operator spi_host_device_t() const { return host_id; }

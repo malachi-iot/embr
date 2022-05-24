@@ -277,6 +277,24 @@ public:
         return count;
     }
 
+    // root cleanup code
+    void post_transaction_cleanup(const spi_transaction_t* trans)
+    {
+        // DEBT: This may not be fully dependdable on, but it's reasonable
+        // to expect that our 'finish' callbacks come back in the exact same order
+        // they were queued.
+        // DEBT: Unsure what happens if we assert (or log?) here, because it's said in esp-idf
+        // docs that this happens within an interrupt, implying an ISR
+        assert(trans == &queue.front());
+
+        queue.pop_front();
+    }
+
+    // helper version
+    static void post_cb(spi_transaction_t* trans)
+    {
+        ((spi_master_ostreambuf*)trans->user)->post_transaction_cleanup(trans);
+    }
 };
 
 }
