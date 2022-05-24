@@ -68,6 +68,8 @@ struct device : device_base
     {
         handle_ = handle;
     }
+
+    device& operator=(const device& copy_from) = default;
 };
 
 struct managed_device : device_base
