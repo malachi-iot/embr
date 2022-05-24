@@ -64,6 +64,15 @@ void spi_init()
     static spi::managed_device _device(bus, devcfg);
     // DEBT: Clunky, but will get us through the short term OK
     device = _device;
+
+    // This is known to be pretty large since it houses a circular queue of transactions
+    static test_interrupt_ostreambuf test(device);
+
+    // Both compile - need a different way to test though this will confuse the ILI9341
+    // Still needs lots of work, including listening to post callback to pop queue... hopefully
+    // it doesn't happen out of order!!
+    //test.sputc('h');
+    //test.sputn("ello", 4);
 }
 
 void spi_loop()

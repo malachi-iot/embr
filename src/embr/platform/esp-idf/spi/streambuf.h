@@ -6,6 +6,7 @@
  */
 #pragma once
 
+#include <estd/queue.h>
 #include <estd/internal/impl/streambuf.h>
 #include <estd/streambuf.h>
 
@@ -45,11 +46,13 @@ protected:
     spi_master_streambuf_base(spi::device&& spi) : spi(std::move(spi)) {}
 };
 
+template <class TCharTraits, spi_flags flags = spi_flags::Default>
+class spi_master_ostreambuf;
 
 // Starting out as blocking polled version, to make life easy
 // Be careful because estd really expects streambufs to be nonblocking
-template <class TCharTraits, spi_flags flags = spi_flags::Default>
-class spi_master_ostreambuf :
+template <class TCharTraits>
+class spi_master_ostreambuf<TCharTraits, spi_flags::Default> :
     public spi_master_streambuf_base,
     public estd::internal::impl::streambuf_base<TCharTraits>
 {
@@ -191,6 +194,78 @@ public:
 };
 
 
+// Unbuffered
+template <class TCharTraits>
+class spi_master_ostreambuf<TCharTraits, spi_flags::Interrupt> :
+    public spi_master_streambuf_base,
+    public estd::internal::impl::streambuf_base<TCharTraits>
+{
+    typedef spi_master_streambuf_base base_type;
+
+    estd::layer1::deque<spi_transaction_t, 6> queue;
+    // DEBT: Optimize this
+    void* user_;
+
+public:
+    typedef TCharTraits traits_type;
+    using char_type = typename traits_type::char_type;
+    using int_type = typename traits_type::int_type;
+
+    constexpr spi_master_ostreambuf(const spi::device& spi) : base_type(spi) {}
+
+    void user(void* v) { user_ = v; }
+
+    int_type sputc(char_type c)
+    {
+        esp_err_t ret;
+
+        // Make sure we don't roll over
+        if(queue.size() == queue.max_size())
+            return traits_type::eof();
+
+        spi_transaction_t& t = queue.emplace_back();
+
+        memset(&t, 0, sizeof(t));       //Zero out the transaction
+        t.length=8;                     // Hard-wired to 8 bits
+        t.tx_buffer=&c;
+        t.user=user_;
+
+        // Non blocking variety
+        ret=spi.queue_trans(&t, 0);  //Transmit!
+        if(ret != ESP_OK)
+        {
+            queue.pop_back();
+            ESP_ERROR_CHECK_WITHOUT_ABORT(ret);
+            return traits_type::eof();
+        }
+        return traits_type::to_int_type(c);
+    }
+
+    estd::streamsize xsputn(const char_type* s, estd::streamsize count)
+    {
+        esp_err_t ret;
+
+        // Make sure we don't roll over
+        if(queue.size() == queue.max_size())
+            return traits_type::eof();
+
+        spi_transaction_t& t = queue.emplace_back();
+        if (count==0) return 0;             //no need to send anything
+        memset(&t, 0, sizeof(t));       //Zero out the transaction
+        t.length=count*8;                 //Len is in bytes, transaction length is in bits.
+        t.tx_buffer=s;               //Data
+        t.user=user_;
+        ret=spi.queue_trans(&t, 0);  //Transmit nonblocking
+        if(ret != ESP_OK)
+        {
+            ESP_ERROR_CHECK_WITHOUT_ABORT(ret);
+            count = 0;
+        }
+        return count;
+    }
+
+};
+
 }
 
 template <class TChar, class TCharTraits = estd::char_traits<TChar> >
@@ -202,5 +277,10 @@ template <class TChar, class TCharTraits = estd::char_traits<TChar> >
 using basic_spi_master_istreambuf = estd::internal::streambuf<impl::spi_master_istreambuf<TCharTraits> >;
 
 typedef basic_spi_master_istreambuf<char> spi_master_istreambuf;
+
+template <class TChar, class TCharTraits = estd::char_traits<TChar> >
+using basic_test_interrupt_ostreambuf = estd::internal::streambuf<impl::spi_master_ostreambuf<TCharTraits, impl::spi_flags::Interrupt> >;
+
+typedef basic_test_interrupt_ostreambuf<char> test_interrupt_ostreambuf;
 
 }}

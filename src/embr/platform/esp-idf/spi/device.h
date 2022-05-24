@@ -8,6 +8,8 @@
 #include <esp_log.h>
 #include <driver/spi_master.h>
 
+#include "transaction.h"
+
 namespace embr { namespace esp_idf { namespace spi {
 
 class device_base
@@ -19,6 +21,16 @@ protected:
 
 public:
     //inline spi_device_handle_t handle() const { return handle_; }
+
+    inline esp_err_t queue_trans(spi_transaction_t* trans_desc, TickType_t ticks_to_wait)
+    {
+        return spi_device_queue_trans(handle_, trans_desc, ticks_to_wait);
+    }
+
+    inline esp_err_t get_trans_result(spi_transaction_t** trans_desc, TickType_t ticks_to_wait)
+    {
+        return spi_device_get_trans_result(handle_, trans_desc, ticks_to_wait);
+    }
 
     inline esp_err_t polling_start(spi_transaction_t* trans_desc, TickType_t ticks_to_wait)
     {
