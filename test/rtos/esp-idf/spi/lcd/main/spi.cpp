@@ -51,6 +51,31 @@ static void exp1()
     out.sputc(LCD_CMD_SLPOUT); */
 }
 
+// There's a distant chance the compiler bug which throws these initializer warnings may be leaving
+// our underlying data unzeroed.  So doing that here.  Only a 5% chance, but given all the pain experienced
+// today I'm not taking any chances.  For the record, makes no difference that I can see on run
+void spi_fixup_exp(spi_bus_config_t& buscfg)
+{
+    buscfg.flags = 0;
+    buscfg.data4_io_num = 0;
+    buscfg.data5_io_num = 0;
+    buscfg.data6_io_num = 0;
+    buscfg.data7_io_num = 0;
+}
+
+
+void spi_fixup_exp(spi_device_interface_config_t& devcfg)
+{
+    devcfg.command_bits = 0;
+    devcfg.address_bits = 0;
+    devcfg.dummy_bits = 0;
+    devcfg.duty_cycle_pos = 0;
+    devcfg.cs_ena_pretrans = 0;
+    devcfg.cs_ena_posttrans = 0;
+    devcfg.input_delay_ns = 0;
+    devcfg.flags = 0;
+    devcfg.post_cb = nullptr;
+}
 
 void spi_init()
 {
@@ -64,6 +89,9 @@ void spi_init()
         .quadhd_io_num=-1,
         .max_transfer_sz=PARALLEL_LINES*320*2+8
     };
+
+    spi_fixup_exp(buscfg);
+
     spi_device_interface_config_t devcfg={
         .mode=0,                                //SPI mode 0
 #ifdef CONFIG_LCD_OVERCLOCK
@@ -75,14 +103,17 @@ void spi_init()
         .queue_size=7,                          //We want to be able to queue 7 transactions at a time
         .pre_cb=lcd_spi_pre_transfer_callback,  //Specify pre-transfer callback to handle D/C line
     };
+
+    spi_fixup_exp(devcfg);
+
     //Initialize the SPI bus
     ret=bus.initialize(buscfg, SPI_DMA_CH_AUTO);
     ESP_ERROR_CHECK(ret);
 
-    //device = bus.add(devcfg);
+    device = bus.add(devcfg);
 
     // DEBT: Clunky, but will get us through the short term OK
-    ESP_ERROR_CHECK(device.add(bus, devcfg));
+    //ESP_ERROR_CHECK(device.add(bus, devcfg));
 
     lcd_init(device);
     exp1();

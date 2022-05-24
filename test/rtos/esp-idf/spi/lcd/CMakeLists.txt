@@ -5,4 +5,4 @@ include(../../helper.cmake)
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 
-project(lcd)
+project(spi-lcd)
