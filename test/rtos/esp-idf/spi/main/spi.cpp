@@ -98,19 +98,21 @@ void spi_loop()
     const char* TAG = "spi_loop";
     static int counter = 0;
     uint8_t brightness = counter % 16 * 0xF;
-    uint8_t brightness_in;
+    uint8_t brightness_in = 0;
 
     out.user((void*) 0);    // D/C command mode
     in.user((void*) 1);     // D/C data mode (separate input streambuf is pretty much always in this mode)
 
+    /*
     out.sputc(LCD_CMD_RDDISBV);
-    brightness_in = in.sbumpc();
+    brightness_in = in.sbumpc(); */
 
     ESP_LOGI(TAG, "Loop: counter=%d, brightness=%d, brightness_in=%d", ++counter, brightness, brightness_in);
 
     out.sputc(0x04);    // ID request
     out.pubsync();
 
+    /*
     out.sputc(0x54);    // Read CTRL Display
     brightness_in = in.sbumpc();
     ESP_LOGD(TAG, "Read CTRL Display: %08X", brightness_in);
@@ -118,7 +120,7 @@ void spi_loop()
     out.sputc(LCD_CMD_WRDISBV);
     out.user((void*) 1);    // D/C data mode
     out.sputc(brightness);
-    out.pubsync();
+    out.pubsync(); */
 
     if(counter % 2 == 0)
     {
@@ -128,7 +130,7 @@ void spi_loop()
         // sync finishes
         in.pubsync();
 
-        //out.sputc(LCD_CMD_DISPOFF);
+        out.sputc(LCD_CMD_DISPOFF);
         //out.sputc(LCD_CMD_SLPIN);
 
         ESP_LOGI(TAG, "LCD ID=%08X - sgetn", lcd_id);
@@ -144,7 +146,7 @@ void spi_loop()
         lcd_id <<= 8;
         lcd_id |= in.sbumpc();
 
-        //out.sputc(LCD_CMD_DISPON);
+        out.sputc(LCD_CMD_DISPON);
         //out.sputc(LCD_CMD_SLPOUT);
 
         ESP_LOGI(TAG, "LCD ID=%08X - sbumpc", lcd_id);
