@@ -1,0 +1,1 @@
+This test uses the arduino slave SPI

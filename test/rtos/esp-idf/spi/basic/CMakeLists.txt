@@ -11,4 +11,4 @@ include(${EMBR_ROOT_DIR}/tools/esp-idf/project.cmake)
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 
-project(lcd)
+project(spi-basic)
