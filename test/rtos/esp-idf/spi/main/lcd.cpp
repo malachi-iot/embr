@@ -3,6 +3,7 @@
 #include "spi.h"
 
 #include <esp_log.h>
+#include <esp_task_wdt.h>
 #include <driver/gpio.h>
 
 #include <esp_lcd_panel_commands.h>
@@ -138,8 +139,9 @@ void lcd_init(spi::device device)
     // Looks like we're getting a zillion 0xFF's.  Not EOFs though.  If we comment out
     // lcd_init_cmds area, then we get all 0's.
     int counter = 0;
-    for(; counter < 1000 && s.sbumpc() != eof; ++counter)
+    for(; counter < 10000 && s.sbumpc() != eof; ++counter)
     {
+        esp_task_wdt_reset();
         estd::this_thread::yield();
     }
 

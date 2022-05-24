@@ -18,7 +18,12 @@ using namespace embr::esp_idf;
 //set the D/C line to the value indicated in the user field.
 void lcd_spi_pre_transfer_callback(spi_transaction_t *t)
 {
+    const char* TAG = "lcd_spi_pre_transfer_callback";
+
     int dc=(int)t->user;
+
+    //ESP_LOGV(TAG, "dc=%d", dc);
+
     gpio_set_level((gpio_num_t)PIN_NUM_DC, dc);
 }
 
