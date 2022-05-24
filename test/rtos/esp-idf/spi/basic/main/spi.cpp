@@ -9,6 +9,7 @@
 #include "spi.h"
 
 using namespace embr::esp_idf;
+using namespace estd::chrono;
 
 static spi::bus bus(LCD_HOST);
 static spi::device device;
@@ -50,8 +51,24 @@ void spi_init()
     device = bus.add(devcfg);
 }
 
+static const char msg[] {"Hello World!"};
 
 void spi_loop()
 {
+    static const char* TAG = "spi_loop";
+
+    static int counter = 0;
+
     spi_master_ostreambuf out(device);
+
+    estd::this_thread::sleep_for(milliseconds(500));
+
+    char c = msg[counter];
+
+    int result = out.sputc(c);
+
+    ESP_LOGI(TAG, "sputc('%c') result = %d", c, result);
+
+    if(++counter == sizeof(msg))
+        counter = 0;
 }
