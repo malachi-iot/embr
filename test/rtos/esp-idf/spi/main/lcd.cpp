@@ -101,6 +101,17 @@ void lcd_init(spi::device device)
 {
     const char* TAG = "lcd_init";
 
+    //Initialize non-SPI GPIOs
+    gpio_set_direction((gpio_num_t)PIN_NUM_DC, GPIO_MODE_OUTPUT);
+    gpio_set_direction((gpio_num_t)PIN_NUM_RST, GPIO_MODE_OUTPUT);
+    gpio_set_direction((gpio_num_t)PIN_NUM_BCKL, GPIO_MODE_OUTPUT);
+
+    //Reset the display
+    gpio_set_level((gpio_num_t)PIN_NUM_RST, 0);
+    vTaskDelay(100 / portTICK_RATE_MS);
+    gpio_set_level((gpio_num_t)PIN_NUM_RST, 1);
+    vTaskDelay(100 / portTICK_RATE_MS);
+
     const lcd_init_cmd_t* lcd_init_cmds = ili_init_cmds;
 
     //Send all the commands
@@ -112,6 +123,9 @@ void lcd_init(spi::device device)
         }
         ++lcd_init_cmds;
     }
+
+    ///Enable backlight
+    gpio_set_level((gpio_num_t)PIN_NUM_BCKL, 0);
 
     ESP_LOGI(TAG, "done");
 }

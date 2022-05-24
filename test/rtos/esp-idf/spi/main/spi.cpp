@@ -38,27 +38,17 @@ static void exp1()
     //test.sputc('h');
     //test.sputn("ello", 4);
 
+    /*
     spi_master_ostreambuf out(device);
     out.user((void*) 0);    // D/C command mode
 
     out.sputc(LCD_CMD_DISPON);
-    out.sputc(LCD_CMD_SLPOUT);
+    out.sputc(LCD_CMD_SLPOUT); */
 }
 
 
 void spi_init()
 {
-    //Initialize non-SPI GPIOs
-    gpio_set_direction((gpio_num_t)PIN_NUM_DC, GPIO_MODE_OUTPUT);
-    gpio_set_direction((gpio_num_t)PIN_NUM_RST, GPIO_MODE_OUTPUT);
-    gpio_set_direction((gpio_num_t)PIN_NUM_BCKL, GPIO_MODE_OUTPUT);
-
-    //Reset the display
-    gpio_set_level((gpio_num_t)PIN_NUM_RST, 0);
-    vTaskDelay(100 / portTICK_RATE_MS);
-    gpio_set_level((gpio_num_t)PIN_NUM_RST, 1);
-    vTaskDelay(100 / portTICK_RATE_MS);
-
     esp_err_t ret;
 
     spi_bus_config_t buscfg={
@@ -83,6 +73,8 @@ void spi_init()
     //Initialize the SPI bus
     ret=bus.initialize(buscfg, SPI_DMA_CH_AUTO);
     ESP_ERROR_CHECK(ret);
+
+    //device = bus.add(devcfg);
 
     // DEBT: Clunky, but will get us through the short term OK
     ESP_ERROR_CHECK(device.add(bus, devcfg));
