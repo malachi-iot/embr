@@ -14,6 +14,9 @@ using namespace estd::chrono;
 static spi::bus bus(LCD_HOST);
 static spi::device device;
 
+#undef PIN_NUM_CS
+#define PIN_NUM_CS 4
+
 // this config style generates a lot of warnings
 // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=61489
 // https://en.cppreference.com/w/cpp/language/aggregate_initialization

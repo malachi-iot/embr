@@ -15,7 +15,7 @@ As per [here](https://learn.adafruit.com/adafruit-feather-m0-basic-proto/pinouts
 https://cdn-learn.adafruit.com/assets/assets/000/046/244/original/adafruit_products_Feather_M0_Basic_Proto_v2.2-1.png?1504885373).
 mappings are:
 
-Sercom1:
+m0 Sercom1:
 
 | SPI  | Native | Arduino |
 | ---- | ------ | ------- |
@@ -24,4 +24,12 @@ Sercom1:
 | SS   | PA18   | D10     |
 | MISO | PA19   | D12     |
 
+Starting with ESP32 (SPI master) connections same as 
+stock ESP-WROVER-KIT LCD config (except for CS of course):
 
+| SPI  | GPIO   |
+| ---- | ------ |
+| MOSI | 23     |
+| CLK  | 19     |
+| CS   | 4      |
+| MISO | 25     |
