@@ -17,7 +17,6 @@ mappings are:
 
 Sercom1:
 
-| ---- | ------ | ------- |
 | SPI  | Native | Arduino |
 | ---- | ------ | ------- |
 | MOSI | PA16   | D11     |
