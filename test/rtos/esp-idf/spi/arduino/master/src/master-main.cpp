@@ -15,6 +15,7 @@ void setup()
     Serial.begin(115200);
 
     pinMode(PIN_CS, OUTPUT);
+    pinMode(PIN_LED, OUTPUT);
 
     SPI.beginTransaction(SPISettings(100000, MSBFIRST, SPI_MODE0));
 }
@@ -28,6 +29,8 @@ static estd::arduino_ostream clog(Serial);
 void loop()
 {
     estd::this_thread::sleep_for(milliseconds(250));
+
+    digitalWrite(PIN_LED, counter % 2);
 
     char c = msg[counter];
 
