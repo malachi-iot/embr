@@ -8,14 +8,28 @@
 
 #include "spi.h"
 
+#define CPP_MODE 0
+
 using namespace embr::esp_idf;
 using namespace estd::chrono;
 
 static spi::bus bus(LCD_HOST);
 static spi::device device;
 
-#undef PIN_NUM_CS
-#define PIN_NUM_CS 4
+#if CPP_MODE
+namespace cpp {
+
+#include "spi_inc.h"
+
+}
+
+#else
+
+extern "C" void copy_to_buscfg(spi_bus_config_t* copy_to);
+extern "C" void copy_to_devcfg(spi_device_interface_config_t* copy_to);
+
+#endif
+
 
 // this config style generates a lot of warnings
 // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=61489
@@ -28,30 +42,30 @@ static spi::device device;
 // due to a compiler bug?  Something to check out.
 void spi_init()
 {
-    spi_bus_config_t buscfg={
-        .mosi_io_num=PIN_NUM_MOSI,
-        .miso_io_num=PIN_NUM_MISO,
-        .sclk_io_num=PIN_NUM_CLK,
-        .quadwp_io_num=-1,
-        .quadhd_io_num=-1,
-        .max_transfer_sz=PARALLEL_LINES*320*2+8,
+    spi_bus_config_t buscfg;
 
-        // bookend
-        .intr_flags=0
-    };
-
+#if CPP_MODE
+    cpp::copy_to_buscfg(&buscfg);
+#else
+    copy_to_buscfg(&buscfg);
+#endif
+    
     bus.initialize(buscfg, SPI_DMA_CH_AUTO);
 
-    spi_device_interface_config_t devcfg={
-        .mode=0,                                //SPI mode 0
-        .clock_speed_hz=1*10*1000,              //Clock out at 1 MHz
-        .spics_io_num=PIN_NUM_CS,               //CS pin
-        .queue_size=7,                          //We want to be able to queue 7 transactions at a time
+    spi_device_interface_config_t devcfg;
 
-        // bookend
-        .post_cb=nullptr
-        //.post_cb = test_interrupt_ostreambuf::post_cb
-    };
+#if CPP_MODE
+    cpp::copy_to_devcfg(&devcfg);
+#else
+    copy_to_devcfg(&devcfg);
+#endif
+
+    // Have to set it to 1 for it to operate as if it was in '0' mode
+    //devcfg.mode = 1;
+    //devcfg.duty_cycle_pos = 0;
+    //devcfg.cs_ena_pretrans = 0;
+
+    //devcfg.duty_cycle_pos = 64;
 
     device = bus.add(devcfg);
 }

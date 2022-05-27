@@ -1,4 +1,4 @@
-set(COMPONENT_SRCS "main.cpp" "spi.cpp")
+set(COMPONENT_SRCS "main.cpp" "spi.cpp" "c_spi.c")
 set(COMPONENT_ADD_INCLUDEDIRS ".")
 
 register_component()
