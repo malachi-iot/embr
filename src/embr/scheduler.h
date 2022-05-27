@@ -186,7 +186,14 @@ class Scheduler :
 
 public:
     Scheduler() = default;
-    Scheduler(TSubject subject) : subject_provider(subject) {}
+    //Scheduler(TSubject subject) : subject_provider(subject) {}
+    Scheduler(const TSubject& subject) : subject_provider(subject) {}
+#ifdef FEATURE_CPP_MOVESEMANTIC
+    Scheduler(TSubject&& subject) : subject_provider(std::move(subject))
+    {
+
+    }
+#endif
 
 
     void schedule(const value_type& value)
@@ -343,7 +350,9 @@ template <class TTraits, int count, class TSubject = void_subject>
 struct Scheduler :
     internal::Scheduler<estd::layer1::vector<typename TTraits::value_type, count>, TTraits, TSubject>
 {
+    typedef internal::Scheduler<estd::layer1::vector<typename TTraits::value_type, count>, TTraits, TSubject> base_type;
 
+    ESTD_CPP_FORWARDING_CTOR(Scheduler)
 };
 
 }

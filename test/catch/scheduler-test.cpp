@@ -3,6 +3,7 @@
 #include <bitset>
 
 #include <embr/scheduler.h>
+#include <embr/observer.h>
 
 // Not available because we test against C++11
 //using namespace std::literals::chrono_literals;
@@ -179,6 +180,32 @@ struct StatefulFunctorTraits : FunctorTraits
     time_point now_ = 0;
 
     time_point now() { return now_++; }
+};
+
+
+template <class TTraits>
+struct SchedulerObserver
+{
+    typedef TTraits traits_type;
+
+    int added = 0;
+    int removed = 0;
+    int processed = 0;
+
+    void on_notify(embr::internal::events::Processing<traits_type>)
+    {
+        ++processed;
+    }
+
+    void on_notify(embr::internal::events::Scheduled<traits_type>)
+    {
+        ++added;
+    }
+
+    void on_notify(embr::internal::events::Removed<traits_type>)
+    {
+        ++removed;
+    }
 };
 
 TEST_CASE("scheduler test", "[scheduler]")
@@ -426,5 +453,32 @@ TEST_CASE("scheduler test", "[scheduler]")
             REQUIRE(arrived.count() == 1);
             REQUIRE(arrived[0]);
         }
+    }
+    SECTION("notifications")
+    {
+        typedef StatefulFunctorTraits traits_type;
+        SchedulerObserver<traits_type> o;
+        auto s = embr::layer1::make_subject(o);
+        embr::internal::layer1::Scheduler<traits_type, 5, decltype(s)> scheduler(s);
+
+        std::bitset<32> arrived;
+
+        auto f = traits_type::make_function(
+            [&](unsigned* wake, unsigned current)
+            {
+                arrived.set(*wake);
+                *wake = current + 2;
+            });
+
+        scheduler.schedule(5, f);
+        scheduler.schedule(99, f); // should never reach this one
+
+        for(traits_type::time_point i = 0; i < 30; i++)
+        {
+            scheduler.process(i);
+        }
+
+        REQUIRE(o.added == 15);
+        REQUIRE(o.removed == 13);
     }
 }
