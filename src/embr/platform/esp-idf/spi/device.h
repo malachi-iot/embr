@@ -87,6 +87,11 @@ struct device : device_base
     }
 
     device& operator=(const device& copy_from) = default;
+    device& operator=(const spi_device_handle_t handle)
+    {
+        handle_ = handle;
+        return *this;
+    }
 
 private:
     device(const spi_host_device_t host_id, const spi_device_interface_config_t& dev_config)

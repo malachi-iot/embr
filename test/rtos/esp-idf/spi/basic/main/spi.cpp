@@ -46,11 +46,11 @@ void spi_init()
 
 #if CPP_MODE
     cpp::copy_to_buscfg(&buscfg);
+    bus.initialize(buscfg, SPI_DMA_CH_AUTO);
 #else
     copy_to_buscfg(&buscfg);
+    ESP_ERROR_CHECK(spi_bus_initialize(bus, &buscfg, SPI_DMA_CH_AUTO));
 #endif
-    
-    bus.initialize(buscfg, SPI_DMA_CH_AUTO);
 
     spi_device_interface_config_t devcfg;
 
@@ -67,7 +67,13 @@ void spi_init()
 
     //devcfg.duty_cycle_pos = 64;
 
+#if CPP_MODE
     device = bus.add(devcfg);
+#else
+    spi_device_handle_t handle;
+    ESP_ERROR_CHECK(spi_bus_add_device(bus, &devcfg, &handle));
+    device = handle;
+#endif
 }
 
 static const char msg[] {"Hello World!"};
