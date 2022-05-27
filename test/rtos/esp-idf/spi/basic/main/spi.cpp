@@ -44,7 +44,7 @@ void spi_init()
 
     spi_device_interface_config_t devcfg={
         .mode=0,                                //SPI mode 0
-        .clock_speed_hz=1*1000*1000,            //Clock out at 1 MHz
+        .clock_speed_hz=1*10*1000,              //Clock out at 1 MHz
         .spics_io_num=PIN_NUM_CS,               //CS pin
         .queue_size=7,                          //We want to be able to queue 7 transactions at a time
 
@@ -65,7 +65,7 @@ void spi_loop()
 
     spi_master_ostreambuf out(device);
 
-    estd::this_thread::sleep_for(milliseconds(500));
+    estd::this_thread::sleep_for(milliseconds(250));
 
     char c = msg[counter];
 
