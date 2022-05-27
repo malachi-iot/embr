@@ -79,17 +79,37 @@ void spi_init()
 static const char msg[] {"Hello World!"};
 static int counter = 0;
 
+int sputc(char c)
+{
+    esp_err_t ret;
+    spi_transaction_t t;
+    memset(&t, 0, sizeof(t));       //Zero out the transaction
+    t.length=8;    
+    t.flags = SPI_TRANS_USE_TXDATA;     
+    //t.tx_buffer=&c;
+    t.tx_data[0]=c;
+    ret=spi_device_polling_transmit(device, &t);  //Transmit!
+    assert(ret==ESP_OK);
+    return ret;
+}
+
 void spi_loop()
 {
     static const char* TAG = "spi_loop";
 
+#if CPP_MODE
     spi_master_ostreambuf out(device);
+#endif
 
     estd::this_thread::sleep_for(milliseconds(250));
 
     char c = msg[counter];
 
+#if CPP_MODE
     int result = out.sputc(c);
+#else
+    int result = sputc(c);
+#endif
 
     ESP_LOGI(TAG, "sputc('%c') result = %d", c, result);
 
