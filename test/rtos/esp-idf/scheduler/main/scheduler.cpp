@@ -10,6 +10,7 @@
 #include "esp_log.h"
 
 using namespace estd::chrono;
+using namespace estd::literals;
 
 using _time_point = freertos_clock::time_point;
 using FunctorTraits = embr::internal::experimental::FunctorTraits<freertos_clock::time_point>;
@@ -31,8 +32,7 @@ void scheduler_daemon_task(void*)
     {
         estd::this_thread::sleep_for(milliseconds(100));
 
-        // FIX: estd time_point doesn't have a != yet
-        //scheduler.process();
+        scheduler.process();
     }
 }
 
@@ -46,20 +46,16 @@ void scheduler_init()
 
     auto f = FunctorTraits::make_function([](_time_point* wake, _time_point current)
     {
-        *wake += milliseconds(3000);
+        *wake += 3000ms;
         ESP_LOGI(TAG, "scheduled: counter=%d", counter);
     });
 
-    _time_point target = freertos_clock::now();
-    // FIX: Figure out why this operator isn't behaving
-    //scheduler.schedule(target + seconds(10), f);
-    target += seconds(5);
-    scheduler.schedule(target, f);
+    scheduler.schedule(freertos_clock::now() + 10s, f);
         
     for(;;)
     {
         ESP_LOGI(TAG, "counter=%d", ++counter);
 
-        estd::this_thread::sleep_for(seconds(1));
+        estd::this_thread::sleep_for(1s);
     }
 }
