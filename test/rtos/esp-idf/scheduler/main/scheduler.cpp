@@ -12,7 +12,6 @@
 using namespace estd::chrono;
 using namespace estd::literals;
 
-using _time_point = freertos_clock::time_point;
 using FunctorTraits = embr::internal::experimental::FunctorTraits<freertos_clock::time_point>;
 
 struct FreertosFunctorTraits : FunctorTraits
@@ -44,7 +43,9 @@ void scheduler_init()
     xTaskCreate(scheduler_daemon_task, "embr:scheduler", 
         4096, NULL, 4, NULL);
 
-    auto f = FunctorTraits::make_function([](_time_point* wake, _time_point current)
+    typedef FunctorTraits::time_point time_point;
+
+    auto f = FunctorTraits::make_function([](time_point* wake, time_point current)
     {
         *wake += 3000ms;
         ESP_LOGI(TAG, "scheduled: counter=%d", counter);
