@@ -86,10 +86,11 @@ struct Scheduler
 };
 
 
-template<class TTraits>
+template<class TTraits, bool is_const = true>
 struct ValueBase : Scheduler<TTraits>
 {
-    typedef typename TTraits::value_type value_type;
+    typedef typename TTraits::value_type _value_type;
+    typedef typename estd::conditional<is_const, const _value_type, _value_type>::type value_type;
 
     // DEBT: Needs better name, this represents the control/meta structure going in
     // the sorted heap.  Be advised the heap one may be a copy of this
@@ -189,6 +190,11 @@ class Scheduler :
 
     priority_queue_type event_queue;
 
+    void do_notify_scheduling(value_type& value)
+    {
+        subject_provider::value().notify(scheduling_event_type(value), *this);
+    }
+
 public:
     time_point top_time() const
     {
@@ -211,7 +217,7 @@ public:
 
     void schedule(const value_type& value)
     {
-        subject_provider::value().notify(scheduling_event_type(value), this);
+        do_notify_scheduling(value);
 
         event_queue.push(value);
 
@@ -221,6 +227,8 @@ public:
 #ifdef FEATURE_CPP_MOVESEMANTIC
     void schedule(value_type&& value)
     {
+        do_notify_scheduling(value);
+
         event_queue.push(std::move(value));
 
         subject_provider::value().notify(scheduled_event_type(value));
@@ -231,6 +239,9 @@ public:
     template <class ...TArgs>
     void schedule(TArgs&&...args)
     {
+        // DEBT: Hard to do this here, want to though
+        //subject_provider::value().notify(scheduling_event_type(value), this);
+
         accessor value = event_queue.emplace(std::forward<TArgs>(args)...);
 
         subject_provider::value().notify(scheduled_event_type(value.lock()));
@@ -293,6 +304,8 @@ public:
 
                 if(reschedule_requested)
                 {
+                    do_notify_scheduling(copied);
+
                     // DEBT: Doesn't handle move variant
                     event_queue.push(copied);
 

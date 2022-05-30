@@ -9,6 +9,8 @@ using namespace estd::literals;
 #if SCHEDULER_APPROACH == SCHEDULER_APPROACH_TASKNOTIFY
 void scheduler_daemon_task(void*)
 {
+    o2.xSchedulerDaemon = xTaskGetCurrentTaskHandle();
+
     const char* TAG = "scheduler_daemon_task";
 
 //    typedef FunctorTraits::time_point time_point;
@@ -20,7 +22,8 @@ void scheduler_daemon_task(void*)
         auto duration = scheduler.top_time() - freertos_clock::now();
         ulTaskNotifyTake(pdFALSE, duration.count());
 
-        ESP_LOGI(TAG, "wake");
+        ESP_LOGD(TAG, "wake");
+
         scheduler.process();
     }
 }
