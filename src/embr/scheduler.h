@@ -177,6 +177,7 @@ class Scheduler :
 
     priority_queue_type event_queue;
 
+public:
     time_point top_time() const
     {
         time_point t = traits_type::get_time_point(event_queue.top().lock());

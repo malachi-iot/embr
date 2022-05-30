@@ -9,9 +9,12 @@ using namespace estd::literals;
 #if SCHEDULER_APPROACH == SCHEDULER_APPROACH_TASKNOTIFY
 void scheduler_daemon_task(void*)
 {
+//    typedef FunctorTraits::time_point time_point;
+
     for(;;)
     {
-        estd::this_thread::sleep_for(milliseconds(100));
+        auto duration = scheduler.top_time() - freertos_clock::now();
+        ulTaskNotifyTake(pdFALSE, duration.count());
 
         scheduler.process();
     }
