@@ -99,6 +99,17 @@ struct ValueBase : Scheduler<TTraits>
 };
 
 template <class TTraits>
+struct Scheduling : ValueBase<TTraits>
+{
+    typedef ValueBase<TTraits> base_type;
+
+    Scheduling(typename base_type::value_type& value) : base_type(value) {}
+};
+
+
+// DEBT: Consider how to semi standardize collection operation events, somewhat similar to how C#
+// does with IObservableCollection
+template <class TTraits>
 struct Scheduled : ValueBase<TTraits>
 {
     typedef ValueBase<TTraits> base_type;
@@ -156,6 +167,7 @@ class Scheduler :
     typedef estd::internal::struct_evaporator<TSubject> subject_provider;
     typedef estd::internal::struct_evaporator<TImpl> impl_provider;
 
+    typedef events::Scheduling<traits_type> scheduling_event_type;
     typedef events::Scheduled<traits_type> scheduled_event_type;
     typedef events::Removed<traits_type> removed_event_type;
     typedef events::Processing<traits_type> processing_event_type;
@@ -199,6 +211,8 @@ public:
 
     void schedule(const value_type& value)
     {
+        subject_provider::value().notify(scheduling_event_type(value), this);
+
         event_queue.push(value);
 
         subject_provider::value().notify(scheduled_event_type());

@@ -9,7 +9,8 @@ using namespace estd::chrono;
 using namespace estd::literals;
 
 embr::experimental::FreeRTOSSchedulerObserver<FreertosFunctorTraits> o;
-auto s = embr::layer1::make_subject(o);
+NotifierObserver o2;
+auto s = embr::layer1::make_subject(o, o2);
 embr::internal::layer1::Scheduler<FreertosFunctorTraits, 5, decltype(s)> scheduler(s);
 
 
