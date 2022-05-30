@@ -1,4 +1,4 @@
-set(COMPONENT_SRCS "main.cpp" "scheduler.cpp")
+set(COMPONENT_SRCS "main.cpp" "scheduler.cpp" "scheduler_tasknotify.cpp" "scheduler_bruteforce.cpp")
 set(COMPONENT_ADD_INCLUDEDIRS ".")
 
 register_component()
