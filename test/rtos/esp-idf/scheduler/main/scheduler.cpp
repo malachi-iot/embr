@@ -28,6 +28,19 @@ void gpio_init()
     gpio_set_direction(SLOW_LED_PIN, GPIO_MODE_OUTPUT);
 }
 
+void scheduler_daemon_init(NotifierObserver& no,
+    configSTACK_DEPTH_TYPE usStackDepth = 4096, UBaseType_t uxPriority = 4)
+{
+    static const char* TAG = "scheduler_daemon_init";
+
+    BaseType_t result = xTaskCreate(scheduler_daemon_task, "embr:scheduler",
+                usStackDepth, &scheduler, uxPriority, &no.xSchedulerDaemon);
+    if(result != pdPASS)
+    {
+        ESP_LOGW(TAG, "Could not start scheduler daemon task");
+    }
+}
+
 void scheduler_init()
 {
     static int counter = 0;
@@ -35,8 +48,7 @@ void scheduler_init()
 
     gpio_init();
 
-    xTaskCreate(scheduler_daemon_task, "embr:scheduler", 
-        4096, NULL, 4, NULL);
+    scheduler_daemon_init(o2);
 
     typedef FunctorTraits::time_point time_point;
 

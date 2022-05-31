@@ -13,6 +13,10 @@ struct FreeRTOSSchedulerObserver
     {
     }
 
+    void on_notify(embr::internal::events::Scheduling<traits_type>)
+    {
+    }
+
     void on_notify(embr::internal::events::Scheduled<traits_type>)
     {
     }
