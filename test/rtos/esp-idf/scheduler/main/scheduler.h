@@ -13,7 +13,7 @@
 #define SCHEDULER_APPROACH_TASKNOTIFY 2
 
 #ifndef SCHEDULER_APPROACH
-#define SCHEDULER_APPROACH SCHEDULER_APPROACH_TASKNOTIFY
+#define SCHEDULER_APPROACH 1
 #endif
 
 
@@ -29,7 +29,8 @@ struct FreertosFunctorTraits : FunctorTraits
     { return estd::chrono::freertos_clock::now(); }
 };
 
-// Specifically, FreeRTOS Task Notifier
+// Specifically, FreeRTOS Task Notifier -
+// not relevant for brute force polled approach
 struct NotifierObserver
 {
     static constexpr const char* TAG = "NotifyObserver";
@@ -64,6 +65,7 @@ struct NotifierObserver
 
     void on_notify(embr::internal::events::Scheduled<FreertosFunctorTraits> scheduled)
     {
+#if SCHEDULER_APPROACH == SCHEDULER_APPROACH_TASKNOTIFY
         if(early_wakeup)
         {
             // NOTE: Only doing warning temporarily as we build this out
@@ -73,6 +75,7 @@ struct NotifierObserver
             // and sleep again - but for a shorter period of time.  Therefore, two wakes occur.
             xTaskNotifyGive(xSchedulerDaemon);
         }
+#endif
 
         ESP_LOGI(TAG, "on_notify(scheduled)");
     }
