@@ -99,18 +99,22 @@ void scheduler_init()
         ESP_LOGI(TAG, "scheduled: counter=%d", counter);
     });
 
-    /*
-     * Not playing nice
-     */
-    /*
-    auto f3 = estd::experimental::function<time_point(time_point*, time_point)>(
+    // Dynamically allocated flavor.  We don't hate this, because it doesn't ever free so it's
+    // not a fragmentation risk
+    auto f3 = estd::experimental::function<void(time_point*, time_point)>(
         [](time_point* wake, time_point current)
         {
-
-        }); */
+            ESP_LOGD(TAG, "f3 counter=%d", counter);
+            *wake += 1s;
+        });
 
     scheduler.schedule(freertos_clock::now() + 5s, f);
-    //scheduler.schedule(freertos_clock::now(), f3);
+    // DEBT: Although for this test we prefer the rvalue/move, it should not be
+    // a general requirement
+    // FIX: Scheduling f3 causes a crash, interestingly only at the 5s marker.  This
+    // implies the scheduling mechanism glitched, not f3/function itself.  Not likely
+    // a race condition since we're testing task-notify approach, though still maybe...
+    //scheduler.schedule(freertos_clock::now(), std::move(f3));
         
     for(;;)
     {
