@@ -29,7 +29,12 @@ void gpio_init()
 }
 
 void scheduler_daemon_init(NotifierObserver& no,
+#ifdef ESP_PLATFORM
+    configSTACK_DEPTH_TYPE usStackDepth = CONFIG_EMBR_SCHEDULER_TASKSIZE,
+    UBaseType_t uxPriority = CONFIG_EMBR_SCHEDULER_PRIORITY)
+#else
     configSTACK_DEPTH_TYPE usStackDepth = 4096, UBaseType_t uxPriority = 4)
+#endif
 {
     static const char* TAG = "scheduler_daemon_init";
 
