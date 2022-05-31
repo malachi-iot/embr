@@ -65,7 +65,14 @@ struct NotifierObserver
     void on_notify(embr::internal::events::Scheduled<FreertosFunctorTraits> scheduled)
     {
         if(early_wakeup)
+        {
+            // NOTE: Only doing warning temporarily as we build this out
+            ESP_LOGW(TAG, "on_notify(scheduled) early wakeup");
+
+            // This will result in immediately waking up daemon, which we expect to turn right around
+            // and sleep again - but for a shorter period of time.  Therefore, two wakes occur.
             xTaskNotifyGive(xSchedulerDaemon);
+        }
 
         ESP_LOGI(TAG, "on_notify(scheduled)");
     }

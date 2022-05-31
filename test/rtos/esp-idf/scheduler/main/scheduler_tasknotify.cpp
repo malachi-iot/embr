@@ -20,9 +20,9 @@ void scheduler_daemon_task(void*)
     for(;;)
     {
         auto duration = scheduler.top_time() - freertos_clock::now();
-        ulTaskNotifyTake(pdFALSE, duration.count());
+        uint32_t r = ulTaskNotifyTake(pdTRUE, duration.count());
 
-        ESP_LOGD(TAG, "wake");
+        ESP_LOGD(TAG, "wake: %u", r);
 
         scheduler.process();
     }

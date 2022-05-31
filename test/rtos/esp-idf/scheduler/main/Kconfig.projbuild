@@ -1,0 +1,13 @@
+menu "Embr Scheduler Test"
+
+    menu "LEDs"
+        config FAST_LED_PIN
+            int "Pin on which to blink quickly but intermittently"
+            default 4
+
+        config SLOW_LED_PIN
+            int "Pin on which to blink slowly and steadily"
+            default 2
+    endmenu
+
+endmenu
