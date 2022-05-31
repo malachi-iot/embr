@@ -46,6 +46,11 @@ void scheduler_daemon_init(NotifierObserver& no,
     }
 }
 
+void repeater(freertos_clock::time_point* wake, freertos_clock::time_point current)
+{
+
+}
+
 void scheduler_init()
 {
     static int counter = 0;
@@ -94,7 +99,18 @@ void scheduler_init()
         ESP_LOGI(TAG, "scheduled: counter=%d", counter);
     });
 
+    /*
+     * Not playing nice
+     */
+    /*
+    auto f3 = estd::experimental::function<time_point(time_point*, time_point)>(
+        [](time_point* wake, time_point current)
+        {
+
+        }); */
+
     scheduler.schedule(freertos_clock::now() + 5s, f);
+    //scheduler.schedule(freertos_clock::now(), f3);
         
     for(;;)
     {
