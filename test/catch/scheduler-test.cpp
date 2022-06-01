@@ -210,6 +210,8 @@ struct SchedulerObserver
 
 TEST_CASE("scheduler test", "[scheduler]")
 {
+    std::bitset<32> arrived;
+
     SECTION("one-shot")
     {
         // doesn't have 'accessor', and maybe array isn't a good fit for priority_queue anyway
@@ -359,7 +361,6 @@ TEST_CASE("scheduler test", "[scheduler]")
         // indeed being in progress and experimental
         SECTION("estd::function style")
         {
-            std::bitset<32> arrived;
             embr::internal::layer1::Scheduler<FunctorTraits, 5> scheduler;
 
             SECTION("trivial scheduling")
@@ -437,7 +438,6 @@ TEST_CASE("scheduler test", "[scheduler]")
         }
         SECTION("stateful")
         {
-            std::bitset<32> arrived;
             embr::internal::layer1::Scheduler<StatefulFunctorTraits, 5> scheduler;
 
             auto f = StatefulFunctorTraits::make_function(
@@ -455,7 +455,6 @@ TEST_CASE("scheduler test", "[scheduler]")
         }
         SECTION("std-style dynamic allocated function")
         {
-            std::bitset<32> arrived;
             embr::internal::layer1::Scheduler<FunctorTraits, 5> scheduler;
 
             estd::experimental::function<void(unsigned*, unsigned)> f(
@@ -483,8 +482,6 @@ TEST_CASE("scheduler test", "[scheduler]")
         auto s = embr::layer1::make_subject(o);
         embr::internal::layer1::Scheduler<traits_type, 5, decltype(s)> scheduler(s);
 
-        std::bitset<32> arrived;
-
         auto f = traits_type::make_function(
             [&](unsigned* wake, unsigned current)
             {
@@ -505,21 +502,24 @@ TEST_CASE("scheduler test", "[scheduler]")
     }
     SECTION("traits")
     {
+        // Test primarily exists to ensure things compile.
+        // Otherwise, it's mostly an estdlib scope kind of test
         SECTION("FunctorTraits")
         {
             typedef embr::internal::experimental::FunctorTraits<int> traits_type;
             typedef typename traits_type::value_type control_structure;
 
             estd::layer1::vector<typename traits_type::value_type, 10> v;
-            estd::experimental::function<void(int*, int)> f([](int* wake, int current)
+            estd::experimental::function<void(int*, int)> f([&](int* wake, int current)
             {
-
+                arrived.set(*wake);
             });
 
             control_structure cs(1, f);
 
-            // FIX: Won't compile, smells like some malfunction with our special estd allocators
-            //v.emplace_back(1, f);
+            v.emplace_back(1, f);
+
+            // TODO: Somewhat incomplete test
         }
     }
 }
