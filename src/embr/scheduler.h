@@ -351,6 +351,9 @@ struct FunctorTraits
             func(func)
         {}
 
+        // Don't give anybody false hope that we're gonna housekeep function_type
+        control_structure(time_point wake, function_type&& func) = delete;
+
         // DEBT: See Item2Traits
         control_structure() = default;
     };

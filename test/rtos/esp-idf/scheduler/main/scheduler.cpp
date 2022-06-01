@@ -109,17 +109,10 @@ void scheduler_init()
         });
 
     scheduler.schedule(freertos_clock::now() + 5s, f);
-    // DEBT: Although for this test we prefer the rvalue/move, it should not be
-    // a general requirement
-    // FIX: Scheduling f3 causes a crash, interestingly only at the 5s marker.  This
-    // implies the scheduling mechanism glitched, not f3/function itself.  Not likely
-    // a race condition since we're testing task-notify approach, though still maybe...
-    // Stack trace indicates crash happens on execution, which kinda makes sense since
-    // by then the pseudo-temporary (as created by std::move) has gone away thus
-    // deleting the function "meat"
-    //scheduler.schedule(freertos_clock::now(), f3);
-    scheduler.schedule(freertos_clock::now(), std::move(f3));
-        
+    // FIX: This schedule operation should do an early wakeup, but it doesn't, because
+    // emplace flavor doesn't fire 'scheduling'
+    scheduler.schedule(freertos_clock::now(), f3);
+
     for(;;)
     {
         ESP_LOGD(TAG, "counter=%d", ++counter);
