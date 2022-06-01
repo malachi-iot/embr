@@ -101,7 +101,7 @@ void scheduler_init()
 
     // Dynamically allocated flavor.  We don't hate this, because it doesn't ever free so it's
     // not a fragmentation risk
-    auto f3 = estd::experimental::function<void(time_point*, time_point)>(
+    estd::experimental::function<void(time_point*, time_point)> f3(
         [](time_point* wake, time_point current)
         {
             ESP_LOGD(TAG, "f3 counter=%d", counter);
@@ -114,7 +114,11 @@ void scheduler_init()
     // FIX: Scheduling f3 causes a crash, interestingly only at the 5s marker.  This
     // implies the scheduling mechanism glitched, not f3/function itself.  Not likely
     // a race condition since we're testing task-notify approach, though still maybe...
-    //scheduler.schedule(freertos_clock::now(), std::move(f3));
+    // Stack trace indicates crash happens on execution, which kinda makes sense since
+    // by then the pseudo-temporary (as created by std::move) has gone away thus
+    // deleting the function "meat"
+    //scheduler.schedule(freertos_clock::now(), f3);
+    scheduler.schedule(freertos_clock::now(), std::move(f3));
         
     for(;;)
     {
