@@ -463,10 +463,7 @@ TEST_CASE("scheduler test", "[scheduler]")
                     arrived.set(*wake);
                 });
 
-            estd::experimental::function_base<void(unsigned*, unsigned)> _f(f);
-
-            // FIX: can't pass 'f' directly into here
-            scheduler.schedule(5, _f);
+            scheduler.schedule(5, f);
 
             scheduler.process(10);
 
