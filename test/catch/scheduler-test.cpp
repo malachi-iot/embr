@@ -503,4 +503,23 @@ TEST_CASE("scheduler test", "[scheduler]")
         REQUIRE(o.added == 15);
         REQUIRE(o.removed == 13);
     }
+    SECTION("traits")
+    {
+        SECTION("FunctorTraits")
+        {
+            typedef embr::internal::experimental::FunctorTraits<int> traits_type;
+            typedef typename traits_type::value_type control_structure;
+
+            estd::layer1::vector<typename traits_type::value_type, 10> v;
+            estd::experimental::function<void(int*, int)> f([](int* wake, int current)
+            {
+
+            });
+
+            control_structure cs(1, f);
+
+            // FIX: Won't compile, smells like some malfunction with our special estd allocators
+            //v.emplace_back(1, f);
+        }
+    }
 }
