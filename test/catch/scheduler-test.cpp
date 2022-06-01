@@ -453,6 +453,28 @@ TEST_CASE("scheduler test", "[scheduler]")
             REQUIRE(arrived.count() == 1);
             REQUIRE(arrived[0]);
         }
+        SECTION("std-style dynamic allocated function")
+        {
+            std::bitset<32> arrived;
+            embr::internal::layer1::Scheduler<FunctorTraits, 5> scheduler;
+
+            estd::experimental::function<void(unsigned*, unsigned)> f(
+                [&](unsigned* wake, unsigned current_time)
+                {
+                    arrived.set(*wake);
+                });
+
+            estd::experimental::function_base<void(unsigned*, unsigned)> _f(f);
+
+            // FIX: can't pass 'f' directly into here
+            scheduler.schedule(5, _f);
+
+            scheduler.process(10);
+
+            REQUIRE(arrived[0] == false);
+            REQUIRE(arrived[5] == true);
+            REQUIRE(arrived[10] == false);
+        }
     }
     SECTION("notifications")
     {
