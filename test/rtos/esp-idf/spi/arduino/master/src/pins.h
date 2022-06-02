@@ -5,4 +5,6 @@
 #define PIN_CS 0
 #define PIN_CLK 0
 
-//#define PIN_LED 13
+#ifndef PIN_LED
+#define PIN_LED 13
+#endif
