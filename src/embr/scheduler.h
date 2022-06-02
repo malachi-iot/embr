@@ -239,10 +239,13 @@ public:
     template <class ...TArgs>
     void schedule(TArgs&&...args)
     {
-        // DEBT: Hard to do this here, want to though
-        //subject_provider::value().notify(scheduling_event_type(value), this);
-
-        accessor value = event_queue.emplace(std::forward<TArgs>(args)...);
+        accessor value = event_queue.emplace_with_notify(
+            [&](const value_type& v)
+            {
+                // announce emplaced item before we actually sort it
+                subject_provider::value().notify(scheduling_event_type(v), *this);
+            },
+            std::forward<TArgs>(args)...);
 
         subject_provider::value().notify(scheduled_event_type(value.lock()));
 
