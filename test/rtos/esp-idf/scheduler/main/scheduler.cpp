@@ -47,11 +47,9 @@ void scheduler_init()
     gpio_init();
 
 #if SCHEDULER_APPROACH == SCHEDULER_APPROACH_TASKNOTIFY
-    embr::freertos::scheduler_notify_daemon_init(scheduler, o2);
+    embr::scheduler::freertos::notify_daemon_init(scheduler, o2);
 #else
-    xTaskCreate(embr::freertos::scheduler_bruteforce_daemon_task, "embr:scheduler",
-        CONFIG_EMBR_SCHEDULER_TASKSIZE, &scheduler,
-        CONFIG_EMBR_SCHEDULER_PRIORITY, nullptr);
+    embr::scheduler::freertos::bruteforce_daemon_init(scheduler);
 #endif
 
     typedef FunctorImpl::time_point time_point;

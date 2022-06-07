@@ -9,12 +9,18 @@
 #include "esp_log.h"
 #endif
 
-namespace embr { namespace freertos {
+// We call this embr::scheduler::freertos and not embr::freertos::scheduler because
+// our scheduler operates in its own specific way, different than FreeRTOS'
+// scheduler.  embr::freertos::scheduler feels more sensible for a wrapper, in theory
+namespace embr { namespace scheduler { namespace freertos {
 
 // NOTE: Will never actually be inline.  Specified as such to suppress compiler
 // warnings about unused static function
-inline static void scheduler_bruteforce_daemon_task(void* data)
+template <class TScheduler>
+inline static void bruteforce_daemon_task(void* data)
 {
+    TScheduler& scheduler = *reinterpret_cast<TScheduler*>(data);
+
     for(;;)
     {
         scheduler.process();
@@ -24,7 +30,7 @@ inline static void scheduler_bruteforce_daemon_task(void* data)
 }
 
 template <class TScheduler>
-static void scheduler_notify_daemon_task(void* data)
+static void notify_daemon_task(void* data)
 {
     using namespace estd::chrono;
 
@@ -67,7 +73,7 @@ static void scheduler_notify_daemon_task(void* data)
 
 
 template <class TScheduler>
-BaseType_t scheduler_notify_daemon_init(
+inline BaseType_t notify_daemon_init(
     TScheduler& scheduler,
     embr::freertos::experimental::NotifierObserver& no,
 #ifdef ESP_PLATFORM
@@ -79,7 +85,7 @@ BaseType_t scheduler_notify_daemon_init(
 {
     static const char* TAG = "scheduler_notify_daemon_init";
 
-    BaseType_t result = xTaskCreate(scheduler_notify_daemon_task<TScheduler>, "embr:scheduler",
+    BaseType_t result = xTaskCreate(notify_daemon_task<TScheduler>, "embr:scheduler",
                                     usStackDepth, &scheduler, uxPriority, &no.xSchedulerDaemon);
     if(result != pdPASS)
     {
@@ -92,5 +98,30 @@ BaseType_t scheduler_notify_daemon_init(
 }
 
 
+template <class TScheduler>
+inline BaseType_t bruteforce_daemon_init(
+    TScheduler& scheduler,
+#ifdef ESP_PLATFORM
+    configSTACK_DEPTH_TYPE usStackDepth = CONFIG_EMBR_SCHEDULER_TASKSIZE,
+    UBaseType_t uxPriority = CONFIG_EMBR_SCHEDULER_PRIORITY)
+#else
+    configSTACK_DEPTH_TYPE usStackDepth = 4096, UBaseType_t uxPriority = 4)
+#endif
+{
+    static const char* TAG = "scheduler_bruteforce_daemon_init";
 
-}}
+    BaseType_t result = xTaskCreate(bruteforce_daemon_task<TScheduler>, "embr:scheduler",
+                                    usStackDepth, &scheduler, uxPriority, nullptr);
+    if(result != pdPASS)
+    {
+#ifdef ESP_PLATFORM
+        ESP_LOGW(TAG, "Could not start scheduler daemon task");
+#endif
+    }
+
+    return result;
+}
+
+
+
+}}}
