@@ -162,23 +162,23 @@ class Scheduler :
     typedef typename container_type::value_type value_type;
     typedef value_type& reference;
 
-    typedef TImpl traits_type;
-    typedef typename traits_type::time_point time_point;
+    typedef TImpl impl_type;
+    typedef typename impl_type::time_point time_point;
 
     typedef estd::internal::struct_evaporator<TSubject> subject_provider;
     typedef estd::internal::struct_evaporator<TImpl> impl_provider;
 
-    typedef events::Scheduling<traits_type> scheduling_event_type;
-    typedef events::Scheduled<traits_type> scheduled_event_type;
-    typedef events::Removed<traits_type> removed_event_type;
-    typedef events::Processing<traits_type> processing_event_type;
+    typedef events::Scheduling<impl_type> scheduling_event_type;
+    typedef events::Scheduled<impl_type> scheduled_event_type;
+    typedef events::Removed<impl_type> removed_event_type;
+    typedef events::Processing<impl_type> processing_event_type;
 
     struct Comparer
     {
         bool operator ()(const reference left, const reference right)
         {
-            time_point l_tp = traits_type::get_time_point(left);
-            time_point r_tp = traits_type::get_time_point(right);
+            time_point l_tp = impl_type::get_time_point(left);
+            time_point r_tp = impl_type::get_time_point(right);
 
             return l_tp > r_tp;
         }
@@ -211,7 +211,7 @@ class Scheduler :
 public:
     time_point top_time() const
     {
-        time_point t = traits_type::get_time_point(event_queue.top().lock());
+        time_point t = impl_type::get_time_point(event_queue.top().lock());
         event_queue.top().unlock();
         return t;
     }
@@ -303,7 +303,7 @@ public:
         while(!event_queue.empty())
         {
             scoped_lock<accessor> t(top());
-            time_point eval_time = traits_type::get_time_point(*t);
+            time_point eval_time = impl_type::get_time_point(*t);
 
             if(current_time >= eval_time)
             {

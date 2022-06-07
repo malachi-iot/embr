@@ -63,7 +63,7 @@ struct NotifierObserver
     //template <class TScheduler>
     //void on_notify(embr::internal::events::Scheduling<FreertosFunctorTraits> scheduling, TScheduler& scheduler)
     template <class TContainer, class TImpl, class TSubject>
-    void on_notify(embr::internal::events::Scheduling<FunctorTraits> scheduling,
+    void on_notify(embr::internal::events::Scheduling<TImpl> scheduling,
         embr::internal::Scheduler<TContainer, TImpl, TSubject>& scheduler)
     {
         if((early_wakeup = scheduling.value.wake < scheduler.top_time()))
@@ -75,13 +75,17 @@ struct NotifierObserver
     }
 
     // 'bigger' one above consumes call, so this one doesn't get called.  Acceptable behavior
-    void on_notify(embr::internal::events::Scheduling<FunctorTraits> scheduling)
+    template <class TImpl>
+    void on_notify(embr::internal::events::Scheduling<TImpl> scheduling)
     {
         ESP_LOGI(TAG, "on_notify(scheduling) 2");
     }
 
-    void on_notify(embr::internal::events::Scheduled<FunctorTraits> scheduled)
+    template <class TImpl>
+    void on_notify(embr::internal::events::Scheduled<TImpl> scheduled)
     {
+// DEBT: Don't actually want to treat feature flag this way.  The NotifyObserver really
+// shouldn't do anything at all, perhaps not even be used, if we aren't in task notify mode
 #if SCHEDULER_APPROACH == SCHEDULER_APPROACH_TASKNOTIFY
         if(early_wakeup)
         {
