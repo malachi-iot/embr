@@ -11,8 +11,8 @@
 using namespace estd::chrono;
 using namespace estd::literals;
 
-embr::experimental::FreeRTOSSchedulerObserver<FreertosFunctorTraits> o;
-NotifierObserver o2;
+embr::freertos::experimental::SchedulerObserver<FreertosFunctorTraits> o;
+embr::freertos::experimental::NotifierObserver o2;
 auto s = embr::layer1::make_subject(o, o2);
 embr::internal::layer1::Scheduler<FreertosFunctorTraits, 5, decltype(s)> scheduler(s);
 

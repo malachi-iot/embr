@@ -22,68 +22,11 @@ void scheduler_daemon_task(void*);
 
 using FunctorTraits = embr::internal::experimental::FunctorTraits<
     estd::chrono::freertos_clock::time_point>;
+using FreertosFunctorTraits = embr::freertos::experimental::FunctorTraits;
+using NotifierObserver = embr::freertos::experimental::NotifierObserver;
 
-struct FreertosFunctorTraits : FunctorTraits
-{
-    inline static time_point now()
-    { return estd::chrono::freertos_clock::now(); }
-};
-
-// Specifically, FreeRTOS Task Notifier -
-// not relevant for brute force polled approach
-struct NotifierObserver
-{
-    static constexpr const char* TAG = "NotifyObserver";
-
-    TaskHandle_t xSchedulerDaemon;
-    // NOTE: Would consider time_point or similar here instead but a flag is equally efficient
-    // and puts less demand on templating.  Also we expect schedule operations to be atomic, so
-    // by convention one early_wakeup flag is sufficient.
-    bool early_wakeup;
-
-    NotifierObserver() : early_wakeup(false) {}
-
-    //template <class TScheduler>
-    //void on_notify(embr::internal::events::Scheduling<FreertosFunctorTraits> scheduling, TScheduler& scheduler)
-    template <class TContainer, class TImpl, class TSubject>
-    void on_notify(embr::internal::events::Scheduling<FreertosFunctorTraits> scheduling,
-        embr::internal::Scheduler<TContainer, TImpl, TSubject>& scheduler)
-    {
-        if((early_wakeup = scheduling.value.wake < scheduler.top_time()))
-        {
-            ESP_LOGD(TAG, "on_notify(scheduling) early wakeup tagged");
-        }
-
-        ESP_LOGI(TAG, "on_notify(scheduling) 1");
-    }
-
-    // 'bigger' one above consumes call, so this one doesn't get called.  Acceptable behavior
-    void on_notify(embr::internal::events::Scheduling<FreertosFunctorTraits> scheduling)
-    {
-        ESP_LOGI(TAG, "on_notify(scheduling) 2");
-    }
-
-    void on_notify(embr::internal::events::Scheduled<FreertosFunctorTraits> scheduled)
-    {
-#if SCHEDULER_APPROACH == SCHEDULER_APPROACH_TASKNOTIFY
-        if(early_wakeup)
-        {
-            // NOTE: Only doing warning temporarily as we build this out
-            ESP_LOGW(TAG, "on_notify(scheduled) early wakeup");
-
-            // This will result in immediately waking up daemon, which we expect to turn right around
-            // and sleep again - but for a shorter period of time.  Therefore, two wakes occur.
-            xTaskNotifyGive(xSchedulerDaemon);
-        }
-#endif
-
-        ESP_LOGI(TAG, "on_notify(scheduled)");
-    }
-};
-
-
-extern embr::experimental::FreeRTOSSchedulerObserver<FreertosFunctorTraits> o;
-extern NotifierObserver o2;
+extern embr::freertos::experimental::SchedulerObserver<FreertosFunctorTraits> o;
+extern embr::freertos::experimental::NotifierObserver o2;
 extern embr::internal::layer1::Scheduler<FreertosFunctorTraits, 5, 
     decltype(embr::layer1::make_subject(o, o2))> scheduler;
 
