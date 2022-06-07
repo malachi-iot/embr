@@ -11,10 +11,10 @@
 using namespace estd::chrono;
 using namespace estd::literals;
 
-embr::freertos::experimental::SchedulerObserver<FreertosFunctorTraits> o;
+embr::freertos::experimental::SchedulerObserver<FunctorImpl> o;
 embr::freertos::experimental::NotifierObserver o2;
 auto s = embr::layer1::make_subject(o, o2);
-embr::internal::layer1::Scheduler<FreertosFunctorTraits, 5, decltype(s)> scheduler(s);
+embr::internal::layer1::Scheduler<FunctorImpl, 5, decltype(s)> scheduler(s);
 
 static constexpr gpio_num_t FAST_LED_PIN = (gpio_num_t)CONFIG_FAST_LED_PIN;
 static constexpr gpio_num_t SLOW_LED_PIN = (gpio_num_t)CONFIG_SLOW_LED_PIN;
@@ -60,11 +60,11 @@ void scheduler_init()
 
     scheduler_daemon_init(o2);
 
-    typedef FunctorTraits::time_point time_point;
+    typedef FunctorImpl::time_point time_point;
 
     static int rapid_counter = 0;
 
-    auto rapid_f = FunctorTraits::make_function([](time_point* wake, time_point current)
+    auto rapid_f = FunctorImpl::make_function([](time_point* wake, time_point current)
     {
         // DEBT: Things don't play nice when using long, and it's a mystery why
         int wake_raw = wake->time_since_epoch().count();
@@ -80,7 +80,7 @@ void scheduler_init()
         }
     });
 
-    auto f = FunctorTraits::make_function([&](time_point* wake, time_point current)
+    auto f = FunctorImpl::make_function([&](time_point* wake, time_point current)
     {
         static bool toggle;
 
@@ -91,8 +91,9 @@ void scheduler_init()
         if(counter % 5 == 0)
         {
             ESP_LOGV(TAG, "Got here");
-            rapid_counter = 5;
-            scheduler.schedule(*wake + 500ms, rapid_f);
+            rapid_counter = 6;
+            // FIX: This flips out if wake isn't far enough in the future
+            scheduler.schedule(*wake + 250ms, rapid_f);
         }
 
         *wake += 2500ms;

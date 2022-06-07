@@ -519,4 +519,8 @@ TEST_CASE("scheduler test", "[scheduler]")
             // TODO: Somewhat incomplete test
         }
     }
+    SECTION("schedule from inside")
+    {
+
+    }
 }

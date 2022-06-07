@@ -11,10 +11,10 @@ namespace embr { namespace freertos { namespace experimental {
 
 /// Dummy/no-op observer
 /// @tparam TTraits
-template <class TTraits>
+template <class TImpl>
 struct SchedulerObserver
 {
-    typedef TTraits traits_type;
+    typedef TImpl traits_type;
 
     void on_notify(embr::internal::events::Processing<traits_type>)
     {
@@ -34,7 +34,7 @@ struct SchedulerObserver
 };
 
 
-struct FunctorTraits :
+struct FunctorImpl :
     embr::internal::experimental::FunctorTraits<estd::chrono::freertos_clock::time_point>
 {
     inline static time_point now()
