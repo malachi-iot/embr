@@ -8,12 +8,18 @@
 
 #include "esp_log.h"
 
+#include <embr/platform/freertos/scheduler.hpp>
+
 using namespace estd::chrono;
 using namespace estd::literals;
 
 embr::freertos::experimental::SchedulerObserver<FunctorImpl> o;
+#if SCHEDULER_APPROACH == SCHEDULER_APPROACH_TASKNOTIFY
 embr::freertos::experimental::NotifierObserver o2;
 auto s = embr::layer1::make_subject(o, o2);
+#else
+auto s = embr::layer1::make_subject(o);
+#endif
 embr::internal::layer1::Scheduler<FunctorImpl, 5, decltype(s)> scheduler(s);
 
 static constexpr gpio_num_t FAST_LED_PIN = (gpio_num_t)CONFIG_FAST_LED_PIN;
@@ -28,24 +34,6 @@ void gpio_init()
     gpio_set_direction(SLOW_LED_PIN, GPIO_MODE_OUTPUT);
 }
 
-void scheduler_daemon_init(NotifierObserver& no,
-#ifdef ESP_PLATFORM
-    configSTACK_DEPTH_TYPE usStackDepth = CONFIG_EMBR_SCHEDULER_TASKSIZE,
-    UBaseType_t uxPriority = CONFIG_EMBR_SCHEDULER_PRIORITY)
-#else
-    configSTACK_DEPTH_TYPE usStackDepth = 4096, UBaseType_t uxPriority = 4)
-#endif
-{
-    static const char* TAG = "scheduler_daemon_init";
-
-    BaseType_t result = xTaskCreate(scheduler_daemon_task, "embr:scheduler",
-                usStackDepth, &scheduler, uxPriority, &no.xSchedulerDaemon);
-    if(result != pdPASS)
-    {
-        ESP_LOGW(TAG, "Could not start scheduler daemon task");
-    }
-}
-
 void repeater(freertos_clock::time_point* wake, freertos_clock::time_point current)
 {
 
@@ -58,7 +46,13 @@ void scheduler_init()
 
     gpio_init();
 
-    scheduler_daemon_init(o2);
+#if SCHEDULER_APPROACH == SCHEDULER_APPROACH_TASKNOTIFY
+    embr::freertos::scheduler_notify_daemon_init(scheduler, o2);
+#else
+    xTaskCreate(embr::freertos::scheduler_bruteforce_daemon_task, "embr:scheduler",
+        CONFIG_EMBR_SCHEDULER_TASKSIZE, &scheduler,
+        CONFIG_EMBR_SCHEDULER_PRIORITY, nullptr);
+#endif
 
     typedef FunctorImpl::time_point time_point;
 

@@ -86,9 +86,6 @@ struct NotifierObserver
     template <class TImpl>
     void on_notify(embr::internal::events::Scheduled<TImpl> scheduled)
     {
-// DEBT: Don't actually want to treat feature flag this way.  The NotifyObserver really
-// shouldn't do anything at all, perhaps not even be used, if we aren't in task notify mode
-#if SCHEDULER_APPROACH == SCHEDULER_APPROACH_TASKNOTIFY
         if(early_wakeup)
         {
             // NOTE: Only doing warning temporarily as we build this out
@@ -98,7 +95,6 @@ struct NotifierObserver
             // and sleep again - but for a shorter period of time.  Therefore, two wakes occur.
             xTaskNotifyGive(xSchedulerDaemon);
         }
-#endif
 
         ESP_LOGV(TAG, "on_notify(scheduled)");
     }
