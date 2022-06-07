@@ -93,7 +93,7 @@ void scheduler_init()
             ESP_LOGV(TAG, "Got here");
             rapid_counter = 6;
             // FIX: This flips out if wake isn't far enough in the future
-            scheduler.schedule(*wake + 250ms, rapid_f);
+            scheduler.schedule(*wake + 1ms, rapid_f);
         }
 
         *wake += 2500ms;
@@ -110,8 +110,6 @@ void scheduler_init()
         });
 
     scheduler.schedule(freertos_clock::now() + 5s, f);
-    // FIX: This schedule operation should do an early wakeup, but it doesn't, because
-    // emplace flavor doesn't fire 'scheduling'
     scheduler.schedule(freertos_clock::now(), f3);
 
     for(;;)
