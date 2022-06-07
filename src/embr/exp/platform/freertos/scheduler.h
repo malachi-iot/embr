@@ -68,17 +68,19 @@ struct NotifierObserver
     {
         if((early_wakeup = scheduling.value.wake < scheduler.top_time()))
         {
-            ESP_LOGD(TAG, "on_notify(scheduling) early wakeup tagged");
+            ESP_LOGV(TAG, "on_notify(scheduling) early wakeup tagged");
         }
 
-        ESP_LOGI(TAG, "on_notify(scheduling) 1");
+        ESP_LOGV(TAG, "on_notify(scheduling)");
     }
 
     // 'bigger' one above consumes call, so this one doesn't get called.  Acceptable behavior
     template <class TImpl>
     void on_notify(embr::internal::events::Scheduling<TImpl> scheduling)
     {
-        ESP_LOGI(TAG, "on_notify(scheduling) 2");
+        // Doing as a warning because we shouldn't see this ever, though
+        // it may be benign if we do
+        ESP_LOGW(TAG, "on_notify(scheduling) 2");
     }
 
     template <class TImpl>
@@ -90,7 +92,7 @@ struct NotifierObserver
         if(early_wakeup)
         {
             // NOTE: Only doing warning temporarily as we build this out
-            ESP_LOGW(TAG, "on_notify(scheduled) early wakeup");
+            ESP_LOGD(TAG, "on_notify(scheduled) early wakeup");
 
             // This will result in immediately waking up daemon, which we expect to turn right around
             // and sleep again - but for a shorter period of time.  Therefore, two wakes occur.
@@ -98,7 +100,7 @@ struct NotifierObserver
         }
 #endif
 
-        ESP_LOGI(TAG, "on_notify(scheduled)");
+        ESP_LOGV(TAG, "on_notify(scheduled)");
     }
 };
 #endif

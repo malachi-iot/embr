@@ -12,8 +12,6 @@ void scheduler_daemon_task(void*)
 {
     const char* TAG = "scheduler_daemon_task";
 
-//    typedef FunctorTraits::time_point time_point;
-
     ESP_LOGI(TAG, "start");
 
     for(;;)
@@ -22,13 +20,12 @@ void scheduler_daemon_task(void*)
 
         freertos_clock::duration duration = scheduler.top_time() - freertos_clock::now();
 
-        // DEBT: ESP_LOGV speed will actually slow things down 
-        // so we double-calculate duration.  Instead, we should
-        // ifdef and only double-do it when verbose level is specified
+#if CONFIG_LOG_MAXIMUM_LEVEL == ESP_LOG_VERBOSE
         // DEBT: We really need to activate FEATURE_ESTD_CHRONO_LOWPRECISION
         ESP_LOGV(TAG, "waiting for %lld ticks", duration.count());
 
         duration = scheduler.top_time() - freertos_clock::now();
+#endif
 
         if(duration.count() > 0)
         {
