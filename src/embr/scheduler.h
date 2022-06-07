@@ -195,6 +195,19 @@ class Scheduler :
         subject_provider::value().notify(scheduling_event_type(value), *this);
     }
 
+    bool process_impl(value_type& t, time_point current_time, estd::monostate)
+    {
+        return impl_provider::value().process(t, current_time);
+    }
+
+    template <class TContext>
+    bool process_impl(value_type& t, time_point current_time, TContext& context)
+    {
+        return impl_provider::value().process(t, current_time, context);
+    }
+
+
+
 public:
     time_point top_time() const
     {
@@ -284,7 +297,8 @@ public:
         subject_provider::value().notify(removed_event_type (*t));
     } */
 
-    void process(time_point current_time)
+    template <class TContext>
+    void process(time_point current_time, TContext& context)
     {
         while(!event_queue.empty())
         {
@@ -293,9 +307,9 @@ public:
 
             if(current_time >= eval_time)
             {
-                subject_provider::value().notify(processing_event_type (*t, current_time));
+                subject_provider::value().notify(processing_event_type (*t, current_time), context);
 
-                bool reschedule_requested = impl_provider::value().process(*t, current_time);
+                bool reschedule_requested = process_impl(*t, current_time, context);
 
                 // Need to do this because *t is a pointer into event_queue and the pop moves
                 // items around.
@@ -303,7 +317,7 @@ public:
 
                 event_queue.pop();
 
-                subject_provider::value().notify(removed_event_type (copied));
+                subject_provider::value().notify(removed_event_type (copied), context);
 
                 if(reschedule_requested)
                 {
@@ -312,7 +326,7 @@ public:
                     // DEBT: Doesn't handle move variant
                     event_queue.push(copied);
 
-                    subject_provider::value().notify(scheduled_event_type (copied));
+                    subject_provider::value().notify(scheduled_event_type (copied), context);
                 }
             }
             else
@@ -322,10 +336,28 @@ public:
 
 
     /// Processes current_time as 'now' as reported by traits
-    void process()
+    template <class TContext, class TEnable =
+        typename estd::enable_if<
+            !estd::is_same<TContext, time_point>::value>::type >
+    void process(TContext& context)
     {
         time_point current_time = impl_provider::value().now();
         process(current_time);
+    }
+
+
+    void process(time_point current_time)
+    {
+        estd::monostate context;
+
+        process(current_time, context);
+    }
+
+    void process()
+    {
+        estd::monostate context;
+
+        process(context);
     }
 };
 
