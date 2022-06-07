@@ -13,6 +13,7 @@
 using namespace estd::chrono;
 using namespace estd::literals;
 
+#if SCHEDULE_MANUAL_INIT
 embr::freertos::experimental::SchedulerObserver<FunctorImpl> o;
 #if SCHEDULER_APPROACH == SCHEDULER_APPROACH_TASKNOTIFY
 embr::freertos::experimental::NotifierObserver o2;
@@ -21,6 +22,9 @@ auto s = embr::layer1::make_subject(o, o2);
 auto s = embr::layer1::make_subject(o);
 #endif
 embr::internal::layer1::Scheduler<FunctorImpl, 5, decltype(s)> scheduler(s);
+#else
+embr::scheduler::freertos::Scheduler<5> scheduler;
+#endif
 
 static constexpr gpio_num_t FAST_LED_PIN = (gpio_num_t)CONFIG_FAST_LED_PIN;
 static constexpr gpio_num_t SLOW_LED_PIN = (gpio_num_t)CONFIG_SLOW_LED_PIN;
@@ -46,10 +50,14 @@ void scheduler_init()
 
     gpio_init();
 
+#if SCHEDULE_MANUAL_INIT
 #if SCHEDULER_APPROACH == SCHEDULER_APPROACH_TASKNOTIFY
     embr::scheduler::freertos::notify_daemon_init(scheduler, o2);
 #else
     embr::scheduler::freertos::bruteforce_daemon_init(scheduler);
+#endif
+#else
+    scheduler.start();
 #endif
 
     typedef FunctorImpl::time_point time_point;

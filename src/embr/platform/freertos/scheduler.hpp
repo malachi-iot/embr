@@ -98,6 +98,7 @@ inline BaseType_t notify_daemon_init(
 }
 
 
+
 template <class TScheduler>
 inline BaseType_t bruteforce_daemon_init(
     TScheduler& scheduler,
@@ -122,6 +123,40 @@ inline BaseType_t bruteforce_daemon_init(
     return result;
 }
 
+
+template <unsigned N, class ...TObservers>
+class Scheduler : public internal::layer1::Scheduler<
+    embr::freertos::experimental::FunctorImpl,
+    N,
+    embr::layer1::subject<embr::freertos::experimental::NotifierObserver, TObservers...>
+    >
+{
+    typedef internal::layer1::Scheduler<
+        embr::freertos::experimental::FunctorImpl,
+        N,
+        embr::layer1::subject<embr::freertos::experimental::NotifierObserver, TObservers...> >
+        base_type;
+
+    embr::freertos::experimental::NotifierObserver& notifier_observer()
+    {
+        return base_type::subject_provider::value().template get<0>();
+    }
+
+public:
+    /// Starts a notifier-based scheduler daemon task
+    void start()
+    {
+        notify_daemon_init(*this, notifier_observer());
+    }
+
+
+    void stop()
+    {
+#ifdef INCLUDE_vTaskDelete
+        vTaskDelete(notifier_observer().xSchedulerDaemon);
+#endif
+    }
+};
 
 
 }}}

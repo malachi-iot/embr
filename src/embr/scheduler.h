@@ -158,6 +158,7 @@ class Scheduler :
     protected estd::internal::struct_evaporator<TSubject>,
     protected estd::internal::struct_evaporator<TImpl>
 {
+protected:
     typedef TContainer container_type;
     typedef typename container_type::value_type value_type;
     typedef value_type& reference;

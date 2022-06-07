@@ -7,6 +7,8 @@
 #define SCHEDULER_APPROACH 2
 #endif
 
+#define SCHEDULE_MANUAL_INIT 0
+
 
 #include <embr/scheduler.h>
 #include <embr/exp/platform/freertos/scheduler.h>
@@ -19,6 +21,10 @@
 
 
 using FunctorImpl = embr::freertos::experimental::FunctorImpl;
+
+// NOTE: All these externs are for posterity, or in case we feel like
+// adding more modules later
+#if SCHEDULE_MANUAL_INIT
 using NotifierObserver = embr::freertos::experimental::NotifierObserver;
 
 extern embr::freertos::experimental::SchedulerObserver<FunctorImpl> o;
@@ -29,4 +35,4 @@ typedef decltype(embr::layer1::make_subject(o, o2)) subject_type;
 typedef decltype(embr::layer1::make_subject(o)) subject_type;
 #endif
 extern embr::internal::layer1::Scheduler<FunctorImpl, 5, subject_type> scheduler;
-
+#endif
