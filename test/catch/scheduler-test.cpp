@@ -521,6 +521,43 @@ TEST_CASE("scheduler test", "[scheduler]")
     }
     SECTION("schedule from inside")
     {
+        typedef embr::internal::experimental::FunctorTraits<int> impl_type;
+        typedef typename impl_type::value_type control_structure;
 
+        embr::internal::layer1::Scheduler<impl_type, 5> scheduler;
+
+        int rapid_counter = 0;
+        int rapid_total = 0;
+
+        auto rapid_f = impl_type::make_function(
+            [&](int* wake, int current_time)
+            {
+                while(rapid_counter-- > 0)
+                {
+                    ++rapid_total;
+                    *wake += 1;
+                }
+            });
+
+        auto slow_f = impl_type::make_function(
+            [&](int* wake, int current_time)
+            {
+                if(*wake % 30 == 0)
+                {
+                    rapid_counter = 5;
+                    scheduler.schedule(current_time, rapid_f);
+                }
+
+                *wake += 10;
+            });
+
+        scheduler.schedule(10, slow_f);
+
+        for(int i = 0; i < 70; i++)
+        {
+            scheduler.process(i);
+        }
+
+        REQUIRE(rapid_total == 10);
     }
 }
