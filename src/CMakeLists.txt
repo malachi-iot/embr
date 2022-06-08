@@ -36,6 +36,9 @@ set(SOURCE_FILES
         embr/exp/datapump-v2.h embr/exp/pbuf.h embr/exp/retry-v2.h embr/exp/datapump-core-v2.h embr/exp/dataport-v2.h)
 
 add_library(${PROJECT_NAME} ${SOURCE_FILES})
+add_library(malachi-iot::embr ALIAS ${PROJECT_NAME})
+
+target_include_directories(${PROJECT_NAME} PUBLIC .)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 

@@ -162,6 +162,7 @@ protected:
     typedef TContainer container_type;
     typedef typename container_type::value_type value_type;
     typedef value_type& reference;
+    typedef const value_type& const_reference;
 
     typedef TImpl impl_type;
     typedef typename impl_type::time_point time_point;
@@ -176,7 +177,7 @@ protected:
 
     struct Comparer
     {
-        bool operator ()(const reference left, const reference right)
+        bool operator ()(const_reference left, const_reference right)
         {
             time_point l_tp = impl_type::get_time_point(left);
             time_point r_tp = impl_type::get_time_point(right);

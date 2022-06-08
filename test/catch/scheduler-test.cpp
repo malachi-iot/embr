@@ -212,6 +212,16 @@ TEST_CASE("scheduler test", "[scheduler]")
 {
     std::bitset<32> arrived;
 
+    SECTION("impl operations")
+    {
+        SECTION("copy")
+        {
+            FunctorTraits::control_structure s1, s2(s1);
+            FunctorTraits::control_structure s3, *ps3 = &s3, *ps1 = &s1;
+
+            *ps3 = std::move(*ps1);
+        }
+    }
     SECTION("one-shot")
     {
         // doesn't have 'accessor', and maybe array isn't a good fit for priority_queue anyway
