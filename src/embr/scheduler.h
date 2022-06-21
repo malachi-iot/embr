@@ -79,17 +79,17 @@ struct SchedulerImpl
 
 namespace events {
 
-template<class TTraits>
+template<class TSchedulerImpl>
 struct Scheduler
 {
-    typedef TTraits traits_type;
+    typedef TSchedulerImpl traits_type;
 };
 
 
-template<class TTraits, bool is_const = true>
-struct ValueBase : Scheduler<TTraits>
+template<class TSchedulerImpl, bool is_const = true>
+struct ValueBase : Scheduler<TSchedulerImpl>
 {
-    typedef typename TTraits::value_type _value_type;
+    typedef typename TSchedulerImpl::value_type _value_type;
     typedef typename estd::conditional<is_const, const _value_type, _value_type>::type value_type;
 
     // DEBT: Needs better name, this represents the control/meta structure going in
@@ -99,10 +99,10 @@ struct ValueBase : Scheduler<TTraits>
     ValueBase(value_type& value) : value(value) {}
 };
 
-template <class TTraits>
-struct Scheduling : ValueBase<TTraits>
+template <class TSchedulerImpl>
+struct Scheduling : ValueBase<TSchedulerImpl>
 {
-    typedef ValueBase<TTraits> base_type;
+    typedef ValueBase<TSchedulerImpl> base_type;
 
     Scheduling(typename base_type::value_type& value) : base_type(value) {}
 };
@@ -110,28 +110,28 @@ struct Scheduling : ValueBase<TTraits>
 
 // DEBT: Consider how to semi standardize collection operation events, somewhat similar to how C#
 // does with IObservableCollection
-template <class TTraits>
-struct Scheduled : ValueBase<TTraits>
+template <class TSchedulerImpl>
+struct Scheduled : ValueBase<TSchedulerImpl>
 {
-    typedef ValueBase<TTraits> base_type;
+    typedef ValueBase<TSchedulerImpl> base_type;
 
     Scheduled(typename base_type::value_type& value) : base_type(value) {}
 };
 
 
-template <class TTraits>
-struct Removed : ValueBase<TTraits>
+template <class TSchedulerImpl>
+struct Removed : ValueBase<TSchedulerImpl>
 {
-    typedef ValueBase<TTraits> base_type;
+    typedef ValueBase<TSchedulerImpl> base_type;
 
     Removed(typename base_type::value_type& value) : base_type(value) {}
 };
 
 
-template <class TTraits>
-struct Processing : ValueBase<TTraits>
+template <class TSchedulerImpl>
+struct Processing : ValueBase<TSchedulerImpl>
 {
-    typedef ValueBase<TTraits> base_type;
+    typedef ValueBase<TSchedulerImpl> base_type;
     typedef typename base_type::traits_type::time_point time_point;
 
     const time_point current_time;
@@ -147,7 +147,7 @@ struct Processing : ValueBase<TTraits>
  *
  * @tparam TContainer raw container for priority_queue usage.  Its value_type must be
  * copyable as indeed priority_queue stores each of these entries by value
- * @tparam TTraits
+ * @tparam TImpl
  * @tparam TSubject optional observer which can listen for schedule and remove events
  */
 template <class TContainer,
@@ -175,6 +175,19 @@ protected:
     typedef events::Removed<impl_type> removed_event_type;
     typedef events::Processing<impl_type> processing_event_type;
 
+    inline typename subject_provider::evaporated_type subject()
+    {
+        return subject_provider::value();
+    }
+
+public:
+    inline typename impl_provider::evaporated_type impl()
+    {
+        return impl_provider::value();
+    }
+
+protected:
+    // NOTE: This particular comparer demands that get_time_point be a static
     struct Comparer
     {
         bool operator ()(const_reference left, const_reference right)
@@ -199,13 +212,13 @@ protected:
 
     bool process_impl(value_type& t, time_point current_time, estd::monostate)
     {
-        return impl_provider::value().process(t, current_time);
+        return impl().process(t, current_time);
     }
 
     template <class TContext>
-    bool process_impl(value_type& t, time_point current_time, TContext& context)
+    inline bool process_impl(value_type& t, time_point current_time, TContext& context)
     {
-        return impl_provider::value().process(t, current_time, context);
+        return impl().process(t, current_time, context);
     }
 
 
@@ -213,6 +226,8 @@ protected:
 public:
     time_point top_time() const
     {
+        // DEBT: Use impl() here once we have estd sorted to give us a
+        // const_evaporator in all conditions
         time_point t = impl_type::get_time_point(event_queue.top().lock());
         event_queue.top().unlock();
         return t;
@@ -274,7 +289,7 @@ public:
     template <class ...TArgs>
     void schedule_now(TArgs&&...args)
     {
-        time_point now = impl_provider::value().now();
+        time_point now = impl().now();
         schedule(now, std::forward<TArgs>(args)...);
     }
 #endif
@@ -305,7 +320,7 @@ public:
         while(!event_queue.empty())
         {
             scoped_lock<accessor> t(top());
-            time_point eval_time = impl_type::get_time_point(*t);
+            time_point eval_time = impl().get_time_point(*t);
 
             if(current_time >= eval_time)
             {
@@ -343,7 +358,7 @@ public:
             !estd::is_same<TContext, time_point>::value>::type >
     void process(TContext& context)
     {
-        time_point current_time = impl_provider::value().now();
+        time_point current_time = impl().now();
         process(current_time);
     }
 
@@ -365,6 +380,7 @@ public:
 
 namespace experimental {
 
+// DEBT: Rename to FunctorImpl and put under scheduler namespace
 template <typename TTimePoint>
 struct FunctorTraits
 {
