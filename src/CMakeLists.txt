@@ -45,5 +45,10 @@ add_library(embr-lib ALIAS ${PROJECT_NAME})
 #target_include_directories(${PROJECT_NAME} PUBLIC .)
 target_include_directories(${PROJECT_NAME} INTERFACE .)
 
-set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
+# Apparently interface libraries don't play well with LINKER_LANGUAGE.  Probably OK since
+# a header library doesn't need its own link phase.
+# For example: https://gitlab.kitware.com/cmake/cmake/-/issues/19528
+# It seems only properties prefixed with INTERFACE_ are permitted
+# (https://stackoverflow.com/questions/68502038/custom-properties-for-interface-libraries)
+#set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 
