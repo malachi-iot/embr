@@ -1,4 +1,4 @@
-menu "Embr Configuration"
+menu "Embr Helper config"
 
     menu "Network"
         config WIFI_SSID
@@ -7,6 +7,7 @@ menu "Embr Configuration"
         config WIFI_PASSWORD
             string "WiFi Password"
 
+        # TODO: Move this out to main Kconfig.projbuild under tools/esp-idf
         config PBUF_CHAIN
             bool "Utilize PBUF chaining for embr::lwip::PbufNetbuf"
             default "y"

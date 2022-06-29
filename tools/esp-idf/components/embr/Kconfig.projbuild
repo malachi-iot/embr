@@ -1,0 +1,17 @@
+menu "Embr config"
+
+    menu "FreeRTOS + EMBR scheduler"
+        config EMBR_FREERTOS_SCHEDULER_TASKSIZE
+            int "Size of stack on which EMBR scheduler daemon runs"
+            default 4096
+
+        config EMBR_FREERTOS_SCHEDULER_PRIORITY
+            int "Priority of EMBR scheduler daemon task"
+            default 4
+            help
+                It is recommended to set this to a relatively high value.
+                Scheduler operations are expected to behave similar to an ISR, to come
+                and go as quickly as possible leaving heavy processing for other tasks
+    endmenu
+
+endmenu

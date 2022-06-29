@@ -77,8 +77,8 @@ inline BaseType_t notify_daemon_init(
     TScheduler& scheduler,
     embr::freertos::experimental::NotifierObserver& no,
 #ifdef ESP_PLATFORM
-    configSTACK_DEPTH_TYPE usStackDepth = CONFIG_EMBR_SCHEDULER_TASKSIZE,
-    UBaseType_t uxPriority = CONFIG_EMBR_SCHEDULER_PRIORITY)
+    configSTACK_DEPTH_TYPE usStackDepth = CONFIG_EMBR_FREERTOS_SCHEDULER_TASKSIZE,
+    UBaseType_t uxPriority = CONFIG_EMBR_FREERTOS_SCHEDULER_PRIORITY)
 #else
     configSTACK_DEPTH_TYPE usStackDepth = 4096, UBaseType_t uxPriority = 4)
 #endif
@@ -103,8 +103,8 @@ template <class TScheduler>
 inline BaseType_t bruteforce_daemon_init(
     TScheduler& scheduler,
 #ifdef ESP_PLATFORM
-    configSTACK_DEPTH_TYPE usStackDepth = CONFIG_EMBR_SCHEDULER_TASKSIZE,
-    UBaseType_t uxPriority = CONFIG_EMBR_SCHEDULER_PRIORITY)
+    configSTACK_DEPTH_TYPE usStackDepth = CONFIG_EMBR_FREERTOS_SCHEDULER_TASKSIZE,
+    UBaseType_t uxPriority = CONFIG_EMBR_FREERTOS_SCHEDULER_PRIORITY)
 #else
     configSTACK_DEPTH_TYPE usStackDepth = 4096, UBaseType_t uxPriority = 4)
 #endif
