@@ -22,7 +22,13 @@ struct Item
     bool match(int* c) const { return c == counter; }
 };
 
-struct ItemTraits
+struct fake_mutex
+{
+    void lock() {}
+    void unlock() {}
+};
+
+struct ItemTraits //: embr::internal::SchedulerImpl<int>
 {
     typedef Item value_type;
     typedef int time_point;
@@ -35,6 +41,8 @@ struct ItemTraits
 
         return false;
     }
+
+    typedef fake_mutex mutex;
 };
 
 
@@ -76,6 +84,8 @@ struct Item2Traits
         ++v.counter;
         return true;
     }
+
+    typedef fake_mutex mutex;
 };
 
 
@@ -100,6 +110,8 @@ struct Item3Traits
     {
         return v->process(t);
     }
+
+    typedef fake_mutex mutex;
 };
 
 struct Item3ControlStructure1 : Item3Traits::control_structure
@@ -141,6 +153,8 @@ struct TraditionalTraitsBase
 
         void* data;
     };
+
+    typedef fake_mutex mutex;
 };
 
 template <bool is_inline>

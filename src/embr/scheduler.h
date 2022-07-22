@@ -75,6 +75,12 @@ struct SchedulerImpl
     {
         return false;
     }
+
+    struct mutex
+    {
+        inline void lock() {}
+        inline void unlock() {}
+    };
 };
 
 namespace events {
@@ -156,7 +162,8 @@ template <class TContainer,
     >
 class Scheduler :
     protected estd::internal::struct_evaporator<TSubject>,
-    protected estd::internal::struct_evaporator<TImpl>
+    protected estd::internal::struct_evaporator<TImpl>,
+    protected estd::internal::struct_evaporator<typename TImpl::mutex>
 {
 protected:
     typedef TContainer container_type;
@@ -169,8 +176,11 @@ public:
     typedef typename impl_type::time_point time_point;
 
 protected:
+    typedef typename impl_type::mutex mutex_type;
+
     typedef estd::internal::struct_evaporator<TSubject> subject_provider;
     typedef estd::internal::struct_evaporator<TImpl> impl_provider;
+    typedef estd::internal::struct_evaporator<mutex_type> mutex_provider;
 
     typedef events::Scheduling<impl_type> scheduling_event_type;
     typedef events::Scheduled<impl_type> scheduled_event_type;
@@ -186,6 +196,11 @@ public:
     inline typename impl_provider::evaporated_type impl()
     {
         return impl_provider::value();
+    }
+
+    inline typename mutex_provider::evaporated_type mutex()
+    {
+        return mutex_provider::value();
     }
 
 protected:
@@ -392,9 +407,24 @@ public:
 
         return nullptr;
     }
+
+    void unschedule(reference v)
+    {
+        mutex().lock();
+        
+        event_queue.erase(v);
+
+        mutex().unlock();
+    }
 };
 
 namespace experimental {
+
+struct fake_mutex
+{
+    void lock() {}
+    void unlock() {}
+};
 
 // DEBT: Rename to FunctorImpl and put under scheduler namespace
 template <typename TTimePoint>
@@ -444,6 +474,8 @@ struct FunctorTraits
 
         return origin != v.wake;
     }
+
+    typedef fake_mutex mutex;
 };
 
 }
