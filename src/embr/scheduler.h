@@ -160,13 +160,15 @@ class Scheduler :
 {
 protected:
     typedef TContainer container_type;
+
+public:
     typedef typename container_type::value_type value_type;
     typedef value_type& reference;
     typedef const value_type& const_reference;
-
     typedef TImpl impl_type;
     typedef typename impl_type::time_point time_point;
 
+protected:
     typedef estd::internal::struct_evaporator<TSubject> subject_provider;
     typedef estd::internal::struct_evaporator<TImpl> impl_provider;
 
@@ -376,6 +378,20 @@ public:
 
         process(context);
     }
+
+    template <class T>
+    value_type* match(const T& value)
+    {
+        // brute force through underlying container attempting to match
+
+        for(auto& i : event_queue.container())
+        {
+            if(i.match(value))
+                return &i;
+        }
+
+        return nullptr;
+    }
 };
 
 namespace experimental {
@@ -409,6 +425,11 @@ struct FunctorTraits
 
         // DEBT: See Item2Traits
         control_structure() = default;
+
+        bool match(const function_type& f)
+        {
+            return func.getm() == f.getm();
+        }
     };
 
     typedef control_structure value_type;

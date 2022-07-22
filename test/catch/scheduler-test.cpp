@@ -12,6 +12,14 @@ struct Item
 {
     int event_due;
     int* counter;
+
+    Item() = default;
+
+    Item(int event_due, int* counter = nullptr) :
+        event_due{event_due}, counter{counter}
+    {}
+
+    bool match(int* c) const { return c == counter; }
 };
 
 struct ItemTraits
@@ -569,5 +577,18 @@ TEST_CASE("scheduler test", "[scheduler]")
         }
 
         REQUIRE(rapid_total == 10);
+    }
+    SECTION("match")
+    {
+        typedef estd::layer1::vector<Item, 20> container_type;
+        embr::internal::Scheduler<container_type, ItemTraits> scheduler;
+        int counter1 = 0, counter2 = 0;
+
+        scheduler.schedule(1, &counter1);
+        scheduler.schedule(10, &counter2);
+
+        Item* i = scheduler.match(&counter1);
+
+        REQUIRE(i->event_due == 1);
     }
 }
