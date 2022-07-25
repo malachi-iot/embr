@@ -33,6 +33,7 @@ set(SOURCE_FILES
     writer-test.cpp
     scheduler-test.cpp
     streambuf-test.cpp
+    word-test.cpp
     )
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
