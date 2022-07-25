@@ -2,7 +2,7 @@
  * References:
  *
  * 1. https://github.com/malachib/chariot/tree/main/lib/j1939/j1939 v0.1
- * 2. README.md
+ * 2. bits/README.md
  */
 #include <catch.hpp>
 
@@ -479,4 +479,247 @@ TEST_CASE("bits2")
             }
         }
     }
+}
+
+using namespace embr::bits;
+
+template <class TInt, length_direction direction>
+static void tester(uint8_t* buf, TInt compare_to, uint8_t bitpos, uint8_t len)
+{
+    // DEBT: Endian doesn't matter much here as this is used for byte-only tests
+    typedef bits::internal::getter<TInt, little_endian, direction> getter;
+
+    --bitpos;
+    //--len;
+
+    INFO("bitpos = " << (int)bitpos << ", len = " << (int)len);
+
+    TInt v = getter::get_adjusted(descriptor{bitpos, len}, buf);
+    //TInt v = bit_get<TInt, direction>(bit_descriptor{1, bitpos, len }, buf);
+
+    REQUIRE(compare_to == v);
+}
+
+// DEBT: Two different TEST_CASE in one file, temporary - artifact of importing code
+// from 'chariot'.  Consolidate and organize - perhaps there's so many bit tests two
+// different TEST_CASE are still warranted, but even if so, them named 'bits' and 'bits2'
+// and in the same file is not helpful
+TEST_CASE("bits")
+{
+    uint8_t* buf1 = test_data::buf1;
+
+    SECTION("uint8_t lsb_to_msb")
+    {
+        uint8_t _buf = *buf1;
+        tester<uint8_t, length_direction::lsb_to_msb>(buf1, _buf & 0b11, 1, 2);
+        _buf >>= 2;
+        tester<uint8_t, length_direction::lsb_to_msb>(buf1, _buf & 0b11, 3, 2);
+        _buf >>= 2;
+        tester<uint8_t, length_direction::lsb_to_msb>(buf1, _buf & 0b11, 5, 2);
+        _buf >>= 2;
+        tester<uint8_t, length_direction::lsb_to_msb>(buf1, _buf & 0b11, 7, 2);
+    }
+    SECTION("uint8_t msb_to_lsb")
+    {
+        uint8_t _buf = *buf1;
+        tester<uint8_t, length_direction::msb_to_lsb>(buf1, _buf & 0b11, 2, 2);
+        _buf >>= 2;
+        tester<uint8_t, length_direction::msb_to_lsb>(buf1, _buf & 0b11, 4, 2);
+        _buf >>= 2;
+        tester<uint8_t, length_direction::msb_to_lsb>(buf1, _buf & 0b11, 6, 2);
+        _buf >>= 2;
+        tester<uint8_t, length_direction::msb_to_lsb>(buf1, _buf & 0b11, 8, 2);
+    }
+    SECTION("bool")
+    {
+        //typedef bits::internal::getter<bool, little_endian, lsb_to_msb> getter;
+        // DEBT: No bool specialization just yet
+        typedef bits::internal::getter<byte, little_endian, lsb_to_msb> getter;
+
+        const uint8_t* buf = buf1;
+        uint8_t _buf = *buf;
+
+        for(uint8_t i = 1; i <= 8; ++i)
+        {
+            INFO("bitpos = " << (int)(i-1));
+
+            //bool v = bit_get<bool, length_direction::lsb_to_msb>(bit_descriptor{1, i }, buf);
+            bool v = getter::get_adjusted(descriptor{ i - 1, 1 }, buf);
+
+            REQUIRE((_buf & 1) == v);
+
+            _buf >>= 1;
+        }
+    }
+    SECTION("big endian (msb_to_lsb)")
+    {
+        typedef bits::internal::getter<uint16_t, big_endian, msb_to_lsb> getter;
+        typedef bits::internal::getter<uint32_t, big_endian, msb_to_lsb> getter_32;
+        //typedef bits<endianness::big_endian, length_direction::msb_to_lsb> bits_type;
+
+        SECTION("bool")
+        {
+            //bool v = bits_type::get<bool>(bit_descriptor{1, 1}, buf1);
+        }
+        SECTION("uint16_t")
+        {
+            //auto v = bits_type::get<uint16_t>(bit_descriptor{1, 1, 9}, buf1);
+            auto v = getter::get_adjusted(descriptor{0, 9}, buf1);
+
+            REQUIRE(v == 0x181);
+        }
+        SECTION("9-bit length, bitpos=3")
+        {
+            /// +++ "BAD" version, maybe I was thinking of lsb ordered bits?
+            // bitpos=4 (1-based) in MSB bit order, that would turn this:
+            // { 0b10111111, 0b10000001 } // 0xBF 0x81
+            // into
+            // { 0b00010111, 0b10000001 } // 0x17 0x81
+            // then the 9 bit length mask would turn it into:
+            // { 0b00010111, 0b10000000 } // 0x17 0x80
+            // FIX: Mask only needs to filter MSB's out.  LSB's need to be bit shifted away
+            // (i.e. we actually need { 0b00000001, 0b01111000 } 0x178
+            /// ---
+            // bitpos=3 (1-based) in MSB bit order, that would turn this:
+            // { 0b10111111, 0b10000001 } // 0xBF 0x81
+            // into
+            // { 0b00000111, 0b10000001 } // 0x07 0x81
+            //          987    654321
+            // then shifting according to 9 bit length would turn that into
+            // { 0b00000001, 0b11100000 } // 0x01 0xE0
+            //            9    87654321
+            //auto v = bits_type::get<uint16_t>(bit_descriptor{1, 3, 9}, buf1);
+            auto v = getter::get_adjusted(descriptor{2, 9}, buf1);
+
+            REQUIRE(v == 0x1E0);
+        }
+        SECTION("uint32_t")
+        {
+            //auto v = bits_type::get<uint32_t>(bit_descriptor{1, 8, 32}, be_example1);
+            auto v = getter_32::get_adjusted(descriptor{7, 32}, be_example1);
+
+            REQUIRE(v == endian_example1);
+        }
+    }
+    SECTION("big endian (lsb to msb)")
+    {
+        typedef bits::internal::getter<uint16_t, big_endian, lsb_to_msb> getter;
+        typedef bits::internal::getter<uint32_t, big_endian, lsb_to_msb> getter_32;
+        //typedef bits<endianness::big_endian, length_direction::lsb_to_msb> bits_type;
+
+        SECTION("uint16_t")
+        {
+            // { 0b10111111, 0b10000001 } // 0xBF 0x81
+            // becomes
+            // { 0b10111111, 0b1xxxxxxx } // 0xBF 0x80
+            // becomes
+            // { 0b00000001, 0b01111111 } // 0x01 0x7F
+            //auto v = bits_type::get<uint16_t>(bit_descriptor{1, 1, 9}, buf1);
+            auto v = getter::get_adjusted(descriptor{0, 9}, buf1);
+
+            REQUIRE(v == 0x17F);
+        }
+        SECTION("uint16_t, bitpos=4, length=9")
+        {
+            // { 0b10111111, 0b10000001 } // 0xBF 0x81
+            // becomes
+            // { 0b10111xxx, 0b1000xxxx } // 0xB? 0x8? aka 0x17 0x8
+            // becomes
+            // { 0b00000001, 0b01111000 } // 0x01 0x78
+            //auto v = bits_type::get<uint16_t>(bit_descriptor{1, 4, 9}, buf1);
+            auto v = getter::get_adjusted(descriptor{3, 9}, buf1);
+
+            REQUIRE(v == 0x178);
+        }
+        SECTION("uint16_t, bitpos=5, length=7")
+        {
+            // { 0b10111111, 0b10000001 } // 0xBF 0x81
+            // becomes
+            // { 0b1011xxxx, 0b100xxxxx } // aka 0xB 0x4
+            // becomes
+            // { 0b00000000, 0b01011100 } // 0x00 0x5C
+            //auto v = bits_type::get<uint16_t>(bit_descriptor{1, 5, 7}, buf1);
+            auto v = getter::get_adjusted(descriptor{4, 7}, buf1);
+
+            REQUIRE(v == 0x5C);
+        }
+        SECTION("uint32_t")
+        {
+            //auto v = bits_type::get<uint32_t>(bit_descriptor{1, 1, 32}, be_example1);
+            auto v = getter_32::get_adjusted(descriptor{0, 32}, be_example1);
+
+            REQUIRE(v == endian_example1);
+        }
+        SECTION("uint32_t, bitpos=5, length=20")
+        {
+            // { 0x12, 0x34, 0x56, 0x78} ->
+            // { 0x01, 0x34, 0x56 }
+            //auto v = bits_type::get<uint32_t>(bit_descriptor{1, 5, 20}, be_example1);
+            auto v = getter_32::get_adjusted(descriptor{4, 20}, be_example1);
+
+            REQUIRE(v == 0x13456);
+        }
+    }
+#if TO_MIGRATE
+    SECTION("little endian (msb to lsb)")
+    {
+        typedef bits::internal::getter<uint16_t, little_endian, msb_to_lsb> getter;
+        typedef bits::internal::getter<uint32_t, little_endian, msb_to_lsb> getter_32;
+        // NOTE: All the little endian stuff may be slightly off.  'bitpos' actually should be
+        // calculated against the last byte, not the first byte, in a little endian scenario
+        //typedef bits<endianness::little_endian, length_direction::msb_to_lsb> bits_type;
+
+        SECTION("bool")
+        {
+            //bool v = bits_type::get<bool>(bit_descriptor{1, 1}, buf1);
+        }
+        SECTION("uint16_t")
+        {
+            SECTION("16-bit length")
+            {
+                //auto v = bits_type::get<uint16_t>(bit_descriptor{1, 8, 16}, buf1);
+                auto v = getter::get_adjusted(descriptor{7, 16}, buf1);
+
+                REQUIRE(v == 0x81BF);
+            }
+            SECTION("9-bit length")
+            {
+                // { 0b10111111, 0b10000001 } 0xBF 81 -> bitpos + length filtering
+                // { 0bxxxxxxx1, 0b10000001 } 0x1 81 -> swapping
+                // { 0b10000001, 0bxxxxxxx1 } 0x81 0x1 -> suturing
+                // { 0b00000001, 0b00000011 } 0x1 0x3
+                auto v = bits_type::get<uint16_t>(bit_descriptor{1, 1, 9}, buf1);
+
+                //REQUIRE(v == 0x103);
+            }
+            SECTION("8-bit length, bitpos=3")
+            {
+                // { 0b10111111, 0b10000001 } 0xBF 81 -> bitpos + length filtering
+                // { 0bxxxxx111, 0bxxx00001 } 0x3 0x01 -> swapping
+                // { 0bxxx00001, 0bxxxxx111 } 0x1 0x03 -> suturing
+                // { 0b00000000, 0b00001111 } 0x0 0xF
+                auto v = bits_type::get<uint16_t>(bit_descriptor{1, 3, 8}, buf1);
+
+                //REQUIRE(v == 0xF);
+            }
+        }
+        SECTION("uint32_t")
+        {
+            SECTION("32-bit length")
+            {
+                auto v = bits_type::get<uint32_t>(bit_descriptor{1, 8, 32}, le_example1);
+
+                REQUIRE(v == endian_example1);
+            }
+            SECTION("24-bit length, bytepos=2")
+            {
+                // TODO: Need to bounds check on 32-bit, as there may not actually
+                // be a full 32 bit word available in the raw data stream
+                //auto v = bits_type::get<uint32_t>(bit_descriptor{2, 8, 24}, le_example1);
+
+                //REQUIRE(v == endian_example1);
+            }
+        }
+    }
+#endif // TO_MIGRATE
 }
