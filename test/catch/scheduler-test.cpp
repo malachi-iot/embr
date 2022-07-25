@@ -3,6 +3,7 @@
 #include <bitset>
 
 #include <embr/scheduler.h>
+#include <embr/observer.h>
 
 // Not available because we test against C++11
 //using namespace std::literals::chrono_literals;
@@ -11,9 +12,23 @@ struct Item
 {
     int event_due;
     int* counter;
+
+    Item() = default;
+
+    Item(int event_due, int* counter = nullptr) :
+        event_due{event_due}, counter{counter}
+    {}
+
+    bool match(int* c) const { return c == counter; }
 };
 
-struct ItemTraits
+struct fake_mutex
+{
+    void lock() {}
+    void unlock() {}
+};
+
+struct ItemTraits //: embr::internal::SchedulerImpl<int>
 {
     typedef Item value_type;
     typedef int time_point;
@@ -26,6 +41,8 @@ struct ItemTraits
 
         return false;
     }
+
+    typedef fake_mutex mutex;
 };
 
 
@@ -67,6 +84,8 @@ struct Item2Traits
         ++v.counter;
         return true;
     }
+
+    typedef fake_mutex mutex;
 };
 
 
@@ -91,6 +110,8 @@ struct Item3Traits
     {
         return v->process(t);
     }
+
+    typedef fake_mutex mutex;
 };
 
 struct Item3ControlStructure1 : Item3Traits::control_structure
@@ -132,6 +153,8 @@ struct TraditionalTraitsBase
 
         void* data;
     };
+
+    typedef fake_mutex mutex;
 };
 
 template <bool is_inline>
@@ -181,8 +204,36 @@ struct StatefulFunctorTraits : FunctorTraits
     time_point now() { return now_++; }
 };
 
+
+template <class TTraits>
+struct SchedulerObserver
+{
+    typedef TTraits traits_type;
+
+    int added = 0;
+    int removed = 0;
+    int processed = 0;
+
+    void on_notify(embr::internal::events::Processing<traits_type>)
+    {
+        ++processed;
+    }
+
+    void on_notify(embr::internal::events::Scheduled<traits_type>)
+    {
+        ++added;
+    }
+
+    void on_notify(embr::internal::events::Removed<traits_type>)
+    {
+        ++removed;
+    }
+};
+
 TEST_CASE("scheduler test", "[scheduler]")
 {
+    std::bitset<32> arrived;
+
     SECTION("impl operations")
     {
         SECTION("copy")
@@ -342,7 +393,6 @@ TEST_CASE("scheduler test", "[scheduler]")
         // indeed being in progress and experimental
         SECTION("estd::function style")
         {
-            std::bitset<32> arrived;
             embr::internal::layer1::Scheduler<FunctorTraits, 5> scheduler;
 
             SECTION("trivial scheduling")
@@ -420,7 +470,6 @@ TEST_CASE("scheduler test", "[scheduler]")
         }
         SECTION("stateful")
         {
-            std::bitset<32> arrived;
             embr::internal::layer1::Scheduler<StatefulFunctorTraits, 5> scheduler;
 
             auto f = StatefulFunctorTraits::make_function(
@@ -436,5 +485,124 @@ TEST_CASE("scheduler test", "[scheduler]")
             REQUIRE(arrived.count() == 1);
             REQUIRE(arrived[0]);
         }
+        SECTION("std-style dynamic allocated function")
+        {
+            embr::internal::layer1::Scheduler<FunctorTraits, 5> scheduler;
+
+            estd::experimental::function<void(unsigned*, unsigned)> f(
+                [&](unsigned* wake, unsigned current_time)
+                {
+                    arrived.set(*wake);
+                });
+
+            scheduler.schedule(5, f);
+
+            scheduler.process(10);
+
+            REQUIRE(arrived[0] == false);
+            REQUIRE(arrived[5] == true);
+            REQUIRE(arrived[10] == false);
+        }
+    }
+    SECTION("notifications")
+    {
+        typedef StatefulFunctorTraits traits_type;
+        SchedulerObserver<traits_type> o;
+        auto s = embr::layer1::make_subject(o);
+        embr::internal::layer1::Scheduler<traits_type, 5, decltype(s)> scheduler(s);
+
+        auto f = traits_type::make_function(
+            [&](unsigned* wake, unsigned current)
+            {
+                arrived.set(*wake);
+                *wake = current + 2;
+            });
+
+        scheduler.schedule(5, f);
+        scheduler.schedule(99, f); // should never reach this one
+
+        for(traits_type::time_point i = 0; i < 30; i++)
+        {
+            scheduler.process(i);
+        }
+
+        REQUIRE(o.added == 15);
+        REQUIRE(o.removed == 13);
+    }
+    SECTION("traits")
+    {
+        // Test primarily exists to ensure things compile.
+        // Otherwise, it's mostly an estdlib scope kind of test
+        SECTION("FunctorTraits")
+        {
+            typedef embr::internal::experimental::FunctorTraits<int> traits_type;
+            typedef typename traits_type::value_type control_structure;
+
+            estd::layer1::vector<typename traits_type::value_type, 10> v;
+            estd::experimental::function<void(int*, int)> f([&](int* wake, int current)
+            {
+                arrived.set(*wake);
+            });
+
+            control_structure cs(1, f);
+
+            v.emplace_back(1, f);
+
+            // TODO: Somewhat incomplete test
+        }
+    }
+    SECTION("schedule from inside")
+    {
+        typedef embr::internal::experimental::FunctorTraits<int> impl_type;
+        typedef typename impl_type::value_type control_structure;
+
+        embr::internal::layer1::Scheduler<impl_type, 5> scheduler;
+
+        int rapid_counter = 0;
+        int rapid_total = 0;
+
+        auto rapid_f = impl_type::make_function(
+            [&](int* wake, int current_time)
+            {
+                while(rapid_counter-- > 0)
+                {
+                    ++rapid_total;
+                    *wake += 1;
+                }
+            });
+
+        auto slow_f = impl_type::make_function(
+            [&](int* wake, int current_time)
+            {
+                if(*wake % 30 == 0)
+                {
+                    rapid_counter = 5;
+                    scheduler.schedule(current_time, rapid_f);
+                }
+
+                *wake += 10;
+            });
+
+        scheduler.schedule(10, slow_f);
+
+        for(int i = 0; i < 70; i++)
+        {
+            scheduler.process(i);
+        }
+
+        REQUIRE(rapid_total == 10);
+    }
+    SECTION("match")
+    {
+        typedef estd::layer1::vector<Item, 20> container_type;
+        embr::internal::Scheduler<container_type, ItemTraits> scheduler;
+        int counter1 = 0, counter2 = 0;
+
+        scheduler.schedule(1, &counter1);
+        scheduler.schedule(10, &counter2);
+
+        Item* i = scheduler.match(&counter1);
+
+        REQUIRE(i->event_due == 1);
     }
 }
