@@ -13,6 +13,10 @@
 #include <embr/streambuf.hpp>
 #include <estd/sstream.h>
 
+#include <embr/bits/bits.hpp>
+
+#include "test-data.h"
+
 using namespace embr::experimental;
 
 template <class TTransport, class TRetryPolicyImpl, class TTimer>
@@ -39,7 +43,7 @@ public:
 
 
 template <class TAllocator>
-void test(TAllocator& a)
+void test_alloc(TAllocator& a)
 {
     // FIX: Misbehaves when we really want it to be TNetBufAllocator&
     // runs destructor since we're actually copying to a local TNetBufAllocator
@@ -67,7 +71,7 @@ TEST_CASE("experimental test", "[experimental]")
         embr::mem::layer1::NetBuf<128> nb;
         NetBufAllocator<char, decltype(nb)& > a(nb);
 
-        test(a);
+        test_alloc(a);
     }
     SECTION("NetBufDynamic")
     {
@@ -83,7 +87,7 @@ TEST_CASE("experimental test", "[experimental]")
             // it's clear naming is a little confusing here, NetBufAllocator and NetBufDynamic
             NetBufAllocator<char, decltype(nb)& > a(nb);
 
-            test(a);
+            test_alloc(a);
         }
     }
     SECTION("Inline NetBufAllocator + NetBufDynamic")
@@ -94,7 +98,7 @@ TEST_CASE("experimental test", "[experimental]")
         //REQUIRE(sizeof(a) == sizeof(int) + sizeof(void*) + sizeof(void*));
 
         // this works, but destructor seems to be a bit squirrely
-        test(a);
+        test_alloc(a);
     }
     SECTION("Retry v3")
     {
@@ -156,5 +160,97 @@ TEST_CASE("experimental test", "[experimental]")
 
         // FIX: In its current state, this generates a memory leak since send does a 'new'
         rm.send(fake_endpoint, *sb, 0);
+    }
+    SECTION("bits")
+    {
+        using namespace embr;
+
+        SECTION("optimized getter")
+        {
+            // ambiguous
+            //typedef
+                //bits::internal::getter<embr::word<10>, bits::little_endian, bits::lsb_to_msb > getter;
+            typedef
+                bits::internal::getter<uint16_t, bits::little_endian, bits::lsb_to_msb > getter;
+
+            //getter::get2<0, 4>(le_example1);
+            auto v = getter::get<4, 8>(le_example1 + 3);
+
+            REQUIRE(v == 0x23);
+
+            SECTION("wrapped in decoder")
+            {
+                // DEBT: Get a more useful constructor here to copy in external data if so desired
+                // DEBT: Use layer2 here
+                bits::layer1::decoder<bits::little_endian, 8> d;
+
+                estd::copy_n(le_example1, 4, d.value());
+
+                // grabs middle of LE 32-bit integer, 4 bits in and treated
+                // as an 8-bit value
+                auto v = d.get<4, 8>(2);
+
+                REQUIRE(v.cvalue() == 0x23);
+
+                auto v2 = d.get<4, 12>(2);
+
+                // This is accurate.  Remember, bitpos is trims off the left END of the word
+                // for little endian, thus pushing length further towards the right
+                REQUIRE(v2 == 0x123);
+
+                auto v3 = d.get<4, 16>(1);
+
+                REQUIRE(v3.cvalue() == 0x2345);
+            }
+        }
+        SECTION("optimized setter")
+        {
+            uint8_t raw[8];
+
+            estd::fill_n(raw, 8, 0);
+
+            REQUIRE(embr::bits::experimental::is_subbyte(0, 8) == true);
+            REQUIRE(embr::bits::experimental::is_byte_boundary(0, 8) == true);
+            REQUIRE(embr::bits::experimental::is_valid(0, 8) == true);
+
+            SECTION("little endian")
+            {
+                typedef
+                    bits::internal::setter<uint16_t, bits::little_endian, bits::lsb_to_msb > setter;
+
+                setter::set<4, 8>(raw, 0x23);
+
+                REQUIRE((int)raw[0] == 0x30);       // lsb_to_msb bitpos=4 means we start 4 bits in
+                REQUIRE((int)raw[1] == 0x02);       // lsb_to_msb resume means we start from lsb 0
+            }
+            SECTION("big endian")
+            {
+                typedef
+                    bits::internal::setter<uint16_t, bits::big_endian, bits::lsb_to_msb > setter;
+
+                SECTION("within-byte operations")
+                {
+                    setter::set<4, 3>(raw + 1, 2);
+
+                    REQUIRE((int)raw[1] == 0x20);
+
+                    setter::set(bits::descriptor{0, 3}, raw + 1, 2);
+
+                    REQUIRE((int)raw[1] == 0x22);
+                }
+                SECTION("multi byte operations")
+                {
+                    //setter::set<4, 8>(raw, 0x23); // disabled as we haven't implemented this specialization yet
+                    setter::set<0, 16>(raw, 0x23);
+                    setter::set(bits::descriptor{0, 32}, raw + 2, 0x1234);
+
+                    REQUIRE((int)raw[0] == 0);
+                    REQUIRE((int)raw[1] == 0x23);
+
+                    REQUIRE((int)raw[4] == 0x12);
+                    REQUIRE((int)raw[5] == 0x34);
+                }
+            }
+        }
     }
 }

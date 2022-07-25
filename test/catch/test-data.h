@@ -11,9 +11,6 @@
 
 #include <estd/cstdint.h>
 
-constexpr static const uint8_t blinker_on[] =
-    {};
-
 // eec1 examples are from [1]
 constexpr static const uint8_t eec1_id_example[] = { 0xc, 0xf0, 0x04, 0x00 };
 constexpr static const uint8_t eec1_frame_example1[] =
