@@ -23,6 +23,7 @@ add_subdirectory(${ESTD_DIR} estd)
 set(SOURCE_FILES
     main.cpp
     basics-test.cpp
+    bits-test.cpp
     dataport-test.cpp
     datapump-test.cpp
     datapump-test.h
