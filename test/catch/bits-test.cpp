@@ -542,6 +542,18 @@ TEST_CASE("bits2")
 
                     REQUIRE(v == endian_example2_1_3_1);
                 }
+                SECTION("16-bit")
+                {
+                    uint16_t v;
+
+                    bits::descriptor d{4, 7};
+                    int adjuster = getter_full::adjuster(d);
+
+                    getter_full::get(d,
+                                     le_example2_1_3_1 + adjuster, v);
+
+                    REQUIRE(v == endian_example2_1_3_1);
+                }
                 SECTION("32-bit")
                 {
                     uint32_t v;

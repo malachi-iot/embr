@@ -21,19 +21,21 @@ struct getter<bitpos, length, little_endian, lsb_to_msb, lsb_to_msb,
            !is_subbyte(bitpos, length)> > :
     getter_tag
 {
+    // DEBT: adjusters are good idea, but doubling up on the width deducer calc plus
+    // all the extraneous trivial math is not great
     constexpr static int adjuster()
     {
-        return 0;
+        return (internal::width_deducer_lsb_to_msb<bitpos, length>() / byte_size()) - 1;
     }
 
     constexpr static int adjuster(descriptor d)
     {
-        return 0;
+        return (internal::width_deducer_lsb_to_msb(d) / byte_size()) - 1;
     }
 
-    template <class TForwardIt, typename TInt,
+    template <class TReverseIt, typename TInt,
         estd::enable_if_t<(sizeof(TInt) > 1), bool> = true>
-    inline static void get_assist(int& i, TForwardIt& raw, TInt& v)
+    inline static void get_assist(int& i, TReverseIt& raw, TInt& v)
     {
         constexpr unsigned byte_width = byte_size();
 
@@ -61,8 +63,8 @@ struct getter<bitpos, length, little_endian, lsb_to_msb, lsb_to_msb,
 
     }
 
-    template <typename TForwardIt, typename TInt>
-    static inline void get(descriptor d, TForwardIt raw, TInt& v)
+    template <typename TReverseIt, typename TInt>
+    static inline void get(descriptor d, TReverseIt raw, TInt& v)
     {
         constexpr unsigned byte_width = byte_size();
         const unsigned width = 
@@ -115,6 +117,7 @@ struct getter<bitpos, length, little_endian, ld, rd,
         return 0;
     }
 
+    // FIX: This needs to be TReverseIt, got it backward
     template <typename TForwardIt, typename TInt>
     static inline void get(descriptor d, TForwardIt raw, TInt& v)
     {
@@ -130,6 +133,7 @@ struct getter<bitpos, length, little_endian, ld, rd,
         }
     }
 
+    // FIX: This needs to be TReverseIt, got it backward
     template <typename TForwardIt, typename TInt>
     static inline void get(TForwardIt raw, TInt& v)
     {
