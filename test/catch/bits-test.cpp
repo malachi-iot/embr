@@ -479,6 +479,60 @@ TEST_CASE("bits2")
             }
         }
     }
+    // Adapted from 2nd Generation tests
+    SECTION("3rd Generation")
+    {
+        SECTION("little endian")
+        {
+            typedef bits::experimental::setter<0, 16, bits::little_endian, bits::lsb_to_msb> setter_16_bb;
+            typedef bits::experimental::setter<1, 14, bits::little_endian, bits::lsb_to_msb> setter_16;
+
+            // Remember, v3 setter and getter are resilient to underlying type bitness
+            typedef setter_16_bb setter_bb;
+            typedef setter_16 setter_full;
+            //typedef bits::experimental::setter<0, 32, bits::little_endian, bits::lsb_to_msb> setter_32_bb;
+            //typedef bits::experimental::setter<1, 30, bits::little_endian, bits::lsb_to_msb> setter_32;
+
+            SECTION("setter")
+            {
+                SECTION("16-bit")
+                {
+                    setter_16_bb::set(bits::descriptor{0, 16}, raw, 0x123);
+
+                    REQUIRE((int)raw[0] == 0x23);
+                    REQUIRE((int)raw[1] == 0x01);
+                }
+                SECTION("16-bit bitpos=4, len=7")
+                {
+                    // direct from [2] 2.1.3.1 example
+                    setter_16::set(bits::descriptor{4, 7}, raw, endian_example2_1_3_1);
+
+                    REQUIRE((int)raw[0] == 0b10100000);
+                    REQUIRE((int)raw[1] == 0b00000101);
+                }
+                SECTION("32-bit")
+                {
+                    setter_bb::set(bits::descriptor{0, 32}, raw, endian_example1);
+                    compare_le_example1(raw);
+                }
+                SECTION("32-bit bitpos=4, len=7")
+                {
+                    setter_full::set(bits::descriptor{4, 7}, raw, endian_example2_1_3_1);
+
+                    test::compare(raw, le_example2_1_3_1, 2);
+                }
+                SECTION("32-bit bitpos=4, len=15")
+                {
+                    setter_full::set(bits::descriptor{4, 15}, raw, endian_example2_1_3_1_aug);
+
+                    test::compare(raw, le_example2_1_3_1_aug, 3);
+                }
+            }
+        }
+        SECTION("big endian")
+        {
+        }
+    }
 }
 
 using namespace embr::bits;

@@ -16,7 +16,6 @@ namespace embr { namespace bits {
 
 namespace experimental {
 
-// FIX: TBD - full bit boundary version
 template <unsigned bitpos, unsigned length>
 struct setter<bitpos, length, little_endian, lsb_to_msb, lsb_to_msb,
     enable<is_valid(bitpos, length) &&
@@ -47,7 +46,8 @@ struct setter<bitpos, length, little_endian, lsb_to_msb, lsb_to_msb,
         }
     }
 
-    // Copy/paste & adapted from internal::setter, UNTESTED
+    // Copy/paste & adapted from internal::setter (v2 version)
+    // Passes unit tests, nice
     template <typename TForwardIt, typename TInt>
     static inline void set(descriptor d, TForwardIt raw, TInt v)
     {
