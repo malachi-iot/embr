@@ -11,6 +11,70 @@
 
 namespace embr { namespace bits {
 
+namespace experimental {
+
+// FIX: TBD - full bit boundary version
+template <unsigned bitpos, unsigned length>
+struct getter<bitpos, length, little_endian, lsb_to_msb, lsb_to_msb,
+    enable<is_valid(bitpos, length) &&
+           !is_byte_boundary(bitpos, length) &&
+           !is_subbyte(bitpos, length)> > :
+    getter_tag
+{
+};
+
+
+/// multi-byte byte boundary version UNTESTED
+template <unsigned bitpos, unsigned length, length_direction ld, resume_direction rd>
+struct getter<bitpos, length, little_endian, ld, rd,
+    enable<is_byte_boundary(bitpos, length) &&
+           !is_subbyte(bitpos, length)> > :
+    getter_tag
+{
+    constexpr static int adjuster()
+    {
+        return 0;
+    }
+
+    constexpr static int adjuster(descriptor d)
+    {
+        return 0;
+    }
+
+    template <typename TForwardIt, typename TInt>
+    static inline void get(descriptor d, TForwardIt raw, TInt& v)
+    {
+        constexpr unsigned byte_width = byte_size();
+        unsigned sz = d.length / byte_width;
+
+        v = 0;
+
+        while(sz--)
+        {
+            v |= (byte) *raw++;
+            v <<= byte_width;
+        }
+    }
+
+    template <typename TForwardIt, typename TInt>
+    static inline void get(TForwardIt raw, TInt& v)
+    {
+        constexpr unsigned byte_width = byte_size();
+        unsigned sz = length / byte_width;
+
+        v = 0;
+
+        while(sz--)
+        {
+            v |= (byte) *raw++;
+            v <<= byte_width;
+        }
+    }
+};
+
+
+}
+
 namespace internal {
 
 // [2] 2.1.3.1.

@@ -101,9 +101,13 @@ namespace experimental {
 template <bool>
 struct enable;
 
-// "higher definition" setter, so that we can specialize even more
+// "higher definition" setter and getter, so that we can specialize even more
+
 template <unsigned bitpos, unsigned length, endianness e, length_direction ld, resume_direction rd = ld, typename = enable<true> >
 struct setter;
+
+template <unsigned bitpos, unsigned length, endianness e, length_direction ld, resume_direction rd = ld, typename = enable<true> >
+struct getter;
 
 }
 

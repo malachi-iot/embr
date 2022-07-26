@@ -26,13 +26,49 @@ struct setter<bitpos, length, little_endian, lsb_to_msb, lsb_to_msb,
 {
 };
 
-/// multi-byte byte boundary version
+/// multi-byte byte boundary version UNTESTED
 template <unsigned bitpos, unsigned length, length_direction ld, resume_direction rd>
 struct setter<bitpos, length, little_endian, ld, rd,
     enable<is_byte_boundary(bitpos, length) &&
            !is_subbyte(bitpos, length)> > :
     setter_tag
 {
+    constexpr static int adjuster()
+    {
+        return 0;
+    }
+
+    constexpr static int adjuster(descriptor d)
+    {
+        return 0;
+    }
+
+    template <typename TForwardIt, typename TInt>
+    static inline void set(descriptor d, TForwardIt raw, TInt v)
+    {
+        constexpr unsigned byte_width = byte_size();
+        unsigned sz = d.length / byte_width;
+
+        while(sz--)
+        {
+            *raw++ = (byte) v;
+            v >>= byte_width;
+        }
+    }
+
+
+    template <typename TForwardIt, typename TInt>
+    static inline void set(TForwardIt raw, TInt v)
+    {
+        constexpr unsigned byte_width = byte_size();
+        unsigned sz = length / byte_width;
+
+        while(sz--)
+        {
+            *raw++ = (byte) v;
+            v >>= byte_width;
+        }
+    }
 };
 
 }

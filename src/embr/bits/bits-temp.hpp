@@ -84,6 +84,7 @@ constexpr bool is_subbyte(descriptor d)
     return is_subbyte(d.bitpos, d.length);
 }
 
+struct getter_tag {};
 struct setter_tag {};
 
 
@@ -121,6 +122,10 @@ struct setter<bitpos, length, e, ld, rd,
 
 template <endianness e, length_direction ld>
 using subbyte_setter = setter<0, byte_size(), e, ld>;
+
+template <endianness e>
+using byte_boundary_setter = setter<0, byte_size() * 2, e, lsb_to_msb>;
+
 
 }
 

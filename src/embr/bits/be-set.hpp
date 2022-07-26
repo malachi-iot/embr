@@ -80,9 +80,6 @@ struct setter<bitpos, length, big_endian, ld, rd,
     }
 };
 
-template <endianness e>
-using byte_boundary_setter = setter<0, byte_size() * 2, e, lsb_to_msb>;
-
 }
 
 namespace internal {
