@@ -33,6 +33,7 @@ struct setter<bitpos, length, little_endian, lsb_to_msb, lsb_to_msb,
         return 0;
     }
 
+    // DEBT: Consolidate set_assist across this and byte-boundary version
     template <typename TForwardIt, typename TInt>
     inline static void set_assist(unsigned& i, TForwardIt& raw, TInt& v)
     {
@@ -49,7 +50,7 @@ struct setter<bitpos, length, little_endian, lsb_to_msb, lsb_to_msb,
     // Copy/paste & adapted from internal::setter (v2 version)
     // Passes unit tests, nice
     template <typename TForwardIt, typename TInt>
-    static inline void set(descriptor d, TForwardIt raw, TInt v)
+    static void set(descriptor d, TForwardIt raw, TInt v)
     {
         constexpr size_t byte_width = byte_size();
         const unsigned width = 
@@ -83,6 +84,12 @@ struct setter<bitpos, length, little_endian, lsb_to_msb, lsb_to_msb,
 
         *raw &= ~right_mask;
         *raw |= v;
+    }
+
+    template <typename TForwardIt, typename TInt>
+    static inline void set(TForwardIt raw, TInt v)
+    {
+        set(descriptor{bitpos, length}, raw, v);
     }
 };
 

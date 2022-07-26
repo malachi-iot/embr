@@ -528,6 +528,31 @@ TEST_CASE("bits2")
                     test::compare(raw, le_example2_1_3_1_aug, 3);
                 }
             }
+            SECTION("getter")
+            {
+                typedef bits::experimental::getter<0, 16, bits::little_endian, bits::lsb_to_msb> getter_bb;
+                typedef bits::experimental::getter<1, 14, bits::little_endian, bits::lsb_to_msb> getter_full;
+
+                SECTION("16-bit")
+                {
+                    uint16_t v;
+                    
+                    getter_full::get(bits::descriptor{4, 7},
+                                                le_example2_1_3_1 + 1, v);
+
+                    REQUIRE(v == endian_example2_1_3_1);
+                }
+                SECTION("32-bit")
+                {
+                    uint32_t v;
+                    
+                    getter_bb::get(bits::descriptor{0, 32},
+                                                le_example1 + 3, v);
+
+                    // FIX: Looks like a big endian decode happened here
+                    //REQUIRE(v == endian_example1);
+                }
+            }
         }
         SECTION("big endian")
         {

@@ -21,6 +21,80 @@ struct getter<bitpos, length, little_endian, lsb_to_msb, lsb_to_msb,
            !is_subbyte(bitpos, length)> > :
     getter_tag
 {
+    constexpr static int adjuster()
+    {
+        return 0;
+    }
+
+    constexpr static int adjuster(descriptor d)
+    {
+        return 0;
+    }
+
+    template <class TForwardIt, typename TInt,
+        estd::enable_if_t<(sizeof(TInt) > 1), bool> = true>
+    inline static void get_assist(int& i, TForwardIt& raw, TInt& v)
+    {
+        constexpr unsigned byte_width = byte_size();
+
+        // DEBT: turn i into unsigned and do an if statement above, rather than
+        // forcing a typecast onto byte_width - though making byte_width an actual
+        // signed int wouldn't be so bad
+        for(; i > (int)byte_width; i -= byte_width)
+        {
+            --raw;
+            v <<= byte_width;
+            v |= *raw;
+        }
+    }
+
+
+    // if TInt is never big enough to do bit shifting in the first place
+    // (8-bit, basically) then don't even try.  Technically this is an
+    // optimization, since the loop kicks out any actual attempt to bit shift,
+    // but we also do this because clang complains at the theoretical
+    // possibility of bitshifting an 8 bit value by 8 bits
+    template <class TForwardIt, typename TInt,
+        estd::enable_if_t<(sizeof(TInt) == 1), bool> = true>
+    inline static void get_assist(int& i, TForwardIt& raw, TInt& v)
+    {
+
+    }
+
+    template <typename TForwardIt, typename TInt>
+    static inline void get(descriptor d, TForwardIt raw, TInt& v)
+    {
+        constexpr unsigned byte_width = byte_size();
+        const unsigned width = 
+            internal::width_deducer_lsb_to_msb(d);
+
+        unsigned outside_bits = width - d.length;
+        unsigned msb_outside_bits = outside_bits - d.bitpos;
+        unsigned msb_inside_bits = byte_width - msb_outside_bits;
+
+        byte msb_mask = (1 << msb_inside_bits) - 1;
+        
+        v = *raw & msb_mask;
+
+        int i = d.length - msb_inside_bits;
+
+        get_assist(i, raw, v);
+
+        // at this point, 'i' is 'lsb_inside_bits' which should be
+        // the same as byte_width - d.bitpos
+
+        --raw;
+
+        {
+            unsigned lsb_inside_bits = byte_width - d.bitpos;
+
+            v <<= lsb_inside_bits;
+
+            byte temp = *raw >> d.bitpos;
+
+            v |= temp;
+        }
+    }
 };
 
 
