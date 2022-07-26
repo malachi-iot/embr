@@ -6,12 +6,36 @@
 #pragma once
 
 #include "byte.hpp"
+#include "bits-temp.hpp"
 
 #include <estd/iterator.h>
 
 #include <embr/platform/guard-in.h>
 
 namespace embr { namespace bits {
+
+namespace experimental {
+
+// FIX: TBD - full bit boundary version
+template <unsigned bitpos, unsigned length>
+struct setter<bitpos, length, little_endian, lsb_to_msb, lsb_to_msb,
+    enable<is_valid(bitpos, length) &&
+           !is_byte_boundary(bitpos, length) &&
+           !is_subbyte(bitpos, length)> > :
+    setter_tag
+{
+};
+
+/// multi-byte byte boundary version
+template <unsigned bitpos, unsigned length, length_direction ld, resume_direction rd>
+struct setter<bitpos, length, little_endian, ld, rd,
+    enable<is_byte_boundary(bitpos, length) &&
+           !is_subbyte(bitpos, length)> > :
+    setter_tag
+{
+};
+
+}
 
 namespace internal {
 
