@@ -52,16 +52,24 @@ struct setter<bitpos, length, big_endian, ld, rd,
     }
 
     template <typename TReverseIt, typename TInt>
-    static inline void set(descriptor d, TReverseIt raw, TInt v)
+    static inline void set_assist(unsigned sz, TReverseIt raw, TInt v)
     {
         constexpr unsigned byte_width = byte_size();
-        unsigned sz = d.length / byte_width;
 
         while(sz--)
         {
             *raw-- = (byte) v;
             v >>= byte_width;
         }
+    }
+
+    template <typename TReverseIt, typename TInt>
+    static inline void set(descriptor d, TReverseIt raw, TInt v)
+    {
+        constexpr unsigned byte_width = byte_size();
+        unsigned sz = d.length / byte_width;
+
+        set_assist(sz, raw, v);
     }
 
 
@@ -72,11 +80,7 @@ struct setter<bitpos, length, big_endian, ld, rd,
         constexpr unsigned _sz = length / byte_width;
         unsigned sz = _sz;
 
-        while(sz--)
-        {
-            *raw-- = (byte) v;
-            v >>= byte_width;
-        }
+        set_assist(sz, raw, v);
     }
 };
 
