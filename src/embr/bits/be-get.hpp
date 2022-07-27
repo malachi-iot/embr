@@ -11,6 +11,41 @@ namespace embr { namespace bits {
 
 namespace internal {
 
+template <class TInt, class TForwardIt>
+inline TInt get_be_lsb_to_msb(const unsigned width, descriptor d, TForwardIt raw);
+
+}
+
+namespace experimental {
+
+
+template <unsigned bitpos, unsigned length>
+struct getter<bitpos, length, big_endian, lsb_to_msb, lsb_to_msb,
+    enable<is_valid(bitpos, length) &&
+            // For the time being, this one serves byte boundary mode also
+            // Neat and elegant that one function works that well, but also slightly
+            // slower than a distinct function if it's available.  So leans on the "win" side
+           //!is_byte_boundary(bitpos, length) &&
+           !is_subbyte(bitpos, length)> > :
+   getter_tag
+{
+    constexpr static int adjuster() { return 0; }
+
+    constexpr static int adjuster(descriptor d) { return 0; }
+
+    template <typename TForwardIt, typename TInt>
+    static inline void get(descriptor d, TForwardIt raw, TInt& v)
+    {
+        const unsigned width = internal::width_deducer_lsb_to_msb(d);
+
+        v = internal::get_be_lsb_to_msb<TInt>(width, d, raw);
+    }
+};
+
+}
+
+namespace internal {
+
 ///
 /// @tparam TInt - unsigned of some flavor
 /// @tparam TIt - iterator of bytes, forward only is all that is required
@@ -18,8 +53,8 @@ namespace internal {
 /// @param d
 /// @param raw
 /// @return
-template <class TInt, class TIt>
-inline TInt get_be_lsb_to_msb(const unsigned width, descriptor d, TIt raw)
+template <class TInt, class TForwardIt>
+inline TInt get_be_lsb_to_msb(const unsigned width, descriptor d, TForwardIt raw)
 {
     constexpr unsigned byte_width = 8;
     TInt v = *raw;

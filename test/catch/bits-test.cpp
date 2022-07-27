@@ -580,7 +580,7 @@ TEST_CASE("bits2")
                     uint32_t v;
 
                     bits::descriptor d{0, 32};
-                    int adjuster = getter_full::adjuster(d);
+                    int adjuster = getter_bb::adjuster(d);
 
                     getter_bb::get(d, le_example1 + adjuster, v);
 
@@ -590,8 +590,41 @@ TEST_CASE("bits2")
         }
         SECTION("big endian")
         {
-            typedef bits::experimental::setter<0, 16, bits::big_endian, bits::lsb_to_msb> setter_bb;
-            typedef bits::experimental::setter<1, 14, bits::big_endian, bits::lsb_to_msb> setter_full;
+            SECTION("setter")
+            {
+                typedef bits::experimental::setter<0, 16, bits::big_endian, bits::lsb_to_msb> setter_bb;
+                typedef bits::experimental::setter<1, 14, bits::big_endian, bits::lsb_to_msb> setter_full;
+            }
+            SECTION("getter")
+            {
+                typedef bits::experimental::getter<0, 16, bits::big_endian, bits::lsb_to_msb> getter_bb;
+                typedef bits::experimental::getter<1, 14, bits::big_endian, bits::lsb_to_msb> getter_full;
+
+                SECTION("16-bit")
+                {
+                    uint16_t v;
+
+                    bits::descriptor d{4, 7};
+                    int adjuster = getter_full::adjuster(d);
+
+                    getter_full::get(d,
+                                     be_example2_1_1 + adjuster, v);
+
+                    // FIX: Appears to have an msb/lsb resume glitch
+                    //REQUIRE(v == endian_example2_1_1);
+                }
+                SECTION("32-bit")
+                {
+                    uint32_t v;
+
+                    bits::descriptor d{0, 32};
+                    int adjuster = getter_bb::adjuster(d);
+
+                    getter_bb::get(d, be_example1 + adjuster, v);
+
+                    REQUIRE(v == endian_example1);
+                }
+            }
         }
     }
 }

@@ -31,7 +31,9 @@ enum endianness
 enum length_direction
 {
     lsb_to_msb,         ///< For bitpos length, starts at LSB 0 and ends at MSB (inclusive)
+                        ///< This inclusive MSB position is from where bit material begins
     msb_to_lsb,         ///< For bitpos length, starts at specified MSB (inclusive) and ends at LSB 0.
+                        ///< This inclusive MSB position is from where bit material begins
                         ///< For resume, starts at uppermost LSB (inclusive).  For 8-bit byte, that would be '7'
 
     no_direction,       ///< For scenarios which are on byte boundaries. bitpos is not used

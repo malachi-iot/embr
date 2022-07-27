@@ -21,6 +21,10 @@ constexpr static const uint8_t be_example1[] = { 0x12, 0x34, 0x56, 0x78 };
 constexpr static const uint8_t le_example1[] = { 0x78, 0x56, 0x34, 0x12 };
 constexpr static const uint32_t endian_example1 = 0x12345678;
 
+// [3] 2.1.1
+constexpr static const uint8_t be_example2_1_1[] = { 0b1010011, 0b11000101 };
+constexpr static const uint16_t endian_example2_1_1 = 0b01010110;
+
 // [3] 2.1.3.1
 constexpr static const uint8_t le_example2_1_3_1[] = { 0b10100000, 0b00000101 };
 constexpr static const uint8_t le_example2_1_3_1_32bit[] = { 0b10100000, 0b00000101, 0, 0 };
