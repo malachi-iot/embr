@@ -84,6 +84,36 @@ constexpr bool is_subbyte(descriptor d)
     return is_subbyte(d.bitpos, d.length);
 }
 
+// DEBT: Poor naming.  Use this for scenarios which require reverse iteration
+// this one is for byte boundaries
+template <unsigned bitpos, unsigned length>
+constexpr unsigned offset_adjuster()
+{
+    return (length / byte_size()) - 1;
+}
+
+// DEBT: Poor naming.  Use this for scenarios which require reverse iteration
+// this one is for byte boundaries
+constexpr unsigned offset_adjuster(descriptor d)
+{
+    return (d.length / byte_size()) - 1;
+}
+
+// DEBT: Poor naming.  Use this for scenarios which require reverse iteration
+// this one is for 'full' mode
+template <unsigned bitpos, unsigned length>
+constexpr unsigned offset_adjuster_lsb_to_msb()
+{
+    return (internal::width_deducer_lsb_to_msb<bitpos, length>() / byte_size()) - 1;
+}
+
+// DEBT: Poor naming.  Use this for scenarios which require reverse iteration
+// this one is for 'full' mode
+inline unsigned offset_adjuster_lsb_to_msb(descriptor d)
+{
+    return (internal::width_deducer_lsb_to_msb(d) / byte_size()) - 1;
+}
+
 struct getter_tag {};
 struct setter_tag {};
 

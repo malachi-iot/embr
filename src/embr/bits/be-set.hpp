@@ -43,12 +43,12 @@ struct setter<bitpos, length, big_endian, ld, rd,
 {
     constexpr static int adjuster()
     {
-        return (length / byte_size()) - 1;
+        return offset_adjuster<bitpos, length>();
     }
 
     constexpr static int adjuster(descriptor d)
     {
-        return (d.length / byte_size()) - 1;
+        return offset_adjuster(d);
     }
 
     template <typename TReverseIt, typename TInt>

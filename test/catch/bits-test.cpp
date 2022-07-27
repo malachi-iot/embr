@@ -557,17 +557,20 @@ TEST_CASE("bits2")
                 SECTION("32-bit")
                 {
                     uint32_t v;
-                    
-                    getter_bb::get(bits::descriptor{0, 32},
-                                                le_example1 + 3, v);
 
-                    // FIX: Looks like a big endian decode happened here
-                    //REQUIRE(v == endian_example1);
+                    bits::descriptor d{0, 32};
+                    int adjuster = getter_full::adjuster(d);
+
+                    getter_bb::get(d, le_example1 + adjuster, v);
+
+                    REQUIRE(v == endian_example1);
                 }
             }
         }
         SECTION("big endian")
         {
+            typedef bits::experimental::setter<0, 16, bits::big_endian, bits::lsb_to_msb> setter_bb;
+            typedef bits::experimental::setter<1, 14, bits::big_endian, bits::lsb_to_msb> setter_full;
         }
     }
 }

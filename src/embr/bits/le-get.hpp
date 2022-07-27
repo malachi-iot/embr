@@ -25,12 +25,12 @@ struct getter<bitpos, length, little_endian, lsb_to_msb, lsb_to_msb,
     // all the extraneous trivial math is not great
     constexpr static int adjuster()
     {
-        return (internal::width_deducer_lsb_to_msb<bitpos, length>() / byte_size()) - 1;
+        return offset_adjuster_lsb_to_msb<bitpos, length>();
     }
 
     constexpr static int adjuster(descriptor d)
     {
-        return (internal::width_deducer_lsb_to_msb(d) / byte_size()) - 1;
+        return offset_adjuster_lsb_to_msb(d);
     }
 
     template <class TReverseIt, typename TInt,
@@ -100,7 +100,7 @@ struct getter<bitpos, length, little_endian, lsb_to_msb, lsb_to_msb,
 };
 
 
-/// multi-byte byte boundary version UNTESTED
+/// multi-byte byte boundary version
 template <unsigned bitpos, unsigned length, length_direction ld, resume_direction rd>
 struct getter<bitpos, length, little_endian, ld, rd,
     enable<is_byte_boundary(bitpos, length) &&
@@ -109,43 +109,41 @@ struct getter<bitpos, length, little_endian, ld, rd,
 {
     constexpr static int adjuster()
     {
-        return 0;
+        return offset_adjuster<bitpos, length>();
     }
 
     constexpr static int adjuster(descriptor d)
     {
-        return 0;
+        return offset_adjuster(d);
     }
 
-    // FIX: This needs to be TReverseIt, got it backward
-    template <typename TForwardIt, typename TInt>
-    static inline void get(descriptor d, TForwardIt raw, TInt& v)
+    template <typename TReverseIt, typename TInt>
+    static inline void get(descriptor d, TReverseIt raw, TInt& v)
     {
         constexpr unsigned byte_width = byte_size();
         unsigned sz = d.length / byte_width;
 
-        v = 0;
+        v = (byte) *raw;
 
-        while(sz--)
+        while(--sz)
         {
-            v |= (byte) *raw++;
             v <<= byte_width;
+            v |= (byte) *--raw;
         }
     }
 
-    // FIX: This needs to be TReverseIt, got it backward
-    template <typename TForwardIt, typename TInt>
-    static inline void get(TForwardIt raw, TInt& v)
+    template <typename TReverseIt, typename TInt>
+    static inline void get(TReverseIt raw, TInt& v)
     {
         constexpr unsigned byte_width = byte_size();
         unsigned sz = length / byte_width;
 
-        v = 0;
+        v = (byte) *raw;
 
-        while(sz--)
+        while(--sz)
         {
-            v |= (byte) *raw++;
             v <<= byte_width;
+            v |= (byte) *--raw;
         }
     }
 };
