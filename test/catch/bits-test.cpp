@@ -493,6 +493,27 @@ TEST_CASE("bits2")
             //typedef bits::experimental::setter<0, 32, bits::little_endian, bits::lsb_to_msb> setter_32_bb;
             //typedef bits::experimental::setter<1, 30, bits::little_endian, bits::lsb_to_msb> setter_32;
 
+            SECTION("get assister")
+            {
+                // NOTE: Not convinced we really want a distinct get_assister.  See comments
+                // on struct itself
+                int i;
+                const uint8_t* raw = le_example1;
+                uint8_t v8;
+                uint16_t v16;
+                uint32_t v32;
+
+                typedef bits::experimental::get_assister<bits::little_endian, true, uint8_t> ga_8;
+                typedef bits::experimental::get_assister<bits::little_endian, true, uint16_t> ga_16;
+                typedef bits::experimental::get_assister<bits::little_endian, true, uint32_t> ga_32;
+
+                /*
+                //ga_8::get_assist(i = 0, raw, v8);
+                ga_16::get_assist(i = 16, raw, v16);
+                ga_32::get_assist(i = 32, raw, v32);
+
+                REQUIRE(v32 == endian_example1); */
+            }
             SECTION("setter")
             {
                 SECTION("16-bit")

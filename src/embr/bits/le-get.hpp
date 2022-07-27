@@ -13,6 +13,33 @@ namespace embr { namespace bits {
 
 namespace experimental {
 
+// NOTE: Not 100% sure we need this level of fanciness, I think burying the assisters
+// in the getters and setters may be enough
+template <endianness e, bool byte_boundary, typename TInt, typename Enabled = void>
+struct get_assister;
+
+
+template <typename TInt>
+struct get_assister<little_endian, false, TInt, estd::enable_if_t<(sizeof(TInt) > 1)> >
+{
+    template <class TReverseIt>
+    inline static void get_assist(int& i, TReverseIt& raw, TInt& v)
+    {
+        constexpr unsigned byte_width = byte_size();
+
+        // DEBT: turn i into unsigned and do an if statement above, rather than
+        // forcing a typecast onto byte_width - though making byte_width an actual
+        // signed int wouldn't be so bad
+        for(; i > (int)byte_width; i -= byte_width)
+        {
+            --raw;
+            v <<= byte_width;
+            v |= *raw;
+        }
+    }
+};
+
+
 // FIX: TBD - full bit boundary version
 template <unsigned bitpos, unsigned length>
 struct getter<bitpos, length, little_endian, lsb_to_msb, lsb_to_msb,
@@ -118,10 +145,9 @@ struct getter<bitpos, length, little_endian, ld, rd,
     }
 
     template <typename TReverseIt, typename TInt>
-    static inline void get(descriptor d, TReverseIt raw, TInt& v)
+    static inline void get_assist(unsigned sz, TReverseIt raw, TInt& v)
     {
         constexpr unsigned byte_width = byte_size();
-        unsigned sz = d.length / byte_width;
 
         v = (byte) *raw;
 
@@ -133,18 +159,21 @@ struct getter<bitpos, length, little_endian, ld, rd,
     }
 
     template <typename TReverseIt, typename TInt>
+    static inline void get(descriptor d, TReverseIt raw, TInt& v)
+    {
+        constexpr unsigned byte_width = byte_size();
+        unsigned sz = d.length / byte_width;
+
+        return get_assist(sz, raw, v);
+    }
+
+    template <typename TReverseIt, typename TInt>
     static inline void get(TReverseIt raw, TInt& v)
     {
         constexpr unsigned byte_width = byte_size();
         unsigned sz = length / byte_width;
 
-        v = (byte) *raw;
-
-        while(--sz)
-        {
-            v <<= byte_width;
-            v |= (byte) *--raw;
-        }
+        return get_assist(sz, raw, v);
     }
 };
 
