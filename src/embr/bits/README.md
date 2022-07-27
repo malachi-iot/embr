@@ -14,7 +14,7 @@ struct descriptor
 };
 ```
 
-Document v0.1
+Document v0.2
 
 ## Terms and conventions
 
@@ -52,6 +52,14 @@ Word operations are undefined for lengths which do not span more than one byte.
 bitpos of 4 and length of 7 means that raw bits:
 
 `1010 0011` filter to `1010 xxxx`
+
+#### 2.1.1.1. remainder is lsb_to_msb
+
+Remaining 3 bit material is expected in rightmost bits of next byte.
+
+`10100011 11000101` -> `1010xxxx .....101` -> `01010101`
+
+#### 2.1.1.2. remainder is msb_to_lsb
 
 Remaining 3 bit material is expected in leftmost bits of next byte.  
 For example:
