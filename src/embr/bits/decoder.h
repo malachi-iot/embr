@@ -22,9 +22,7 @@ public:
     template <class TInt>
     inline TInt get(int index, descriptor d) const
     {
-        typedef internal::getter<TInt, e, direction, rd> getter;
-
-        return getter::get_adjusted(d, base_type::data() + index);
+        return bits::get<e, TInt, direction, rd>(d, base_type::data() + index);
     }
 
     template <class TInt>

@@ -24,17 +24,13 @@ public:
     template <class TInt>
     inline void set(index_type index, descriptor d, TInt v)
     {
-        typedef internal::setter<TInt, e, direction, rd> setter;
-
-        setter::set(d, base_type::data() + index, v);
+        bits::set<e, TInt, direction, rd>(d, base_type::data() + index, v);
     }
 
     template <class TInt>
     inline void set(index_type index, TInt v)
     {
-        typedef internal::setter<TInt, e, direction> setter;
-
-        setter::set(base_type::data() + index, v);
+        bits::set<e>(base_type::data() + index, v);
 
         /*
          * This works just fine, but does more masking/shifting legwork than necessary
