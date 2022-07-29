@@ -28,10 +28,7 @@ public:
     template <class TInt>
     inline TInt get(int index)
     {
-        constexpr unsigned byte_size = 8;
-
-        return get<TInt>(index,
-                         descriptor{direction == lsb_to_msb ? 0 : byte_size - 1, sizeof(TInt) * byte_size});
+        return bits::get<e, TInt>(base_type::data() + index);
     }
 
     // EXPERIMENTAL
