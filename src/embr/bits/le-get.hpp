@@ -40,7 +40,7 @@ struct get_assister<little_endian, false, TInt, estd::enable_if_t<(sizeof(TInt) 
 };
 
 
-// FIX: TBD - full bit boundary version
+// Full bit boundary version
 template <unsigned bitpos, unsigned length>
 struct getter<bitpos, length, little_endian, lsb_to_msb, lsb_to_msb,
     enable<is_valid(bitpos, length) &&
@@ -112,6 +112,8 @@ struct getter<bitpos, length, little_endian, lsb_to_msb, lsb_to_msb,
         // at this point, 'i' is 'lsb_inside_bits' which should be
         // the same as byte_width - d.bitpos
 
+        // because subbyte version exists elsewhere, we know that at least one
+        // additional byte is to be processed
         --raw;
 
         {

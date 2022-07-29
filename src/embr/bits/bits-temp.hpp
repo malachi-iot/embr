@@ -6,12 +6,18 @@ namespace embr { namespace bits {
 
 namespace internal {
 
+/// Given a bit position and length, indicate how many bits total on byte
+/// boundaries are necessary to fully contain the indicated word
 template <unsigned bitpos, unsigned length, unsigned byte_width = byte_size()>
 constexpr unsigned width_deducer_lsb_to_msb()
 {
     return ((length + bitpos) + byte_width - 1) / byte_width * byte_width;
 }
 
+/// Given a descriptor, indicate how many bits total on byte boundaries
+/// are necessary to fully contain the indicated word
+/// @param d
+/// @return
 inline unsigned width_deducer_lsb_to_msb(descriptor d)
 {
     constexpr unsigned byte_width = byte_size();
