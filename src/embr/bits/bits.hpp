@@ -84,9 +84,9 @@ inline void set(descriptor d, TByte* raw, TInt v)
 template <endianness e, typename TInt, typename TByte>
 inline void set(TByte* raw, TInt v)
 {
-    typedef internal::setter<TInt, e, no_direction> setter;
+    typedef experimental::byte_boundary_setter<e, TInt> s;
 
-    setter::set(raw, v);
+    s::set(raw + s::adjuster(), v);
 }
 
 

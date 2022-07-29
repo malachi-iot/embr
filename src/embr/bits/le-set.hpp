@@ -457,7 +457,7 @@ struct setter<TInt, endianness::little_endian,
         }
         else if(experimental::is_byte_boundary(d))
         {
-            typedef experimental::byte_boundary_setter<little_endian, TInt> s;
+            typedef experimental::byte_boundary_setter<little_endian> s;
 
             s::set(d, raw + s::adjuster(d), v);
         }

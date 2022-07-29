@@ -169,10 +169,10 @@ using subbyte_getter = getter<0, byte_size(), e, ld>;
 // beware though that doing this will break current runtime-dispatching get/set since
 // they are able to accept bytes as well
 
-template <endianness e, class TInt>
+template <endianness e, class TInt = uint16_t>
 using byte_boundary_setter = setter<0, sizeof(TInt) * byte_size(), e, no_direction>;
 
-template <endianness e, class TInt>
+template <endianness e, class TInt = uint16_t>
 using byte_boundary_getter = getter<0, sizeof(TInt) * byte_size(), e, no_direction>;
 
 
