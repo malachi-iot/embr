@@ -156,8 +156,8 @@ struct setter<bitpos, length, e, ld, rd,
     }
 };
 
-template <endianness e, length_direction ld>
-using subbyte_setter = setter<0, byte_size(), e, ld>;
+template <endianness e, length_direction ld, resume_direction rd = ld>
+using subbyte_setter = setter<0, byte_size(), e, ld, rd>;
 
 template <endianness e, length_direction ld>
 using subbyte_getter = getter<0, byte_size(), e, ld>;

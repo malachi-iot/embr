@@ -93,7 +93,7 @@ struct setter<bitpos, length, little_endian, lsb_to_msb, lsb_to_msb,
     }
 };
 
-/// multi-byte byte boundary version UNTESTED
+/// multi-byte byte boundary version
 template <unsigned bitpos, unsigned length, length_direction ld, resume_direction rd>
 struct setter<bitpos, length, little_endian, ld, rd,
     enable<is_byte_boundary(bitpos, length) &&
@@ -111,16 +111,24 @@ struct setter<bitpos, length, little_endian, ld, rd,
     }
 
     template <typename TForwardIt, typename TInt>
-    static inline void set(descriptor d, TForwardIt raw, TInt v)
+    static inline void set_assist(unsigned sz, TForwardIt raw, TInt v)
     {
         constexpr unsigned byte_width = byte_size();
-        unsigned sz = d.length / byte_width;
 
         while(sz--)
         {
             *raw++ = (byte) v;
             v >>= byte_width;
         }
+    }
+
+    template <typename TForwardIt, typename TInt>
+    static inline void set(descriptor d, TForwardIt raw, TInt v)
+    {
+        constexpr unsigned byte_width = byte_size();
+        unsigned sz = d.length / byte_width;
+
+        set_assist(sz, raw, v);
     }
 
 
@@ -130,11 +138,7 @@ struct setter<bitpos, length, little_endian, ld, rd,
         constexpr unsigned byte_width = byte_size();
         unsigned sz = length / byte_width;
 
-        while(sz--)
-        {
-            *raw++ = (byte) v;
-            v >>= byte_width;
-        }
+        set_assist(sz, raw, v);
     }
 };
 
@@ -230,6 +234,9 @@ constexpr unsigned width_deducer2(TInt v)
     return ___width_deducer2<TInt, byte_size()>(v);
 }
 
+// Temporary flag as we transition to v3 setter
+#define BITS_LEGACY 0
+
 // [1] 2.1.3.1.
 template <class TInt>
 struct setter<TInt, endianness::little_endian,
@@ -237,6 +244,7 @@ struct setter<TInt, endianness::little_endian,
     resume_direction::lsb_to_msb
     >
 {
+#if BITS_LEGACY
     template <class TForwardIt, typename TIntShadow = TInt,
         estd::enable_if_t<(sizeof(TIntShadow) > 1), bool> = true>
     inline static void set_assist(unsigned& i, TForwardIt& raw, TInt& v)
@@ -413,6 +421,58 @@ struct setter<TInt, endianness::little_endian,
             shifter -= byte_width;
         }
     }
+#else
+    // DEBT: Phase this out in favor of directly using underlying v3 setter
+    template <unsigned bitpos, unsigned length, typename TIt>
+    static inline void set(TIt raw, TInt v)
+    {
+        typedef experimental::setter<bitpos, length, little_endian,
+            lsb_to_msb, lsb_to_msb> s;
+
+        s::set(raw + s::adjuster(), v);
+    }
+
+    // byte boundary/subbyte
+    // DEBT: Phase this out in favor of directly interacting with underlying
+    // "high definition" setter
+    template <typename TIt>
+    static inline void set(TIt raw, TInt v)
+    {
+        typedef experimental::setter<0, sizeof(TInt) * byte_size(), little_endian,
+            lsb_to_msb, lsb_to_msb> s;
+
+        s::set(raw + s::adjuster(), v);
+    }
+
+    template <typename TIt>
+    static inline void set(descriptor d, TIt raw, TInt v)
+    {
+        // DEBT: Enable or disable these cases with compile time config, possibly enum-flag style
+
+        if(experimental::is_subbyte(d))
+        {
+            typedef experimental::subbyte_setter<little_endian, lsb_to_msb> s;
+
+            s::set(d, raw + s::adjuster(d), v);
+        }
+        else if(experimental::is_byte_boundary(d))
+        {
+            typedef experimental::byte_boundary_setter<little_endian, lsb_to_msb> s;
+
+            s::set(d, raw + s::adjuster(d), v);
+        }
+        else if(experimental::is_valid(d))
+        {
+            typedef experimental::setter<1, 8, little_endian, lsb_to_msb> s;
+
+            s::set(d, raw + s::adjuster(d), v);
+        }
+        else
+        {
+            // DEBT: Perhaps some kind of error logging?
+        }
+    }
+#endif
 };
 
 
