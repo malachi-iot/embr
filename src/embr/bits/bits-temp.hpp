@@ -162,11 +162,18 @@ using subbyte_setter = setter<0, byte_size(), e, ld, rd>;
 template <endianness e, length_direction ld>
 using subbyte_getter = getter<0, byte_size(), e, ld>;
 
-template <endianness e, length_direction ld>
-using byte_boundary_setter = setter<0, byte_size() * 2, e, ld>;
+// byte_boundary_xxxx undefined behavior if TInt is either:
+// - not an actual integer type
+// - less than 2 bytes big
+// DEBT: Feed in an enable/disable if possible to guard against that at compile time
+// beware though that doing this will break current runtime-dispatching get/set since
+// they are able to accept bytes as well
 
-template <endianness e, length_direction ld>
-using byte_boundary_getter = getter<0, byte_size() * 2, e, ld>;
+template <endianness e, class TInt>
+using byte_boundary_setter = setter<0, sizeof(TInt) * byte_size(), e, no_direction>;
+
+template <endianness e, class TInt>
+using byte_boundary_getter = getter<0, sizeof(TInt) * byte_size(), e, no_direction>;
 
 
 }

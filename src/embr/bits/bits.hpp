@@ -62,15 +62,11 @@ inline TInt get(descriptor d, const TByte* raw)
 template <endianness e, typename TInt, typename TByte>
 inline TInt get(const TByte* raw)
 {
-    typedef experimental::byte_boundary_getter<e, no_direction> g;
+    typedef experimental::byte_boundary_getter<e, TInt> g;
 
     TInt v;
 
-    // DEBT: Fix byte_boundary_getter itself to not take direction and instead take TInt.
-    // this way 'd' won't be needed at all here
-    descriptor d{0, sizeof(TInt) * byte_size()};
-
-    g::get(d, raw + g::adjuster(d), v);
+    g::get(raw + g::adjuster(), v);
 
     return v;
 }

@@ -114,7 +114,7 @@ struct setter<TInt, big_endian, lsb_to_msb, lsb_to_msb>
         }
         else if(experimental::is_byte_boundary(d))
         {
-            typedef experimental::byte_boundary_setter<big_endian, lsb_to_msb> s;
+            typedef experimental::byte_boundary_setter<big_endian, TInt> s;
 
             s::set(d, raw + s::adjuster(d), v);
         }
