@@ -450,31 +450,32 @@ TEST_CASE("bits2")
             {
                 SECTION("16-bit")
                 {
-                    uint16_t v = getter_16::get(16, bits::descriptor{4, 7},
-                                                le_example2_1_3_1 + 1);
+                    uint16_t v = getter_16::get(bits::descriptor{4, 7},
+                                                le_example2_1_3_1 + 1, false);
 
                     REQUIRE(v == endian_example2_1_3_1);
                 }
                 SECTION("32-bit")
                 {
-                    uint32_t v = getter_32::get(32, bits::descriptor{0, 32},
-                                                le_example1 + 3);
+                    uint32_t v = getter_32::get(bits::descriptor{0, 32},
+                                                le_example1 + 3, false);
 
                     REQUIRE(v == endian_example1);
                 }
                 SECTION("32-bit bitpos=4, len=7")
                 {
-                    uint32_t v = getter_32::get(16, bits::descriptor{4, 7},
-                                                le_example2_1_3_1 + 1);
+                    uint32_t v = getter_32::get(bits::descriptor{4, 7},
+                                                le_example2_1_3_1 + 1, false);
 
                     REQUIRE(v == endian_example2_1_3_1);
                 }
                 SECTION("32-bit bitpos=4, len=7")
                 {
-                    uint32_t v = getter_32::get(32,
+                    uint32_t v = getter_32::get(
                                                 //bits::descriptor{4, 7},
                                                 bits::descriptor{4, 7 + 16},    // width deducer needs extra 16 bits here
-                                                le_example2_1_3_1_32bit + 3);
+                                                le_example2_1_3_1_32bit + 3,
+                                                false);
 
                     REQUIRE(v == endian_example2_1_3_1);
                 }

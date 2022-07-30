@@ -345,7 +345,7 @@ struct getter<TInt, endianness::little_endian,
     }
 
     template <class TReverseIt>
-    static TInt get(descriptor d, TReverseIt raw, bool adjusted = false)
+    static TInt get(descriptor d, TReverseIt raw, bool adjusted)
     {
         TInt v;
 
@@ -371,13 +371,6 @@ struct getter<TInt, endianness::little_endian,
         }
 
         return v;
-    }
-
-    // DEBT: Phase this out, since we now auto deduce 'width' from d
-    template <class TReverseIt>
-    static TInt get(unsigned, descriptor d, TReverseIt raw)
-    {
-        return get(d, raw, false);
     }
 
     template <class TReverseIt>
