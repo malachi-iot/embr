@@ -178,4 +178,7 @@ using byte_boundary_getter = getter<0, sizeof(TInt) * byte_size(), e, no_directi
 
 }
 
+// Temporary flag as we transition to v3 setter
+#define BITS_LEGACY 0
+
 }}

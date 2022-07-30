@@ -215,10 +215,7 @@ TEST_CASE("experimental test", "[experimental]")
 
             SECTION("little endian")
             {
-                typedef
-                    bits::internal::setter<uint16_t, bits::little_endian, bits::lsb_to_msb > setter;
-
-                setter::set<4, 8>(raw, 0x23);
+                bits::experimental::set<4, 8, bits::little_endian, bits::lsb_to_msb>(raw, 0x23);
 
                 REQUIRE((int)raw[0] == 0x30);       // lsb_to_msb bitpos=4 means we start 4 bits in
                 REQUIRE((int)raw[1] == 0x02);       // lsb_to_msb resume means we start from lsb 0

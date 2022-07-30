@@ -234,9 +234,6 @@ constexpr unsigned width_deducer2(TInt v)
     return ___width_deducer2<TInt, byte_size()>(v);
 }
 
-// Temporary flag as we transition to v3 setter
-#define BITS_LEGACY 0
-
 // [1] 2.1.3.1.
 template <class TInt>
 struct setter<TInt, endianness::little_endian,
@@ -244,7 +241,7 @@ struct setter<TInt, endianness::little_endian,
     resume_direction::lsb_to_msb
     >
 {
-#if BITS_LEGACY
+#if _BITS_LEGACY
     template <class TForwardIt, typename TIntShadow = TInt,
         estd::enable_if_t<(sizeof(TIntShadow) > 1), bool> = true>
     inline static void set_assist(unsigned& i, TForwardIt& raw, TInt& v)
@@ -422,26 +419,12 @@ struct setter<TInt, endianness::little_endian,
         }
     }
 #else
-    // DEBT: Phase this out in favor of directly using underlying v3 setter
+    // NOTE: Keeping this because calling semantic is rather smooth with this
+    // flavor
     template <unsigned bitpos, unsigned length, typename TIt>
     static inline void set(TIt raw, TInt v)
     {
-        typedef experimental::setter<bitpos, length, little_endian,
-            lsb_to_msb, lsb_to_msb> s;
-
-        s::set(raw + s::adjuster(), v);
-    }
-
-    // byte boundary/subbyte
-    // DEBT: Phase this out in favor of directly interacting with underlying
-    // "high definition" setter
-    template <typename TIt>
-    static inline void set(TIt raw, TInt v)
-    {
-        typedef experimental::setter<0, sizeof(TInt) * byte_size(), little_endian,
-            lsb_to_msb, lsb_to_msb> s;
-
-        s::set(raw + s::adjuster(), v);
+        experimental::set<bitpos, length, little_endian, lsb_to_msb, lsb_to_msb>(raw, v);
     }
 
     template <typename TIt>

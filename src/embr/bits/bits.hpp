@@ -10,6 +10,20 @@
 
 namespace embr { namespace bits {
 
+namespace experimental {
+
+template <unsigned bitpos, unsigned length, endianness e,
+    length_direction d, resume_direction rd,
+    typename TInt, class TIt>
+inline void set(TIt raw, TInt v)
+{
+    typedef experimental::setter<bitpos, length, e, d, rd> s;
+
+    s::set(raw + s::adjuster(), v);
+}
+
+}
+
 template <endianness e, class TBase>
 inline bool operator <(
     const embr::bits::internal::provider<e, TBase>& lhs,

@@ -69,6 +69,9 @@ struct descriptor_base;
 template <endianness e, bool greater_than, bool equal_to>
 struct compare;
 
+// NOTE: Looks like it would be helpful to move getter/setter out of internal, though
+// I think we'd prefer to ditch 'TInt' before doing so
+
 template <class TInt, endianness e, length_direction ld, resume_direction rd = ld>
 struct getter;
 
@@ -110,6 +113,22 @@ struct setter;
 
 template <unsigned bitpos, unsigned length, endianness e, length_direction ld, resume_direction rd = ld, typename = enable<true> >
 struct getter;
+
+
+// The following two discrete methods are good to have, but actually somewhat clumsy compared to
+// current 'v2' getter::get and setter::set since they can retain endianness and length direction
+// while varying bitpos, length etc
+
+template <unsigned bitpos, unsigned length, endianness e,
+    length_direction d = default_direction, resume_direction rd = d,
+    typename TInt, typename TIt>
+void get(TIt raw, TInt& v);
+
+template <unsigned bitpos, unsigned length, endianness e,
+    length_direction d = default_direction, resume_direction rd = d,
+    typename TInt, typename TIt>
+void set(TIt raw, TInt v);
+
 
 }
 
