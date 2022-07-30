@@ -191,15 +191,15 @@ struct getter<bitpos, length, little_endian, ld, rd,
 namespace internal {
 
 // [2] 2.1.3.1.
-template <class TInt>
-struct getter<TInt, endianness::little_endian,
+template <>
+struct getter<endianness::little_endian,
     length_direction::lsb_to_msb,
     resume_direction::lsb_to_msb
     >
 {
+#if BITS_LEGACY
     typedef TInt int_type;
 
-#if BITS_LEGACY
     template <class TForwardIt, typename TIntShadow = TInt,
         estd::enable_if_t<(sizeof(TIntShadow) > 1), bool> = true>
     inline static void get_assist(int& i, TForwardIt& raw, TInt& v)
@@ -320,7 +320,7 @@ struct getter<TInt, endianness::little_endian,
     // DEBT: Only expose fully-adjusted at this level.  If programmer wants non-adjusted
     // iterator, use the v3 getter directly
 
-    template <unsigned bitpos, unsigned length, class TReverseIt>
+    template <unsigned bitpos, unsigned length, typename TInt, class TReverseIt>
     static TInt get(TReverseIt raw)
     {
         typedef experimental::getter<bitpos, length, little_endian, lsb_to_msb> g;
@@ -332,7 +332,7 @@ struct getter<TInt, endianness::little_endian,
         return v;
     }
 
-    template <unsigned bitpos, unsigned length, class TReverseIt>
+    template <unsigned bitpos, unsigned length, typename TInt, class TReverseIt>
     static TInt get_adjusted(TReverseIt raw)
     {
         typedef experimental::getter<bitpos, length, little_endian, lsb_to_msb> g;
@@ -344,7 +344,7 @@ struct getter<TInt, endianness::little_endian,
         return v;
     }
 
-    template <class TReverseIt>
+    template <typename TInt, class TReverseIt>
     static TInt get(descriptor d, TReverseIt raw, bool adjusted)
     {
         TInt v;
@@ -373,28 +373,28 @@ struct getter<TInt, endianness::little_endian,
         return v;
     }
 
-    template <class TReverseIt>
+    template <typename TInt, class TReverseIt>
     inline static TInt get_adjusted(descriptor d, TReverseIt raw)
     {
-        return get(d, raw, true);
+        return get<TInt>(d, raw, true);
     }
 #endif
 };
 
-template <class TInt>
-struct getter<TInt, endianness::little_endian,
+template <>
+struct getter<endianness::little_endian,
     length_direction::lsb_to_msb,
     resume_direction::msb_to_lsb
 >
 {
-    template <class TReverseIt>
+    template <typename TInt, class TReverseIt>
     static TInt get(const unsigned width, descriptor d, TReverseIt raw)
     {
         constexpr unsigned byte_width = byte_size();
 
         if(d.bitpos + d.length <= byte_width)
         {
-            return getter<byte, no_endian, lsb_to_msb>::get(d, raw);
+            return getter<no_endian, lsb_to_msb>::get<TInt>(d, raw);
         }
 
         unsigned msb_already_shifted = d.bitpos;
@@ -415,12 +415,12 @@ struct getter<TInt, endianness::little_endian,
         return v;
     }
 
-    template <class TIt>
+    template <typename TInt, class TIt>
     inline static TInt get_adjusted(descriptor d, TIt raw)
     {
         unsigned width = width_deducer_lsb_to_msb(d);
 
-        return get(width, d, raw + ((width - 1) / 8));
+        return get<TInt>(width, d, raw + ((width - 1) / 8));
     }
 };
 
@@ -458,10 +458,10 @@ struct getter<TInt, endianness::little_endian,
 // is present.  Not DEBT because easy to get caught off guard with this
 // misleading implementation
 template <>
-struct getter<byte, endianness::little_endian,
+struct getter<endianness::little_endian,
     msb_to_lsb,
     msb_to_lsb
-> : getter<byte, no_endian, msb_to_lsb, msb_to_lsb>
+> : getter<no_endian, msb_to_lsb, msb_to_lsb>
 {
 
 };

@@ -69,12 +69,9 @@ struct descriptor_base;
 template <endianness e, bool greater_than, bool equal_to>
 struct compare;
 
-// NOTE: Looks like it would be helpful to move getter/setter out of internal, though
-// I think we'd prefer to ditch 'TInt' before doing so
+// NOTE: Looks like it would be helpful to move getter/setter out of internal
 
-// TODO: Clean up TInt portion like we did with setter, but consider doing TInt& v
-// to ease calling
-template <class TInt, endianness e, length_direction ld, resume_direction rd = ld>
+template <endianness e, length_direction ld, resume_direction rd = ld>
 struct getter;
 
 template <endianness e, length_direction ld, resume_direction rd = ld>

@@ -102,52 +102,52 @@ inline TInt get_be_msb_to_lsb(const unsigned width, descriptor d, TIt raw)
 }
 
 // FIX: Either this or the dual lsb_to_msb collide, one needs work
-template <class TInt>
-struct getter<TInt, big_endian, lsb_to_msb, msb_to_lsb>
+template <>
+struct getter<big_endian, lsb_to_msb, msb_to_lsb>
 {
-    template <class TForwardIt>
+    template <typename TInt, class TForwardIt>
     static inline TInt get(unsigned width, descriptor d, TForwardIt raw)
     {
         return get_be_lsb_to_msb<TInt>(width, d, raw);
     }
 
-    template <class TForwardIt>
+    template <typename TInt, class TForwardIt>
     static inline TInt get_adjusted(descriptor d, TForwardIt raw)
     {
         return get(width_deducer_lsb_to_msb(d), d, raw);
     }
 };
 
-template <class TInt>
-struct getter<TInt, big_endian, lsb_to_msb, lsb_to_msb>
+template <>
+struct getter<big_endian, lsb_to_msb, lsb_to_msb>
 {
-    template <class TForwardIt>
+    template <typename TInt, class TForwardIt>
     static inline TInt get(unsigned width, descriptor d, TForwardIt raw)
     {
         return get_be_lsb_to_msb<TInt>(width, d, raw);
     }
 
-    template <class TForwardIt>
+    template <typename TInt, class TForwardIt>
     static inline TInt get_adjusted(descriptor d, TForwardIt raw)
     {
-        return get(width_deducer_lsb_to_msb(d), d, raw);
+        return get<TInt>(width_deducer_lsb_to_msb(d), d, raw);
     }
 };
 
 
-template <class TInt>
-struct getter<TInt, big_endian, msb_to_lsb, msb_to_lsb>
+template <>
+struct getter<big_endian, msb_to_lsb, msb_to_lsb>
 {
-    template <class TForwardIt>
+    template <typename TInt, class TForwardIt>
     static inline TInt get(unsigned width, descriptor d, TForwardIt raw)
     {
         return get_be_msb_to_lsb<TInt>(width, d, raw);
     }
 
-    template <class TForwardIt>
+    template <typename TInt, class TForwardIt>
     static inline TInt get_adjusted(descriptor d, TForwardIt raw)
     {
-        return get(width_deducer_msb_to_lsb(d), d, raw);
+        return get<TInt>(width_deducer_msb_to_lsb(d), d, raw);
     }
 };
 

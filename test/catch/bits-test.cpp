@@ -29,7 +29,8 @@ TEST_CASE("bits2")
             SECTION("get")
             {
                 uint8_t v =
-                    bits::get<bits::no_endian, uint8_t, bits::lsb_to_msb>(bits::descriptor{ 0, 4}, be_example1);
+                    bits::get<bits::no_endian, uint8_t, bits::lsb_to_msb>(
+                        bits::descriptor{ 0, 4}, be_example1);
                 REQUIRE(v == 2);
             }
             SECTION("set")
@@ -409,10 +410,11 @@ TEST_CASE("bits2")
         }
         SECTION("little endian")
         {
-            typedef bits::internal::getter<uint16_t, bits::little_endian, bits::lsb_to_msb> getter_16;
-            typedef bits::internal::getter<uint32_t, bits::little_endian, bits::lsb_to_msb> getter_32;
+            // TODO: Cleanup - we aren't bound to bit size at this level anymore
+            typedef bits::internal::getter<bits::little_endian, bits::lsb_to_msb> getter_16;
+            typedef bits::internal::getter<bits::little_endian, bits::lsb_to_msb> getter_32;
             typedef bits::internal::setter<bits::little_endian, bits::lsb_to_msb> setter_16;
-            typedef bits::internal::setter<bits::little_endian, bits::lsb_to_msb> setter_32;    // TODO: Cleanup
+            typedef bits::internal::setter<bits::little_endian, bits::lsb_to_msb> setter_32;
 
             SECTION("setter")
             {
@@ -450,28 +452,28 @@ TEST_CASE("bits2")
             {
                 SECTION("16-bit")
                 {
-                    uint16_t v = getter_16::get(bits::descriptor{4, 7},
+                    uint16_t v = getter_16::get<uint16_t>(bits::descriptor{4, 7},
                                                 le_example2_1_3_1 + 1, false);
 
                     REQUIRE(v == endian_example2_1_3_1);
                 }
                 SECTION("32-bit")
                 {
-                    uint32_t v = getter_32::get(bits::descriptor{0, 32},
+                    uint32_t v = getter_32::get<uint32_t>(bits::descriptor{0, 32},
                                                 le_example1 + 3, false);
 
                     REQUIRE(v == endian_example1);
                 }
                 SECTION("32-bit bitpos=4, len=7")
                 {
-                    uint32_t v = getter_32::get(bits::descriptor{4, 7},
+                    uint32_t v = getter_32::get<uint32_t>(bits::descriptor{4, 7},
                                                 le_example2_1_3_1 + 1, false);
 
                     REQUIRE(v == endian_example2_1_3_1);
                 }
                 SECTION("32-bit bitpos=4, len=7")
                 {
-                    uint32_t v = getter_32::get(
+                    uint32_t v = getter_32::get<uint32_t>(
                                                 //bits::descriptor{4, 7},
                                                 bits::descriptor{4, 7 + 16},    // width deducer needs extra 16 bits here
                                                 le_example2_1_3_1_32bit + 3,
@@ -638,14 +640,14 @@ template <class TInt, length_direction direction>
 static void tester(uint8_t* buf, TInt compare_to, uint8_t bitpos, uint8_t len)
 {
     // DEBT: Endian doesn't matter much here as this is used for byte-only tests
-    typedef bits::internal::getter<TInt, little_endian, direction> getter;
+    typedef bits::internal::getter<little_endian, direction> getter;
 
     --bitpos;
     //--len;
 
     INFO("bitpos = " << (int)bitpos << ", len = " << (int)len);
 
-    TInt v = getter::get_adjusted(descriptor{bitpos, len}, buf);
+    TInt v = getter::template get_adjusted<TInt>(descriptor{bitpos, len}, buf);
     //TInt v = bit_get<TInt, direction>(bit_descriptor{1, bitpos, len }, buf);
 
     REQUIRE(compare_to == v);
@@ -685,7 +687,7 @@ TEST_CASE("bits")
     {
         //typedef bits::internal::getter<bool, little_endian, lsb_to_msb> getter;
         // DEBT: No bool specialization just yet
-        typedef bits::internal::getter<byte, little_endian, lsb_to_msb> getter;
+        typedef bits::internal::getter<little_endian, lsb_to_msb> getter;
 
         const uint8_t* buf = buf1;
         uint8_t _buf = *buf;
@@ -695,7 +697,7 @@ TEST_CASE("bits")
             INFO("bitpos = " << (int)(i-1));
 
             //bool v = bit_get<bool, length_direction::lsb_to_msb>(bit_descriptor{1, i }, buf);
-            bool v = getter::get_adjusted(descriptor{ i - 1, 1 }, buf);
+            bool v = getter::template get_adjusted<byte>(descriptor{ i - 1, 1 }, buf);
 
             REQUIRE((_buf & 1) == v);
 
@@ -704,9 +706,7 @@ TEST_CASE("bits")
     }
     SECTION("big endian (msb_to_lsb)")
     {
-        typedef bits::internal::getter<uint16_t, big_endian, msb_to_lsb> getter;
-        typedef bits::internal::getter<uint32_t, big_endian, msb_to_lsb> getter_32;
-        //typedef bits<endianness::big_endian, length_direction::msb_to_lsb> bits_type;
+        typedef bits::internal::getter<big_endian, msb_to_lsb> getter;
 
         SECTION("bool")
         {
@@ -715,7 +715,7 @@ TEST_CASE("bits")
         SECTION("uint16_t")
         {
             //auto v = bits_type::get<uint16_t>(bit_descriptor{1, 1, 9}, buf1);
-            auto v = getter::get_adjusted(descriptor{0, 9}, buf1);
+            auto v = getter::get_adjusted<uint16_t>(descriptor{0, 9}, buf1);
 
             REQUIRE(v == 0x181);
         }
@@ -740,22 +740,21 @@ TEST_CASE("bits")
             // { 0b00000001, 0b11100000 } // 0x01 0xE0
             //            9    87654321
             //auto v = bits_type::get<uint16_t>(bit_descriptor{1, 3, 9}, buf1);
-            auto v = getter::get_adjusted(descriptor{2, 9}, buf1);
+            auto v = getter::get_adjusted<uint16_t>(descriptor{2, 9}, buf1);
 
             REQUIRE(v == 0x1E0);
         }
         SECTION("uint32_t")
         {
             //auto v = bits_type::get<uint32_t>(bit_descriptor{1, 8, 32}, be_example1);
-            auto v = getter_32::get_adjusted(descriptor{7, 32}, be_example1);
+            auto v = getter::get_adjusted<uint32_t>(descriptor{7, 32}, be_example1);
 
             REQUIRE(v == endian_example1);
         }
     }
     SECTION("big endian (lsb to msb)")
     {
-        typedef bits::internal::getter<uint16_t, big_endian, lsb_to_msb> getter;
-        typedef bits::internal::getter<uint32_t, big_endian, lsb_to_msb> getter_32;
+        typedef bits::internal::getter<big_endian, lsb_to_msb> getter;
         //typedef bits<endianness::big_endian, length_direction::lsb_to_msb> bits_type;
 
         SECTION("uint16_t")
@@ -766,7 +765,7 @@ TEST_CASE("bits")
             // becomes
             // { 0b00000001, 0b01111111 } // 0x01 0x7F
             //auto v = bits_type::get<uint16_t>(bit_descriptor{1, 1, 9}, buf1);
-            auto v = getter::get_adjusted(descriptor{0, 9}, buf1);
+            auto v = getter::get_adjusted<uint16_t>(descriptor{0, 9}, buf1);
 
             REQUIRE(v == 0x17F);
         }
@@ -778,7 +777,7 @@ TEST_CASE("bits")
             // becomes
             // { 0b00000001, 0b01111000 } // 0x01 0x78
             //auto v = bits_type::get<uint16_t>(bit_descriptor{1, 4, 9}, buf1);
-            auto v = getter::get_adjusted(descriptor{3, 9}, buf1);
+            auto v = getter::get_adjusted<uint16_t>(descriptor{3, 9}, buf1);
 
             REQUIRE(v == 0x178);
         }
@@ -790,14 +789,14 @@ TEST_CASE("bits")
             // becomes
             // { 0b00000000, 0b01011100 } // 0x00 0x5C
             //auto v = bits_type::get<uint16_t>(bit_descriptor{1, 5, 7}, buf1);
-            auto v = getter::get_adjusted(descriptor{4, 7}, buf1);
+            auto v = getter::get_adjusted<uint16_t>(descriptor{4, 7}, buf1);
 
             REQUIRE(v == 0x5C);
         }
         SECTION("uint32_t")
         {
             //auto v = bits_type::get<uint32_t>(bit_descriptor{1, 1, 32}, be_example1);
-            auto v = getter_32::get_adjusted(descriptor{0, 32}, be_example1);
+            auto v = getter::get_adjusted<uint32_t>(descriptor{0, 32}, be_example1);
 
             REQUIRE(v == endian_example1);
         }
@@ -806,7 +805,7 @@ TEST_CASE("bits")
             // { 0x12, 0x34, 0x56, 0x78} ->
             // { 0x01, 0x34, 0x56 }
             //auto v = bits_type::get<uint32_t>(bit_descriptor{1, 5, 20}, be_example1);
-            auto v = getter_32::get_adjusted(descriptor{4, 20}, be_example1);
+            auto v = getter::get_adjusted<uint32_t>(descriptor{4, 20}, be_example1);
 
             REQUIRE(v == 0x13456);
         }

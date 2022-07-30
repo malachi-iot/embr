@@ -171,10 +171,10 @@ TEST_CASE("experimental test", "[experimental]")
             //typedef
                 //bits::internal::getter<embr::word<10>, bits::little_endian, bits::lsb_to_msb > getter;
             typedef
-                bits::internal::getter<uint16_t, bits::little_endian, bits::lsb_to_msb > getter;
+                bits::internal::getter<bits::little_endian, bits::lsb_to_msb > getter;
 
             //getter::get2<0, 4>(le_example1);
-            auto v = getter::get<4, 8>(le_example1 + 3);
+            auto v = getter::get<4, 8, uint16_t>(le_example1 + 3);
 
             REQUIRE(v == 0x23);
 

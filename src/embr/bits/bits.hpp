@@ -70,7 +70,7 @@ inline bool operator ==(
 template <endianness e, typename TInt, length_direction ld, resume_direction rd, typename TByte>
 inline TInt get(descriptor d, const TByte* raw)
 {
-    return internal::getter<TInt, e, ld, rd>::get_adjusted(d, raw);
+    return internal::getter<e, ld, rd>::template get_adjusted<TInt>(d, raw);
 }
 
 template <endianness e, typename TInt, typename TByte>
