@@ -471,7 +471,9 @@ TEST_CASE("bits2")
                 }
                 SECTION("32-bit bitpos=4, len=7")
                 {
-                    uint32_t v = getter_32::get(32, bits::descriptor{4, 7},
+                    uint32_t v = getter_32::get(32,
+                                                //bits::descriptor{4, 7},
+                                                bits::descriptor{4, 7 + 16},    // width deducer needs extra 16 bits here
                                                 le_example2_1_3_1_32bit + 3);
 
                     REQUIRE(v == endian_example2_1_3_1);

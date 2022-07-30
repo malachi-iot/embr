@@ -42,6 +42,22 @@ struct setter<bitpos, length, e, lsb_to_msb, rd,
     }
 };
 
+template <unsigned bitpos, unsigned length, endianness e, resume_direction rd>
+struct getter<bitpos, length, e, lsb_to_msb, rd,
+    enable<is_subbyte(bitpos, length)> > :
+    getter_tag
+{
+    static constexpr int adjuster() { return 0; }
+    static constexpr int adjuster(descriptor) { return 0; }
+
+    template <class TIt, typename TInt>
+    inline static void get(descriptor d, TIt raw, TInt& v)
+    {
+        const byte mask = (1 << (d.length)) - 1;
+        v = (*raw >> d.bitpos) & mask;
+    }
+};
+
 }
 
 namespace internal {

@@ -126,6 +126,12 @@ struct getter<bitpos, length, little_endian, lsb_to_msb, lsb_to_msb,
             v |= temp;
         }
     }
+
+    template <typename TReverseIt, typename TInt>
+    static inline void get(TReverseIt raw, TInt& v)
+    {
+        get(descriptor{bitpos, length}, raw, v);
+    }
 };
 
 
@@ -193,6 +199,7 @@ struct getter<TInt, endianness::little_endian,
 {
     typedef TInt int_type;
 
+#if BITS_LEGACY
     template <class TForwardIt, typename TIntShadow = TInt,
         estd::enable_if_t<(sizeof(TIntShadow) > 1), bool> = true>
     inline static void get_assist(int& i, TForwardIt& raw, TInt& v)
@@ -309,6 +316,72 @@ struct getter<TInt, endianness::little_endian,
 
         return get(width, descriptor{bitpos, length}, raw + ((width - 1) / 8));
     }
+#else
+    // DEBT: Only expose fully-adjusted at this level.  If programmer wants non-adjusted
+    // iterator, use the v3 getter directly
+
+    template <unsigned bitpos, unsigned length, class TReverseIt>
+    static TInt get(TReverseIt raw)
+    {
+        typedef experimental::getter<bitpos, length, little_endian, lsb_to_msb> g;
+
+        TInt v;
+
+        g::get(raw, v);
+
+        return v;
+    }
+
+    template <unsigned bitpos, unsigned length, class TReverseIt>
+    static TInt get_adjusted(TReverseIt raw)
+    {
+        typedef experimental::getter<bitpos, length, little_endian, lsb_to_msb> g;
+
+        TInt v;
+
+        g::get(raw + g::adjuster(), v);
+
+        return v;
+    }
+
+    template <class TReverseIt>
+    static TInt get(descriptor d, TReverseIt raw, bool adjusted = false)
+    {
+        TInt v;
+
+        if(experimental::is_subbyte(d))
+        {
+            experimental::subbyte_getter<lsb_to_msb>::get(d, raw, v);
+        }
+        else if(experimental::is_byte_boundary(d))
+        {
+            experimental::byte_boundary_getter<little_endian>::get(d, raw, v);
+        }
+        else
+        {
+            typedef experimental::getter<1, 8, little_endian, lsb_to_msb> g;
+
+            g::get(d,
+                raw + (adjusted ? g::adjuster(d) : 0),
+                v);
+        }
+
+        return v;
+    }
+
+    // DEBT: Phase this out, since we now auto deduce 'width' from d
+    template <class TReverseIt>
+    static TInt get(unsigned, descriptor d, TReverseIt raw)
+    {
+        return get(d, raw, false);
+    }
+
+    template <class TReverseIt>
+    inline static TInt get_adjusted(descriptor d, TReverseIt raw)
+    {
+        return get(d, raw, true);
+    }
+#endif
 };
 
 template <class TInt>
@@ -354,22 +427,6 @@ struct getter<TInt, endianness::little_endian,
     }
 };
 
-// EXPERIMENTAL
-template <size_t bits, length_direction ld, resume_direction rd>
-struct getter<embr::word<bits>, endianness::little_endian, ld, rd
->
-{
-    typedef embr::word<bits> word_type;
-
-    typedef getter<typename word_type::type,
-        endianness::little_endian, ld, rd> core_getter;
-
-    template <unsigned width, unsigned bitpos, class TReverseIt>
-    static word_type get2(TReverseIt raw)
-    {
-        return core_getter::get<width, bitpos, bits>(raw);
-    }
-};
 
 
 /*

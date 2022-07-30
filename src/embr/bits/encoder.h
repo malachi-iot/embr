@@ -13,6 +13,8 @@ class encoder : public TBase
     typedef unsigned index_type;
 
 protected:
+    typedef internal::setter<e, direction, rd> setter_type;
+
     // Needed for layer1
     // FIX: Need to SFINEA-style disable/enable this based on whether we actually are in layer1 mode
     // that might be easiest by using a pure forwarding constructor all the way down
@@ -21,10 +23,17 @@ protected:
 public:
     encoder(byte_type* raw) : base_type(raw) {}
 
+    // UNTESTED
+    template <unsigned bitpos, unsigned length, class TInt>
+    inline void set(index_type index, TInt v)
+    {
+        setter_type::set<bitpos, length>(base_type::data() + index, v);
+    }
+
     template <class TInt>
     inline void set(index_type index, descriptor d, TInt v)
     {
-        bits::set<e, TInt, direction, rd>(d, base_type::data() + index, v);
+        setter_type::set(d, base_type::data() + index, v);
     }
 
     template <class TInt>
