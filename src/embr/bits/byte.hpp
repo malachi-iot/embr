@@ -1,8 +1,48 @@
 #pragma once
 
 #include "bits.h"
+#include "bits-temp.hpp"
 
 namespace embr { namespace bits {
+
+namespace experimental {
+
+// for subbyte operations, endianness and resume_direction do not matter
+template <unsigned bitpos, unsigned length, endianness e, resume_direction rd>
+struct setter<bitpos, length, e, lsb_to_msb, rd,
+    enable<is_subbyte(bitpos, length)> > :
+    setter_tag
+{
+    constexpr static int adjuster()
+    {
+        return 0;
+    }
+
+    constexpr static int adjuster(descriptor d)
+    {
+        return 0;
+    }
+
+
+    template <typename TIt, typename TInt>
+    static inline void set(descriptor d, TIt raw, TInt v)
+    {
+        // prepare overall value mask
+        const byte mask = ((1 << (d.length)) - 1) << d.bitpos;
+        // shift it to match position where we're writing it to
+        *raw &= ~mask;
+        *raw |= v << d.bitpos;
+    }
+
+    template <typename TIt, typename TInt>
+    static inline void set(TIt raw, TInt v)
+    {
+        // DEBT: Set up version with direct template values
+        set(descriptor{bitpos, length}, raw, v);
+    }
+};
+
+}
 
 namespace internal {
 
@@ -14,14 +54,11 @@ namespace internal {
 template <resume_direction rd>
 struct setter<byte, no_endian, lsb_to_msb, rd>
 {
+    // NOTE: Using v3 temporarily as we slowly migrate this 'byte' setter away
     template <class TIt>
     inline static void set(const descriptor d, TIt raw, byte v)
     {
-        // prepare overall value mask
-        const byte mask = ((1 << (d.length)) - 1) << d.bitpos;
-        // shift it to match position where we're writing it to
-        *raw &= ~mask;
-        *raw |= v << d.bitpos;
+        bits::experimental::subbyte_setter<lsb_to_msb>::set(d, raw, v);
     }
 };
 
@@ -31,7 +68,7 @@ struct setter<byte, no_endian, msb_to_lsb, rd>
     template <class TIt>
     inline static void set(descriptor d, TIt raw, byte v)
     {
-        setter<byte, no_endian, lsb_to_msb>::set(
+        bits::experimental::subbyte_setter<lsb_to_msb>::set(
             descriptor{d.bitpos + 1 - d.length, d.length},
             raw, v
         );

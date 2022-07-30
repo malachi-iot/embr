@@ -124,43 +124,13 @@ struct getter_tag {};
 struct setter_tag {};
 
 
-// for subbyte operations, endianness and resume_direction do not matter
-template <unsigned bitpos, unsigned length, endianness e, length_direction ld, resume_direction rd>
-struct setter<bitpos, length, e, ld, rd,
-    enable<is_subbyte(bitpos, length)> > :
-    setter_tag
-{
-    constexpr static int adjuster()
-    {
-        return 0;
-    }
-
-    constexpr static int adjuster(descriptor d)
-    {
-        return 0;
-    }
 
 
-    template <typename TIt, typename TInt>
-    static inline void set(descriptor d, TIt raw, TInt v)
-    {
-        bits::set<no_endian, byte, ld>(d, raw, v);
-    }
+template <length_direction ld>
+using subbyte_setter = setter<0, byte_size(), no_endian, ld>;
 
-    template <typename TIt, typename TInt>
-    static inline void set(TIt raw, TInt v)
-    {
-        // DEBT: Set up a bits::set with template values
-        bits::set<no_endian, byte, ld>(
-            descriptor{bitpos, length}, raw, v);
-    }
-};
-
-template <endianness e, length_direction ld, resume_direction rd = ld>
-using subbyte_setter = setter<0, byte_size(), e, ld, rd>;
-
-template <endianness e, length_direction ld>
-using subbyte_getter = getter<0, byte_size(), e, ld>;
+template <length_direction ld>
+using subbyte_getter = getter<0, byte_size(), no_endian, ld>;
 
 // byte_boundary_xxxx undefined behavior if TInt is either:
 // - not an actual integer type

@@ -108,7 +108,7 @@ struct setter<TInt, big_endian, lsb_to_msb, lsb_to_msb>
 
         if(experimental::is_subbyte(d))
         {
-            typedef experimental::subbyte_setter<big_endian, lsb_to_msb> s;
+            typedef experimental::subbyte_setter<lsb_to_msb> s;
 
             s::set(d, raw + s::adjuster(d), v);
         }
