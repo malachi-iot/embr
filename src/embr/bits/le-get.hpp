@@ -355,7 +355,11 @@ struct getter<TInt, endianness::little_endian,
         }
         else if(experimental::is_byte_boundary(d))
         {
-            experimental::byte_boundary_getter<little_endian>::get(d, raw, v);
+            typedef experimental::byte_boundary_getter<little_endian> g;
+
+            raw += adjusted ? g::adjuster(d) : 0;
+
+            g::get(d, raw, v);
         }
         else
         {
