@@ -411,8 +411,8 @@ TEST_CASE("bits2")
         {
             typedef bits::internal::getter<uint16_t, bits::little_endian, bits::lsb_to_msb> getter_16;
             typedef bits::internal::getter<uint32_t, bits::little_endian, bits::lsb_to_msb> getter_32;
-            typedef bits::internal::setter<uint16_t, bits::little_endian, bits::lsb_to_msb> setter_16;
-            typedef bits::internal::setter<uint32_t, bits::little_endian, bits::lsb_to_msb> setter_32;
+            typedef bits::internal::setter<bits::little_endian, bits::lsb_to_msb> setter_16;
+            typedef bits::internal::setter<bits::little_endian, bits::lsb_to_msb> setter_32;    // TODO: Cleanup
 
             SECTION("setter")
             {

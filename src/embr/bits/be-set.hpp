@@ -89,11 +89,11 @@ struct setter<bitpos, length, big_endian, ld, rd,
 namespace internal {
 
 
-template <typename TInt>
-struct setter<TInt, big_endian, lsb_to_msb, lsb_to_msb>
+template <>
+struct setter<big_endian, lsb_to_msb, lsb_to_msb>
 {
     // EXPERIMENTAL
-    template <unsigned bitpos, unsigned length, typename TIt>
+    template <unsigned bitpos, unsigned length, typename TIt, typename TInt>
     static inline void set(TIt raw, TInt v)
     {
         typedef experimental::setter<bitpos, length, big_endian, lsb_to_msb> _setter;
@@ -101,7 +101,7 @@ struct setter<TInt, big_endian, lsb_to_msb, lsb_to_msb>
         _setter::set(raw + _setter::adjuster(), v);
     }
 
-    template <typename TIt>
+    template <typename TIt, typename TInt>
     static inline void set(descriptor d, TIt raw, TInt v)
     {
         // DEBT: Enable or disable these cases with compile time config, possibly enum-flag style
@@ -137,16 +137,16 @@ struct setter<TInt, big_endian, lsb_to_msb, lsb_to_msb>
 // holds the fort until then.  Clearly these are basically fake endian operations,
 // thus the FIX and not just DEBT
 template <>
-struct setter<byte, big_endian, lsb_to_msb, msb_to_lsb>
+struct setter<big_endian, lsb_to_msb, msb_to_lsb>
 {
-    template <typename TIt>
-    static inline void set(descriptor d, TIt raw, byte v)
+    template <typename TIt, typename TInt>
+    static inline void set(descriptor d, TIt raw, TInt v)
     {
-        bits::set<no_endian, byte, lsb_to_msb>(d, raw, v);
+        bits::set<no_endian, TInt, lsb_to_msb>(d, raw, v);
     }
 
-    template <typename TIt>
-    static inline void set(unsigned, descriptor d, TIt raw, byte v)
+    template <typename TIt, typename TInt>
+    static inline void set(unsigned, descriptor d, TIt raw, TInt v)
     {
         set(d, raw, v);
     }
@@ -154,9 +154,10 @@ struct setter<byte, big_endian, lsb_to_msb, msb_to_lsb>
 
 // DEBT: Devise a way for unit test to test native and non native flavors
 
-template <typename TInt>
-struct setter<TInt, big_endian, no_direction>
+template <>
+struct setter<big_endian, no_direction>
 {
+    template <typename TInt>
     static inline void set(byte* raw, TInt v)
     {
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__

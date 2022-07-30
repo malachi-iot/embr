@@ -235,8 +235,8 @@ constexpr unsigned width_deducer2(TInt v)
 }
 
 // [1] 2.1.3.1.
-template <class TInt>
-struct setter<TInt, endianness::little_endian,
+template <>
+struct setter<endianness::little_endian,
     length_direction::lsb_to_msb,
     resume_direction::lsb_to_msb
     >
@@ -421,13 +421,13 @@ struct setter<TInt, endianness::little_endian,
 #else
     // NOTE: Keeping this because calling semantic is rather smooth with this
     // flavor
-    template <unsigned bitpos, unsigned length, typename TIt>
+    template <unsigned bitpos, unsigned length, typename TIt, typename TInt>
     static inline void set(TIt raw, TInt v)
     {
         experimental::set<bitpos, length, little_endian, lsb_to_msb, lsb_to_msb>(raw, v);
     }
 
-    template <typename TIt>
+    template <typename TIt, typename TInt>
     static inline void set(descriptor d, TIt raw, TInt v)
     {
         // DEBT: Enable or disable these cases with compile time config, possibly enum-flag style
@@ -460,8 +460,8 @@ struct setter<TInt, endianness::little_endian,
 
 
 // [1] 2.1.3.2.
-template <class TInt>
-struct setter<TInt, endianness::little_endian,
+template <>
+struct setter<endianness::little_endian,
     length_direction::lsb_to_msb,
     resume_direction::msb_to_lsb
 >
@@ -473,7 +473,7 @@ struct setter<TInt, endianness::little_endian,
     /// @param d
     /// @param raw beginning of the stream, without jumping forward.  In other words, position at the littlest end
     /// @param v
-    template <class TForwardIt>
+    template <class TForwardIt, typename TInt>
     static inline void set(const unsigned width, descriptor d, TForwardIt raw, TInt v)
     {
         typedef typename estd::iterator_traits<TForwardIt>::value_type byte_type;
@@ -481,7 +481,7 @@ struct setter<TInt, endianness::little_endian,
 
         if(d.bitpos + d.length <= byte_width)
         {
-            setter<byte, no_endian, lsb_to_msb>::set(d, raw, v);
+            experimental::subbyte_setter<lsb_to_msb>::set(d, raw, v);
             return;
         }
 
@@ -511,7 +511,7 @@ struct setter<TInt, endianness::little_endian,
         *raw |= ((byte_type) v) << lsb_outside_bit_material;
     }
 
-    template <class TForwardIt>
+    template <class TForwardIt, typename TInt>
     static inline void set(descriptor d, TForwardIt raw, TInt v)
     {
         unsigned width = width_deducer_lsb_to_msb(d);
@@ -519,7 +519,7 @@ struct setter<TInt, endianness::little_endian,
     }
 
     // No descriptor, so no bitpos - use more basic behaviors
-    template <class TForwardIt>
+    template <class TForwardIt, typename TInt>
     static inline void set(TForwardIt raw, TInt v)
     {
         constexpr unsigned width = sizeof(TInt) * byte_size();
@@ -528,7 +528,7 @@ struct setter<TInt, endianness::little_endian,
     }
 };
 
-
+/*
 // EXPERIMENTAL
 // not sure we want the "detailed" bitsize of embr::word, but rather then general int type width
 // during 'set' operations
@@ -551,6 +551,7 @@ struct setter<embr::word<bits>, endianness::little_endian,
         core_setter::set(word_type::width(), d, raw, v.cvalue());
     }
 };
+ */
 
 
 /// Optimized version without bitmasking - i.e. bitpos = 0/7 length=bit width of int
@@ -579,10 +580,10 @@ inline void set_le(TForwardIt raw, TInt v)
 
 // DEBT: Devise a way for unit test to test native and non native flavors
 
-template <typename TInt>
-struct setter<TInt, little_endian, no_direction>
+template <>
+struct setter<little_endian, no_direction>
 {
-    template <class TByte>
+    template <class TByte, typename TInt>
     static inline void set(TByte* raw, TInt v)
     {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
