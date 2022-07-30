@@ -318,19 +318,7 @@ struct getter<endianness::little_endian,
     }
 #else
     // DEBT: Only expose fully-adjusted at this level.  If programmer wants non-adjusted
-    // iterator, use the v3 getter directly
-
-    template <unsigned bitpos, unsigned length, typename TInt, class TReverseIt>
-    static TInt get(TReverseIt raw)
-    {
-        typedef experimental::getter<bitpos, length, little_endian, lsb_to_msb> g;
-
-        TInt v;
-
-        g::get(raw, v);
-
-        return v;
-    }
+    // iterator, use the v3 getter directly.  Also rename 'get_adjusted' to 'get'
 
     template <unsigned bitpos, unsigned length, typename TInt, class TReverseIt>
     static TInt get_adjusted(TReverseIt raw)

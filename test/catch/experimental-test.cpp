@@ -165,16 +165,20 @@ TEST_CASE("experimental test", "[experimental]")
     {
         using namespace embr;
 
-        SECTION("optimized getter")
+        SECTION("optimized/low level getter")
         {
             // ambiguous
             //typedef
                 //bits::internal::getter<embr::word<10>, bits::little_endian, bits::lsb_to_msb > getter;
+            //typedef
+                //bits::internal::getter<bits::little_endian, bits::lsb_to_msb > getter;
             typedef
-                bits::internal::getter<bits::little_endian, bits::lsb_to_msb > getter;
+                bits::experimental::getter<4, 8, bits::little_endian, bits::lsb_to_msb> getter;
 
             //getter::get2<0, 4>(le_example1);
-            auto v = getter::get<4, 8, uint16_t>(le_example1 + 3);
+            //auto v = getter::get<4, 8, uint16_t>(le_example1 + 3);
+            uint16_t v;
+            getter::get(le_example1 + 3, v);
 
             REQUIRE(v == 0x23);
 
