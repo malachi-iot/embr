@@ -56,7 +56,9 @@ namespace internal {
 template <class TInt, class TForwardIt>
 inline TInt get_be_lsb_to_msb(const unsigned width, descriptor d, TForwardIt raw)
 {
-    constexpr unsigned byte_width = 8;
+    typedef typename estd::iterator_traits<TForwardIt>::value_type byte_type;
+    constexpr size_t byte_width = sizeof(byte_type) * byte_size();
+
     TInt v = *raw;
 
     v >>= d.bitpos;
@@ -64,7 +66,7 @@ inline TInt get_be_lsb_to_msb(const unsigned width, descriptor d, TForwardIt raw
     // skip first byte, iterate through the rest
     for (int i = width / byte_width; --i > 0;)
     {
-        v <<= 8;
+        v <<= byte_width;
         v |= *++raw;
     }
 
@@ -78,17 +80,18 @@ inline TInt get_be_lsb_to_msb(const unsigned width, descriptor d, TForwardIt raw
 }
 
 // also has resume_direction of msb_to_lsb
-template <class TInt, class TIt>
-inline TInt get_be_msb_to_lsb(const unsigned width, descriptor d, TIt raw)
+template <class TInt, class TForwardIt>
+inline TInt get_be_msb_to_lsb(const unsigned width, descriptor d, TForwardIt raw)
 {
-    constexpr unsigned byte_width = 8;
+    typedef typename estd::iterator_traits<TForwardIt>::value_type byte_type;
+    constexpr size_t byte_width = sizeof(byte_type) * byte_size();
     const TInt mask = (1 << (d.bitpos + 1)) - 1;
     TInt v = *raw & mask;
 
     // skip first byte, iterate through the rest
     for (int i = width / byte_width; --i > 0;)
     {
-        v <<= 8;
+        v <<= byte_width;
         v |= *++raw;
     }
 

@@ -38,7 +38,7 @@ struct setter<bitpos, length, little_endian, lsb_to_msb, lsb_to_msb,
     inline static void set_assist(unsigned& i, TForwardIt& raw, TInt& v)
     {
         typedef typename estd::iterator_traits<TForwardIt>::value_type byte_type;
-        constexpr size_t byte_width = byte_size();
+        constexpr size_t byte_width = sizeof(byte_type) * byte_size();
 
         for(; i > byte_width; i -= byte_width)
         {
@@ -52,11 +52,12 @@ struct setter<bitpos, length, little_endian, lsb_to_msb, lsb_to_msb,
     template <typename TForwardIt, typename TInt>
     static void set(descriptor d, TForwardIt raw, TInt v)
     {
-        constexpr size_t byte_width = byte_size();
-        const unsigned width = 
+        const unsigned width =
             internal::width_deducer_lsb_to_msb(d);
 
         typedef typename estd::iterator_traits<TForwardIt>::value_type byte_type;
+        constexpr size_t byte_width = sizeof(byte_type) * byte_size();
+
         unsigned outside_material = width - d.length;
         unsigned outside_right_material = outside_material - d.bitpos;
         unsigned inside_right_material = byte_width - outside_right_material;
