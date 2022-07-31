@@ -95,7 +95,7 @@ template <resume_direction rd>
 struct getter<no_endian, lsb_to_msb, rd>
 {
     template <typename TInt, class TIt>
-    inline static TInt get(const descriptor d, TIt raw, bool adjusted)
+    inline static TInt get(const descriptor d, TIt raw)
     {
         const TInt mask = (1 << (d.length)) - 1;
         return (*raw >> d.bitpos) & mask;
@@ -107,10 +107,10 @@ template <resume_direction rd>
 struct getter<no_endian, msb_to_lsb, rd>
 {
     template <typename TInt, class TIt>
-    inline static TInt get(descriptor d, TIt raw, bool adjusted)
+    inline static TInt get(descriptor d, TIt raw)
     {
         return getter<no_endian, lsb_to_msb>::get<TInt>(
-            descriptor{d.bitpos + 1 - d.length, d.length}, raw, true);
+            descriptor{d.bitpos + 1 - d.length, d.length}, raw);
     }
 };
 

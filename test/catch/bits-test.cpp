@@ -647,7 +647,7 @@ static void tester(uint8_t* buf, TInt compare_to, uint8_t bitpos, uint8_t len)
 
     INFO("bitpos = " << (int)bitpos << ", len = " << (int)len);
 
-    TInt v = getter::template get<TInt>(descriptor{bitpos, len}, buf, true);
+    TInt v = getter::template get<TInt>(descriptor{bitpos, len}, buf);
     //TInt v = bit_get<TInt, direction>(bit_descriptor{1, bitpos, len }, buf);
 
     REQUIRE(compare_to == v);
@@ -697,7 +697,7 @@ TEST_CASE("bits")
             INFO("bitpos = " << (int)(i-1));
 
             //bool v = bit_get<bool, length_direction::lsb_to_msb>(bit_descriptor{1, i }, buf);
-            bool v = getter::template get<byte>(descriptor{ i - 1, 1 }, buf, true);
+            bool v = getter::template get<byte>(descriptor{ i - 1, 1 }, buf);
 
             REQUIRE((_buf & 1) == v);
 
@@ -715,7 +715,7 @@ TEST_CASE("bits")
         SECTION("uint16_t")
         {
             //auto v = bits_type::get<uint16_t>(bit_descriptor{1, 1, 9}, buf1);
-            auto v = getter::get<uint16_t>(descriptor{0, 9}, buf1, true);
+            auto v = getter::get<uint16_t>(descriptor{0, 9}, buf1);
 
             REQUIRE(v == 0x181);
         }
@@ -740,14 +740,14 @@ TEST_CASE("bits")
             // { 0b00000001, 0b11100000 } // 0x01 0xE0
             //            9    87654321
             //auto v = bits_type::get<uint16_t>(bit_descriptor{1, 3, 9}, buf1);
-            auto v = getter::get<uint16_t>(descriptor{2, 9}, buf1, true);
+            auto v = getter::get<uint16_t>(descriptor{2, 9}, buf1);
 
             REQUIRE(v == 0x1E0);
         }
         SECTION("uint32_t")
         {
             //auto v = bits_type::get<uint32_t>(bit_descriptor{1, 8, 32}, be_example1);
-            auto v = getter::get<uint32_t>(descriptor{7, 32}, be_example1, true);
+            auto v = getter::get<uint32_t>(descriptor{7, 32}, be_example1);
 
             REQUIRE(v == endian_example1);
         }
@@ -765,7 +765,7 @@ TEST_CASE("bits")
             // becomes
             // { 0b00000001, 0b01111111 } // 0x01 0x7F
             //auto v = bits_type::get<uint16_t>(bit_descriptor{1, 1, 9}, buf1);
-            auto v = getter::get<uint16_t>(descriptor{0, 9}, buf1, true);
+            auto v = getter::get<uint16_t>(descriptor{0, 9}, buf1);
 
             REQUIRE(v == 0x17F);
         }
@@ -777,7 +777,7 @@ TEST_CASE("bits")
             // becomes
             // { 0b00000001, 0b01111000 } // 0x01 0x78
             //auto v = bits_type::get<uint16_t>(bit_descriptor{1, 4, 9}, buf1);
-            auto v = getter::get<uint16_t>(descriptor{3, 9}, buf1, true);
+            auto v = getter::get<uint16_t>(descriptor{3, 9}, buf1);
 
             REQUIRE(v == 0x178);
         }
@@ -789,14 +789,14 @@ TEST_CASE("bits")
             // becomes
             // { 0b00000000, 0b01011100 } // 0x00 0x5C
             //auto v = bits_type::get<uint16_t>(bit_descriptor{1, 5, 7}, buf1);
-            auto v = getter::get<uint16_t>(descriptor{4, 7}, buf1, true);
+            auto v = getter::get<uint16_t>(descriptor{4, 7}, buf1);
 
             REQUIRE(v == 0x5C);
         }
         SECTION("uint32_t")
         {
             //auto v = bits_type::get<uint32_t>(bit_descriptor{1, 1, 32}, be_example1);
-            auto v = getter::get<uint32_t>(descriptor{0, 32}, be_example1, true);
+            auto v = getter::get<uint32_t>(descriptor{0, 32}, be_example1);
 
             REQUIRE(v == endian_example1);
         }
@@ -805,7 +805,7 @@ TEST_CASE("bits")
             // { 0x12, 0x34, 0x56, 0x78} ->
             // { 0x01, 0x34, 0x56 }
             //auto v = bits_type::get<uint32_t>(bit_descriptor{1, 5, 20}, be_example1);
-            auto v = getter::get<uint32_t>(descriptor{4, 20}, be_example1, true);
+            auto v = getter::get<uint32_t>(descriptor{4, 20}, be_example1);
 
             REQUIRE(v == 0x13456);
         }

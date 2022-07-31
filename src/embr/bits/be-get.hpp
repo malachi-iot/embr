@@ -124,7 +124,7 @@ template <>
 struct getter<big_endian, lsb_to_msb, lsb_to_msb>
 {
     template <typename TInt, class TForwardIt>
-    static inline TInt get(descriptor d, TForwardIt raw, bool adjusted)
+    static inline TInt get(descriptor d, TForwardIt raw, bool = true)
     {
         const unsigned width = width_deducer_lsb_to_msb(d);
 
@@ -140,7 +140,7 @@ template <>
 struct getter<big_endian, msb_to_lsb, msb_to_lsb>
 {
     template <typename TInt, class TForwardIt>
-    static inline TInt get(descriptor d, TForwardIt raw, bool adjusted)
+    static inline TInt get(descriptor d, TForwardIt raw, bool = true)
     {
         unsigned width = width_deducer_msb_to_lsb(d);
 
