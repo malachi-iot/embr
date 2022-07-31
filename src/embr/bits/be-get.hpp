@@ -123,18 +123,21 @@ public:
 template <>
 struct getter<big_endian, lsb_to_msb, lsb_to_msb>
 {
-private:
     template <typename TInt, class TForwardIt>
-    static inline TInt get(unsigned width, descriptor d, TForwardIt raw)
+    static inline TInt get(descriptor d, TForwardIt raw, bool adjusted)
     {
+        const unsigned width = width_deducer_lsb_to_msb(d);
+
+        // NOTE: Ignoring 'adjusted', it's just a temporary parameter as we phase away
+        // from old get_adjusted signature
+
         return get_be_lsb_to_msb<TInt>(width, d, raw);
     }
 
-public:
     template <typename TInt, class TForwardIt>
     static inline TInt get_adjusted(descriptor d, TForwardIt raw)
     {
-        return get<TInt>(width_deducer_lsb_to_msb(d), d, raw);
+        return get<TInt>(d, raw, true);
     }
 };
 
@@ -142,18 +145,21 @@ public:
 template <>
 struct getter<big_endian, msb_to_lsb, msb_to_lsb>
 {
-private:
     template <typename TInt, class TForwardIt>
-    static inline TInt get(unsigned width, descriptor d, TForwardIt raw)
+    static inline TInt get(descriptor d, TForwardIt raw, bool adjusted)
     {
+        unsigned width = width_deducer_msb_to_lsb(d);
+
+        // NOTE: Ignoring 'adjusted', it's just a temporary parameter as we phase away
+        // from old get_adjusted signature
+
         return get_be_msb_to_lsb<TInt>(width, d, raw);
     }
 
-public:
     template <typename TInt, class TForwardIt>
     static inline TInt get_adjusted(descriptor d, TForwardIt raw)
     {
-        return get<TInt>(width_deducer_msb_to_lsb(d), d, raw);
+        return get<TInt>(d, raw, true);
     }
 };
 

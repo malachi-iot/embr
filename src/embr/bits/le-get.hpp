@@ -377,13 +377,20 @@ struct getter<endianness::little_endian,
 {
 private:
     template <typename TInt, class TReverseIt>
-    static TInt get(const unsigned width, descriptor d, TReverseIt raw)
+    static TInt get(descriptor d, TReverseIt raw, bool adjusted)
     {
+        unsigned width = width_deducer_lsb_to_msb(d);
+
         constexpr unsigned byte_width = byte_size();
 
         if(d.bitpos + d.length <= byte_width)
         {
             return getter<no_endian, lsb_to_msb>::get<TInt>(d, raw);
+        }
+
+        if(adjusted)
+        {
+            raw += ((width - 1) / byte_width);
         }
 
         unsigned msb_already_shifted = d.bitpos;
@@ -408,9 +415,7 @@ public:
     template <typename TInt, class TIt>
     inline static TInt get_adjusted(descriptor d, TIt raw)
     {
-        unsigned width = width_deducer_lsb_to_msb(d);
-
-        return get<TInt>(width, d, raw + ((width - 1) / 8));
+        return get<TInt>(d, raw, true);
     }
 };
 
