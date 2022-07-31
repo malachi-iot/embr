@@ -114,7 +114,7 @@ private:
 
 public:
     template <typename TInt, class TForwardIt>
-    static inline TInt get_adjusted(descriptor d, TForwardIt raw)
+    static inline TInt get(descriptor d, TForwardIt raw, bool adjusted)
     {
         return get(width_deducer_lsb_to_msb(d), d, raw);
     }
@@ -133,12 +133,6 @@ struct getter<big_endian, lsb_to_msb, lsb_to_msb>
 
         return get_be_lsb_to_msb<TInt>(width, d, raw);
     }
-
-    template <typename TInt, class TForwardIt>
-    static inline TInt get_adjusted(descriptor d, TForwardIt raw)
-    {
-        return get<TInt>(d, raw, true);
-    }
 };
 
 
@@ -154,12 +148,6 @@ struct getter<big_endian, msb_to_lsb, msb_to_lsb>
         // from old get_adjusted signature
 
         return get_be_msb_to_lsb<TInt>(width, d, raw);
-    }
-
-    template <typename TInt, class TForwardIt>
-    static inline TInt get_adjusted(descriptor d, TForwardIt raw)
-    {
-        return get<TInt>(d, raw, true);
     }
 };
 
