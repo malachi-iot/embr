@@ -321,7 +321,7 @@ struct getter<endianness::little_endian,
     // iterator, use the v3 getter directly.  Also rename 'get_adjusted' to 'get'
 
     template <unsigned bitpos, unsigned length, typename TInt, class TReverseIt>
-    static TInt get_adjusted(TReverseIt raw)
+    static TInt get(TReverseIt raw)
     {
         typedef experimental::getter<bitpos, length, little_endian, lsb_to_msb> g;
 
@@ -372,7 +372,6 @@ struct getter<endianness::little_endian,
     template <typename TInt, class TReverseIt>
     static TInt get(descriptor d, TReverseIt raw)
     {
-        bool adjusted = true;
         unsigned width = width_deducer_lsb_to_msb(d);
 
         constexpr unsigned byte_width = byte_size();
@@ -382,10 +381,7 @@ struct getter<endianness::little_endian,
             return getter<no_endian, lsb_to_msb>::get<TInt>(d, raw);
         }
 
-        if(adjusted)
-        {
-            raw += ((width - 1) / byte_width);
-        }
+        raw += ((width - 1) / byte_width);
 
         unsigned msb_already_shifted = d.bitpos;
         unsigned remaining_to_shift_pre_lsb = width - msb_already_shifted;
