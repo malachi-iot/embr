@@ -411,8 +411,8 @@ TEST_CASE("bits2")
         SECTION("little endian")
         {
             // TODO: Cleanup - we aren't bound to bit size at this level anymore
-            typedef bits::internal::getter<bits::little_endian, bits::lsb_to_msb> getter_16;
-            typedef bits::internal::getter<bits::little_endian, bits::lsb_to_msb> getter_32;
+            typedef bits::getter<bits::little_endian, bits::lsb_to_msb> getter_16;
+            typedef bits::getter<bits::little_endian, bits::lsb_to_msb> getter_32;
             typedef bits::internal::setter<bits::little_endian, bits::lsb_to_msb> setter_16;
             typedef bits::internal::setter<bits::little_endian, bits::lsb_to_msb> setter_32;
 
@@ -640,7 +640,7 @@ template <class TInt, length_direction direction>
 static void tester(uint8_t* buf, TInt compare_to, uint8_t bitpos, uint8_t len)
 {
     // DEBT: Endian doesn't matter much here as this is used for byte-only tests
-    typedef bits::internal::getter<little_endian, direction> getter;
+    typedef bits::getter<little_endian, direction> getter;
 
     --bitpos;
     //--len;
@@ -687,7 +687,7 @@ TEST_CASE("bits")
     {
         //typedef bits::internal::getter<bool, little_endian, lsb_to_msb> getter;
         // DEBT: No bool specialization just yet
-        typedef bits::internal::getter<little_endian, lsb_to_msb> getter;
+        typedef bits::getter<little_endian, lsb_to_msb> getter;
 
         const uint8_t* buf = buf1;
         uint8_t _buf = *buf;
@@ -706,7 +706,7 @@ TEST_CASE("bits")
     }
     SECTION("big endian (msb_to_lsb)")
     {
-        typedef bits::internal::getter<big_endian, msb_to_lsb> getter;
+        typedef bits::getter<big_endian, msb_to_lsb> getter;
 
         SECTION("bool")
         {
@@ -754,7 +754,7 @@ TEST_CASE("bits")
     }
     SECTION("big endian (lsb to msb)")
     {
-        typedef bits::internal::getter<big_endian, lsb_to_msb> getter;
+        typedef bits::getter<big_endian, lsb_to_msb> getter;
         //typedef bits<endianness::big_endian, length_direction::lsb_to_msb> bits_type;
 
         SECTION("uint16_t")

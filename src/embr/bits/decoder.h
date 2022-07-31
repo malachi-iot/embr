@@ -37,7 +37,7 @@ public:
     {
         typedef word<length> word_type;
 
-        typedef internal::getter<e, direction, rd> getter;
+        typedef getter<e, direction, rd> getter;
 
         return getter::template get<bitpos, length, typename word_type::type>(base_type::data() + bytepos);
     }

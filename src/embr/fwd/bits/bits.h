@@ -72,12 +72,13 @@ struct compare;
 // NOTE: Looks like it would be helpful to move getter/setter out of internal
 
 template <endianness e, length_direction ld, resume_direction rd = ld>
-struct getter;
-
-template <endianness e, length_direction ld, resume_direction rd = ld>
 struct setter;
 
 }
+
+template <endianness e, length_direction ld, resume_direction rd = ld>
+struct getter;
+
 
 /// contains length and sub-byte bit position of data
 struct descriptor;

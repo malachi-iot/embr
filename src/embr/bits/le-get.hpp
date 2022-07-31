@@ -188,8 +188,6 @@ struct getter<bitpos, length, little_endian, ld, rd,
 
 }
 
-namespace internal {
-
 // [2] 2.1.3.1.
 template <>
 struct getter<endianness::little_endian,
@@ -444,6 +442,7 @@ struct getter<endianness::little_endian,
 
 };
 
+namespace internal {
 
 // It is presumed these are the same length, otherwise one is automatically greater than the other
 template <bool greater_than, bool or_equal_to, typename TReverseIterator1, typename TReverseIterator2>

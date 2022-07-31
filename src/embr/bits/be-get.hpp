@@ -62,7 +62,7 @@ inline TInt get_be_lsb_to_msb(const unsigned width, descriptor d, TForwardIt raw
     v >>= d.bitpos;
 
     // skip first byte, iterate through the rest
-    for(int i = width / byte_width; --i > 0;)
+    for (int i = width / byte_width; --i > 0;)
     {
         v <<= 8;
         v |= *++raw;
@@ -86,7 +86,7 @@ inline TInt get_be_msb_to_lsb(const unsigned width, descriptor d, TIt raw)
     TInt v = *raw & mask;
 
     // skip first byte, iterate through the rest
-    for(int i = width / byte_width; --i > 0;)
+    for (int i = width / byte_width; --i > 0;)
     {
         v <<= 8;
         v |= *++raw;
@@ -101,6 +101,8 @@ inline TInt get_be_msb_to_lsb(const unsigned width, descriptor d, TIt raw)
     return v;
 }
 
+}
+
 // FIX: Either this or the dual lsb_to_msb collide, one needs work
 template <>
 struct getter<big_endian, lsb_to_msb, msb_to_lsb>
@@ -109,7 +111,7 @@ private:
     template <typename TInt, class TForwardIt>
     static inline TInt get(unsigned width, descriptor d, TForwardIt raw)
     {
-        return get_be_lsb_to_msb<TInt>(width, d, raw);
+        return internal::get_be_lsb_to_msb<TInt>(width, d, raw);
     }
 
 public:
@@ -128,7 +130,7 @@ struct getter<big_endian, lsb_to_msb, lsb_to_msb>
     {
         const unsigned width = width_deducer_lsb_to_msb(d);
 
-        return get_be_lsb_to_msb<TInt>(width, d, raw);
+        return internal::get_be_lsb_to_msb<TInt>(width, d, raw);
     }
 };
 
@@ -141,9 +143,11 @@ struct getter<big_endian, msb_to_lsb, msb_to_lsb>
     {
         unsigned width = width_deducer_msb_to_lsb(d);
 
-        return get_be_msb_to_lsb<TInt>(width, d, raw);
+        return internal::get_be_msb_to_lsb<TInt>(width, d, raw);
     }
 };
+
+namespace internal {
 
 template <bool greater_than, bool equal_to>
 struct compare<endianness::big_endian, greater_than, equal_to>

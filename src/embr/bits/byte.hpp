@@ -91,6 +91,8 @@ struct setter<no_endian, msb_to_lsb, rd>
     }
 };
 
+}
+
 template <resume_direction rd>
 struct getter<no_endian, lsb_to_msb, rd>
 {
@@ -113,7 +115,5 @@ struct getter<no_endian, msb_to_lsb, rd>
             descriptor{d.bitpos + 1 - d.length, d.length}, raw);
     }
 };
-
-}
 
 }}
