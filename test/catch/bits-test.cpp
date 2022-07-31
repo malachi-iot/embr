@@ -697,7 +697,7 @@ TEST_CASE("bits")
             INFO("bitpos = " << (int)(i-1));
 
             //bool v = bit_get<bool, length_direction::lsb_to_msb>(bit_descriptor{1, i }, buf);
-            bool v = getter::template get_adjusted<byte>(descriptor{ i - 1, 1 }, buf);
+            bool v = getter::template get<byte>(descriptor{ i - 1, 1 }, buf, true);
 
             REQUIRE((_buf & 1) == v);
 

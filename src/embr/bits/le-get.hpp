@@ -375,6 +375,7 @@ struct getter<endianness::little_endian,
     resume_direction::msb_to_lsb
 >
 {
+private:
     template <typename TInt, class TReverseIt>
     static TInt get(const unsigned width, descriptor d, TReverseIt raw)
     {
@@ -403,6 +404,7 @@ struct getter<endianness::little_endian,
         return v;
     }
 
+public:
     template <typename TInt, class TIt>
     inline static TInt get_adjusted(descriptor d, TIt raw)
     {

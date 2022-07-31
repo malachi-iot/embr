@@ -105,12 +105,14 @@ inline TInt get_be_msb_to_lsb(const unsigned width, descriptor d, TIt raw)
 template <>
 struct getter<big_endian, lsb_to_msb, msb_to_lsb>
 {
+private:
     template <typename TInt, class TForwardIt>
     static inline TInt get(unsigned width, descriptor d, TForwardIt raw)
     {
         return get_be_lsb_to_msb<TInt>(width, d, raw);
     }
 
+public:
     template <typename TInt, class TForwardIt>
     static inline TInt get_adjusted(descriptor d, TForwardIt raw)
     {
