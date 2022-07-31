@@ -60,8 +60,6 @@ struct getter<bitpos, length, e, lsb_to_msb, rd,
 
 }
 
-namespace internal {
-
 // these two setters do not cross byte boundaries.  If that is desired, one must
 // cast the 'byte v' to a bigger int which became a paradigm because the underlying
 // 'raw' itself must be bigger than a byte for that
@@ -90,8 +88,6 @@ struct setter<no_endian, msb_to_lsb, rd>
         );
     }
 };
-
-}
 
 template <resume_direction rd>
 struct getter<no_endian, lsb_to_msb, rd>

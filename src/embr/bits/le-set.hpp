@@ -161,7 +161,7 @@ unsigned width_deducer_old(TInt v)
 
     auto test = v & mask;
 
-    while((v & mask) != 0)
+    while ((v & mask) != 0)
     {
         mask <<= byte_width;
         width += byte_width;
@@ -185,9 +185,9 @@ inline unsigned width_deducer(TInt v)
 
     auto test = v & mask;
 
-    for(; width < max_width; width += byte_width, mask <<= byte_width)
+    for (; width < max_width; width += byte_width, mask <<= byte_width)
     {
-        if((v & mask) == 0) break;
+        if ((v & mask) == 0) break;
     }
 
     return width;
@@ -232,6 +232,8 @@ template <class TInt>
 constexpr unsigned width_deducer2(TInt v)
 {
     return ___width_deducer2<TInt, byte_size()>(v);
+}
+
 }
 
 // [1] 2.1.3.1.
@@ -553,6 +555,7 @@ struct setter<embr::word<bits>, endianness::little_endian,
 };
  */
 
+namespace internal {
 
 /// Optimized version without bitmasking - i.e. bitpos = 0/7 length=bit width of int
 /// @tparam TInt
@@ -571,11 +574,13 @@ inline void set_le(TForwardIt raw, TInt v)
     *raw = (byte_type) v;
 
     // skip first byte, iterate through the rest
-    for(int i = (width / byte_width); --i > 0;)
+    for (int i = (width / byte_width); --i > 0;)
     {
         v >>= 8;
         *++raw = (byte_type) v;
     }
+}
+
 }
 
 // DEBT: Devise a way for unit test to test native and non native flavors
@@ -594,9 +599,6 @@ struct setter<little_endian, no_direction>
     }
 };
 
-
-
-}
 
 }}
 

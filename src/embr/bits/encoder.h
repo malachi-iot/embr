@@ -13,7 +13,7 @@ class encoder : public TBase
     typedef unsigned index_type;
 
 protected:
-    typedef internal::setter<e, direction, rd> setter_type;
+    typedef setter<e, direction, rd> setter_type;
 
     // Needed for layer1
     // FIX: Need to SFINEA-style disable/enable this based on whether we actually are in layer1 mode

@@ -86,9 +86,6 @@ struct setter<bitpos, length, big_endian, ld, rd,
 
 }
 
-namespace internal {
-
-
 template <>
 struct setter<big_endian, lsb_to_msb, lsb_to_msb>
 {
@@ -168,7 +165,5 @@ struct setter<big_endian, no_direction>
     }
 };
 
-
-}
 
 }}

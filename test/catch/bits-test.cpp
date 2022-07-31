@@ -410,40 +410,37 @@ TEST_CASE("bits2")
         }
         SECTION("little endian")
         {
-            // TODO: Cleanup - we aren't bound to bit size at this level anymore
-            typedef bits::getter<bits::little_endian, bits::lsb_to_msb> getter_16;
-            typedef bits::getter<bits::little_endian, bits::lsb_to_msb> getter_32;
-            typedef bits::internal::setter<bits::little_endian, bits::lsb_to_msb> setter_16;
-            typedef bits::internal::setter<bits::little_endian, bits::lsb_to_msb> setter_32;
+            typedef bits::getter<bits::little_endian, bits::lsb_to_msb> getter;
+            typedef bits::setter<bits::little_endian, bits::lsb_to_msb> setter;
 
             SECTION("setter")
             {
                 SECTION("16-bit")
                 {
-                    setter_16::set(bits::descriptor{0, 16}, raw, 0x123);
+                    setter::set(bits::descriptor{0, 16}, raw, 0x123);
                 }
                 SECTION("16-bit bitpos=4, len=7")
                 {
                     // direct from [2] 2.1.3.1 example
-                    setter_16::set(bits::descriptor{4, 7}, raw, endian_example2_1_3_1);
+                    setter::set(bits::descriptor{4, 7}, raw, endian_example2_1_3_1);
 
                     REQUIRE((int)raw[0] == 0b10100000);
                     REQUIRE((int)raw[1] == 0b00000101);
                 }
                 SECTION("32-bit")
                 {
-                    setter_32::set(bits::descriptor{0, 32}, raw, endian_example1);
+                    setter::set(bits::descriptor{0, 32}, raw, endian_example1);
                     compare_le_example1(raw);
                 }
                 SECTION("32-bit bitpos=4, len=7")
                 {
-                    setter_32::set(bits::descriptor{4, 7}, raw, endian_example2_1_3_1);
+                    setter::set(bits::descriptor{4, 7}, raw, endian_example2_1_3_1);
 
                     test::compare(raw, le_example2_1_3_1, 2);
                 }
                 SECTION("32-bit bitpos=4, len=15")
                 {
-                    setter_32::set(bits::descriptor{4, 15}, raw, endian_example2_1_3_1_aug);
+                    setter::set(bits::descriptor{4, 15}, raw, endian_example2_1_3_1_aug);
 
                     test::compare(raw, le_example2_1_3_1_aug, 3);
                 }
@@ -452,28 +449,28 @@ TEST_CASE("bits2")
             {
                 SECTION("16-bit")
                 {
-                    uint16_t v = getter_16::get<uint16_t>(bits::descriptor{4, 7},
+                    uint16_t v = getter::get<uint16_t>(bits::descriptor{4, 7},
                                                 le_example2_1_3_1 + 1, false);
 
                     REQUIRE(v == endian_example2_1_3_1);
                 }
                 SECTION("32-bit")
                 {
-                    uint32_t v = getter_32::get<uint32_t>(bits::descriptor{0, 32},
+                    uint32_t v = getter::get<uint32_t>(bits::descriptor{0, 32},
                                                 le_example1 + 3, false);
 
                     REQUIRE(v == endian_example1);
                 }
                 SECTION("32-bit bitpos=4, len=7")
                 {
-                    uint32_t v = getter_32::get<uint32_t>(bits::descriptor{4, 7},
+                    uint32_t v = getter::get<uint32_t>(bits::descriptor{4, 7},
                                                 le_example2_1_3_1 + 1, false);
 
                     REQUIRE(v == endian_example2_1_3_1);
                 }
                 SECTION("32-bit bitpos=4, len=7")
                 {
-                    uint32_t v = getter_32::get<uint32_t>(
+                    uint32_t v = getter::get<uint32_t>(
                                                 //bits::descriptor{4, 7},
                                                 bits::descriptor{4, 7 + 16},    // width deducer needs extra 16 bits here
                                                 le_example2_1_3_1_32bit + 3,

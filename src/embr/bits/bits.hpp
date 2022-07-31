@@ -89,7 +89,7 @@ inline TInt get(const TByte* raw)
 template <endianness e, typename TInt, length_direction ld, resume_direction rd, typename TByte>
 inline void set(descriptor d, TByte* raw, TInt v)
 {
-    typedef internal::setter<e, ld, rd> setter;
+    typedef setter<e, ld, rd> setter;
 
     setter::set(d, raw, v);
 }

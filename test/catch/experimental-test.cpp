@@ -227,7 +227,7 @@ TEST_CASE("experimental test", "[experimental]")
             SECTION("big endian")
             {
                 typedef
-                    bits::internal::setter<bits::big_endian, bits::lsb_to_msb > setter;
+                    bits::setter<bits::big_endian, bits::lsb_to_msb > setter;
 
                 SECTION("within-byte operations")
                 {
