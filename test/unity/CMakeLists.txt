@@ -18,6 +18,4 @@ add_library(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME} unity embr)
 
-target_include_directories(${PROJECT_NAME} PUBLIC
-    ${UNITY_DIR}
-    )
+target_include_directories(${PROJECT_NAME} PUBLIC .)
