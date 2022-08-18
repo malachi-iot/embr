@@ -1,3 +1,5 @@
+#include <embr/bits/word.hpp>
+
 #include "unit-test.h"
 
 static void test_bits_1()

@@ -1,10 +1,12 @@
 cmake_minimum_required(VERSION 3.1)
 
-set(CMAKE_CXX_STANDARD 98)
+# TODO: Temporarily setting to c++11 as we bring up build
+#set(CMAKE_CXX_STANDARD 98)
+set(CMAKE_CXX_STANDARD 11)
 
 # DEBT: This is not always true for C++98 scenarios, but implicitly true for ADSPBFIN (inttypes.h isn't
 # available, but it seems to have those defs) and most other compilers I use
-add_compile_definitions(FEATURE_STD_INTTYPES)
+#add_compile_definitions(FEATURE_STD_INTTYPES)
 
 project(embr-unity-tests VERSION 1.0)
 
