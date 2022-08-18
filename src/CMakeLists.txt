@@ -6,11 +6,9 @@ set(ROOT_DIR ..)
 set(EXT_DIR ${ROOT_DIR}/ext)
 set(ESTDLIB_DIR ${EXT_DIR}/estdlib/src)
 
-include_directories(${ESTDLIB_DIR})
-
-# libs don't add subdirectories themselves, since it collides
-# with an add_subdirectory that a consuming app may issue
-#add_subdirectory(${ESTDLIB_DIR} estdlib)
+if(NOT TARGET estd_lib)
+    add_subdirectory(${ESTDLIB_DIR} estd)
+endif()
 
 set(SOURCE_FILES
     embr/dataport.h
@@ -39,6 +37,8 @@ set(SOURCE_FILES
 # https://stackoverflow.com/questions/5957134/how-do-i-set-up-cmake-to-generate-header-only-projects
 add_library(${PROJECT_NAME} INTERFACE)
 add_library(malachi-iot::embr ALIAS ${PROJECT_NAME})
+# DEBT: Move this to estd itself, once we're 100% sure that 'malachi-iot' is a good prefix
+add_library(malachi-iot::estd ALIAS estd_lib)
 # 'embr-lib' name is now deprecated
 add_library(embr-lib ALIAS ${PROJECT_NAME})
 
