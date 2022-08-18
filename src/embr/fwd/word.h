@@ -1,5 +1,7 @@
 #pragma once
 
+#include <estd/internal/platform.h>
+
 #include "narrow_cast.h"
 
 namespace embr {

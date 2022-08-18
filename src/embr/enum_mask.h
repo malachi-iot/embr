@@ -1,5 +1,8 @@
 #pragma once
 
+#include <estd/internal/platform.h>
+
+#ifdef FEATURE_CPP_VARIADIC
 namespace embr {
 
 namespace internal {
@@ -62,3 +65,6 @@ struct enum_mask : estd::integral_constant<TEnum, v>
 }
 
 }
+#else
+#include "c++03/enum_mask.h"
+#endif
