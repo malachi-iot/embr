@@ -4,6 +4,10 @@
 #include <estd/cstdint.h>
 #include <estd/internal/value_evaporator.h>
 
+#include "base.h"
+#include "get.h"
+#include "set.h"
+
 namespace embr { namespace bits {
 
 // DEBT: Use estd::byte instead
@@ -18,34 +22,7 @@ constexpr unsigned byte_size()
 #endif
 }
 
-enum endianness
-{
-    no_endian,                  ///< Operations which only happen within a byte, therefore no endianness is involved
-    big_endian,
-    little_endian,
 
-    unspecified_endian,         ///< For internal use only
-};
-
-/// Denotes which direction starting from bitpos to evaluate length
-enum length_direction
-{
-    lsb_to_msb,         ///< For bitpos length, starts at LSB 0 and ends at MSB (inclusive)
-                        ///< This inclusive MSB position is from where bit material begins
-    msb_to_lsb,         ///< For bitpos length, starts at specified MSB (inclusive) and ends at LSB 0.
-                        ///< This inclusive MSB position is from where bit material begins
-                        ///< For resume, starts at uppermost LSB (inclusive).  For 8-bit byte, that would be '7'
-
-    no_direction,       ///< For scenarios which are on byte boundaries. bitpos is not used
-
-    default_direction = lsb_to_msb
-};
-
-/// Denotes direction from which to resume the last bits of a
-/// multi-byte int.
-/// i.e. given a 12 bit length in a 16 bit integer, msb_to_lsb means
-/// start from bit 7 going down to bit 4 for storing the remaining 4 bits
-typedef length_direction resume_direction;
 
 namespace internal {
 
@@ -70,24 +47,6 @@ template <endianness e, bool greater_than, bool equal_to>
 struct compare;
 
 }
-
-template <endianness e, length_direction ld, resume_direction rd = ld>
-struct getter;
-
-template <endianness e, length_direction ld, resume_direction rd = ld>
-struct setter;
-
-
-/// contains length and sub-byte bit position of data
-struct descriptor;
-
-template <endianness e, class TInt, length_direction d = default_direction,
-    resume_direction rd = d, class TByte>
-TInt get(descriptor, const TByte* raw);
-
-template <endianness e, class TInt, length_direction d = default_direction,
-    resume_direction rd = d, class TByte>
-void set(descriptor, TByte* raw, TInt v);
 
 // Follows are regular non-fancy endian conversions.  Just included for a consistent API
 
