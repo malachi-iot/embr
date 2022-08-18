@@ -14,11 +14,8 @@ set(CATCH_DIR ${EXT_DIR}/Catch2/single_include/catch2)
 set(EMBR_DIR ${ROOT_DIR}/src)
 
 include_directories(${CATCH_DIR})
-include_directories(${EMBR_DIR})
-include_directories(${ESTD_DIR})
 
 add_subdirectory(${EMBR_DIR} embr)
-add_subdirectory(${ESTD_DIR} estd)
 
 set(SOURCE_FILES
     main.cpp
@@ -39,4 +36,4 @@ set(SOURCE_FILES
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 
-target_link_libraries(${PROJECT_NAME} embr)
+target_link_libraries(${PROJECT_NAME} embr malachi-iot::estd)
