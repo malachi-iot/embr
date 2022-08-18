@@ -11,23 +11,6 @@
 
 namespace embr {
 
-template <word_strictness s>
-using strictness_helper = internal::enum_mask<word_strictness, s>;
-
-/// Determines if any 's' bits are present in 'v'
-template <word_strictness v, word_strictness... s>
-constexpr bool any()
-{
-    return strictness_helper<v>::template any<s...>();
-}
-
-/// Determines if all 's' bits are present in 'v'
-template <word_strictness v, word_strictness... s>
-constexpr bool all()
-{
-    return strictness_helper<v>::template all<s...>();
-}
-
 template <class T, class U>
 constexpr T narrow_cast(U&& u) noexcept
 {
@@ -80,16 +63,10 @@ class word : public internal::word_base<bits, is_signed, strict>
 public:
     typedef typename base_type::type type;
 
-protected:
-
-    type value_;
-
 public:
     word() = default;
-    constexpr word(const type& value) : value_{
-        any<strict, word_strictness::masking>() ? base_type::mask(value) : value} {}
-    constexpr word(type&& value) : value_{
-        any<strict, h::e::masking>() ? base_type::mask(value) : value} {}
+    constexpr word(const type& value) : base_type(value) {}
+    constexpr word(type&& value) : base_type(std::move(value)) {}
 
     // DEBT: This can be optimized by skipping any masking altogether when the source
     // word has masking employed - we are guaranteed in that case to receive a pristine
@@ -97,14 +74,12 @@ public:
     template <size_t incoming_bits, class Enabled =
         typename estd::enable_if<(incoming_bits <= bits)>::type>
     constexpr word(const word<incoming_bits>& copy_from) :
-        value_{h::template all<h::e::masking>() ?
+        base_type(h::template all<h::e::masking>() ?
             base_type::mask(copy_from.cvalue()) :
-            copy_from.cvalue()}
+            copy_from.cvalue())
     {}
 
     //type& value() { return value_; }
-    constexpr const type& value() const { return value_; }
-    constexpr const type& cvalue() const { return value_; }
 
     // DEBT: Filter this by strictness flags, i.e. we don't want uint16_t automatically
     // assignable to 11-bit words
@@ -117,7 +92,7 @@ public:
         typename estd::enable_if<(bits_rhs <= bits)>::type>
     inline word& operator +=(word<bits_rhs> r)
     {
-        value_ += r.cvalue();
+        base_type::value_ += r.cvalue();
         return *this;
     }
 
@@ -125,7 +100,7 @@ public:
         typename estd::enable_if<(bits_rhs <= bits)>::type>
     inline word& operator -=(word<bits_rhs> r)
     {
-        value_ -= r.cvalue();
+        base_type::value_ -= r.cvalue();
         return *this;
     }
 
@@ -134,7 +109,7 @@ public:
         typename estd::enable_if<(bits_rhs <= bits)>::type>
     inline word& operator &=(word<bits_rhs> r)
     {
-        value_ &= r.cvalue();
+        base_type::value_ &= r.cvalue();
         return *this;
     }
 
@@ -142,7 +117,7 @@ public:
     inline word& operator <<=(TInt r)
     {
         // DEBT: If strict masking is on, apply mask here - and consider an overflow detect feature
-        value_ <<= r;
+        base_type::value_ <<= r;
         return *this;
     }
 
@@ -151,7 +126,7 @@ public:
         typename estd::enable_if<(bits_rhs <= bits)>::type>
     inline word& operator |=(word<bits_rhs> r)
     {
-        value_ |= r.cvalue();
+        base_type::value_ |= r.cvalue();
         return *this;
     }
 
@@ -160,17 +135,17 @@ public:
         typename estd::enable_if<(bits_rhs <= bits)>::type>
     constexpr word operator +(word<bits_rhs> r) const
     {
-        return word{(type) (value_ + r.value())};
+        return word{(type) (base_type::value_ + r.value())};
     }
 
     template <size_t bits_rhs, class Enabled =
         typename estd::enable_if<(bits_rhs <= bits)>::type>
     constexpr word operator &(word<bits_rhs> r) const
     {
-        return word{(type) (value_ & r.value())};
+        return word{(type) (base_type::value_ & r.value())};
     }
 
-    constexpr word operator ~() const { return word{~value_}; }
+    constexpr word operator ~() const { return word{~base_type::value_}; }
 };
 
 
