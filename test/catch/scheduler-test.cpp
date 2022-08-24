@@ -432,7 +432,7 @@ TEST_CASE("scheduler test", "[scheduler]")
             }
             SECTION("overly smart scheduling")
             {
-                auto _f = estd::experimental::function<void(unsigned*, unsigned)>::make_inline(
+                auto _f = estd::detail::function<void(unsigned*, unsigned)>::make_inline(
                     [&arrived](unsigned* wake, unsigned current_time)
                     {
                         arrived.set(*wake);
@@ -445,7 +445,7 @@ TEST_CASE("scheduler test", "[scheduler]")
                             *wake = *wake + 2;
                         }
                     });
-                estd::experimental::function_base<void(unsigned*, unsigned)> f(&_f);
+                estd::detail::function<void(unsigned*, unsigned)> f(&_f);
 
                 scheduler.schedule(11, f);
                 scheduler.schedule(3, f);

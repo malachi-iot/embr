@@ -431,7 +431,7 @@ template <typename TTimePoint>
 struct FunctorTraits
 {
     typedef TTimePoint time_point;
-    typedef estd::experimental::function_base<void(time_point*, time_point)> function_type;
+    typedef estd::detail::function<void(time_point*, time_point)> function_type;
 
     template <class F>
     static estd::experimental::inline_function<F, void(time_point*, time_point)> make_function(F&& f)
