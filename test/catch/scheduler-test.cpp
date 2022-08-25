@@ -141,7 +141,7 @@ struct Item3ControlStructure2 : Item3Traits::control_structure
 
 
 
-
+// Legacy c-style handler
 bool traditional_handler(
     embr::internal::scheduler::impl::TraditionalBase::control_structure* c,
     unsigned long current_time)
@@ -228,7 +228,7 @@ TEST_CASE("scheduler test", "[scheduler]")
     }
     SECTION("repeating")
     {
-        embr::internal::layer1::Scheduler<Item2Traits, 5> scheduler;
+        embr::internal::layer1::Scheduler<5, Item2Traits> scheduler;
 
         scheduler.schedule(5);
         scheduler.schedule(99); // should never reach this one
@@ -281,7 +281,7 @@ TEST_CASE("scheduler test", "[scheduler]")
     }
     SECTION("virtual")
     {
-        embr::internal::layer1::Scheduler<Item3Traits, 5> scheduler;
+        embr::internal::layer1::Scheduler<5, Item3Traits> scheduler;
 
         Item3ControlStructure1 schedule1;
         Item3ControlStructure2 schedule2;
@@ -304,11 +304,11 @@ TEST_CASE("scheduler test", "[scheduler]")
     {
         SECTION("inline")
         {
-            typedef embr::internal::scheduler::impl::Traditional<true> traits_type;
-            typedef traits_type::value_type value_type;
+            typedef embr::internal::scheduler::impl::Traditional<true> impl_type;
+            typedef impl_type::value_type value_type;
             int counter = 0;
 
-            embr::internal::layer1::Scheduler<traits_type, 5> scheduler;
+            embr::internal::layer1::Scheduler<5, impl_type> scheduler;
 
             scheduler.schedule(value_type{10, traditional_handler, &counter});
             scheduler.schedule(value_type{20, traditional_handler, &counter});
@@ -322,13 +322,13 @@ TEST_CASE("scheduler test", "[scheduler]")
         }
         SECTION("user allocated")
         {
-            typedef embr::internal::scheduler::impl::Traditional<false> traits_type;
-            typedef traits_type::value_type value_type;
+            typedef embr::internal::scheduler::impl::Traditional<false> impl_type;
+            //typedef impl_type::value_type value_type;
             int counter = 0;
 
-            embr::internal::layer1::Scheduler<traits_type, 5> scheduler;
+            embr::internal::layer1::Scheduler<5, impl_type> scheduler;
 
-            traits_type::control_structure
+            impl_type::control_structure
                 scheduled1{10, traditional_handler, &counter},
                 scheduled2{20, traditional_handler, &counter};
 
@@ -349,7 +349,7 @@ TEST_CASE("scheduler test", "[scheduler]")
         // indeed being in progress and experimental
         SECTION("estd::function style")
         {
-            embr::internal::layer1::Scheduler<FunctorTraits, 5> scheduler;
+            embr::internal::layer1::Scheduler<5, FunctorTraits> scheduler;
 
             SECTION("trivial scheduling")
             {
@@ -429,7 +429,7 @@ TEST_CASE("scheduler test", "[scheduler]")
         }
         SECTION("stateful")
         {
-            embr::internal::layer1::Scheduler<StatefulFunctorTraits, 5> scheduler;
+            embr::internal::layer1::Scheduler<5, StatefulFunctorTraits> scheduler;
 
             auto f = StatefulFunctorTraits::make_function(
                 [&](unsigned* wake, unsigned current)
@@ -446,7 +446,7 @@ TEST_CASE("scheduler test", "[scheduler]")
         }
         SECTION("std-style dynamic allocated function")
         {
-            embr::internal::layer1::Scheduler<FunctorTraits, 5> scheduler;
+            embr::internal::layer1::Scheduler<5, FunctorTraits> scheduler;
 
             estd::experimental::function<void(unsigned*, unsigned)> f(
                 [&](unsigned* wake, unsigned current_time)
@@ -468,7 +468,7 @@ TEST_CASE("scheduler test", "[scheduler]")
         typedef StatefulFunctorTraits traits_type;
         SchedulerObserver<traits_type> o;
         auto s = embr::layer1::make_subject(o);
-        embr::internal::layer1::Scheduler<traits_type, 5, decltype(s)> scheduler(s);
+        embr::internal::layer1::Scheduler<5, traits_type, decltype(s)> scheduler(s);
 
         auto f = traits_type::make_function(
             [&](unsigned* wake, unsigned current)
@@ -515,7 +515,7 @@ TEST_CASE("scheduler test", "[scheduler]")
         typedef embr::internal::scheduler::impl::Function<int> impl_type;
         typedef typename impl_type::value_type control_structure;
 
-        embr::internal::layer1::Scheduler<impl_type, 5> scheduler;
+        embr::internal::layer1::Scheduler<5, impl_type> scheduler;
 
         int rapid_counter = 0;
         int rapid_total = 0;

@@ -90,12 +90,12 @@ struct Processing : ValueBase<TSchedulerImpl>
  * @tparam TSubject optional observer which can listen for schedule and remove events
  */
 template <class TContainer,
-    class TImpl = scheduler::impl::Reference<typename TContainer::value_type>,
+    class TImpl,
     class TSubject = embr::void_subject
     >
 class Scheduler :
+    public TImpl,
     protected estd::internal::struct_evaporator<TSubject>,
-    protected estd::internal::struct_evaporator<TImpl>,
     protected estd::internal::struct_evaporator<typename TImpl::mutex>
 {
 protected:
@@ -112,7 +112,6 @@ protected:
     typedef typename impl_type::mutex mutex_type;
 
     typedef estd::internal::struct_evaporator<TSubject> subject_provider;
-    typedef estd::internal::struct_evaporator<TImpl> impl_provider;
     typedef estd::internal::struct_evaporator<mutex_type> mutex_provider;
 
     typedef events::Scheduling<impl_type> scheduling_event_type;
@@ -126,9 +125,9 @@ protected:
     }
 
 public:
-    inline typename impl_provider::evaporated_type impl()
+    inline impl_type& impl()
     {
-        return impl_provider::value();
+        return *this;
     }
 
     inline typename mutex_provider::evaporated_type mutex()
@@ -355,11 +354,13 @@ public:
 // DEBT: Putting this here under internal to reflect we're still fleshing things out
 namespace layer1 {
 
-template <class TTraits, int count, class TSubject = void_subject>
+template <int count,
+    class TImpl = embr::internal::scheduler::impl::Function<estd::chrono::steady_clock::time_point>,
+    class TSubject = void_subject>
 struct Scheduler :
-    internal::Scheduler<estd::layer1::vector<typename TTraits::value_type, count>, TTraits, TSubject>
+    embr::internal::Scheduler<estd::layer1::vector<typename TImpl::value_type, count>, TImpl, TSubject>
 {
-    typedef internal::Scheduler<estd::layer1::vector<typename TTraits::value_type, count>, TTraits, TSubject> base_type;
+    typedef embr::internal::Scheduler<estd::layer1::vector<typename TImpl::value_type, count>, TImpl, TSubject> base_type;
 
     ESTD_CPP_FORWARDING_CTOR(Scheduler)
 };
