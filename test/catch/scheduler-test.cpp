@@ -140,54 +140,10 @@ struct Item3ControlStructure2 : Item3Traits::control_structure
 };
 
 
-struct TraditionalTraitsBase
-{
-    typedef unsigned long time_point;
 
-    struct control_structure
-    {
-        typedef bool (*handler_type)(control_structure* c, time_point current_time);
-
-        time_point wake_time;
-        handler_type handler;
-
-        void* data;
-    };
-
-    typedef fake_mutex mutex;
-};
-
-template <bool is_inline>
-struct TraditionalTraits;
-
-template <>
-struct TraditionalTraits<true> : TraditionalTraitsBase
-{
-    typedef control_structure value_type;
-
-    static time_point get_time_point(const value_type& v) { return v.wake_time; }
-
-    static bool process(value_type& v, time_point current_time)
-    {
-        return v.handler(&v, current_time);
-    }
-};
-
-template <>
-struct TraditionalTraits<false> : TraditionalTraitsBase
-{
-    typedef control_structure* value_type;
-
-    static time_point get_time_point(value_type v) { return v->wake_time; }
-
-    static bool process(value_type v, time_point current_time)
-    {
-        return v->handler(v, current_time);
-    }
-};
 
 bool traditional_handler(
-    TraditionalTraitsBase::control_structure* c,
+    embr::internal::scheduler::impl::TraditionalBase::control_structure* c,
     unsigned long current_time)
 {
     ++(*(int*)c->data);
@@ -195,7 +151,7 @@ bool traditional_handler(
 }
 
 
-using FunctorTraits = embr::internal::experimental::FunctorTraits<unsigned>;
+using FunctorTraits = embr::internal::scheduler::impl::Function<unsigned>;
 
 struct StatefulFunctorTraits : FunctorTraits
 {
@@ -348,7 +304,7 @@ TEST_CASE("scheduler test", "[scheduler]")
     {
         SECTION("inline")
         {
-            typedef TraditionalTraits<true> traits_type;
+            typedef embr::internal::scheduler::impl::Traditional<true> traits_type;
             typedef traits_type::value_type value_type;
             int counter = 0;
 
@@ -366,7 +322,7 @@ TEST_CASE("scheduler test", "[scheduler]")
         }
         SECTION("user allocated")
         {
-            typedef TraditionalTraits<false> traits_type;
+            typedef embr::internal::scheduler::impl::Traditional<false> traits_type;
             typedef traits_type::value_type value_type;
             int counter = 0;
 
@@ -538,7 +494,7 @@ TEST_CASE("scheduler test", "[scheduler]")
         // Otherwise, it's mostly an estdlib scope kind of test
         SECTION("FunctorTraits")
         {
-            typedef embr::internal::experimental::FunctorTraits<int> traits_type;
+            typedef embr::internal::scheduler::impl::Function<int> traits_type;
             typedef typename traits_type::value_type control_structure;
 
             estd::layer1::vector<typename traits_type::value_type, 10> v;
@@ -556,7 +512,7 @@ TEST_CASE("scheduler test", "[scheduler]")
     }
     SECTION("schedule from inside")
     {
-        typedef embr::internal::experimental::FunctorTraits<int> impl_type;
+        typedef embr::internal::scheduler::impl::Function<int> impl_type;
         typedef typename impl_type::value_type control_structure;
 
         embr::internal::layer1::Scheduler<impl_type, 5> scheduler;
