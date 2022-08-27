@@ -63,7 +63,11 @@ struct NotifierObserver
     // by convention one early_wakeup flag is sufficient.
     bool early_wakeup;
 
-    NotifierObserver() : early_wakeup(false) {}
+    NotifierObserver() :
+        // DEBT: Optimization, would be nice to pass this in and also
+        // have a 'strict' flag of sorts to optimize out boundary checks
+        xSchedulerDaemon(NULLPTR),
+        early_wakeup(false) {}
 
     //template <class TScheduler>
     //void on_notify(embr::internal::events::Scheduling<FreertosFunctorTraits> scheduling, TScheduler& scheduler)
@@ -96,6 +100,12 @@ struct NotifierObserver
             // NOTE: Only doing warning temporarily as we build this out
             ESP_LOGD(TAG, "on_notify(scheduled) early wakeup");
 
+            if(xSchedulerDaemon == NULLPTR)
+            {
+                ESP_LOGE(TAG, "on_notify(scheduled) failure - daemon not running, aborting wakeup");
+                return;
+            }
+                
             // This will result in immediately waking up daemon, which we expect to turn right around
             // and sleep again - but for a shorter period of time.  Therefore, two wakes occur.
             xTaskNotifyGive(xSchedulerDaemon);
