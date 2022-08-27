@@ -1,3 +1,19 @@
+This was in scheduler.cpp global area:
+
+#if SCHEDULE_MANUAL_INIT
+embr::freertos::experimental::SchedulerObserver<FunctorImpl> o;
+#if SCHEDULER_APPROACH == SCHEDULER_APPROACH_TASKNOTIFY
+embr::freertos::experimental::NotifierObserver o2;
+auto s = embr::layer1::make_subject(o, o2);
+#else
+auto s = embr::layer1::make_subject(o);
+#endif
+embr::internal::layer1::Scheduler<FunctorImpl, 5, decltype(s)> scheduler(s);
+#else
+embr::scheduler::freertos::Scheduler<5> scheduler;
+#endif
+
+
 This was in scheduler_init function:
 
 #if SCHEDULE_MANUAL_INIT
