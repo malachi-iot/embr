@@ -50,16 +50,6 @@ void scheduler_init()
 
     gpio_init();
 
-#if SCHEDULE_MANUAL_INIT
-#if SCHEDULER_APPROACH == SCHEDULER_APPROACH_TASKNOTIFY
-    embr::scheduler::freertos::notify_daemon_init(scheduler, o2);
-#else
-    embr::scheduler::freertos::bruteforce_daemon_init(scheduler);
-#endif
-#else
-    scheduler.start();
-#endif
-
     typedef FunctorImpl::time_point time_point;
 
     static int rapid_counter = 0;
