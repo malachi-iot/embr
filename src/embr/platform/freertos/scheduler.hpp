@@ -126,14 +126,14 @@ inline BaseType_t bruteforce_daemon_init(
 
 template <unsigned N, class ...TObservers>
 class Scheduler : public internal::layer1::Scheduler<
-    embr::freertos::experimental::FunctorImpl,
     N,
+    embr::freertos::experimental::FunctorImpl,
     embr::layer1::subject<embr::freertos::experimental::NotifierObserver, TObservers...>
     >
 {
     typedef internal::layer1::Scheduler<
-        embr::freertos::experimental::FunctorImpl,
         N,
+        embr::freertos::experimental::FunctorImpl,
         embr::layer1::subject<embr::freertos::experimental::NotifierObserver, TObservers...> >
         base_type;
 

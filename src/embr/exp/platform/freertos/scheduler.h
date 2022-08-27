@@ -37,7 +37,7 @@ struct SchedulerObserver
 
 
 struct FunctorImpl :
-    embr::internal::experimental::FunctorTraits<estd::chrono::freertos_clock::time_point>
+    embr::internal::scheduler::impl::Function<estd::chrono::freertos_clock::time_point>
 {
     // TODO: Change namespace to estd::freertos
     typedef estd::experimental::mutex mutex;
