@@ -22,12 +22,12 @@ constexpr unsigned byte_size()
 #else
     return estd::numeric_limits<unsigned char>::digits;
 #endif
+}
 #else
 // DEBT: We assume UCHAR_WIDTH presence for c++03
 // DEBT: Don't love faking out a constexpr function with this lower case
 #define byte_size() UCHAR_WIDTH
 #endif
-}
 
 
 

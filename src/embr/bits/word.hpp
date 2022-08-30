@@ -29,7 +29,7 @@ class reference_base
     typedef internal::descriptor_base<sizeof(T) * byte_size()> descriptor_type;
 
     const descriptor_type d;
-    typedef estd::conditional_t<is_const, const T*, T*> pointer;
+    typedef typename estd::conditional<is_const, const T*, T*>::type pointer;
     pointer const raw;
 
 public:
@@ -43,7 +43,7 @@ public:
         return get_word_lsb_to_msb(raw, d);
     }
 
-    constexpr operator T() const { return value(); }
+    ESTD_CPP_CONSTEXPR_RET operator T() const { return value(); }
 
     reference_base operator=(T v)
     {
@@ -58,7 +58,11 @@ template <unsigned bits>
 class word<bits, lsb_to_msb> : public embr::word<bits>
 {
     typedef embr::word<bits> base_type;
+#ifdef __cpp_alias_templates
     using word_type = typename base_type::type;
+#else
+    typedef typename base_type::type word_type;
+#endif
 
     //T raw;
     word_type& raw() { return base_type::value_; }
@@ -67,7 +71,7 @@ class word<bits, lsb_to_msb> : public embr::word<bits>
 public:
     typedef internal::descriptor_base<sizeof(word_type) * byte_size()> descriptor_type;
 
-    constexpr word(word_type v) : base_type{v} {}
+    ESTD_CPP_CONSTEXPR_RET word(word_type v) : base_type(v) {}
 
     typedef reference_base<false, word_type> reference;
     typedef reference_base<true, word_type> const_reference;
@@ -77,20 +81,28 @@ public:
         set_word_lsb_to_msb(&raw(), d, value);
     }
 
-    constexpr word_type get(descriptor_type d) const
+    ESTD_CPP_CONSTEXPR_RET word_type get(descriptor_type d) const
     {
         return get_word_lsb_to_msb(&raw(), d);
     }
 
     // EXPERIMENTAL
+#ifdef FEATURE_CPP_DEFAULT_TARGS
     template <unsigned bitpos, unsigned length = 1>
+#else
+    template <unsigned bitpos, unsigned length>
+#endif
     ESTD_CPP_CONSTEXPR_RET embr::word<length> get() const
     {
         return experimental::bit_traits<bitpos, length>::get(&raw());
     }
 
     // EXPERIMENTAL
+#ifdef FEATURE_CPP_DEFAULT_TARGS
     template <unsigned bitpos, unsigned length = 1>
+#else
+    template <unsigned bitpos, unsigned length>
+#endif
     //inline void set(experimental::word<length> v) const
     inline unsigned set(word_type v)
     {
@@ -116,7 +128,7 @@ public:
         return reference{d, &raw()};
     }
 
-    constexpr const_reference operator[](descriptor_type d) const
+    ESTD_CPP_CONSTEXPR_RET const_reference operator[](descriptor_type d) const
     {
         return const_reference{d, &raw()};
     }

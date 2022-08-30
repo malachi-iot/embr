@@ -4,6 +4,15 @@
 
 #include "unit-test.h"
 
+static void test_word_16bit()
+{
+    {
+        embr::word<16> w(5);
+
+        TEST_ASSERT_EQUAL(5, w.cvalue());
+    }
+}
+
 static void test_word_32bit()
 {
     {
@@ -25,5 +34,6 @@ TEST_CASE("bit manipulator tests", "[bits]")
 void test_word()
 #endif
 {
+    RUN_TEST(test_word_16bit);
     RUN_TEST(test_word_32bit);
 }
