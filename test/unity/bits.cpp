@@ -1,3 +1,5 @@
+#define FEATURE_EMBR_WORD_STRICTNESS 0
+
 #include <embr/bits/word.hpp>
 
 #include "unit-test.h"

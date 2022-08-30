@@ -11,6 +11,7 @@
 
 namespace embr {
 
+#if __cplusplus >= 201103L
 template <class T, class U>
 constexpr T narrow_cast(U&& u) noexcept
 {
@@ -20,6 +21,7 @@ constexpr T narrow_cast(U&& u) noexcept
 
     return caster_type::cast(std::move(u));
 }
+#endif
 
 
 }
@@ -32,17 +34,19 @@ struct numeric_limits<embr::word<bits, false, strict> >
     typedef embr::word<bits, false, strict> word_type;
     typedef typename word_type::type type;
 
-    static constexpr type min() { return 0; }
-    static constexpr type max() { return word_type::mask(); }
+    static ESTD_CPP_CONSTEXPR_RET type min() { return 0; }
+    static ESTD_CPP_CONSTEXPR_RET type max() { return word_type::mask(); }
 };
 
 // Converts word back to requested integer with a compile time guard against
 // narrowing conversion
 template <class TInt, size_t bits, bool is_signed, embr::word_strictness strict, typename Enabled =
 typename enable_if<
+#if FEATURE_EMBR_WORD_STRICTNESS
     (!embr::any<strict, embr::word_strictness::narrowing>()) ||
+#endif
     (estd::numeric_limits<TInt>::max() >= estd::numeric_limits<embr::word<bits> >::max())>::type >
-constexpr TInt to_integer(embr::word<bits, is_signed, strict> w)
+ESTD_CPP_CONSTEXPR_RET TInt to_integer(embr::word<bits, is_signed, strict> w)
 {
     return w.cvalue();
 }
@@ -65,8 +69,8 @@ public:
 
 public:
     word() = default;
-    constexpr word(const type& value) : base_type(value) {}
-    constexpr word(type&& value) : base_type(std::move(value)) {}
+    ESTD_CPP_CONSTEXPR_RET word(const type& value) : base_type(value) {}
+    ESTD_CPP_CONSTEXPR_RET word(type&& value) : base_type(std::move(value)) {}
 
     // DEBT: This can be optimized by skipping any masking altogether when the source
     // word has masking employed - we are guaranteed in that case to receive a pristine
@@ -74,9 +78,13 @@ public:
     template <size_t incoming_bits, class Enabled =
         typename estd::enable_if<(incoming_bits <= bits)>::type>
     constexpr word(const word<incoming_bits>& copy_from) :
+#if FEATURE_EMBR_WORD_STRICTNESS
         base_type(h::template all<h::e::masking>() ?
             base_type::mask(copy_from.cvalue()) :
             copy_from.cvalue())
+#else
+        base_type(copy_from.cvalue())
+#endif
     {}
 
     //type& value() { return value_; }
@@ -133,14 +141,14 @@ public:
 
     template <size_t bits_rhs, class Enabled =
         typename estd::enable_if<(bits_rhs <= bits)>::type>
-    constexpr word operator +(word<bits_rhs> r) const
+    ESTD_CPP_CONSTEXPR_RET word operator +(word<bits_rhs> r) const
     {
         return word{(type) (base_type::value_ + r.value())};
     }
 
     template <size_t bits_rhs, class Enabled =
         typename estd::enable_if<(bits_rhs <= bits)>::type>
-    constexpr word operator &(word<bits_rhs> r) const
+    ESTD_CPP_CONSTEXPR_RET word operator &(word<bits_rhs> r) const
     {
         return word{(type) (base_type::value_ & r.value())};
     }
@@ -160,9 +168,12 @@ constexpr word<bits> operator &(word<bits> l, typename word<bits>::type r)
     return l & word<bits>{r};
 }
 
-template <size_t bits, bool is_signed, word_strictness s,
-    typename Enabled = estd::enable_if_t<
-        any<s, word_strictness::arithmetic>()> >
+template <size_t bits, bool is_signed, word_strictness s
+#if FEATURE_EMBR_WORD_STRICTNESS
+    ,typename Enabled = estd::enable_if_t<
+        any<s, word_strictness::arithmetic>()>
+#endif
+    >
 inline word<bits, is_signed, s>& operator +=
     (word<bits, is_signed, s>& l, typename word<bits, is_signed>::type r)
 {
@@ -170,36 +181,39 @@ inline word<bits, is_signed, s>& operator +=
 }
 
 
-template <size_t bits, bool is_signed, word_strictness s,
-    typename Enabled = estd::enable_if_t<
-        any<s, word_strictness::arithmetic>()> >
-constexpr word<bits, is_signed, s> operator +(
+template <size_t bits, bool is_signed, word_strictness s
+#if FEATURE_EMBR_WORD_STRICTNESS
+    ,typename Enabled = estd::enable_if_t<
+        any<s, word_strictness::arithmetic>()>
+#endif
+    >
+ESTD_CPP_CONSTEXPR_RET word<bits, is_signed, s> operator +(
     word<bits, is_signed, s> l, typename word<bits, is_signed, s>::type r)
 {
     return l + word<bits, is_signed, s>{r};
 }
 
 template <size_t bits, typename TInt>
-constexpr word<bits> operator <<(word<bits> l, TInt r)
+ESTD_CPP_CONSTEXPR_RET word<bits> operator <<(word<bits> l, TInt r)
 {
     return word<bits>{l.cvalue() << r};
 }
 
 template <size_t bits, typename TInt>
-constexpr word<bits> operator >>(word<bits> l, TInt r)
+ESTD_CPP_CONSTEXPR_RET word<bits> operator >>(word<bits> l, TInt r)
 {
     return word<bits>{l.cvalue() >> r};
 }
 
 
 template <size_t bits, bool is_signed, word_strictness s, typename TInt>
-constexpr bool operator !=(word<bits, is_signed, s> l, TInt r)
+ESTD_CPP_CONSTEXPR_RET bool operator !=(word<bits, is_signed, s> l, TInt r)
 {
     return l.cvalue() != r;
 }
 
 template <size_t bits, bool is_signed, word_strictness s, typename TInt>
-constexpr bool operator ==(word<bits, is_signed, s> l, TInt r)
+ESTD_CPP_CONSTEXPR_RET bool operator ==(word<bits, is_signed, s> l, TInt r)
 {
     return l.cvalue() == r;
 }

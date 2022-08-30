@@ -1,5 +1,8 @@
 #pragma once
 
+// This include is primarily for access to ESTD_CPP_CONSTEXPR_RET
+#include <estd/internal/locale.h>
+
 #include "../fwd/word.h"
 
 #include "../enum_mask.h"   // NOTE: Only in support of experimental 'attributes'
@@ -8,6 +11,8 @@
 #include "type_from_bits.h"
 
 namespace embr {
+
+#if FEATURE_EMBR_WORD_STRICTNESS
 
 // DEBT: These are located here because internal::word_base needs them.
 // perhaps a "word_strictness.h" is appropriate?
@@ -28,6 +33,8 @@ constexpr bool all()
 {
     return strictness_helper<v>::template all<s...>();
 }
+
+#endif
 
 
 namespace internal {
@@ -79,27 +86,36 @@ protected:
 
     type value_;
 
-    constexpr word_base(const type& value) : value_{
-        any<strict, word_strictness::masking>() ? mask(value) : value} {}
+#if FEATURE_EMBR_WORD_STRICTNESS
+    constexpr word_base(const type& value) : value_
+        {any<strict, word_strictness::masking>() ? mask(value) : value} {}
     constexpr word_base(type&& value) : value_{
         any<strict, h::e::masking>() ? mask(value) : value} {}
+#else
+    constexpr word_base(const type& value) : value_(value) {}
+#ifdef FEATURE_CPP_MOVESEMANTIC
+    constexpr word_base(type&& value) : value_{value} {}
+#endif
+#endif
 
 public:
     constexpr const type& value() const { return value_; }
     constexpr const type& cvalue() const { return value_; }
 
+#if FEATURE_EMBR_WORD_STRICTNESS
     // EXPERIMENTAL
     typedef internal::enum_mask<word_strictness, strict> attributes;
+#endif
 
     static constexpr unsigned width() { return bits; }
 
     // DEBT: Pretty sure we have to adjust this for signed operations
-    static constexpr type mask()
+    static ESTD_CPP_CONSTEXPR_RET type mask()
     {
         return mask_;
     }
     
-    static constexpr type mask(type v)
+    static ESTD_CPP_CONSTEXPR_RET type mask(type v)
     {
         return v & mask();
     }
