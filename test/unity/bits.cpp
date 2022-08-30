@@ -14,7 +14,7 @@ static void test_word_1()
 
     embr::word<1> val = w.get<0, 1>();
 
-    TEST_ASSERT_EQUAL(1, val.cvalue());
+    TEST_ASSERT_EQUAL(1, val.value());
 }
 
 }

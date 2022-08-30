@@ -15,15 +15,15 @@ static void test_word_basics()
 
     word_type w(5);
 
-    TEST_ASSERT_EQUAL(5, w.cvalue());
+    TEST_ASSERT_EQUAL(5, w.value());
 
     w <<= 1;
 
-    TEST_ASSERT_EQUAL(10, w.cvalue());
+    TEST_ASSERT_EQUAL(10, w.value());
 
     w |= embr::word<1>(1);
 
-    TEST_ASSERT_EQUAL(11, w.cvalue());
+    TEST_ASSERT_EQUAL(11, w.value());
 }
 
 static void test_word_16bit()
@@ -39,9 +39,7 @@ static void test_word_32bit()
     }
 
     {
-        embr::word<24> w(5);
-
-        TEST_ASSERT_EQUAL(5, w.cvalue());
+        test_word_basics<24, uint32_t>();
     }
 }
 
