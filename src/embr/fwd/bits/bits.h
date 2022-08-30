@@ -12,6 +12,8 @@ namespace embr { namespace bits {
 
 // DEBT: Use estd::byte instead
 typedef unsigned char byte;
+
+#ifdef __cpp_constexpr
 /// @return in bits
 constexpr unsigned byte_size()
 {
@@ -19,6 +21,11 @@ constexpr unsigned byte_size()
     return UCHAR_WIDTH;
 #else
     return estd::numeric_limits<unsigned char>::digits;
+#endif
+#else
+// DEBT: We assume UCHAR_WIDTH presence for c++03
+// DEBT: Don't love faking out a constexpr function with this lower case
+#define byte_size() UCHAR_WIDTH
 #endif
 }
 
@@ -77,12 +84,20 @@ struct getter;
 // while varying bitpos, length etc
 
 template <unsigned bitpos, unsigned length, endianness e,
+#ifdef FEATURE_CPP_DEFAULT_TARGS
     length_direction d = default_direction, resume_direction rd = d,
+#else
+    length_direction d, resume_direction rd,
+#endif
     typename TInt, typename TIt>
 void get(TIt raw, TInt& v);
 
 template <unsigned bitpos, unsigned length, endianness e,
+#ifdef FEATURE_CPP_DEFAULT_TARGS
     length_direction d = default_direction, resume_direction rd = d,
+#else
+    length_direction d, resume_direction rd,
+#endif
     typename TInt, typename TIt>
 void set(TIt raw, TInt v);
 

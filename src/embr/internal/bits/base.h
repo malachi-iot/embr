@@ -29,13 +29,13 @@ inline TInt get_native(TByte* raw, TInt v) { return *((TInt*)raw); }
 /// Unshifted mask reflecting length
 /// @return
 template <typename T, size_t bitness>
-constexpr T mask(const descriptor_base<bitness>& d)
+ESTD_CPP_CONSTEXPR_RET T mask(const descriptor_base<bitness>& d)
 {
     return (1 << d.length) - 1;
 }
 
 template <typename T, size_t bitness>
-constexpr T shifted_mask(const descriptor_base<bitness>& d)
+ESTD_CPP_CONSTEXPR_RET T shifted_mask(const descriptor_base<bitness>& d)
 {
     return mask<T>(d) << d.bitpos;
 }
@@ -50,21 +50,34 @@ struct descriptor_base<bitness, estd::internal::Range<(bitness <= 8)> >
     const uint8_t bitpos : 3;      ///< 0-based, inclusive - starting from lsb
     const uint8_t length : 3;      ///< in bits.  @see length_direction
 
+#if __cplusplus >= 201103L
     descriptor_base() = default;
 
     constexpr descriptor_base(bitness_type bitpos, bitness_type length) :
         bitpos{bitpos}, length{length} {}
+#else
+    descriptor_base() { }
+
+    inline descriptor_base(bitness_type bitpos, bitness_type length) :
+        bitpos(bitpos), length(length) {}
+#endif
 
     // NOTE: Be careful, narrowing happens here and undefined behavior occurs if it overflows
     template <size_t bitness2>
-    constexpr descriptor_base(const internal::descriptor_base<bitness2>& copy_from) :
-        bitpos{(bitness_type)copy_from.bitpos}, length{(bitness_type)copy_from.length}
+    ESTD_CPP_CONSTEXPR_RET descriptor_base(const internal::descriptor_base<bitness2>& copy_from) :
+        bitpos((bitness_type)copy_from.bitpos), length((bitness_type)copy_from.length)
     {}
 };
 
 template <size_t bitness>
 struct descriptor_base<bitness, estd::internal::Range<
-    (bitness > 8 && bitness <= estd::numeric_limits<unsigned short>::max())> >
+    (bitness > 8 && bitness <=
+#ifdef __cpp_constexpr
+        estd::numeric_limits<unsigned short>::max()
+#else
+        USHRT_MAX
+#endif
+    )> >
 {
     typedef unsigned short bitness_type;
     // DEBT: Deduce this more closely based on bitness itself
@@ -73,21 +86,28 @@ struct descriptor_base<bitness, estd::internal::Range<
     const unsigned short bitpos;      ///< 0-based, inclusive - starting from lsb
     const unsigned short length;      ///< in bits.  @see length_direction
 
+#if __cplusplus >= 201103L
     descriptor_base() = default;
 
     constexpr descriptor_base(bitness_type bitpos, bitness_type length) :
         bitpos{bitpos}, length{length} {}
+#else
+    descriptor_base() { };
+
+    inline descriptor_base(bitness_type bitpos, bitness_type length) :
+        bitpos(bitpos), length(length) {}
+#endif
 
 
     template <size_t bitness2>
-    constexpr descriptor_base(const internal::descriptor_base<bitness2>& copy_from) :
-        bitpos{copy_from.bitpos}, length{copy_from.length}
+    ESTD_CPP_CONSTEXPR_RET descriptor_base(const internal::descriptor_base<bitness2>& copy_from) :
+        bitpos(copy_from.bitpos), length(copy_from.length)
     {}
 };
 
 
 template <size_t bitness1, size_t bitness2>
-constexpr bool operator==(descriptor_base<bitness1> lhs, descriptor_base<bitness2> rhs)
+ESTD_CPP_CONSTEXPR_RET bool operator==(descriptor_base<bitness1> lhs, descriptor_base<bitness2> rhs)
 {
     return lhs.length == rhs.length && lhs.bitpos == rhs.bitpos;
 }
@@ -121,7 +141,7 @@ protected:
     ESTD_CPP_FORWARDING_CTOR(provider)
 
 public:
-    static constexpr endianness e = _e;
+    static CONSTEXPR endianness e = _e;
 };
 
 

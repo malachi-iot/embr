@@ -14,11 +14,13 @@ struct descriptor : internal::descriptor_base<64>
     typedef typename base_type::uint_type uint_type;
 
     // DEBT: Needs a cleanup
-    constexpr descriptor(unsigned bitpos, unsigned length) : base_type{(bitness_type)bitpos, (bitness_type)length} {}
-    constexpr descriptor(int bitpos, int length) : base_type{(bitness_type)bitpos, (bitness_type)length} {}
+    ESTD_CPP_CONSTEXPR_RET descriptor(unsigned bitpos, unsigned length) :
+        base_type((bitness_type)bitpos, (bitness_type)length) {}
+    ESTD_CPP_CONSTEXPR_RET descriptor(int bitpos, int length) :
+        base_type((bitness_type)bitpos, (bitness_type)length) {}
 
     template <size_t bitness>
-    constexpr descriptor(const internal::descriptor_base<bitness>& copy_from) :
+    ESTD_CPP_CONSTEXPR_RET descriptor(const internal::descriptor_base<bitness>& copy_from) :
         base_type(copy_from) {}
 
     //const unsigned bitpos;      ///< 0-based, inclusive - starting from lsb

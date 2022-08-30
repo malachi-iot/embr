@@ -176,7 +176,7 @@ public:
         >
     ESTD_CPP_CONSTEXPR_RET word operator +(word<bits_rhs> r) const
     {
-        return word{(type) (base_type::value_ + r.value())};
+        return word((type) (base_type::value_ + r.value()));
     }
 
     template <size_t bits_rhs
@@ -186,10 +186,10 @@ public:
         >
     ESTD_CPP_CONSTEXPR_RET word operator &(word<bits_rhs> r) const
     {
-        return word{(type) (base_type::value_ & r.value())};
+        return word((type) (base_type::value_ & r.value()));
     }
 
-    ESTD_CPP_CONSTEXPR_RET word operator ~() const { return word{~base_type::value_}; }
+    ESTD_CPP_CONSTEXPR_RET word operator ~() const { return word(~base_type::value_); }
 };
 
 
@@ -201,7 +201,7 @@ public:
 template <size_t bits>
 ESTD_CPP_CONSTEXPR_RET word<bits> operator &(word<bits> l, typename word<bits>::type r)
 {
-    return l & word<bits>{r};
+    return l & word<bits>(r);
 }
 
 template <size_t bits, bool is_signed, word_strictness s
@@ -213,7 +213,7 @@ template <size_t bits, bool is_signed, word_strictness s
 inline word<bits, is_signed, s>& operator +=
     (word<bits, is_signed, s>& l, typename word<bits, is_signed>::type r)
 {
-    return l += word<bits, is_signed, s>{r};
+    return l += word<bits, is_signed, s>(r);
 }
 
 
@@ -226,19 +226,19 @@ template <size_t bits, bool is_signed, word_strictness s
 ESTD_CPP_CONSTEXPR_RET word<bits, is_signed, s> operator +(
     word<bits, is_signed, s> l, typename word<bits, is_signed, s>::type r)
 {
-    return l + word<bits, is_signed, s>{r};
+    return l + word<bits, is_signed, s>(r);
 }
 
 template <size_t bits, typename TInt>
 ESTD_CPP_CONSTEXPR_RET word<bits> operator <<(word<bits> l, TInt r)
 {
-    return word<bits>{l.cvalue() << r};
+    return word<bits>(l.cvalue() << r);
 }
 
 template <size_t bits, typename TInt>
 ESTD_CPP_CONSTEXPR_RET word<bits> operator >>(word<bits> l, TInt r)
 {
-    return word<bits>{l.cvalue() >> r};
+    return word<bits>(l.cvalue() >> r);
 }
 
 

@@ -11,13 +11,13 @@ namespace embr { namespace bits {
 namespace internal {
 
 template <class T, size_t bitness>
-constexpr T& set_word_lsb_to_msb(T* const raw, const internal::descriptor_base<bitness>& d, T value)
+ESTD_CPP_CONSTEXPR_RET T& set_word_lsb_to_msb(T* const raw, const internal::descriptor_base<bitness>& d, T value)
 {
     return (*raw &= ~internal::shifted_mask<T>(d)) |= value << d.bitpos;
 }
 
 template <class T, size_t bitness>
-constexpr T get_word_lsb_to_msb(const T* const raw, const internal::descriptor_base<bitness>& d)
+ESTD_CPP_CONSTEXPR_RET T get_word_lsb_to_msb(const T* const raw, const internal::descriptor_base<bitness>& d)
 {
     return (*raw >> d.bitpos) & internal::mask<T>(d);
 }
@@ -33,12 +33,12 @@ class reference_base
     pointer const raw;
 
 public:
-    constexpr reference_base(descriptor_type d, pointer raw) : d{d}, raw{raw}
+    ESTD_CPP_CONSTEXPR_RET reference_base(descriptor_type d, pointer raw) : d(d), raw(raw)
     {}
 
     reference_base(const reference_base&) = default;
 
-    constexpr T value() const
+    ESTD_CPP_CONSTEXPR_RET T value() const
     {
         return get_word_lsb_to_msb(raw, d);
     }
@@ -84,7 +84,7 @@ public:
 
     // EXPERIMENTAL
     template <unsigned bitpos, unsigned length = 1>
-    constexpr embr::word<length> get() const
+    ESTD_CPP_CONSTEXPR_RET embr::word<length> get() const
     {
         return experimental::bit_traits<bitpos, length>::get(&raw());
     }
@@ -99,7 +99,7 @@ public:
 
     // EXPERIMENTAL
     template <class TBitTraits>
-    constexpr embr::word<TBitTraits::length> get() const
+    ESTD_CPP_CONSTEXPR_RET embr::word<TBitTraits::length> get() const
     {
         return TBitTraits::get(&raw());
     }
@@ -123,7 +123,7 @@ public:
 
     // EXPERIMENTAL
     inline word_type& value() { return raw(); }
-    constexpr const word_type& value() const { return raw(); }
+    ESTD_CPP_CONSTEXPR_RET const word_type& value() const { return raw(); }
 };
 
 }

@@ -59,9 +59,9 @@ namespace experimental {
 template <unsigned bitpos_, unsigned length_, length_direction direction_ = default_direction>
 struct bit_traits
 {
-    static constexpr unsigned bitpos = bitpos_;
-    static constexpr unsigned length = length_;
-    static constexpr length_direction direction = direction_;
+    static CONSTEXPR unsigned bitpos = bitpos_;
+    static CONSTEXPR unsigned length = length_;
+    static CONSTEXPR length_direction direction = direction_;
 
     typedef word<length> word_type;
 
@@ -72,23 +72,31 @@ struct bit_traits
     typedef internal::descriptor_base<length_ + bitpos_> descriptor_type;
     typedef typename descriptor_type::uint_type descriptor_uint_type;
 
-    static constexpr descriptor_type get_descriptor()
+    static ESTD_CPP_CONSTEXPR_RET descriptor_type get_descriptor()
     {
         return descriptor_type{bitpos, length};
     }
 
-    static constexpr descriptor_uint_type mask() { return (1 << length) - 1; }
-    static constexpr descriptor_uint_type shifted_mask() { return mask() << bitpos; }
+    static ESTD_CPP_CONSTEXPR_RET descriptor_uint_type mask() { return (1 << length) - 1; }
+    static ESTD_CPP_CONSTEXPR_RET descriptor_uint_type shifted_mask() { return mask() << bitpos; }
 
+#ifdef FEATURE_CPP_DEFAULT_TARGS
     template <class T = descriptor_uint_type, length_direction d = direction_>
-    static constexpr word_type get(const T* raw)
+#else
+    template <class T, length_direction d>
+#endif
+    static ESTD_CPP_CONSTEXPR_RET word_type get(const T* raw)
     {
         // FIX: msb_to_lsb mode still needed here
         return d == lsb_to_msb ? ((*raw >> bitpos) & mask()) : 0;
     }
 
+#ifdef FEATURE_CPP_DEFAULT_TARGS
     template <class T = descriptor_uint_type, length_direction d = direction_>
-    static constexpr descriptor_uint_type set(T* raw, word_type value)
+#else
+    template <class T, length_direction d>
+#endif
+    static ESTD_CPP_CONSTEXPR_RET descriptor_uint_type set(T* raw, word_type value)
     {
         return d == lsb_to_msb ?
             (*raw &= ~shifted_mask()) |= estd::to_integer<descriptor_uint_type>(value) << bitpos :
