@@ -36,7 +36,13 @@ public:
     ESTD_CPP_CONSTEXPR_RET reference_base(descriptor_type d, pointer raw) : d(d), raw(raw)
     {}
 
+#ifdef __cplusplus >= 201103L
     reference_base(const reference_base&) = default;
+#else
+    reference_base(const reference_base& copy_from) :
+        raw(copy_from.raw)
+    {}
+#endif
 
     ESTD_CPP_CONSTEXPR_RET T value() const
     {

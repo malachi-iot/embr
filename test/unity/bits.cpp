@@ -4,8 +4,16 @@
 
 #include "unit-test.h"
 
-static void test_bits_1()
+namespace bits {
+
+using namespace embr::bits;
+
+static void test_word_1()
 {
+    internal::word<10> w(0);
+
+    //int val = w.get<0, 0>();
+}
 
 }
 
@@ -15,5 +23,5 @@ TEST_CASE("bit manipulator tests", "[bits]")
 void test_bits()
 #endif
 {
-    RUN_TEST(test_bits_1);
+    RUN_TEST(bits::test_word_1);
 }
