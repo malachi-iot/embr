@@ -1,1 +1,3 @@
-set(SOURCES bits.cpp)
+set(SOURCES
+        bits.cpp
+        word.cpp)

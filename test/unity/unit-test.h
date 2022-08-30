@@ -7,3 +7,4 @@
 #endif
 
 void test_bits();
+void test_word();
