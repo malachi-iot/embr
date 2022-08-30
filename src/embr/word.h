@@ -38,6 +38,7 @@ struct numeric_limits<embr::word<bits, false, strict> >
     static ESTD_CPP_CONSTEXPR_RET type max() { return word_type::mask(); }
 };
 
+#if __cplusplus >= 201103L
 // Converts word back to requested integer with a compile time guard against
 // narrowing conversion
 template <class TInt, size_t bits, bool is_signed, embr::word_strictness strict, typename Enabled =
@@ -46,6 +47,11 @@ typename enable_if<
     (!embr::any<strict, embr::word_strictness::narrowing>()) ||
 #endif
     (estd::numeric_limits<TInt>::max() >= estd::numeric_limits<embr::word<bits> >::max())>::type >
+#else
+// For c++03 is is just a noop for forward compatibility.
+// DEBT: If need be, a c++03 version could be made using the UINT_MAX style defines
+template <class TInt, size_t bits, bool is_signed, embr::word_strictness strict>
+#endif
 ESTD_CPP_CONSTEXPR_RET TInt to_integer(embr::word<bits, is_signed, strict> w)
 {
     return w.cvalue();
@@ -62,22 +68,34 @@ class word : public internal::word_base<bits, is_signed, strict>
 {
     typedef internal::word_base<bits, is_signed, strict> base_type;
 
+#if FEATURE_EMBR_WORD_STRICTNESS
     typedef internal::enum_mask<word_strictness, strict> h;
+#endif
 
 public:
     typedef typename base_type::type type;
 
 public:
-    word() = default;
     ESTD_CPP_CONSTEXPR_RET word(const type& value) : base_type(value) {}
+#ifdef FEATURE_CPP_MOVESEMANTIC
+    word() = default;
     ESTD_CPP_CONSTEXPR_RET word(type&& value) : base_type(std::move(value)) {}
+#else
+    word() {}
+#endif
 
     // DEBT: This can be optimized by skipping any masking altogether when the source
     // word has masking employed - we are guaranteed in that case to receive a pristine
     // bit limited word which we know already fits into our own
+#ifdef FEATURE_CPP_DEFAULT_TARGS
     template <size_t incoming_bits, class Enabled =
         typename estd::enable_if<(incoming_bits <= bits)>::type>
-    constexpr word(const word<incoming_bits>& copy_from) :
+    constexpr
+#else
+    template <size_t incoming_bits>
+    inline
+#endif
+    word(const word<incoming_bits>& copy_from) :
 #if FEATURE_EMBR_WORD_STRICTNESS
         base_type(h::template all<h::e::masking>() ?
             base_type::mask(copy_from.cvalue()) :
@@ -96,16 +114,22 @@ public:
         return * (new (this) word(value));
     }
 
-    template <size_t bits_rhs, class Enabled =
-        typename estd::enable_if<(bits_rhs <= bits)>::type>
+    template <size_t bits_rhs
+#ifdef FEATURE_CPP_DEFAULT_TARGS
+        , class Enabled = typename estd::enable_if<(bits_rhs <= bits)>::type
+#endif
+        >
     inline word& operator +=(word<bits_rhs> r)
     {
         base_type::value_ += r.cvalue();
         return *this;
     }
 
-    template <size_t bits_rhs, class Enabled =
-        typename estd::enable_if<(bits_rhs <= bits)>::type>
+    template <size_t bits_rhs
+#ifdef FEATURE_CPP_DEFAULT_TARGS
+        , class Enabled = typename estd::enable_if<(bits_rhs <= bits)>::type
+#endif
+        >
     inline word& operator -=(word<bits_rhs> r)
     {
         base_type::value_ -= r.cvalue();
@@ -113,8 +137,11 @@ public:
     }
 
 
-    template <size_t bits_rhs, class Enabled =
-        typename estd::enable_if<(bits_rhs <= bits)>::type>
+    template <size_t bits_rhs
+#ifdef FEATURE_CPP_DEFAULT_TARGS
+        , class Enabled = typename estd::enable_if<(bits_rhs <= bits)>::type
+#endif
+        >
     inline word& operator &=(word<bits_rhs> r)
     {
         base_type::value_ &= r.cvalue();
@@ -130,8 +157,11 @@ public:
     }
 
 
-    template <size_t bits_rhs, class Enabled =
-        typename estd::enable_if<(bits_rhs <= bits)>::type>
+    template <size_t bits_rhs
+#ifdef FEATURE_CPP_DEFAULT_TARGS
+        , class Enabled = typename estd::enable_if<(bits_rhs <= bits)>::type
+#endif
+        >
     inline word& operator |=(word<bits_rhs> r)
     {
         base_type::value_ |= r.cvalue();
@@ -139,21 +169,27 @@ public:
     }
 
 
-    template <size_t bits_rhs, class Enabled =
-        typename estd::enable_if<(bits_rhs <= bits)>::type>
+    template <size_t bits_rhs
+#ifdef FEATURE_CPP_DEFAULT_TARGS
+        , class Enabled = typename estd::enable_if<(bits_rhs <= bits)>::type
+#endif
+        >
     ESTD_CPP_CONSTEXPR_RET word operator +(word<bits_rhs> r) const
     {
         return word{(type) (base_type::value_ + r.value())};
     }
 
-    template <size_t bits_rhs, class Enabled =
-        typename estd::enable_if<(bits_rhs <= bits)>::type>
+    template <size_t bits_rhs
+#ifdef FEATURE_CPP_DEFAULT_TARGS
+        , class Enabled = typename estd::enable_if<(bits_rhs <= bits)>::type
+#endif
+        >
     ESTD_CPP_CONSTEXPR_RET word operator &(word<bits_rhs> r) const
     {
         return word{(type) (base_type::value_ & r.value())};
     }
 
-    constexpr word operator ~() const { return word{~base_type::value_}; }
+    ESTD_CPP_CONSTEXPR_RET word operator ~() const { return word{~base_type::value_}; }
 };
 
 
@@ -163,7 +199,7 @@ public:
 // +++
 
 template <size_t bits>
-constexpr word<bits> operator &(word<bits> l, typename word<bits>::type r)
+ESTD_CPP_CONSTEXPR_RET word<bits> operator &(word<bits> l, typename word<bits>::type r)
 {
     return l & word<bits>{r};
 }

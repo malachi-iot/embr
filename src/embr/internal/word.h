@@ -50,6 +50,7 @@ struct narrow_cast<word<bits_cast_from>, word<bits_cast_to>,
 }; */
 
 
+#if __cplusplus >= 201103L
 template <size_t bits_cast_from, bool signed_from, size_t bits_cast_to, bool signed_to, word_strictness strict>
 struct narrow_cast<word<bits_cast_from, signed_from>, word<bits_cast_to, signed_to, strict> >
 {
@@ -61,7 +62,7 @@ struct narrow_cast<word<bits_cast_from, signed_from>, word<bits_cast_to, signed_
             (typename to_type::type)from.cvalue()};
     }
 };
-
+#endif
 
 // Analogous to std::byte, but with choosable bit count
 
@@ -73,10 +74,12 @@ template <size_t bits, bool is_signed, word_strictness strict>
 class word_base : public type_from_bits<bits, is_signed>
 {
     typedef type_from_bits<bits, is_signed> base_type;
+#if FEATURE_EMBR_WORD_STRICTNESS
     typedef internal::enum_mask<word_strictness, strict> h;
+#endif
 
     // Equivalent to  ((1 << bits) - 1) without overflowing
-    static constexpr std::uintmax_t mask_ =  
+    static CONSTEXPR std::uintmax_t mask_ =
         (((std::uintmax_t)1 << (bits - 1)) - 1) | ((std::uintmax_t)1 << (bits - 1));
 
 public:
@@ -92,22 +95,22 @@ protected:
     constexpr word_base(type&& value) : value_{
         any<strict, h::e::masking>() ? mask(value) : value} {}
 #else
-    constexpr word_base(const type& value) : value_(value) {}
+    ESTD_CPP_CONSTEXPR_RET word_base(const type& value) : value_(value) {}
 #ifdef FEATURE_CPP_MOVESEMANTIC
     constexpr word_base(type&& value) : value_{value} {}
 #endif
 #endif
 
 public:
-    constexpr const type& value() const { return value_; }
-    constexpr const type& cvalue() const { return value_; }
+    ESTD_CPP_CONSTEXPR_RET const type& value() const { return value_; }
+    ESTD_CPP_CONSTEXPR_RET const type& cvalue() const { return value_; }
 
 #if FEATURE_EMBR_WORD_STRICTNESS
     // EXPERIMENTAL
     typedef internal::enum_mask<word_strictness, strict> attributes;
 #endif
 
-    static constexpr unsigned width() { return bits; }
+    static ESTD_CPP_CONSTEXPR_RET unsigned width() { return bits; }
 
     // DEBT: Pretty sure we have to adjust this for signed operations
     static ESTD_CPP_CONSTEXPR_RET type mask()

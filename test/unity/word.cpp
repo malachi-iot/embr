@@ -6,9 +6,17 @@
 
 static void test_word_32bit()
 {
-    embr::word<32> w(5);
+    {
+        embr::word<32> w(5);
 
-    TEST_ASSERT_EQUAL(5, w.cvalue());
+        TEST_ASSERT_EQUAL(5, w.cvalue());
+    }
+
+    {
+        embr::word<24> w(5);
+
+        TEST_ASSERT_EQUAL(5, w.cvalue());
+    }
 }
 
 #ifdef ESP_IDF_TESTING
