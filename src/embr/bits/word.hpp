@@ -36,7 +36,7 @@ public:
     ESTD_CPP_CONSTEXPR_RET reference_base(descriptor_type d, pointer raw) : d(d), raw(raw)
     {}
 
-#ifdef __cplusplus >= 201103L
+#if __cplusplus >= 201103L
     reference_base(const reference_base&) = default;
 #else
     reference_base(const reference_base& copy_from) :
@@ -100,7 +100,7 @@ public:
 #endif
     ESTD_CPP_CONSTEXPR_RET embr::word<length> get() const
     {
-        return experimental::bit_traits<bitpos, length>::get(&raw());
+        return experimental::bit_traits<bitpos, length>::template get<word_type, lsb_to_msb>(&raw());
     }
 
     // EXPERIMENTAL
@@ -112,7 +112,7 @@ public:
     //inline void set(experimental::word<length> v) const
     inline unsigned set(word_type v)
     {
-        return experimental::bit_traits<bitpos, length>::set(&raw(), v);
+        return experimental::bit_traits<bitpos, length>::template set<word_type, lsb_to_msb>(&raw(), v);
     }
 
     // EXPERIMENTAL

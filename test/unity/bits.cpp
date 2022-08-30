@@ -10,9 +10,11 @@ using namespace embr::bits;
 
 static void test_word_1()
 {
-    internal::word<10> w(0);
+    internal::word<10> w(1);
 
-    //int val = w.get<0, 0>();
+    embr::word<1> val = w.get<0, 1>();
+
+    TEST_ASSERT_EQUAL(1, val.cvalue());
 }
 
 }
