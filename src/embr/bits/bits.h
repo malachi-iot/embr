@@ -74,7 +74,7 @@ struct bit_traits
 
     static ESTD_CPP_CONSTEXPR_RET descriptor_type get_descriptor()
     {
-        return descriptor_type{bitpos, length};
+        return descriptor_type(bitpos, length);
     }
 
     static ESTD_CPP_CONSTEXPR_RET descriptor_uint_type mask() { return (1 << length) - 1; }

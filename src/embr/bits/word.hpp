@@ -125,12 +125,12 @@ public:
 
     inline reference operator[](descriptor_type d)
     {
-        return reference{d, &raw()};
+        return reference(d, &raw());
     }
 
     ESTD_CPP_CONSTEXPR_RET const_reference operator[](descriptor_type d) const
     {
-        return const_reference{d, &raw()};
+        return const_reference(d, &raw());
     }
 
     // EXPERIMENTAL

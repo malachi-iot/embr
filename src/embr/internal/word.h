@@ -5,7 +5,9 @@
 
 #include "../fwd/word.h"
 
+#if FEATURE_EMBR_WORD_STRICTNESS
 #include "../enum_mask.h"   // NOTE: Only in support of experimental 'attributes'
+#endif
 
 #include "narrow_cast.h"
 #include "type_from_bits.h"

@@ -124,7 +124,7 @@ public:
 protected:
     T* const raw;
 
-    base(value_type* raw) : raw{raw} {}
+    base(value_type* raw) : raw(raw) {}
 
     T* data() { return raw; }
     const T* data() const { return raw; }

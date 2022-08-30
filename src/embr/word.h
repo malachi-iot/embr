@@ -5,7 +5,9 @@
 
 #include "internal/word.h"
 
+#if FEATURE_EMBR_WORD_STRICTNESS
 #include "enum_mask.h"
+#endif
 
 #include "platform/guard-in.h"
 
@@ -36,6 +38,7 @@ struct numeric_limits<embr::word<bits, false, strict> >
 
     static ESTD_CPP_CONSTEXPR_RET type min() { return 0; }
     static ESTD_CPP_CONSTEXPR_RET type max() { return word_type::mask(); }
+    static CONSTEXPR int digits = bits;
 };
 
 #if __cplusplus >= 201103L
