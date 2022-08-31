@@ -39,8 +39,8 @@ struct SchedulerObserver
 struct FunctorImpl :
     embr::internal::scheduler::impl::Function<estd::chrono::freertos_clock::time_point>
 {
-    // TODO: Change namespace to estd::freertos
-    typedef estd::experimental::mutex mutex;
+    // 'true' designates static allocation
+    typedef estd::freertos::mutex<true> mutex;
 
     inline static time_point now()
     { return estd::chrono::freertos_clock::now(); }
