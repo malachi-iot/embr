@@ -64,6 +64,8 @@ template <unsigned bits>
 class word<bits, lsb_to_msb> : public embr::word<bits>
 {
     typedef embr::word<bits> base_type;
+
+protected:
 #ifdef __cpp_alias_templates
     using word_type = typename base_type::type;
 #else
@@ -155,7 +157,7 @@ ESTD_CPP_CONSTEXPR_RET embr::word<length> name() const  \
 }
 
 #define EMBR_BITS_WORD_SETTER(name, bitpos, length) \
-inline void name(unsigned v)              \
+inline void name(typename base_type::word_type v)   \
 {                                                   \
     base_type::set<bitpos, length>(v);              \
 }
