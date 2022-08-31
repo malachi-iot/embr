@@ -119,14 +119,14 @@ public:
 
     // EXPERIMENTAL
     template <class TBitTraits>
-    ESTD_CPP_CONSTEXPR_RET embr::word<TBitTraits::length> get() const
+    ESTD_CPP_CONSTEXPR_RET embr::word<TBitTraits::length> get_exp() const
     {
         return TBitTraits::get(&raw());
     }
 
     // EXPERIMENTAL
     template <class TBitTraits>
-    inline void set(embr::word<TBitTraits::length> v)
+    inline void set_exp(embr::word<TBitTraits::length> v)
     {
         TBitTraits::set(&raw(), v);
     }

@@ -326,7 +326,7 @@ TEST_CASE("bits2")
 
             v.set(d, v1);
 
-            REQUIRE(v.get<traits_type>() == v1);
+            REQUIRE(v.get_exp<traits_type>() == v1);
 
             REQUIRE(d == traits_type::get_descriptor());
         }
