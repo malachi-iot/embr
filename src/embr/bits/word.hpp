@@ -148,4 +148,20 @@ public:
 
 }}
 
+#define EMBR_BITS_WORD_GETTER(name, bitpos, length) \
+ESTD_CPP_CONSTEXPR_RET embr::word<length> name() const  \
+{                                                   \
+    return base_type::get<bitpos, length>();                \
+}
+
+#define EMBR_BITS_WORD_SETTER(name, bitpos, length) \
+inline void name(unsigned v)              \
+{                                                   \
+    base_type::set<bitpos, length>(v);              \
+}
+
+#define EMBR_BITS_WORD_PROPERTY(name, bitpos, length) \
+EMBR_BITS_WORD_GETTER(name, bitpos, length)             \
+EMBR_BITS_WORD_SETTER(name, bitpos, length)
+
 #include "../platform/guard-out.h"
