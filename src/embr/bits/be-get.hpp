@@ -135,6 +135,23 @@ struct getter<big_endian, lsb_to_msb, lsb_to_msb>
 
         return internal::get_be_lsb_to_msb<TInt>(width, d, raw);
     }
+
+
+    template <unsigned bitpos, unsigned length, typename TInt, class TForwardIt>
+    static TInt get(TForwardIt raw)
+    {
+        typedef experimental::getter<bitpos, length, big_endian, lsb_to_msb> g;
+        // DEBT: Reliance on descriptor means less compile time optimization opportunity
+        // Have to do this right now because v3 getter isn't fully built out
+        CONSTEXPR descriptor d(bitpos, length);
+
+        TInt v;
+
+        g::get(d, raw + g::adjuster(), v);
+
+        return v;
+    }
+
 };
 
 

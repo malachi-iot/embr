@@ -225,6 +225,20 @@ TEST_CASE("bits2")
             REQUIRE(!(item < item));
             REQUIRE(!(item > item));
             REQUIRE((item == item));
+
+            SECTION("3rd generation")
+            {
+                // auto-converting up to 16 bit for convenience
+                embr::word<16> v = item.get<4, 4>(0);
+
+                REQUIRE(v == 1);
+
+                // FIX: word<8> overflows on shift operations while this
+                // is crossing boundaries
+                //v = item.get<4, 8>(1);
+
+                //REQUIRE(v.value() == 0x35);
+            }
         }
         SECTION("little endian")
         {
