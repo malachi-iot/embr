@@ -126,7 +126,8 @@ class DataPump
 public:
     typedef TTransportDescriptor transport_descriptor_t;
     typedef typename transport_descriptor_t::endpoint_type endpoint_type;
-    typedef typename transport_descriptor_t::netbuf_type netbuf_type;
+    typedef typename transport_descriptor_t::buffer_type buffer_type;
+    typedef buffer_type netbuf_type;
 #if ENABLE_EMBR_DATAPUMP_INLINE
     typedef netbuf_type pnetbuf_t;
 #else
