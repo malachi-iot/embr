@@ -1,46 +1,29 @@
 cmake_minimum_required(VERSION 3.2)
 
-project(embr VERSION 0.1.2 LANGUAGES CXX)
+project(embr VERSION 0.1.3 LANGUAGES CXX)
 
 set(ROOT_DIR ..)
 set(EXT_DIR ${ROOT_DIR}/ext)
 set(ESTDLIB_DIR ${EXT_DIR}/estdlib/src)
 
-if(NOT TARGET estd_lib)
+if(NOT TARGET estd)
     add_subdirectory(${ESTDLIB_DIR} estd)
 endif()
 
-set(SOURCE_FILES
-    embr/dataport.h
-    embr/dataport.hpp
-    embr/datapump.h
-    embr/datapump.hpp
-    embr/events.h
-
-    embr/exp/netbuf-alloc.h
-
-    embr/netbuf.h
-    embr/netbuf-static.h
-    embr/netbuf-dynamic.h
-    embr/netbuf-reader.h
-    embr/netbuf-writer.h
-
-    embr/observer.h
-
-    embr/scheduler.h
-
-    embr/streambuf.h
-    embr/transport-descriptor.h
-        embr/exp/datapump-v2.h embr/exp/pbuf.h embr/exp/retry-v2.h embr/exp/datapump-core-v2.h embr/exp/dataport-v2.h)
+# NOTE: SOURCE_FILES not picked up ever.  Below target_include_directories
+# INTERFACE effectively makes it a **/*.h header library.  So, source.cmake
+# is effectively a NOOP and we keep it around just for reference.
+include(sources.cmake)
 
 #add_library(${PROJECT_NAME} ${SOURCE_FILES})
 # https://stackoverflow.com/questions/5957134/how-do-i-set-up-cmake-to-generate-header-only-projects
 add_library(${PROJECT_NAME} INTERFACE)
 add_library(malachi-iot::embr ALIAS ${PROJECT_NAME})
-# DEBT: Move this to estd itself, once we're 100% sure that 'malachi-iot' is a good prefix
-add_library(malachi-iot::estd ALIAS estd_lib)
-# 'embr-lib' name is now deprecated
-add_library(embr-lib ALIAS ${PROJECT_NAME})
+
+# This line is largely superflous.  No linking happens for an INTERFACE library.
+# estd itself does demand some linking.  I speculate this line will come in handy
+# for consuming CMake projects which don't make explicit reference to estd
+target_link_libraries(${PROJECT_NAME} INTERFACE estd)
 
 #target_include_directories(${PROJECT_NAME} PUBLIC .)
 target_include_directories(${PROJECT_NAME} INTERFACE .)
