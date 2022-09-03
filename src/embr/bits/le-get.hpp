@@ -167,6 +167,7 @@ struct getter<bitpos, length, little_endian, ld, rd,
         }
     }
 
+    // DEBT: Consolidate this with full bit flavor, since it's a copy/paste
     template <typename TReverseIt, typename TInt,
         estd::enable_if_t<(sizeof(TInt) <= 1), bool> = true>
     static inline void get_assist(unsigned, TReverseIt, TInt&)

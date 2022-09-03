@@ -31,7 +31,23 @@ struct getter<bitpos, length, big_endian, lsb_to_msb, lsb_to_msb,
 {
     constexpr static int adjuster() { return 0; }
 
-    constexpr static int adjuster(descriptor d) { return 0; }
+    constexpr static int adjuster(descriptor) { return 0; }
+
+    // NOTE: Copy/pasted & adapted from le-get, not fully reworked for BE yet
+    template <typename TReverseIt, typename TInt,
+        estd::enable_if_t<(sizeof(TInt) > 1), bool> = true>
+    static inline void get_assist(unsigned sz, TReverseIt raw, TInt& v)
+    {
+        constexpr unsigned byte_width = byte_size();
+
+        v = (byte) *raw;
+
+        while(--sz)
+        {
+            v <<= byte_width;
+            v |= (byte) *++raw;
+        }
+    }
 
     // Prep for uint8_t operation
     template <typename TForwardIt, typename TInt,
