@@ -152,7 +152,8 @@ struct getter<bitpos, length, little_endian, ld, rd,
         return offset_adjuster(d);
     }
 
-    template <typename TReverseIt, typename TInt>
+    template <typename TReverseIt, typename TInt,
+        estd::enable_if_t<(sizeof(TInt) > 1), bool> = true>
     static inline void get_assist(unsigned sz, TReverseIt raw, TInt& v)
     {
         constexpr unsigned byte_width = byte_size();
@@ -165,6 +166,13 @@ struct getter<bitpos, length, little_endian, ld, rd,
             v |= (byte) *--raw;
         }
     }
+
+    template <typename TReverseIt, typename TInt,
+        estd::enable_if_t<(sizeof(TInt) <= 1), bool> = true>
+    static inline void get_assist(unsigned, TReverseIt, TInt&)
+    {
+    }
+
 
     template <typename TReverseIt, typename TInt>
     static inline void get(descriptor d, TReverseIt raw, TInt& v)

@@ -33,6 +33,13 @@ struct getter<bitpos, length, big_endian, lsb_to_msb, lsb_to_msb,
 
     constexpr static int adjuster(descriptor d) { return 0; }
 
+    // Prep for uint8_t operation
+    template <typename TForwardIt, typename TInt,
+        estd::enable_if_t<(sizeof(TInt) <= 1), bool> = true>
+    static inline void get_assist(unsigned, TForwardIt, TInt&)
+    {
+    }
+
     template <typename TForwardIt, typename TInt>
     static inline void get(descriptor d, TForwardIt raw, TInt& v)
     {
