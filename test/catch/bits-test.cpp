@@ -347,13 +347,35 @@ TEST_CASE("bits2")
         SECTION("v3")
         {
             using namespace bits;
-
-            typedef experimental::getter<2, 7, big_endian, lsb_to_msb> g;
-            constexpr descriptor d{2, 7};
             uint8_t v;
 
             // TODO: Needs more work
-            g::get_unready(d, &be_example1[0], v);
+
+            SECTION("big_endian, lsb_to_msb, 8-bit")
+            {
+                SECTION("4, 8")
+                {
+
+                    typedef experimental::getter<4, 8, big_endian, lsb_to_msb> g;
+                    constexpr descriptor d{4, 8};
+
+                    g::get_unready(d, be_example1, v);
+
+                    REQUIRE(v == 0x14);
+                }
+                SECTION("2, 7")
+                {
+                    typedef experimental::getter<2, 7, big_endian, lsb_to_msb> g;
+                    constexpr descriptor d{2, 7};
+
+                    g::get_unready(d, &be_example1[0], v);
+
+                    // 0x12 0x34 = 0b00010010 0b00110100
+                    // making result 0b000100xx + 0b.......0 = 0b00001000 = 0x08
+
+                    REQUIRE(v == 0x08);
+                }
+            }
         }
     }
     SECTION("comparison")
