@@ -40,8 +40,6 @@ struct getter<bitpos, length, big_endian, lsb_to_msb, lsb_to_msb,
     {
         constexpr unsigned byte_width = byte_size();
 
-        v = (byte) *raw;
-
         while(--sz)
         {
             v <<= byte_width;
@@ -74,13 +72,19 @@ struct getter<bitpos, length, big_endian, lsb_to_msb, lsb_to_msb,
 
         v >>= d.bitpos;
 
-        // FIX: Probably this math is wrong
-        int i = d.length - d.bitpos;
+        // 'i' represents remaining bits after initial bitpos byte is processed
+        int i = d.length - (byte_width - d.bitpos);
 
-        get_assist(i, raw, v);
+        get_assist(i / byte_width, raw, v);
 
         // FIX: Need to handle remainder byte.  Remember this code generally
         // assumes multibyte operation
+
+        byte_type lsb_outside_bits;
+        byte_type remainder_bits = i % byte_width;
+        byte_type mask = (1 << remainder_bits) - 1;
+
+        v |= (*raw & mask);
     }
 };
 
