@@ -344,6 +344,17 @@ TEST_CASE("bits2")
 
             REQUIRE(d == traits_type::get_descriptor());
         }
+        SECTION("v3")
+        {
+            using namespace bits;
+
+            typedef experimental::getter<2, 7, big_endian, lsb_to_msb> g;
+            constexpr descriptor d{2, 7};
+            uint8_t v;
+
+            // TODO: Needs more work
+            g::get_unready(d, &be_example1[0], v);
+        }
     }
     SECTION("comparison")
     {
