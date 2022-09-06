@@ -412,6 +412,16 @@ TEST_CASE("bits2")
 
                     REQUIRE(v == 0x868);
                 }
+                // Byte boundary flavor
+                SECTION("0, 16")
+                {
+                    typedef experimental::getter<0, 16, big_endian, lsb_to_msb> g;
+                    constexpr descriptor d{0, 16};
+
+                    g::get_unready(d, be_example1, v);
+
+                    REQUIRE(v == 0x1234);
+                }
             }
             SECTION("big_endian, lsb_to_msb, 32-bit")
             {
@@ -449,6 +459,26 @@ TEST_CASE("bits2")
                     // 0b00010xxx 0b00110100 0b01010110 0b..111000 = 000 10001101 00010101 10111000
 
                     REQUIRE(v == 0x8D15B8);
+                }
+                // Byte boundary flavor
+                SECTION("0, 24")
+                {
+                    typedef experimental::getter<0, 24, big_endian, lsb_to_msb> g;
+                    constexpr descriptor d{0, 24};
+
+                    g::get_unready(d, be_example1, v);
+
+                    REQUIRE(v == 0x123456);
+                }
+                // Byte boundary flavor
+                SECTION("0, 32")
+                {
+                    typedef experimental::getter<0, 32, big_endian, lsb_to_msb> g;
+                    constexpr descriptor d{0, 32};
+
+                    g::get_unready(d, be_example1, v);
+
+                    REQUIRE(v == 0x12345678);
                 }
             }
 
