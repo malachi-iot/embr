@@ -4,7 +4,6 @@
 
 namespace embr { namespace bits {
 
-// DEBT: Un-hardcode the '8'
 template <endianness e, length_direction direction = default_direction, resume_direction rd = direction,
     class TBase = internal::provider<e, internal::base<const byte> > >
 class decoder : public TBase

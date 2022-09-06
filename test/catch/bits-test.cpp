@@ -220,7 +220,7 @@ TEST_CASE("bits2")
         {
             std::copy_n(be_example1, sizeof(be_example1), raw);
 
-            bits::material<bits::big_endian> item{raw};
+            bits::layer2::material<bits::big_endian, sizeof(be_example1)> item{raw};
 
             REQUIRE(!(item < item));
             REQUIRE(!(item > item));
@@ -253,11 +253,24 @@ TEST_CASE("bits2")
     }
     SECTION("layer1 operations")
     {
-        bits::layer1::encoder<bits::big_endian, 4, bits::lsb_to_msb, bits::msb_to_lsb> e;
+        SECTION("encoder")
+        {
+            bits::layer1::encoder<bits::big_endian, 4, bits::lsb_to_msb, bits::msb_to_lsb> e;
 
-        e.set<uint8_t>(0, bits::descriptor{4, 3}, 3);
+            e.set<uint8_t>(0, bits::descriptor{4, 3}, 3);
 
-        REQUIRE(e.data()[0] == 0x30);
+            REQUIRE(e.data()[0] == 0x30);
+        }
+        SECTION("material")
+        {
+            /*
+             * Not quite ready yet as we work out what constructors should be
+            bits::layer1::material<bits::big_endian, 4, bits::lsb_to_msb> e;
+
+            e.set<uint8_t>(0, bits::descriptor{4, 3}, 3);
+
+            REQUIRE(e.data()[0] == 0x30); */
+        }
     }
     SECTION("word operations")
     {

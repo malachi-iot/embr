@@ -11,30 +11,35 @@
 
 namespace embr { namespace bits {
 
+namespace internal {
 
 /// Utility class combining encoder and decoder together.  Name still in flux
 /// @tparam e
 /// @tparam direction
-template <endianness e, length_direction direction = default_direction, resume_direction rd = direction,
-    class TBase = internal::provider<e, estd::layer2::array<uint8_t, 8> > >
-class material : public decoder<e, direction, rd, encoder<e, direction, rd, TBase> >
-{
-    typedef decoder<e, direction, rd, encoder<e, direction, rd, TBase> > base_type;
-    typedef typename base_type::value_type byte_type;
+/// TODO: Likely this wants to be formalized into 'detail' namespace
+template <endianness e, length_direction direction, resume_direction rd, class TBase>
+using material = decoder<e, direction, rd, encoder<e, direction, rd,
+    embr::bits::internal::provider<e, TBase> > >;
 
-protected:
-    // Needed for layer1
-    material() = default;
+}
 
-public:
-    material(byte_type* raw) : base_type(raw) {}
-};
 
+
+namespace layer1 {
+
+template <endianness e, size_t N, length_direction direction = default_direction>
+using material = embr::bits::internal::material<e, direction, direction, estd::array<uint8_t, N> >;
+
+}
 
 
 // Almost exactly like regular encoder/decoder but these *imply* an upper boundary, though
 // it is not enforced.  Also possibly useful is since we derive from array, you get access to size()
 namespace layer2 {
+
+template <endianness e, size_t N, length_direction direction = default_direction>
+using material = embr::bits::internal::material<e, direction, direction, estd::layer2::array<uint8_t, N> >;
+
 
 // We do it this way so that the default constructor is now visible
 template <endianness e, size_t N, length_direction direction = default_direction>
@@ -52,6 +57,14 @@ class decoder : public embr::bits::decoder<e, direction, rd,
 };
 
 }
+
+/// DEBT: hard dependency on estd::layer2::array of 8 works because we
+/// basically ignore the upper boundary.  Depending on internal::base<const byte> does
+/// not bring forward 'size()' which creates other complications.  Phase out
+/// the usage of embr::bits::material entirely in preference for layer1/layer2 varieties
+template <endianness e, length_direction direction = default_direction>
+using material = layer2::material<e, 8, direction>;
+
 
 namespace experimental {
 
