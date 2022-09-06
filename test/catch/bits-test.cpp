@@ -250,7 +250,7 @@ TEST_CASE("bits2")
         {
             std::copy_n(le_example1, sizeof(le_example1), raw);
 
-            bits::material<bits::little_endian> item{raw};
+            bits::layer2::material<bits::little_endian, 4> item{raw};
 
             REQUIRE(!(item < item));
             REQUIRE(!(item > item));
@@ -271,13 +271,26 @@ TEST_CASE("bits2")
         }
         SECTION("material")
         {
-            bits::layer1::material<bits::big_endian, 4, bits::lsb_to_msb> e;
+            SECTION("big endian")
+            {
+                bits::layer1::material<bits::big_endian, 4, bits::lsb_to_msb> e;
 
-            clear(e);
+                clear(e);
 
-            e.set<uint8_t>(0, bits::descriptor{4, 3}, 3);
+                e.set<uint8_t>(0, bits::descriptor{4, 3}, 3);
 
-            REQUIRE(e.data()[0] == 0x30);
+                REQUIRE(e.data()[0] == 0x30);
+            }
+            SECTION("little endian")
+            {
+                // It seems le_example1's constness is not compatible with estd::array ctor
+                /*
+                bits::layer1::material<bits::little_endian, 4> item{le_example1};
+
+                REQUIRE(!(item < item));
+                REQUIRE(!(item > item));
+                REQUIRE((item == item)); */
+            }
         }
     }
     SECTION("word operations")

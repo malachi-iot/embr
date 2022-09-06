@@ -54,13 +54,6 @@ using decoder = embr::bits::decoder<e, direction, rd,
 
 }
 
-/// DEBT: hard dependency on estd::layer2::array of 8 works because we
-/// basically ignore the upper boundary.  Depending on internal::base<const byte> does
-/// not bring forward 'size()' which creates other complications.  Phase out
-/// the usage of embr::bits::material entirely in preference for layer1/layer2 varieties
-template <endianness e, length_direction direction = default_direction>
-using material = layer2::material<e, 8, direction>;
-
 
 namespace experimental {
 
