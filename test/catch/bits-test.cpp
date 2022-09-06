@@ -376,6 +376,16 @@ TEST_CASE("bits2")
 
                     REQUIRE(v == 0x08);
                 }
+                SECTION("subbyte 1, 3")
+                {
+                    typedef experimental::getter<1, 3, big_endian, lsb_to_msb> g;
+                    constexpr descriptor d{1, 3};
+
+                    //g::get_unready(d, &be_example1[0], v);
+
+                    // FIX: wire in subbyte here - probably located in embr::bits or embr::bits::internal
+                    // remember, subbyte is not multibyte so endianness does not apply
+                }
             }
             SECTION("big_endian, lsb_to_msb, 16-bit")
             {
@@ -436,9 +446,9 @@ TEST_CASE("bits2")
                     g::get_unready(d, be_example1, v);
 
                     // 0x12 0x34 0x56 0x78 = 0b00010010 0b00110100 0b01010110 0b01111000
-                    // 0b00010xxx 0b00110100 0b01010110 0b..111000 = 00010001 10100010 10110111 000
+                    // 0b00010xxx 0b00110100 0b01010110 0b..111000 = 000 10001101 00010101 10111000
 
-                    REQUIRE(v == 0x10D158);
+                    REQUIRE(v == 0x8D15B8);
                 }
             }
 
