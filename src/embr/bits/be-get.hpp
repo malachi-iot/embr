@@ -22,8 +22,7 @@ namespace experimental {
 template <unsigned bitpos, unsigned length>
 struct getter<bitpos, length, big_endian, lsb_to_msb, lsb_to_msb,
     enable<is_valid(bitpos, length) &&
-            // DEBT: Still prepping byte boundary flavor
-            //!is_byte_boundary(bitpos, length) &&
+            !is_byte_boundary(bitpos, length) &&
             !is_subbyte(bitpos, length)> > :
    getter_tag
 {
@@ -31,7 +30,6 @@ struct getter<bitpos, length, big_endian, lsb_to_msb, lsb_to_msb,
 
     constexpr static int adjuster(descriptor) { return 0; }
 
-    // NOTE: Copy/pasted & adapted from le-get, not fully reworked for BE yet
     template <typename TReverseIt, typename TInt,
         estd::enable_if_t<(sizeof(TInt) > 1), bool> = true>
     static inline void get_assist(unsigned sz, TReverseIt& raw, TInt& v)
@@ -113,7 +111,8 @@ struct getter<bitpos, length, big_endian, lsb_to_msb, lsb_to_msb,
     }
 };
 
-/*
+
+// Byte boundary flavor
 template <unsigned bitpos, unsigned length>
 struct getter<bitpos, length, big_endian, lsb_to_msb, lsb_to_msb,
     enable<is_valid(bitpos, length) &&
@@ -125,13 +124,39 @@ struct getter<bitpos, length, big_endian, lsb_to_msb, lsb_to_msb,
 
     constexpr static int adjuster(descriptor) { return 0; }
 
+    template <typename TReverseIt, typename TInt,
+        estd::enable_if_t<(sizeof(TInt) > 1), bool> = true>
+    static inline void get_assist(unsigned sz, TReverseIt& raw, TInt& v)
+    {
+        constexpr unsigned byte_width = byte_size();
+
+        while(--sz)
+        {
+            v <<= byte_width;
+            v |= (byte) *++raw;
+        }
+    }
+
+    // Prep for uint8_t operation
+    template <typename TForwardIt, typename TInt,
+        estd::enable_if_t<(sizeof(TInt) <= 1), bool> = true>
+    static inline void get_assist(unsigned, TForwardIt, TInt&)
+    {
+    }
+
     template <typename TForwardIt, typename TInt>
     static inline void get(descriptor d, TForwardIt raw, TInt& v)
     {
+        typedef typename estd::iterator_traits<TForwardIt>::value_type byte_type;
+        constexpr size_t byte_width = sizeof(byte_type) * byte_size();
 
+        v = *raw;
+
+        // process middle and end bytes
+        get_assist(d.length / byte_width, raw, v);
     }
 };
-*/
+
 
 }
 
