@@ -293,7 +293,7 @@ TEST_CASE("bits2")
             }
         }
     }
-    SECTION("word operations")
+    SECTION("bits::word")
     {
         constexpr int v1 = 5;
         constexpr int v2 = 10;

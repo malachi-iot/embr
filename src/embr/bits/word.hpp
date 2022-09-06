@@ -72,9 +72,10 @@ protected:
     typedef typename base_type::type word_type;
 #endif
 
-    //T raw;
-    word_type& raw() { return base_type::value_; }
-    const word_type& raw() const { return base_type::value(); }
+private:
+    // DEBT: Somehow, &base_type::value_ flips out here.  Find out why
+    inline word_type* raw() { return &this->value_; }
+    ESTD_CPP_CONSTEXPR_RET const word_type* raw() const { return &this->value_; }
 
 public:
     typedef internal::descriptor_base<sizeof(word_type) * byte_size()> descriptor_type;
@@ -86,12 +87,12 @@ public:
 
     inline void set(descriptor_type d, word_type value)
     {
-        set_word_lsb_to_msb(&raw(), d, value);
+        set_word_lsb_to_msb(raw(), d, value);
     }
 
     ESTD_CPP_CONSTEXPR_RET word_type get(descriptor_type d) const
     {
-        return get_word_lsb_to_msb(&raw(), d);
+        return get_word_lsb_to_msb(raw(), d);
     }
 
     // EXPERIMENTAL
@@ -102,7 +103,7 @@ public:
 #endif
     ESTD_CPP_CONSTEXPR_RET embr::word<length> get() const
     {
-        return experimental::bit_traits<bitpos, length>::template get<word_type, lsb_to_msb>(&raw());
+        return experimental::bit_traits<bitpos, length>::template get<word_type, lsb_to_msb>(raw());
     }
 
     // EXPERIMENTAL
@@ -114,36 +115,32 @@ public:
     //inline void set(experimental::word<length> v) const
     inline unsigned set(word_type v)
     {
-        return experimental::bit_traits<bitpos, length>::template set<word_type, lsb_to_msb>(&raw(), v);
+        return experimental::bit_traits<bitpos, length>::template set<word_type, lsb_to_msb>(raw(), v);
     }
 
     // EXPERIMENTAL
     template <class TBitTraits>
     ESTD_CPP_CONSTEXPR_RET embr::word<TBitTraits::length> get_exp() const
     {
-        return TBitTraits::get(&raw());
+        return TBitTraits::get(raw());
     }
 
     // EXPERIMENTAL
     template <class TBitTraits>
     inline void set_exp(embr::word<TBitTraits::length> v)
     {
-        TBitTraits::set(&raw(), v);
+        TBitTraits::set(raw(), v);
     }
 
     inline reference operator[](descriptor_type d)
     {
-        return reference(d, &raw());
+        return reference(d, raw());
     }
 
     ESTD_CPP_CONSTEXPR_RET const_reference operator[](descriptor_type d) const
     {
-        return const_reference(d, &raw());
+        return const_reference(d, raw());
     }
-
-    // EXPERIMENTAL
-    inline word_type& value() { return raw(); }
-    ESTD_CPP_CONSTEXPR_RET const word_type& value() const { return raw(); }
 };
 
 }
