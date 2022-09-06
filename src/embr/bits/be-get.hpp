@@ -103,9 +103,6 @@ struct getter<bitpos, length, big_endian, lsb_to_msb, lsb_to_msb,
 
         get_assist(i / byte_width, raw, v);
 
-        // FIX: Need to handle remainder byte.  Remember this code generally
-        // assumes multibyte operation
-
         byte_type lsb_outside_bits;
         byte_type remainder_bits = i % byte_width;
         byte_type mask = (1 << remainder_bits) - 1;
