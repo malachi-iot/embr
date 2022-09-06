@@ -36,11 +36,11 @@ struct getter<bitpos, length, big_endian, lsb_to_msb, lsb_to_msb,
     // NOTE: Copy/pasted & adapted from le-get, not fully reworked for BE yet
     template <typename TReverseIt, typename TInt,
         estd::enable_if_t<(sizeof(TInt) > 1), bool> = true>
-    static inline void get_assist(unsigned sz, TReverseIt raw, TInt& v)
+    static inline void get_assist(unsigned sz, TReverseIt& raw, TInt& v)
     {
         constexpr unsigned byte_width = byte_size();
 
-        while(--sz)
+        while(sz--)
         {
             v <<= byte_width;
             v |= (byte) *++raw;
@@ -110,6 +110,9 @@ struct getter<bitpos, length, big_endian, lsb_to_msb, lsb_to_msb,
         byte_type remainder_bits = i % byte_width;
         byte_type mask = (1 << remainder_bits) - 1;
 
+        ++raw;
+
+        v <<= remainder_bits;
         v |= (*raw & mask);
     }
 };

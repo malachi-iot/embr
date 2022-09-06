@@ -347,12 +347,13 @@ TEST_CASE("bits2")
         SECTION("v3")
         {
             using namespace bits;
-            uint8_t v;
 
             // TODO: Needs more work
 
             SECTION("big_endian, lsb_to_msb, 8-bit")
             {
+                uint8_t v;
+
                 SECTION("4, 8")
                 {
 
@@ -370,10 +371,36 @@ TEST_CASE("bits2")
 
                     g::get_unready(d, &be_example1[0], v);
 
-                    // 0x12 0x34 = 0b00010010 0b00110100
+                    // 0x12 0x34 0x56 = 0b00010010 0b00110100 0b01010110
                     // making result 0b000100xx + 0b.......0 = 0b00001000 = 0x08
 
                     REQUIRE(v == 0x08);
+                }
+            }
+            SECTION("big_endian, lsb_to_msb, 16-bit")
+            {
+                uint16_t v;
+
+                SECTION("4, 8")
+                {
+                    typedef experimental::getter<4, 16, big_endian, lsb_to_msb> g;
+                    constexpr descriptor d{4, 16};
+
+                    g::get_unready(d, be_example1, v);
+
+                    REQUIRE(v == 0x1346);
+                }
+                SECTION("2, 15")
+                {
+                    typedef experimental::getter<4, 15, big_endian, lsb_to_msb> g;
+                    constexpr descriptor d{2, 15};
+
+                    g::get_unready(d, be_example1, v);
+
+                    // 0x12 0x34 0x56 = 0b00010010 0b00110100 0b01010110
+                    // 0b000100xx 0b00110100 0b.......0 = 0b00000100 0b01101000 = 0x468
+
+                    //REQUIRE(v == 0x468);
                 }
             }
         }
