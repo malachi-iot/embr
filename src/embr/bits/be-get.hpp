@@ -22,11 +22,9 @@ namespace experimental {
 template <unsigned bitpos, unsigned length>
 struct getter<bitpos, length, big_endian, lsb_to_msb, lsb_to_msb,
     enable<is_valid(bitpos, length) &&
-            // For the time being, this one serves byte boundary mode also
-            // Neat and elegant that one function works that well, but also slightly
-            // slower than a distinct function if it's available.  So leans on the "win" side
-           //!is_byte_boundary(bitpos, length) &&
-           !is_subbyte(bitpos, length)> > :
+            // DEBT: Still prepping byte boundary flavor
+            //!is_byte_boundary(bitpos, length) &&
+            !is_subbyte(bitpos, length)> > :
    getter_tag
 {
     constexpr static int adjuster() { return 0; }
@@ -114,6 +112,26 @@ struct getter<bitpos, length, big_endian, lsb_to_msb, lsb_to_msb,
         v |= (*raw & mask);
     }
 };
+
+/*
+template <unsigned bitpos, unsigned length>
+struct getter<bitpos, length, big_endian, lsb_to_msb, lsb_to_msb,
+    enable<is_valid(bitpos, length) &&
+           is_byte_boundary(bitpos, length) &&
+           !is_subbyte(bitpos, length)> > :
+    getter_tag
+{
+    constexpr static int adjuster() { return 0; }
+
+    constexpr static int adjuster(descriptor) { return 0; }
+
+    template <typename TForwardIt, typename TInt>
+    static inline void get_unready(descriptor d, TForwardIt raw, TInt& v)
+    {
+
+    }
+};
+*/
 
 }
 
