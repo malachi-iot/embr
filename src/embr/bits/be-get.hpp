@@ -101,6 +101,7 @@ struct getter<bitpos, length, big_endian, lsb_to_msb, lsb_to_msb,
         // 'i' represents remaining bits after initial bitpos byte is processed
         int i = d.length - (byte_width - d.bitpos);
 
+        // process middle bytes, excluding end
         get_assist(i / byte_width, raw, v);
 
         byte_type lsb_outside_bits;

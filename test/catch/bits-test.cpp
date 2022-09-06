@@ -381,7 +381,7 @@ TEST_CASE("bits2")
             {
                 uint16_t v;
 
-                SECTION("4, 8")
+                SECTION("4, 16")
                 {
                     typedef experimental::getter<4, 16, big_endian, lsb_to_msb> g;
                     constexpr descriptor d{4, 16};
@@ -403,6 +403,33 @@ TEST_CASE("bits2")
                     REQUIRE(v == 0x868);
                 }
             }
+            SECTION("big_endian, lsb_to_msb, 32-bit")
+            {
+                uint32_t v;
+
+                SECTION("4, 24")
+                {
+                    typedef experimental::getter<4, 24, big_endian, lsb_to_msb> g;
+                    constexpr descriptor d{4, 24};
+
+                    g::get_unready(d, be_example1, v);
+
+                    REQUIRE(v == 0x134568);
+                }
+                SECTION("2, 24")
+                {
+                    typedef experimental::getter<2, 24, big_endian, lsb_to_msb> g;
+                    constexpr descriptor d{2, 24};
+
+                    g::get_unready(d, be_example1, v);
+
+                    // 0x12 0x34 0x56 = 0b00010010 0b00110100 0b01010110
+                    // 0b000100xx 0b00110100 0b01010110 0b......00 = 0b00010000 0b11010001 0b01011000
+
+                    REQUIRE(v == 0x10D158);
+                }
+            }
+
         }
     }
     SECTION("comparison")
