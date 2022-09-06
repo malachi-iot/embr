@@ -11,12 +11,8 @@ class decoder : public TBase
     typedef TBase base_type;
     typedef typename base_type::value_type byte_type;
 
-protected:
-    // Needed for layer1
-    decoder() = default;
-
 public:
-    decoder(byte_type* raw) : base_type(raw) {}
+    ESTD_CPP_FORWARDING_CTOR(decoder)
 
     template <class TInt>
     inline TInt get(int index, descriptor d) const

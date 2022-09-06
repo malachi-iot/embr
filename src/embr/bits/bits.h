@@ -33,28 +33,24 @@ using material = embr::bits::internal::material<e, direction, direction, estd::a
 }
 
 
-// Almost exactly like regular encoder/decoder but these *imply* an upper boundary, though
-// it is not enforced.  Also possibly useful is since we derive from array, you get access to size()
+// These *imply* an upper boundary, though it is not enforced, except on == overload.
+// Since we derive from array, you get access to size() etc
 namespace layer2 {
 
-template <endianness e, size_t N, length_direction direction = default_direction>
-using material = embr::bits::internal::material<e, direction, direction, estd::layer2::array<uint8_t, N> >;
+template <endianness e, size_t N,
+    length_direction direction = default_direction,
+    resume_direction rd = direction
+    >
+using material = embr::bits::internal::material<e, direction, rd, estd::layer2::array<uint8_t, N> >;
 
 
-// We do it this way so that the default constructor is now visible
 template <endianness e, size_t N, length_direction direction = default_direction>
-class encoder : public embr::bits::encoder<e, direction, direction,
-    internal::provider<e, estd::layer2::array<uint8_t, N> > >
-{
-    //typedef embr::bits::encoder<e, direction, estd::layer2::array<uint8_t, N> > base_type;
-};
+using encoder = embr::bits::encoder<e, direction, direction,
+    internal::provider<e, estd::layer2::array<uint8_t, N> > >;
 
 template <endianness e, size_t N, length_direction direction = default_direction, resume_direction rd = direction>
-class decoder : public embr::bits::decoder<e, direction, rd,
-    internal::provider<e, estd::layer2::array<uint8_t, N> > >
-{
-    //typedef embr::bits::decoder<e, direction, estd::layer2::array<uint8_t, N> > base_type;
-};
+using decoder = embr::bits::decoder<e, direction, rd,
+    internal::provider<e, estd::layer2::array<uint8_t, N> > >;
 
 }
 

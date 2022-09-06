@@ -17,6 +17,12 @@ void compare_le_example1(const uint8_t raw[])
     test::compare(raw, le_example1, 4);
 }
 
+template <std::size_t N>
+void clear(estd::array<uint8_t, N>& a)
+{
+    estd::fill(a.begin(), a.end(), 0);
+}
+
 TEST_CASE("bits2")
 {
     uint8_t raw[64];
@@ -257,19 +263,21 @@ TEST_CASE("bits2")
         {
             bits::layer1::encoder<bits::big_endian, 4, bits::lsb_to_msb, bits::msb_to_lsb> e;
 
+            clear(e);
+
             e.set<uint8_t>(0, bits::descriptor{4, 3}, 3);
 
             REQUIRE(e.data()[0] == 0x30);
         }
         SECTION("material")
         {
-            /*
-             * Not quite ready yet as we work out what constructors should be
             bits::layer1::material<bits::big_endian, 4, bits::lsb_to_msb> e;
+
+            clear(e);
 
             e.set<uint8_t>(0, bits::descriptor{4, 3}, 3);
 
-            REQUIRE(e.data()[0] == 0x30); */
+            REQUIRE(e.data()[0] == 0x30);
         }
     }
     SECTION("word operations")

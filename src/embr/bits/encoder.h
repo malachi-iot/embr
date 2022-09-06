@@ -15,13 +15,8 @@ class encoder : public TBase
 protected:
     typedef setter<e, direction, rd> setter_type;
 
-    // Needed for layer1
-    // FIX: Need to SFINEA-style disable/enable this based on whether we actually are in layer1 mode
-    // that might be easiest by using a pure forwarding constructor all the way down
-    encoder() = default;
-
 public:
-    encoder(byte_type* raw) : base_type(raw) {}
+    ESTD_CPP_FORWARDING_CTOR(encoder)
 
     // UNTESTED
     template <unsigned bitpos, unsigned length, class TInt>
