@@ -428,6 +428,18 @@ TEST_CASE("bits2")
 
                     REQUIRE(v == 0x10D158);
                 }
+                SECTION("3, 27")
+                {
+                    typedef experimental::getter<3, 27, big_endian, lsb_to_msb> g;
+                    constexpr descriptor d{3, 27};
+
+                    g::get_unready(d, be_example1, v);
+
+                    // 0x12 0x34 0x56 0x78 = 0b00010010 0b00110100 0b01010110 0b01111000
+                    // 0b00010xxx 0b00110100 0b01010110 0b..111000 = 00010001 10100010 10110111 000
+
+                    REQUIRE(v == 0x10D158);
+                }
             }
 
         }
