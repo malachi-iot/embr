@@ -360,7 +360,7 @@ TEST_CASE("bits2")
                     typedef experimental::getter<4, 8, big_endian, lsb_to_msb> g;
                     constexpr descriptor d{4, 8};
 
-                    g::get_unready(d, be_example1, v);
+                    g::get(d, be_example1, v);
 
                     REQUIRE(v == 0x14);
                 }
@@ -369,7 +369,7 @@ TEST_CASE("bits2")
                     typedef experimental::getter<2, 7, big_endian, lsb_to_msb> g;
                     constexpr descriptor d{2, 7};
 
-                    g::get_unready(d, &be_example1[0], v);
+                    g::get(d, &be_example1[0], v);
 
                     // 0x12 0x34 0x56 = 0b00010010 0b00110100 0b01010110
                     // making result 0b000100xx + 0b.......0 = 0b00001000 = 0x08
@@ -396,7 +396,7 @@ TEST_CASE("bits2")
                     typedef experimental::getter<4, 16, big_endian, lsb_to_msb> g;
                     constexpr descriptor d{4, 16};
 
-                    g::get_unready(d, be_example1, v);
+                    g::get(d, be_example1, v);
 
                     REQUIRE(v == 0x1346);
                 }
@@ -405,7 +405,7 @@ TEST_CASE("bits2")
                     typedef experimental::getter<4, 15, big_endian, lsb_to_msb> g;
                     constexpr descriptor d{2, 15};
 
-                    g::get_unready(d, be_example1, v);
+                    g::get(d, be_example1, v);
 
                     // 0x12 0x34 0x56 = 0b00010010 0b00110100 0b01010110
                     // 0b000100xx 0b00110100 0b.......0 = 0b00001000 0b01101000 = 0x868
@@ -418,7 +418,7 @@ TEST_CASE("bits2")
                     typedef experimental::getter<0, 16, big_endian, lsb_to_msb> g;
                     constexpr descriptor d{0, 16};
 
-                    g::get_unready(d, be_example1, v);
+                    g::get(d, be_example1, v);
 
                     REQUIRE(v == 0x1234);
                 }
@@ -432,7 +432,7 @@ TEST_CASE("bits2")
                     typedef experimental::getter<4, 24, big_endian, lsb_to_msb> g;
                     constexpr descriptor d{4, 24};
 
-                    g::get_unready(d, be_example1, v);
+                    g::get(d, be_example1, v);
 
                     REQUIRE(v == 0x134568);
                 }
@@ -441,7 +441,7 @@ TEST_CASE("bits2")
                     typedef experimental::getter<2, 24, big_endian, lsb_to_msb> g;
                     constexpr descriptor d{2, 24};
 
-                    g::get_unready(d, be_example1, v);
+                    g::get(d, be_example1, v);
 
                     // 0x12 0x34 0x56 = 0b00010010 0b00110100 0b01010110
                     // 0b000100xx 0b00110100 0b01010110 0b......00 = 0b00010000 0b11010001 0b01011000
@@ -453,7 +453,7 @@ TEST_CASE("bits2")
                     typedef experimental::getter<3, 27, big_endian, lsb_to_msb> g;
                     constexpr descriptor d{3, 27};
 
-                    g::get_unready(d, be_example1, v);
+                    g::get(d, be_example1, v);
 
                     // 0x12 0x34 0x56 0x78 = 0b00010010 0b00110100 0b01010110 0b01111000
                     // 0b00010xxx 0b00110100 0b01010110 0b..111000 = 000 10001101 00010101 10111000
@@ -466,7 +466,7 @@ TEST_CASE("bits2")
                     typedef experimental::getter<0, 24, big_endian, lsb_to_msb> g;
                     constexpr descriptor d{0, 24};
 
-                    g::get_unready(d, be_example1, v);
+                    g::get(d, be_example1, v);
 
                     REQUIRE(v == 0x123456);
                 }
@@ -476,7 +476,7 @@ TEST_CASE("bits2")
                     typedef experimental::getter<0, 32, big_endian, lsb_to_msb> g;
                     constexpr descriptor d{0, 32};
 
-                    g::get_unready(d, be_example1, v);
+                    g::get(d, be_example1, v);
 
                     REQUIRE(v == 0x12345678);
                 }
