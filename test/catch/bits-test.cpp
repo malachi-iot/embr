@@ -23,14 +23,15 @@ void clear(estd::array<uint8_t, N>& a)
     estd::fill(a.begin(), a.end(), 0);
 }
 
-struct macro_tester_1 : bits::layer1::encoder<embr::bits::big_endian, 8>
+template <bits::endianness e>
+struct macro_tester_1 : bits::layer1::encoder<e, 8>
 {
-    typedef bits::layer1::encoder<embr::bits::big_endian, 8> base_type;
+    typedef bits::layer1::encoder<e, 8> base_type;
 
     //EMBR_BITS_ENCODER_SET(test1, 0, 0, 4);
     void set_test1(unsigned v)
     {
-        //base_type::template set<0, 4>(0, v);
+        base_type::template set<0, 4>(0, v);
     }
 };
 
@@ -1013,7 +1014,9 @@ TEST_CASE("bits")
         }
         SECTION("EMBR_BITS_ENCODER_SET")
         {
+            macro_tester_1<bits::little_endian> v;
 
+            //v.set_test1(10);
         }
     }
 #if TO_MIGRATE
