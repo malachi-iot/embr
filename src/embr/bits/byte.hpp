@@ -56,6 +56,13 @@ struct getter<bitpos, length, e, lsb_to_msb, rd,
         const byte mask = (1 << (d.length)) - 1;
         v = (*raw >> d.bitpos) & mask;
     }
+
+    template <class TIt, typename TInt>
+    inline static void get(TIt raw, TInt& v)
+    {
+        const byte mask = (1 << (length)) - 1;
+        v = (*raw >> bitpos) & mask;
+    }
 };
 
 }

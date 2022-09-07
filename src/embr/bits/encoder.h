@@ -49,20 +49,25 @@ public:
 
 namespace layer1 {
 
-// We do it this way so that the default constructor is now visible
 template <endianness e, size_t N, length_direction direction = default_direction, resume_direction rd = direction>
-class encoder : public embr::bits::encoder<e, direction, rd,
-    internal::provider<e, estd::array<uint8_t, N> > >
-{
-    typedef embr::bits::encoder<e, direction, rd, estd::array<uint8_t, N> > base_type;
-};
+using encoder = embr::bits::encoder<e, direction, rd,
+    internal::provider<e, estd::array<uint8_t, N> > >;
+
+}
+
+namespace layer2 {
+
+template <endianness e, size_t N, length_direction direction = default_direction>
+using encoder = embr::bits::encoder<e, direction, direction,
+    internal::provider<e, estd::layer2::array<uint8_t, N> > >;
+
 
 }
 
 #define EMBR_BITS_ENCODER_SETTER(name, offset, bitpos, length) \
 void name(unsigned v)                         \
 {                                                   \
-    base_type::set<bitpos, length>(offset, v);  \
+    base_type::template set<bitpos, length>(offset, v);  \
 }
 
 }}

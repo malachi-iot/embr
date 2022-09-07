@@ -28,7 +28,7 @@ public:
 
     // EXPERIMENTAL
     template <unsigned bitpos, unsigned length>
-    inline word<length> get(unsigned bytepos)
+    inline word<length> get(unsigned bytepos) const
     {
         typedef word<length> word_type;
 
@@ -52,7 +52,7 @@ class decoder : public embr::bits::decoder<e, direction, rd,
 #define EMBR_BITS_DECODER_GETTER(name, offset, bitpos, length) \
 embr::word<length> name() const                               \
 {                                                   \
-    return base_type::get<bitpos, length>(offset);   \
+    return base_type::template get<bitpos, length>(offset);   \
 }
 
 }}
