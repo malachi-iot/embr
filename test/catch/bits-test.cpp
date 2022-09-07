@@ -28,7 +28,9 @@ struct macro_tester_1 : bits::layer1::encoder<e, 8>
 {
     typedef bits::layer1::encoder<e, 8> base_type;
 
-    //EMBR_BITS_ENCODER_SET(test1, 0, 0, 4);
+    EMBR_BITS_ENCODER_SET(test2, 0, 0, 4);
+    EMBR_BITS_DECODER_GET(test2, 0, 0, 4);
+
     void set_test1(unsigned v)
     {
         base_type::template set<0, 4>(0, v);
@@ -1016,7 +1018,7 @@ TEST_CASE("bits")
         {
             macro_tester_1<bits::little_endian> v;
 
-            //v.set_test1(10);
+            v.set_test1(10);
         }
     }
 #if TO_MIGRATE

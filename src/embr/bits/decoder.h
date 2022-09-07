@@ -49,6 +49,10 @@ class decoder : public embr::bits::decoder<e, direction, rd,
 
 }
 
-#define EMBR_BITS_DECODER_GET(name, bitpos, length)
+#define EMBR_BITS_DECODER_GET(name, offset, bitpos, length) \
+embr::word<length> name() const                               \
+{                                                   \
+    return base_type::get<bitpos, length>(offset);   \
+}
 
 }}

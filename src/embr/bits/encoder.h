@@ -22,7 +22,7 @@ public:
     template <unsigned bitpos, unsigned length, class TInt>
     inline void set(index_type index, TInt v)
     {
-        setter_type::set<bitpos, length>(base_type::data() + index, v);
+        setter_type::template set<bitpos, length>(base_type::data() + index, v);
     }
 
     template <class TInt>
@@ -60,7 +60,7 @@ class encoder : public embr::bits::encoder<e, direction, rd,
 }
 
 #define EMBR_BITS_ENCODER_SET(name, offset, bitpos, length) \
-void set_##name(unsigned v)                         \
+void name(unsigned v)                         \
 {                                                   \
     base_type::set<bitpos, length>(offset, v);  \
 }
