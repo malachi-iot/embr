@@ -59,5 +59,10 @@ class encoder : public embr::bits::encoder<e, direction, rd,
 
 }
 
+#define EMBR_BITS_ENCODER_SET(name, offset, bitpos, length) \
+void set_##name(unsigned v)                         \
+{                                                   \
+    base_type::set<bitpos, length>(offset, v);  \
+}
 
 }}
