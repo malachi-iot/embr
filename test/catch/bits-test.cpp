@@ -322,6 +322,10 @@ TEST_CASE("bits2")
         constexpr int v2 = 10;
         constexpr bool v3 = true;
 
+        SECTION("General")
+        {
+            bits::internal::word<16> w;
+        }
         SECTION("8-bit")
         {
             bits::internal::word<8> w{0};

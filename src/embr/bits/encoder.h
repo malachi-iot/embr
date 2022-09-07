@@ -47,6 +47,7 @@ public:
     }
 };
 
+#if __cpp_alias_templates
 namespace layer1 {
 
 template <endianness e, size_t N, length_direction direction = default_direction, resume_direction rd = direction>
@@ -63,6 +64,7 @@ using encoder = embr::bits::encoder<e, direction, direction,
 
 
 }
+#endif
 
 #define EMBR_BITS_ENCODER_SETTER(name, offset, bitpos, length) \
 void name(unsigned v)                         \

@@ -91,6 +91,8 @@ protected:
 
     type value_;
 
+    ESTD_CPP_CONSTEXPR_RET word_base() {}
+
 #if FEATURE_EMBR_WORD_STRICTNESS
     constexpr word_base(const type& value) : value_
         {any<strict, word_strictness::masking>() ? mask(value) : value} {}

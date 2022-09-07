@@ -11,6 +11,8 @@
 
 namespace embr { namespace bits {
 
+#ifdef __cpp_alias_templates
+
 namespace internal {
 
 /// Utility class combining encoder and decoder together.  Name still in flux
@@ -49,6 +51,8 @@ using decoder = embr::bits::decoder<e, direction, rd,
     internal::provider<e, estd::layer2::array<uint8_t, N> > >;
 
 }
+
+#endif
 
 
 namespace experimental {

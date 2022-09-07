@@ -78,6 +78,10 @@ private:
     ESTD_CPP_CONSTEXPR_RET const word_type* raw() const { return &this->value_; }
 
 public:
+    // DEBT: Make this and base embr::word hide their default constructor according to
+    // a strictness flag setting (currently the unimplemented word_strictness::initialized)
+    ESTD_CPP_CONSTEXPR_RET word() {}
+
     typedef internal::descriptor_base<sizeof(word_type) * byte_size()> descriptor_type;
 
     ESTD_CPP_CONSTEXPR_RET word(word_type v) : base_type(v) {}

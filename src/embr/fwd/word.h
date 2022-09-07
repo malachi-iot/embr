@@ -23,6 +23,7 @@ enum class word_strictness
     masking     = 0x02,     ///< runtime enforcement to apply masks while assigning to word
     arithmetic  = 0x04,     ///< compile time permission to do integer arithmetic
     overflow    = 0x08,     ///< runtime indicator of overflow from shift operations - EXPERIMENTAL, not implemented
+    initialized = 0x10,     ///< when true, disables default constructor thus requiring initialization - not implemented
 
     narrowing_and_arithmetic = narrowing | arithmetic,
     narrowing_and_masking = narrowing | masking,

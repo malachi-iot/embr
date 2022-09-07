@@ -38,6 +38,7 @@ public:
     }
 };
 
+#ifdef __cpp_alias_templates
 namespace layer1 {
 
 template <endianness e, size_t N, length_direction direction = default_direction, resume_direction rd = direction>
@@ -48,6 +49,7 @@ class decoder : public embr::bits::decoder<e, direction, rd,
 };
 
 }
+#endif
 
 #define EMBR_BITS_DECODER_GETTER(name, offset, bitpos, length) \
 embr::word<length> name() const                               \
