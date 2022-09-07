@@ -1032,13 +1032,14 @@ TEST_CASE("bits")
             v.test2(15);
 
             REQUIRE(v.test2() == 15);
-
             REQUIRE(v.test3() == 15);
 
             v.test4(1);
+            v.test5(0x123);
 
             REQUIRE(v.test3() == 15);
             REQUIRE(v.test4() == 1);
+            REQUIRE(v.test5() == 0x123);
         }
     }
 #if TO_MIGRATE
