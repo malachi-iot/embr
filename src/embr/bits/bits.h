@@ -112,4 +112,8 @@ struct bit_traits
 }}
 
 
+#define EMBR_BITS_MATERIAL_PROPERTY(name, offset, bitpos, length) \
+    EMBR_BITS_DECODER_GETTER(name, offset, bitpos, length)        \
+    EMBR_BITS_ENCODER_SETTER(name, offset, bitpos, length)
+
 #include "../platform/guard-out.h"
