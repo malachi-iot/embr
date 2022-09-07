@@ -32,6 +32,8 @@ struct macro_tester_1 : bits::layer1::material<e, 8>
     EMBR_BITS_DECODER_GETTER(test2, 0, 0, 4);
 
     EMBR_BITS_MATERIAL_PROPERTY(test3, 0, 0, 4);
+    EMBR_BITS_MATERIAL_PROPERTY(test4, 0, 4, 4);
+    EMBR_BITS_MATERIAL_PROPERTY(test5, 1, 0, 9);
 
     void set_test1(unsigned v)
     {
@@ -1017,13 +1019,11 @@ TEST_CASE("bits")
     }
     SECTION("macro helpers")
     {
-        SECTION("EMBR_BITS_DECODER_GET")
-        {
-
-        }
-        SECTION("EMBR_BITS_ENCODER_SET")
+        SECTION("EMBR_BITS_ENCODER_SETTER + EMBR_BITS_ENCODER_GETTER")
         {
             macro_tester_1<bits::little_endian> v;
+
+            v.fill(0);
 
             v.set_test1(10);
 
@@ -1032,6 +1032,13 @@ TEST_CASE("bits")
             v.test2(15);
 
             REQUIRE(v.test2() == 15);
+
+            REQUIRE(v.test3() == 15);
+
+            v.test4(1);
+
+            REQUIRE(v.test3() == 15);
+            REQUIRE(v.test4() == 1);
         }
     }
 #if TO_MIGRATE
