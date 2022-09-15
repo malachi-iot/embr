@@ -7,9 +7,7 @@
 
 //#include <estd/iostream.h>    // FIX: This fails rather badly, look into why
 
-#define ESP_IDF_TESTING
-
-#include "unity.h"
+#include "unit-test.h"
 
 #include "esp_log.h"
 
