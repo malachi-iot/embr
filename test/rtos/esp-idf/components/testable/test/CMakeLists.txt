@@ -3,13 +3,13 @@ set(SRCS_PATH ../../../../..)
 set(COMPONENT_SRCS2 
     ${SRCS_PATH}/unity/bits.cpp
     ${SRCS_PATH}/unity/lwip.cpp
+    ${SRCS_PATH}/unity/pbuf.cpp
+    ${SRCS_PATH}/unity/transport.cpp
     ${SRCS_PATH}/unity/word.cpp)
 
 set(COMPONENT_SRCS
     ${COMPONENT_SRCS2}
     "dummy.cpp"
-    "pbuf.cpp"
-    "transport.cpp"
     "experimental.cpp"
     "dataport.cpp")
 
