@@ -84,7 +84,10 @@ static void test_basic_loopback()
     pcb2.bind(&loopback_addr, reply_listener_port);
     pcb2.recv(reply_listener, &output);
 
+    // Works the same whether or not TCPIP code lock feature is enabled
+    LOCK_TCPIP_CORE();
     pcb1.send(buf, &loopback_addr, listener_port);
+    UNLOCK_TCPIP_CORE();
 
     TEST_ASSERT_EQUAL(11, output[0]);
     TEST_ASSERT_EQUAL(12, output[1]);
