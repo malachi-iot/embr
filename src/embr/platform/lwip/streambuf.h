@@ -345,17 +345,17 @@ public:
 };
 }
 
-#ifdef FEATURE_CPP_ALIASTEMPLATE
-template <class CharT, class CharTraits = std::char_traits<CharT> >
+#ifdef __cpp_alias_templates
+template <class CharT, class CharTraits = estd::char_traits<CharT> >
 using basic_opbuf_streambuf = estd::internal::streambuf<impl::opbuf_streambuf<CharTraits> >;
 
-template <class CharT, class CharTraits = std::char_traits<CharT> >
+template <class CharT, class CharTraits = estd::char_traits<CharT> >
 using basic_ipbuf_streambuf = estd::internal::streambuf<impl::ipbuf_streambuf<CharTraits> >;
-
-#endif
 
 typedef basic_opbuf_streambuf<char> opbuf_streambuf;
 typedef basic_ipbuf_streambuf<char> ipbuf_streambuf;
+#endif
+
 
 
 }
