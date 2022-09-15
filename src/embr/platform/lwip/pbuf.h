@@ -88,6 +88,21 @@ public:
         return pbuf_skip(p, in_offset, out_offset);
     }
 
+    err_t take(const void* dataptr, uint16_t len)
+    {
+        return pbuf_take(p, dataptr, len);
+    }
+
+    uint8_t get_at(uint16_t offset) const
+    {
+        return pbuf_get_at(p, offset);
+    }
+
+    void put_at(uint16_t offset, uint8_t data)
+    {
+        pbuf_put_at(p, offset, data);
+    }
+
     bool valid() const { return p != NULLPTR; }
 
     operator pbuf_pointer() const { return p; }

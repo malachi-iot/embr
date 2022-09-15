@@ -7,4 +7,5 @@
 #endif
 
 void test_bits();
+void test_lwip();
 void test_word();
