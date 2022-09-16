@@ -16,6 +16,9 @@ typedef estd::internal::basic_ostream<opbuf_streambuf> opbufstream;
 
 }
 
+#ifdef FEATURE_CPP_INLINE_NAMESPACE
+inline
+#endif
 namespace upgrading {
 
 typedef estd::internal::basic_ostream<embr::lwip::upgrading::opbuf_streambuf> opbufstream;

@@ -23,11 +23,11 @@ static const char* TAG = "lwip-pbuf";
 typedef embr::lwip::PbufNetbuf netbuf_type;
 typedef netbuf_type::size_type size_type;
 
-using embr::lwip::upgrading::opbufstream;
-using embr::lwip::upgrading::ipbufstream;
+using embr::lwip::opbufstream;
+using embr::lwip::ipbufstream;
 
-typedef embr::lwip::upgrading::opbuf_streambuf out_pbuf_streambuf;
-typedef embr::lwip::upgrading::ipbuf_streambuf in_pbuf_streambuf;
+typedef embr::lwip::opbuf_streambuf out_pbuf_streambuf;
+typedef embr::lwip::ipbuf_streambuf in_pbuf_streambuf;
 
 typedef in_pbuf_streambuf::traits_type traits_type;
 
@@ -298,7 +298,7 @@ TEST_CASE("lwip pbuf embr-netbuf: netbuf shrink", "[lwip-pbuf]")
 }
 #endif
 
-TEST_CASE("lwip upgraded streambuf: helpers", "[lwip-helpers]")
+TEST_CASE("lwip streambuf: helpers", "[lwip-helpers]")
 {
     CONSTEXPR unsigned pbuf_size = 32;
     embr::lwip::Pbuf pbuf(pbuf_size);
@@ -323,11 +323,11 @@ TEST_CASE("lwip upgraded streambuf: helpers", "[lwip-helpers]")
     TEST_ASSERT_EQUAL(size, 0);
 }
 
-TEST_CASE("lwip upgraded streambuf: output", "[lwip-streambuf]")
+TEST_CASE("lwip streambuf: output", "[lwip-streambuf]")
 {
     CONSTEXPR unsigned pbuf_size = 32;
     embr::lwip::Pbuf pbuf(pbuf_size);
-    embr::lwip::upgrading::basic_opbuf_streambuf<char> out(std::move(pbuf));
+    embr::lwip::basic_opbuf_streambuf<char> out(std::move(pbuf));
 
     out.sputn(s1, s1_size);
 
@@ -352,7 +352,7 @@ TEST_CASE("lwip upgraded streambuf: output", "[lwip-streambuf]")
 }
 
 
-TEST_CASE("lwip upgraded streambuf: input", "[lwip-streambuf]")
+TEST_CASE("lwip streambuf: input", "[lwip-streambuf]")
 {
     // remember, pbufs are assumed to have the entire content populated.  This
     // test we only actually populate s1_size amount
@@ -361,7 +361,7 @@ TEST_CASE("lwip upgraded streambuf: input", "[lwip-streambuf]")
     char* payload = (char*)pbuf.payload();
     strcpy(payload, s1);
 
-    embr::lwip::upgrading::ipbuf_streambuf in(std::move(pbuf));
+    embr::lwip::ipbuf_streambuf in(std::move(pbuf));
 
     TEST_ASSERT_EQUAL(0, in.pubseekoff(0, estd::ios_base::cur));
     TEST_ASSERT_EQUAL(payload, in.eback());
@@ -378,14 +378,14 @@ TEST_CASE("lwip upgraded streambuf: input", "[lwip-streambuf]")
     TEST_ASSERT_EQUAL(s1[0], buf[0]);
 }
 
-TEST_CASE("lwip upgraded istream", "[lwip-ios]")
+TEST_CASE("lwip istream", "[lwip-ios]")
 {
     embr::lwip::Pbuf pbuf(128);
 
     char* payload = (char*)pbuf.payload();
     char buf[128];
 
-    embr::lwip::upgrading::ipbufstream in(std::move(pbuf));
+    embr::lwip::ipbufstream in(std::move(pbuf));
 
     in.ignore(128);
 
@@ -394,13 +394,13 @@ TEST_CASE("lwip upgraded istream", "[lwip-ios]")
     TEST_ASSERT_EQUAL(-1, val);
 }
 
-TEST_CASE("lwip upgraded ostream", "[lwip-ios]")
+TEST_CASE("lwip ostream", "[lwip-ios]")
 {
     embr::lwip::Pbuf pbuf(128);
 
     char* payload = (char*)pbuf.payload();
 
-    embr::lwip::upgrading::opbufstream out(std::move(pbuf));
+    embr::lwip::opbufstream out(std::move(pbuf));
 
     out << s1 << estd::endl;
 

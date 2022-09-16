@@ -2,30 +2,15 @@
 
 #include "pbuf.h"
 #include "../../streambuf.h"
+#include "legacy/streambuf.h"
 
 namespace embr { namespace lwip {
 
-namespace legacy {
-
-// FIX: Doesn't match std type signature.  std uses basic_XXXXbuf for <TChar>
-// flavors and XXXXbuf for common type char, so if we did that, ours would look something like:
-// out_basic_pbuf_streambuf<char> and out_pbuf_streambuf (no char)
-#ifdef FEATURE_CPP_ALIASTEMPLATE
-template <class CharT, class CharTraits = std::char_traits<CharT> >
-using basic_opbuf_streambuf = embr::mem::out_netbuf_streambuf<CharT, PbufNetbuf, CharTraits>;
-
-template <class CharT, class CharTraits = std::char_traits<CharT> >
-using basic_ipbuf_streambuf = embr::mem::in_netbuf_streambuf<CharT, PbufNetbuf, CharTraits>;
-
+// Displaces all netbuf abstractions, they are finally gone
+// and replaced by more straightforward estd::streambuf capabilities
+#ifdef FEATURE_CPP_INLINE_NAMESPACE
+inline
 #endif
-
-typedef embr::mem::out_netbuf_streambuf<char, PbufNetbuf> opbuf_streambuf;
-typedef embr::mem::in_netbuf_streambuf<char, PbufNetbuf> ipbuf_streambuf;
-
-}
-
-// NOTE: Not ready for prime time yet.  Will displace all my netbuf abstractions, they are finally
-// going away and replaced by more straightforward estd::streambuf capabilities
 namespace upgrading {
 
 namespace impl {
@@ -344,6 +329,7 @@ public:
 #endif
 };
 }
+
 
 #ifdef __cpp_alias_templates
 template <class CharT, class CharTraits = estd::char_traits<CharT> >

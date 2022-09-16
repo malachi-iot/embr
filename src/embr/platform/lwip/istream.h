@@ -16,6 +16,9 @@ typedef estd::internal::basic_istream<ipbuf_streambuf> ipbufstream;
 
 }
 
+#ifdef FEATURE_CPP_INLINE_NAMESPACE
+inline
+#endif
 namespace upgrading {
 
 typedef estd::internal::basic_istream<embr::lwip::upgrading::ipbuf_streambuf> ipbufstream;
