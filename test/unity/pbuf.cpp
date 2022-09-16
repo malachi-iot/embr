@@ -376,10 +376,23 @@ static void streambuf_output_2()
     TEST_ASSERT_EQUAL(pbuf_size, delta_length(pbuf, pbuf.pbuf()->next));
 }
 
+// Testing overflow and experimental 'grow_by'
+static void streambuf_output_3()
+{
+    estd::internal::streambuf<
+        embr::lwip::impl::opbuf_streambuf<estd::char_traits<char>, 32> > out(32);
+
+    out.sputn(s2, s2_size);
+    out.sputn(s2, s2_size);
+
+    TEST_ASSERT_EQUAL(64, out.pbuf().total_length());
+}
+
 TEST_CASE("lwip streambuf: output", "[lwip-streambuf]")
 {
     streambuf_output_1();
     streambuf_output_2();
+    streambuf_output_3();
 }
 
 

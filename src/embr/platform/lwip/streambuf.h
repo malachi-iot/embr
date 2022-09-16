@@ -35,7 +35,7 @@ protected:
 #endif
     size_type size() const { return pbuf.length(); }
 
-#ifdef FEATURE_CPP_MOVESEMANTIC
+#ifdef __cpp_variadic_templates
         template <class ...TArgs>
         pbuf_streambuf_base(TArgs&&... args) :
                 pbuf(std::forward<TArgs>(args)...)
@@ -90,7 +90,7 @@ public:
 };
 
 
-template <class TCharTraits>
+template <class TCharTraits, unsigned grow_by = 256>
 struct opbuf_streambuf : 
     pbuf_streambuf_base<TCharTraits>,
     pbuf_current_base<TCharTraits>,
@@ -173,7 +173,7 @@ public:
 
     const PbufBase pbuf() const { return pbuf_base_type::pbuf; }
 
-#ifdef FEATURE_CPP_MOVESEMANTIC
+#ifdef __cpp_variadic_templates
     template <class ...TArgs>
     opbuf_streambuf(TArgs&&... args) :
         pbuf_base_type(std::forward<TArgs>(args)...),
@@ -185,16 +185,17 @@ public:
 
 
 // Placing non-inline because it's kinda bulky
-template <class TCharTraits>
-typename TCharTraits::int_type opbuf_streambuf<TCharTraits>::overflow(int_type ch)
+template <class TCharTraits, unsigned grow_by>
+typename TCharTraits::int_type opbuf_streambuf<TCharTraits, grow_by>::overflow(int_type ch)
 {
     if(xout_avail() == 0)
     {
         if(!this->move_next())
         {
-            // UNTESTED
-            // DEBT: Need a way to specify app-specific values, not hardcode 256
-            PbufBase appended(256);
+            // Lightly tested
+            // DEBT: Not 100% convinced this 'grow_by' template value is the way
+            // to go, but it vastly beats hardcoding
+            PbufBase appended(grow_by);
 
             // TODO: Might want to check appended.valid() to be sure, though
             // pretty sure concat of a null pbuf will yield similar results in the end
@@ -319,7 +320,7 @@ public:
         return xsgetc();
     }
 
-#ifdef FEATURE_CPP_MOVESEMANTIC
+#ifdef __cpp_variadic_templates
         template <class ...TArgs>
         ipbuf_streambuf(TArgs&&... args) :
             pbuf_base_type(std::forward<TArgs>(args)...),
