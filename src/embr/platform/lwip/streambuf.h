@@ -6,6 +6,10 @@
 
 namespace embr { namespace lwip {
 
+#ifndef EMBR_LWIP_PBUF_OSTREAMBUF_GROW_BY
+#define EMBR_LWIP_PBUF_OSTREAMBUF_GROW_BY 256
+#endif
+
 // Displaces all netbuf abstractions, they are finally gone
 // and replaced by more straightforward estd::streambuf capabilities
 #ifdef FEATURE_CPP_INLINE_NAMESPACE
@@ -90,7 +94,7 @@ public:
 };
 
 
-template <class TCharTraits, unsigned grow_by = 256>
+template <class TCharTraits, unsigned grow_by = EMBR_LWIP_PBUF_OSTREAMBUF_GROW_BY>
 struct opbuf_streambuf : 
     pbuf_streambuf_base<TCharTraits>,
     pbuf_current_base<TCharTraits>,
