@@ -52,6 +52,21 @@ public:
     uint16_t port() const { return _port; }
 };
 
+
+// DEBT: Not well tested
+template <bool use_address_ptr_lhs, bool use_address_ptr_rhs>
+bool operator ==(
+    const Endpoint<use_address_ptr_lhs>& lhs,
+    const Endpoint<use_address_ptr_rhs>& rhs)
+{
+    // *lhs.address() == *rhs.address();
+    // We need an ipv4 vs ipv6 version to properly compare addresses
+    bool address_match = ip_addr_cmp(lhs.address(), rhs.address());
+
+    return lhs.port() == rhs.port() && address_match;
+}
+
+
 }
 
 typedef experimental::Endpoint<> Endpoint;

@@ -66,7 +66,9 @@ static void reply_listener(void* arg, struct udp_pcb* _pcb, struct pbuf* p, cons
 
 static void test_basic_loopback()
 {
-    embr::lwip::udp::Pcb pcb1, pcb2;
+    embr::experimental::Unique<embr::lwip::udp::Pcb>
+        pcb1, pcb2;
+
     embr::lwip::Pbuf buf(4);
 
     // DEBT: span broken, default ctor has an issue
@@ -75,9 +77,6 @@ static void test_basic_loopback()
 
     buf.put_at(0, 1);
     buf.put_at(1, 2);
-
-    pcb1.alloc();
-    pcb2.alloc();
 
     pcb1.bind(&loopback_addr, listener_port);
     pcb1.recv(listener);
@@ -91,9 +90,6 @@ static void test_basic_loopback()
 
     TEST_ASSERT_EQUAL(11, output[0]);
     TEST_ASSERT_EQUAL(12, output[1]);
-
-    pcb2.free();
-    pcb1.free();
 }
 
 

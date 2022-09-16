@@ -15,6 +15,7 @@ extern "C" {
 }
 
 #include <estd/internal/platform.h>
+#include "../../internal/unique.h"
 
 namespace embr { namespace lwip { namespace udp {
 
@@ -103,7 +104,12 @@ public:
 
     void disconnect() { udp_disconnect(pcb); }
 
-    bool alloc() { pcb = udp_new(); return pcb != NULLPTR; }
+    inline static pcb_pointer create()
+    {
+        return udp_new();
+    }
+
+    bool alloc() { pcb = create(); return pcb != NULLPTR; }
 
     bool alloc(lwip_ip_addr_type type)
     {
@@ -155,4 +161,24 @@ struct AutoPcb : Pcb
 #endif
 typedef udp::Pcb Pcb;
 
-}}
+}
+
+namespace experimental {
+
+template <>
+struct Unique<lwip::udp::Pcb> : lwip::udp::Pcb
+{
+    typedef lwip::udp::Pcb base_type;
+
+    Unique() : base_type(create()) {}
+    ~Unique() { base_type::free(); }
+
+private:
+    // stubs to disallow explicit memory management
+    void alloc();
+    void free();
+};
+
+}
+
+}
