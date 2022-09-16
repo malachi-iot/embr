@@ -15,7 +15,9 @@ using namespace embr;
 using namespace embr::mem;
 
 const char* s1 = "test";
+const char* s2 = "longer test string";
 constexpr int s1_size = 4;
+constexpr int s2_size = 17;
 constexpr int netbuf_size = 128;
 
 static const char* TAG = "lwip-pbuf";
@@ -323,7 +325,7 @@ TEST_CASE("lwip streambuf: helpers", "[lwip-helpers]")
     TEST_ASSERT_EQUAL(size, 0);
 }
 
-TEST_CASE("lwip streambuf: output", "[lwip-streambuf]")
+static void streambuf_output_1()
 {
     CONSTEXPR unsigned pbuf_size = 32;
     embr::lwip::Pbuf pbuf(pbuf_size);
@@ -349,6 +351,35 @@ TEST_CASE("lwip streambuf: output", "[lwip-streambuf]")
     out.shrink();
 
     TEST_ASSERT_EQUAL(s1_size + 1, out.pbuf().total_length());
+}
+
+// There may be a bug where output streambuf aggressively expands its size
+// This unit test is to diagnose that
+// DEBT: Once diagnostic is complete, change above comment
+static void streambuf_output_2()
+{
+    CONSTEXPR unsigned pbuf_size = 128;
+    embr::lwip::Pbuf pbuf(pbuf_size);
+    embr::lwip::opbuf_streambuf out(pbuf);
+
+    out.sputn(s1, s1_size);
+    out.sputn(s2, 3);
+    out.sputn(s2, 2);
+
+    TEST_ASSERT_EQUAL(pbuf_size, pbuf.total_length());
+
+    out.sputn(s2, s2_size);
+    out.sputn(s2, s2_size);
+
+    TEST_ASSERT_EQUAL(pbuf_size, pbuf.total_length());
+    TEST_ASSERT_EQUAL(pbuf_size, pbuf.length());
+    TEST_ASSERT_EQUAL(pbuf_size, delta_length(pbuf, pbuf.pbuf()->next));
+}
+
+TEST_CASE("lwip streambuf: output", "[lwip-streambuf]")
+{
+    streambuf_output_1();
+    streambuf_output_2();
 }
 
 
