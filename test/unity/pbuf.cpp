@@ -388,11 +388,25 @@ static void streambuf_output_3()
     TEST_ASSERT_EQUAL(64, out.pbuf().total_length());
 }
 
+// Testing boundary when streambuf enters 'grow_by' mode
+static void streambuf_output_grow()
+{
+    embr::lwip::opbuf_streambuf out(8);
+
+    out.sputn("0123456789", 10);
+    
+    out.shrink();
+
+    // FIX: Breaking - pretty sure we're missing '8'
+    TEST_ASSERT_EQUAL(10, out.pbuf().total_length());
+}
+
 TEST_CASE("lwip streambuf: output", "[lwip-streambuf]")
 {
     streambuf_output_1();
     streambuf_output_2();
     streambuf_output_3();
+    streambuf_output_grow();
 }
 
 

@@ -6,8 +6,8 @@
 using embr::lwip::legacy::opbufstream;
 using embr::lwip::legacy::ipbufstream;
 #else
-using embr::lwip::upgrading::opbufstream;
-using embr::lwip::upgrading::ipbufstream;
+using embr::lwip::opbufstream;
+using embr::lwip::ipbufstream;
 #endif
 
 void process_out(ipbufstream& in, opbufstream& out);

@@ -5,6 +5,7 @@
 
 namespace embr { namespace lwip {
 
+#if FEATURE_EMBR_NETBUF_STREAMBUF
 namespace legacy {
 
 #ifdef FEATURE_CPP_ALIASTEMPLATE
@@ -15,6 +16,7 @@ using basic_opbufstream = estd::internal::basic_ostream<basic_opbuf_streambuf<Ch
 typedef estd::internal::basic_ostream<opbuf_streambuf> opbufstream;
 
 }
+#endif
 
 #ifdef FEATURE_CPP_INLINE_NAMESPACE
 inline
