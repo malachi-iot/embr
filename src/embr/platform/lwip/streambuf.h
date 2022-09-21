@@ -111,6 +111,7 @@ struct opbuf_streambuf :
     typedef Pbuf::pbuf_pointer pbuf_pointer;
     typedef Pbuf::size_type size_type;
 
+    // Attempts to move to the beginning of the next pbuf in the chain
     bool move_next()
     {
         if(!pbuf_current_base_type::move_next()) return false;
@@ -189,11 +190,15 @@ public:
 
 
 // Placing non-inline because it's kinda bulky
+// DEBT: Move outside of the class altogether
 template <class TCharTraits, unsigned grow_by>
 typename TCharTraits::int_type opbuf_streambuf<TCharTraits, grow_by>::overflow(int_type ch)
 {
+    // If there's no buffer space left to write to
     if(xout_avail() == 0)
     {
+        // Attempt to move to the next allocated pbuf.  Probably there isn't
+        // one
         if(!this->move_next())
         {
             // Lightly tested
@@ -206,6 +211,8 @@ typename TCharTraits::int_type opbuf_streambuf<TCharTraits, grow_by>::overflow(i
 
             this->pbuf_current.concat(appended);
 
+            // Now move to this next pbuf and also test
+            // to see if concat actually worked
             if(!this->move_next())
                 return traits_type::eof();
         }
@@ -217,7 +224,10 @@ typename TCharTraits::int_type opbuf_streambuf<TCharTraits, grow_by>::overflow(i
         *pptr() = ch;
 
     // DEBT: We can do better than this.  Can't return ch since sometimes it's eof
-    // even when we do have more buffer space
+    // even when we do have more buffer space.  That said this is technically a valid
+    // success code:
+    // Guidance: https://en.cppreference.com/w/cpp/io/basic_streambuf/overflow
+    // "Returns unspecified value not equal to Traits::eof() on success"
     return traits_type::eof() - 1;
 }
 
