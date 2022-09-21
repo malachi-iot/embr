@@ -4,6 +4,7 @@
 
 #include "lwip/tcpip.h"
 
+#include <embr/platform/lwip/endpoint.h>
 #include <embr/platform/lwip/pbuf.h>
 #include <embr/platform/lwip/udp.h>
 
@@ -98,6 +99,20 @@ static void test_rtos_loopback()
 
 }
 
+static void test_endpoint_equality()
+{
+    embr::lwip::experimental::Endpoint<>
+        endpoint1(&loopback_addr, 10000),
+        endpoint2(&loopback_addr, 10000),
+        endpoint3(&loopback_addr, 10001);
+
+    TEST_ASSERT_TRUE(endpoint1 == endpoint2);
+    TEST_ASSERT_FALSE(endpoint1 == endpoint3);
+    
+    // TODO
+    //TEST_ASSERT_TRUE(endpoint1 != endpoint3);
+}
+
 #ifdef ESP_IDF_TESTING
 TEST_CASE("lwip wrapper / general tests", "[lwip]")
 #else
@@ -108,4 +123,5 @@ void test_lwip()
 
     RUN_TEST(test_basic_loopback);
     RUN_TEST(test_rtos_loopback);
+    RUN_TEST(test_endpoint_equality);
 }
