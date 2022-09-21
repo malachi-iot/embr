@@ -17,7 +17,6 @@
 #include "process.h"
 
 using namespace embr;
-using namespace embr::mem;
 
 typedef embr::lwip::PbufNetbuf netbuf_type;
 typedef struct pbuf* pbuf_pointer;

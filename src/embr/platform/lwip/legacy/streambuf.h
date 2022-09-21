@@ -5,6 +5,7 @@
 
 namespace embr { namespace lwip {
 
+#if FEATURE_EMBR_NETBUF_STREAMBUF
 namespace legacy {
 
 // FIX: Doesn't match std type signature.  std uses basic_XXXXbuf for <TChar>
@@ -23,5 +24,6 @@ typedef embr::mem::out_netbuf_streambuf<char, PbufNetbuf> opbuf_streambuf;
 typedef embr::mem::in_netbuf_streambuf<char, PbufNetbuf> ipbuf_streambuf;
 
 }
+#endif
 
 }}
