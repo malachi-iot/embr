@@ -397,7 +397,15 @@ static void streambuf_output_grow()
     
     out.shrink();
 
-    // FIX: Breaking - pretty sure we're missing '8'
+    embr::lwip::PbufBase pbuf(out.pbuf());
+
+    const char* payload = static_cast<const char*>(pbuf.payload());
+
+    TEST_ASSERT_EQUAL('1', payload[1]);
+    TEST_ASSERT_EQUAL('7', payload[7]);
+    // FIX: Breaking - '8' and '9' are garbled
+    TEST_ASSERT_EQUAL('8', payload[8]);
+    TEST_ASSERT_EQUAL('9', payload[9]);
     TEST_ASSERT_EQUAL(10, out.pbuf().total_length());
 }
 
