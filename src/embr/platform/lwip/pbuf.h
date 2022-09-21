@@ -105,6 +105,8 @@ public:
 
     bool valid() const { return p != NULLPTR; }
 
+    PbufBase next() const { return p->next; }
+
     operator pbuf_pointer() const { return p; }
 };
 
