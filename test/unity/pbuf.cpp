@@ -408,9 +408,8 @@ static void streambuf_output_grow()
 
     pbuf = pbuf.next();
 
-    // FIX: '8' gets consumed, ends up being '9'.  Looks to be a bug
-    // in estd's sputn implementation
     TEST_ASSERT_EQUAL('8', pbuf.get_at(0));
+    TEST_ASSERT_EQUAL('9', pbuf.get_at(1));
 
     TEST_ASSERT_EQUAL(10, out.pbuf().total_length());
 }
