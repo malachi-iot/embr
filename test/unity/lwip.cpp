@@ -15,13 +15,19 @@
 #endif
 #endif
 
-static ip_addr_t loopback_addr;
+static ip_addr_t
+    loopback_addr,
+    loopback2;        // a different instance, for deeper equality testing
 
+
+// NOTE: Always be sure to set ipv4 vs ipv6 type, otherwise comparisons
+// (and likely other operations) will fail
 static void setup()
 {
-#if FEATURE_EMBR_LWIP_LOOPBACK_TESTS
     ip4_addr_set_loopback(ip_2_ip4(&loopback_addr));
-#endif
+    IP_SET_TYPE(&loopback_addr, IPADDR_TYPE_V4);
+
+    ip_addr_set_loopback(false, &loopback2);    // shorthand for above
 }
 
 static constexpr int listener_port = 1000;
@@ -96,7 +102,11 @@ static void test_basic_loopback()
 
 static void test_rtos_loopback()
 {
+    TEST_ASSERT_EQUAL(127, ip4_addr1(ip_2_ip4(&loopback_addr)));
+    TEST_ASSERT_EQUAL(0, ip4_addr2(ip_2_ip4(&loopback_addr)));
 
+    TEST_ASSERT_EQUAL(127, ip4_addr1(ip_2_ip4(&loopback2)));
+    TEST_ASSERT_EQUAL(0, ip4_addr2(ip_2_ip4(&loopback2)));
 }
 
 static void test_endpoint_equality()
@@ -104,10 +114,20 @@ static void test_endpoint_equality()
     embr::lwip::experimental::Endpoint<>
         endpoint1(&loopback_addr, 10000),
         endpoint2(&loopback_addr, 10000),
-        endpoint3(&loopback_addr, 10001);
+        endpoint3(&loopback_addr, 10001),
+
+        endpoint_instance(&loopback2, 10000);
+
+    embr::lwip::experimental::Endpoint<false>
+        endpoint_instance2(&loopback_addr, 10000);
 
     TEST_ASSERT_TRUE(endpoint1 == endpoint2);
     TEST_ASSERT_FALSE(endpoint1 == endpoint3);
+
+    TEST_ASSERT_TRUE(ip_addr_cmp(&loopback2, &loopback_addr));
+
+    TEST_ASSERT_TRUE(endpoint1 == endpoint_instance);
+    TEST_ASSERT_TRUE(endpoint1 == endpoint_instance2);
     
     // TODO
     //TEST_ASSERT_TRUE(endpoint1 != endpoint3);
