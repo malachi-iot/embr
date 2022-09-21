@@ -109,6 +109,13 @@ static void test_rtos_loopback()
     TEST_ASSERT_EQUAL(0, ip4_addr2(ip_2_ip4(&loopback2)));
 }
 
+static void test_endpoint_configuration()
+{
+    embr::lwip::experimental::Endpoint<> endpoint1(&loopback_addr, 10000);
+    
+    TEST_ASSERT_EQUAL(IPADDR_TYPE_V4, endpoint1.type());
+}
+
 static void test_endpoint_equality()
 {
     embr::lwip::experimental::Endpoint<>
@@ -142,6 +149,7 @@ void test_lwip()
     setup();
 
     RUN_TEST(test_basic_loopback);
+    RUN_TEST(test_endpoint_configuration);
     RUN_TEST(test_rtos_loopback);
     RUN_TEST(test_endpoint_equality);
 }
