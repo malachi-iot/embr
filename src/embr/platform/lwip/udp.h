@@ -16,6 +16,7 @@ extern "C" {
 
 #include <estd/internal/platform.h>
 #include "../../internal/unique.h"
+#include "endpoint.h"
 
 namespace embr { namespace lwip { namespace udp {
 
@@ -57,6 +58,17 @@ public:
             pbuf, 
             addr, 
             port);
+    }
+
+    // Experimental call permitting direct use of our Endpoint class
+    // Not sure I want this level of complexity in what amounts to a PCB wrapper
+    template <bool use_ptr>
+    err_t send_experimental(pbuf_pointer pbuf,
+        embr::lwip::experimental::Endpoint<use_ptr>& endpoint)
+    {
+        return send(pbuf,
+            endpoint.address(),
+            endpoint.port());
     }
 
     /**

@@ -42,6 +42,25 @@ struct TransportUdp : TransportBase
     TransportUdp(TArgs&& ...args) : pcb(std::forward<TArgs>(args)...) {}
 #endif
 
+    // Following some unproven guidance to overcome udp_send side-effects
+    void send_experimental(const PbufBase& pbuf, const endpoint_type& endpoint)
+    {
+        pbuf_pointer underlying = pbuf;
+        struct pbuf saved = *underlying;
+
+        pcb.send_experimental(underlying, endpoint);
+
+        *underlying = saved;
+    }
+
+
+    void send(const PbufBase& pbuf, const endpoint_type& endpoint)
+    {
+        pcb.send(pbuf,
+            endpoint.address(),
+            endpoint.port());
+    }
+
 #if FEATURE_EMBR_NETBUF_STREAMBUF
 #ifdef FEATURE_CPP_ALIASTEMPLATE
     template <class TChar>
@@ -68,13 +87,6 @@ struct TransportUdp : TransportBase
             endpoint.port());
     }
 #endif
-
-    void send(Pbuf& pbuf, const endpoint_type& endpoint)
-    {
-        pcb.send(pbuf.pbuf(),
-            endpoint.address(),
-            endpoint.port());
-    }
 };
 
 

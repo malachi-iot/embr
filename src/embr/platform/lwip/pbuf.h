@@ -54,6 +54,8 @@ public:
     {
     }
 
+    // DEBT: Likely we need to consolidate these, given the bitwise
+    // nature of constness
     const_pointer pbuf() const { return p; }
     pointer pbuf() { return p; }
 
@@ -107,6 +109,14 @@ public:
     bool valid() const { return p != NULLPTR; }
 
     PbufBase next() const { return p->next; }
+
+#if LWIP_VERSION >= EMBR_LWIP_VERSION(2, 1, 0, 0)
+#else
+    pbuf_type type() const
+    {
+        return p->type;
+    }
+#endif
 
     operator pointer() const { return p; }
 };
