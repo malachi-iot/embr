@@ -24,7 +24,7 @@ struct ipbuf_streambuf :
     typedef pbuf_current_base<TCharTraits> pbuf_current_base_type;
     typedef TCharTraits traits_type;
 
-    typedef Pbuf::pbuf_pointer pbuf_pointer;
+    typedef Pbuf::pointer pbuf_pointer;
     typedef Pbuf::size_type size_type;
 
     typedef typename traits_type::char_type char_type;

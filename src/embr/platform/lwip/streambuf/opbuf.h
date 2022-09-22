@@ -29,7 +29,7 @@ struct opbuf_streambuf :
     typedef typename traits_type::char_type char_type;
     typedef typename traits_type::int_type int_type;
 
-    typedef Pbuf::pbuf_pointer pbuf_pointer;
+    typedef Pbuf::pointer pbuf_pointer;
     typedef Pbuf::size_type size_type;
 
     // Attempts to move to the beginning of the next pbuf in the chain

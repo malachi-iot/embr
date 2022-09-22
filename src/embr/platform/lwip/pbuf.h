@@ -9,6 +9,7 @@
 #pragma once
 
 #include "udp.h"
+#include "version.h"
 
 #include <embr/netbuf.h>
 
@@ -32,12 +33,12 @@ namespace embr { namespace lwip {
 // pbuf itself.  No auto-reference magic
 struct PbufBase
 {
-    typedef struct pbuf pbuf_type;
-    typedef pbuf_type* pbuf_pointer;
-    typedef const pbuf_type* const_pbuf_pointer;
+    typedef struct pbuf value_type;
+    typedef value_type* pointer;
+    typedef const value_type* const_pointer;
 
 protected:
-    pbuf_pointer p;
+    pointer p;
 
 public:
 #ifdef FEATURE_CPP_DECLTYPE
@@ -46,15 +47,15 @@ public:
     typedef uint16_t size_type;
 #endif
 
-    PbufBase(pbuf_pointer p) : p(p) {}
+    PbufBase(pointer p) : p(p) {}
     PbufBase() = delete;
     PbufBase(size_type size, pbuf_layer layer = PBUF_TRANSPORT) : 
         p(pbuf_alloc(layer, size, PBUF_RAM))
     {
     }
 
-    const_pbuf_pointer pbuf() const { return p; }
-    pbuf_pointer pbuf() { return p; }
+    const_pointer pbuf() const { return p; }
+    pointer pbuf() { return p; }
 
     void* payload() const { return p->payload; }
 
@@ -75,7 +76,7 @@ public:
         return pbuf_copy_partial(p, s, len, offset);
     }
 
-    void concat(pbuf_pointer t)
+    void concat(pointer t)
     {
         pbuf_cat(p, t);
     }
@@ -107,13 +108,13 @@ public:
 
     PbufBase next() const { return p->next; }
 
-    operator pbuf_pointer() const { return p; }
+    operator pointer() const { return p; }
 };
 
 // returns size between the start of two pbufs
 inline PbufBase::size_type delta_length(PbufBase from, PbufBase to)
 {
-    PbufBase::const_pbuf_pointer p = from.pbuf();
+    PbufBase::const_pointer p = from.pbuf();
     PbufBase::size_type len = 0;
 
     while(p != to.pbuf())
@@ -161,7 +162,7 @@ struct Pbuf : PbufBase
     {
     }
 
-    Pbuf(pbuf_pointer p, bool bump_reference = true) : 
+    Pbuf(pointer p, bool bump_reference = true) : 
         PbufBase(p)
     {
         if(bump_reference) pbuf_ref(p);
@@ -183,7 +184,7 @@ struct Pbuf : PbufBase
 
     ~Pbuf()
     {
-        pbuf_pointer p_to_free = pbuf();
+        pointer p_to_free = pbuf();
 
         if(p_to_free != NULLPTR)
             // remember, pbufs are reference counted so this may or may not actually
@@ -201,7 +202,7 @@ struct Pbuf : PbufBase
 struct PbufNetbuf : PbufBase
 {
 #ifdef FEATURE_EMBR_PBUF_CHAIN_EXP
-    pbuf_pointer p_start;
+    pointer p_start;
 #endif
 
 public:
@@ -219,7 +220,7 @@ public:
 #endif
     }
 
-    PbufNetbuf(pbuf_pointer p, bool bump_reference = true) : 
+    PbufNetbuf(pointer p, bool bump_reference = true) : 
         PbufBase(p)
     {
         if(bump_reference) pbuf_ref(p);
@@ -258,7 +259,7 @@ public:
 
     ~PbufNetbuf()
     {
-        pbuf_pointer p_to_free = pbuf();
+        pointer p_to_free = pbuf();
 
         if(p_to_free != NULLPTR)
             // remember, pbufs are reference counted so this may or may not actually
@@ -269,14 +270,14 @@ public:
 #ifdef FEATURE_EMBR_PBUF_CHAIN_EXP
     static CONSTEXPR size_type threshold_size = 32;
 
-    const_pbuf_pointer pbuf() const { return p_start; }
-    pbuf_pointer pbuf() { return p_start; }
+    const_pointer pbuf() const { return p_start; }
+    pointer pbuf() { return p_start; }
 #else
-    const_pbuf_pointer pbuf() const { return p; }
-    pbuf_pointer pbuf() { return p; }
+    const_pointer pbuf() const { return p; }
+    pointer pbuf() { return p; }
 #endif
 
-    operator const_pbuf_pointer() const { return pbuf(); }
+    operator const_pointer() const { return pbuf(); }
 
     // p->len represents length of current pbuf, if a chain is involved
     // look at tot_len
@@ -351,7 +352,7 @@ public:
     int chain_counter() const
     {
 #ifdef FEATURE_EMBR_PBUF_CHAIN_EXP
-        pbuf_pointer p_counter = p_start;
+        pointer p_counter = p_start;
         int counter = 0;
         while(p_counter)
         {

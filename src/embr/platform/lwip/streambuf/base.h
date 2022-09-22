@@ -53,7 +53,7 @@ class pbuf_current_base
     typedef typename traits_type::char_type char_type;
     typedef typename traits_type::int_type int_type;
 
-    typedef PbufBase::pbuf_pointer pbuf_pointer;
+    typedef PbufBase::pointer pbuf_pointer;
     typedef PbufBase::size_type size_type;
 
 protected:
