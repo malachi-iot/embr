@@ -42,8 +42,9 @@ struct TransportUdp : TransportBase
     TransportUdp(TArgs&& ...args) : pcb(std::forward<TArgs>(args)...) {}
 #endif
 
-    // Follows partially proven guidance to overcome udp_send side-effects
-    void send_experimental(const PbufBase& pbuf, const endpoint_type& endpoint)
+    // Following some unprove guidance to overcome udp_send side-effects
+    template <bool use_ptr>
+    void send_experimental(const PbufBase& pbuf, const Endpoint<use_ptr>& endpoint)
     {
         pbuf_pointer underlying = pbuf;
         struct pbuf saved = *underlying;
@@ -54,7 +55,8 @@ struct TransportUdp : TransportBase
     }
 
 
-    void send(pbuf_pointer pbuf, const endpoint_type& endpoint)
+    template <bool use_ptr>
+    void send(const PbufBase& pbuf, const Endpoint<use_ptr>& endpoint)
     {
         pcb.send(pbuf,
             endpoint.address(),
@@ -79,8 +81,9 @@ struct TransportUdp : TransportBase
             endpoint.port());
     }
 #else
-    template <class TChar>
-    void send(upgrading::basic_opbuf_streambuf<TChar>& streambuf, const endpoint_type& endpoint)
+
+    template <class TChar, bool use_ptr>
+    void send(upgrading::basic_opbuf_streambuf<TChar>& streambuf, const Endpoint<use_ptr>& endpoint)
     {
         pcb.send(streambuf.pbuf(), 
             endpoint.address(),
