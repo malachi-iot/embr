@@ -125,7 +125,7 @@ public:
         if(by_size < threshold_size)
             by_size = threshold_size;
             
-        pbuf_pointer new_p = pbuf_alloc(PBUF_TRANSPORT, by_size, PBUF_RAM);
+        pointer new_p = pbuf_alloc(PBUF_TRANSPORT, by_size, PBUF_RAM);
 
         if(new_p == NULLPTR) return embr::mem::ExpandFailOutOfMemory;
 
