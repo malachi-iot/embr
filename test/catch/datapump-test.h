@@ -1,7 +1,7 @@
 #pragma once
 
 #include <embr/datapump.h>
-#include <embr/netbuf-static.h>
+#include <embr/obsolete/netbuf-static.h>
 #include <embr/transport-descriptor.h>
 
 

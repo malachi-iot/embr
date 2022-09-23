@@ -24,11 +24,8 @@ set(SOURCE_FILES
     dataport-test.cpp
     datapump-test.cpp
     datapump-test.h
-    netbuf-test.cpp
     observer-test.cpp
     experimental-test.cpp
-    reader-test.cpp
-    writer-test.cpp
     scheduler-test.cpp
     streambuf-test.cpp
     word-test.cpp

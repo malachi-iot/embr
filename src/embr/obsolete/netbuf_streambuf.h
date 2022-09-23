@@ -3,7 +3,7 @@
 #include <estd/streambuf.h>
 #include <estd/optional.h>
 
-#include "../netbuf.h"
+#include "netbuf.h"
 
 namespace embr { namespace mem {
 namespace impl {
