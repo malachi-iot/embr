@@ -31,7 +31,7 @@ struct TransportBase
 template <bool use_address_ptr = true>
 struct TransportUdp : TransportBase
 {
-    typedef Endpoint<use_address_ptr> endpoint_type;
+    typedef lwip::internal::Endpoint<use_address_ptr> endpoint_type;
 
     lwip::udp::Pcb pcb;
 
@@ -44,7 +44,7 @@ struct TransportUdp : TransportBase
 
     // Following some unprove guidance to overcome udp_send side-effects
     template <bool use_ptr>
-    void send_experimental(const PbufBase& pbuf, const Endpoint<use_ptr>& endpoint)
+    void send_experimental(const PbufBase& pbuf, const lwip::internal::Endpoint<use_ptr>& endpoint)
     {
         pbuf_pointer underlying = pbuf;
         struct pbuf saved = *underlying;
@@ -56,7 +56,7 @@ struct TransportUdp : TransportBase
 
 
     template <bool use_ptr>
-    void send(const PbufBase& pbuf, const Endpoint<use_ptr>& endpoint)
+    void send(const PbufBase& pbuf, const lwip::internal::Endpoint<use_ptr>& endpoint)
     {
         pcb.send(pbuf,
             endpoint.address(),
@@ -83,7 +83,7 @@ struct TransportUdp : TransportBase
 #else
 
     template <class TChar, bool use_ptr>
-    void send(upgrading::basic_opbuf_streambuf<TChar>& streambuf, const Endpoint<use_ptr>& endpoint)
+    void send(upgrading::basic_opbuf_streambuf<TChar>& streambuf, const lwip::internal::Endpoint<use_ptr>& endpoint)
     {
         pcb.send(streambuf.pbuf(), 
             endpoint.address(),

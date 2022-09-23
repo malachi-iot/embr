@@ -27,7 +27,7 @@ struct DiagnosticDataportObserver
     typedef embr::DataPortEvents<TPolicy> event;
 
     template <bool use_addr_ptr>
-    static const char* get_addr_str(const embr::lwip::experimental::Endpoint<use_addr_ptr>& endpoint)
+    static const char* get_addr_str(const embr::lwip::internal::Endpoint<use_addr_ptr>& endpoint)
     {
         // https://www.nongnu.org/lwip/2_1_x/group__ipaddr.html
         // careful, not reentrant--

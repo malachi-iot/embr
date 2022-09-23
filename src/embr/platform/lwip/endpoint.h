@@ -14,9 +14,11 @@ typedef const ip_addr_t* addr_pointer;
 template <class TAddress>
 class EndpointAddressBase<true, TAddress>
 {
+public:
     typedef TAddress value_type;
     typedef const value_type* pointer;
-    
+
+private:    
     pointer address_;
 
 public:
@@ -28,9 +30,11 @@ public:
 template <class TAddress>
 class EndpointAddressBase<false, TAddress>
 {
+public:
     typedef TAddress value_type;
     typedef const value_type* pointer;
 
+private:
     const value_type address_;
 
 public:
@@ -79,17 +83,23 @@ public:
 };
 #endif
 
+}
 
+namespace internal {
 
 
 template <bool use_address_ptr = true>
-class Endpoint : public EndpointAddress<use_address_ptr>
+class Endpoint : public embr::lwip::experimental::EndpointAddress<use_address_ptr>
 {
+    typedef embr::lwip::experimental::EndpointAddress<use_address_ptr> base_type;
+
     const uint16_t port_;
 
 public:
+    typedef typename base_type::pointer addr_pointer;
+
     Endpoint(addr_pointer address, uint16_t port) :
-        EndpointAddress<use_address_ptr>(address),
+        base_type(address),
         port_(port)
     {}
 
@@ -113,6 +123,6 @@ bool operator ==(
 
 }
 
-typedef experimental::Endpoint<> Endpoint;
+//typedef experimental::Endpoint<> Endpoint;
 
 }}

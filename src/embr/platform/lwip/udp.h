@@ -64,7 +64,7 @@ public:
     // Not sure I want this level of complexity in what amounts to a PCB wrapper
     template <bool use_ptr>
     err_t send_experimental(pbuf_pointer pbuf,
-        const embr::lwip::experimental::Endpoint<use_ptr>& endpoint)
+        const embr::lwip::internal::Endpoint<use_ptr>& endpoint)
     {
         return send(pbuf,
             endpoint.address(),
