@@ -22,7 +22,7 @@ constexpr int netbuf_size = 128;
 
 static const char* TAG = "lwip-pbuf";
 
-typedef embr::lwip::PbufNetbuf netbuf_type;
+typedef embr::lwip::legacy::PbufNetbuf netbuf_type;
 typedef netbuf_type::size_type size_type;
 
 using embr::lwip::opbufstream;
@@ -36,12 +36,12 @@ typedef in_pbuf_streambuf::traits_type traits_type;
 TEST_CASE("lwip pbuf embr-netbuf: out streambuf", "[lwip-pbuf]")
 {
     // NOTE: Not tested with move constructor, only tested with reference version
-    embr::lwip::PbufNetbuf _netbuf(netbuf_size);
+    netbuf_type _netbuf(netbuf_size);
 
     TEST_ASSERT(_netbuf.size() == netbuf_size);
 
     //out_netbuf_streambuf<char, embr::lwip::PbufNetbuf&> sb(_netbuf);
-    out_netbuf_streambuf<char, embr::lwip::PbufNetbuf> sb(std::move(_netbuf));
+    out_netbuf_streambuf<char, netbuf_type> sb(std::move(_netbuf));
     //out_netbuf_streambuf<char, embr::lwip::PbufNetbuf> sb(netbuf_size);
 
     sb.xsputn(s1, s1_size);
@@ -92,7 +92,7 @@ TEST_CASE("lwip pbuf embr-netbuf: out streambuf chain", "[lwip-pbuf]")
 TEST_CASE("lwip pbuf embr-netbuf: ostream", "[lwip-pbuf]")
 {
     // NOTE: Compiles, not runtime tested at all
-    typedef out_netbuf_streambuf<char, embr::lwip::PbufNetbuf> streambuf_type;
+    typedef out_netbuf_streambuf<char, netbuf_type> streambuf_type;
 
     estd::internal::basic_ostream<streambuf_type> 
         out(netbuf_size);
