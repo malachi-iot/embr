@@ -7,6 +7,21 @@ namespace embr { namespace bits {
 
 namespace experimental {
 
+template <typename TInt>
+struct set_assist2<big_endian, TInt>
+{
+    template <typename TReverseIt>
+    static inline void set(unsigned sz, TReverseIt raw, TInt v)
+    {
+        constexpr unsigned byte_width = byte_size();
+
+        while(sz--)
+        {
+            *raw-- = (byte) v;
+            v >>= byte_width;
+        }
+    }
+};
 
 // NOTE: Remember, when using this 'enable' trick, specialization has to
 // focus inside the 'enable' portion.  For example, "setter<0...." makes
@@ -54,13 +69,7 @@ struct setter<bitpos, length, big_endian, ld, rd,
     template <typename TReverseIt, typename TInt>
     static inline void set_assist(unsigned sz, TReverseIt raw, TInt v)
     {
-        constexpr unsigned byte_width = byte_size();
-
-        while(sz--)
-        {
-            *raw-- = (byte) v;
-            v >>= byte_width;
-        }
+        set_assist2<big_endian, TInt>::set(sz, raw, v);
     }
 
     template <typename TReverseIt, typename TInt>

@@ -16,6 +16,40 @@ namespace embr { namespace bits {
 
 namespace experimental {
 
+template <typename TInt>
+struct set_assist2<little_endian, TInt>
+{
+    template <typename TForwardIt>
+    inline static void set(unsigned& i, TForwardIt& raw, TInt& v)
+    {
+        typedef typename estd::iterator_traits<TForwardIt>::value_type byte_type;
+        constexpr size_t byte_width = sizeof(byte_type) * byte_size();
+
+        for(; i > byte_width; i -= byte_width)
+        {
+            *raw++ = (byte_type) v;
+            v >>= byte_width;
+        }
+    }
+
+
+    // FIX: Consolidate set/set2 into just set
+    // Technically this is DEBT, but it invites such confusion that it's
+    // a FIX
+    template <typename TForwardIt>
+    static inline void set2(unsigned sz, TForwardIt raw, TInt v)
+    {
+        constexpr unsigned byte_width = byte_size();
+
+        while(sz--)
+        {
+            *raw++ = (byte) v;
+            v >>= byte_width;
+        }
+    }
+};
+
+
 template <unsigned bitpos, unsigned length>
 struct setter<bitpos, length, little_endian, lsb_to_msb, lsb_to_msb,
     enable<is_valid(bitpos, length) &&
@@ -37,14 +71,7 @@ struct setter<bitpos, length, little_endian, lsb_to_msb, lsb_to_msb,
     template <typename TForwardIt, typename TInt>
     inline static void set_assist(unsigned& i, TForwardIt& raw, TInt& v)
     {
-        typedef typename estd::iterator_traits<TForwardIt>::value_type byte_type;
-        constexpr size_t byte_width = sizeof(byte_type) * byte_size();
-
-        for(; i > byte_width; i -= byte_width)
-        {
-            *raw++ = (byte_type) v;
-            v >>= byte_width;
-        }
+        set_assist2<little_endian, TInt>::set(i, raw, v);
     }
 
     // Copy/paste & adapted from internal::setter (v2 version)
@@ -114,13 +141,7 @@ struct setter<bitpos, length, little_endian, ld, rd,
     template <typename TForwardIt, typename TInt>
     static inline void set_assist(unsigned sz, TForwardIt raw, TInt v)
     {
-        constexpr unsigned byte_width = byte_size();
-
-        while(sz--)
-        {
-            *raw++ = (byte) v;
-            v >>= byte_width;
-        }
+        set_assist2<little_endian, TInt>::set2(sz, raw, v);
     }
 
     template <typename TForwardIt, typename TInt>
@@ -261,7 +282,8 @@ struct setter<endianness::little_endian,
 
     template <class TForwardIt, typename TIntShadow = TInt,
         estd::enable_if_t<(sizeof(TIntShadow) == 1), bool> = true>
-    inline static void set_assist(unsigned& i, TForwardIt& raw, TInt& v)
+    inline static 
+    (unsigned& i, TForwardIt& raw, TInt& v)
     {
 
     }

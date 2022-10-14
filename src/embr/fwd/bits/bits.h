@@ -101,6 +101,10 @@ template <unsigned bitpos, unsigned length, endianness e,
     typename TInt, typename TIt>
 void set(TIt raw, TInt v);
 
+// DEBT: Clean up naming, can't name set_assist as that currently is a set
+// of functions we're displacing
+template <endianness e, typename TInt>
+struct set_assist2;
 
 }
 
