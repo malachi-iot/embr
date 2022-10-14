@@ -5,13 +5,13 @@
 
 namespace embr { namespace bits {
 
-namespace experimental {
+namespace detail {
 
 // for subbyte operations, endianness and resume_direction do not matter
 template <unsigned bitpos, unsigned length, endianness e, resume_direction rd>
 struct setter<bitpos, length, e, lsb_to_msb, rd,
-    enable<is_subbyte(bitpos, length)> > :
-    setter_tag
+    enable<internal::is_subbyte(bitpos, length)> > :
+    internal::setter_tag
 {
     constexpr static int adjuster()
     {
@@ -44,8 +44,8 @@ struct setter<bitpos, length, e, lsb_to_msb, rd,
 
 template <unsigned bitpos, unsigned length, endianness e, resume_direction rd>
 struct getter<bitpos, length, e, lsb_to_msb, rd,
-    enable<is_subbyte(bitpos, length)> > :
-    getter_tag
+    enable<internal::is_subbyte(bitpos, length)> > :
+    internal::getter_tag
 {
     static constexpr int adjuster() { return 0; }
     static constexpr int adjuster(descriptor) { return 0; }

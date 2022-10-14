@@ -45,13 +45,7 @@ inline unsigned width_deducer_msb_to_lsb(descriptor d)
 }
 
 
-}
-
-namespace experimental {
-
 // these hold true no matter the endianness or underlying material size
-// DEBT: These are good to go for at least 'internal' namespace, their presence
-// even in the odd chance we don't use them fits there neatly
 
 constexpr unsigned max_bits()
 {
@@ -105,6 +99,17 @@ constexpr unsigned offset_adjuster(descriptor d)
     return (d.length / byte_size()) - 1;
 }
 
+struct getter_tag {};
+struct setter_tag {};
+
+
+
+}
+
+namespace experimental {
+
+
+
 // DEBT: Poor naming.  Use this for scenarios which require reverse iteration
 // this one is for 'full' mode
 template <unsigned bitpos, unsigned length>
@@ -120,17 +125,11 @@ inline unsigned offset_adjuster_lsb_to_msb(descriptor d)
     return (internal::width_deducer_lsb_to_msb(d) / byte_size()) - 1;
 }
 
-struct getter_tag {};
-struct setter_tag {};
-
-
-
+template <length_direction ld>
+using subbyte_setter = detail::setter<0, byte_size(), no_endian, ld>;
 
 template <length_direction ld>
-using subbyte_setter = setter<0, byte_size(), no_endian, ld>;
-
-template <length_direction ld>
-using subbyte_getter = getter<0, byte_size(), no_endian, ld>;
+using subbyte_getter = detail::getter<0, byte_size(), no_endian, ld>;
 
 // byte_boundary_xxxx undefined behavior if TInt is either:
 // - not an actual integer type
@@ -140,10 +139,10 @@ using subbyte_getter = getter<0, byte_size(), no_endian, ld>;
 // they are able to accept bytes as well
 
 template <endianness e, class TInt = uint16_t>
-using byte_boundary_setter = setter<0, sizeof(TInt) * byte_size(), e, no_direction>;
+using byte_boundary_setter = detail::setter<0, sizeof(TInt) * byte_size(), e, no_direction>;
 
 template <endianness e, class TInt = uint16_t>
-using byte_boundary_getter = getter<0, sizeof(TInt) * byte_size(), e, no_direction>;
+using byte_boundary_getter = detail::getter<0, sizeof(TInt) * byte_size(), e, no_direction>;
 
 
 }

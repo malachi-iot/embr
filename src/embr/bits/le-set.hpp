@@ -14,7 +14,7 @@
 
 namespace embr { namespace bits {
 
-namespace experimental {
+namespace internal {
 
 template <typename TInt>
 struct set_assist<little_endian, TInt>
@@ -27,7 +27,7 @@ struct set_assist<little_endian, TInt>
         unsigned sz = i;
 
         // for(; i > byte_width; i -= byte_width)
-        while(sz--)
+        while (sz--)
         {
             *raw++ = (byte_type) v;
             v >>= byte_width;
@@ -51,17 +51,20 @@ struct le_setter_base : setter_tag
     template <typename TForwardIt, typename TInt>
     static void set_assist(unsigned i, TForwardIt& raw, TInt& v)
     {
-        experimental::set_assist<little_endian, TInt>::set(i, raw, v);
+        internal::set_assist<little_endian, TInt>::set(i, raw, v);
     }
 };
 
+}
+
+namespace detail {
 
 template <unsigned bitpos, unsigned length>
 struct setter<bitpos, length, little_endian, lsb_to_msb, lsb_to_msb,
-    enable<is_valid(bitpos, length) &&
-           !is_byte_boundary(bitpos, length) &&
-           !is_subbyte(bitpos, length)> > :
-    le_setter_base
+    enable<internal::is_valid(bitpos, length) &&
+           !internal::is_byte_boundary(bitpos, length) &&
+           !internal::is_subbyte(bitpos, length)> > :
+    internal::le_setter_base
 {
     // Copy/paste & adapted from internal::setter (v2 version)
     // Passes unit tests, nice
@@ -113,9 +116,9 @@ struct setter<bitpos, length, little_endian, lsb_to_msb, lsb_to_msb,
 /// multi-byte byte boundary version
 template <unsigned bitpos, unsigned length, length_direction ld, resume_direction rd>
 struct setter<bitpos, length, little_endian, ld, rd,
-    enable<is_byte_boundary(bitpos, length) &&
-           !is_subbyte(bitpos, length)> > :
-    le_setter_base
+    enable<internal::is_byte_boundary(bitpos, length) &&
+           !internal::is_subbyte(bitpos, length)> > :
+    internal::le_setter_base
 {
     template <typename TForwardIt, typename TInt>
     static inline void set(descriptor d, TForwardIt raw, TInt v)
@@ -253,21 +256,21 @@ struct setter<endianness::little_endian,
     {
         // DEBT: Enable or disable these cases with compile time config, possibly enum-flag style
 
-        if(experimental::is_subbyte(d))
+        if(internal::is_subbyte(d))
         {
             typedef experimental::subbyte_setter<lsb_to_msb> s;
 
             s::set(d, raw + s::adjuster(d), v);
         }
-        else if(experimental::is_byte_boundary(d))
+        else if(internal::is_byte_boundary(d))
         {
             typedef experimental::byte_boundary_setter<little_endian> s;
 
             s::set(d, raw + s::adjuster(d), v);
         }
-        else if(experimental::is_valid(d))
+        else if(internal::is_valid(d))
         {
-            typedef experimental::setter<1, 8, little_endian, lsb_to_msb> s;
+            typedef detail::setter<1, 8, little_endian, lsb_to_msb> s;
 
             s::set(d, raw + s::adjuster(d), v);
         }

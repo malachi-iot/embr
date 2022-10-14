@@ -64,7 +64,7 @@ template <endianness e, class TInt, class TByte>
 void set(TByte* raw, TInt v);
 
 
-namespace experimental {
+namespace detail {
 
 // copy/paste of our 'Range' technique
 template <bool>
@@ -78,7 +78,9 @@ struct setter;
 template <unsigned bitpos, unsigned length, endianness e, length_direction ld, resume_direction rd = ld, typename = enable<true> >
 struct getter;
 
+}
 
+namespace experimental {
 // The following two discrete methods are good to have, but actually somewhat clumsy compared to
 // current 'v2' getter::get and setter::set since they can retain endianness and length direction
 // while varying bitpos, length etc
@@ -100,6 +102,10 @@ template <unsigned bitpos, unsigned length, endianness e,
 #endif
     typename TInt, typename TIt>
 void set(TIt raw, TInt v);
+
+}
+
+namespace internal {
 
 // These assisters are used to do the byte-oriented endian setting and getting
 // Bit boundary operations are NOT handled in the assist mechanism.  These might

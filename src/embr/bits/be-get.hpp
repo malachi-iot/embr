@@ -16,15 +16,15 @@ inline TInt get_be_lsb_to_msb(const unsigned width, descriptor d, TForwardIt raw
 
 }
 
-namespace experimental {
+namespace detail {
 
 
 template <unsigned bitpos, unsigned length>
 struct getter<bitpos, length, big_endian, lsb_to_msb, lsb_to_msb,
-    enable<is_valid(bitpos, length) &&
-            !is_byte_boundary(bitpos, length) &&
-            !is_subbyte(bitpos, length)> > :
-   getter_tag
+    enable<internal::is_valid(bitpos, length) &&
+            !internal::is_byte_boundary(bitpos, length) &&
+            !internal::is_subbyte(bitpos, length)> > :
+    internal::getter_tag
 {
     constexpr static int adjuster() { return 0; }
 
@@ -115,10 +115,10 @@ struct getter<bitpos, length, big_endian, lsb_to_msb, lsb_to_msb,
 // Byte boundary flavor
 template <unsigned bitpos, unsigned length>
 struct getter<bitpos, length, big_endian, lsb_to_msb, lsb_to_msb,
-    enable<is_valid(bitpos, length) &&
-           is_byte_boundary(bitpos, length) &&
-           !is_subbyte(bitpos, length)> > :
-    getter_tag
+    enable<internal::is_valid(bitpos, length) &&
+        internal::is_byte_boundary(bitpos, length) &&
+           !internal::is_subbyte(bitpos, length)> > :
+    internal::getter_tag
 {
     constexpr static int adjuster() { return 0; }
 
@@ -256,7 +256,7 @@ struct getter<big_endian, lsb_to_msb, lsb_to_msb>
     template <unsigned bitpos, unsigned length, typename TInt, class TForwardIt>
     static TInt get(TForwardIt raw)
     {
-        typedef experimental::getter<bitpos, length, big_endian, lsb_to_msb> g;
+        typedef detail::getter<bitpos, length, big_endian, lsb_to_msb> g;
         // DEBT: Reliance on descriptor means less compile time optimization opportunity
         // Have to do this right now because v3 getter isn't fully built out
         CONSTEXPR descriptor d(bitpos, length);

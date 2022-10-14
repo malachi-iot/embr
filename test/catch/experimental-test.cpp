@@ -126,7 +126,7 @@ TEST_CASE("experimental test", "[experimental]")
     {
         using namespace embr;
 
-        SECTION("optimized/low level getter")
+        SECTION("optimized/low level getter ('v3')")
         {
             // ambiguous
             //typedef
@@ -134,7 +134,7 @@ TEST_CASE("experimental test", "[experimental]")
             //typedef
                 //bits::internal::getter<bits::little_endian, bits::lsb_to_msb > getter;
             typedef
-                bits::experimental::getter<4, 8, bits::little_endian, bits::lsb_to_msb> getter;
+                bits::detail::getter<4, 8, bits::little_endian, bits::lsb_to_msb> getter;
 
             //getter::get2<0, 4>(le_example1);
             //auto v = getter::get<4, 8, uint16_t>(le_example1 + 3);
@@ -174,9 +174,10 @@ TEST_CASE("experimental test", "[experimental]")
 
             estd::fill_n(raw, 8, 0);
 
-            REQUIRE(embr::bits::experimental::is_subbyte(0, 8) == true);
-            REQUIRE(embr::bits::experimental::is_byte_boundary(0, 8) == true);
-            REQUIRE(embr::bits::experimental::is_valid(0, 8) == true);
+            // DEBT: These 3 no longer experimental, move them
+            REQUIRE(embr::bits::internal::is_subbyte(0, 8) == true);
+            REQUIRE(embr::bits::internal::is_byte_boundary(0, 8) == true);
+            REQUIRE(embr::bits::internal::is_valid(0, 8) == true);
 
             SECTION("little endian")
             {

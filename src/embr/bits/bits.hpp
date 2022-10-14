@@ -17,7 +17,7 @@ template <unsigned bitpos, unsigned length, endianness e,
     typename TInt, class TIt>
 inline void set(TIt raw, TInt v)
 {
-    typedef experimental::setter<bitpos, length, e, d, rd> s;
+    typedef detail::setter<bitpos, length, e, d, rd> s;
 
     s::set(raw + s::adjuster(), v);
 }

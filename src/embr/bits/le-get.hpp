@@ -11,7 +11,7 @@
 
 namespace embr { namespace bits {
 
-namespace experimental {
+namespace internal {
 
 template <typename TInt>
 struct get_assister<little_endian, false, TInt, estd::enable_if_t<(sizeof(TInt) > 1)> >
@@ -24,7 +24,7 @@ struct get_assister<little_endian, false, TInt, estd::enable_if_t<(sizeof(TInt) 
         // DEBT: turn i into unsigned and do an if statement above, rather than
         // forcing a typecast onto byte_width - though making byte_width an actual
         // signed int wouldn't be so bad
-        for(; i > (int)byte_width; i -= byte_width)
+        for (; i > (int) byte_width; i -= byte_width)
         {
             --raw;
             v <<= byte_width;
@@ -33,25 +33,28 @@ struct get_assister<little_endian, false, TInt, estd::enable_if_t<(sizeof(TInt) 
     }
 };
 
+}
+
+namespace detail {
 
 // Full bit boundary version
 template <unsigned bitpos, unsigned length>
 struct getter<bitpos, length, little_endian, lsb_to_msb, lsb_to_msb,
-    enable<is_valid(bitpos, length) &&
-           !is_byte_boundary(bitpos, length) &&
-           !is_subbyte(bitpos, length)> > :
-    getter_tag
+    enable<internal::is_valid(bitpos, length) &&
+           !internal::is_byte_boundary(bitpos, length) &&
+           !internal::is_subbyte(bitpos, length)> > :
+    internal::getter_tag
 {
     // DEBT: adjusters are good idea, but doubling up on the width deducer calc plus
     // all the extraneous trivial math is not great
     constexpr static int adjuster()
     {
-        return offset_adjuster_lsb_to_msb<bitpos, length>();
+        return experimental::offset_adjuster_lsb_to_msb<bitpos, length>();
     }
 
     constexpr static int adjuster(descriptor d)
     {
-        return offset_adjuster_lsb_to_msb(d);
+        return experimental::offset_adjuster_lsb_to_msb(d);
     }
 
     template <class TReverseIt, typename TInt,
@@ -132,18 +135,18 @@ struct getter<bitpos, length, little_endian, lsb_to_msb, lsb_to_msb,
 /// multi-byte byte boundary version
 template <unsigned bitpos, unsigned length, length_direction ld, resume_direction rd>
 struct getter<bitpos, length, little_endian, ld, rd,
-    enable<is_byte_boundary(bitpos, length) &&
-           !is_subbyte(bitpos, length)> > :
-    getter_tag
+    enable<internal::is_byte_boundary(bitpos, length) &&
+           !internal::is_subbyte(bitpos, length)> > :
+    internal::getter_tag
 {
     constexpr static int adjuster()
     {
-        return offset_adjuster<bitpos, length>();
+        return internal::offset_adjuster<bitpos, length>();
     }
 
     constexpr static int adjuster(descriptor d)
     {
-        return offset_adjuster(d);
+        return internal::offset_adjuster(d);
     }
 
     template <typename TReverseIt, typename TInt,
@@ -204,7 +207,7 @@ struct getter<endianness::little_endian,
     template <unsigned bitpos, unsigned length, typename TInt, class TReverseIt>
     static TInt get(TReverseIt raw)
     {
-        typedef experimental::getter<bitpos, length, little_endian, lsb_to_msb> g;
+        typedef detail::getter<bitpos, length, little_endian, lsb_to_msb> g;
 
         TInt v;
 
@@ -218,11 +221,11 @@ struct getter<endianness::little_endian,
     {
         TInt v;
 
-        if(experimental::is_subbyte(d))
+        if(internal::is_subbyte(d))
         {
             experimental::subbyte_getter<lsb_to_msb>::get(d, raw, v);
         }
-        else if(experimental::is_byte_boundary(d))
+        else if(internal::is_byte_boundary(d))
         {
             typedef experimental::byte_boundary_getter<little_endian> g;
 
@@ -232,7 +235,7 @@ struct getter<endianness::little_endian,
         }
         else
         {
-            typedef experimental::getter<1, 8, little_endian, lsb_to_msb> g;
+            typedef detail::getter<1, 8, little_endian, lsb_to_msb> g;
 
             g::get(d,
                 raw + (adjusted ? g::adjuster(d) : 0),

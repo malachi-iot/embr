@@ -405,7 +405,10 @@ TEST_CASE("bits2")
 
             REQUIRE(d == traits_type::get_descriptor());
         }
-        SECTION("v3")
+    }
+    SECTION("v3")
+    {
+        SECTION("getters/setters")
         {
             using namespace bits;
 
@@ -418,7 +421,7 @@ TEST_CASE("bits2")
                 SECTION("4, 8")
                 {
 
-                    typedef experimental::getter<4, 8, big_endian, lsb_to_msb> g;
+                    typedef detail::getter<4, 8, big_endian, lsb_to_msb> g;
                     constexpr descriptor d{4, 8};
 
                     g::get(d, be_example1, v);
@@ -427,7 +430,7 @@ TEST_CASE("bits2")
                 }
                 SECTION("2, 7")
                 {
-                    typedef experimental::getter<2, 7, big_endian, lsb_to_msb> g;
+                    typedef detail::getter<2, 7, big_endian, lsb_to_msb> g;
                     constexpr descriptor d{2, 7};
 
                     g::get(d, &be_example1[0], v);
@@ -439,7 +442,7 @@ TEST_CASE("bits2")
                 }
                 SECTION("subbyte 1, 3")
                 {
-                    typedef experimental::getter<1, 3, big_endian, lsb_to_msb> g;
+                    typedef detail::getter<1, 3, big_endian, lsb_to_msb> g;
                     constexpr descriptor d{1, 3};
 
                     //g::get_unready(d, &be_example1[0], v);
@@ -454,7 +457,7 @@ TEST_CASE("bits2")
 
                 SECTION("4, 16")
                 {
-                    typedef experimental::getter<4, 16, big_endian, lsb_to_msb> g;
+                    typedef detail::getter<4, 16, big_endian, lsb_to_msb> g;
                     constexpr descriptor d{4, 16};
 
                     g::get(d, be_example1, v);
@@ -463,7 +466,7 @@ TEST_CASE("bits2")
                 }
                 SECTION("2, 15")
                 {
-                    typedef experimental::getter<4, 15, big_endian, lsb_to_msb> g;
+                    typedef detail::getter<4, 15, big_endian, lsb_to_msb> g;
                     constexpr descriptor d{2, 15};
 
                     g::get(d, be_example1, v);
@@ -476,7 +479,7 @@ TEST_CASE("bits2")
                 // Byte boundary flavor
                 SECTION("0, 16")
                 {
-                    typedef experimental::getter<0, 16, big_endian, lsb_to_msb> g;
+                    typedef detail::getter<0, 16, big_endian, lsb_to_msb> g;
                     constexpr descriptor d{0, 16};
 
                     g::get(d, be_example1, v);
@@ -490,7 +493,7 @@ TEST_CASE("bits2")
 
                 SECTION("4, 24")
                 {
-                    typedef experimental::getter<4, 24, big_endian, lsb_to_msb> g;
+                    typedef detail::getter<4, 24, big_endian, lsb_to_msb> g;
                     constexpr descriptor d{4, 24};
 
                     g::get(d, be_example1, v);
@@ -499,7 +502,7 @@ TEST_CASE("bits2")
                 }
                 SECTION("2, 24")
                 {
-                    typedef experimental::getter<2, 24, big_endian, lsb_to_msb> g;
+                    typedef detail::getter<2, 24, big_endian, lsb_to_msb> g;
                     constexpr descriptor d{2, 24};
 
                     g::get(d, be_example1, v);
@@ -511,7 +514,7 @@ TEST_CASE("bits2")
                 }
                 SECTION("3, 27")
                 {
-                    typedef experimental::getter<3, 27, big_endian, lsb_to_msb> g;
+                    typedef detail::getter<3, 27, big_endian, lsb_to_msb> g;
                     constexpr descriptor d{3, 27};
 
                     g::get(d, be_example1, v);
@@ -524,7 +527,7 @@ TEST_CASE("bits2")
                 // Byte boundary flavor
                 SECTION("0, 24")
                 {
-                    typedef experimental::getter<0, 24, big_endian, lsb_to_msb> g;
+                    typedef detail::getter<0, 24, big_endian, lsb_to_msb> g;
                     constexpr descriptor d{0, 24};
 
                     g::get(d, be_example1, v);
@@ -534,7 +537,7 @@ TEST_CASE("bits2")
                 // Byte boundary flavor
                 SECTION("0, 32")
                 {
-                    typedef experimental::getter<0, 32, big_endian, lsb_to_msb> g;
+                    typedef detail::getter<0, 32, big_endian, lsb_to_msb> g;
                     constexpr descriptor d{0, 32};
 
                     g::get(d, be_example1, v);
@@ -700,8 +703,8 @@ TEST_CASE("bits2")
     {
         SECTION("little endian")
         {
-            typedef bits::experimental::setter<0, 16, bits::little_endian, bits::lsb_to_msb> setter_16_bb;
-            typedef bits::experimental::setter<1, 14, bits::little_endian, bits::lsb_to_msb> setter_16;
+            typedef bits::detail::setter<0, 16, bits::little_endian, bits::lsb_to_msb> setter_16_bb;
+            typedef bits::detail::setter<1, 14, bits::little_endian, bits::lsb_to_msb> setter_16;
 
             // Remember, v3 setter and getter are resilient to underlying type bitness
             typedef setter_16_bb setter_bb;
@@ -719,9 +722,9 @@ TEST_CASE("bits2")
                 uint16_t v16;
                 uint32_t v32;
 
-                typedef bits::experimental::get_assister<bits::little_endian, true, uint8_t> ga_8;
-                typedef bits::experimental::get_assister<bits::little_endian, true, uint16_t> ga_16;
-                typedef bits::experimental::get_assister<bits::little_endian, true, uint32_t> ga_32;
+                typedef bits::internal::get_assister<bits::little_endian, true, uint8_t> ga_8;
+                typedef bits::internal::get_assister<bits::little_endian, true, uint16_t> ga_16;
+                typedef bits::internal::get_assister<bits::little_endian, true, uint32_t> ga_32;
 
                 /*
                 //ga_8::get_assist(i = 0, raw, v8);
@@ -767,8 +770,8 @@ TEST_CASE("bits2")
             }
             SECTION("getter")
             {
-                typedef bits::experimental::getter<0, 16, bits::little_endian, bits::lsb_to_msb> getter_bb;
-                typedef bits::experimental::getter<1, 14, bits::little_endian, bits::lsb_to_msb> getter_full;
+                typedef bits::detail::getter<0, 16, bits::little_endian, bits::lsb_to_msb> getter_bb;
+                typedef bits::detail::getter<1, 14, bits::little_endian, bits::lsb_to_msb> getter_full;
 
                 SECTION("16-bit")
                 {
@@ -808,13 +811,13 @@ TEST_CASE("bits2")
         {
             SECTION("setter")
             {
-                typedef bits::experimental::setter<0, 16, bits::big_endian, bits::lsb_to_msb> setter_bb;
-                typedef bits::experimental::setter<1, 14, bits::big_endian, bits::lsb_to_msb> setter_full;
+                typedef bits::detail::setter<0, 16, bits::big_endian, bits::lsb_to_msb> setter_bb;
+                typedef bits::detail::setter<1, 14, bits::big_endian, bits::lsb_to_msb> setter_full;
             }
             SECTION("getter")
             {
-                typedef bits::experimental::getter<0, 16, bits::big_endian, bits::lsb_to_msb> getter_bb;
-                typedef bits::experimental::getter<1, 14, bits::big_endian, bits::lsb_to_msb> getter_full;
+                typedef bits::detail::getter<0, 16, bits::big_endian, bits::lsb_to_msb> getter_bb;
+                typedef bits::detail::getter<1, 14, bits::big_endian, bits::lsb_to_msb> getter_full;
 
                 SECTION("16-bit")
                 {
