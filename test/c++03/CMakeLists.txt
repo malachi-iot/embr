@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD 98)
 # DEBT: This is not always true for C++98 scenarios, but implicitly true for ADSPBFIN (inttypes.h isn't
 # available, but it seems to have those defs) and most other compilers I use
 #add_compile_definitions(FEATURE_STD_INTTYPES)
+add_compile_definitions(FEATURE_EMBR_LWIP=0)
 
 project(embr-unity-tests VERSION 1.0)
 

@@ -1,5 +1,7 @@
 #include "unit-test.h"
 
+#if defined(ESP_PLATFORM)
+
 #include "esp_log.h"
 
 #include "lwip/tcpip.h"
@@ -153,3 +155,5 @@ void test_lwip()
     RUN_TEST(test_rtos_loopback);
     RUN_TEST(test_endpoint_equality);
 }
+
+#endif
