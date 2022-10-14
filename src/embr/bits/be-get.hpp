@@ -7,12 +7,21 @@
 #include "byte.hpp"
 #include "bits-temp.hpp"
 
+#include "detail/be-get.hpp"
+
 namespace embr { namespace bits {
 
 namespace internal {
 
 template <class TInt, class TForwardIt>
 inline TInt get_be_lsb_to_msb(const unsigned width, descriptor d, TForwardIt raw);
+
+struct be_getter_base : getter_tag
+{
+    constexpr static int adjuster() { return 0; }
+
+    constexpr static int adjuster(descriptor) { return 0; }
+};
 
 }
 
@@ -24,12 +33,8 @@ struct getter<bitpos, length, big_endian, lsb_to_msb, lsb_to_msb,
     enable<internal::is_valid(bitpos, length) &&
             !internal::is_byte_boundary(bitpos, length) &&
             !internal::is_subbyte(bitpos, length)> > :
-    internal::getter_tag
+    internal::be_getter_base
 {
-    constexpr static int adjuster() { return 0; }
-
-    constexpr static int adjuster(descriptor) { return 0; }
-
     template <typename TReverseIt, typename TInt,
         estd::enable_if_t<(sizeof(TInt) > 1), bool> = true>
     static inline void get_assist(unsigned sz, TReverseIt& raw, TInt& v)
@@ -118,12 +123,8 @@ struct getter<bitpos, length, big_endian, lsb_to_msb, lsb_to_msb,
     enable<internal::is_valid(bitpos, length) &&
         internal::is_byte_boundary(bitpos, length) &&
            !internal::is_subbyte(bitpos, length)> > :
-    internal::getter_tag
+    internal::be_getter_base
 {
-    constexpr static int adjuster() { return 0; }
-
-    constexpr static int adjuster(descriptor) { return 0; }
-
     template <typename TReverseIt, typename TInt,
         estd::enable_if_t<(sizeof(TInt) > 1), bool> = true>
     static inline void get_assist(unsigned sz, TReverseIt& raw, TInt& v)

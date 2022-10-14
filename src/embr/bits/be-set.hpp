@@ -3,6 +3,8 @@
 #include "byte.hpp"
 #include "bits-temp.hpp"
 
+#include "detail/be-set.hpp"
+
 namespace embr { namespace bits {
 
 namespace internal {
