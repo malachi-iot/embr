@@ -16,6 +16,15 @@ struct descriptor
 
 Document v0.2
 
+## Introduction
+
+### embr::bits namespace
+
+### embr::bits::detail namespace
+
+The getters and setters provided in this namespace demand
+a compile time indicator of the `bitpos` and `length` involved
+
 ## Terms and conventions
 
 | Term                       | Description                                                           |
