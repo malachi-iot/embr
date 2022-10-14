@@ -23,6 +23,20 @@ struct set_assist2<big_endian, TInt>
     }
 };
 
+// In the case of 8 bit integer, we can never shift right by 8
+// anyway.  This mainly exists to quiet down compiler bit shift
+// warnings for those conditions, but is also potentially a mild
+// optimization
+template <>
+struct set_assist2<big_endian, uint8_t>
+{
+    template <typename TReverseIt>
+    static inline void set(unsigned, TReverseIt, uint8_t)
+    {
+
+    }
+};
+
 // NOTE: Remember, when using this 'enable' trick, specialization has to
 // focus inside the 'enable' portion.  For example, "setter<0...." makes
 // compiler mad

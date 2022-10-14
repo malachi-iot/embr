@@ -20,30 +20,16 @@ template <typename TInt>
 struct set_assist2<little_endian, TInt>
 {
     template <typename TForwardIt>
-    inline static void set(unsigned& i, TForwardIt& raw, TInt& v)
+    inline static void set(unsigned i, TForwardIt& raw, TInt& v)
     {
         typedef typename estd::iterator_traits<TForwardIt>::value_type byte_type;
         constexpr size_t byte_width = sizeof(byte_type) * byte_size();
+        unsigned sz = i;
 
-        for(; i > byte_width; i -= byte_width)
-        {
-            *raw++ = (byte_type) v;
-            v >>= byte_width;
-        }
-    }
-
-
-    // FIX: Consolidate set/set2 into just set
-    // Technically this is DEBT, but it invites such confusion that it's
-    // a FIX
-    template <typename TForwardIt>
-    static inline void set2(unsigned sz, TForwardIt raw, TInt v)
-    {
-        constexpr unsigned byte_width = byte_size();
-
+        // for(; i > byte_width; i -= byte_width)
         while(sz--)
         {
-            *raw++ = (byte) v;
+            *raw++ = (byte_type) v;
             v >>= byte_width;
         }
     }
@@ -141,7 +127,7 @@ struct setter<bitpos, length, little_endian, ld, rd,
     template <typename TForwardIt, typename TInt>
     static inline void set_assist(unsigned sz, TForwardIt raw, TInt v)
     {
-        set_assist2<little_endian, TInt>::set2(sz, raw, v);
+        set_assist2<little_endian, TInt>::set(sz, raw, v);
     }
 
     template <typename TForwardIt, typename TInt>
