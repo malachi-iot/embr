@@ -9,11 +9,61 @@ namespace internal {
 template <class TInt, class TForwardIt>
 inline TInt get_be_lsb_to_msb(const unsigned width, descriptor d, TForwardIt raw);
 
+template <typename TInt>
+struct get_assist<big_endian, TInt>
+{
+    template <typename TReverseIt>
+    static inline void get(unsigned sz, TReverseIt& raw, TInt& v)
+    {
+        constexpr unsigned byte_width = byte_size();
+
+        while(sz--)
+        {
+            v <<= byte_width;
+            v |= (byte) *++raw;
+        }
+    }
+
+
+    // FIX: Consolidate get and get2, otherwise confusion abounds
+    template <typename TReverseIt>
+    static inline void get2(unsigned sz, TReverseIt& raw, TInt& v)
+    {
+        constexpr unsigned byte_width = byte_size();
+
+        while(--sz)
+        {
+            v <<= byte_width;
+            v |= (byte) *++raw;
+        }
+    }
+};
+
+
+template <>
+struct get_assist<big_endian, uint8_t>
+{
+    template <typename TReverseIt>
+    static inline void get(unsigned sz, TReverseIt& raw, uint8_t v) {}
+};
+
 struct be_getter_base : getter_tag
 {
     constexpr static int adjuster() { return 0; }
 
     constexpr static int adjuster(descriptor) { return 0; }
+
+    template <typename TReverseIt, typename TInt>
+    static inline void get_assist(unsigned sz, TReverseIt& raw, TInt& v)
+    {
+        internal::get_assist<big_endian, TInt>::get(sz, raw, v);
+    }
+
+    template <typename TReverseIt, typename TInt>
+    static inline void get_assist2(unsigned sz, TReverseIt& raw, TInt& v)
+    {
+        internal::get_assist<big_endian, TInt>::get2(sz, raw, v);
+    }
 };
 
 }
@@ -28,34 +78,6 @@ struct getter<bitpos, length, big_endian, lsb_to_msb, lsb_to_msb,
            !internal::is_subbyte(bitpos, length)> > :
     internal::be_getter_base
 {
-    template <typename TReverseIt, typename TInt,
-        estd::enable_if_t<(sizeof(TInt) > 1), bool> = true>
-    static inline void get_assist(unsigned sz, TReverseIt& raw, TInt& v)
-    {
-        constexpr unsigned byte_width = byte_size();
-
-        while(sz--)
-        {
-            v <<= byte_width;
-            v |= (byte) *++raw;
-        }
-    }
-
-    // Prep for uint8_t operation
-    template <typename TForwardIt, typename TInt,
-        estd::enable_if_t<(sizeof(TInt) <= 1), bool> = true>
-    static inline void get_assist(unsigned, TForwardIt, TInt&)
-    {
-    }
-
-    template <typename TForwardIt, typename TInt>
-    static inline void get_legacy(descriptor d, TForwardIt raw, TInt& v)
-    {
-        const unsigned width = internal::width_deducer_lsb_to_msb(d);
-
-        v = internal::get_be_lsb_to_msb<TInt>(width, d, raw);
-    }
-
     template <typename TForwardIt, typename TInt>
     static inline void get_bytesize(descriptor d, TForwardIt raw, TInt& v)
     {
@@ -118,26 +140,6 @@ struct getter<bitpos, length, big_endian, lsb_to_msb, lsb_to_msb,
            !internal::is_subbyte(bitpos, length)> > :
     internal::be_getter_base
 {
-    template <typename TReverseIt, typename TInt,
-        estd::enable_if_t<(sizeof(TInt) > 1), bool> = true>
-    static inline void get_assist(unsigned sz, TReverseIt& raw, TInt& v)
-    {
-        constexpr unsigned byte_width = byte_size();
-
-        while(--sz)
-        {
-            v <<= byte_width;
-            v |= (byte) *++raw;
-        }
-    }
-
-    // Prep for uint8_t operation
-    template <typename TForwardIt, typename TInt,
-        estd::enable_if_t<(sizeof(TInt) <= 1), bool> = true>
-    static inline void get_assist(unsigned, TForwardIt, TInt&)
-    {
-    }
-
     template <typename TForwardIt, typename TInt>
     static inline void get(descriptor d, TForwardIt raw, TInt& v)
     {
@@ -147,7 +149,7 @@ struct getter<bitpos, length, big_endian, lsb_to_msb, lsb_to_msb,
         v = *raw;
 
         // process middle and end bytes
-        get_assist(d.length / byte_width, raw, v);
+        get_assist2(d.length / byte_width, raw, v);
     }
 };
 

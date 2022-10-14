@@ -117,6 +117,9 @@ namespace internal {
 template <endianness e, typename TInt>
 struct set_assist;
 
+template <endianness e, typename TInt>
+struct get_assist;
+
 // NOTE: Not 100% sure we need this level of fanciness, I think burying the assisters
 // in the getters and setters may be enough
 template <endianness e, bool byte_boundary, typename TInt, typename Enabled = void>
