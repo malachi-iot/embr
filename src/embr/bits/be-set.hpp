@@ -8,7 +8,7 @@ namespace embr { namespace bits {
 namespace experimental {
 
 template <typename TInt>
-struct set_assist2<big_endian, TInt>
+struct set_assist<big_endian, TInt>
 {
     template <typename TReverseIt>
     static inline void set(unsigned sz, TReverseIt raw, TInt v)
@@ -28,7 +28,7 @@ struct set_assist2<big_endian, TInt>
 // warnings for those conditions, but is also potentially a mild
 // optimization
 template <>
-struct set_assist2<big_endian, uint8_t>
+struct set_assist<big_endian, uint8_t>
 {
     template <typename TReverseIt>
     static inline void set(unsigned, TReverseIt, uint8_t)
@@ -81,18 +81,12 @@ struct setter<bitpos, length, big_endian, ld, rd,
     }
 
     template <typename TReverseIt, typename TInt>
-    static inline void set_assist(unsigned sz, TReverseIt raw, TInt v)
-    {
-        set_assist2<big_endian, TInt>::set(sz, raw, v);
-    }
-
-    template <typename TReverseIt, typename TInt>
     static inline void set(descriptor d, TReverseIt raw, TInt v)
     {
         constexpr unsigned byte_width = byte_size();
         unsigned sz = d.length / byte_width;
 
-        set_assist(sz, raw, v);
+        set_assist<big_endian, TInt>::set(sz, raw, v);
     }
 
 
@@ -103,7 +97,7 @@ struct setter<bitpos, length, big_endian, ld, rd,
         constexpr unsigned _sz = length / byte_width;
         unsigned sz = _sz;
 
-        set_assist(sz, raw, v);
+        set_assist<big_endian, TInt>::set(sz, raw, v);
     }
 };
 

@@ -17,7 +17,7 @@ namespace embr { namespace bits {
 namespace experimental {
 
 template <typename TInt>
-struct set_assist2<little_endian, TInt>
+struct set_assist<little_endian, TInt>
 {
     template <typename TForwardIt>
     inline static void set(unsigned i, TForwardIt& raw, TInt& v)
@@ -35,13 +35,8 @@ struct set_assist2<little_endian, TInt>
     }
 };
 
-
-template <unsigned bitpos, unsigned length>
-struct setter<bitpos, length, little_endian, lsb_to_msb, lsb_to_msb,
-    enable<is_valid(bitpos, length) &&
-           !is_byte_boundary(bitpos, length) &&
-           !is_subbyte(bitpos, length)> > :
-    setter_tag
+// NOTE: Keep this in an internal namespace somewhere
+struct le_setter_base : setter_tag
 {
     constexpr static int adjuster()
     {
@@ -53,13 +48,21 @@ struct setter<bitpos, length, little_endian, lsb_to_msb, lsb_to_msb,
         return 0;
     }
 
-    // DEBT: Consolidate set_assist across this and byte-boundary version
     template <typename TForwardIt, typename TInt>
-    inline static void set_assist(unsigned& i, TForwardIt& raw, TInt& v)
+    static void set_assist(unsigned i, TForwardIt& raw, TInt& v)
     {
-        set_assist2<little_endian, TInt>::set(i, raw, v);
+        experimental::set_assist<little_endian, TInt>::set(i, raw, v);
     }
+};
 
+
+template <unsigned bitpos, unsigned length>
+struct setter<bitpos, length, little_endian, lsb_to_msb, lsb_to_msb,
+    enable<is_valid(bitpos, length) &&
+           !is_byte_boundary(bitpos, length) &&
+           !is_subbyte(bitpos, length)> > :
+    le_setter_base
+{
     // Copy/paste & adapted from internal::setter (v2 version)
     // Passes unit tests, nice
     template <typename TForwardIt, typename TInt>
@@ -112,24 +115,8 @@ template <unsigned bitpos, unsigned length, length_direction ld, resume_directio
 struct setter<bitpos, length, little_endian, ld, rd,
     enable<is_byte_boundary(bitpos, length) &&
            !is_subbyte(bitpos, length)> > :
-    setter_tag
+    le_setter_base
 {
-    constexpr static int adjuster()
-    {
-        return 0;
-    }
-
-    constexpr static int adjuster(descriptor d)
-    {
-        return 0;
-    }
-
-    template <typename TForwardIt, typename TInt>
-    static inline void set_assist(unsigned sz, TForwardIt raw, TInt v)
-    {
-        set_assist2<little_endian, TInt>::set(sz, raw, v);
-    }
-
     template <typename TForwardIt, typename TInt>
     static inline void set(descriptor d, TForwardIt raw, TInt v)
     {
@@ -153,6 +140,8 @@ struct setter<bitpos, length, little_endian, ld, rd,
 }
 
 namespace internal {
+
+// TODO: width_deducer and friends need documentation
 
 // given an arbitrary int, how many bits (in byte boundaries) are needed to represent
 // the value

@@ -13,12 +13,6 @@ namespace embr { namespace bits {
 
 namespace experimental {
 
-// NOTE: Not 100% sure we need this level of fanciness, I think burying the assisters
-// in the getters and setters may be enough
-template <endianness e, bool byte_boundary, typename TInt, typename Enabled = void>
-struct get_assister;
-
-
 template <typename TInt>
 struct get_assister<little_endian, false, TInt, estd::enable_if_t<(sizeof(TInt) > 1)> >
 {

@@ -101,10 +101,22 @@ template <unsigned bitpos, unsigned length, endianness e,
     typename TInt, typename TIt>
 void set(TIt raw, TInt v);
 
+// These assisters are used to do the byte-oriented endian setting and getting
+// Bit boundary operations are NOT handled in the assist mechanism.  These might
+// be 1:1 with "normal" unfancy endian getters/setters, not investigated at this time
+
 // DEBT: Clean up naming, can't name set_assist as that currently is a set
 // of functions we're displacing
+// DEBT: Make unit tests also
 template <endianness e, typename TInt>
-struct set_assist2;
+struct set_assist;
+
+// NOTE: Not 100% sure we need this level of fanciness, I think burying the assisters
+// in the getters and setters may be enough
+template <endianness e, bool byte_boundary, typename TInt, typename Enabled = void>
+struct get_assister;
+
+
 
 }
 
