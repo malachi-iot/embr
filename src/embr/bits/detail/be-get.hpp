@@ -17,20 +17,6 @@ struct get_assist<big_endian, TInt>
     {
         constexpr unsigned byte_width = byte_size();
 
-        while(sz--)
-        {
-            v <<= byte_width;
-            v |= (byte) *++raw;
-        }
-    }
-
-
-    // FIX: Consolidate get and get2, otherwise confusion abounds
-    template <typename TReverseIt>
-    static inline void get2(unsigned sz, TReverseIt& raw, TInt& v)
-    {
-        constexpr unsigned byte_width = byte_size();
-
         while(--sz)
         {
             v <<= byte_width;
@@ -58,12 +44,6 @@ struct be_getter_base : getter_tag
     {
         internal::get_assist<big_endian, TInt>::get(sz, raw, v);
     }
-
-    template <typename TReverseIt, typename TInt>
-    static inline void get_assist2(unsigned sz, TReverseIt& raw, TInt& v)
-    {
-        internal::get_assist<big_endian, TInt>::get2(sz, raw, v);
-    }
 };
 
 }
@@ -79,26 +59,6 @@ struct getter<bitpos, length, big_endian, lsb_to_msb, lsb_to_msb,
     internal::be_getter_base
 {
     template <typename TForwardIt, typename TInt>
-    static inline void get_bytesize(descriptor d, TForwardIt raw, TInt& v)
-    {
-        typedef typename estd::iterator_traits<TForwardIt>::value_type byte_type;
-        constexpr size_t byte_width = sizeof(byte_type) * byte_size();
-
-        v >>= d.bitpos;
-
-        // 'i' represents remaining bits after initial bitpos byte is processed
-        int i = d.length - (byte_width - d.bitpos);
-
-        auto remaining_bits = (byte_type)i;
-        byte_type mask = (1 << remaining_bits) - 1;
-
-        ++raw;
-
-        v <<= remaining_bits;
-        v |= (*raw & mask);
-    }
-
-    template <typename TForwardIt, typename TInt>
     static inline void get(descriptor d, TForwardIt raw, TInt& v)
     {
         typedef typename estd::iterator_traits<TForwardIt>::value_type byte_type;
@@ -106,16 +66,12 @@ struct getter<bitpos, length, big_endian, lsb_to_msb, lsb_to_msb,
 
         v = *raw;
 
-        if(d.length <= 8)
-        {
-            get_bytesize(d, raw, v);
-            return;
-        }
-
         v >>= d.bitpos;
 
         // 'i' represents remaining bits after initial bitpos byte is processed
         int i = d.length - (byte_width - d.bitpos);
+
+        i += byte_width;
 
         // process middle bytes, excluding end
         get_assist(i / byte_width, raw, v);
@@ -149,7 +105,7 @@ struct getter<bitpos, length, big_endian, lsb_to_msb, lsb_to_msb,
         v = *raw;
 
         // process middle and end bytes
-        get_assist2(d.length / byte_width, raw, v);
+        get_assist(d.length / byte_width, raw, v);
     }
 };
 
