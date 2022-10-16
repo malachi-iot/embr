@@ -27,13 +27,14 @@ a compile time indicator of the `bitpos` and `length` involved
 
 ## Terms and conventions
 
-| Term                       | Description                                                           |
-|----------------------------|-----------------------------------------------------------------------|
-| lsb_to_msb                 | Indicates that bit material begins at lsb and ends at msb (inclusive) |
-| msb_to_lsb                 | Indicates that bit material begins at msb and ends at lsb (inclusive) |
-| `x` in bit representation  | means bits excluded based on `bitpos`                                 |
+| Term                      | Description                                                           |
+|---------------------------|-----------------------------------------------------------------------|
+| lsb_to_msb                | Indicates that bit material begins at lsb and ends at msb (inclusive) |
+| msb_to_lsb                | Indicates that bit material begins at msb and ends at lsb (inclusive) |
+| bitpos                    | Indicates where within a byte bit material begins.  e.g. bitpos 2 in `lsb_to_msb` could describe 0b111111xx |
+| `x` in bit representation | means bits excluded based on `bitpos`                                 |
 | `.` in bit representation | means bits excluded based on `length`                                 |
-| outside bits | bits excluded in based on either `bitpos` or `length`                  |
+| outside bits              | bits excluded in based on either `bitpos` or `length`                  |
 
 For this document, bits to the left are considered more significant.  i.e.
 
@@ -45,12 +46,17 @@ For this document, examples always start in big endian (network order) format. i
 
 ## 1. Byte operations
 
+In this case, operations happen within a single byte only.
+Endian concerns are therefore irrelevant
+
 ### 1.1. lsb_to_msb
 
-Bit material begins at `descriptor.bitpos` + `descriptor.length`.
+Bit material begins at `bitpos` counting from LSB to MSB
+Bit material continues for `length` in an MSB direction
+
 So, bitpos of 4 and length of 2 means that raw bits:
 
-`1010 0011` filter to `xx10 xxxx`
+`1010 0011` filter to `..10 xxxx`
 
 ## 2.1 Word Operations
 
