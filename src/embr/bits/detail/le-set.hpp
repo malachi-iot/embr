@@ -91,7 +91,7 @@ struct setter<bitpos, length, little_endian, lsb_to_msb, lsb_to_msb,
         // rollunder
         unsigned i = d.length - inside_left_material;
 
-        set_assist(i, ++raw, v);
+        set_assist(i / byte_width, ++raw, v);
 
         *raw &= ~right_mask;
         *raw |= v;
