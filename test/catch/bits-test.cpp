@@ -113,22 +113,23 @@ TEST_CASE("bits2")
                     //e.set(0, bits::descriptor{4, 8}, 0x13);
                 }
             }
-            SECTION("decoder, lsb_to_msb")
+            SECTION("decoder, lsb_to_msb bitpos and lsb_to_msb resume")
             {
                 bits::decoder<bits::big_endian> d{be_example1};
+                constexpr unsigned expected = 0x14;
 
                 SECTION("16-bit")
                 {
                     //d.get<uint8_t>(1, bits::descriptor{1, 4});
                     auto v = d.get<uint16_t>(0, bits::descriptor{4, 8});
 
-                    REQUIRE(v == 0x13);
+                    REQUIRE(v == expected);
                 }
                 SECTION("32-bit")
                 {
                     auto v = d.get<uint32_t>(0, bits::descriptor{4, 8});
 
-                    REQUIRE(v == 0x13);
+                    REQUIRE(v == expected);
                 }
             }
             SECTION("decoder, msb_to_lsb")
@@ -247,7 +248,7 @@ TEST_CASE("bits2")
     {
         SECTION("big endian")
         {
-            std::copy_n(be_example1, sizeof(be_example1), raw);
+            estd::copy_n(be_example1, sizeof(be_example1), raw);
 
             bits::layer2::material<bits::big_endian, sizeof(be_example1)> item{raw};
 
@@ -966,16 +967,16 @@ TEST_CASE("bits")
             REQUIRE(v == endian_example1);
         }
     }
-    SECTION("big endian (lsb to msb)")
+    SECTION("big endian (lsb_to_msb bitpos, msb_to_lsb remainder)")
     {
-        typedef bits::getter<big_endian, lsb_to_msb> getter;
+        typedef bits::getter<big_endian, lsb_to_msb, msb_to_lsb> getter;
         //typedef bits<endianness::big_endian, length_direction::lsb_to_msb> bits_type;
 
         SECTION("uint16_t")
         {
             // { 0b10111111, 0b10000001 } // 0xBF 0x81
             // becomes
-            // { 0b10111111, 0b1xxxxxxx } // 0xBF 0x80
+            // { 0b10111111, 0b1....... } // 0xBF 0x80
             // becomes
             // { 0b00000001, 0b01111111 } // 0x01 0x7F
             //auto v = bits_type::get<uint16_t>(bit_descriptor{1, 1, 9}, buf1);

@@ -74,7 +74,6 @@ inline TInt get_be_msb_to_lsb(const unsigned width, descriptor d, TForwardIt raw
 
 }
 
-// FIX: Either this or the dual lsb_to_msb collide, one needs work
 template <>
 struct getter<big_endian, lsb_to_msb, msb_to_lsb>
 {
@@ -89,22 +88,13 @@ public:
     template <typename TInt, class TForwardIt>
     static inline TInt get(descriptor d, TForwardIt raw)
     {
-        return get(width_deducer_lsb_to_msb(d), d, raw);
+        return get<TInt>(width_deducer_lsb_to_msb(d), d, raw);
     }
 };
 
 template <>
 struct getter<big_endian, lsb_to_msb, lsb_to_msb>
 {
-    template <typename TInt, class TForwardIt>
-    static inline TInt get(descriptor d, TForwardIt raw)
-    {
-        const unsigned width = width_deducer_lsb_to_msb(d);
-
-        return internal::get_be_lsb_to_msb<TInt>(width, d, raw);
-    }
-
-
     template <unsigned bitpos, unsigned length, typename TInt, class TForwardIt>
     static TInt get(TForwardIt raw)
     {
@@ -119,6 +109,22 @@ struct getter<big_endian, lsb_to_msb, lsb_to_msb>
 
         return v;
     }
+
+    template <typename TInt, class TForwardIt>
+    static inline TInt get(descriptor d, TForwardIt raw)
+    {
+        // DEBT: The "full version" really is full and handles byte boundary OK too, but
+        // arguable is not optimal.  Prefer the internal::is_byte_boundary compare both for
+        // speed and if we ever change "full version" to NOT support byte boundary flavor
+        typedef detail::getter<1, 8, big_endian, lsb_to_msb> g;
+
+        TInt v;
+
+        g::get(d, raw + g::adjuster(), v);
+
+        return v;
+    }
+
 
 };
 
