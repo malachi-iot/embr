@@ -38,7 +38,11 @@ struct getter<endianness::little_endian,
     template <typename TInt, class TReverseIt>
     static TInt get(descriptor d, TReverseIt raw, bool adjusted = true)
     {
+#if WORKAROUND_EMBR_MAYBE_UNINITIALIZED
+        TInt v = TInt();
+#else
         TInt v;
+#endif
 
         if(internal::is_subbyte(d))
         {

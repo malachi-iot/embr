@@ -116,4 +116,12 @@ struct bit_traits
     EMBR_BITS_DECODER_GETTER(name, offset, bitpos, length)        \
     EMBR_BITS_ENCODER_SETTER(name, offset, bitpos, length)
 
+// DEBT: Under unknown conditions, esp-idf GCC gets upset about uninitialized
+// variables passed in by reference.  I too have my misgivings about that pattern,
+// but it's a valid one.  This flag force-initializes variables in question,
+// thus inhibiting the promoted warning->error 
+#ifndef WORKAROUND_EMBR_MAYBE_UNINITIALIZED
+#define WORKAROUND_EMBR_MAYBE_UNINITIALIZED 0
+#endif
+
 #include "../platform/guard-out.h"
