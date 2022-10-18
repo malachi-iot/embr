@@ -119,7 +119,17 @@ struct bit_traits
 // DEBT: Under unknown conditions, esp-idf GCC gets upset about uninitialized
 // variables passed in by reference.  I too have my misgivings about that pattern,
 // but it's a valid one.  This flag force-initializes variables in question,
-// thus inhibiting the promoted warning->error 
+// thus inhibiting the promoted warning->error.
+// ---
+// Specifically, esp-idf GCC defaults to promoting warnings to errors.  Works for me.
+// Then, it notices that sometimes a variable passed somewhere by reference hasn't
+// been initialized yet, some it warns us "maybe-uninitialized".  So far so good.
+// This results in an error.  So, under those circumstances, it would make sense to
+// pragma GCC disable that warning.  That's part 1 of where things get odd.
+// The pragmas seem to do nothing in this instance.
+// Then, there's part 2 - the unexplained behavior that the seemingly same compiler
+// configuration can compile embr::bits code base just fine under our esp-idf
+// unity tests, but under chariot project we experience the warning.
 #ifndef WORKAROUND_EMBR_MAYBE_UNINITIALIZED
 #define WORKAROUND_EMBR_MAYBE_UNINITIALIZED 0
 #endif
