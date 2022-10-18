@@ -1,6 +1,9 @@
 #define FEATURE_EMBR_WORD_STRICTNESS 0
 
 #include <embr/bits/word.hpp>
+#if __cplusplus >= 201103L
+#include <embr/bits/bits.hpp>
+#endif
 
 #include "unit-test.h"
 
@@ -47,6 +50,17 @@ static void test_word_2()
     TEST_ASSERT_EQUAL(0x3, w.val2().value());
 }
 
+#if __cplusplus >= 201103L
+void test_getter_1()
+{
+    byte bytes[] { 0x12, 0x34 };
+
+    auto v = getter<little_endian, lsb_to_msb>::get<0, 16, unsigned>(bytes);
+
+    TEST_ASSERT_EQUAL(0x3412, v);
+}
+#endif
+
 }
 
 #ifdef ESP_IDF_TESTING
@@ -57,4 +71,7 @@ void test_bits()
 {
     RUN_TEST(bits::test_word_1);
     RUN_TEST(bits::test_word_2);
+#if __cplusplus >= 201103L
+    RUN_TEST(bits::test_getter_1);
+#endif
 }
