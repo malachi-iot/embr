@@ -47,7 +47,7 @@ private:
         return estd::chrono::milliseconds(150);
     }
 
-    bool bump_encountered(duration delta, States switch_to);
+    bool encountered(duration delta, States switch_to);
 
 protected:
     void state(States v) { state_ = v; }

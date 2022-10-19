@@ -4,15 +4,16 @@
 
 namespace embr { namespace detail {
 
-bool Debouncer::bump_encountered(duration delta, States switch_to)
+bool Debouncer::encountered(duration delta, States switch_to)
 {
-    // reaching here means we went from state A to B and back to A, so record
-    // amount of time spent in that B state
+    // reaching here means we encountered a particular state A, so record
+    // amount of time spent in that A state
     noise_or_signal += delta;
 
     if(noise_or_signal > signal_threshold())
     {
         // we have enough on energy to indicate a real signal
+        // 'switch_to' is expected to be B state
         state(switch_to);
         state(Idle);
         return true;
@@ -39,7 +40,17 @@ inline bool Debouncer::time_passed(duration delta, bool on)
 
         case EvalOn:
         {
-            if(on) return false;      // noop if same state that we previously observed
+            if(on)
+            {
+                if(state() == Off)
+                {
+                    // reaching here means we went from off to on and stayed on, so
+                    // record amount of additional time spent in that on state
+                    return encountered(delta, On);
+                }
+
+                return false;      // noop if same state that we previously observed
+            }
 
             // incoming state is off
             state(EvalOff);
@@ -49,7 +60,7 @@ inline bool Debouncer::time_passed(duration delta, bool on)
             {
                 // reaching here means we went from off to on back to off, so record
                 // amount of time spent in that on state
-                return bump_encountered(delta, On);
+                return encountered(delta, On);
             }
 
             break;
@@ -66,7 +77,7 @@ inline bool Debouncer::time_passed(duration delta, bool on)
             {
                 // reaching here means we went from on to off back to on, so record
                 // amount of time spent in that off state
-                return bump_encountered(delta, Off);
+                return encountered(delta, Off);
             }
             break;
     }
