@@ -10,6 +10,6 @@ TEST_CASE("Debounce and friends state machine tests", "[debounce]")
     {
         Debouncer d;
 
-        d.time_passed(estd::chrono::milliseconds(10));
+        d.time_passed(estd::chrono::milliseconds(10), true);
     }
 }

@@ -21,6 +21,8 @@ public:
         EvalOff,
     };
 
+    typedef estd::chrono::milliseconds duration;
+
 private:
     struct
     {
@@ -28,7 +30,12 @@ private:
         Substates substate_: 3;
     };
 
-    estd::chrono::milliseconds threshold;
+    duration threshold;
+
+    inline static duration max()
+    {
+        return estd::chrono::milliseconds(150);
+    }
 
 protected:
     void state(States v) { state_ = v; }
@@ -36,8 +43,9 @@ protected:
 
 public:
     Debouncer() : state_(States::Unstarted) {}
+    Debouncer(bool on) : state_(on ? On : Off) {}
 
-    void time_passed(estd::chrono::milliseconds delta);
+    void time_passed(duration delta, bool on);
 
     States state() const { return state_; }
     Substates substate() const { return substate_; }
