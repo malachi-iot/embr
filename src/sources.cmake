@@ -1,3 +1,8 @@
+set(INCLUDE_FILES
+    embr/detail/debounce.h
+    embr/detail/debounce.hpp
+)
+
 set(SOURCE_FILES
     embr/dataport.h
     embr/dataport.hpp

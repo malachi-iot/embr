@@ -15,7 +15,7 @@ endif()
 # is effectively a NOOP and we keep it around just for reference.
 include(sources.cmake)
 
-#add_library(${PROJECT_NAME} ${SOURCE_FILES})
+#add_library(${PROJECT_NAME} ${SOURCE_FILES} ${INCLUDE_FILES})
 # https://stackoverflow.com/questions/5957134/how-do-i-set-up-cmake-to-generate-header-only-projects
 add_library(${PROJECT_NAME} INTERFACE)
 add_library(malachi-iot::embr ALIAS ${PROJECT_NAME})

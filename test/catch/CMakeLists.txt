@@ -24,6 +24,7 @@ set(SOURCE_FILES
     dataport-test.cpp
     datapump-test.cpp
     datapump-test.h
+    debounce-test.cpp
     observer-test.cpp
     experimental-test.cpp
     scheduler-test.cpp
