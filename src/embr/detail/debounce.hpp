@@ -4,28 +4,74 @@
 
 namespace embr { namespace detail {
 
-inline void Debouncer::time_passed(duration delta, bool on)
+bool Debouncer::bump_encountered(duration delta, States switch_to)
+{
+    // reaching here means we went from state A to B and back to A, so record
+    // amount of time spent in that B state
+    noise_or_signal += delta;
+
+    if(noise_or_signal > signal_threshold())
+    {
+        // we have enough on energy to indicate a real signal
+        state(switch_to);
+        state(Idle);
+        return true;
+    }
+
+    return false;
+}
+
+inline bool Debouncer::time_passed(duration delta, bool on)
 {
     if(state() == Unstarted)
     {
         state(on ? On : Off);
         state(on ? EvalOn : EvalOff);
-        return;
+        return true;
     }
 
     switch(substate())
     {
         case Idle:
             state(on ? EvalOn : EvalOff);
-            threshold = duration::min();
+            noise_or_signal = delta;
             break;
 
         case EvalOn:
+        {
+            if(on) return false;      // noop if same state that we previously observed
+
+            // incoming state is off
+            state(EvalOff);
+
+            // if main state is off...
+            if(state() == Off)
+            {
+                // reaching here means we went from off to on back to off, so record
+                // amount of time spent in that on state
+                return bump_encountered(delta, On);
+            }
+
             break;
+        }
 
         case EvalOff:
+            if(!on) return false;      // noop if same state that we previously observed
+
+            // incoming state is on
+            state(EvalOn);
+
+            // if main state is on...
+            if(state() == On)
+            {
+                // reaching here means we went from on to off back to on, so record
+                // amount of time spent in that off state
+                return bump_encountered(delta, Off);
+            }
             break;
     }
+
+    return false;
 }
 
 }}

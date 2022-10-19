@@ -4,21 +4,22 @@
 
 namespace embr { namespace detail {
 
+// DEBT: Consider bitmask approach rather than tracking time directly.  Pretty similar either way
 class Debouncer
 {
 public:
     enum States
     {
-        Unstarted,
-        On,
-        Off
+        Unstarted = -1,
+        Off,
+        On
     };
 
     enum Substates
     {
-        Idle,
-        EvalOn,
-        EvalOff,
+        Idle,       ///< no on/off state evaluation happening
+        EvalOn,     ///< last state evaluated was on
+        EvalOff,    ///< last state evaluated was off
     };
 
     typedef estd::chrono::milliseconds duration;
@@ -30,12 +31,23 @@ private:
         Substates substate_: 3;
     };
 
-    duration threshold;
+    // Amount of time observing blips into opposite state.
+    // May or may not be noise.
+    // If it passes noise_threshold, then we consider it
+    // an actual indicator of signal.
+    duration noise_or_signal;
 
+    inline static duration signal_threshold()
+    {
+        return estd::chrono::milliseconds(40);
+    }
+    
     inline static duration max()
     {
         return estd::chrono::milliseconds(150);
     }
+
+    bool bump_encountered(duration delta, States switch_to);
 
 protected:
     void state(States v) { state_ = v; }
@@ -43,9 +55,13 @@ protected:
 
 public:
     Debouncer() : state_(States::Unstarted) {}
-    Debouncer(bool on) : state_(on ? On : Off) {}
+    Debouncer(bool on) : state_(on ? On : Off), substate_(Idle) {}
 
-    void time_passed(duration delta, bool on);
+    ///
+    /// @param delta
+    /// @param on
+    /// @return true = main state changed
+    bool time_passed(duration delta, bool on);
 
     States state() const { return state_; }
     Substates substate() const { return substate_; }
