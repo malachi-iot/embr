@@ -33,6 +33,8 @@ extern "C" void app_main()
 #endif
 
     Debouncer d;
+    bool old_level = false;
+    int counter = 0;
 
     for(;;)
     {
@@ -44,6 +46,18 @@ extern "C" void app_main()
         if(state_changed)
         {
             ESP_LOGI(TAG, "state changed: ");
+        }
+
+        if(old_level != level)
+        {
+            // Non-debounced, just for diagnostics
+            ESP_LOGD(TAG, "level changed: %d", level);
+            old_level = level;
+        }
+
+        if((++counter % 500) == 0)
+        {
+            ESP_LOGD(TAG, "counter: %d", counter);
         }
     }
 }

@@ -1,4 +1,4 @@
-menu "Embr Scheduler Test"
+menu "Embr Button Test"
 
     menu "GPIO"
 
@@ -6,16 +6,6 @@ menu "Embr Scheduler Test"
             int "Pin on which debounced button is tested"
             default 23
 
-    endmenu
-
-    menu "LEDs"
-        config FAST_LED_PIN
-            int "Pin on which to blink quickly but intermittently"
-            default 4
-
-        config SLOW_LED_PIN
-            int "Pin on which to blink slowly and steadily"
-            default 2
     endmenu
 
 endmenu
