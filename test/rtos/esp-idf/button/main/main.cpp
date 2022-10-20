@@ -15,6 +15,7 @@
 
 #include "main.h"
 #include "gpio.h"
+#include "xthal_clock.h"
 
 using namespace embr::detail;
 using namespace estd::chrono_literals;
