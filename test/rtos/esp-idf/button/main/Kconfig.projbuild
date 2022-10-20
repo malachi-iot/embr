@@ -4,7 +4,7 @@ menu "Embr Button Test"
 
         config BUTTON_PIN
             int "Pin on which debounced button is tested"
-            default 23
+            default 0
 
     endmenu
 
