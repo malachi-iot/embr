@@ -95,14 +95,17 @@ private:
     /// @return
     bool encountered(duration delta, States switch_to);
 
-    bool remove_energy(duration delta);
+    bool remove_energy(const duration& delta);
+
+    bool time_passed_internal(duration delta, bool on);
 
 public:
     ///
     /// @param delta
     /// @param on
     /// @return true = main state changed
-    bool time_passed(duration delta, bool on);
+    template <typename TRep, typename TPeriod>
+    bool time_passed(const estd::chrono::duration<TRep, TPeriod>& delta, bool on);
 
     Debouncer() : base_type() {}
     Debouncer(bool on) : base_type(on) {}

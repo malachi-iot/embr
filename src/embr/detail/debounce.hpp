@@ -26,7 +26,7 @@ bool Debouncer<TImpl>::encountered(duration delta, States switch_to)
 }
 
 template <class TImpl>
-bool Debouncer<TImpl>::remove_energy(duration delta)
+inline bool Debouncer<TImpl>::remove_energy(const duration& delta)
 {
     // If energy to remove exceeds energy available
     if(delta >= noise_or_signal)
@@ -40,17 +40,27 @@ bool Debouncer<TImpl>::remove_energy(duration delta)
     return true;
 }
 
+
 template <class TImpl>
-bool Debouncer<TImpl>::time_passed(duration delta, bool on)
+template <typename TRep, typename TPeriod>
+inline bool Debouncer<TImpl>::time_passed(const estd::chrono::duration<TRep, TPeriod>& delta, bool on)
 {
     // We only evaluate within a certain sliding time window.  When that
     // window elapses, reset debounce state
+    // This also filters when 'delta' has a larger value than our duration
+    // could handle in the fist place
     if(delta > impl_type::max())
     {
         state(Idle);
         return false;
     }
 
+    return time_passed_internal(delta, on);
+}
+
+template <class TImpl>
+bool Debouncer<TImpl>::time_passed_internal(duration delta, bool on)
+{
     // Optimization of sorts.  If we are in idle state and incoming signal matches our
     // current signal state, don't process any further
     if(substate() == Idle)
