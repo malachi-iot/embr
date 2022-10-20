@@ -1,3 +1,6 @@
+#include <estd/thread.h>
+
+#include "esp_log.h"
 #include <driver/gpio.h>
 
 #include <embr/platform/esp-idf/debounce.hpp>
@@ -13,5 +16,25 @@ static constexpr gpio_num_t pin = (gpio_num_t)CONFIG_BUTTON_PIN;
 
 void test_isr()
 {
+    const char* TAG = "test_isr";
 
+    embr::esp_idf::Debouncer d;
+
+    d.track(CONFIG_BUTTON_PIN);
+
+    int counter = 0;
+
+    for(;;)
+    {
+        //estd::this_thread::sleep_for(1s);
+
+        embr::esp_idf::Debouncer::Notification n;
+        
+        if(d.queue.receive(&n, 1s))
+        {
+            ESP_LOGI(TAG, "got something");
+        }
+        else
+            ESP_LOGD(TAG, "counter=%d", ++counter);
+    }
 }

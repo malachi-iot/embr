@@ -5,6 +5,7 @@
 #include <map>
 
 #include "debounce.hpp"
+#include "queue.h"
 
 #include <driver/gpio.h>
 #include <driver/timer.h>
@@ -22,7 +23,11 @@ static gpio_isr_handle_t gpio_isr_handle;
 static timer_isr_handle_t timer_isr_handle;
 static timer_group_t timer_group = TIMER_GROUP_0;
 
-static void gpio_isr(void* context)
+using namespace estd::chrono;
+
+esp_clock::time_point last_now;
+
+inline void Debouncer::gpio_isr()
 {
     uint32_t gpio_intr_status = READ_PERI_REG(GPIO_STATUS_REG);   //read status to get interrupt status for GPIO0-31
     uint32_t gpio_intr_status_h = READ_PERI_REG(GPIO_STATUS1_REG);//read status1 to get interrupt status for GPIO32-39
@@ -31,7 +36,7 @@ static void gpio_isr(void* context)
     SET_PERI_REG_MASK(GPIO_STATUS1_W1TC_REG, gpio_intr_status_h); //Clear intr for gpio32-39
 
     // https://www.esp32.com/viewtopic.php?t=20123 indicates we can call this here
-    auto now = estd::chrono::esp_clock::now();
+    auto now = esp_clock::now();
 
     int pin = 0;
 
@@ -39,18 +44,40 @@ static void gpio_isr(void* context)
     {
         if(gpio_intr_status & 1)
         {
+            // DEBT: Would be better to do like esp32-button does it, track the pin
+            // as part of a debouncer vector - iterate through those and reverse check
+            // to see if we are masked to care
             auto it = debouncers.find(pin);
+
+            int level = gpio_get_level((gpio_num_t)pin);
+
+            ets_printf("1 Intr GPIO%d, val: %d\n", pin, level);
 
             if(it != std::end(debouncers))
             {
                 embr::detail::Debouncer& d = it->second;
+                auto duration = last_now - now;
+                bool state_changed = d.time_passed(duration, level);
+                if(state_changed)
+                {
+                    ets_printf("2 Intr GPIO%d, debounce state: %d\n", pin, d.state());
+                    queue.send_from_isr(Notification{});
+                }
             }
         }
 
         gpio_intr_status >>= 1;
         ++pin;
     }
+
+    last_now = now;
 }
+
+void Debouncer::gpio_isr(void* context)
+{
+    static_cast<Debouncer*>(context)->gpio_isr();
+}
+
 
 // Guidance from
 // https://www.esp32.com/viewtopic.php?t=12931 
@@ -64,7 +91,7 @@ static void IRAM_ATTR timer_group0_isr (void *param)
     auto now = estd::chrono::esp_clock::now();
 }
 
-static void timer_init()
+void Debouncer::timer_init()
 {
     timer_config_t timer;
     
@@ -78,9 +105,9 @@ static void timer_init()
     timer.auto_reload = TIMER_AUTORELOAD_EN; // Reset timer to 0 when end condition is triggered
     timer.counter_en = TIMER_PAUSE;
 
-    timer_init(timer_group, TIMER_0, &timer);
+    ::timer_init(timer_group, TIMER_0, &timer);
     timer_set_counter_value(timer_group, TIMER_0, 0);
-    timer_isr_register(timer_group, TIMER_0, timer_group0_isr, NULL, 
+    timer_isr_register(timer_group, TIMER_0, timer_group0_isr, this, 
         ESP_INTR_FLAG_LEVEL1 | ESP_INTR_FLAG_IRAM,
         &timer_isr_handle);
     
@@ -92,20 +119,29 @@ static void timer_init()
 }
 
 
-void debouncer_init()
+Debouncer::Debouncer() : queue(10)
 {
     ESP_ERROR_CHECK(
-        gpio_isr_register(gpio_isr, NULL, ESP_INTR_FLAG_LEVEL1, &gpio_isr_handle));
+        gpio_isr_register(gpio_isr, this, ESP_INTR_FLAG_LEVEL1, &gpio_isr_handle));
     timer_init();
+    last_now = esp_clock::now();
 }
 
-void debouncer_deinit()
+Debouncer::~Debouncer()
 {
     esp_intr_free(gpio_isr_handle);    
 
     timer_set_alarm(timer_group, TIMER_0, TIMER_ALARM_DIS);
     timer_disable_intr(timer_group, TIMER_0);
     esp_intr_free(timer_isr_handle);    
+}
+
+void Debouncer::track(int pin)
+{
+    //debouncers.insert_or_assign(pin, embr::detail::Debouncer{});
+    // FIX: Clearly not a great way to do things, but I do not yet understand how std::map
+    // regular 'insert' and 'emplace' work
+    debouncers[pin] = embr::detail::Debouncer{};
 }
 
 

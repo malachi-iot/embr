@@ -1,5 +1,18 @@
 menu "Embr Button Test"
 
+    choice
+        prompt "Test mode"
+
+        config POLLED_MODE
+            bool "polled"
+
+        config ISR_MODE
+            bool "isr"
+
+    endchoice
+            
+            
+
     menu "GPIO"
 
         config BUTTON_PIN

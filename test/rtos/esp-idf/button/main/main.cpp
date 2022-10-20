@@ -30,6 +30,12 @@ extern "C" void app_main()
     wifi_init_sta(event_handler);
 #endif
 
+#if CONFIG_ISR_MODE
+    ESP_LOGD(TAG, "Starting ISR test");
+    test_isr();
+#else
+    ESP_LOGD(TAG, "Starting polled test");
     test_polled();
+#endif
 }
 
