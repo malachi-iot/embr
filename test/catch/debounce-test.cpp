@@ -32,4 +32,8 @@ TEST_CASE("Debounce and friends state machine tests", "[debounce]")
         r = d.time_passed(estd::chrono::milliseconds(30), false);
         REQUIRE(r == true);
     }
+    SECTION("expire window")
+    {
+        
+    }
 }
