@@ -47,6 +47,11 @@ private:
         return estd::chrono::milliseconds(150);
     }
 
+    /// record amount of time spent in current eval state.  If time exceeds
+    /// threshold, change to 'switch_to'
+    /// @param delta
+    /// @param switch_to
+    /// @return
     bool encountered(duration delta, States switch_to);
 
 protected:
