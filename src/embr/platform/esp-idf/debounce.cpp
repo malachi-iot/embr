@@ -69,6 +69,8 @@ inline void Debouncer::gpio_isr()
                 }
                 else
                 {
+                    auto future = now + estd::chrono::milliseconds(40);
+                    timer_set_alarm_value(timer_group, TIMER_0, future.time_since_epoch().count());
                     timer_set_alarm(timer_group, TIMER_0, TIMER_ALARM_EN);
                 }
                 ets_printf("4 Intr state=%s:%s\n", to_string(d.state()), to_string(d.substate()));
@@ -95,17 +97,18 @@ inline void IRAM_ATTR Debouncer::timer_group0_isr()
     auto now = estd::chrono::esp_clock::now();
     auto duration = now - last_now;
 
-    ets_printf("1 Timer Intr, duration=%lldus\n", duration.count());
-
-    auto& d = debouncers[0];
-
-    // bool level = gpio_get_level((gpio_num_t)0);
     // Since GPIO ISR was presumably not called yet, state hasn't changed
-    bool state_changed = d.time_passed(duration, d.state());
+    //bool level = d.state();
+    bool level = gpio_get_level((gpio_num_t)0);
+    ets_printf("1 Timer Intr, duration=%lldus, level=%d\n", duration.count(), level);
+    auto& d = debouncers[0];
+    ets_printf("2 Timer Intr state=%s:%s\n", to_string(d.state()), to_string(d.substate()));
+    bool state_changed = d.time_passed(duration, level);
+    ets_printf("3 Timer Intr state=%s:%s\n", to_string(d.state()), to_string(d.substate()));
 
     if(state_changed)
     {
-        ets_printf("2 Timer Intr debounce state changed\n");
+        ets_printf("3.1 Timer Intr debounce state changed\n");
         queue.send_from_isr(Notification{});
     }
 
@@ -142,10 +145,10 @@ void Debouncer::timer_init()
         ESP_INTR_FLAG_LEVEL1 | ESP_INTR_FLAG_IRAM,
         &timer_isr_handle);
     
-    // Brings us to an alarm at 41us when enabled.  This is to give us 1us wiggle room
-    // when detecting debounce threshold of 40us
+    // Brings us to an alarm at 41ms when enabled.  This is to give us 1us wiggle room
+    // when detecting debounce threshold of 40ms
     // DEBT: All that needs to be configurable
-    timer_set_alarm_value(timer_group, TIMER_0, 41);
+    timer_set_alarm_value(timer_group, TIMER_0, 41000);
     timer_start(timer_group, TIMER_0);
 
     timer_enable_intr(timer_group, TIMER_0);
