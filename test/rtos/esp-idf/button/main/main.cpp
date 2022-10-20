@@ -11,7 +11,7 @@
 #include <estd/optional.h>
 #include <estd/thread.h>
 
-#include <embr/detail/debounce.hpp>
+#include <embr/platform/esp-idf/debounce.hpp>
 
 #include "main.h"
 #include "gpio.h"

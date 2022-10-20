@@ -27,3 +27,7 @@ set(SOURCE_FILES
         embr/exp/datapump-v2.h embr/exp/pbuf.h embr/exp/retry-v2.h embr/exp/datapump-core-v2.h embr/exp/dataport-v2.h
     )
 
+set(ESP_IDF_SOURCE_FILES
+    embr/platform/esp-idf/debounce.cpp
+    )
+
