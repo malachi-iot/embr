@@ -34,9 +34,19 @@ extern "C" void app_main()
     wifi_init_sta(event_handler);
 #endif
 
-    internal::Debouncer<internal::impl::Debouncer<estd::chrono::microseconds> > d;
+    // Full 64-bit resolution counter, way overkill but easy to visualize
+    internal::Debouncer<internal::impl::Debouncer<estd::chrono::microseconds> > d1;
+
+    Debouncer d;
+
+    Debouncer d_array[10];
+
     bool old_level = false;
     int counter = 0, counter2 = 0;
+    int dmax = Debouncer::duration::max().count();
+
+    ESP_LOGI(TAG, "start: sizeof(d)=%d, sizeof(d1)=%d, duration::max()=%d", sizeof(d), sizeof(d1), dmax);
+    ESP_LOGI(TAG, "start: sizeof(d_array)=%d", sizeof(d_array));
 
     esp_task_wdt_add(nullptr);
     //vTaskPrioritySet(nullptr, 0);
@@ -66,6 +76,7 @@ extern "C" void app_main()
         estd::chrono::microseconds true_duration = now - true_duration_start;
         true_duration_start = now;
         bool state_changed = d.time_passed(true_duration, level);
+        d1.time_passed(true_duration, level);   // dummy call, just to make sure this thing works too
 
         if(state_changed)
         {

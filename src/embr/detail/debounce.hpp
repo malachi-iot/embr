@@ -11,9 +11,9 @@ bool Debouncer<TImpl>::encountered(duration delta, States switch_to)
 {
     // reaching here means we encountered a particular state A, so record
     // amount of time spent in that A state
-    noise_or_signal += delta;
+    noise_or_signal() += delta;
 
-    if(noise_or_signal > impl_type::signal_threshold())
+    if(noise_or_signal() > impl_type::signal_threshold())
     {
         // we have enough on energy to indicate a real signal
         // 'switch_to' is expected to be B state
@@ -29,14 +29,14 @@ template <class TImpl>
 inline bool Debouncer<TImpl>::remove_energy(const duration& delta)
 {
     // If energy to remove exceeds energy available
-    if(delta >= noise_or_signal)
+    if(delta >= noise_or_signal())
     {
         // reset energy accumulator
         state(Idle);
         return false;
     }
 
-    noise_or_signal -= delta;
+    noise_or_signal() -= delta;
     return true;
 }
 
@@ -82,14 +82,14 @@ bool Debouncer<TImpl>::time_passed_internal(duration delta, bool on)
     if(state() == Unstarted)
     {
         state(on ? On : Off);
-        noise_or_signal = duration::zero();
+        noise_or_signal() = duration::zero();
         return true;
     }
 
     switch(ss)
     {
         case Idle:
-            noise_or_signal = delta;
+            noise_or_signal() = delta;
             break;
 
         case EvalOn:
