@@ -132,6 +132,9 @@ public:
     bool time_passed(const estd::chrono::duration<TRep, TPeriod>& delta, bool on);
 }   __attribute__((packed));
 
+
+const char* to_string(DebouncerBase::Substates);
+
 }
 
 typedef internal::Debouncer<> Debouncer;

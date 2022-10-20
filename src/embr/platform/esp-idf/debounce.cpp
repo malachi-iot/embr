@@ -63,6 +63,7 @@ inline void Debouncer::gpio_isr()
                     ets_printf("2 Intr GPIO%d, debounce state: %d\n", pin, d.state());
                     queue.send_from_isr(Notification{});
                 }
+                ets_printf("3 Intr state=%s:%s", to_string(d.state()), to_string(d.substate()));
             }
         }
 

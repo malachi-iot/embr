@@ -122,6 +122,30 @@ bool Debouncer<TImpl>::time_passed_internal(duration delta, bool on)
     return false;
 }
 
+inline const char* to_string(DebouncerBase::States s)
+{
+    switch(s)
+    {
+        case DebouncerBase::On:         return "On";
+        case DebouncerBase::Off:        return "Off";
+        case DebouncerBase::Unstarted:  return "Unstarted";
+        default:                        return "N/A";
+    }
 }
+
+
+inline const char* to_string(DebouncerBase::Substates s)
+{
+    switch(s)
+    {
+        case DebouncerBase::Idle:       return "Idle";
+        case DebouncerBase::EvalOn:     return "EvalOn";
+        case DebouncerBase::EvalOff:    return "EvalOff";
+        default:                        return "N/A";
+    }
+}
+
+}
+
 
 }}
