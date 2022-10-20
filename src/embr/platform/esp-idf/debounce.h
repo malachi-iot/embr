@@ -16,8 +16,10 @@ public:
 private:
     void timer_init();
     void gpio_isr();
+    void timer_group0_isr();
 
     static void gpio_isr(void*);
+    static void timer_group0_isr(void*);
 
 public:
     // DEBT: Not sure I want to expose the whole queue here, but seems OK
