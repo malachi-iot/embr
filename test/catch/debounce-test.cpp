@@ -13,7 +13,7 @@ TEST_CASE("Debounce and friends state machine tests", "[debounce]")
 
         r = d.time_passed(estd::chrono::milliseconds(10), true);
 
-        REQUIRE(r);
+        REQUIRE(r == false);
     }
     SECTION("initial off state")
     {

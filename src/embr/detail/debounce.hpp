@@ -66,9 +66,6 @@ bool Debouncer<TImpl>::time_passed_internal(duration delta, bool on)
     // current signal state, don't process any further
     if(substate() == Idle)
     {
-        // NOTE: substate() MAY be invalid here during 'Unstarted' condition.  That is OK
-        // because we implicitly guard against that in state() == On/Off
-
         if (state() == On && on)
             return false;
         else if (state() == Off && !on)
@@ -80,14 +77,6 @@ bool Debouncer<TImpl>::time_passed_internal(duration delta, bool on)
     // retain incoming state.  NOTE 'encountered' may supersede this
     state(on ? EvalOn : EvalOff);
 
-    if(state() == Unstarted)
-    {
-        // DEBT: Keep 'Unstarted' until we eval whether truly up or down
-        state(on ? On : Off);
-        noise_or_signal() = duration::zero();
-        return true;
-    }
-
     // evaluate current state - i.e. the one we just had before we switched to EvalOn/EvalOff
     switch(ss)
     {
@@ -98,7 +87,7 @@ bool Debouncer<TImpl>::time_passed_internal(duration delta, bool on)
             break;
 
         case EvalOn:
-            if(state() == Off)
+            if(state() == Off || state() == Unstarted)
             {
                 // reaching here means we went from off to on back to off, OR
                 // reaching here means we went from off to on and stayed on,
@@ -111,7 +100,7 @@ bool Debouncer<TImpl>::time_passed_internal(duration delta, bool on)
             break;
 
         case EvalOff:
-            if(state() == On)
+            if(state() == On || state() == Unstarted)
             {
                 // reaching here means we went from on to off back to on, OR
                 // reaching here means we went from on to off and stayed off,

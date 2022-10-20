@@ -97,14 +97,14 @@ protected:
     void state(Substates v) { substate_ = v; }
 
 public:
-    Debouncer() : state_(States::Unstarted) {}
+    Debouncer() : state_(States::Unstarted), substate_(Idle) {}
     Debouncer(bool on) : state_(on ? On : Off), substate_(Idle) {}
 
     // Mostly for debug curiosity
     inline const duration& noise_or_signal() const { return (duration&) noise_or_signal_; }
 
-    States state() const { return state_; }
-    Substates substate() const { return substate_; }
+    ESTD_CPP_CONSTEXPR_RET States state() const { return state_; }
+    ESTD_CPP_CONSTEXPR_RET Substates substate() const { return substate_; }
 
     //void reset(States s = States::Unstarted)
     void reset()
