@@ -22,7 +22,8 @@ public:
         EvalOff,    ///< last state evaluated was off
     };
 
-    typedef estd::chrono::duration<uint8_t, estd::milli> duration;
+    typedef estd::chrono::duration<int32_t, estd::micro> duration;
+    //typedef estd::chrono::duration<uint8_t, estd::milli> duration;
 
 private:
     struct

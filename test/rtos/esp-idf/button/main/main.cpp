@@ -8,6 +8,7 @@
 #include <driver/gpio.h>
 
 #include <estd/chrono.h>
+#include <estd/optional.h>
 #include <estd/thread.h>
 
 #include <embr/detail/debounce.hpp>
@@ -35,10 +36,12 @@ extern "C" void app_main()
 
     Debouncer d;
     bool old_level = false;
-    auto last_now = estd::chrono::freertos_clock::now();
-    int counter = 0;
+    int counter = 0, counter2 = 0;
 
     esp_task_wdt_add(nullptr);
+    //vTaskPrioritySet(nullptr, 0);
+
+    auto last_now = estd::chrono::freertos_clock::now();
 
     // Careful of this situation:
     // https://esp32.com/viewtopic.php?f=2&t=809&start=10
@@ -51,6 +54,7 @@ extern "C" void app_main()
     for(;;)
     {
         const auto duration = 1ms;
+        auto true_duration_start = estd::chrono::esp_clock::now();
         // NOTE: Sleep doesn't last NEARLY 1ms!
         // DEBT: May want to put a workaround into sleep_for for FreeRTOS?  Get into why delay
         // is so innacurate
@@ -58,7 +62,8 @@ extern "C" void app_main()
         estd::this_thread::yield();
 
         bool level = gpio_get_level(pin);
-        bool state_changed = d.time_passed(duration, level);
+        estd::chrono::microseconds true_duration = estd::chrono::esp_clock::now() - true_duration_start;
+        bool state_changed = d.time_passed(true_duration, level);
 
         if(state_changed)
         {
@@ -76,11 +81,14 @@ extern "C" void app_main()
 
         if(now - last_now > 1s)
         {
-            ESP_LOGD(TAG, "counter: %d", ++counter);
+            ESP_LOGD(TAG, "counter: %d, %d, %lldus", ++counter, counter2, true_duration.count());
             last_now = now;
+            counter2 = 0;
         }
 
         esp_task_wdt_reset();
+
+        ++counter2;
     }
 }
 
