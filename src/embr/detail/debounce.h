@@ -4,8 +4,9 @@
 
 namespace embr { namespace detail {
 
-// DEBT: Consider bitmask approach rather than tracking time directly.  Pretty similar either way
-class Debouncer
+namespace internal {
+
+struct DebouncerBase
 {
 public:
     enum States
@@ -22,26 +23,44 @@ public:
         EvalOff,    ///< last state evaluated was off
     };
 
-    typedef estd::chrono::duration<int32_t, estd::micro> duration;
-    //typedef estd::chrono::duration<uint8_t, estd::milli> duration;
-
 private:
+    // DEBT: May want to put this struct in Debouncer itself for better packing
     struct
     {
         States state_ : 3;
         Substates substate_: 3;
     };
 
-    // Amount of time observing blips into opposite state.
-    // May or may not be noise.
-    // If it passes signal_threshold, then we consider it
-    // an actual indicator of signal.
-    duration noise_or_signal;
+protected:
+    void state(States v) { state_ = v; }
+    void state(Substates v) { substate_ = v; }
+
+    DebouncerBase() : state_(States::Unstarted) {}
+    DebouncerBase(bool on) : state_(on ? On : Off), substate_(Idle) {}
+
+public:
+    States state() const { return state_; }
+    Substates substate() const { return substate_; }
+
+    //void reset(States s = States::Unstarted)
+    void reset()
+    {
+        //state(s);
+        state(Idle);
+    }
+};
+
+namespace impl {
+
+template <typename TDuration = estd::chrono::duration<uint8_t, estd::milli>, unsigned threshold_ms = 40 >
+struct Debouncer
+{
+    typedef TDuration duration;
 
     /// amount of "time energy" accumulated necessary to indicate a signal
     ESTD_CPP_CONSTEXPR_RET static duration signal_threshold()
     {
-        return estd::chrono::milliseconds(40);
+        return estd::chrono::milliseconds(threshold_ms);
     }
 
     /// Delta window in which debounce operates before auto resetting
@@ -49,6 +68,25 @@ private:
     {
         return estd::chrono::milliseconds(150);
     }
+};
+
+}
+
+// DEBT: Consider bitmask approach rather than tracking time directly.  Pretty similar either way
+template <class TImpl = impl::Debouncer<> >
+class Debouncer : public DebouncerBase,
+    TImpl
+{
+    typedef DebouncerBase base_type;
+    typedef TImpl impl_type;
+    typedef typename TImpl::duration duration;
+
+private:
+    // Amount of time observing blips into opposite state.
+    // May or may not be noise.
+    // If it passes signal_threshold, then we consider it
+    // an actual indicator of signal.
+    duration noise_or_signal;
 
     /// record amount of time spent in current eval state.  If time exceeds
     /// threshold, change to 'switch_to'
@@ -59,29 +97,19 @@ private:
 
     bool remove_energy(duration delta);
 
-protected:
-    void state(States v) { state_ = v; }
-    void state(Substates v) { substate_ = v; }
-
 public:
-    Debouncer() : state_(States::Unstarted) {}
-    Debouncer(bool on) : state_(on ? On : Off), substate_(Idle) {}
-
-    //void reset(States s = States::Unstarted)
-    void reset()
-    {
-        //state(s);
-        state(Idle);
-    }
-
     ///
     /// @param delta
     /// @param on
     /// @return true = main state changed
     bool time_passed(duration delta, bool on);
 
-    States state() const { return state_; }
-    Substates substate() const { return substate_; }
+    Debouncer() : base_type() {}
+    Debouncer(bool on) : base_type(on) {}
 };
+
+}
+
+typedef internal::Debouncer<> Debouncer;
 
 }}

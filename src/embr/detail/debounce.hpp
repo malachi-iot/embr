@@ -4,13 +4,16 @@
 
 namespace embr { namespace detail {
 
-bool Debouncer::encountered(duration delta, States switch_to)
+namespace internal {
+
+template <class TImpl>
+bool Debouncer<TImpl>::encountered(duration delta, States switch_to)
 {
     // reaching here means we encountered a particular state A, so record
     // amount of time spent in that A state
     noise_or_signal += delta;
 
-    if(noise_or_signal > signal_threshold())
+    if(noise_or_signal > impl_type::signal_threshold())
     {
         // we have enough on energy to indicate a real signal
         // 'switch_to' is expected to be B state
@@ -22,7 +25,8 @@ bool Debouncer::encountered(duration delta, States switch_to)
     return false;
 }
 
-bool Debouncer::remove_energy(duration delta)
+template <class TImpl>
+bool Debouncer<TImpl>::remove_energy(duration delta)
 {
     // If energy to remove exceeds energy available
     if(delta >= noise_or_signal)
@@ -36,11 +40,12 @@ bool Debouncer::remove_energy(duration delta)
     return true;
 }
 
-inline bool Debouncer::time_passed(duration delta, bool on)
+template <class TImpl>
+bool Debouncer<TImpl>::time_passed(duration delta, bool on)
 {
     // We only evaluate within a certain sliding time window.  When that
     // window elapses, reset debounce state
-    if(delta > max())
+    if(delta > impl_type::max())
     {
         state(Idle);
         return false;
@@ -105,6 +110,8 @@ inline bool Debouncer::time_passed(duration delta, bool on)
     }
 
     return false;
+}
+
 }
 
 }}
