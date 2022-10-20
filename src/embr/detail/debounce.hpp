@@ -49,7 +49,8 @@ inline bool Debouncer<TImpl>::time_passed(const estd::chrono::duration<TRep, TPe
     // window elapses, reset debounce state
     // This also filters when 'delta' has a larger value than our duration
     // could handle in the fist place
-    if(delta > impl_type::max())
+    // DEBT: When unstarted, 'Idle' could be an invalid substate
+    if(substate() != Idle && delta > impl_type::max())
     {
         state(Idle);
         return false;
@@ -81,15 +82,19 @@ bool Debouncer<TImpl>::time_passed_internal(duration delta, bool on)
 
     if(state() == Unstarted)
     {
+        // DEBT: Keep 'Unstarted' until we eval whether truly up or down
         state(on ? On : Off);
         noise_or_signal() = duration::zero();
         return true;
     }
 
+    // evaluate current state - i.e. the one we just had before we switched to EvalOn/EvalOff
     switch(ss)
     {
         case Idle:
-            noise_or_signal() = delta;
+            // We were idling, and now we are about to start tracking an eval state
+            // so zero out our measurer
+            noise_or_signal() = duration::zero();
             break;
 
         case EvalOn:

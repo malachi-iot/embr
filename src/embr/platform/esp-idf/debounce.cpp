@@ -58,6 +58,7 @@ inline void Debouncer::gpio_isr()
             if(it != std::end(debouncers))
             {
                 embr::detail::Debouncer& d = it->second;
+                ets_printf("3 Intr state=%s:%s\n", to_string(d.state()), to_string(d.substate()));
                 bool state_changed = d.time_passed(duration, level);
                 if(state_changed)
                 {
@@ -70,7 +71,7 @@ inline void Debouncer::gpio_isr()
                 {
                     timer_set_alarm(timer_group, TIMER_0, TIMER_ALARM_EN);
                 }
-                ets_printf("3 Intr state=%s:%s\n", to_string(d.state()), to_string(d.substate()));
+                ets_printf("4 Intr state=%s:%s\n", to_string(d.state()), to_string(d.substate()));
             }
         }
 
@@ -98,6 +99,8 @@ inline void IRAM_ATTR Debouncer::timer_group0_isr()
 
     auto& d = debouncers[0];
 
+    // bool level = gpio_get_level((gpio_num_t)0);
+    // Since GPIO ISR was presumably not called yet, state hasn't changed
     bool state_changed = d.time_passed(duration, d.state());
 
     if(state_changed)
