@@ -3,6 +3,12 @@
 #include "esp_system.h"
 #include "esp_wifi.h"
 
+#include <embr/detail/debounce.hpp>
+
+#include "main.h"
+
+using namespace embr::detail;
+
 extern "C" void app_main()
 {
     init_flash();
@@ -12,5 +18,12 @@ extern "C" void app_main()
 #else
     wifi_init_sta(event_handler);
 #endif
+
+    Debouncer d;
+
+    for(;;)
+    {
+
+    }
 }
 

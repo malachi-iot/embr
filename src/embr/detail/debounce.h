@@ -22,7 +22,7 @@ public:
         EvalOff,    ///< last state evaluated was off
     };
 
-    typedef estd::chrono::milliseconds duration;
+    typedef estd::chrono::duration<uint8_t, estd::milli> duration;
 
 private:
     struct
@@ -38,13 +38,13 @@ private:
     duration noise_or_signal;
 
     /// amount of "time energy" accumulated necessary to indicate a signal
-    inline static duration signal_threshold()
+    ESTD_CPP_CONSTEXPR_RET static duration signal_threshold()
     {
         return estd::chrono::milliseconds(40);
     }
 
     /// Delta window in which debounce operates before auto resetting
-    inline static duration max()
+    ESTD_CPP_CONSTEXPR_RET static duration max()
     {
         return estd::chrono::milliseconds(150);
     }
