@@ -1,3 +1,3 @@
 #pragma once
 
-void gpio_init();
+void init_gpio();

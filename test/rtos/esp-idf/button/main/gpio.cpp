@@ -2,7 +2,7 @@
 
 #include "gpio.h"
 
-void gpio_init()
+void init_gpio()
 {
     gpio_config_t io_conf;
     io_conf.intr_type = GPIO_INTR_ANYEDGE;
@@ -13,6 +13,6 @@ void gpio_init()
     io_conf.pull_up_en = (gpio_pullup_t)0;
     //io_conf.pull_up_en = (pull_mode == GPIO_PULLUP_ONLY || pull_mode == GPIO_PULLUP_PULLDOWN);
     //io_conf.pull_down_en = (pull_mode == GPIO_PULLDOWN_ONLY || pull_mode == GPIO_PULLUP_PULLDOWN);;
-    //io_conf.pin_bit_mask = pin_select;
+    io_conf.pin_bit_mask = PIN_BIT(CONFIG_BUTTON_PIN);
     gpio_config(&io_conf);
 }
