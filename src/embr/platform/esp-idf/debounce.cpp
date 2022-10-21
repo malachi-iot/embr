@@ -7,6 +7,8 @@
 #include "debounce.hpp"
 #include "queue.h"
 
+#include "esp_log.h"
+
 #include <driver/gpio.h>
 #include <driver/timer.h>
 
@@ -76,6 +78,10 @@ inline void Debouncer::gpio_isr()
                     //timer_set_alarm_value(timer_group, timer_idx, 40000);
                     //timer_set_alarm(timer_group, timer_idx, TIMER_ALARM_EN);
                     //timer_group_set_alarm_value_in_isr(timer_group, timer_idx, 40000);
+
+                    // NOTE: Not sure if we can/should do this in an ISR
+                    timer_set_counter_value(timer_group, timer_idx, 0);
+
                     timer_group_enable_alarm_in_isr(timer_group, timer_idx);
                 }
                 ets_printf("4 Intr state=%s:%s\n", to_string(d.state()), to_string(d.substate()));
@@ -150,6 +156,8 @@ bool IRAM_ATTR Debouncer::timer_group0_callback (void *param)
 
 void Debouncer::timer_init()
 {
+    const char* TAG = "Debouncer::timer_init";
+
     timer_config_t timer;
     
     // Set prescaler for 1 MHz clock - remember, we're dividing
@@ -159,7 +167,8 @@ void Debouncer::timer_init()
     timer.counter_dir = TIMER_COUNT_UP;
     timer.alarm_en = TIMER_ALARM_DIS;
     timer.intr_type = TIMER_INTR_LEVEL;
-    timer.auto_reload = TIMER_AUTORELOAD_EN; // Reset timer to 0 when end condition is triggered
+    timer.auto_reload = TIMER_AUTORELOAD_DIS;
+    //timer.auto_reload = TIMER_AUTORELOAD_EN; // Reset timer to 0 when end condition is triggered
     timer.counter_en = TIMER_PAUSE;
 #if SOC_TIMER_GROUP_SUPPORT_XTAL
     timer.clk_src = TIMER_SRC_CLK_APB;
@@ -169,10 +178,12 @@ void Debouncer::timer_init()
     timer_set_counter_value(timer_group, timer_idx, 0);
     // DEBT: Would be better to use timer_isr_callback_add
 #if CONFIG_ISR_LOW_LEVEL_MODE
+    ESP_LOGD(TAG, "ISR low level mode");
     timer_isr_register(timer_group, timer_idx, timer_group0_isr, this, 
         ESP_INTR_FLAG_LEVEL1 | ESP_INTR_FLAG_IRAM,
         &timer_isr_handle);
 #elif CONFIG_ISR_CALLBACK_MODE
+    ESP_LOGD(TAG, "ISR callback mode");
     timer_isr_callback_add(timer_group, timer_idx, timer_group0_callback, this,
         ESP_INTR_FLAG_LEVEL1 | ESP_INTR_FLAG_IRAM);
 #else
