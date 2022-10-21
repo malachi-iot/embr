@@ -75,7 +75,7 @@ inline void Debouncer::gpio_isr()
                     //timer_set_alarm_value(timer_group, timer_idx, future.time_since_epoch().count());
                     //timer_set_alarm_value(timer_group, timer_idx, 40000);
                     //timer_set_alarm(timer_group, timer_idx, TIMER_ALARM_EN);
-                    timer_group_set_alarm_value_in_isr(timer_group, timer_idx, 40000);
+                    //timer_group_set_alarm_value_in_isr(timer_group, timer_idx, 40000);
                     timer_group_enable_alarm_in_isr(timer_group, timer_idx);
                 }
                 ets_printf("4 Intr state=%s:%s\n", to_string(d.state()), to_string(d.substate()));
@@ -105,7 +105,10 @@ inline void IRAM_ATTR Debouncer::timer_group0_isr()
     // Since GPIO ISR was presumably not called yet, state hasn't changed
     //bool level = d.state();
     bool level = gpio_get_level((gpio_num_t)0);
-    uint16_t counter = timer_group_get_counter_value_in_isr(timer_group, timer_idx);
+    uint64_t counter;
+    
+    //timer_get_counter_value(timer_group, timer_idx, &counter);
+    counter = timer_group_get_counter_value_in_isr(timer_group, timer_idx);
     ets_printf("1 Timer Intr, duration=%lldus, timer_counter=%lld, level=%d\n",
         duration.count(), counter, level);
         
@@ -132,6 +135,19 @@ void IRAM_ATTR Debouncer::timer_group0_isr (void *param)
     static_cast<Debouncer*>(param)->timer_group0_isr();
 }
 
+
+bool IRAM_ATTR Debouncer::timer_group0_callback (void *param)
+{
+    static_cast<Debouncer*>(param)->timer_group0_isr();
+
+    // DEBT: Pretty sure we need an ISR-friendly version of this.  However, I can't find one
+    //timer_set_alarm(timer_group, timer_idx, TIMER_ALARM_DIS);
+    // Above not needed, becase
+    // "Once triggered, the alarm is disabled automatically and needs to be re-enabled to trigger again."
+
+    return false;
+}
+
 void Debouncer::timer_init()
 {
     timer_config_t timer;
@@ -152,9 +168,16 @@ void Debouncer::timer_init()
     ::timer_init(timer_group, timer_idx, &timer);
     timer_set_counter_value(timer_group, timer_idx, 0);
     // DEBT: Would be better to use timer_isr_callback_add
+#if CONFIG_ISR_LOW_LEVEL_MODE
     timer_isr_register(timer_group, timer_idx, timer_group0_isr, this, 
         ESP_INTR_FLAG_LEVEL1 | ESP_INTR_FLAG_IRAM,
         &timer_isr_handle);
+#elif CONFIG_ISR_CALLBACK_MODE
+    timer_isr_callback_add(timer_group, timer_idx, timer_group0_callback, this,
+        ESP_INTR_FLAG_LEVEL1 | ESP_INTR_FLAG_IRAM);
+#else
+#error Unknown ISR config mode
+#endif
     
     // Brings us to an alarm at 41ms when enabled.  This is to give us 1ms wiggle room
     // when detecting debounce threshold of 40ms
@@ -180,6 +203,12 @@ Debouncer::~Debouncer()
 
     timer_set_alarm(timer_group, timer_idx, TIMER_ALARM_DIS);
     timer_disable_intr(timer_group, timer_idx);
+
+#if CONFIG_ISR_LOW_LEVEL_MODE
+#elif CONFIG_ISR_CALLBACK_MODE
+    timer_isr_callback_remove(timer_group, timer_idx);
+#endif
+
     esp_intr_free(timer_isr_handle);    
 }
 

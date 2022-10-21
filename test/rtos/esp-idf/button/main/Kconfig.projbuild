@@ -10,6 +10,18 @@ menu "Embr Button Test"
             bool "isr"
 
     endchoice
+
+    choice
+        prompt "ISR mode"
+        depends on ISR_MODE
+
+        config ISR_LOW_LEVEL_MODE
+            bool "low level"
+
+        config ISR_CALLBACK_MODE
+            bool "callback"
+
+    endchoice
             
             
 

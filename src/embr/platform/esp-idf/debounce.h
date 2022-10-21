@@ -20,6 +20,7 @@ private:
 
     static void gpio_isr(void*);
     static void timer_group0_isr(void*);
+    static bool timer_group0_callback(void *param);
 
 public:
     // DEBT: Not sure I want to expose the whole queue here, but seems OK
