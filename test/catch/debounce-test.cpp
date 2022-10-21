@@ -2,7 +2,18 @@
 
 #include <embr/detail/debounce.hpp>
 
+#include <embr/exp/filter.h>
+
 using namespace embr::detail;
+
+namespace embr { namespace experimental {
+
+
+//typedef fake_lpf<estd::chrono::milliseconds, 10> fake_lpf_ms;
+typedef filter_wrapper<estd::chrono::milliseconds> fake_lpf_ms;
+
+
+}}
 
 TEST_CASE("Debounce and friends state machine tests", "[debounce]")
 {
@@ -35,5 +46,21 @@ TEST_CASE("Debounce and friends state machine tests", "[debounce]")
     SECTION("expire window")
     {
         
+    }
+    SECTION("experimental")
+    {
+        using namespace embr::experimental;
+
+        SECTION("lpf")
+        {
+            //fake_lpf_ms::filter<30>;
+            fake_lpf<int, 30> f;
+
+            f.add(10);
+        }
+        SECTION("wrapped")
+        {
+
+        }
     }
 }
