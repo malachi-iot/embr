@@ -69,8 +69,9 @@ inline void Debouncer::gpio_isr()
                 }
                 else
                 {
-                    auto future = now + estd::chrono::milliseconds(40);
-                    timer_set_alarm_value(timer_group, TIMER_0, future.time_since_epoch().count());
+                    //auto future = now + estd::chrono::milliseconds(40);
+                    //timer_set_alarm_value(timer_group, TIMER_0, future.time_since_epoch().count());
+                    //timer_set_alarm_value(timer_group, TIMER_0, 40000);
                     timer_set_alarm(timer_group, TIMER_0, TIMER_ALARM_EN);
                 }
                 ets_printf("4 Intr state=%s:%s\n", to_string(d.state()), to_string(d.substate()));
@@ -130,7 +131,7 @@ void Debouncer::timer_init()
     
     // Set prescaler for 1 MHz clock - remember, we're dividing
     // "default is APB_CLK running at 80 MHz"
-    timer.divider = 80; 
+    timer.divider = 800; 
 
     timer.counter_dir = TIMER_COUNT_UP;
     timer.alarm_en = TIMER_ALARM_DIS;
@@ -145,7 +146,7 @@ void Debouncer::timer_init()
         ESP_INTR_FLAG_LEVEL1 | ESP_INTR_FLAG_IRAM,
         &timer_isr_handle);
     
-    // Brings us to an alarm at 41ms when enabled.  This is to give us 1us wiggle room
+    // Brings us to an alarm at 41ms when enabled.  This is to give us 1ms wiggle room
     // when detecting debounce threshold of 40ms
     // DEBT: All that needs to be configurable
     timer_set_alarm_value(timer_group, TIMER_0, 41000);
