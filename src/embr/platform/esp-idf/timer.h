@@ -44,7 +44,7 @@ struct Timer
         return timer_deinit(group, idx);
     }
 
-    uint64_t get_counter_value_in_isr() const
+    inline uint64_t get_counter_value_in_isr() const
     {
         return timer_group_get_counter_value_in_isr(group, idx);
     }
@@ -57,6 +57,11 @@ struct Timer
     esp_err_t set_alarm_value(uint64_t alarm_value)
     {
         return timer_set_alarm_value(group, idx, alarm_value);
+    }
+
+    void set_alarm_value_in_isr(uint64_t alarm_value)
+    {
+        timer_group_set_alarm_value_in_isr(group, idx, alarm_value);
     }
 
     esp_err_t set_counter_value(uint64_t load_val)

@@ -33,7 +33,7 @@ struct ThresholdImpl
 };
 
 // DEBT: Wrap all this up in a templatized class
-void timer_scheduler_init(Timer& timer, timer_isr_t, void*);
+void timer_scheduler_init(Timer& timer, uint32_t divider, timer_isr_t, void*);
 void timer_scheduler_tester();
 
 template <class TScheduler>
@@ -47,12 +47,13 @@ class TimerScheduler
 
 private:
     scheduler_type scheduler;
-    Timer timer;
 
     void timer_callback();
     static bool timer_callback(void* arg);
 
 public:
+    Timer timer;
+
     TimerScheduler(const Timer& timer) : timer{timer} {}
 
     void init();
