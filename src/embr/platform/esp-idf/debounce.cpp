@@ -227,7 +227,7 @@ void Debouncer::timer_init()
 }
 
 
-Debouncer::Debouncer() : queue(10)
+Debouncer::Debouncer() //: queue(10)
 {
     ESP_ERROR_CHECK(
         gpio_isr_register(gpio_isr, this, ESP_INTR_FLAG_LEVEL1, &gpio_isr_handle));

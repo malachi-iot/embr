@@ -37,7 +37,7 @@ private:
 
 public:
     // DEBT: Not sure I want to expose the whole queue here, but seems OK
-    embr::freertos::queue<Notification> queue;
+    embr::freertos::layer1::queue<Notification, 10> queue;
 
 public:
     Debouncer();

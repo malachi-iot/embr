@@ -1,5 +1,7 @@
 #pragma once
 
+#include <estd/array.h>
+
 #if ESP_PLATFORM
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
@@ -19,6 +21,9 @@ protected:
     QueueHandle_t h;
 
     inline queue_base(QueueHandle_t h) : h{h} {}
+
+public:
+    ESTD_CPP_CONSTEXPR_RET operator QueueHandle_t () const { return h; }
 };
 
 struct queue : queue_base
@@ -39,6 +44,10 @@ public:
         return q;
     }
 
+    const char* get_name() const { return pcQueueGetName(h); }
+
+    void reset() { xQueueReset(h); }
+
     void free() { vQueueDelete(h); }
 
     BaseType_t send_from_isr(const void* pvItemToQueue, BaseType_t* pxHigherPriorityTaskWoken)
@@ -56,13 +65,8 @@ public:
 
 namespace internal {
 
-}
-
-template <class T, bool is_static = false>
-struct queue;
-
 template <class T>
-struct queue<T, false>
+struct queue
 {
     typedef T value_type;
     typedef value_type* pointer;
@@ -70,14 +74,16 @@ struct queue<T, false>
     typedef const value_type& const_reference;
     typedef estd::chrono::freertos_clock::duration duration;
 
+protected:
     wrapper::queue q;
 
-public:
-    queue(unsigned queue_length) : q(wrapper::queue::create(queue_length, sizeof(value_type)))
+    queue(QueueHandle_t q) : q(q) {}
+    ~queue()
     {
-
+        q.free();
     }
 
+public:
     bool receive(pointer v, duration timeout)
     {
         return q.receive(v, timeout.count()) == pdTRUE;
@@ -88,5 +94,62 @@ public:
         return q.send_from_isr(&v, pxHigherPriorityTaskWoken);
     }
 };
+
+}
+
+template <class T, bool is_static = false>
+class queue;
+
+template <class T>
+class queue<T, false> : public internal::queue<T>
+{
+    typedef internal::queue<T> base_type;
+    typedef typename base_type::value_type value_type;
+
+public:
+    queue(unsigned queue_length) :
+        base_type(
+            wrapper::queue::create(queue_length, sizeof(value_type)))
+    {
+
+    }
+};
+
+template <class T>
+class queue<T, true> : public internal::queue<T>
+{
+    StaticQueue_t static_queue;
+
+    typedef internal::queue<T> base_type;
+    typedef typename base_type::value_type value_type;
+    typedef typename base_type::pointer pointer;
+
+public:
+    queue(pointer storage, unsigned queue_length) : 
+        base_type(wrapper::queue::create(
+            queue_length,
+            sizeof(value_type),
+            reinterpret_cast<uint8_t*>(storage),
+            &static_queue))
+    {
+
+    }
+};
+
+namespace layer1 {
+
+template <class T, unsigned queue_length>
+class queue : public freertos::queue<T, true>
+{
+    typedef freertos::queue<T, true> base_type;
+
+    estd::array<T, queue_length> storage;
+
+public:
+    queue() : base_type(storage.data(), queue_length) {}
+};
+
+}
+
 
 }}
