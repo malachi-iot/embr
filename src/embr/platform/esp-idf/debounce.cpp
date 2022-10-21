@@ -29,10 +29,14 @@ static timer_group_t timer_group = TIMER_GROUP_0;
 static timer_idx_t timer_idx = TIMER_0;
 
 using namespace estd::chrono;
+using namespace estd::chrono_literals;
 
 esp_clock::time_point last_now;
 
+void held_callback(TimerHandle_t);
+
 embr::esp_idf::Timer timer(timer_group, timer_idx);
+embr::freertos::timer<> held_timer("held", 3s, false, nullptr, held_callback);
 
 bool low_means_pressed = true;
 
@@ -234,6 +238,7 @@ Debouncer::Debouncer() //: queue(10)
         gpio_isr_register(gpio_isr, this, ESP_INTR_FLAG_LEVEL1, &gpio_isr_handle));
     timer_init();
     last_now = esp_clock::now();
+    held_timer.start(1s);
 }
 
 Debouncer::~Debouncer()
@@ -270,5 +275,15 @@ const char* to_string(Debouncer::States state)
         default:                return "N/A";
     }
 }
+
+void held_callback(TimerHandle_t xTimer)
+{
+    const char* TAG = "held_callback";
+
+    auto timer = (embr::freertos::timer<>&) xTimer; 
+
+    ESP_LOGI(TAG, "Callback name: \"%s\"", timer.name());
+}
+
 
 }}
