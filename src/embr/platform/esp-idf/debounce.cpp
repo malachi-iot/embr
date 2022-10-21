@@ -22,6 +22,7 @@ static std::map<uint8_t, detail::Debouncer> debouncers;
 static gpio_isr_handle_t gpio_isr_handle;
 static timer_isr_handle_t timer_isr_handle;
 static timer_group_t timer_group = TIMER_GROUP_0;
+static timer_idx_t timer_idx = TIMER_0;
 
 using namespace estd::chrono;
 
@@ -65,14 +66,17 @@ inline void Debouncer::gpio_isr()
                     ets_printf("2 Intr debounce state changed\n");
                     queue.send_from_isr(Notification{});
                     // If there was a timer waiting for state change, disable it
-                    timer_set_alarm(timer_group, TIMER_0, TIMER_ALARM_DIS);
+                    //timer_set_alarm(timer_group, timer_idx, TIMER_ALARM_DIS);
+                    //timer_group_disable_alarm_in_isr(timer_group, timer_idx);
                 }
                 else
                 {
                     //auto future = now + estd::chrono::milliseconds(40);
-                    //timer_set_alarm_value(timer_group, TIMER_0, future.time_since_epoch().count());
-                    //timer_set_alarm_value(timer_group, TIMER_0, 40000);
-                    timer_set_alarm(timer_group, TIMER_0, TIMER_ALARM_EN);
+                    //timer_set_alarm_value(timer_group, timer_idx, future.time_since_epoch().count());
+                    //timer_set_alarm_value(timer_group, timer_idx, 40000);
+                    //timer_set_alarm(timer_group, timer_idx, TIMER_ALARM_EN);
+                    timer_group_set_alarm_value_in_isr(timer_group, timer_idx, 40000);
+                    timer_group_enable_alarm_in_isr(timer_group, timer_idx);
                 }
                 ets_printf("4 Intr state=%s:%s\n", to_string(d.state()), to_string(d.substate()));
             }
@@ -101,7 +105,10 @@ inline void IRAM_ATTR Debouncer::timer_group0_isr()
     // Since GPIO ISR was presumably not called yet, state hasn't changed
     //bool level = d.state();
     bool level = gpio_get_level((gpio_num_t)0);
-    ets_printf("1 Timer Intr, duration=%lldus, level=%d\n", duration.count(), level);
+    uint16_t counter = timer_group_get_counter_value_in_isr(timer_group, timer_idx);
+    ets_printf("1 Timer Intr, duration=%lldus, timer_counter=%lld, level=%d\n",
+        duration.count(), counter, level);
+        
     auto& d = debouncers[0];
     ets_printf("2 Timer Intr state=%s:%s\n", to_string(d.state()), to_string(d.substate()));
     bool state_changed = d.time_passed(duration, level);
@@ -131,28 +138,31 @@ void Debouncer::timer_init()
     
     // Set prescaler for 1 MHz clock - remember, we're dividing
     // "default is APB_CLK running at 80 MHz"
-    timer.divider = 800; 
+    timer.divider = 80; 
 
     timer.counter_dir = TIMER_COUNT_UP;
     timer.alarm_en = TIMER_ALARM_DIS;
     timer.intr_type = TIMER_INTR_LEVEL;
     timer.auto_reload = TIMER_AUTORELOAD_EN; // Reset timer to 0 when end condition is triggered
     timer.counter_en = TIMER_PAUSE;
+#if SOC_TIMER_GROUP_SUPPORT_XTAL
+    timer.clk_src = TIMER_SRC_CLK_APB;
+#endif
 
-    ::timer_init(timer_group, TIMER_0, &timer);
-    timer_set_counter_value(timer_group, TIMER_0, 0);
+    ::timer_init(timer_group, timer_idx, &timer);
+    timer_set_counter_value(timer_group, timer_idx, 0);
     // DEBT: Would be better to use timer_isr_callback_add
-    timer_isr_register(timer_group, TIMER_0, timer_group0_isr, this, 
+    timer_isr_register(timer_group, timer_idx, timer_group0_isr, this, 
         ESP_INTR_FLAG_LEVEL1 | ESP_INTR_FLAG_IRAM,
         &timer_isr_handle);
     
     // Brings us to an alarm at 41ms when enabled.  This is to give us 1ms wiggle room
     // when detecting debounce threshold of 40ms
     // DEBT: All that needs to be configurable
-    timer_set_alarm_value(timer_group, TIMER_0, 41000);
-    timer_start(timer_group, TIMER_0);
+    timer_set_alarm_value(timer_group, timer_idx, 41000);
+    timer_start(timer_group, timer_idx);
 
-    timer_enable_intr(timer_group, TIMER_0);
+    timer_enable_intr(timer_group, timer_idx);
 }
 
 
@@ -168,8 +178,8 @@ Debouncer::~Debouncer()
 {
     esp_intr_free(gpio_isr_handle);    
 
-    timer_set_alarm(timer_group, TIMER_0, TIMER_ALARM_DIS);
-    timer_disable_intr(timer_group, TIMER_0);
+    timer_set_alarm(timer_group, timer_idx, TIMER_ALARM_DIS);
+    timer_disable_intr(timer_group, timer_idx);
     esp_intr_free(timer_isr_handle);    
 }
 
