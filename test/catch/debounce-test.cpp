@@ -53,14 +53,18 @@ TEST_CASE("Debounce and friends state machine tests", "[debounce]")
 
         SECTION("lpf")
         {
-            //fake_lpf_ms::filter<30>;
             fake_lpf<int, 30> f;
 
             f.add(10);
         }
         SECTION("wrapped")
         {
+            fake_lpf_ms::wrapped<30> f;
 
+            f.add(estd::chrono::milliseconds(1));
+            f.add(estd::chrono::microseconds(1500));
+
+            REQUIRE(f.energy().count() == 2);
         }
     }
 }

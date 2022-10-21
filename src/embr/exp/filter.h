@@ -53,7 +53,22 @@ struct filter_wrapper<estd::chrono::duration<Rep, Period> >
     typedef estd::chrono::duration<Rep, Period> energy_type;
 
     template <Rep max>
-    using filter = fake_lpf<Rep, max>;
+    struct wrapped
+    {
+        fake_lpf<Rep, max> f;
+
+        energy_type energy() const { return energy_type(f.energy()); }
+
+        inline bool add(energy_type v)
+        {
+            return f.add(v.count());
+        }
+
+        inline bool subtract(energy_type v)
+        {
+            return f.subtract(v.count());
+        }
+    };
 };
 
 
