@@ -1,5 +1,7 @@
 #pragma once
 
+#include <new>
+
 #include <driver/timer.h>
 
 // DEBT: Work out if we want camel case or not, look at other esp_idf specific (non estd flavor)
@@ -26,9 +28,25 @@ struct Timer
 
     }
 
+    Timer(const Timer& copy_from) = default;
+    Timer& operator =(const Timer& copy_from)
+    {
+        return * new (this) Timer(copy_from);
+    }
+
     esp_err_t init(const timer_config_t* config)
     {
         return timer_init(group, idx, config);
+    }
+
+    esp_err_t deinit()
+    {
+        return timer_deinit(group, idx);
+    }
+
+    uint64_t get_counter_value_in_isr() const
+    {
+        return timer_group_get_counter_value_in_isr(group, idx);
     }
 
     esp_err_t set_alarm(timer_alarm_t alarm_en)
@@ -61,14 +79,19 @@ struct Timer
         timer_group_enable_alarm_in_isr(group, idx);
     }
 
-    void enable_intr()
+    esp_err_t enable_intr()
     {
-        timer_enable_intr(group, idx);
+        return timer_enable_intr(group, idx);
     }
 
-    void disable_intr()
+    esp_err_t disable_intr()
     {
-        timer_disable_intr(group, idx);
+        return timer_disable_intr(group, idx);
+    }
+
+    esp_err_t isr_callback_add(timer_isr_t isr_handler, void* arg, int intr_alloc_flags)
+    {
+        return timer_isr_callback_add(group, idx, isr_handler, arg, intr_alloc_flags);
     }
 };
 

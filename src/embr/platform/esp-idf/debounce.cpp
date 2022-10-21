@@ -14,8 +14,6 @@
 #include <driver/gpio.h>
 #include <driver/timer.h>
 
-#include "../../scheduler.h"
-
 namespace embr { inline namespace esp_idf {
 
 // Guidance from:
@@ -42,30 +40,6 @@ embr::freertos::timer<> held_timer("held", 3s, false, nullptr, held_callback);
 
 bool low_means_pressed = true;
 
-struct ThresholdImpl
-{
-    typedef estd::chrono::duration<uint32_t, estd::milli> time_point;
-
-    struct value_type
-    {
-        embr::detail::Debouncer* debouncer;
-        time_point wakeup;
-    };
-
-    static inline const time_point& get_time_point(const value_type& v)
-    {
-        return v.wakeup;
-    }
-
-    static bool process(value_type& v, time_point now)
-    {
-        return false;
-    }
-
-    typedef estd::monostate mutex;
-};
-
-static embr::internal::layer1::Scheduler<5, ThresholdImpl> scheduler;
 
 inline void Debouncer::gpio_isr()
 {

@@ -29,5 +29,6 @@ set(SOURCE_FILES
 
 set(ESP_IDF_SOURCE_FILES
     embr/platform/esp-idf/debounce.cpp
+    embr/platform/esp-idf/timer-scheduler.cpp
     )
 
