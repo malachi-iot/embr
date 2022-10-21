@@ -44,7 +44,9 @@ public:
         return q;
     }
 
+#if ( configQUEUE_REGISTRY_SIZE > 0 )
     const char* get_name() const { return pcQueueGetName(h); }
+#endif
 
     void reset() { xQueueReset(h); }
 

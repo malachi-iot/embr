@@ -7,6 +7,7 @@
 #include "debounce.hpp"
 #include "queue.h"
 #include "timer.h"
+#include "freertos/timer.h"
 
 #include "esp_log.h"
 
