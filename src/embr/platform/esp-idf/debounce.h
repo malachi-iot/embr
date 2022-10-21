@@ -8,15 +8,28 @@ namespace embr { inline namespace esp_idf {
 class Debouncer
 {
 public:
+    enum States
+    {
+        Uninitialized = -1,
+        Up = 0,
+        Down = 1,
+        Held
+    };
+
     struct Notification
     {
-        int val;
+        const States state;
+
+        Notification(States state = Uninitialized) : 
+            state{state}
+        {}
     };
     
 private:
     void timer_init();
     void gpio_isr();
     void timer_group0_isr();
+    void emit_state(const embr::detail::Debouncer& d);
 
     static void gpio_isr(void*);
     static void timer_group0_isr(void*);
@@ -32,5 +45,7 @@ public:
 
     void track(int pin);
 };
+
+const char* to_string(Debouncer::States state);
 
 }}

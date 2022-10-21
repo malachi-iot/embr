@@ -54,6 +54,10 @@ public:
 
 }
 
+namespace internal {
+
+}
+
 template <class T, bool is_static = false>
 struct queue;
 

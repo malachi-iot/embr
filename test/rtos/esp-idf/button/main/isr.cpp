@@ -32,7 +32,7 @@ void test_isr()
         
         if(d.queue.receive(&n, 1s))
         {
-            ESP_LOGI(TAG, "got something");
+            ESP_LOGI(TAG, "state change: %s", to_string(n.state));
         }
         else
             ESP_LOGD(TAG, "counter=%d", ++counter);

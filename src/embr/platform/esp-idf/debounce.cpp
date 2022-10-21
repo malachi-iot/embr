@@ -6,6 +6,7 @@
 
 #include "debounce.hpp"
 #include "queue.h"
+#include "timer.h"
 
 #include "esp_log.h"
 
@@ -29,6 +30,10 @@ static timer_idx_t timer_idx = TIMER_0;
 using namespace estd::chrono;
 
 esp_clock::time_point last_now;
+
+embr::esp_idf::Timer timer(timer_group, timer_idx);
+
+bool low_means_pressed = true;
 
 inline void Debouncer::gpio_isr()
 {
@@ -66,12 +71,13 @@ inline void Debouncer::gpio_isr()
                 if(state_changed)
                 {
                     ets_printf("2 Intr debounce state changed\n");
-                    queue.send_from_isr(Notification{});
+                    emit_state(d);
+
                     // If there was a timer waiting for state change, disable it
                     //timer_set_alarm(timer_group, timer_idx, TIMER_ALARM_DIS);
                     //timer_group_disable_alarm_in_isr(timer_group, timer_idx);
                 }
-                else
+                else if(d.substate() != embr::detail::Debouncer::Idle)
                 {
                     //auto future = now + estd::chrono::milliseconds(40);
                     //timer_set_alarm_value(timer_group, timer_idx, future.time_since_epoch().count());
@@ -80,9 +86,11 @@ inline void Debouncer::gpio_isr()
                     //timer_group_set_alarm_value_in_isr(timer_group, timer_idx, 40000);
 
                     // NOTE: Not sure if we can/should do this in an ISR
-                    timer_set_counter_value(timer_group, timer_idx, 0);
+                    //timer_set_counter_value(timer_group, timer_idx, 0);   // This works -- now trying pause method
+                    timer.enable_alarm_in_isr();
 
-                    timer_group_enable_alarm_in_isr(timer_group, timer_idx);
+                    timer.start();
+
                 }
                 ets_printf("4 Intr state=%s:%s\n", to_string(d.state()), to_string(d.substate()));
             }
@@ -102,6 +110,11 @@ void Debouncer::gpio_isr(void* context)
 
 inline void IRAM_ATTR Debouncer::timer_group0_isr()
 {
+    uint64_t counter;
+    
+    //timer_get_counter_value(timer_group, timer_idx, &counter);
+    counter = timer_group_get_counter_value_in_isr(timer_group, timer_idx);
+
     // DEBT: This is an expensive call, and we can compute
     // the time pretty handily by inspecting our own timer instead
     // as per https://esp32.com/viewtopic.php?t=16228
@@ -111,10 +124,7 @@ inline void IRAM_ATTR Debouncer::timer_group0_isr()
     // Since GPIO ISR was presumably not called yet, state hasn't changed
     //bool level = d.state();
     bool level = gpio_get_level((gpio_num_t)0);
-    uint64_t counter;
-    
-    //timer_get_counter_value(timer_group, timer_idx, &counter);
-    counter = timer_group_get_counter_value_in_isr(timer_group, timer_idx);
+
     ets_printf("1 Timer Intr, duration=%lldus, timer_counter=%lld, level=%d\n",
         duration.count(), counter, level);
         
@@ -126,16 +136,27 @@ inline void IRAM_ATTR Debouncer::timer_group0_isr()
     if(state_changed)
     {
         ets_printf("3.1 Timer Intr debounce state changed\n");
-        queue.send_from_isr(Notification{});
+        emit_state(d);
     }
 
     last_now = now;
+}
+
+void Debouncer::emit_state(const embr::detail::Debouncer& d)
+{
+    bool on = d.state();
+
+    if(low_means_pressed) on = !on;
+
+    queue.send_from_isr(Notification{(States)on});
 }
 
 // Guidance from
 // https://www.esp32.com/viewtopic.php?t=12931 
 void IRAM_ATTR Debouncer::timer_group0_isr (void *param)
 {
+    // NOTE: Last I checked, this flavor doesn't work quite right.
+
     TIMERG0.int_clr_timers.t0 = 1; //clear interrupt bit
 
     static_cast<Debouncer*>(param)->timer_group0_isr();
@@ -144,6 +165,8 @@ void IRAM_ATTR Debouncer::timer_group0_isr (void *param)
 
 bool IRAM_ATTR Debouncer::timer_group0_callback (void *param)
 {
+    timer.pause();
+
     static_cast<Debouncer*>(param)->timer_group0_isr();
 
     // DEBT: Pretty sure we need an ISR-friendly version of this.  However, I can't find one
@@ -158,6 +181,9 @@ void Debouncer::timer_init()
 {
     const char* TAG = "Debouncer::timer_init";
 
+    embr::esp_idf::Timer& timer_alias = timer;
+
+    {
     timer_config_t timer;
     
     // Set prescaler for 1 MHz clock - remember, we're dividing
@@ -167,15 +193,16 @@ void Debouncer::timer_init()
     timer.counter_dir = TIMER_COUNT_UP;
     timer.alarm_en = TIMER_ALARM_DIS;
     timer.intr_type = TIMER_INTR_LEVEL;
-    timer.auto_reload = TIMER_AUTORELOAD_DIS;
-    //timer.auto_reload = TIMER_AUTORELOAD_EN; // Reset timer to 0 when end condition is triggered
+    //timer.auto_reload = TIMER_AUTORELOAD_DIS;
+    timer.auto_reload = TIMER_AUTORELOAD_EN; // Reset timer to 0 when end condition is triggered
     timer.counter_en = TIMER_PAUSE;
 #if SOC_TIMER_GROUP_SUPPORT_XTAL
     timer.clk_src = TIMER_SRC_CLK_APB;
 #endif
+    timer_alias.init(&timer);
+    }
 
-    ::timer_init(timer_group, timer_idx, &timer);
-    timer_set_counter_value(timer_group, timer_idx, 0);
+    timer.set_counter_value(0);
     // DEBT: Would be better to use timer_isr_callback_add
 #if CONFIG_ISR_LOW_LEVEL_MODE
     ESP_LOGD(TAG, "ISR low level mode");
@@ -193,10 +220,10 @@ void Debouncer::timer_init()
     // Brings us to an alarm at 41ms when enabled.  This is to give us 1ms wiggle room
     // when detecting debounce threshold of 40ms
     // DEBT: All that needs to be configurable
-    timer_set_alarm_value(timer_group, timer_idx, 41000);
-    timer_start(timer_group, timer_idx);
+    timer.set_alarm_value(41000);
+    //timer_start(timer_group, timer_idx);
 
-    timer_enable_intr(timer_group, timer_idx);
+    timer.enable_intr();
 }
 
 
@@ -212,8 +239,8 @@ Debouncer::~Debouncer()
 {
     esp_intr_free(gpio_isr_handle);    
 
-    timer_set_alarm(timer_group, timer_idx, TIMER_ALARM_DIS);
-    timer_disable_intr(timer_group, timer_idx);
+    timer.set_alarm(TIMER_ALARM_DIS);
+    timer.disable_intr();
 
 #if CONFIG_ISR_LOW_LEVEL_MODE
 #elif CONFIG_ISR_CALLBACK_MODE
@@ -231,5 +258,16 @@ void Debouncer::track(int pin)
     debouncers[pin] = embr::detail::Debouncer{};
 }
 
+
+const char* to_string(Debouncer::States state)
+{
+    switch(state)
+    {
+        case Debouncer::Up:     return "Up";
+        case Debouncer::Down:   return "Down";
+        case Debouncer::Held:   return "Held";
+        default:                return "N/A";
+    }
+}
 
 }}
