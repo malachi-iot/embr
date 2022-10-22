@@ -4,7 +4,7 @@
 
 namespace embr { namespace esp_idf {
 
-typedef embr::internal::layer1::Scheduler<5, ThresholdImpl> scheduler_type;
+typedef embr::internal::layer1::Scheduler<5, DurationImpl> scheduler_type;
 
 void timer_scheduler_init(embr::esp_idf::Timer& timer, uint32_t divider, timer_isr_t isr_handler, void* arg)
 {

@@ -14,7 +14,47 @@
 #include <driver/gpio.h>
 #include <driver/timer.h>
 
+#include "timer-scheduler.h"
+
 namespace embr { inline namespace esp_idf {
+
+
+struct ThresholdImpl : DurationImpl
+{
+    struct value_type : DurationImpl::value_type
+    {
+        typedef embr::detail::Debouncer debouncer_type;
+
+        debouncer_type& debouncer_;
+        int pin_;
+
+        debouncer_type& debouncer() { return debouncer_; }
+        int pin() const { return pin_; }
+
+        bool on() const
+        {
+            return false;
+        }
+
+        value_type(time_point t, debouncer_type& debouncer_) :
+            DurationImpl::value_type(t),
+            debouncer_{debouncer_}
+        {}
+    };
+
+
+    // we're scheduled to reach here optimisitcally thinking up or down energy is high
+    // enough to yield a state change
+    static bool process(value_type& v, time_point now)
+    {
+        bool state_changed = v.debouncer().time_passed(now, v.on());
+        if(!state_changed)
+        {
+            // TODO: evaluate whether we need more time and if so, reschedule
+        }
+        return false;
+    }
+};
 
 // Guidance from:
 // https://esp32.com/viewtopic.php?t=345 

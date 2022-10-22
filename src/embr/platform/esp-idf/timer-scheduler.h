@@ -6,9 +6,9 @@
 
 namespace embr { namespace esp_idf {
 
-struct ThresholdImpl
+struct DurationImpl
 {
-    typedef estd::chrono::duration<uint32_t, estd::milli> time_point;
+    typedef estd::chrono::duration<uint32_t, estd::micro> time_point;
 
     struct value_type
     {
