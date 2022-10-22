@@ -100,6 +100,8 @@ public:
     Debouncer() : state_(States::Unstarted), substate_(Idle) {}
     Debouncer(bool on) : state_(on ? On : Off), substate_(Idle) {}
 
+    static ESTD_CPP_CONSTEXPR_RET duration signal_threshold() { return impl_type::signal_threshold(); }
+
     // Mostly for debug curiosity
     inline const duration& noise_or_signal() const { return (duration&) noise_or_signal_; }
 
