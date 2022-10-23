@@ -21,8 +21,14 @@ void test_isr()
 
     // DEBT: Move this out to a discrete timer test app
     embr::esp_idf::timer_scheduler_tester();
+    
+#if ISR_CALLBACK_MODE
+    bool callback_mode = true;
+#else
+    bool callback_mode = false;
+#endif
 
-    embr::esp_idf::Debouncer d;
+    embr::esp_idf::Debouncer d(callback_mode);
 
     d.track(CONFIG_BUTTON_PIN);
 

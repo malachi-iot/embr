@@ -221,7 +221,7 @@ bool IRAM_ATTR Debouncer::timer_group0_callback (void *param)
     return false;
 }
 
-void Debouncer::timer_init()
+void Debouncer::timer_init(bool callback_mode)
 {
     const char* TAG = "Debouncer::timer_init";
 
@@ -247,19 +247,20 @@ void Debouncer::timer_init()
     }
 
     timer.set_counter_value(0);
-    // DEBT: Would be better to use timer_isr_callback_add
-#if CONFIG_ISR_LOW_LEVEL_MODE
-    ESP_LOGD(TAG, "ISR low level mode");
-    timer_isr_register(timer.group, timer.idx, timer_group0_isr, this, 
-        ESP_INTR_FLAG_LEVEL1 | ESP_INTR_FLAG_IRAM,
-        &timer_isr_handle);
-#elif CONFIG_ISR_CALLBACK_MODE
-    ESP_LOGD(TAG, "ISR callback mode");
-    timer_isr_callback_add(timer.group, timer.idx, timer_group0_callback, this,
-        ESP_INTR_FLAG_LEVEL1 | ESP_INTR_FLAG_IRAM);
-#else
-#error Unknown ISR config mode
-#endif
+
+    if(callback_mode == false)
+    {
+        ESP_LOGD(TAG, "ISR low level mode");
+        timer_isr_register(timer.group, timer.idx, timer_group0_isr, this, 
+            ESP_INTR_FLAG_LEVEL1 | ESP_INTR_FLAG_IRAM,
+            &timer_isr_handle);
+    }
+    else
+    {
+        ESP_LOGD(TAG, "ISR callback mode");
+        timer_isr_callback_add(timer.group, timer.idx, timer_group0_callback, this,
+            ESP_INTR_FLAG_LEVEL1 | ESP_INTR_FLAG_IRAM);
+    }
     
     // Brings us to an alarm at 41ms when enabled.  This is to give us 1ms wiggle room
     // when detecting debounce threshold of 40ms
@@ -271,11 +272,11 @@ void Debouncer::timer_init()
 }
 
 
-Debouncer::Debouncer() //: queue(10)
+Debouncer::Debouncer(bool callback_mode) //: queue(10)
 {
     ESP_ERROR_CHECK(
         gpio_isr_register(gpio_isr, this, ESP_INTR_FLAG_LEVEL1, &gpio_isr_handle));
-    timer_init();
+    timer_init(callback_mode);
     last_now = esp_clock::now();
     held_timer.start(1s);
 }

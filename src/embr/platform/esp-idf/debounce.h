@@ -56,7 +56,7 @@ public:
 private:
     gpio_isr_handle_t gpio_isr_handle;
 
-    void timer_init();
+    void timer_init(bool callback_mode);
     void gpio_isr();
     void timer_group0_isr();
     void emit_state(const Item& item);
@@ -70,7 +70,7 @@ public:
     embr::freertos::layer1::queue<Notification, 10> queue;
 
 public:
-    Debouncer();
+    Debouncer(bool callback_mode);
     ~Debouncer();
 
     void track(int pin);
