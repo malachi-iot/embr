@@ -4,8 +4,6 @@
 
 namespace embr { namespace esp_idf {
 
-typedef embr::internal::layer1::Scheduler<5, DurationImpl> scheduler_type;
-
 void timer_scheduler_init(embr::esp_idf::Timer& timer, uint32_t divider, timer_isr_t isr_handler, void* arg)
 {
     const char* TAG = "timer_scheduler_init";
@@ -30,24 +28,6 @@ void timer_scheduler_init(embr::esp_idf::Timer& timer, uint32_t divider, timer_i
     timer.set_counter_value(0);
     timer.isr_callback_add(isr_handler, arg, ESP_INTR_FLAG_LEVEL1 | ESP_INTR_FLAG_IRAM);
     timer.enable_intr();
-}
-
-void timer_scheduler_tester()
-{
-    const char* TAG = "timer_scheduler_tester";
-
-    embr::esp_idf::Timer timer(TIMER_GROUP_0, TIMER_1);
-
-    static TimerScheduler<scheduler_type> ts(timer);
-
-    ts.init();
-
-    scheduler_type::value_type scheduled(estd::chrono::milliseconds(250));
-
-    ts.schedule(scheduled);
-
-    ESP_LOGD(TAG, "group=%d, idx=%d, scheduled=%u", ts.timer.group, ts.timer.idx,
-        scheduled.wakeup.count());
 }
 
 }}

@@ -19,9 +19,6 @@ void test_isr()
 {
     const char* TAG = "test_isr";
 
-    // DEBT: Move this out to a discrete timer test app
-    embr::esp_idf::timer_scheduler_tester();
-    
 #if ISR_CALLBACK_MODE
     bool callback_mode = true;
 #else

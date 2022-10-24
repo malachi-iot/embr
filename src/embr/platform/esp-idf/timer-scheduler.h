@@ -1,5 +1,7 @@
 #pragma once
 
+#include <estd/mutex.h>
+
 #include "timer.h"
 
 #include "../../scheduler.h"
@@ -61,6 +63,7 @@ class TimerScheduler
 
 private:
     scheduler_type scheduler;
+    estd::freertos::timed_mutex<true> mutex;
 
     void timer_callback();
     static bool timer_callback(void* arg);

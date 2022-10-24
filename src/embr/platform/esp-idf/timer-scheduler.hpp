@@ -23,24 +23,31 @@ inline IRAM_ATTR void TimerScheduler<TScheduler>::timer_callback ()
     ets_printf("1 TimerScheduler Intr: duration=%lldus, timer_counter=%lld, this=%p\n",
         duration.count(), counter, this);
 
+    assert(mutex.native_handle().take_from_isr(nullptr));
     scheduler.process(time_point(counter));
+    assert(mutex.native_handle().give_from_isr(nullptr));
 
     // DEBT: Consider making a scheduler.empty()
+    // DEBT: We need mutex protection down here too
     bool more = scheduler.size() > 0;
     if(more)
     {
         time_point next = scheduler.top_time();
-        //next += duration;
-        // FIX: "works" but causes a mega loop
-        // I believe API itself is functioning I am just not using it right
-        //timer.set_alarm_value_in_isr(next.count());
+
+        embr::experimental::TimerSchedulerConverter converter;
+
+        uint64_t native = converter.convert(next);
+
         ets_printf("1.1 TimerScheduler Intr: size=%d, next=%lluus\n",
             scheduler.size(),
             next.count());
+
+        timer.set_alarm_value_in_isr(native);
     }
     else
     {
         ets_printf("1.2 TimerScheduler Intr: no further events\n");
+        //timer.pause();
     }
 }
 
@@ -75,19 +82,23 @@ inline void TimerScheduler<TScheduler>::schedule(value_type& v)
 {
     //timer.enable_alarm_in_isr();
     time_point t = impl_type::get_time_point(v);
-    estd::chrono::duration<uint64_t, estd::micro> native;
 
     embr::experimental::TimerSchedulerConverter converter;
 
-    uint64_t native2 = converter.convert(t);
+    uint64_t native = converter.convert(t);
 
-    native = t;
-
-    timer.set_alarm(TIMER_ALARM_EN);
-    timer.set_alarm_value(1000000);    // FIX: Dummy value - set to 1s
-    timer.start();
-
+    assert(mutex.try_lock_for(estd::chrono::milliseconds(50)));
     scheduler.schedule(v);
+    assert(mutex.unlock());
+
+    last_now = estd::chrono::esp_clock::now();
+
+    if(scheduler.size() == 1)
+    {
+        timer.set_alarm(TIMER_ALARM_EN);
+        timer.set_alarm_value(native);
+        timer.start();
+    }
 }
 
 

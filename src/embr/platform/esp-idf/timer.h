@@ -69,6 +69,11 @@ struct Timer
         return timer_set_counter_value(group, idx, load_val);
     }
 
+    void set_counter_enable_in_isr(timer_start_t counter_en)
+    {
+        timer_group_set_counter_enable_in_isr(group, idx, counter_en);
+    }
+
     esp_err_t start()
     {
         return timer_start(group, idx);

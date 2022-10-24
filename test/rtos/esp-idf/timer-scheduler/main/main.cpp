@@ -3,9 +3,7 @@
 #include "esp_system.h"
 #include "esp_wifi.h"
 
-#include <embr/platform/esp-idf/timer-scheduler.hpp>
-
-void scheduler_init();
+void timer_scheduler_tester();
 
 extern "C" void app_main()
 {
@@ -16,5 +14,7 @@ extern "C" void app_main()
 #else
     wifi_init_sta(event_handler);
 #endif
+
+    timer_scheduler_tester();
 }
 
