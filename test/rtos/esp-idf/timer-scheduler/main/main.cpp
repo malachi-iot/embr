@@ -3,6 +3,8 @@
 #include "esp_system.h"
 #include "esp_wifi.h"
 
+#include <embr/platform/esp-idf/timer-scheduler.hpp>
+
 void scheduler_init();
 
 extern "C" void app_main()

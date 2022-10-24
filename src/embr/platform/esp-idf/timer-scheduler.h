@@ -36,6 +36,20 @@ struct DurationImpl
 void timer_scheduler_init(Timer& timer, uint32_t divider, timer_isr_t, void*);
 void timer_scheduler_tester();
 
+struct TimerSchedulerObserver
+{
+    static constexpr const char* TAG = "TimerSchedulerObserver";
+
+    bool early_wakeup;
+
+    template <class TContainer, class TImpl, class TSubject>
+    void on_notify(embr::internal::events::Scheduling<TImpl> scheduling,
+        embr::internal::Scheduler<TContainer, TImpl, TSubject>& scheduler)
+    {
+
+    }
+};
+
 template <class TScheduler>
 class TimerScheduler
 {

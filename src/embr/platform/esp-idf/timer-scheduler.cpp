@@ -19,8 +19,8 @@ void timer_scheduler_init(embr::esp_idf::Timer& timer, uint32_t divider, timer_i
     config.counter_dir = TIMER_COUNT_UP;
     config.alarm_en = TIMER_ALARM_DIS;
     config.intr_type = TIMER_INTR_LEVEL;
-    //config.auto_reload = TIMER_AUTORELOAD_DIS;
-    config.auto_reload = TIMER_AUTORELOAD_EN; // Reset timer to 0 when end condition is triggered
+    config.auto_reload = TIMER_AUTORELOAD_DIS;
+    //config.auto_reload = TIMER_AUTORELOAD_EN; // Reset timer to 0 when end condition is triggered
     config.counter_en = TIMER_PAUSE;
 #if SOC_TIMER_GROUP_SUPPORT_XTAL
     config.clk_src = TIMER_SRC_CLK_APB;

@@ -73,6 +73,11 @@ template <class TScheduler>
 inline void TimerScheduler<TScheduler>::schedule(value_type& v)
 {
     //timer.enable_alarm_in_isr();
+    time_point t = impl_type::get_time_point(v);
+    estd::chrono::duration<uint64_t, estd::micro> native;
+
+    native = t;
+
     timer.set_alarm(TIMER_ALARM_EN);
     timer.set_alarm_value(1000000);    // FIX: Dummy value - set to 1s
     timer.start();
