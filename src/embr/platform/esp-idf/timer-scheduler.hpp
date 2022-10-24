@@ -1,6 +1,7 @@
 #pragma once
 
 #include "timer-scheduler.h"
+#include "../../exp/runtime-chrono.h"
 
 namespace embr { namespace esp_idf {
 
@@ -75,6 +76,10 @@ inline void TimerScheduler<TScheduler>::schedule(value_type& v)
     //timer.enable_alarm_in_isr();
     time_point t = impl_type::get_time_point(v);
     estd::chrono::duration<uint64_t, estd::micro> native;
+
+    embr::experimental::TimerSchedulerConverter converter;
+
+    uint64_t native2 = converter.convert(t);
 
     native = t;
 
