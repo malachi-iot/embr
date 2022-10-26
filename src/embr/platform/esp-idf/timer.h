@@ -1,3 +1,8 @@
+// Wrapper for general purpose timer
+// https://docs.espressif.com/projects/esp-idf/en/v4.4.2/esp32/api-reference/peripherals/timer.html
+// Different than and does not wrap slightly higher level timer component:
+// https://docs.espressif.com/projects/esp-idf/en/v4.4.2/esp32/api-reference/system/esp_timer.html
+// NOTE: v5 seems to be changing API to 'gptimer_'
 #pragma once
 
 #include <new>
@@ -42,6 +47,11 @@ struct Timer
     esp_err_t deinit()
     {
         return timer_deinit(group, idx);
+    }
+
+    inline esp_err_t get_counter_value(uint64_t* timer_val) const
+    {
+        return timer_get_counter_value(group, idx, timer_val);
     }
 
     inline uint64_t get_counter_value_in_isr() const

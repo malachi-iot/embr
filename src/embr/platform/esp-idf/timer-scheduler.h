@@ -5,8 +5,67 @@
 #include "timer.h"
 
 #include "../../scheduler.h"
+#include "../../exp/runtime-chrono.h"
 
 namespace embr { namespace esp_idf {
+
+template <typename TInt>
+struct DurationImplBase
+{
+    typedef TInt time_point;
+
+    // DEBT: Make this the source timer
+    Timer* timer_;
+    Timer& timer() { return *timer_; }
+
+    inline TInt now(bool in_isr = false)
+    {
+        if(in_isr)
+            return (TInt)timer().get_counter_value_in_isr();
+        else
+        {
+            uint64_t v;
+            ESP_ERR_CHECK(timer().get_counter_value(&v));
+            return (TInt) v;
+        }
+    }
+};
+
+template <typename TInt, int divisor_ = -1>
+struct DurationImpl2 : DurationImplBase<TInt>
+{
+    typedef DurationImplBase<TInt> base_type;
+
+    static constexpr unsigned divisor() { return divisor_; }
+};
+
+
+template <typename TInt>
+struct DurationImpl2<TInt, -1> : 
+    DurationImplBase<TInt>,
+    embr::experimental::TimerSchedulerConverter
+{
+    typedef DurationImplBase<TInt> base_type;
+};
+
+/*
+NOTE: Don't think we'll do offset in any case
+// 64-bit native versions don't do offset
+template <int divisor>
+struct DurationImpl2<uint64_t, divisor>
+{
+
+};
+
+
+// 64-bit native versions don't do offset
+template <>
+struct DurationImpl2<uint64_t, -1> : embr::experimental::TimerSchedulerConverter
+{
+
+};
+*/
+
 
 struct DurationImpl
 {
