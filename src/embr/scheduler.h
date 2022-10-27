@@ -167,17 +167,15 @@ protected:
     priority_queue_type event_queue;
 
     template <class TContext>
-    void do_notify_scheduling(value_type& value, TContext& user_context)
+    void do_notify_scheduling(value_type& value, context_type<TContext>& context)
     {
-        context_type<TContext> context(*this, user_context, false);
-
         subject_provider::value().notify(scheduling_event_type(value), context);
     }
 
-    void do_notify_scheduling(value_type& value)
+    inline void do_notify_scheduling(value_type& value)
     {
-        estd::monostate c;
-        do_notify_scheduling(value, c);
+        context_type<> context(*this, false);
+        do_notify_scheduling(value, context);
     }
 
     bool process_impl(value_type& t, time_point current_time, estd::monostate)
@@ -228,6 +226,16 @@ public:
         event_queue.push(value);
 
         subject_provider::value().notify(scheduled_event_type());
+    }
+
+    template <class TContext>
+    void schedule(const value_type& value, context_type<TContext>& context)
+    {
+        do_notify_scheduling(value, context);
+
+        event_queue.push(value);
+
+        subject_provider::value().notify(scheduled_event_type(), context);
     }
 
 #ifdef FEATURE_CPP_MOVESEMANTIC
@@ -293,10 +301,8 @@ public:
     } */
 
     template <class TContext>
-    void process(time_point current_time, TContext& user_context)
+    void process(time_point current_time, context_type<TContext>& context)
     {
-        context_type<TContext> context(*this, user_context, false);
-
         while(!event_queue.empty())
         {
             scoped_lock<accessor> t(top());
@@ -318,7 +324,7 @@ public:
 
                 if(reschedule_requested)
                 {
-                    do_notify_scheduling(copied);
+                    do_notify_scheduling(copied, context);
 
                     // DEBT: Doesn't handle move variant
                     event_queue.push(copied);
@@ -339,20 +345,20 @@ public:
     void process(TContext& context)
     {
         time_point current_time = impl().now();
-        process(current_time);
+        process(current_time, context);
     }
 
 
     void process(time_point current_time)
     {
-        estd::monostate context;
+        context_type<> context(*this, false);
 
         process(current_time, context);
     }
 
     void process()
     {
-        estd::monostate context;
+        context_type<> context(*this, false);
 
         process(context);
     }
