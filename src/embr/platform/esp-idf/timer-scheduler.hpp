@@ -23,7 +23,13 @@ inline IRAM_ATTR void TimerScheduler<TScheduler>::timer_callback ()
     ets_printf("1 TimerScheduler Intr: duration=%lldus, timer_counter=%lld, this=%p\n",
         duration.count(), counter, this);
 
-    scheduler.process_in_isr(time_point(counter));
+    // DEBT: Don't do auto here
+    // DEBT: Pass in something like 'in_isr_tag' do disambiguate inputs to create_context
+    auto context = scheduler.create_context(true);  // create an in_isr context
+
+    context.higherPriorityTaskWoken = false;
+
+    scheduler.process(time_point(counter), context);
 
     // DEBT: Consider making a scheduler.empty()
     // DEBT: We need mutex protection down here too
@@ -47,6 +53,10 @@ inline IRAM_ATTR void TimerScheduler<TScheduler>::timer_callback ()
         ets_printf("1.2 TimerScheduler Intr: no further events\n");
         //timer.pause();
     }
+
+    // Recommended by
+    // https://www.freertos.org/a00124.html
+    portYIELD_FROM_ISR(context.higherPriorityTaskWoken);
 }
 
 template <class TScheduler>

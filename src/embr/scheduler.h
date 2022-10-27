@@ -108,6 +108,7 @@ public:
     typedef value_type& reference;
     typedef const value_type& const_reference;
     typedef TImpl impl_type;
+    typedef typename impl_type::context_factory context_factory;
     typedef typename impl_type::time_point time_point;
     typedef SchedulerContextBase<this_type> context_base_type;
 
@@ -146,6 +147,16 @@ public:
     inline typename mutex_provider::evaporated_type mutex()
     {
         return mutex_provider::value();
+    }
+
+    // Creates a default context if non is specifically provided
+    // DEBT: Some kind of policy should feed the parameters to default context
+    inline context_type<> create_context(bool in_isr = false)
+    {
+        estd::monostate uc;
+
+        //return context_type<>(*this, in_isr);
+        return context_factory::create_context(*this, uc, in_isr, true);
     }
 
 protected:
@@ -195,13 +206,6 @@ protected:
     {
         // DEBT: We actually would prefer full SchedulerContext to be passed if we can
         return process_impl(t, current_time, context.user_context());
-    }
-
-    // Creates a default context if non is specifically provided
-    // DEBT: Some kind of policy should feed the parameters to default context
-    inline context_type<> create_context(bool in_isr = false)
-    {
-        return context_type<>(*this, in_isr);
     }
 
     // DEBT: Also mixes concerns and checks for if we should even do mutex

@@ -39,6 +39,30 @@ struct SchedulerObserver
 struct FunctorImpl :
     embr::internal::scheduler::impl::Function<estd::chrono::freertos_clock::time_point>
 {
+    struct context_factory
+    {
+        template <class TScheduler, class TUserContext>
+        inline static embr::internal::SchedulerContext<TScheduler, TUserContext> create_context(
+            TScheduler& scheduler, TUserContext& user_context, bool in_isr, bool use_mutex = true)
+        {
+            // NOTE: Must compare LOG_LOCAL_LEVEL to raw int because enum isn't
+            // available during preprocessor phase
+#if defined(ESP_PLATFORM) and (LOG_LOCAL_LEVEL > 4)     // only enter if in ESP verbose logging
+            const char* TAG = "context_factory (FreeRTOS flavor)";
+
+            if(in_isr)
+                ets_printf("%s: create_context: entry - in_isr=true\n", TAG);
+            else
+                ESP_LOGV(TAG, "create_context: entry - in_isr=false");
+#endif
+            embr::internal::SchedulerContext<TScheduler, TUserContext> context(scheduler, user_context, in_isr, use_mutex);
+
+            context.higherPriorityTaskWoken = false;
+
+            return context;
+        }
+    };
+
     // 'true' designates static allocation
     struct mutex : estd::freertos::timed_mutex<true>
     {

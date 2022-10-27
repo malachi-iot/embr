@@ -102,6 +102,7 @@ struct DurationImpl : embr::internal::scheduler::impl::ReferenceBaseBase
 
     typedef embr::freertos::experimental::FunctorImpl::mutex mutex;
     typedef embr::freertos::experimental::FunctorImpl::context_type context_type;
+    typedef embr::freertos::experimental::FunctorImpl::context_factory context_factory;
 };
 
 // DEBT: Wrap all this up in a templatized class

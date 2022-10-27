@@ -72,6 +72,17 @@ struct noop_mutex
 
 namespace scheduler { namespace impl {
 
+// For full scheduler context, not just scheduler impl context
+struct ReferenceContextFactory
+{
+    template <class TScheduler, class TUserContext>
+    inline static SchedulerContext<TScheduler, TUserContext> create_context(
+        TScheduler& scheduler, TUserContext& user_context, bool in_isr, bool use_mutex = true)
+    {
+        return SchedulerContext<TScheduler, TUserContext>(scheduler, user_context, in_isr, use_mutex);
+    }
+};
+
 struct ReferenceBaseBase
 {
     typedef internal::noop_mutex mutex;
@@ -85,7 +96,10 @@ struct ReferenceBaseBase
     }
 #endif
 
+    // DEBT: Improve naming - context_type is just for schedule impl context,
+    // while context_factory is for schedule context
     typedef estd::monostate context_type;
+    typedef ReferenceContextFactory context_factory;
 };
 
 template <typename TTimePoint = void>
