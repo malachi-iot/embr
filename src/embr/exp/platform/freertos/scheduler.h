@@ -40,9 +40,22 @@ struct FunctorImpl :
     embr::internal::scheduler::impl::Function<estd::chrono::freertos_clock::time_point>
 {
     // 'true' designates static allocation
-    struct mutex : estd::freertos::mutex<true>
+    struct mutex : estd::freertos::timed_mutex<true>
     {
-        typedef estd::freertos::mutex<true> base_type;
+        enum TimeoutModes
+        {
+            Blocking,       ///< Blocks until mutex is acquired
+
+            // Silent and Warning not useful for scheduler activities because for the time being
+            // they are do or die.  In a broader mutex-wrapper kind of a way
+            // (decoupled from scheduler), this might be useful
+            //Silent,         ///< Times out and records result in context without emitting a warning
+            //Warning,      // TBD: Same as above and Emits a warning log on timeout
+
+            Abort           ///< Times out and signals an abort program if mutex is not acquired
+        };
+
+        typedef estd::freertos::timed_mutex<true> base_type;
 
         template <class TScheduler>
         inline void lock(embr::internal::SchedulerContextBase<TScheduler>& context)
@@ -52,7 +65,23 @@ struct FunctorImpl :
                 native_handle().take_from_isr(&context.higherPriorityTaskWoken);
             }
             else
-                base_type::lock();
+            {
+                switch(context.mutex_timeout_mode())
+                {
+                    default:
+                    case Blocking:
+                        base_type::lock();
+                        break;
+
+                    //case Silent:
+                        //context.timedLockResult = base_type::try_lock_for(context.mutex_timeout());
+                        //break;
+
+                    case Abort:
+                        assert(base_type::try_lock_for(context.mutex_timeout()));
+                        break;
+                }
+            }
         }
 
         template <class TScheduler>
@@ -74,13 +103,23 @@ struct FunctorImpl :
     // and non const separation
     struct context_type
     {
-        // to catch output from xSemaphoreGiveFromISR and friends
-        BaseType_t higherPriorityTaskWoken;
+        union
+        {
+            // to catch output from xSemaphoreGiveFromISR and friends
+            BaseType_t higherPriorityTaskWoken;
+            // output code from timed lock operation
+            BaseType_t timedLockResult;
+        };
 
         // DEBT: Make this configurable
         static constexpr estd::chrono::milliseconds mutex_timeout()
         {
             return estd::chrono::milliseconds(50);
+        }
+
+        static constexpr mutex::TimeoutModes mutex_timeout_mode()
+        {
+            return mutex::Abort;
         }
     };
 };

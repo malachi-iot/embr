@@ -85,10 +85,7 @@ inline void TimerScheduler<TScheduler>::schedule(value_type& v)
 
     uint64_t native = converter.convert(t);
 
-    // DEBT: Put timeout flavor back in via scheduler impl policy
-    //assert(mutex.try_lock_for(estd::chrono::milliseconds(50)));
     scheduler.schedule(v);
-    //assert(mutex.unlock());
 
     last_now = estd::chrono::esp_clock::now();
 
