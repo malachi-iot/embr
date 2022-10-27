@@ -20,9 +20,11 @@ struct SchedulerContextFlags
 };
 
 template <class TScheduler>
-struct SchedulerContextBase : SchedulerContextFlags
+struct SchedulerContextBase : SchedulerContextFlags,
+    TScheduler::impl_type::context_type
 {
     typedef TScheduler scheduler_type;
+    typedef typename TScheduler::impl_type::context_type impl_context_type;
 
     scheduler_type& scheduler_;
 
@@ -70,12 +72,8 @@ struct noop_mutex
 
 namespace scheduler { namespace impl {
 
-
-template <typename TTimePoint>
-struct ReferenceBase
+struct ReferenceBaseBase
 {
-    typedef TTimePoint time_point;
-
     typedef internal::noop_mutex mutex;
 
 #if __cpp_variadic_templates
@@ -86,6 +84,24 @@ struct ReferenceBase
         f(std::forward<TArgs>(args)...);
     }
 #endif
+
+    typedef estd::monostate context_type;
+};
+
+template <typename TTimePoint = void>
+struct ReferenceBase;
+
+
+template <>
+struct ReferenceBase<void> : ReferenceBaseBase
+{
+
+};
+
+template <typename TTimePoint>
+struct ReferenceBase : ReferenceBaseBase
+{
+    typedef TTimePoint time_point;
 };
 
 /// Reference base implementation for scheduler impl
@@ -93,9 +109,10 @@ struct ReferenceBase
 template <class T, class TTimePoint = decltype(T().event_due())>
 struct Reference : ReferenceBase<TTimePoint>
 {
+    typedef ReferenceBase<TTimePoint> base_type;
     typedef T value_type;
 
-    typedef TTimePoint time_point;
+    typedef typename base_type::time_point time_point;
 
     /// Retrieve specialized wake up time from T
     /// \param value

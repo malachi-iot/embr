@@ -6,6 +6,7 @@
 
 #include "../../scheduler.h"
 #include "../../exp/runtime-chrono.h"
+#include "../../exp/platform/freertos/scheduler.h"
 
 namespace embr { namespace esp_idf {
 
@@ -76,7 +77,7 @@ struct DurationImpl2<uint64_t, -1> : embr::experimental::TimerSchedulerConverter
 */
 
 
-struct DurationImpl
+struct DurationImpl : embr::internal::scheduler::impl::ReferenceBaseBase
 {
     typedef estd::chrono::duration<uint32_t, estd::micro> time_point;
 
@@ -99,7 +100,8 @@ struct DurationImpl
         return false;
     }
 
-    typedef estd::monostate mutex;
+    typedef embr::freertos::experimental::FunctorImpl::mutex mutex;
+    typedef embr::freertos::experimental::FunctorImpl::context_type context_type;
 };
 
 // DEBT: Wrap all this up in a templatized class
@@ -131,7 +133,6 @@ class TimerScheduler
 
 private:
     scheduler_type scheduler;
-    estd::freertos::timed_mutex<true> mutex;
 
     void timer_callback();
     static bool timer_callback(void* arg);

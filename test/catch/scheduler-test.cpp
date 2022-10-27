@@ -39,7 +39,7 @@ struct ItemTraits : embr::internal::scheduler::impl::Reference<Item>
 };
 
 
-struct Item2Traits
+struct Item2Traits : embr::internal::scheduler::impl::ReferenceBase<unsigned>
 {
     typedef unsigned time_point;
 
@@ -77,12 +77,10 @@ struct Item2Traits
         ++v.counter;
         return true;
     }
-
-    typedef embr::internal::noop_mutex mutex;
 };
 
 
-struct Item3Traits
+struct Item3Traits : embr::internal::scheduler::impl::ReferenceBase<unsigned>
 {
     typedef estd::chrono::steady_clock::time_point time_point;
 
@@ -103,8 +101,6 @@ struct Item3Traits
     {
         return v->process(t);
     }
-
-    typedef embr::internal::noop_mutex mutex;
 };
 
 struct Item3ControlStructure1 : Item3Traits::control_structure

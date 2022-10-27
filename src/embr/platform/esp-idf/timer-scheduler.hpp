@@ -23,9 +23,7 @@ inline IRAM_ATTR void TimerScheduler<TScheduler>::timer_callback ()
     ets_printf("1 TimerScheduler Intr: duration=%lldus, timer_counter=%lld, this=%p\n",
         duration.count(), counter, this);
 
-    assert(mutex.native_handle().take_from_isr(nullptr));
-    scheduler.process(time_point(counter));
-    assert(mutex.native_handle().give_from_isr(nullptr));
+    scheduler.process_in_isr(time_point(counter));
 
     // DEBT: Consider making a scheduler.empty()
     // DEBT: We need mutex protection down here too
@@ -87,9 +85,10 @@ inline void TimerScheduler<TScheduler>::schedule(value_type& v)
 
     uint64_t native = converter.convert(t);
 
-    assert(mutex.try_lock_for(estd::chrono::milliseconds(50)));
+    // DEBT: Put timeout flavor back in via scheduler impl policy
+    //assert(mutex.try_lock_for(estd::chrono::milliseconds(50)));
     scheduler.schedule(v);
-    assert(mutex.unlock());
+    //assert(mutex.unlock());
 
     last_now = estd::chrono::esp_clock::now();
 

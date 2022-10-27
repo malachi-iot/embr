@@ -40,28 +40,27 @@ struct FunctorImpl :
     embr::internal::scheduler::impl::Function<estd::chrono::freertos_clock::time_point>
 {
     // 'true' designates static allocation
-    //typedef estd::freertos::mutex<true> mutex;
     struct mutex : estd::freertos::mutex<true>
     {
         typedef estd::freertos::mutex<true> base_type;
 
-        inline void lock(const internal::SchedulerContextFlags& scf)
+        template <class TScheduler>
+        inline void lock(embr::internal::SchedulerContextBase<TScheduler>& context)
         {
-            if(scf.in_isr())
+            if(context.in_isr())
             {
-                // DEBT: We almost definitely do want to get back the woken task here
-                wrapped().take_from_isr(nullptr);
+                native_handle().take_from_isr(&context.higherPriorityTaskWoken);
             }
             else
                 base_type::lock();
         }
 
-        inline void unlock(const internal::SchedulerContextFlags& scf)
+        template <class TScheduler>
+        inline void unlock(embr::internal::SchedulerContextBase<TScheduler>& context)
         {
-            if(scf.in_isr())
+            if(context.in_isr())
             {
-                // DEBT: We almost definitely do want to get back the woken task here
-                wrapped().give_from_isr(nullptr);
+                native_handle().give_from_isr(&context.higherPriorityTaskWoken);
             }
             else
                 base_type::unlock();
@@ -70,6 +69,20 @@ struct FunctorImpl :
 
     inline static time_point now()
     { return estd::chrono::freertos_clock::now(); }
+
+    // DEBT: This works well, but it would be nice for context to have clearer const
+    // and non const separation
+    struct context_type
+    {
+        // to catch output from xSemaphoreGiveFromISR and friends
+        BaseType_t higherPriorityTaskWoken;
+
+        // DEBT: Make this configurable
+        static constexpr estd::chrono::milliseconds mutex_timeout()
+        {
+            return estd::chrono::milliseconds(50);
+        }
+    };
 };
 
 

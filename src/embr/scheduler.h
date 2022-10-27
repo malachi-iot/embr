@@ -199,9 +199,9 @@ protected:
 
     // Creates a default context if non is specifically provided
     // DEBT: Some kind of policy should feed the parameters to default context
-    inline context_type<> create_context()
+    inline context_type<> create_context(bool in_isr = false)
     {
-        return context_type<>(*this, false);
+        return context_type<>(*this, in_isr);
     }
 
     // DEBT: Also mixes concerns and checks for if we should even do mutex
@@ -389,6 +389,13 @@ public:
     void process(time_point current_time)
     {
         context_type<> context = create_context();
+
+        process(current_time, context);
+    }
+
+    void process_in_isr(time_point current_time)
+    {
+        context_type<> context = create_context(true);
 
         process(current_time, context);
     }
