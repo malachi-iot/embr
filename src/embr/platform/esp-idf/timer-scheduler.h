@@ -79,6 +79,11 @@ struct DurationImpl2<uint64_t, -1> : embr::experimental::TimerSchedulerConverter
 
 struct DurationImpl : embr::internal::scheduler::impl::ReferenceBaseBase
 {
+    Timer timer_;
+
+    inline Timer& timer() { return timer_; }
+    constexpr const Timer& timer() const { return timer_; }
+
     typedef estd::chrono::duration<uint32_t, estd::micro> time_point;
 
     struct value_type
@@ -100,9 +105,13 @@ struct DurationImpl : embr::internal::scheduler::impl::ReferenceBaseBase
         return false;
     }
 
+    void init();
+
     typedef embr::freertos::experimental::FunctorImpl::mutex mutex;
     typedef embr::freertos::experimental::FunctorImpl::context_type context_type;
     typedef embr::freertos::experimental::FunctorImpl::context_factory context_factory;
+
+    DurationImpl(const Timer& timer) : timer_{timer} {}
 };
 
 // DEBT: Wrap all this up in a templatized class
@@ -138,10 +147,11 @@ private:
     void timer_callback();
     static bool timer_callback(void* arg);
 
-public:
-    Timer timer;
+    Timer& timer() { return scheduler.timer(); }
 
-    TimerScheduler(const Timer& timer) : timer{timer} {}
+public:
+    TimerScheduler(const Timer& timer) :
+        scheduler{embr::internal::scheduler::impl_params_tag{}, timer} {}
 
     void init();
 

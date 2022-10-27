@@ -31,17 +31,12 @@ void timer_scheduler_tester()
 
     ts.schedule(scheduled);
 
-    ESP_LOGD(TAG, "group=%d, idx=%d, scheduled=%u", ts.timer.group, ts.timer.idx,
-        scheduled.wakeup.count());
     }
 
     {
     scheduler_type::value_type scheduled(estd::chrono::milliseconds(500));
 
     ts.schedule(scheduled);
-
-    ESP_LOGD(TAG, "group=%d, idx=%d, scheduled=%u", ts.timer.group, ts.timer.idx,
-        scheduled.wakeup.count());
     }
 }
 

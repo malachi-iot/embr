@@ -15,7 +15,7 @@ inline IRAM_ATTR void TimerScheduler<TScheduler>::timer_callback ()
 
     //ets_printf("0 TimerScheduler Intr: group=%d, idx=%d\n", timer.group, timer.idx);
 
-    counter = timer.get_counter_value_in_isr();
+    counter = timer().get_counter_value_in_isr();
 
     auto now = estd::chrono::esp_clock::now();
     auto duration = now - last_now;
@@ -46,7 +46,7 @@ inline IRAM_ATTR void TimerScheduler<TScheduler>::timer_callback ()
             scheduler.size(),
             next.count());
 
-        timer.set_alarm_value_in_isr(native);
+        timer().set_alarm_value_in_isr(native);
     }
     else
     {
@@ -82,12 +82,14 @@ void TimerScheduler<TScheduler>::init()
     // "default is APB_CLK running at 80 MHz"
     uint32_t divider = 80;
 
-    timer_scheduler_init(timer, divider, &timer_callback, this);
+    timer_scheduler_init(timer(), divider, &timer_callback, this);
 }
 
 template <class TScheduler>
 inline void TimerScheduler<TScheduler>::schedule(value_type& v)
 {
+    const char* TAG = "TimerScheduler::schedule";
+
     //timer.enable_alarm_in_isr();
     time_point t = impl_type::get_time_point(v);
 
@@ -101,10 +103,12 @@ inline void TimerScheduler<TScheduler>::schedule(value_type& v)
 
     if(scheduler.size() == 1)
     {
-        timer.set_alarm(TIMER_ALARM_EN);
-        timer.set_alarm_value(native);
-        timer.start();
+        timer().set_alarm(TIMER_ALARM_EN);
+        timer().set_alarm_value(native);
+        timer().start();
     }
+
+    ESP_LOGD(TAG, "group=%d, idx=%d, scheduled=%llu", timer().group, timer().idx, native);
 }
 
 

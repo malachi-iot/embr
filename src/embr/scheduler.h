@@ -13,7 +13,12 @@ namespace embr {
 
 namespace internal {
 
+namespace scheduler {
 
+// DEBT: See Scheduler constructor comments
+struct impl_params_tag {};
+
+}
 
 
 namespace events {
@@ -253,7 +258,15 @@ public:
 
     }
 #endif
+#ifdef __cpp_variadic_templates
+    // impl-initializing version
+    // DEBT: impl_params_tag necessary to disambiguate from TSubject initializers above
+    template <typename ...TArgs>
+    constexpr Scheduler(scheduler::impl_params_tag, TArgs&&...args) : impl_type(std::forward<TArgs>(args)...)
+    {
 
+    }
+#endif
 
     void schedule(const value_type& value)
     {
