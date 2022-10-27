@@ -9,19 +9,20 @@ namespace embr { namespace esp_idf {
 static auto last_now = estd::chrono::esp_clock::now();
 
 template <class TScheduler>
-inline IRAM_ATTR void TimerScheduler<TScheduler>::timer_callback ()
+bool IRAM_ATTR DurationImpl::helper<TScheduler>::timer_callback (void* arg)
 {
+    TScheduler& scheduler = * (TScheduler*) arg;
     uint64_t counter;
 
     //ets_printf("0 TimerScheduler Intr: group=%d, idx=%d\n", timer.group, timer.idx);
 
-    counter = timer().get_counter_value_in_isr();
+    counter = scheduler.timer().get_counter_value_in_isr();
 
     auto now = estd::chrono::esp_clock::now();
     auto duration = now - last_now;
 
-    ets_printf("1 TimerScheduler Intr: duration=%lldus, timer_counter=%lld, this=%p\n",
-        duration.count(), counter, this);
+    ets_printf("1 TimerScheduler Intr: duration=%lldus, timer_counter=%lld, scheduler=%p\n",
+        duration.count(), counter, &scheduler);
 
     // DEBT: Don't do auto here
     // DEBT: Pass in something like 'in_isr_tag' do disambiguate inputs to create_context
@@ -46,7 +47,7 @@ inline IRAM_ATTR void TimerScheduler<TScheduler>::timer_callback ()
             scheduler.size(),
             next.count());
 
-        timer().set_alarm_value_in_isr(native);
+        scheduler.timer().set_alarm_value_in_isr(native);
     }
     else
     {
@@ -57,10 +58,14 @@ inline IRAM_ATTR void TimerScheduler<TScheduler>::timer_callback ()
     // Recommended by
     // https://www.freertos.org/a00124.html
     portYIELD_FROM_ISR(context.higherPriorityTaskWoken);
+
+    // DEBT: Document what this does - I think it relates to the portYIELD mechanism above
+    return false;
 }
 
+/*
 template <class TScheduler>
-bool IRAM_ATTR TimerScheduler<TScheduler>::timer_callback (void *param)
+bool IRAM_ATTR DurationImpl::timer_callback (void *param)
 {
     //timer.pause();
 
@@ -73,16 +78,16 @@ bool IRAM_ATTR TimerScheduler<TScheduler>::timer_callback (void *param)
 
     return false;
 }
-
+*/
 
 template <class TScheduler>
-void TimerScheduler<TScheduler>::init()
+void DurationImpl::init(TScheduler* scheduler)
 {
     // Set prescaler for 1 MHz clock - remember, we're dividing
     // "default is APB_CLK running at 80 MHz"
     uint32_t divider = 80;
 
-    timer_scheduler_init(timer(), divider, &timer_callback, this);
+    timer_scheduler_init(timer(), divider, &helper<TScheduler>::timer_callback, scheduler);
 }
 
 template <class TScheduler>

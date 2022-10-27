@@ -105,13 +105,22 @@ struct DurationImpl : embr::internal::scheduler::impl::ReferenceBaseBase
         return false;
     }
 
-    void init();
+    template <class TScheduler>
+    struct helper
+    {
+        static bool timer_callback(void* arg);
+    };
+
+    // We pass this in to avoid downcasting
+    template <class TScheduler>
+    void init(TScheduler* scheduler);
 
     typedef embr::freertos::experimental::FunctorImpl::mutex mutex;
     typedef embr::freertos::experimental::FunctorImpl::context_type context_type;
     typedef embr::freertos::experimental::FunctorImpl::context_factory context_factory;
 
-    DurationImpl(const Timer& timer) : timer_{timer} {}
+    constexpr DurationImpl(const Timer& timer) : timer_{timer} {}
+    constexpr DurationImpl(timer_group_t group, timer_idx_t idx) : timer_(group, idx) {}
 };
 
 // DEBT: Wrap all this up in a templatized class
@@ -144,16 +153,13 @@ class TimerScheduler
 private:
     scheduler_type scheduler;
 
-    void timer_callback();
-    static bool timer_callback(void* arg);
-
     Timer& timer() { return scheduler.timer(); }
 
 public:
     TimerScheduler(const Timer& timer) :
         scheduler{embr::internal::scheduler::impl_params_tag{}, timer} {}
 
-    void init();
+    void init() { scheduler.init(&scheduler); }
 
     // DEBT: do_notify_scheduling doesn't take a const, so this can't either
     void schedule(value_type& v);
