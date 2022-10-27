@@ -2,6 +2,66 @@
 
 namespace embr { namespace internal {
 
+// DEBT: These need to live in 'internal/scheduler.h'
+struct SchedulerContextFlags
+{
+    const bool use_mutex_ : 1;
+    const bool in_isr_ : 1;
+
+    constexpr bool use_mutex() const { return use_mutex_; }
+    constexpr bool in_isr() const { return in_isr_; }
+
+    constexpr SchedulerContextFlags(bool in_isr, bool use_mutex = true) :
+        use_mutex_(use_mutex),
+        in_isr_(in_isr)
+    {
+
+    }
+};
+
+template <class TScheduler>
+struct SchedulerContextBase
+{
+    typedef TScheduler scheduler_type;
+
+    scheduler_type& scheduler_;
+
+    constexpr scheduler_type& scheduler() { return scheduler_; }
+
+    constexpr SchedulerContextBase(scheduler_type& s) : scheduler_(s) {}
+};
+
+template <class TScheduler, class TUserContext = estd::monostate>
+struct SchedulerContext :
+    SchedulerContextBase<TScheduler>,
+    SchedulerContextFlags
+{
+    typedef SchedulerContextBase<TScheduler> base_type;
+    typedef typename base_type::scheduler_type scheduler_type;
+    typedef TUserContext user_context_type;
+
+    // DEBT: Do the whole value/reference evaporator routine here
+    user_context_type user_context_;
+
+    user_context_type& user_context() { return user_context_; }
+
+    constexpr SchedulerContext(scheduler_type& s, user_context_type& uc, bool in_isr, bool use_mutex = true) :
+        base_type(s),
+        SchedulerContextFlags(in_isr, use_mutex),
+        user_context_(uc)
+    {
+
+    }
+
+    constexpr SchedulerContext(scheduler_type& s, bool in_isr, bool use_mutex = true) :
+        base_type(s),
+        SchedulerContextFlags(in_isr, use_mutex)
+    {
+
+    }
+};
+
+
 struct fake_mutex
 {
     void lock() {}

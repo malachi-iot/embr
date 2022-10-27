@@ -98,6 +98,8 @@ class Scheduler :
     protected estd::internal::struct_evaporator<TSubject>,
     protected estd::internal::struct_evaporator<typename TImpl::mutex>
 {
+    typedef Scheduler this_type;
+
 protected:
     typedef TContainer container_type;
 
@@ -107,6 +109,16 @@ public:
     typedef const value_type& const_reference;
     typedef TImpl impl_type;
     typedef typename impl_type::time_point time_point;
+
+    // DEBT: May want c++03 guards here
+    template <class TUserContext = estd::monostate>
+    using context_type = SchedulerContext<this_type, TUserContext>;
+
+    // EXPERIMENTAL, different way to get at typedefs
+    struct event
+    {
+        typedef events::Scheduling<impl_type> scheduling;
+    };
 
 protected:
     typedef typename impl_type::mutex mutex_type;
@@ -154,9 +166,18 @@ protected:
 
     priority_queue_type event_queue;
 
+    template <class TContext>
+    void do_notify_scheduling(value_type& value, TContext& user_context)
+    {
+        context_type<TContext> context(*this, user_context, false);
+
+        subject_provider::value().notify(scheduling_event_type(value), context);
+    }
+
     void do_notify_scheduling(value_type& value)
     {
-        subject_provider::value().notify(scheduling_event_type(value), *this);
+        estd::monostate c;
+        do_notify_scheduling(value, c);
     }
 
     bool process_impl(value_type& t, time_point current_time, estd::monostate)
@@ -170,6 +191,12 @@ protected:
         return impl().process(t, current_time, context);
     }
 
+    template <class TContext>
+    inline bool process_impl(value_type& t, time_point current_time, context_type<TContext>& context)
+    {
+        // DEBT: We actually would prefer full SchedulerContext to be passed if we can
+        return process_impl(t, current_time, context.user_context());
+    }
 
 
 public:
@@ -218,11 +245,13 @@ public:
     template <class ...TArgs>
     void schedule(TArgs&&...args)
     {
+        context_type<> context(*this, false);
+
         accessor value = event_queue.emplace_with_notify(
             [&](const value_type& v)
             {
                 // announce emplaced item before we actually sort it
-                subject_provider::value().notify(scheduling_event_type(v), *this);
+                subject_provider::value().notify(scheduling_event_type(v), context);
             },
             std::forward<TArgs>(args)...);
 
@@ -264,8 +293,10 @@ public:
     } */
 
     template <class TContext>
-    void process(time_point current_time, TContext& context)
+    void process(time_point current_time, TContext& user_context)
     {
+        context_type<TContext> context(*this, user_context, false);
+
         while(!event_queue.empty())
         {
             scoped_lock<accessor> t(top());

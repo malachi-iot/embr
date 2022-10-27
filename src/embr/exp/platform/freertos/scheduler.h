@@ -71,16 +71,22 @@ struct NotifierObserver
 
     //template <class TScheduler>
     //void on_notify(embr::internal::events::Scheduling<FreertosFunctorTraits> scheduling, TScheduler& scheduler)
-    template <class TContainer, class TImpl, class TSubject>
-    void on_notify(embr::internal::events::Scheduling<TImpl> scheduling,
-        embr::internal::Scheduler<TContainer, TImpl, TSubject>& scheduler)
+    
+    //template <class TContainer, class TImpl, class TSubject>
+    //void on_notify(embr::internal::events::Scheduling<TImpl> scheduling,
+    //    embr::internal::Scheduler<TContainer, TImpl, TSubject>& scheduler)
+
+    template <class TScheduler>
+    //void on_notify(embr::internal::events::Scheduling<typename TScheduler::impl_type> scheduling,
+    void on_notify(typename TScheduler::event::scheduling scheduling,
+        embr::internal::SchedulerContextBase<TScheduler>& context)
     {
-        if((early_wakeup = scheduling.value.wake < scheduler.top_time()))
+        if((early_wakeup = scheduling.value.wake < context.scheduler().top_time()))
         {
             ESP_LOGV(TAG, "on_notify(scheduling) early wakeup tagged");
         }
 
-        ESP_LOGV(TAG, "on_notify(scheduling)");
+        ESP_LOGD(TAG, "on_notify(scheduling)");
     }
 
     // 'bigger' one above consumes call, so this one doesn't get called.  Acceptable behavior
