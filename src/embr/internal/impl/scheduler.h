@@ -20,7 +20,7 @@ struct SchedulerContextFlags
 };
 
 template <class TScheduler>
-struct SchedulerContextBase
+struct SchedulerContextBase : SchedulerContextFlags
 {
     typedef TScheduler scheduler_type;
 
@@ -28,13 +28,14 @@ struct SchedulerContextBase
 
     constexpr scheduler_type& scheduler() { return scheduler_; }
 
-    constexpr SchedulerContextBase(scheduler_type& s) : scheduler_(s) {}
+    constexpr SchedulerContextBase(scheduler_type& s, bool in_isr, bool use_mutex) :
+        SchedulerContextFlags(in_isr, use_mutex),
+        scheduler_(s) {}
 };
 
 template <class TScheduler, class TUserContext = estd::monostate>
 struct SchedulerContext :
-    SchedulerContextBase<TScheduler>,
-    SchedulerContextFlags
+    SchedulerContextBase<TScheduler>
 {
     typedef SchedulerContextBase<TScheduler> base_type;
     typedef typename base_type::scheduler_type scheduler_type;
@@ -46,16 +47,14 @@ struct SchedulerContext :
     user_context_type& user_context() { return user_context_; }
 
     constexpr SchedulerContext(scheduler_type& s, user_context_type& uc, bool in_isr, bool use_mutex = true) :
-        base_type(s),
-        SchedulerContextFlags(in_isr, use_mutex),
+        base_type(s,in_isr, use_mutex),
         user_context_(uc)
     {
 
     }
 
     constexpr SchedulerContext(scheduler_type& s, bool in_isr, bool use_mutex = true) :
-        base_type(s),
-        SchedulerContextFlags(in_isr, use_mutex)
+        base_type(s, in_isr, use_mutex)
     {
 
     }
@@ -71,10 +70,28 @@ struct noop_mutex
 
 namespace scheduler { namespace impl {
 
+
+template <typename TTimePoint>
+struct ReferenceBase
+{
+    typedef TTimePoint time_point;
+
+    typedef internal::noop_mutex mutex;
+
+#if __cpp_variadic_templates
+    // EXPERIMENTAL
+    template <class F, typename ...TArgs>
+    void project_emplace(F&& f, TArgs&&...args)
+    {
+        f(std::forward<TArgs>(args)...);
+    }
+#endif
+};
+
 /// Reference base implementation for scheduler impl
 /// \tparam T consider this the system + app data structure
 template <class T, class TTimePoint = decltype(T().event_due())>
-struct Reference
+struct Reference : ReferenceBase<TTimePoint>
 {
     typedef T value_type;
 
@@ -96,11 +113,9 @@ struct Reference
     {
         return false;
     }
-
-    typedef internal::noop_mutex mutex;
 };
 
-struct TraditionalBase
+struct TraditionalBase : ReferenceBase<unsigned long>
 {
     typedef unsigned long time_point;
 
@@ -113,8 +128,6 @@ struct TraditionalBase
 
         void* data;
     };
-
-    typedef noop_mutex mutex;
 };
 
 template <bool is_inline>
@@ -148,7 +161,7 @@ struct Traditional<false> : TraditionalBase
 
 
 template <typename TTimePoint>
-struct Function
+struct Function : ReferenceBase<TTimePoint>
 {
     typedef TTimePoint time_point;
     typedef estd::detail::function<void(time_point*, time_point)> function_type;
@@ -195,8 +208,6 @@ struct Function
 
         return origin != v.wake;
     }
-
-    typedef noop_mutex mutex;
 };
 
 }}

@@ -109,6 +109,7 @@ public:
     typedef const value_type& const_reference;
     typedef TImpl impl_type;
     typedef typename impl_type::time_point time_point;
+    typedef SchedulerContextBase<this_type> context_base_type;
 
     // DEBT: May want c++03 guards here
     template <class TUserContext = estd::monostate>
@@ -206,24 +207,21 @@ protected:
     // DEBT: Also mixes concerns and checks for if we should even do mutex
     struct mutex_guard
     {
-        this_type* parent;
-        const SchedulerContextFlags& scf;
+        context_base_type& context;
 
     private:
         inline void lock()
         {
-            if(scf.use_mutex()) parent->mutex().lock(scf);
+            if(context.use_mutex()) context.scheduler().mutex().lock(context);
         }
 
         inline void unlock()
         {
-            if(scf.use_mutex()) parent->mutex().unlock(scf);
+            if(context.use_mutex()) context.scheduler().mutex().unlock(context);
         }
 
     public:
-        mutex_guard(this_type* parent, SchedulerContextFlags& flags) :
-            parent(parent),
-            scf(flags)
+        mutex_guard(context_base_type& context) : context(context)
         {
             lock();
         }
@@ -265,7 +263,7 @@ public:
     template <class TContext>
     void schedule(const value_type& value, context_type<TContext>& context)
     {
-        mutex_guard(this, context);
+        mutex_guard m(context);
 
         do_notify_scheduling(value, context);
 
@@ -285,12 +283,12 @@ public:
     }
 #endif
 
-#ifdef FEATURE_CPP_VARIADIC
+#ifdef __cpp_variadic_templates
     template <class ...TArgs>
     void schedule(TArgs&&...args)
     {
         context_type<> context = create_context();
-        mutex_guard(this, context);
+        mutex_guard m(context);
 
         accessor value = event_queue.emplace_with_notify(
             [&](const value_type& v)
@@ -340,7 +338,7 @@ public:
     template <class TContext>
     void process(time_point current_time, context_type<TContext>& context)
     {
-        mutex_guard(this, context);
+        mutex_guard m(context);
 
         while(!event_queue.empty())
         {
@@ -406,7 +404,7 @@ public:
     value_type* match(const T& value)
     {
         context_type<> context = create_context();
-        mutex_guard(this, context);
+        mutex_guard m(context);
 
         // brute force through underlying container attempting to match
 
