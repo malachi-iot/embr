@@ -79,6 +79,8 @@ struct DurationImpl2<uint64_t, -1> : embr::experimental::TimerSchedulerConverter
 
 struct DurationImpl : embr::internal::scheduler::impl::ReferenceBaseBase
 {
+    static constexpr const char* TAG = "DurationImpl";
+
     Timer timer_;
 
     inline Timer& timer() { return timer_; }
@@ -104,6 +106,8 @@ struct DurationImpl : embr::internal::scheduler::impl::ReferenceBaseBase
     {
         return false;
     }
+
+    void on_scheduled(const value_type& value);
 
     template <class TScheduler>
     struct helper

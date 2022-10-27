@@ -100,6 +100,10 @@ struct ReferenceBaseBase
     // while context_factory is for schedule context
     typedef estd::monostate context_type;
     typedef ReferenceContextFactory context_factory;
+
+    // Simpler version of subject/observer mechanism, tuned for impl-specific usage
+    template <class T>
+    inline void on_scheduled(const T& value) {}
 };
 
 template <typename TTimePoint = void>

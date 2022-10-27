@@ -195,6 +195,15 @@ protected:
         do_notify_scheduling(value, context);
     }
 
+    // Doing const because this may be the passed-in vs. copied/emplaced one
+    // though we expect content to be identical
+    inline void do_notify_scheduled(const value_type& value)
+    {
+        impl().on_scheduled(value);
+
+        subject_provider::value().notify(scheduled_event_type(value));
+    }
+
     bool process_impl(value_type& t, time_point current_time, estd::monostate)
     {
         return impl().process(t, current_time);
@@ -274,6 +283,8 @@ public:
 
         event_queue.push(value);
 
+        do_notify_scheduled(value);
+
         subject_provider::value().notify(scheduled_event_type());
     }
 
@@ -286,6 +297,7 @@ public:
 
         event_queue.push(value);
 
+        impl().on_scheduled(value); // DEBT: Need to pass in context
         subject_provider::value().notify(scheduled_event_type(), context);
     }
 
@@ -296,7 +308,7 @@ public:
 
         event_queue.push(std::move(value));
 
-        subject_provider::value().notify(scheduled_event_type(value));
+        do_notify_scheduled(value);
     }
 #endif
 
@@ -315,7 +327,7 @@ public:
             },
             std::forward<TArgs>(args)...);
 
-        subject_provider::value().notify(scheduled_event_type(value.lock()));
+        do_notify_scheduled(value); // DEBT: Need to pass in context
 
         value.unlock();
     }
@@ -382,6 +394,8 @@ public:
 
                     // DEBT: Doesn't handle move variant
                     event_queue.push(copied);
+                    
+                    impl().on_scheduled(copied);    // DEBT: Needs context
 
                     subject_provider::value().notify(scheduled_event_type (copied), context);
                 }

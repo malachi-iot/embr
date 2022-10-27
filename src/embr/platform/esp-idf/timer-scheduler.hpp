@@ -90,11 +90,19 @@ void DurationImpl::init(TScheduler* scheduler)
     timer_scheduler_init(timer(), divider, &helper<TScheduler>::timer_callback, scheduler);
 }
 
+
+// DEBT: Temporarily making inline just incase DurationImpl goes templatized
+inline void DurationImpl::on_scheduled(const value_type& value)
+{
+    ESP_LOGV(TAG, "on_scheduled: entry");
+    ESP_LOGD(TAG, "on_scheduled: group=%d, idx=%d, scheduled=%u", timer().group, timer().idx,
+        value.wakeup.count());
+}
+
+
 template <class TScheduler>
 inline void TimerScheduler<TScheduler>::schedule(value_type& v)
 {
-    const char* TAG = "TimerScheduler::schedule";
-
     //timer.enable_alarm_in_isr();
     time_point t = impl_type::get_time_point(v);
 
@@ -112,8 +120,6 @@ inline void TimerScheduler<TScheduler>::schedule(value_type& v)
         timer().set_alarm_value(native);
         timer().start();
     }
-
-    ESP_LOGD(TAG, "group=%d, idx=%d, scheduled=%llu", timer().group, timer().idx, native);
 }
 
 
