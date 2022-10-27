@@ -191,17 +191,24 @@ protected:
 
     inline void do_notify_scheduling(value_type& value)
     {
-        context_type<> context(*this, false);
+        context_type<> context = create_context();
         do_notify_scheduling(value, context);
     }
 
     // Doing const because this may be the passed-in vs. copied/emplaced one
     // though we expect content to be identical
+    template <class TContext>
+    inline void do_notify_scheduled(const value_type& value, context_type<TContext>& context)
+    {
+        impl().on_scheduled(value, context);
+
+        subject_provider::value().notify(scheduled_event_type(value), context);
+    }
+
     inline void do_notify_scheduled(const value_type& value)
     {
-        impl().on_scheduled(value);
-
-        subject_provider::value().notify(scheduled_event_type(value));
+        context_type<> context = create_context();
+        do_notify_scheduled(value, context);
     }
 
     bool process_impl(value_type& t, time_point current_time, estd::monostate)
@@ -277,6 +284,7 @@ public:
     }
 #endif
 
+    // DEBT: No mutex operation here, be careful!
     void schedule(const value_type& value)
     {
         do_notify_scheduling(value);
@@ -297,8 +305,7 @@ public:
 
         event_queue.push(value);
 
-        impl().on_scheduled(value); // DEBT: Need to pass in context
-        subject_provider::value().notify(scheduled_event_type(), context);
+        do_notify_scheduled(value, context);
     }
 
 #ifdef FEATURE_CPP_MOVESEMANTIC
@@ -327,7 +334,7 @@ public:
             },
             std::forward<TArgs>(args)...);
 
-        do_notify_scheduled(value); // DEBT: Need to pass in context
+        do_notify_scheduled(value, context);
 
         value.unlock();
     }
@@ -394,10 +401,8 @@ public:
 
                     // DEBT: Doesn't handle move variant
                     event_queue.push(copied);
-                    
-                    impl().on_scheduled(copied);    // DEBT: Needs context
 
-                    subject_provider::value().notify(scheduled_event_type (copied), context);
+                    do_notify_scheduled(copied, context);
                 }
             }
             else

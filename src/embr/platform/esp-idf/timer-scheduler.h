@@ -107,7 +107,9 @@ struct DurationImpl : embr::internal::scheduler::impl::ReferenceBaseBase
         return false;
     }
 
-    void on_scheduled(const value_type& value);
+    template <class TScheduler>
+    void on_scheduled(const value_type& value,
+        internal::SchedulerContextBase<TScheduler>& context);
 
     template <class TScheduler>
     struct helper
@@ -145,6 +147,7 @@ struct TimerSchedulerObserver
     }
 };
 
+/*
 template <class TScheduler>
 class TimerScheduler
 {
@@ -167,7 +170,7 @@ public:
 
     // DEBT: do_notify_scheduling doesn't take a const, so this can't either
     void schedule(value_type& v);
-};
+}; */
 
 
 }}

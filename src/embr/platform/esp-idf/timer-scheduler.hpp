@@ -91,36 +91,39 @@ void DurationImpl::init(TScheduler* scheduler)
 }
 
 
-// DEBT: Temporarily making inline just incase DurationImpl goes templatized
-inline void DurationImpl::on_scheduled(const value_type& value)
+// NOTE: All this happens while in the locked mutex 
+template <class TScheduler>
+inline void DurationImpl::on_scheduled(const value_type& value, internal::SchedulerContextBase<TScheduler>& context)
 {
     ESP_LOGV(TAG, "on_scheduled: entry");
     ESP_LOGD(TAG, "on_scheduled: group=%d, idx=%d, scheduled=%u", timer().group, timer().idx,
         value.wakeup.count());
-}
 
-
-template <class TScheduler>
-inline void TimerScheduler<TScheduler>::schedule(value_type& v)
-{
-    //timer.enable_alarm_in_isr();
-    time_point t = impl_type::get_time_point(v);
+    time_point t = get_time_point(value);
 
     embr::experimental::TimerSchedulerConverter converter;
 
     uint64_t native = converter.convert(t);
 
-    scheduler.schedule(v);
-
     last_now = estd::chrono::esp_clock::now();
 
-    if(scheduler.size() == 1)
+    if(context.scheduler().size() == 1)
     {
         timer().set_alarm(TIMER_ALARM_EN);
         timer().set_alarm_value(native);
         timer().start();
     }
 }
+
+
+/*
+template <class TScheduler>
+inline void TimerScheduler<TScheduler>::schedule(value_type& v)
+{
+    //timer.enable_alarm_in_isr();
+    scheduler.schedule(v);
+}
+*/
 
 
 }} // namespace embr { namespace esp_idf 

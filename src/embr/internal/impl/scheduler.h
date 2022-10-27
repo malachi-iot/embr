@@ -102,8 +102,8 @@ struct ReferenceBaseBase
     typedef ReferenceContextFactory context_factory;
 
     // Simpler version of subject/observer mechanism, tuned for impl-specific usage
-    template <class T>
-    inline void on_scheduled(const T& value) {}
+    template <class T, class TContext>
+    inline void on_scheduled(const T& value, TContext& context) {}
 };
 
 template <typename TTimePoint = void>
