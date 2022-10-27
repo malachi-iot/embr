@@ -10,30 +10,25 @@
 
 struct Item
 {
-    int event_due;
+    int event_due_;
     int* counter;
+
+    int event_due() const { return event_due_; }
 
     Item() = default;
 
     Item(int event_due, int* counter = nullptr) :
-        event_due{event_due}, counter{counter}
+        event_due_{event_due}, counter{counter}
     {}
 
     bool match(int* c) const { return c == counter; }
 };
 
-struct fake_mutex
-{
-    void lock() {}
-    void unlock() {}
-};
 
-struct ItemTraits //: embr::internal::SchedulerImpl<int>
+struct ItemTraits : embr::internal::scheduler::impl::Reference<Item>
 {
-    typedef Item value_type;
     typedef int time_point;
 
-    static time_point get_time_point(const Item& item) { return item.event_due; }
     static bool process(Item& item, time_point)
     {
         if(item.counter != nullptr)
@@ -41,8 +36,6 @@ struct ItemTraits //: embr::internal::SchedulerImpl<int>
 
         return false;
     }
-
-    typedef fake_mutex mutex;
 };
 
 
@@ -85,7 +78,7 @@ struct Item2Traits
         return true;
     }
 
-    typedef fake_mutex mutex;
+    typedef embr::internal::noop_mutex mutex;
 };
 
 
@@ -111,7 +104,7 @@ struct Item3Traits
         return v->process(t);
     }
 
-    typedef fake_mutex mutex;
+    typedef embr::internal::noop_mutex mutex;
 };
 
 struct Item3ControlStructure1 : Item3Traits::control_structure
@@ -217,7 +210,7 @@ TEST_CASE("scheduler test", "[scheduler]")
 
         const Item& value = top.clock();
 
-        REQUIRE(value.event_due == 5);
+        REQUIRE(value.event_due() == 5);
 
         top.cunlock();
 
@@ -562,6 +555,6 @@ TEST_CASE("scheduler test", "[scheduler]")
 
         Item* i = scheduler.match(&counter1);
 
-        REQUIRE(i->event_due == 1);
+        REQUIRE(i->event_due() == 1);
     }
 }

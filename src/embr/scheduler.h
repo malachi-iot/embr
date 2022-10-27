@@ -196,6 +196,40 @@ protected:
         return process_impl(t, current_time, context.user_context());
     }
 
+    // Creates a default context if non is specifically provided
+    // DEBT: Some kind of policy should feed the parameters to default context
+    inline context_type<> create_context()
+    {
+        return context_type<>(*this, false);
+    }
+
+    // DEBT: Also mixes concerns and checks for if we should even do mutex
+    struct mutex_guard
+    {
+        this_type* parent;
+        const SchedulerContextFlags& scf;
+
+    private:
+        inline void lock()
+        {
+            if(scf.use_mutex()) parent->mutex().lock(scf);
+        }
+
+        inline void unlock()
+        {
+            if(scf.use_mutex()) parent->mutex().unlock(scf);
+        }
+
+    public:
+        mutex_guard(this_type* parent, SchedulerContextFlags& flags) :
+            parent(parent),
+            scf(flags)
+        {
+            lock();
+        }
+
+        ~mutex_guard() { unlock(); }
+    };
 
 public:
     time_point top_time() const
@@ -231,6 +265,8 @@ public:
     template <class TContext>
     void schedule(const value_type& value, context_type<TContext>& context)
     {
+        mutex_guard(this, context);
+
         do_notify_scheduling(value, context);
 
         event_queue.push(value);
@@ -253,7 +289,8 @@ public:
     template <class ...TArgs>
     void schedule(TArgs&&...args)
     {
-        context_type<> context(*this, false);
+        context_type<> context = create_context();
+        mutex_guard(this, context);
 
         accessor value = event_queue.emplace_with_notify(
             [&](const value_type& v)
@@ -303,6 +340,8 @@ public:
     template <class TContext>
     void process(time_point current_time, context_type<TContext>& context)
     {
+        mutex_guard(this, context);
+
         while(!event_queue.empty())
         {
             scoped_lock<accessor> t(top());
@@ -351,14 +390,14 @@ public:
 
     void process(time_point current_time)
     {
-        context_type<> context(*this, false);
+        context_type<> context = create_context();
 
         process(current_time, context);
     }
 
     void process()
     {
-        context_type<> context(*this, false);
+        context_type<> context = create_context();
 
         process(context);
     }
@@ -366,6 +405,9 @@ public:
     template <class T>
     value_type* match(const T& value)
     {
+        context_type<> context = create_context();
+        mutex_guard(this, context);
+
         // brute force through underlying container attempting to match
 
         for(auto& i : event_queue.container())
@@ -379,11 +421,10 @@ public:
 
     void unschedule(reference v)
     {
-        mutex().lock();
-        
-        event_queue.erase(v);
+        context_type<> context = create_context();
+        mutex_guard(this, context);
 
-        mutex().unlock();
+        event_queue.erase(v);
     }
 };
 

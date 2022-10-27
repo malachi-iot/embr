@@ -40,7 +40,33 @@ struct FunctorImpl :
     embr::internal::scheduler::impl::Function<estd::chrono::freertos_clock::time_point>
 {
     // 'true' designates static allocation
-    typedef estd::freertos::mutex<true> mutex;
+    //typedef estd::freertos::mutex<true> mutex;
+    struct mutex : estd::freertos::mutex<true>
+    {
+        typedef estd::freertos::mutex<true> base_type;
+
+        inline void lock(const internal::SchedulerContextFlags& scf)
+        {
+            if(scf.in_isr())
+            {
+                // DEBT: We almost definitely do want to get back the woken task here
+                wrapped().take_from_isr(nullptr);
+            }
+            else
+                base_type::lock();
+        }
+
+        inline void unlock(const internal::SchedulerContextFlags& scf)
+        {
+            if(scf.in_isr())
+            {
+                // DEBT: We almost definitely do want to get back the woken task here
+                wrapped().give_from_isr(nullptr);
+            }
+            else
+                base_type::unlock();
+        }
+    };
 
     inline static time_point now()
     { return estd::chrono::freertos_clock::now(); }

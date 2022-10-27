@@ -1,11 +1,18 @@
 #pragma once
 
+#include <estd/type_traits.h>
+
 namespace embr {
 
 namespace internal {
 
 // TODO: Move this out to estd
-template <class TLockable, bool const_lock = false>
+// TODO: Document that this is tuned for an acquirable resource lock
+// DEBT: Consider a name change to lock_guard
+// DEBT: Consider upgrading it to detect lightweight
+// guard-style locking (such as mutex) vs resource acquisition guarding (done here, memory locking)
+// One could probably do this by looking for the presence of 'value_type'
+template <class TLockable, bool const_lock = false, class enabled = void>
 class scoped_lock;
 
 template <class TLockable>

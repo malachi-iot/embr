@@ -62,30 +62,30 @@ struct SchedulerContext :
 };
 
 
-struct fake_mutex
+struct noop_mutex
 {
-    void lock() {}
+    static void lock(SchedulerContextFlags) {}
 
-    void unlock() {}
+    static void unlock(SchedulerContextFlags) {}
 };
 
 namespace scheduler { namespace impl {
 
-/// Reference scheduler item traits
+/// Reference base implementation for scheduler impl
 /// \tparam T consider this the system + app data structure
-template <class T>
+template <class T, class TTimePoint = decltype(T().event_due())>
 struct Reference
 {
     typedef T value_type;
 
-    typedef estd::chrono::steady_clock::time_point time_point;
+    typedef TTimePoint time_point;
 
     /// Retrieve specialized wake up time from T
     /// \param value
     /// \return
     static time_point get_time_point(const T& value)
     {
-        return value.event_due;
+        return value.event_due();
     }
 
     ///
@@ -97,12 +97,7 @@ struct Reference
         return false;
     }
 
-    struct mutex
-    {
-        inline void lock() {}
-
-        inline void unlock() {}
-    };
+    typedef internal::noop_mutex mutex;
 };
 
 struct TraditionalBase
@@ -119,7 +114,7 @@ struct TraditionalBase
         void* data;
     };
 
-    typedef fake_mutex mutex;
+    typedef noop_mutex mutex;
 };
 
 template <bool is_inline>
@@ -201,7 +196,7 @@ struct Function
         return origin != v.wake;
     }
 
-    typedef fake_mutex mutex;
+    typedef noop_mutex mutex;
 };
 
 }}
