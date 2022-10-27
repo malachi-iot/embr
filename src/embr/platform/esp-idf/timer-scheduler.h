@@ -36,7 +36,16 @@ struct DurationImpl2 : DurationImplBase<TInt>
 {
     typedef DurationImplBase<TInt> base_type;
 
+    static constexpr unsigned apb_clock() { return 80000000; }
     static constexpr unsigned divisor() { return divisor_; }
+
+    typedef estd::chrono::duration<TInt, estd::ratio<divisor(), apb_clock()> > duration;
+
+    template <typename Rep, typename Period>
+    static constexpr duration convert(const estd::chrono::duration<Rep, Period>& convert_from)
+    {
+        return duration(convert_from);
+    }
 };
 
 
