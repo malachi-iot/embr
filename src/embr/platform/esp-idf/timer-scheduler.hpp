@@ -39,8 +39,8 @@ bool IRAM_ATTR DurationImplBaseBase::helper<TScheduler>::timer_callback (void* a
 
     // TODO: We should be acting on converted time, but code isn't quite ready for it
     // it seems - specifically, runtime duration converter isn't functional yet
-    //scheduler.process(current_time, context);
-    scheduler.process(time_point(counter), context);
+    scheduler.process(current_time, context);
+    //scheduler.process(time_point(counter), context);
 
     // DEBT: We need mutex protection down here too
     bool more = !scheduler.empty();
