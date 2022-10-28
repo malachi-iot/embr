@@ -33,20 +33,27 @@ bool IRAM_ATTR DurationImplBaseBase::helper<TScheduler>::timer_callback (void* a
 
     context.higherPriorityTaskWoken = false;
 
+    // convert native esp32 Timer format back to scheduler format
+    time_point current_time;
+    scheduler.duration_converter().convert(counter, &current_time);
+
+    // TODO: We should be acting on converted time, but code isn't quite ready for it
+    // it seems - specifically, runtime duration converter isn't functional yet
+    //scheduler.process(current_time, context);
     scheduler.process(time_point(counter), context);
 
-    // DEBT: Consider making a scheduler.empty()
     // DEBT: We need mutex protection down here too
-    bool more = scheduler.size() > 0;
+    bool more = !scheduler.empty();
     if(more)
     {
         time_point next = scheduler.top_time();
 
         uint64_t native = scheduler.duration_converter().convert(next);
 
-        ets_printf("1.1 TimerScheduler Intr: size=%d, next=%lluus\n",
+        ets_printf("1.1 TimerScheduler Intr: size=%d, next=%llu / %llu(ticks)\n",
             scheduler.size(),
-            next.count());
+            next.count(),
+            native);
 
         scheduler.timer().set_alarm_value_in_isr(native);
     }
@@ -122,15 +129,15 @@ template <class T, int divider_, typename TTimePoint, class TReference>
 template <class TScheduler>
 inline void DurationImpl2<T, divider_, TTimePoint, TReference>::on_scheduled(const value_type& value, internal::SchedulerContextBase<TScheduler>& context)
 {
-    time_point t = get_time_point(value);
-
     ESP_DRAM_LOGV(TAG, "on_scheduled: entry");
     
-    // DEBT: Do we need a non-chrono version?
-    ESP_DRAM_LOGD(TAG, "on_scheduled: group=%d, idx=%d, scheduled=%llu", timer().group, timer().idx,
-        t.count());
-
+    time_point t = get_time_point(value);
     uint64_t native = duration_converter().convert(t);
+
+    // DEBT: Do we need a non-chrono version?
+    ESP_DRAM_LOGD(TAG, "on_scheduled: group=%d, idx=%d, scheduled=%llu / %llu(ticks)", timer().group, timer().idx,
+        t.count(),
+        native);
 
     if(context.scheduler().size() == 1)
     {

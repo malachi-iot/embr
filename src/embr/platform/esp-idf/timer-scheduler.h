@@ -219,6 +219,7 @@ struct DurationImpl : DurationImplBaseBase
 
     static bool process(value_type& v, time_point now)
     {
+        ESP_DRAM_LOGD(TAG, "process: now=%luus", now.count());
         return false;
     }
 
@@ -226,6 +227,12 @@ struct DurationImpl : DurationImplBaseBase
     inline void init(TScheduler* scheduler, uint32_t divider = 80)
     {
         base_type::init(scheduler, divider);
+    }
+
+    template <class TContext>
+    inline void on_processing(value_type& value, time_point current, TContext)
+    {
+        ESP_DRAM_LOGV(TAG, "on_processing: current=%llu", current.count());
     }
 
     template <class TScheduler>

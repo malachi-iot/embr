@@ -184,6 +184,13 @@ protected:
     priority_queue_type event_queue;
 
     template <class TContext>
+    void do_notify_processing(value_type& value, time_point current_time, context_type<TContext>& context)
+    {
+        impl().on_processing(value, current_time, context);
+        subject_provider::value().notify(processing_event_type(value, current_time), context);
+    }
+
+    template <class TContext>
     void do_notify_scheduling(value_type& value, context_type<TContext>& context)
     {
         impl().on_scheduling(value, context);
@@ -358,6 +365,12 @@ public:
     }
 #endif
 
+    bool empty() const
+    {
+        return event_queue.empty();
+    }
+
+
     size_type size() const
     {
         return event_queue.size();
@@ -390,6 +403,7 @@ public:
 
             if(current_time >= eval_time)
             {
+                do_notify_processing(*t, current_time, context);
                 subject_provider::value().notify(processing_event_type (*t, current_time), context);
 
                 bool reschedule_requested = process_impl(*t, current_time, context);

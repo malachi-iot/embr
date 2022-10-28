@@ -31,12 +31,12 @@ struct control_structure1
     bool process(time_point current_time)
     {
         // This variant of log macro works inside ISRs
-        ESP_DRAM_LOGI(TAG, "process: wake=%lu, current=%lu",
+        ESP_DRAM_LOGI(TAG, "process: wake=%llu, current=%llu",
             wakeup_.count(),
             current_time.count());
 
         wakeup_ += 1s;
-        //return true;  // TODO: Almost works, but somehow current_time keeps reporting 0
+        //return true;  // TODO: Almost works, just need to sort out duration converter a bit more
         return false;
     }
 };
