@@ -59,12 +59,9 @@ bool IRAM_ATTR DurationImplBaseBase::helper<TScheduler>::timer_callback (void* a
         //timer.pause();
     }
 
-    // Recommended by
-    // https://www.freertos.org/a00124.html
-    portYIELD_FROM_ISR(context.higherPriorityTaskWoken);
-
-    // DEBT: Document what this does - I think it relates to the portYIELD mechanism above
-    return false;
+    // "The callback should return a bool value to determine whether need to do YIELD at the end of the ISR."
+    // effectively https://www.freertos.org/a00124.html
+    return context.higherPriorityTaskWoken;
 }
 
 /*
