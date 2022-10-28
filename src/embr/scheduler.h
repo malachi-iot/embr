@@ -293,6 +293,18 @@ protected:
         ~mutex_guard() { unlock(); }
     };
 
+    // No mutex is what makes this an internal call
+    template <class TContext>
+    inline void schedule_internal(value_type& value, context_type<TContext>& context)
+    {
+        do_notify_scheduling(value, context);
+
+        event_queue.push(value);
+
+        do_notify_scheduled(value, context);
+    }
+
+
 public:
     time_point top_time() const
     {
@@ -338,11 +350,7 @@ public:
     {
         mutex_guard m(context);
 
-        do_notify_scheduling(value, context);
-
-        event_queue.push(value);
-
-        do_notify_scheduled(value, context);
+        schedule_internal(value, context);
     }
 
 #ifdef FEATURE_CPP_MOVESEMANTIC
@@ -442,16 +450,17 @@ public:
 
                 if(reschedule_requested)
                 {
-                    do_notify_scheduling(copied, context);
-
                     // DEBT: Doesn't handle move variant
-                    event_queue.push(copied);
-
-                    do_notify_scheduled(copied, context);
+                    schedule_internal(copied, context);
                 }
             }
             else
+            {
+                // NOTE: Currently this only emits if there was something to process in the first place
+                // So in other words, denotes the end of a 1+ item batch
+                do_notify_processed(nullptr, current_time, context);
                 return;
+            }
         }
     }
 
