@@ -143,11 +143,11 @@ public:
         typedef events::Scheduling<impl_type> scheduling;
     };
 
-protected:
     typedef typename impl_type::mutex mutex_type;
-
-    typedef estd::internal::struct_evaporator<TSubject> subject_provider;
     typedef estd::internal::struct_evaporator<mutex_type> mutex_provider;
+
+protected:
+    typedef estd::internal::struct_evaporator<TSubject> subject_provider;
 
     typedef events::Scheduling<impl_type> scheduling_event_type;
     typedef events::Scheduled<impl_type> scheduled_event_type;
@@ -276,12 +276,12 @@ protected:
     private:
         inline void lock()
         {
-            if(context.use_mutex()) context.scheduler().mutex().lock(context);
+            if(context.use_mutex()) context.mutex().lock(context);
         }
 
         inline void unlock()
         {
-            if(context.use_mutex()) context.scheduler().mutex().unlock(context);
+            if(context.use_mutex()) context.mutex().unlock(context);
         }
 
     public:

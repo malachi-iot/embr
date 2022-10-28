@@ -3,7 +3,7 @@
 namespace embr { namespace internal {
 
 // DEBT: These need to live in 'internal/scheduler.h'
-struct SchedulerContextFlags
+struct MutexContext
 {
     const bool use_mutex_ : 1;
     const bool in_isr_ : 1;
@@ -11,13 +11,15 @@ struct SchedulerContextFlags
     constexpr bool use_mutex() const { return use_mutex_; }
     constexpr bool in_isr() const { return in_isr_; }
 
-    constexpr SchedulerContextFlags(bool in_isr, bool use_mutex = true) :
+    constexpr MutexContext(bool in_isr, bool use_mutex = true) :
         use_mutex_(use_mutex),
         in_isr_(in_isr)
     {
 
     }
 };
+
+typedef MutexContext SchedulerContextFlags;
 
 template <class TScheduler>
 struct SchedulerContextBase : SchedulerContextFlags,
@@ -29,6 +31,11 @@ struct SchedulerContextBase : SchedulerContextFlags,
     scheduler_type& scheduler_;
 
     constexpr scheduler_type& scheduler() { return scheduler_; }
+
+    inline typename scheduler_type::mutex_provider::evaporated_type mutex()
+    {
+        return scheduler_.mutex();
+    }
 
     constexpr SchedulerContextBase(scheduler_type& s, bool in_isr, bool use_mutex) :
         SchedulerContextFlags(in_isr, use_mutex),
