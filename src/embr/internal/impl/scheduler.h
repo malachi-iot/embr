@@ -105,6 +105,9 @@ struct ReferenceBaseBase
     template <class T, typename TTimePoint, class TContext>
     inline void on_processing(T& value, TTimePoint, TContext& context) {}
 
+    template <class T, typename TTimePoint, class TContext>
+    inline void on_processed(T* value, TTimePoint, TContext& context) {}
+
     template <class T, class TContext>
     inline void on_scheduling(T& value, TContext& context) {}
 

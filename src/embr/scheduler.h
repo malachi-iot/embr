@@ -26,7 +26,7 @@ namespace events {
 template<class TSchedulerImpl>
 struct Scheduler
 {
-    typedef TSchedulerImpl traits_type;
+    typedef TSchedulerImpl impl_type;
 };
 
 
@@ -76,12 +76,28 @@ template <class TSchedulerImpl>
 struct Processing : ValueBase<TSchedulerImpl>
 {
     typedef ValueBase<TSchedulerImpl> base_type;
-    typedef typename base_type::traits_type::time_point time_point;
+    typedef typename base_type::impl_type::time_point time_point;
 
     const time_point current_time;
 
     Processing(typename base_type::value_type& value, time_point current_time) :
         base_type(value), current_time(current_time)
+    {}
+};
+
+
+template <class TSchedulerImpl>
+struct Processed : Scheduler<TSchedulerImpl>
+{
+    typedef Scheduler<TSchedulerImpl> base_type;
+    typedef typename base_type::impl_type::time_point time_point;
+
+    const time_point current_time;
+
+    // DEBT: Need to actually store 'value'
+
+    Processed(typename base_type::impl_type::value_type* value, time_point current_time) :
+        current_time(current_time)
     {}
 };
 
@@ -184,14 +200,21 @@ protected:
     priority_queue_type event_queue;
 
     template <class TContext>
-    void do_notify_processing(value_type& value, time_point current_time, context_type<TContext>& context)
+    inline void do_notify_processing(value_type& value, time_point current_time, context_type<TContext>& context)
     {
-        impl().on_processing(value, current_time, context);
+        impl_type::on_processing(value, current_time, context);
         subject_provider::value().notify(processing_event_type(value, current_time), context);
     }
 
     template <class TContext>
-    void do_notify_scheduling(value_type& value, context_type<TContext>& context)
+    inline void do_notify_processed(value_type* value, time_point current_time, context_type<TContext>& context)
+    {
+        impl_type::on_processed(value, current_time, context);
+        subject_provider::value().notify(events::Processed<impl_type>(value, current_time), context);
+    }
+
+    template <class TContext>
+    inline void do_notify_scheduling(value_type& value, context_type<TContext>& context)
     {
         impl().on_scheduling(value, context);
         subject_provider::value().notify(scheduling_event_type(value), context);
@@ -404,9 +427,10 @@ public:
             if(current_time >= eval_time)
             {
                 do_notify_processing(*t, current_time, context);
-                subject_provider::value().notify(processing_event_type (*t, current_time), context);
 
                 bool reschedule_requested = process_impl(*t, current_time, context);
+
+                do_notify_processed(t.get(), current_time, context);
 
                 // Need to do this because *t is a pointer into event_queue and the pop moves
                 // items around.

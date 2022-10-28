@@ -47,6 +47,9 @@ public:
     }
 
     value_type& operator*() { return value; }
+
+    // EXPERIMENTAL
+    value_type* get() { return &value; }
 };
 
 }
