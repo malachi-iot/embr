@@ -105,6 +105,12 @@ TEST_CASE("Debounce and friends state machine tests", "[debounce]")
                 uint64_t v = converter.convert(estd::chrono::milliseconds(100));
 
                 REQUIRE(v == 1000);
+
+                estd::chrono::duration<int, std::ratio<3, 1000> > v2;
+
+                converter.convert(v, &v2);
+
+                REQUIRE(v2.count() == 33);
             }
             SECTION("constexpr converter (80)")
             {

@@ -44,12 +44,15 @@ struct DurationConverter<TInt, -1, denominator_>
     typedef TInt int_type;
     uint32_t numerator_ = 80;
     uint32_t numerator() const { return numerator_; }
+    static constexpr int denominator() { return denominator_; }
+    // bits of precision to lose in order to avoid overflow/underflow
+    static constexpr unsigned adjuster() { return 2;}
 
     template <typename Rep, typename Period>
     int_type convert(const estd::chrono::duration<Rep, Period>& convert_from) const
     {
         // NOTE: timor divisor generally represents 80MHz (APB) / divisor()
-        constexpr int precision_helper = 2;
+        constexpr int precision_helper = adjuster();
         constexpr int_type hz = denominator_ << precision_helper;
         int_type den = hz / numerator();    // aka timer counts per second
         int_type mul = Period::num * den / Period::den;
@@ -59,8 +62,12 @@ struct DurationConverter<TInt, -1, denominator_>
     template <typename Rep, typename Period>
     estd::chrono::duration<Rep, Period>& convert(int_type convert_from, estd::chrono::duration<Rep, Period>* convert_to) const
     {
-        // TBD
-        return *convert_to;
+        //typedef estd::ratio<Period::den, denominator_ * Period::num> r;       // FIX: Ours doesn't do reduction
+        typedef std::ratio<Period::den, denominator_ * Period::num> r;
+        constexpr auto num = r::num;
+        constexpr auto den = r::den;
+        Rep raw = numerator() * convert_from * num / den;
+        return * new (convert_to) estd::chrono::duration<Rep, Period>(raw);
     }
 };
 
