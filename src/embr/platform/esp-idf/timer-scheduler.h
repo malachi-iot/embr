@@ -10,56 +10,155 @@
 
 namespace embr { namespace esp_idf {
 
+struct DurationImplBaseBase : embr::internal::scheduler::impl::ReferenceBaseBase
+{
+    Timer timer_;
+
+    inline Timer& timer() { return timer_; }
+    constexpr const Timer& timer() const { return timer_; }
+
+    constexpr DurationImplBaseBase(const Timer& timer) : timer_{timer} {}
+    constexpr DurationImplBaseBase(timer_group_t group, timer_idx_t idx) : timer_(group, idx) {}
+
+    typedef embr::freertos::experimental::FunctorImpl::mutex mutex;
+    typedef embr::freertos::experimental::FunctorImpl::context_type context_type;
+    typedef embr::freertos::experimental::FunctorImpl::context_factory context_factory;
+
+    template <class TScheduler>
+    struct helper
+    {
+        static bool timer_callback(void* arg);
+    };
+
+protected:
+    // We pass this in to avoid downcasting
+    template <class TScheduler>
+    // for example, 80 = prescaler for 1 MHz clock - remember, we're dividing
+    // "default is APB_CLK running at 80 MHz"
+    void init(TScheduler* scheduler, uint32_t divider);
+};
+
+
+template <typename TTimePoint>
+struct DurationImplBase;
+
 template <typename TInt>
-struct DurationImplBase
+struct DurationImplBase : DurationImplBaseBase
 {
     typedef TInt time_point;
+    typedef TInt int_type;
 
-    // DEBT: Make this the source timer
-    Timer* timer_;
-    Timer& timer() { return *timer_; }
+    static constexpr bool is_chrono() { return false; }
 
-    inline TInt now(bool in_isr = false)
+    inline int_type now(bool in_isr = false)
     {
         if(in_isr)
-            return (TInt)timer().get_counter_value_in_isr();
+            return (int_type)timer().get_counter_value_in_isr();
         else
         {
             uint64_t v;
-            ESP_ERR_CHECK(timer().get_counter_value(&v));
-            return (TInt) v;
+            ESP_ERROR_CHECK(timer().get_counter_value(&v));
+            return (int_type) v;
         }
     }
+
+    constexpr DurationImplBase(const Timer& timer) : DurationImplBaseBase{timer} {}
+    constexpr DurationImplBase(timer_group_t group, timer_idx_t idx) : DurationImplBaseBase(group, idx) {}
 };
 
-template <typename TInt, int divisor_ = -1>
-struct DurationImpl2 : DurationImplBase<TInt>,
-    embr::experimental::DurationConverter<TInt, divisor_, 80000000>
+// DEBT: Move some of this specialization magic out to Reference
+template <typename Rep, typename Period>
+struct DurationImplBase<estd::chrono::duration<Rep, Period> > : DurationImplBaseBase
 {
-    /*
-    typedef DurationImplBase<TInt> base_type;
+    typedef estd::chrono::duration<Rep, Period> duration;
+    typedef duration time_point;
+    typedef Rep int_type;
 
-    static constexpr unsigned apb_clock() { return 80000000; }
-    static constexpr unsigned divisor() { return divisor_; }
+    static constexpr bool is_chrono() { return true; }
 
-    typedef estd::chrono::duration<TInt, estd::ratio<divisor(), apb_clock()> > duration;
-
-    template <typename Rep, typename Period>
-    static constexpr duration convert(const estd::chrono::duration<Rep, Period>& convert_from)
+    inline duration now(bool in_isr = false)
     {
-        return duration(convert_from);
+        if(in_isr)
+            return duration(timer().get_counter_value_in_isr());
+        else
+        {
+            uint64_t v;
+            ESP_ERROR_CHECK(timer().get_counter_value(&v));
+            return duration(v);
+        }
     }
-    */
+
+    constexpr DurationImplBase(const Timer& timer) : DurationImplBaseBase{timer} {}
+    constexpr DurationImplBase(timer_group_t group, timer_idx_t idx) : DurationImplBaseBase(group, idx) {}
+};
+
+template <class T, int divider_ = -1,
+    typename TTimePoint = typename std::remove_pointer<T>::type::time_point,
+    class TReference = embr::internal::scheduler::impl::Reference<T, TTimePoint> >
+struct DurationImpl2;
+
+template <class T, int divider_, typename TTimePoint, class TReference>
+struct DurationImpl2 : DurationImplBase<TTimePoint>,
+    embr::experimental::DurationConverter<
+        typename DurationImplBase<TTimePoint>::int_type, divider_, Timer::base_clock_hz()>
+{
+    typedef DurationImplBase<TTimePoint> base_type;
+    typedef typename base_type::time_point time_point;
+    typedef embr::experimental::DurationConverter<typename base_type::int_type, divider_, Timer::base_clock_hz()> converter_type;
+
+    // reference_impl comes in handy for supporting both value and pointer of T.  Also
+    // if one *really* wants to deviate from 'event_due' and 'process' paradigm, it's done
+    // with a custom reference_impl.
+    // DEBT: Break out those static/support portions since Reference is designed to be a complete
+    // base class
+    typedef TReference reference_impl;
+    typedef typename reference_impl::value_type value_type;
+
+    static constexpr bool is_runtime_divider() { return divider_ == -1; }
+    const converter_type& duration_converter() const { return *this; }
+
+    static inline time_point get_time_point(const value_type& v)
+    {
+        return reference_impl::get_time_point(v);
+    }
+
+    static inline bool process(value_type& v, time_point current_time)
+    {
+        return reference_impl::process(v, current_time);
+    }
+
+    template <class TScheduler, int shadowed = divider_,
+        typename = typename estd::enable_if<shadowed == -1>::type >
+    void init(TScheduler* scheduler, uint32_t divider)
+    {
+        base_type::init(scheduler, divider);
+    }
+
+    template <class TScheduler, int shadowed = divider_,
+        typename = typename estd::enable_if<shadowed != -1>::type >
+    void init(TScheduler* scheduler)
+    {
+        base_type::init(scheduler, divider_);
+    }
+
+    constexpr DurationImpl2(const Timer& timer) : base_type{timer} {}
+    constexpr DurationImpl2(timer_group_t group, timer_idx_t idx) : base_type(group, idx) {}
 };
 
 
+/*
 template <typename TInt>
 struct DurationImpl2<TInt, -1> : 
     DurationImplBase<TInt>,
     embr::experimental::DurationConverter<TInt, -1>
 {
     typedef DurationImplBase<TInt> base_type;
+
+    constexpr DurationImpl2(const Timer& timer) : base_type{timer} {}
+    constexpr DurationImpl2(timer_group_t group, timer_idx_t idx) : base_type(group, idx) {}
 };
+*/
+
 
 /*
 NOTE: Don't think we'll do offset in any case
@@ -80,19 +179,18 @@ struct DurationImpl2<uint64_t, -1> : embr::experimental::TimerSchedulerConverter
 */
 
 
-struct DurationImpl : embr::internal::scheduler::impl::ReferenceBaseBase
+struct DurationImpl : DurationImplBaseBase
 {
+    typedef DurationImplBaseBase base_type;
+
     static constexpr const char* TAG = "DurationImpl";
 
     // TODO: Optimize in the fully constexpr flavor
     typedef embr::experimental::DurationConverter<uint64_t, -1> converter_type;
 
-    Timer timer_;
     converter_type converter_;
 
     const converter_type& duration_converter() const { return converter_; }
-    inline Timer& timer() { return timer_; }
-    constexpr const Timer& timer() const { return timer_; }
 
     typedef estd::chrono::duration<uint32_t, estd::micro> time_point;
 
@@ -116,6 +214,12 @@ struct DurationImpl : embr::internal::scheduler::impl::ReferenceBaseBase
     }
 
     template <class TScheduler>
+    inline void init(TScheduler* scheduler, uint32_t divider = 80)
+    {
+        base_type::init(scheduler, divider);
+    }
+
+    template <class TScheduler>
     void on_scheduling(value_type& value,
         internal::SchedulerContextBase<TScheduler>& context);
 
@@ -123,22 +227,8 @@ struct DurationImpl : embr::internal::scheduler::impl::ReferenceBaseBase
     void on_scheduled(const value_type& value,
         internal::SchedulerContextBase<TScheduler>& context);
 
-    template <class TScheduler>
-    struct helper
-    {
-        static bool timer_callback(void* arg);
-    };
-
-    // We pass this in to avoid downcasting
-    template <class TScheduler>
-    void init(TScheduler* scheduler);
-
-    typedef embr::freertos::experimental::FunctorImpl::mutex mutex;
-    typedef embr::freertos::experimental::FunctorImpl::context_type context_type;
-    typedef embr::freertos::experimental::FunctorImpl::context_factory context_factory;
-
-    constexpr DurationImpl(const Timer& timer) : timer_{timer} {}
-    constexpr DurationImpl(timer_group_t group, timer_idx_t idx) : timer_(group, idx) {}
+    constexpr DurationImpl(const Timer& timer) : DurationImplBaseBase{timer} {}
+    constexpr DurationImpl(timer_group_t group, timer_idx_t idx) : DurationImplBaseBase(group, idx) {}
 };
 
 // DEBT: Wrap all this up in a templatized class

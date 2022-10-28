@@ -9,9 +9,10 @@ namespace embr { namespace esp_idf {
 static auto last_now = estd::chrono::esp_clock::now();
 
 template <class TScheduler>
-bool IRAM_ATTR DurationImpl::helper<TScheduler>::timer_callback (void* arg)
+bool IRAM_ATTR DurationImplBaseBase::helper<TScheduler>::timer_callback (void* arg)
 {
     TScheduler& scheduler = * (TScheduler*) arg;
+    typedef typename TScheduler::time_point time_point;
     uint64_t counter;
 
     //ets_printf("0 TimerScheduler Intr: group=%d, idx=%d\n", timer.group, timer.idx);
@@ -79,12 +80,8 @@ bool IRAM_ATTR DurationImpl::timer_callback (void *param)
 */
 
 template <class TScheduler>
-void DurationImpl::init(TScheduler* scheduler)
+void DurationImplBaseBase::init(TScheduler* scheduler, uint32_t divider)
 {
-    // Set prescaler for 1 MHz clock - remember, we're dividing
-    // "default is APB_CLK running at 80 MHz"
-    uint32_t divider = 80;
-
     timer_scheduler_init(timer(), divider, &helper<TScheduler>::timer_callback, scheduler);
 }
 

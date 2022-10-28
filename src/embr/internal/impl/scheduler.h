@@ -163,7 +163,7 @@ struct Reference<T, TTimePoint, typename estd::enable_if<!estd::is_pointer<T>::v
     /// \return true = reschedule requested, false = one shot
     static bool process(T& value, time_point current_time)
     {
-        return false;
+        return value.process(current_time);
     }
 };
 
@@ -190,9 +190,9 @@ struct Reference<T, TTimePoint, typename estd::enable_if<estd::is_pointer<T>::va
     /// \param value
     /// \param current_time actual current time
     /// \return true = reschedule requested, false = one shot
-    static bool process(T& value, time_point current_time)
+    static bool process(T value, time_point current_time)
     {
-        return false;
+        return value->process(current_time);
     }
 };
 

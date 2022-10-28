@@ -26,6 +26,12 @@ struct Timer
     const timer_group_t group;
     const timer_idx_t idx;
 
+    // ++ EXPERIMENTAL
+    // Typically 80Mhz, but can be reconfigured
+    static constexpr unsigned base_clock_hz() { return TIMER_BASE_CLK; }
+    static constexpr unsigned apb_hz() { return APB_CLK_FREQ; }
+    // --
+
     constexpr Timer(timer_group_t group, timer_idx_t idx) :
         group{group},
         idx{idx}
@@ -47,6 +53,16 @@ struct Timer
     esp_err_t deinit()
     {
         return timer_deinit(group, idx);
+    }
+
+    inline esp_err_t get_alarm_value(uint64_t* alarm_val) const
+    {
+        return timer_get_alarm_value(group, idx, alarm_val);
+    }
+
+    inline esp_err_t get_config(timer_config_t* config)
+    {
+        return timer_get_config(group, idx, config);
     }
 
     inline esp_err_t get_counter_value(uint64_t* timer_val) const
@@ -82,6 +98,11 @@ struct Timer
     void set_counter_enable_in_isr(timer_start_t counter_en)
     {
         timer_group_set_counter_enable_in_isr(group, idx, counter_en);
+    }
+
+    esp_err_t set_divider(uint32_t divider)
+    {
+        return timer_set_divider(group, idx, divider);
     }
 
     esp_err_t start()
