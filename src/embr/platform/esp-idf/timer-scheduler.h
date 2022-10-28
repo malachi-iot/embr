@@ -102,6 +102,8 @@ struct DurationImpl2 : DurationImplBase<TTimePoint>,
     embr::experimental::DurationConverter<
         typename DurationImplBase<TTimePoint>::int_type, divider_, Timer::base_clock_hz()>
 {
+    static constexpr const char* TAG = "DurationImpl2";
+
     typedef DurationImplBase<TTimePoint> base_type;
     typedef typename base_type::time_point time_point;
     typedef embr::experimental::DurationConverter<typename base_type::int_type, divider_, Timer::base_clock_hz()> converter_type;
@@ -116,6 +118,8 @@ struct DurationImpl2 : DurationImplBase<TTimePoint>,
 
     static constexpr bool is_runtime_divider() { return divider_ == -1; }
     const converter_type& duration_converter() const { return *this; }
+
+    Timer& timer() { return base_type::timer(); }
 
     static inline time_point get_time_point(const value_type& v)
     {
@@ -140,6 +144,11 @@ struct DurationImpl2 : DurationImplBase<TTimePoint>,
     {
         base_type::init(scheduler, divider_);
     }
+
+
+    template <class TScheduler>
+    void on_scheduled(const value_type& value,
+        internal::SchedulerContextBase<TScheduler>& context);
 
     constexpr DurationImpl2(const Timer& timer) : base_type{timer} {}
     constexpr DurationImpl2(timer_group_t group, timer_idx_t idx) : base_type(group, idx) {}

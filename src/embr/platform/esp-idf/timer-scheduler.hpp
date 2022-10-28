@@ -12,6 +12,7 @@ template <class TScheduler>
 bool IRAM_ATTR DurationImplBaseBase::helper<TScheduler>::timer_callback (void* arg)
 {
     TScheduler& scheduler = * (TScheduler*) arg;
+    Timer& timer = scheduler.timer();
     typedef typename TScheduler::time_point time_point;
     uint64_t counter;
 
@@ -22,7 +23,8 @@ bool IRAM_ATTR DurationImplBaseBase::helper<TScheduler>::timer_callback (void* a
     auto now = estd::chrono::esp_clock::now();
     auto duration = now - last_now;
 
-    ets_printf("1 TimerScheduler Intr: duration=%lldus, timer_counter=%lld, scheduler=%p\n",
+    ets_printf("1 TimerScheduler Intr: [%d:%d] duration=%lldus, timer_counter=%lld, scheduler=%p\n",
+        timer.group, timer.idx,
         duration.count(), counter, &scheduler);
 
     // DEBT: Don't do auto here
@@ -99,11 +101,34 @@ inline void DurationImpl::on_scheduling(value_type& value,
 template <class TScheduler>
 inline void DurationImpl::on_scheduled(const value_type& value, internal::SchedulerContextBase<TScheduler>& context)
 {
+    time_point t = get_time_point(value);
+
     ESP_LOGV(TAG, "on_scheduled: entry");
     ESP_LOGD(TAG, "on_scheduled: group=%d, idx=%d, scheduled=%u", timer().group, timer().idx,
-        value.wakeup.count());
+        t.count());
 
+    uint64_t native = duration_converter().convert(t);
+
+    if(context.scheduler().size() == 1)
+    {
+        timer().set_alarm(TIMER_ALARM_EN);
+        timer().set_alarm_value(native);
+        timer().start();
+    }
+}
+
+
+template <class T, int divider_, typename TTimePoint, class TReference>
+template <class TScheduler>
+inline void DurationImpl2<T, divider_, TTimePoint, TReference>::on_scheduled(const value_type& value, internal::SchedulerContextBase<TScheduler>& context)
+{
     time_point t = get_time_point(value);
+
+    ESP_DRAM_LOGV(TAG, "on_scheduled: entry");
+    
+    // DEBT: Do we need a non-chrono version?
+    ESP_DRAM_LOGD(TAG, "on_scheduled: group=%d, idx=%d, scheduled=%llu", timer().group, timer().idx,
+        t.count());
 
     uint64_t native = duration_converter().convert(t);
 
