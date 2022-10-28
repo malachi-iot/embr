@@ -123,17 +123,31 @@ template <typename TTimePoint>
 struct ReferenceBase : ReferenceBaseBase
 {
     typedef TTimePoint time_point;
+
+    // Reference implementation only.  Yours may be quite different
+    struct value_type
+    {
+        time_point event_due_;
+
+        value_type(time_point event_due) : event_due_(event_due) {}
+        value_type(const value_type& copy_from) = default;
+    };
 };
+
+template <class T, class TTimePoint = decltype(T().event_due()), class Enabled = void>
+struct Reference;
 
 /// Reference base implementation for scheduler impl
 /// \tparam T consider this the system + app data structure
-template <class T, class TTimePoint = decltype(T().event_due())>
-struct Reference : ReferenceBase<TTimePoint>
+template <class T, class TTimePoint>
+struct Reference<T, TTimePoint, typename estd::enable_if<!estd::is_pointer<T>::value>::type> : ReferenceBase<TTimePoint>
 {
     typedef ReferenceBase<TTimePoint> base_type;
     typedef T value_type;
+    typedef T item_type;
 
     typedef typename base_type::time_point time_point;
+    static bool ESTD_CPP_CONSTEXPR_RET is_pointer() { return false; }
 
     /// Retrieve specialized wake up time from T
     /// \param value
@@ -152,6 +166,36 @@ struct Reference : ReferenceBase<TTimePoint>
         return false;
     }
 };
+
+
+template <class T, class TTimePoint>
+struct Reference<T, TTimePoint, typename estd::enable_if<estd::is_pointer<T>::value>::type> : ReferenceBase<TTimePoint>
+{
+    typedef ReferenceBase<TTimePoint> base_type;
+    typedef typename std::remove_pointer<T>::type item_type;
+    typedef T value_type;
+
+    typedef typename base_type::time_point time_point;
+    static bool ESTD_CPP_CONSTEXPR_RET is_pointer() { return true; }
+
+    /// Retrieve specialized wake up time from T
+    /// \param value
+    /// \return
+    static time_point get_time_point(const T value)
+    {
+        return value->event_due();
+    }
+
+    ///
+    /// \param value
+    /// \param current_time actual current time
+    /// \return true = reschedule requested, false = one shot
+    static bool process(T& value, time_point current_time)
+    {
+        return false;
+    }
+};
+
 
 struct TraditionalBase : ReferenceBase<unsigned long>
 {
