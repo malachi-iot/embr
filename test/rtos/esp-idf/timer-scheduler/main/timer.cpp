@@ -36,7 +36,8 @@ struct control_structure1
             current_time.count());
 
         wakeup_ += 1s;
-        return true;  // TODO: Almost works, but alarm wakeup is behaving in an unexpected way (waking too early)
+
+        return true;    // Signal we want a reschedule
     }
 };
 

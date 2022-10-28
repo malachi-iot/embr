@@ -37,14 +37,10 @@ bool IRAM_ATTR DurationImplBaseBase::helper<TScheduler>::timer_callback (void* a
     time_point current_time;
     scheduler.duration_converter().convert(counter, &current_time);
 
-    // TODO: We should be acting on converted time, but code isn't quite ready for it
-    // it seems - specifically, runtime duration converter isn't functional yet
     scheduler.process(current_time, context);
-    //scheduler.process(time_point(counter), context);
 
     // DEBT: We need mutex protection down here too
-    bool more = !scheduler.empty();
-    if(more)
+    if(!scheduler.empty())
     {
         time_point next = scheduler.top_time();
 
@@ -127,7 +123,9 @@ inline void DurationImpl::on_scheduled(const value_type& value, internal::Schedu
 
 template <class T, int divider_, typename TTimePoint, class TReference>
 template <class TScheduler>
-inline void DurationImpl2<T, divider_, TTimePoint, TReference>::on_scheduled(const value_type& value, internal::SchedulerContextBase<TScheduler>& context)
+inline void DurationImpl2<T, divider_, TTimePoint, TReference>::on_scheduled(
+    const value_type& value,
+    const internal::SchedulerContextBase<TScheduler>& context)
 {
     ESP_DRAM_LOGV(TAG, "on_scheduled: entry");
     
@@ -139,7 +137,8 @@ inline void DurationImpl2<T, divider_, TTimePoint, TReference>::on_scheduled(con
         t.count(),
         native);
 
-    if(context.scheduler().size() == 1)
+    // DEBT: Works, but sloppy - clean up semi-lazy init of timer when outside ISR
+    if(context.scheduler().size() == 1 && !context.in_isr())
     {
         timer().set_alarm(TIMER_ALARM_EN);
         timer().set_alarm_value(native);

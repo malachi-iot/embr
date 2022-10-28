@@ -12,6 +12,8 @@ namespace embr { namespace esp_idf {
 
 struct DurationImplBaseBase : embr::internal::scheduler::impl::ReferenceBaseBase
 {
+    static constexpr const char* TAG = "DurationImplBaseBase";
+
     Timer timer_;
 
     inline Timer& timer() { return timer_; }
@@ -36,6 +38,15 @@ protected:
     // for example, 80 = prescaler for 1 MHz clock - remember, we're dividing
     // "default is APB_CLK running at 80 MHz"
     void init(TScheduler* scheduler, uint32_t divider);
+
+public:
+    // DEBT: should be protected - impl() trick interrupts that
+    // DEBT: This in particular is a better candidate for subject/observer
+    template <class T, class Rep, class Period, class TContext>
+    inline void on_processing(T&, estd::chrono::duration<Rep, Period> current, TContext)
+    {
+        ESP_DRAM_LOGV(TAG, "on_processing: current=%llu", current.count());
+    }
 };
 
 
@@ -227,12 +238,6 @@ struct DurationImpl : DurationImplBaseBase
     inline void init(TScheduler* scheduler, uint32_t divider = 80)
     {
         base_type::init(scheduler, divider);
-    }
-
-    template <class TContext>
-    inline void on_processing(value_type& value, time_point current, TContext)
-    {
-        ESP_DRAM_LOGV(TAG, "on_processing: current=%llu", current.count());
     }
 
     template <class TScheduler>
