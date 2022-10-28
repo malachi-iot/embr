@@ -73,7 +73,7 @@ TEST_CASE("Debounce and friends state machine tests", "[debounce]")
         {
             SECTION("converter (default 80)")
             {
-                TimerSchedulerConverter converter;
+                DurationConverter<int, -1> converter;
 
                 uint64_t v = converter.convert(estd::chrono::milliseconds(10));
 
@@ -88,9 +88,9 @@ TEST_CASE("Debounce and friends state machine tests", "[debounce]")
             }
             SECTION("converter (400)")
             {
-                TimerSchedulerConverter converter;
+                DurationConverter<int, -1> converter;
 
-                converter.divisor_ = 400;
+                converter.numerator_ = 400;
 
                 uint64_t v = converter.convert(estd::chrono::milliseconds(10));
 
@@ -98,13 +98,36 @@ TEST_CASE("Debounce and friends state machine tests", "[debounce]")
             }
             SECTION("converter (8000)")
             {
-                TimerSchedulerConverter converter;
+                DurationConverter<int, -1> converter;
 
-                converter.divisor_ = 8000;
+                converter.numerator_ = 8000;
 
                 uint64_t v = converter.convert(estd::chrono::milliseconds(100));
 
                 REQUIRE(v == 1000);
+            }
+            SECTION("constexpr converter (80)")
+            {
+                DurationConverter<int, 80> converter;
+
+                uint64_t v = converter.convert(estd::chrono::milliseconds(10));
+
+                REQUIRE(v == 10000);
+
+                v = converter.convert(estd::chrono::duration<uint16_t, estd::ratio<1, 3> >(1));
+                REQUIRE(v == 333333);
+
+                // 5/33 of a second = 0.151515151_ forever
+                v = converter.convert(estd::chrono::duration<uint16_t, estd::ratio<5, 33> >(1));
+                REQUIRE(v == 151515);
+            }
+            SECTION("constexpr converter (400)")
+            {
+                DurationConverter<int, 400> converter;
+
+                uint64_t v = converter.convert(estd::chrono::milliseconds(10));
+
+                REQUIRE(v == 2000);
             }
         }
     }

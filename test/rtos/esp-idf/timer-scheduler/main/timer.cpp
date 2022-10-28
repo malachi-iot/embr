@@ -16,12 +16,12 @@ void timer_scheduler_tester()
     DurationImpl2<int, -1> test1;
     DurationImpl2<unsigned, 80> test2;
 
-    auto v1 = test1.divisor();
-    auto v2 = test2.divisor();
+    auto v1 = test1.numerator();
+    auto v2 = test2.numerator();
 
     const char* TAG = "timer_scheduler_tester";
 
-    embr::esp_idf::Timer timer(TIMER_GROUP_0, TIMER_1);
+    constexpr embr::esp_idf::Timer timer(TIMER_GROUP_0, TIMER_1);
 
     static scheduler_type scheduler(embr::internal::scheduler::impl_params_tag{}, timer);
 

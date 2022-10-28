@@ -103,6 +103,9 @@ struct ReferenceBaseBase
 
     // Simpler version of subject/observer mechanism, tuned for impl-specific usage
     template <class T, class TContext>
+    inline void on_scheduling(T& value, TContext& context) {}
+
+    template <class T, class TContext>
     inline void on_scheduled(const T& value, TContext& context) {}
 };
 

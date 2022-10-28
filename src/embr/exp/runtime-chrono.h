@@ -35,21 +35,55 @@ struct runtime_duration
 // This exists so that we can convert timepoints to
 // esp32 timer native 64-bit divided value.  Note that this is a kind of
 // underpinning for a potentially bigger runtime_ratio / runtime_duration codebase
-struct TimerSchedulerConverter
-{
-    uint32_t divisor_ = 80;
+template <typename TInt, int numerator_ = -1, int denominator_ = 80000000>
+struct DurationConverter;
 
-    uint32_t divisor() const { return divisor_; }
+template <typename TInt, int denominator_>
+struct DurationConverter<TInt, -1, denominator_>
+{
+    typedef TInt int_type;
+    uint32_t numerator_ = 80;
+    uint32_t numerator() const { return numerator_; }
 
     template <typename Rep, typename Period>
-    uint64_t convert(const estd::chrono::duration<Rep, Period>& convert_from)
+    int_type convert(const estd::chrono::duration<Rep, Period>& convert_from) const
     {
         // NOTE: timor divisor generally represents 80MHz (APB) / divisor()
         constexpr int precision_helper = 2;
-        constexpr uint64_t hz = 80000000 << precision_helper;
-        uint64_t den = hz / divisor();    // aka timer counts per second
-        uint64_t mul = Period::num * den / Period::den;
+        constexpr int_type hz = denominator_ << precision_helper;
+        int_type den = hz / numerator();    // aka timer counts per second
+        int_type mul = Period::num * den / Period::den;
         return (convert_from.count() * mul) >> precision_helper;
+    }
+
+    template <typename Rep, typename Period>
+    estd::chrono::duration<Rep, Period>& convert(int_type convert_from, estd::chrono::duration<Rep, Period>* convert_to) const
+    {
+        // TBD
+        return *convert_to;
+    }
+};
+
+template <typename TInt, int numerator_, int denominator_>
+struct DurationConverter
+{
+    typedef TInt int_type;
+
+    static constexpr int numerator() { return numerator_; }
+
+    typedef estd::chrono::duration<int_type, estd::ratio<numerator_, denominator_> > duration;
+
+    template <typename Rep, typename Period>
+    static constexpr int_type convert(const estd::chrono::duration<Rep, Period>& convert_from)
+    {
+        return duration(convert_from).count();
+    }
+
+    template <typename Rep, typename Period>
+    static constexpr estd::chrono::duration<Rep, Period>& convert(int_type convert_from,
+        estd::chrono::duration<Rep, Period>* convert_to)
+    {
+        return * new (convert_to) estd::chrono::duration<Rep, Period>(duration(convert_from));
     }
 };
 

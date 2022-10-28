@@ -186,8 +186,17 @@ protected:
     template <class TContext>
     void do_notify_scheduling(value_type& value, context_type<TContext>& context)
     {
+        impl().on_scheduling(value, context);
         subject_provider::value().notify(scheduling_event_type(value), context);
     }
+
+    /*
+    template <class TContext>
+    void do_notify_scheduling(const value_type& value, context_type<TContext>& context)
+    {
+        impl().on_scheduling(value, context);
+        subject_provider::value().notify(scheduling_event_type(value), context);
+    } */
 
     inline void do_notify_scheduling(value_type& value)
     {
@@ -292,8 +301,6 @@ public:
         event_queue.push(value);
 
         do_notify_scheduled(value);
-
-        subject_provider::value().notify(scheduled_event_type());
     }
 
     template <class TContext>
@@ -327,10 +334,10 @@ public:
         mutex_guard m(context);
 
         accessor value = event_queue.emplace_with_notify(
-            [&](const value_type& v)
+            [&](value_type& v)
             {
                 // announce emplaced item before we actually sort it
-                subject_provider::value().notify(scheduling_event_type(v), context);
+                do_notify_scheduling(v, context);
             },
             std::forward<TArgs>(args)...);
 

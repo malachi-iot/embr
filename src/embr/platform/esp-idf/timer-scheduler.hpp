@@ -39,9 +39,7 @@ bool IRAM_ATTR DurationImpl::helper<TScheduler>::timer_callback (void* arg)
     {
         time_point next = scheduler.top_time();
 
-        embr::experimental::TimerSchedulerConverter converter;
-
-        uint64_t native = converter.convert(next);
+        uint64_t native = scheduler.duration_converter().convert(next);
 
         ets_printf("1.1 TimerScheduler Intr: size=%d, next=%lluus\n",
             scheduler.size(),
@@ -90,6 +88,15 @@ void DurationImpl::init(TScheduler* scheduler)
     timer_scheduler_init(timer(), divider, &helper<TScheduler>::timer_callback, scheduler);
 }
 
+template <class TScheduler>
+inline void DurationImpl::on_scheduling(value_type& value,
+    internal::SchedulerContextBase<TScheduler>& context)
+{
+    // Putting this in here rather than scheduled because it makes timestamps look more accurate.
+    // Didn't dig into the whys and hows at all
+    last_now = estd::chrono::esp_clock::now();
+}
+
 
 // NOTE: All this happens while in the locked mutex 
 template <class TScheduler>
@@ -101,11 +108,7 @@ inline void DurationImpl::on_scheduled(const value_type& value, internal::Schedu
 
     time_point t = get_time_point(value);
 
-    embr::experimental::TimerSchedulerConverter converter;
-
-    uint64_t native = converter.convert(t);
-
-    last_now = estd::chrono::esp_clock::now();
+    uint64_t native = duration_converter().convert(t);
 
     if(context.scheduler().size() == 1)
     {

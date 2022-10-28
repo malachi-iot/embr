@@ -33,7 +33,7 @@ struct ThresholdImpl : DurationImpl
 
     // we're scheduled to reach here optimisitcally thinking up or down energy is high
     // enough to yield a state change
-    static bool process(value_type& v, time_point now)
+    bool process(value_type& v, time_point now)
     {
         detail::Debouncer& d = v.debouncer();
         bool state_changed = d.time_passed(now, v.item_->on());

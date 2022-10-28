@@ -33,8 +33,10 @@ struct DurationImplBase
 };
 
 template <typename TInt, int divisor_ = -1>
-struct DurationImpl2 : DurationImplBase<TInt>
+struct DurationImpl2 : DurationImplBase<TInt>,
+    embr::experimental::DurationConverter<TInt, divisor_, 80000000>
 {
+    /*
     typedef DurationImplBase<TInt> base_type;
 
     static constexpr unsigned apb_clock() { return 80000000; }
@@ -47,13 +49,14 @@ struct DurationImpl2 : DurationImplBase<TInt>
     {
         return duration(convert_from);
     }
+    */
 };
 
 
 template <typename TInt>
 struct DurationImpl2<TInt, -1> : 
     DurationImplBase<TInt>,
-    embr::experimental::TimerSchedulerConverter
+    embr::experimental::DurationConverter<TInt, -1>
 {
     typedef DurationImplBase<TInt> base_type;
 };
@@ -81,8 +84,13 @@ struct DurationImpl : embr::internal::scheduler::impl::ReferenceBaseBase
 {
     static constexpr const char* TAG = "DurationImpl";
 
-    Timer timer_;
+    // TODO: Optimize in the fully constexpr flavor
+    typedef embr::experimental::DurationConverter<uint64_t, -1> converter_type;
 
+    Timer timer_;
+    converter_type converter_;
+
+    const converter_type& duration_converter() const { return converter_; }
     inline Timer& timer() { return timer_; }
     constexpr const Timer& timer() const { return timer_; }
 
@@ -106,6 +114,10 @@ struct DurationImpl : embr::internal::scheduler::impl::ReferenceBaseBase
     {
         return false;
     }
+
+    template <class TScheduler>
+    void on_scheduling(value_type& value,
+        internal::SchedulerContextBase<TScheduler>& context);
 
     template <class TScheduler>
     void on_scheduled(const value_type& value,
