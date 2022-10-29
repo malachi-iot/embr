@@ -1,6 +1,6 @@
 #pragma once
 
-#include "driver/gpio.h"
+#include <driver/gpio.h>
 
 
 namespace embr { namespace esp_idf {
@@ -12,6 +12,12 @@ class gpio
 
 public:
     constexpr gpio(gpio_num_t pin) : pin_{pin} {}
+    gpio(const gpio& copy_from) = default;
+    gpio& operator=(const gpio& copy_from)
+    {
+        // DEBT: This doesn't pass the smell test
+        return * new (this) gpio(copy_from);
+    }
 
     esp_err_t reset() const
     {
@@ -37,6 +43,8 @@ public:
     {
         return gpio_set_pull_mode(pin_, pull);
     }
+
+    constexpr operator gpio_num_t () const { return pin_; }
 };
 
 }}

@@ -5,8 +5,9 @@
 
 namespace embr { namespace esp_idf {
 
-
-static auto last_now = estd::chrono::esp_clock::now();
+// DEBT: Move this out of static/global namespace and conditionally compile only for
+// diagnostic scenarios
+static auto last_now_diagnostic = estd::chrono::esp_clock::now();
 
 template <class TScheduler>
 bool IRAM_ATTR DurationImplBaseBase::helper<TScheduler>::timer_callback (void* arg)
@@ -21,7 +22,7 @@ bool IRAM_ATTR DurationImplBaseBase::helper<TScheduler>::timer_callback (void* a
     counter = scheduler.timer().get_counter_value_in_isr();
 
     auto now = estd::chrono::esp_clock::now();
-    auto duration = now - last_now;
+    auto duration = now - last_now_diagnostic;
 
     ets_printf("1 TimerScheduler Intr: [%d:%d] duration=%lldus, timer_counter=%lld, scheduler=%p\n",
         timer.group, timer.idx,
@@ -93,7 +94,7 @@ inline void DurationImpl::on_scheduling(value_type& value,
 {
     // Putting this in here rather than scheduled because it makes timestamps look more accurate.
     // Didn't dig into the whys and hows at all
-    last_now = estd::chrono::esp_clock::now();
+    last_now_diagnostic = estd::chrono::esp_clock::now();
 }
 
 

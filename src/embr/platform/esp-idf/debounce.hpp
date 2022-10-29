@@ -3,7 +3,7 @@
 #include "../../detail/debounce.hpp"
 #include "debounce.h"
 
-namespace embr { inline namespace esp_idf {
+namespace embr { namespace esp_idf {
 
 
 }}

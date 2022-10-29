@@ -1,32 +1,40 @@
 #pragma once
 
-#include <driver/gpio.h>
 #include <driver/timer.h>
 
 #include "../../detail/debounce.h"
+#include "gpio.h"
 #include "queue.h"
 
-namespace embr { inline namespace esp_idf {
+namespace embr { namespace esp_idf {
 
+
+class Debouncer;
 
 struct Item
 {
+    typedef estd::chrono::milliseconds duration;
+    typedef duration time_point;
+
     detail::Debouncer debouncer_;
-    int pin_;
+    gpio pin_;
     bool low_means_pressed = true;
+    duration wakeup_;
+    Debouncer* parent_;
 
     detail::Debouncer& debouncer() { return debouncer_; }
     const detail::Debouncer& debouncer() const { return debouncer_; }
-    int pin() const { return pin_; }
+    gpio pin() const { return pin_; }
+    time_point event_due() const { return wakeup_; }
 
     bool on() const
     {
-        return false;
+        return pin_.level();
     }
 
-    Item() = default;
+    //Item() = default;
     Item(const Item& copy_from) = default;
-    Item(int pin) : pin_{pin} {}
+    Item(Debouncer* parent, gpio pin) : pin_{pin} {}
 };
 
 
@@ -62,8 +70,10 @@ private:
     void emit_state(const Item& item);
 
     static void gpio_isr(void*);
+#if UNUSED
     static void timer_group0_isr(void*);
     static bool timer_group0_callback(void *param);
+#endif
 
 public:
     // DEBT: Not sure I want to expose the whole queue here, but seems OK

@@ -11,32 +11,27 @@
 
 #include <esp_log.h>
 
-#include "timer-scheduler.h"
+#include "timer-scheduler.hpp"
 
-namespace embr { inline namespace esp_idf {
+namespace embr { namespace esp_idf {
 
 
-struct ThresholdImpl : DurationImpl
+struct ThresholdImpl : DurationImpl2<Item*, 80>
 {
-    struct value_type : DurationImpl::value_type
-    {
-        Item* item_;
+    static constexpr const char* TAG = "ThreadholdImpl";
 
-        detail::Debouncer& debouncer() { return item_->debouncer(); }
-
-        value_type(time_point t, Item* item) :
-            DurationImpl::value_type(t),
-            item_{item_}
-        {}
-    };
-
+    typedef DurationImpl2<Item*, 80> base_type;
+    using typename base_type::value_type;
 
     // we're scheduled to reach here optimisitcally thinking up or down energy is high
     // enough to yield a state change
-    bool process(value_type& v, time_point now)
+    bool process(value_type v, time_point now)
     {
-        detail::Debouncer& d = v.debouncer();
-        bool state_changed = d.time_passed(now, v.item_->on());
+        detail::Debouncer& d = v->debouncer();
+        bool state_changed = d.time_passed(now, v->on());
+
+        ESP_DRAM_LOGD(TAG, "process: %d", state_changed);
+
         if(!state_changed)
         {
             // evaluate whether we need more time and if so, reschedule
@@ -45,12 +40,15 @@ struct ThresholdImpl : DurationImpl
                 const detail::Debouncer& d2 = d;    // DEBT: Workaround to get at const noise_or_signal
                 auto amt = d2.noise_or_signal() - d2.signal_threshold();
 
-                v.wakeup = now + amt;
+                v->wakeup_ = now + amt;
                 return true;
             }
         }
         return false;
     }
+
+    constexpr ThresholdImpl(const Timer& timer) : base_type{timer} {}
+    constexpr ThresholdImpl(timer_group_t group, timer_idx_t idx) : base_type(group, idx) {}
 };
 
 
@@ -59,20 +57,22 @@ struct ThresholdImpl : DurationImpl
 // Guidance from:
 // https://esp32.com/viewtopic.php?t=345 
 
+// DEBT: Place these inside 'Debouncer'
 // DEBT: upgrade estd map to use vector, since maps indeed should be dynamic even
 // in our basic use cases
 //static estd::layer1::map<uint8_t, detail::Debouncer, 5> debouncers;
 static std::map<uint8_t, Item> debouncers;
-static timer_isr_handle_t timer_isr_handle;
+static embr::internal::layer1::Scheduler<5, ThresholdImpl> scheduler(
+    embr::internal::scheduler::impl_params_tag{},
+    TIMER_GROUP_0, TIMER_0);
 
 using namespace estd::chrono;
 using namespace estd::chrono_literals;
 
-esp_clock::time_point last_now;
+static esp_clock::time_point last_now;
 
 void held_callback(TimerHandle_t);
 
-static embr::esp_idf::Timer timer(TIMER_GROUP_0, TIMER_0);
 embr::freertos::timer<> held_timer("held", 3s, false, nullptr, held_callback);
 
 
@@ -129,9 +129,14 @@ inline void Debouncer::gpio_isr()
 
                     // NOTE: Not sure if we can/should do this in an ISR
                     //timer_set_counter_value(timer_group, timer_idx, 0);   // This works -- now trying pause method
+                    
+#if UNUSED
                     timer.enable_alarm_in_isr();
-
                     timer.start();
+#else
+                    auto context = scheduler.create_context(true);  // isr context
+                    scheduler.schedule_with_context(context, &item);
+#endif
 
                 }
                 ets_printf("4 Intr state=%s:%s\n", to_string(d.state()), to_string(d.substate()));
@@ -150,6 +155,7 @@ void Debouncer::gpio_isr(void* context)
     static_cast<Debouncer*>(context)->gpio_isr();
 }
 
+#if UNUSED
 inline void IRAM_ATTR Debouncer::timer_group0_isr()
 {
     uint64_t counter;
@@ -185,6 +191,7 @@ inline void IRAM_ATTR Debouncer::timer_group0_isr()
 
     last_now = now;
 }
+#endif
 
 void Debouncer::emit_state(const Item& item)
 {
@@ -195,6 +202,7 @@ void Debouncer::emit_state(const Item& item)
     queue.send_from_isr(Notification{item.pin(), (States)on});
 }
 
+#if UNUSED
 // Guidance from
 // https://www.esp32.com/viewtopic.php?t=12931 
 void IRAM_ATTR Debouncer::timer_group0_isr (void *param)
@@ -270,6 +278,12 @@ void Debouncer::timer_init(bool callback_mode)
 
     timer.enable_intr();
 }
+#else
+void Debouncer::timer_init(bool callback_mode)
+{
+    scheduler.init(&scheduler);
+}
+#endif
 
 
 Debouncer::Debouncer(bool callback_mode) //: queue(10)
@@ -285,6 +299,7 @@ Debouncer::~Debouncer()
 {
     esp_intr_free(gpio_isr_handle);    
 
+#if UNUSED
     timer.set_alarm(TIMER_ALARM_DIS);
     timer.disable_intr();
 
@@ -294,6 +309,7 @@ Debouncer::~Debouncer()
 #endif
 
     esp_intr_free(timer_isr_handle);    
+#endif
 }
 
 void Debouncer::track(int pin)
@@ -301,8 +317,11 @@ void Debouncer::track(int pin)
     //debouncers.insert_or_assign(pin, embr::detail::Debouncer{});
     // FIX: Clearly not a great way to do things, but I do not yet understand how std::map
     // regular 'insert' and 'emplace' work
-    Item item(pin);
-    debouncers[pin] = item;
+    //Item item(this, (gpio_num_t)pin);
+    //debouncers[pin] = item;
+    debouncers.emplace(std::make_pair(
+        pin,
+        Item(this, (gpio_num_t)pin)));
 }
 
 
