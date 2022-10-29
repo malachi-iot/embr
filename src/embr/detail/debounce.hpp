@@ -9,6 +9,14 @@ namespace internal {
 template <class TImpl>
 bool Debouncer<TImpl>::encountered(duration delta, States switch_to)
 {
+    // DEBT: Workaround for overflow condition
+    if(delta == duration::max())
+    {
+        state(switch_to);
+        state(Idle);
+        return true;
+    }
+
     // reaching here means we encountered a particular state A, so record
     // amount of time spent in that A state
     noise_or_signal() += delta;
@@ -54,6 +62,11 @@ inline bool Debouncer<TImpl>::time_passed(const estd::chrono::duration<TRep, TPe
     {
         state(Idle);
         return false;
+    }
+    else if(substate() != Idle && (delta + noise_or_signal()) > duration::max())
+    {
+        // DEBT: Workaround for overflow condition
+        return time_passed_internal(duration::max(), on);
     }
 
     return time_passed_internal(delta, on);
