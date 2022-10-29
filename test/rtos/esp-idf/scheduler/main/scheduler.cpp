@@ -15,9 +15,10 @@ using namespace estd::chrono;
 using namespace estd::literals;
 
 embr::scheduler::freertos::Scheduler<5> scheduler;
+embr::internal::layer1::Scheduler<5, embr::freertos::experimental::FunctorImpl2> scheduler_new;
 
 static constexpr gpio_num_t SLOW_LED_PIN = (gpio_num_t)CONFIG_SLOW_LED_PIN;
-static constexpr embr::esp_idf::gpio fast_pin((gpio_num_t)CONFIG_FAST_LED_PIN, GPIO_MODE_OUTPUT);
+static constexpr embr::esp_idf::gpio fast_pin((gpio_num_t)CONFIG_FAST_LED_PIN);
 
 void gpio_init()
 {
@@ -41,6 +42,9 @@ void scheduler_init()
     gpio_init();
 
     scheduler.start();
+
+    // FIX: Compiles, but WDT crashes when we get to fast flash
+    scheduler_new.start(&scheduler_new);
 
     typedef FunctorImpl::time_point time_point;
 

@@ -2,12 +2,21 @@
 
 #include <estd/chrono.h>
 #include <estd/port/freertos/mutex.h>
+#include <estd/port/freertos/thread.h>
 
 #include <embr/scheduler.h>
 
 #ifdef ESP_PLATFORM
 #include "esp_log.h"
 #endif
+
+namespace embr { namespace scheduler { namespace freertos {
+
+template <class TScheduler>
+void notify_daemon_task(void* data);
+
+
+}}}
 
 namespace embr { namespace freertos { namespace experimental {
 
@@ -36,6 +45,9 @@ struct SchedulerObserver
 };
 
 
+// DEBT: Break this out a bit the way esp32 timer mode was where we pass in control_structure
+// but definitely lean heavily towards *default* being FunctorImpl - so that we can do FreeRTOS
+// stuff without: 1) being bound to functors and 2) using simpler on_scheduled vs. subject/observer pattern
 struct FunctorImpl :
     embr::internal::scheduler::impl::Function<estd::chrono::freertos_clock::time_point>
 {
@@ -224,6 +236,69 @@ struct NotifierObserver
 };
 #endif
 
+struct FunctorImpl2 : FunctorImpl
+{
+    static constexpr const char* TAG = "FunctorImpl2";
 
+    estd::freertos::wrapper::task daemon;
+    bool early_wakeup;
+
+    FunctorImpl2() :
+        daemon(NULLPTR),
+        early_wakeup(false) {}
+
+    template <class TScheduler>
+    void start(TScheduler* scheduler)
+    {
+        configSTACK_DEPTH_TYPE usStackDepth = CONFIG_EMBR_FREERTOS_SCHEDULER_TASKSIZE;
+        UBaseType_t uxPriority = CONFIG_EMBR_FREERTOS_SCHEDULER_PRIORITY;
+
+        TaskHandle_t t;
+        BaseType_t result = xTaskCreate(embr::scheduler::freertos::notify_daemon_task<TScheduler>, "embr:scheduler2",
+                                        usStackDepth, scheduler, uxPriority, &t);
+
+        daemon = t;
+    }
+
+    void stop()
+    {
+#ifdef INCLUDE_vTaskDelete
+        vTaskDelete(daemon);
+#endif
+    }
+
+    template <class T, class TScheduler>
+    void on_scheduling(T& t, embr::internal::SchedulerContextBase<TScheduler>& context)
+    {
+        if((early_wakeup = get_time_point(t) < context.scheduler().top_time()))
+        {
+            ESP_LOGV(TAG, "on_notify(scheduling) early wakeup tagged");
+        }
+
+        ESP_LOGD(TAG, "on_notify(scheduling)");
+    }
+
+    template <class T, class TScheduler>
+    void on_scheduled(T&, embr::internal::SchedulerContextBase<TScheduler>& context)
+    {
+        if(early_wakeup)
+        {
+            // NOTE: Only doing warning temporarily as we build this out
+            ESP_LOGD(TAG, "on_notify(scheduled) early wakeup");
+
+            if(daemon == NULLPTR)
+            {
+                ESP_LOGE(TAG, "on_notify(scheduled) failure - daemon not running, aborting wakeup");
+                return;
+            }
+                
+            // This will result in immediately waking up daemon, which we expect to turn right around
+            // and sleep again - but for a shorter period of time.  Therefore, two wakes occur.
+            daemon.notify_give();
+        }
+
+        ESP_LOGV(TAG, "on_notify(scheduled)");
+    }
+};
 
 }}}

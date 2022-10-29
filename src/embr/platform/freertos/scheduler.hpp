@@ -34,27 +34,39 @@ static void notify_daemon_task(void* data)
 {
     using namespace estd::chrono;
 
-    const char* TAG = "scheduler_notify_daemon_task";
     TScheduler& scheduler = *reinterpret_cast<TScheduler*>(data);
 
 #ifdef ESP_PLATFORM
+    static constexpr const char* TAG = "scheduler_notify_daemon_task";
     ESP_LOGI(TAG, "start");
 #endif
+
+    // DEBT: We need to account for WDT here, probably cap the value fed into ulTaskNotifyTake
 
     for(;;)
     {
         scheduler.process();
 
-        freertos_clock::duration duration = scheduler.top_time() - freertos_clock::now();
+        freertos_clock::duration duration;
+        
+        // If nothing's scheduled at all, wait for notification for a while
+        if(!scheduler.empty())
+        {
+            duration = scheduler.top_time() - freertos_clock::now();
 
 #ifdef ESP_PLATFORM
 #if CONFIG_LOG_MAXIMUM_LEVEL == ESP_LOG_VERBOSE
-        // DEBT: We really need to activate FEATURE_ESTD_CHRONO_LOWPRECISION
-        ESP_LOGV(TAG, "waiting for %lld ticks", duration.count());
+            // DEBT: We really need to activate FEATURE_ESTD_CHRONO_LOWPRECISION
+            ESP_LOGV(TAG, "waiting for %lld ticks", duration.count());
 
-        duration = scheduler.top_time() - freertos_clock::now();
+            duration = scheduler.top_time() - freertos_clock::now();
 #endif
 #endif
+        }
+        else
+        {
+            duration = estd::chrono::seconds(2);
+        }
 
         // Only sleep if there's actually an interval we need to wait.
         // It's an acceptable use case for count() <= 0 since this task
@@ -62,6 +74,9 @@ static void notify_daemon_task(void* data)
         // which even the fastest wakeup time has already passed (in theory)
         if(duration.count() > 0)
         {
+            // DEBT: Keep eye out for race condition where notification was sent
+            // after above empty check but before we reach here.  Not sure if notification
+            // queues up (I think it does) - if so, we are OK
             uint32_t r = ulTaskNotifyTake(pdTRUE, duration.count());
 
 #ifdef ESP_PLATFORM
