@@ -9,22 +9,23 @@
 #include "esp_log.h"
 
 #include <embr/platform/freertos/scheduler.hpp>
+#include <embr/platform/esp-idf/gpio.h>
 
 using namespace estd::chrono;
 using namespace estd::literals;
 
 embr::scheduler::freertos::Scheduler<5> scheduler;
 
-static constexpr gpio_num_t FAST_LED_PIN = (gpio_num_t)CONFIG_FAST_LED_PIN;
 static constexpr gpio_num_t SLOW_LED_PIN = (gpio_num_t)CONFIG_SLOW_LED_PIN;
+static constexpr embr::esp_idf::gpio fast_pin((gpio_num_t)CONFIG_FAST_LED_PIN, GPIO_MODE_OUTPUT);
 
 void gpio_init()
 {
-    gpio_pad_select_gpio(FAST_LED_PIN);
     gpio_pad_select_gpio(SLOW_LED_PIN);
-
-    gpio_set_direction(FAST_LED_PIN, GPIO_MODE_OUTPUT);
     gpio_set_direction(SLOW_LED_PIN, GPIO_MODE_OUTPUT);
+
+    fast_pin.reset();
+    fast_pin.set_direction(GPIO_MODE_OUTPUT);
 }
 
 void repeater(freertos_clock::time_point* wake, freertos_clock::time_point current)
@@ -51,7 +52,7 @@ void scheduler_init()
         int wake_raw = wake->time_since_epoch().count();
         ESP_LOGD(TAG, "rapid_f: %d, wake=%d", rapid_counter, wake_raw);
 
-        gpio_set_level(FAST_LED_PIN, rapid_counter % 2 == 0);
+        fast_pin.level(rapid_counter % 2 == 0);
 
         if(rapid_counter-- > 0)
         {
