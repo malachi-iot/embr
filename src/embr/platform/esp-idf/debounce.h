@@ -17,10 +17,10 @@ struct Item
     typedef duration time_point;
 
     detail::Debouncer debouncer_;
+    Debouncer* parent_;
     gpio pin_;
     bool low_means_pressed = true;
     duration wakeup_;
-    Debouncer* parent_;
 
     detail::Debouncer& debouncer() { return debouncer_; }
     const detail::Debouncer& debouncer() const { return debouncer_; }
@@ -34,7 +34,7 @@ struct Item
 
     //Item() = default;
     Item(const Item& copy_from) = default;
-    Item(Debouncer* parent, gpio pin) : pin_{pin} {}
+    Item(Debouncer* parent, gpio pin) : parent_{parent}, pin_{pin} {}
 };
 
 
@@ -67,7 +67,6 @@ private:
     void timer_init(bool callback_mode);
     void gpio_isr();
     void timer_group0_isr();
-    void emit_state(const Item& item);
 
     static void gpio_isr(void*);
 #if UNUSED
@@ -76,6 +75,9 @@ private:
 #endif
 
 public:
+    // DEBT: Don't expose as public - however, most of these will be in the impl eventually
+    // anyhow
+    void emit_state(const Item& item);
     // DEBT: Not sure I want to expose the whole queue here, but seems OK
     embr::freertos::layer1::queue<Notification, 10> queue;
 

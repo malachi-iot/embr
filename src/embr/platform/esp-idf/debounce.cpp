@@ -30,20 +30,24 @@ struct ThresholdImpl : DurationImpl2<Item*, 80>
         detail::Debouncer::duration d_now(now);
 
         detail::Debouncer& d = v->debouncer();
+        const detail::Debouncer& d2 = d;    // DEBT: Workaround to get at const noise_or_signal
         bool level = v->on();
         ESP_DRAM_LOGD(TAG, "process: state=%s:%s, level=%u, event_due=%llu, now=%llu, d_now=%llu",
             to_string(d.state()), to_string(d.substate()), level,
             v->event_due(), now.count(), d_now.count());
         bool state_changed = d.time_passed(now, level);
-        ESP_DRAM_LOGD(TAG, "process: state=%s:%s, changed=%u",
-            to_string(d.state()), to_string(d.substate()), state_changed);
+        ESP_DRAM_LOGD(TAG, "process: state=%s:%s, changed=%u, strength=%u",
+            to_string(d.state()), to_string(d.substate()), state_changed, d2.noise_or_signal());
 
-        if(!state_changed)
+        if(state_changed)
+        {
+            v->parent_->emit_state(*v);
+        }
+        else
         {
             // evaluate whether we need more time and if so, reschedule
             if(d.substate() != detail::Debouncer::Idle)
             {
-                const detail::Debouncer& d2 = d;    // DEBT: Workaround to get at const noise_or_signal
                 auto amt = d2.noise_or_signal() - d2.signal_threshold();
 
                 // DEBT: Fudge factor
