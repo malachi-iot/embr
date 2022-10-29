@@ -172,12 +172,11 @@ public:
 
     // Creates a default context if non is specifically provided
     // DEBT: Some kind of policy should feed the parameters to default context
-    inline context_type<> create_context(bool in_isr = false)
+    inline context_type<> create_context(bool in_isr = false, bool use_mutex = true)
     {
         estd::monostate uc;
 
-        //return context_type<>(*this, in_isr);
-        return context_factory::create_context(*this, uc, in_isr, true);
+        return context_factory::create_context(*this, uc, in_isr, use_mutex);
     }
 
 protected:
@@ -365,10 +364,10 @@ public:
 #endif
 
 #ifdef __cpp_variadic_templates
-    template <class ...TArgs>
-    void schedule(TArgs&&...args)
+    // DEBT: Not so elegant
+    template <class TContext, class ...TArgs>
+    void schedule_with_context(internal::SchedulerContext<this_type, TContext>& context, TArgs&&...args)
     {
-        context_type<> context = create_context();
         mutex_guard m(context);
 
         accessor value = event_queue.emplace_with_notify(
@@ -382,6 +381,13 @@ public:
         do_notify_scheduled(value, context);
 
         value.unlock();
+    }
+
+    template <class ...TArgs>
+    inline void schedule(TArgs&&...args)
+    {
+        context_type<> context = create_context();
+        schedule_with_context(context, std::forward<TArgs>(args)...);
     }
 
 

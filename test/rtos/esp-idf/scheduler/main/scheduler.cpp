@@ -73,8 +73,10 @@ void scheduler_init()
         {
             ESP_LOGV(TAG, "Got here");
             rapid_counter = 6;
+            // DEBT: Need to do this because otherwise mutex goes into a recursive lock
+            auto context = scheduler.create_context(false, false);
             // FIX: This flips out if wake isn't far enough in the future
-            scheduler.schedule(*wake + 1ms, rapid_f);
+            scheduler.schedule_with_context(context, *wake + 1ms, rapid_f);
         }
 
         *wake += 2500ms;

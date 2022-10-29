@@ -59,6 +59,7 @@ struct DurationConverter<TInt, -1, denominator_>
         return (convert_from.count() * mul) >> precision_helper;
     }
 
+    // https://bit.ly/3TQ6AJ2
     template <typename Rep, typename Period>
     estd::chrono::duration<Rep, Period>& convert(int_type convert_from, estd::chrono::duration<Rep, Period>* convert_to) const
     {
