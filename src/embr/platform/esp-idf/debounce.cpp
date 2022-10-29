@@ -27,15 +27,17 @@ struct ThresholdImpl : DurationImpl2<Item*, 80>
     // enough to yield a state change
     bool process(value_type v, time_point now)
     {
+        time_point delta = now - v->last_wakeup_;
+
         detail::Debouncer::duration d_now(now);
 
         detail::Debouncer& d = v->debouncer();
         const detail::Debouncer& d2 = d;    // DEBT: Workaround to get at const noise_or_signal
         bool level = v->on();
-        ESP_DRAM_LOGD(TAG, "process: state=%s:%s, level=%u, event_due=%llu, now=%llu, d_now=%llu",
+        ESP_DRAM_LOGD(TAG, "process: state=%s:%s, level=%u, event_due=%llu, now=%llu, d_now=%llu, delta=%llu",
             to_string(d.state()), to_string(d.substate()), level,
-            v->event_due(), now.count(), d_now.count());
-        bool state_changed = d.time_passed(now, level);
+            v->event_due(), now.count(), d_now.count(), delta.count());
+        bool state_changed = d.time_passed(delta, level);
         ESP_DRAM_LOGD(TAG, "process: state=%s:%s, changed=%u, strength=%u",
             to_string(d.state()), to_string(d.substate()), state_changed, d2.noise_or_signal());
 
@@ -53,6 +55,7 @@ struct ThresholdImpl : DurationImpl2<Item*, 80>
                 // DEBT: Fudge factor
                 amt += estd::chrono::milliseconds(1);
 
+                v->last_wakeup_ = v->wakeup_;
                 v->wakeup_ = now + amt;
                 return true;
             }
@@ -146,6 +149,9 @@ inline void Debouncer::gpio_isr()
                     auto context = scheduler.create_context(true);  // isr context
                     // call isr-specific now()
                     item.wakeup_ = scheduler.now(true) + d.signal_threshold();
+                    // DEBT: Sloppy assignment of last_wakeup_
+                    item.last_wakeup_ = item.wakeup_;
+                    
                     scheduler.schedule_with_context(context, &item);
 
                     // DEBT: Wrap the following up inside scheduler impl on_xxx itself, and

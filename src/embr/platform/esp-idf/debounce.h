@@ -20,6 +20,7 @@ struct Item
     Debouncer* parent_;
     gpio pin_;
     bool low_means_pressed = true;
+    duration last_wakeup_;
     duration wakeup_;
 
     detail::Debouncer& debouncer() { return debouncer_; }

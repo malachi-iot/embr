@@ -24,9 +24,9 @@ bool IRAM_ATTR DurationImplBaseBase::helper<TScheduler>::timer_callback (void* a
     auto now = estd::chrono::esp_clock::now();
     auto duration = now - last_now_diagnostic;
 
-    ets_printf("1 TimerScheduler Intr: [%d:%d] duration=%lldus, timer_counter=%lld, scheduler=%p\n",
-        timer.group, timer.idx,
-        duration.count(), counter, &scheduler);
+    ESP_DRAM_LOGD(TAG, "timer_callback: [%d:%d] (%p) duration=%lldus, timer_counter=%lld",
+        timer.group, timer.idx, &scheduler,
+        duration.count(), counter);
 
     // DEBT: Don't do auto here
     // DEBT: Pass in something like 'in_isr_tag' do disambiguate inputs to create_context
@@ -47,7 +47,7 @@ bool IRAM_ATTR DurationImplBaseBase::helper<TScheduler>::timer_callback (void* a
 
         uint64_t native = scheduler.duration_converter().convert(next);
 
-        ets_printf("1.1 TimerScheduler Intr: size=%d, next=%llu / %llu(ticks)\n",
+        ESP_DRAM_LOGD(TAG, "timer_callback: size=%d, next=%llu / %llu(ticks)",
             scheduler.size(),
             next.count(),
             native);
