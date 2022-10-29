@@ -39,6 +39,18 @@ protected:
     // "default is APB_CLK running at 80 MHz"
     void init(TScheduler* scheduler, uint32_t divider);
 
+    inline uint64_t get_counter(bool in_isr) const
+    {
+        if(in_isr)
+            return timer().get_counter_value_in_isr();
+        else
+        {
+            uint64_t v;
+            ESP_ERROR_CHECK(timer().get_counter_value(&v));
+            return v;
+        }
+    }
+
 public:
     // DEBT: should be protected - impl() trick interrupts that
     // DEBT: This in particular is a better candidate for subject/observer
@@ -61,18 +73,6 @@ struct DurationImplBase : DurationImplBaseBase
 
     static constexpr bool is_chrono() { return false; }
 
-    inline int_type now(bool in_isr = false)
-    {
-        if(in_isr)
-            return (int_type)timer().get_counter_value_in_isr();
-        else
-        {
-            uint64_t v;
-            ESP_ERROR_CHECK(timer().get_counter_value(&v));
-            return (int_type) v;
-        }
-    }
-
     constexpr DurationImplBase(const Timer& timer) : DurationImplBaseBase{timer} {}
     constexpr DurationImplBase(timer_group_t group, timer_idx_t idx) : DurationImplBaseBase(group, idx) {}
 };
@@ -86,18 +86,6 @@ struct DurationImplBase<estd::chrono::duration<Rep, Period> > : DurationImplBase
     typedef Rep int_type;
 
     static constexpr bool is_chrono() { return true; }
-
-    inline duration now(bool in_isr = false)
-    {
-        if(in_isr)
-            return duration(timer().get_counter_value_in_isr());
-        else
-        {
-            uint64_t v;
-            ESP_ERROR_CHECK(timer().get_counter_value(&v));
-            return duration(v);
-        }
-    }
 
     constexpr DurationImplBase(const Timer& timer) : DurationImplBaseBase{timer} {}
     constexpr DurationImplBase(timer_group_t group, timer_idx_t idx) : DurationImplBaseBase(group, idx) {}
@@ -129,6 +117,13 @@ struct DurationImpl2 : DurationImplBase<TTimePoint>,
 
     static constexpr bool is_runtime_divider() { return divider_ == -1; }
     const converter_type& duration_converter() const { return *this; }
+
+    inline time_point now(bool in_isr = false)
+    {
+        time_point v;
+        duration_converter().convert(base_type::get_counter(in_isr), &v);
+        return v;
+    }
 
     Timer& timer() { return base_type::timer(); }
 

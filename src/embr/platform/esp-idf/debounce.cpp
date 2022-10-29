@@ -34,7 +34,7 @@ struct ThresholdImpl : DurationImpl2<Item*, 80>
         detail::Debouncer& d = v->debouncer();
         const detail::Debouncer& d2 = d;    // DEBT: Workaround to get at const noise_or_signal
         bool level = v->on();
-        ESP_DRAM_LOGD(TAG, "process: state=%s:%s, level=%u, event_due=%llu, now=%llu, d_now=%llu, delta=%llu",
+        ESP_DRAM_LOGV(TAG, "process: state=%s:%s, level=%u, event_due=%llu, now=%llu, d_now=%llu, delta=%llu",
             to_string(d.state()), to_string(d.substate()), level,
             v->event_due(), now.count(), d_now.count(), delta.count());
         bool state_changed = d.time_passed(delta, level);
