@@ -28,9 +28,12 @@ struct ThresholdImpl : DurationImpl2<Item*, 80>
     bool process(value_type v, time_point now)
     {
         detail::Debouncer& d = v->debouncer();
-        bool state_changed = d.time_passed(now, v->on());
-
-        ESP_DRAM_LOGD(TAG, "process: %d", state_changed);
+        bool level = v->on();
+        ESP_DRAM_LOGD(TAG, "process: state=%s:%s, level=%u",
+            to_string(d.state()), to_string(d.substate()), level);
+        bool state_changed = d.time_passed(now, level);
+        ESP_DRAM_LOGD(TAG, "process: state=%s:%s, changed=%u",
+            to_string(d.state()), to_string(d.substate()), state_changed);
 
         if(!state_changed)
         {
@@ -130,13 +133,16 @@ inline void Debouncer::gpio_isr()
                     // NOTE: Not sure if we can/should do this in an ISR
                     //timer_set_counter_value(timer_group, timer_idx, 0);   // This works -- now trying pause method
                     
-#if UNUSED
+                    auto context = scheduler.create_context(true);  // isr context
+                    // call isr-specific now()
+                    item.wakeup_ = scheduler.now(true) + d.signal_threshold();
+                    scheduler.schedule_with_context(context, &item);
+
+                    // DEBT: Wrap the following up inside scheduler impl on_xxx itself, and
+                    // set actual alarm_value also
+                    Timer& timer = scheduler.timer();
                     timer.enable_alarm_in_isr();
                     timer.start();
-#else
-                    auto context = scheduler.create_context(true);  // isr context
-                    scheduler.schedule_with_context(context, &item);
-#endif
 
                 }
                 ets_printf("4 Intr state=%s:%s\n", to_string(d.state()), to_string(d.substate()));
