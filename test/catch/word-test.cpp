@@ -1,6 +1,8 @@
 #include <catch.hpp>
 
 #include <embr/word.h>
+#include <embr/bits/word.hpp>
+#include <estd/chrono.h>
 
 using namespace embr;
 
@@ -64,5 +66,48 @@ TEST_CASE("word type test", "[word]")
         auto v_short1 = embr::narrow_cast<word<10, true> >(v);
 
         REQUIRE(v_short1 == 3);
+    }
+    SECTION("masking")
+    {
+        union
+        {
+            uint16_t v;
+            embr::bits::internal::word<16> v2;
+            embr::word<6, false, embr::word_strictness::masking> storage;
+        };
+
+        v = 0;
+
+        v2.set<8>(1);
+
+        REQUIRE(v == 0x0100);
+        REQUIRE(v2 == 0x0100);
+        REQUIRE(storage.value() == 0);
+
+        v2.set<10>(1);
+
+        REQUIRE(v == 0x0500);
+        REQUIRE(v2 == 0x0500);
+
+        // Ahh, in this case we want to force embr::word to be 16 bits wide.  Code auto deduces down to 8 bits
+        //REQUIRE(storage.value() == 1);
+    }
+    SECTION("chrono")
+    {
+        // DEBT: All of these helpers return underlying int type, which for this scenario is a pain
+        //constexpr auto flags = embr::internal::enum_or_all<embr::word_strictness, embr::word_strictness::arithmetic, embr::word_strictness::masking>::value;
+        //constexpr auto flags = embr::strictness_helper<embr::word_strictness::none>
+            //::or_all<embr::word_strictness::arithmetic, embr::word_strictness::masking>::value;
+        // DEBT: This too is a pain
+        constexpr auto flags = (embr::word_strictness) ((int)embr::word_strictness::arithmetic | (int)embr::word_strictness::masking);
+
+        estd::chrono::duration<embr::word<5, false, flags> > seconds(3);
+
+        // TODO: Some incompatibilities
+        estd::chrono::milliseconds ms = seconds;
+        //estd::chrono::duration_cast<estd::chrono::milliseconds>(seconds)
+
+        REQUIRE(seconds.count() == 3);
+        REQUIRE(ms.count() == 3000);
     }
 }

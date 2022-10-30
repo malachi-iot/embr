@@ -80,7 +80,7 @@ private:
 public:
     // DEBT: Make this and base embr::word hide their default constructor according to
     // a strictness flag setting (currently the unimplemented word_strictness::initialized)
-    ESTD_CPP_CONSTEXPR_RET word() {}
+    EMBR_CPP_DEFAULT_CTOR(word)
 
     typedef internal::descriptor_base<sizeof(word_type) * byte_size()> descriptor_type;
 

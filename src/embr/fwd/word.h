@@ -44,4 +44,13 @@ template <size_t bits, bool is_signed = false, word_strictness strict =
     >
 class word;
 
+// NOTE: This macro is useful so that c++11 can have a trivial constructor, but still
+// be c++03 compatible
+// DEBT: Consider putting this into ESTD
+#if __cpp_constexpr
+#define EMBR_CPP_DEFAULT_CTOR(name) constexpr name() = default;
+#else
+#define EMBR_CPP_DEFAULT_CTOR(name) inline name() {};
+#endif
+
 }

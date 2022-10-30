@@ -41,6 +41,14 @@ struct numeric_limits<embr::word<bits, false, strict> >
     static CONSTEXPR int digits = bits;
 };
 
+// Helper macro just for this header
+#pragma push_macro("EMBR_WORD_ARITHMETIC")
+#if FEATURE_EMBR_WORD_STRICTNESS
+#define EMBR_WORD_ARITHMETIC ,typename Enabled = estd::enable_if_t<any<s, word_strictness::arithmetic>()>
+#else
+#define EMBR_WORD_ARITHMETIC
+#endif
+
 #if __cplusplus >= 201103L
 // Converts word back to requested integer with a compile time guard against
 // narrowing conversion
@@ -186,6 +194,16 @@ public:
 #ifdef FEATURE_CPP_DEFAULT_TARGS
         , class Enabled = typename estd::enable_if<(bits_rhs <= bits)>::type
 #endif
+    >
+    ESTD_CPP_CONSTEXPR_RET word operator *(word<bits_rhs> r) const
+    {
+        return word((type) (base_type::value_ * r.value()));
+    }
+
+    template <size_t bits_rhs
+#ifdef FEATURE_CPP_DEFAULT_TARGS
+        , class Enabled = typename estd::enable_if<(bits_rhs <= bits)>::type
+#endif
         >
     ESTD_CPP_CONSTEXPR_RET word operator &(word<bits_rhs> r) const
     {
@@ -232,6 +250,21 @@ ESTD_CPP_CONSTEXPR_RET word<bits, is_signed, s> operator +(
     return l + word<bits, is_signed, s>(r);
 }
 
+
+template <size_t bits, bool is_signed, word_strictness s EMBR_WORD_ARITHMETIC>
+ESTD_CPP_CONSTEXPR_RET word<bits, is_signed, s> operator *(
+    word<bits, is_signed, s> l, typename word<bits, is_signed, s>::type r)
+{
+    return l * word<bits, is_signed, s>(r);
+}
+
+template <size_t bits, bool is_signed, word_strictness s, typename TInt EMBR_WORD_ARITHMETIC>
+ESTD_CPP_CONSTEXPR_RET TInt operator *(
+    word<bits, is_signed, s> l, TInt r)
+{
+    return l.value() * r;
+}
+
 template <size_t bits, typename TInt>
 ESTD_CPP_CONSTEXPR_RET word<bits> operator <<(word<bits> l, TInt r)
 {
@@ -268,5 +301,7 @@ constexpr bool operator ==(const word<bits>& lhs, const word<bits>& rhs)
 
 
 }
+
+#pragma pop_macro("EMBR_WORD_ARITHMETIC")
 
 #include "platform/guard-out.h"

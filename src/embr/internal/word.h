@@ -91,7 +91,7 @@ protected:
 
     type value_;
 
-    ESTD_CPP_CONSTEXPR_RET word_base() {}
+    EMBR_CPP_DEFAULT_CTOR(word_base)
 
 #if FEATURE_EMBR_WORD_STRICTNESS
     constexpr word_base(const type& value) : value_
