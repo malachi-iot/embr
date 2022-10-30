@@ -52,12 +52,17 @@ bool IRAM_ATTR DurationImplBaseBase::helper<TScheduler>::timer_callback (void* a
             next.count(),
             native);
 
-        scheduler.timer().set_alarm_value_in_isr(native);
+        timer.set_alarm_value_in_isr(native);
+        timer.start();
     }
     else
     {
-        ets_printf("1.2 TimerScheduler Intr: no further events\n");
-        //timer.pause();
+        ESP_DRAM_LOGD(TAG, "timer_callback: no further events");
+
+        // DEBT: I can't explain it, our callback gets called but
+        // 'counter' itself freezes
+        //timer.set_counter_value(0);
+        timer.pause();
     }
 
     // "The callback should return a bool value to determine whether need to do YIELD at the end of the ISR."
@@ -135,15 +140,35 @@ inline void DurationImpl2<T, divider_, TTimePoint, TReference>::on_scheduled(
         t.count(),
         native);
 
+    if(context.is_processing())
+    {
+
+    }
+
     // DEBT: Works, but sloppy - clean up semi-lazy init of timer when outside ISR
     if(context.scheduler().size() == 1 && !context.in_isr())
     {
         timer().set_alarm(TIMER_ALARM_EN);
         timer().set_alarm_value(native);
-        timer().start();
     }
+
+    timer().start();
 }
 
+template <class T, int divider_, typename TTimePoint, class TReference>
+template <class TScheduler>
+inline void DurationImpl2<T, divider_, TTimePoint, TReference>::on_processed(
+    const value_type* value, time_point t,
+    const internal::SchedulerContextBase<TScheduler>& context)
+{
+    if(value == nullptr)
+    {
+        // we finished a batch of processing and arrive here
+
+        ESP_DRAM_LOGD(TAG, "on_processed: finished processing - count=%d",
+            context.scheduler().size());
+    }
+}
 
 /*
 template <class TScheduler>

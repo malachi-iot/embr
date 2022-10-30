@@ -435,6 +435,8 @@ public:
 
         while(!event_queue.empty())
         {
+            context.is_processing(true);
+
             scoped_lock<accessor> t(top());
             time_point eval_time = impl().get_time_point(*t);
 
@@ -462,12 +464,15 @@ public:
             }
             else
             {
-                // NOTE: Currently this only emits if there was something to process in the first place
-                // So in other words, denotes the end of a 1+ item batch
                 do_notify_processed(nullptr, current_time, context);
+                context.is_processing(false);
                 return;
             }
         }
+
+        // DEBT: Clean this up via a wrapper/internal call
+        do_notify_processed(nullptr, current_time, context);
+        context.is_processing(false);
     }
 
 

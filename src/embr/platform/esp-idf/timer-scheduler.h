@@ -156,6 +156,10 @@ struct DurationImpl2 : DurationImplBase<TTimePoint>,
     void on_scheduled(const value_type& value,
         const internal::SchedulerContextBase<TScheduler>& context);
 
+    template <class TScheduler>
+    void on_processed(const value_type* value, time_point,
+        const internal::SchedulerContextBase<TScheduler>& context);
+
     constexpr DurationImpl2(const Timer& timer) : base_type{timer} {}
     constexpr DurationImpl2(timer_group_t group, timer_idx_t idx) : base_type(group, idx) {}
 };

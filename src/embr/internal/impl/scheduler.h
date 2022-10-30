@@ -40,6 +40,16 @@ struct SchedulerContextBase : SchedulerContextFlags,
     constexpr SchedulerContextBase(scheduler_type& s, bool in_isr, bool use_mutex) :
         SchedulerContextFlags(in_isr, use_mutex),
         scheduler_(s) {}
+
+protected:
+    // DEBT: Sloppy
+    bool flag1_ : 1;
+    bool flag2_ : 1;
+    bool flag3_ : 1;
+
+public:
+    bool is_processing() const { return flag1_; }
+    void is_processing(bool v) { flag1_ = v; }
 };
 
 template <class TScheduler, class TUserContext = estd::monostate>
