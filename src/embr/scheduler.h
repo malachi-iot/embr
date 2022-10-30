@@ -496,6 +496,13 @@ public:
     {
         impl_type::init(this, std::forward<TArgs>(args)...);
     }
+
+    // EXPERIMENTAL but liking this better - scheduler start/stop is intuitive
+    template <class ...TArgs>
+    inline void start(TArgs&&...args)
+    {
+        impl_type::start(this, std::forward<TArgs>(args)...);
+    }
 #endif
 };
 

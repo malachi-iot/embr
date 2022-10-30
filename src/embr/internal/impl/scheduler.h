@@ -130,6 +130,9 @@ struct ReferenceBaseBase
 
     template <class T, class TContext>
     inline void on_scheduled(const T& value, TContext& context) {}
+
+    template <class TScheduler>
+    inline void start(TScheduler*) {}
 };
 
 template <typename TTimePoint = void>

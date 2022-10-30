@@ -42,9 +42,7 @@ void scheduler_init()
     gpio_init();
 
     scheduler.start();
-
-    // FIX: Compiles, but WDT crashes when we get to fast flash
-    scheduler_new.start(&scheduler_new);
+    scheduler_new.start();
 
     typedef FunctorImpl::time_point time_point;
 
@@ -79,6 +77,8 @@ void scheduler_init()
             ESP_LOGV(TAG, "Got here");
             rapid_counter = 6;
             // DEBT: Need to do this because otherwise mutex goes into a recursive lock
+            // not bad to make a "no mutex" context like this, but we would like a true
+            // recursive lock option too
             auto context = scheduler.create_context(false, false);
             // FIX: This flips out if wake isn't far enough in the future
             scheduler.schedule_with_context(context, *wake + 1ms, rapid_f);

@@ -4,7 +4,7 @@
 #include <estd/port/freertos/mutex.h>
 #include <estd/port/freertos/thread.h>
 
-#include <embr/scheduler.h>
+#include <embr/scheduler.hpp>
 
 #ifdef ESP_PLATFORM
 #include "esp_log.h"
@@ -243,14 +243,20 @@ struct FunctorImpl2 : FunctorImpl
         early_wakeup(false) {}
 
     template <class TScheduler>
-    void start(TScheduler* scheduler)
+    void start(TScheduler* scheduler,
+        configSTACK_DEPTH_TYPE usStackDepth = CONFIG_EMBR_FREERTOS_SCHEDULER_TASKSIZE,
+        UBaseType_t uxPriority = CONFIG_EMBR_FREERTOS_SCHEDULER_PRIORITY)
     {
-        configSTACK_DEPTH_TYPE usStackDepth = CONFIG_EMBR_FREERTOS_SCHEDULER_TASKSIZE;
-        UBaseType_t uxPriority = CONFIG_EMBR_FREERTOS_SCHEDULER_PRIORITY;
-
         TaskHandle_t t;
         BaseType_t result = xTaskCreate(embr::scheduler::freertos::notify_daemon_task<TScheduler>, "embr:scheduler2",
                                         usStackDepth, scheduler, uxPriority, &t);
+
+        if(result != pdPASS)
+        {
+#ifdef ESP_PLATFORM
+            ESP_LOGW(TAG, "Could not start scheduler daemon task");
+#endif
+        }
 
         daemon = t;
     }
