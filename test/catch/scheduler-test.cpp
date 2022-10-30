@@ -2,7 +2,7 @@
 
 #include <bitset>
 
-#include <embr/scheduler.h>
+#include <embr/scheduler.hpp>
 #include <embr/observer.h>
 
 // Not available because we test against C++11

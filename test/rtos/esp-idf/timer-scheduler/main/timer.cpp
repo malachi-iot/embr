@@ -55,14 +55,14 @@ void timer_scheduler_tester()
     static embr::internal::layer1::Scheduler<5, decltype(test3)> s3(params_tag, TIMER_GROUP_0, TIMER_0);
     static control_structure1 c1{1s};
 
-    s3.init(&s3);
+    s3.init();
     s3.schedule(&c1);
 
     const char* TAG = "timer_scheduler_tester";
 
     static scheduler_type scheduler(params_tag, timer);
 
-    scheduler.init(&scheduler, 16000);
+    scheduler.init(16000);
 
     scheduler.schedule(estd::chrono::milliseconds(250));
     scheduler.schedule(estd::chrono::milliseconds(500));

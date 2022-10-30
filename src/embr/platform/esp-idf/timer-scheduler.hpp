@@ -1,6 +1,7 @@
 #pragma once
 
 #include "timer-scheduler.h"
+#include "../../scheduler.hpp"
 #include "../../exp/runtime-chrono.h"
 
 namespace embr { namespace esp_idf {
