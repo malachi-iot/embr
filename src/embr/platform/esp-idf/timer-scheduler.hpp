@@ -32,6 +32,7 @@ bool IRAM_ATTR DurationImplBaseBase::helper<TScheduler>::timer_callback (void* a
     // DEBT: Pass in something like 'in_isr_tag' do disambiguate inputs to create_context
     auto context = scheduler.create_context(true);  // create an in_isr context
 
+    // DEBT: Pretty sure our context_factory handles this now, but keeping around until 100% sure
     context.higherPriorityTaskWoken = false;
 
     // convert native esp32 Timer format back to scheduler format
@@ -59,8 +60,7 @@ bool IRAM_ATTR DurationImplBaseBase::helper<TScheduler>::timer_callback (void* a
     {
         ESP_DRAM_LOGD(TAG, "timer_callback: no further events");
 
-        // DEBT: I can't explain it, our callback gets called but
-        // 'counter' itself freezes
+        // Can't do this because this refers only to initial counter value
         //timer.set_counter_value(0);
         timer.pause();
     }
@@ -128,8 +128,7 @@ inline void DurationImpl::on_scheduled(const value_type& value,
 template <class T, int divider_, typename TTimePoint, class TReference>
 template <class TScheduler>
 inline void DurationImpl2<T, divider_, TTimePoint, TReference>::on_scheduled(
-    const value_type& value,
-    const embr::internal::SchedulerContextBase<TScheduler>& context)
+    const value_type& value, const scheduler_context_type<TScheduler>& context)
 {
     ESP_DRAM_LOGV(TAG, "on_scheduled: entry");
     
@@ -159,8 +158,7 @@ inline void DurationImpl2<T, divider_, TTimePoint, TReference>::on_scheduled(
 template <class T, int divider_, typename TTimePoint, class TReference>
 template <class TScheduler>
 inline void DurationImpl2<T, divider_, TTimePoint, TReference>::on_processed(
-    const value_type* value, time_point t,
-    const embr::internal::SchedulerContextBase<TScheduler>& context)
+    const value_type* value, time_point t, const scheduler_context_type<TScheduler>& context)
 {
     if(value == nullptr)
     {

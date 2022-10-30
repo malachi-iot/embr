@@ -12,7 +12,7 @@ menu "Embr Button Test"
     endchoice
 
     choice
-        prompt "ISR mode"
+        prompt "ISR mode (inactive, always callback - keeping for Kconfig reference)"
         depends on ISR_MODE
 
         config ISR_LOW_LEVEL_MODE

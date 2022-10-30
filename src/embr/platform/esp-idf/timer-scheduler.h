@@ -151,14 +151,16 @@ struct DurationImpl2 : DurationImplBase<TTimePoint>,
         base_type::init(scheduler, divider_);
     }
 
+    // NOTE: Beware, do not name 'context_type' because impl already has that reserved for
+    // impl-specialized context
+    template <class TScheduler>
+    using scheduler_context_type = embr::internal::SchedulerContextBase<TScheduler>;
 
     template <class TScheduler>
-    void on_scheduled(const value_type& value,
-        const embr::internal::SchedulerContextBase<TScheduler>& context);
+    void on_scheduled(const value_type& value, const scheduler_context_type<TScheduler>&);
 
     template <class TScheduler>
-    void on_processed(const value_type* value, time_point,
-        const embr::internal::SchedulerContextBase<TScheduler>& context);
+    void on_processed(const value_type* value, time_point, const scheduler_context_type<TScheduler>&);
 
     constexpr DurationImpl2(const Timer& timer) : base_type{timer} {}
     constexpr DurationImpl2(timer_group_t group, timer_idx_t idx) : base_type(group, idx) {}

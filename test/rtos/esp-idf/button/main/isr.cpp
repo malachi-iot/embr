@@ -19,13 +19,7 @@ void test_isr()
 {
     const char* TAG = "test_isr";
 
-#if ISR_CALLBACK_MODE
-    bool callback_mode = true;
-#else
-    bool callback_mode = false;
-#endif
-
-    embr::esp_idf::Debouncer d(callback_mode);
+    embr::esp_idf::Debouncer d(TIMER_GROUP_0, TIMER_0);
 
     d.track(CONFIG_BUTTON_PIN);
 

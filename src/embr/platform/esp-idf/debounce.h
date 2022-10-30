@@ -89,18 +89,18 @@ public:
 private:
     gpio_isr_handle_t gpio_isr_handle;
 
-    void timer_init(bool callback_mode);
     void gpio_isr();
     void timer_group0_isr();
 
     static void gpio_isr(void*);
 #if UNUSED
+    void timer_init(bool callback_mode);
     static void timer_group0_isr(void*);
     static bool timer_group0_callback(void *param);
 #endif
 
     embr::internal::layer1::Scheduler<5, internal::ThresholdImpl<> > scheduler;
-    
+
 public:
     // DEBT: Don't expose as public - however, most of these will be in the impl eventually
     // anyhow
@@ -109,7 +109,7 @@ public:
     embr::freertos::layer1::queue<Notification, 10> queue;
 
 public:
-    Debouncer(bool callback_mode);
+    Debouncer(timer_group_t, timer_idx_t);
     ~Debouncer();
 
     void track(int pin);

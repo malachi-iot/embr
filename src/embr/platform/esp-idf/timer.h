@@ -90,6 +90,9 @@ struct Timer
         timer_group_set_alarm_value_in_isr(group, idx, alarm_value);
     }
 
+    /// @brief  Sets initial counter value
+    /// @param load_val 
+    /// @return 
     esp_err_t set_counter_value(uint64_t load_val)
     {
         return timer_set_counter_value(group, idx, load_val);

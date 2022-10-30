@@ -247,20 +247,15 @@ void Debouncer::timer_init(bool callback_mode)
 
     timer.enable_intr();
 }
-#else
-void Debouncer::timer_init(bool callback_mode)
-{
-    scheduler.init(&scheduler);
-}
 #endif
 
 
-Debouncer::Debouncer(bool callback_mode) //: queue(10)
-    : scheduler(embr::internal::scheduler::impl_params_tag{}, TIMER_GROUP_0, TIMER_0)
+Debouncer::Debouncer(timer_group_t timer_group, timer_idx_t timer_idx) //: queue(10)
+    : scheduler(embr::internal::scheduler::impl_params_tag{}, timer_group, timer_idx)
 {
     ESP_ERROR_CHECK(
         gpio_isr_register(gpio_isr, this, ESP_INTR_FLAG_LEVEL1, &gpio_isr_handle));
-    timer_init(callback_mode);
+    scheduler.init(&scheduler);
     last_now = esp_clock::now();
     held_timer.start(1s);
 }
