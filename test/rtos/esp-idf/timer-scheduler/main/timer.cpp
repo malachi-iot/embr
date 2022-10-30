@@ -9,14 +9,12 @@
 using namespace embr::esp_idf;
 using namespace estd::chrono_literals;
 
-typedef DurationImpl impl_type;
+typedef embr::internal::scheduler::impl::ReferenceBase<
+    estd::chrono::duration<uint32_t, estd::milli> >::value_type control_structure;
+
+typedef DurationImpl2<control_structure> impl_type;
 typedef embr::internal::layer1::Scheduler<5, impl_type> scheduler_type;
 static constexpr embr::internal::scheduler::impl_params_tag params_tag;
-
-struct control_structure
-{
-    typedef long time_point;
-};
 
 struct control_structure1
 {
@@ -64,20 +62,10 @@ void timer_scheduler_tester()
 
     static scheduler_type scheduler(params_tag, timer);
 
-    scheduler.init(&scheduler);
+    scheduler.init(&scheduler, 16000);
 
-    {
-    scheduler_type::value_type scheduled(estd::chrono::milliseconds(250));
-
-    scheduler.schedule(scheduled);
-
-    }
-
-    {
-    scheduler_type::value_type scheduled(estd::chrono::milliseconds(500));
-
-    scheduler.schedule(scheduled);
-    }
+    scheduler.schedule(estd::chrono::milliseconds(250));
+    scheduler.schedule(estd::chrono::milliseconds(500));
 }
 
 

@@ -150,10 +150,17 @@ struct ReferenceBase : ReferenceBaseBase
     // Reference implementation only.  Yours may be quite different
     struct value_type
     {
+        typedef TTimePoint time_point;
+
         time_point event_due_;
 
+        const time_point& event_due() const { return event_due_; }
+
+        value_type() = default;     // DEBT: priority_queue may need this, but see if we can phase that out.  If not, document why
         value_type(time_point event_due) : event_due_(event_due) {}
         value_type(const value_type& copy_from) = default;
+
+        bool process(time_point) { return false; }
     };
 };
 

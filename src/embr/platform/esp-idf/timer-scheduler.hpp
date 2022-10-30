@@ -93,6 +93,7 @@ void DurationImplBaseBase::init(TScheduler* scheduler, uint32_t divider)
     timer_scheduler_init(timer(), divider, &helper<TScheduler>::timer_callback, scheduler);
 }
 
+/*
 template <class TScheduler>
 inline void DurationImpl::on_scheduling(value_type& value,
     embr::internal::SchedulerContextBase<TScheduler>& context)
@@ -123,7 +124,7 @@ inline void DurationImpl::on_scheduled(const value_type& value,
         timer().start();
     }
 }
-
+*/
 
 template <class T, int divider_, typename TTimePoint, class TReference>
 template <class TScheduler>

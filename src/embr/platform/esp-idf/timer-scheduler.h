@@ -141,6 +141,8 @@ struct DurationImpl2 : DurationImplBase<TTimePoint>,
         typename = typename estd::enable_if<shadowed == -1>::type >
     void init(TScheduler* scheduler, uint32_t divider)
     {
+        // DEBT: Sloppy way of initializing numerator
+        this->numerator_ = divider;
         base_type::init(scheduler, divider);
     }
 
@@ -166,92 +168,6 @@ struct DurationImpl2 : DurationImplBase<TTimePoint>,
     constexpr DurationImpl2(timer_group_t group, timer_idx_t idx) : base_type(group, idx) {}
 };
 
-
-/*
-template <typename TInt>
-struct DurationImpl2<TInt, -1> : 
-    DurationImplBase<TInt>,
-    embr::experimental::DurationConverter<TInt, -1>
-{
-    typedef DurationImplBase<TInt> base_type;
-
-    constexpr DurationImpl2(const Timer& timer) : base_type{timer} {}
-    constexpr DurationImpl2(timer_group_t group, timer_idx_t idx) : base_type(group, idx) {}
-};
-*/
-
-
-/*
-NOTE: Don't think we'll do offset in any case
-// 64-bit native versions don't do offset
-template <int divisor>
-struct DurationImpl2<uint64_t, divisor>
-{
-
-};
-
-
-// 64-bit native versions don't do offset
-template <>
-struct DurationImpl2<uint64_t, -1> : embr::experimental::TimerSchedulerConverter
-{
-
-};
-*/
-
-
-struct DurationImpl : DurationImplBaseBase
-{
-    typedef DurationImplBaseBase base_type;
-
-    static constexpr const char* TAG = "DurationImpl";
-
-    // TODO: Optimize in the fully constexpr flavor
-    typedef embr::experimental::DurationConverter<uint64_t, -1> converter_type;
-
-    converter_type converter_;
-
-    const converter_type& duration_converter() const { return converter_; }
-
-    typedef estd::chrono::duration<uint32_t, estd::micro> time_point;
-
-    struct value_type
-    {
-        //embr::detail::Debouncer* debouncer;
-        time_point wakeup;
-
-        value_type(time_point wakeup) : wakeup{wakeup} {}
-        value_type() = default;
-    };
-
-    static inline const time_point& get_time_point(const value_type& v)
-    {
-        return v.wakeup;
-    }
-
-    static bool process(value_type& v, time_point now)
-    {
-        ESP_DRAM_LOGD(TAG, "process: now=%luus", now.count());
-        return false;
-    }
-
-    template <class TScheduler>
-    inline void init(TScheduler* scheduler, uint32_t divider = 80)
-    {
-        base_type::init(scheduler, divider);
-    }
-
-    template <class TScheduler>
-    void on_scheduling(value_type& value,
-        embr::internal::SchedulerContextBase<TScheduler>& context);
-
-    template <class TScheduler>
-    void on_scheduled(const value_type& value,
-        embr::internal::SchedulerContextBase<TScheduler>& context);
-
-    constexpr DurationImpl(const Timer& timer) : DurationImplBaseBase{timer} {}
-    constexpr DurationImpl(timer_group_t group, timer_idx_t idx) : DurationImplBaseBase(group, idx) {}
-};
 
 // DEBT: Wrap all this up in a templatized class
 void timer_scheduler_init(Timer& timer, uint32_t divider, timer_isr_t, void*);
