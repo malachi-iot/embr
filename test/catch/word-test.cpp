@@ -69,20 +69,26 @@ TEST_CASE("word type test", "[word]")
     }
     SECTION("masking")
     {
+        // DEBT: See chrono comments
+        constexpr auto flags = (embr::word_strictness) ((int)embr::word_strictness::arithmetic | (int)embr::word_strictness::masking);
+
         union
         {
             uint16_t v;
             embr::bits::internal::word<16> v2;
-            embr::word<6, false, embr::word_strictness::masking> storage;
+            embr::word<6, false, flags, uint16_t> storage;
         };
 
         v = 0;
 
         v2.set<8>(1);
+        unsigned v3 = storage.value();
+
+        v3 &= storage.mask();
 
         REQUIRE(v == 0x0100);
         REQUIRE(v2 == 0x0100);
-        REQUIRE(storage.value() == 0);
+        REQUIRE(v3 == 0);
 
         v2.set<10>(1);
 

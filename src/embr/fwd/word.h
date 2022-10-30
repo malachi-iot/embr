@@ -10,6 +10,7 @@
 #endif
 
 #include "narrow_cast.h"
+#include "type_from_bits.h"
 
 namespace embr {
 
@@ -25,6 +26,7 @@ enum class word_strictness
     overflow    = 0x08,     ///< runtime indicator of overflow from shift operations - EXPERIMENTAL, not implemented
     initialized = 0x10,     ///< when true, disables default constructor thus requiring initialization - not implemented
 
+
     narrowing_and_arithmetic = narrowing | arithmetic,
     narrowing_and_masking = narrowing | masking,
 };
@@ -37,11 +39,11 @@ typedef unsigned word_strictness;
 // Auto-sizing word
 template <size_t bits, bool is_signed = false, word_strictness strict =
 #if FEATURE_EMBR_WORD_STRICTNESS
-    word_strictness::narrowing_and_arithmetic
+    word_strictness::narrowing_and_arithmetic,
 #else
-    word_strictness()
+    word_strictness(),
 #endif
-    >
+    typename TInt = typename type_from_bits<bits, is_signed>::type>
 class word;
 
 // NOTE: This macro is useful so that c++11 can have a trivial constructor, but still

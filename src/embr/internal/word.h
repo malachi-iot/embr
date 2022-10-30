@@ -72,10 +72,10 @@ struct narrow_cast<word<bits_cast_from, signed_from>, word<bits_cast_to, signed_
 // a) convenient place to experiment with mask & attributes
 // b) we can consolidate the current c++03 incompatible (any/all) mechanisms
 // c) nice to have the ceremony of all the operator overloads elsewhere (in 'word')
-template <size_t bits, bool is_signed, word_strictness strict>
-class word_base : public type_from_bits<bits, is_signed>
+template <size_t bits, bool is_signed, word_strictness strict,
+    typename T = typename type_from_bits<bits, is_signed>::type >
+class word_base
 {
-    typedef type_from_bits<bits, is_signed> base_type;
 #if FEATURE_EMBR_WORD_STRICTNESS
     typedef internal::enum_mask<word_strictness, strict> h;
 #endif
@@ -85,7 +85,7 @@ class word_base : public type_from_bits<bits, is_signed>
         (((std::uintmax_t)1 << (bits - 1)) - 1) | ((std::uintmax_t)1 << (bits - 1));
 
 public:
-    typedef typename base_type::type type;
+    typedef T type;
 
 protected:
 

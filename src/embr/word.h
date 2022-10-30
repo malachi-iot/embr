@@ -74,10 +74,10 @@ namespace embr {
 
 
 // Auto-sizing word
-template <size_t bits, bool is_signed, word_strictness strict>
-class word : public internal::word_base<bits, is_signed, strict>
+template <size_t bits, bool is_signed, word_strictness strict, typename T>
+class word : public internal::word_base<bits, is_signed, strict, T>
 {
-    typedef internal::word_base<bits, is_signed, strict> base_type;
+    typedef internal::word_base<bits, is_signed, strict, T> base_type;
 
 #if FEATURE_EMBR_WORD_STRICTNESS
     typedef internal::enum_mask<word_strictness, strict> h;
@@ -87,12 +87,10 @@ public:
     typedef typename base_type::type type;
 
 public:
+    EMBR_CPP_DEFAULT_CTOR(word)
     ESTD_CPP_CONSTEXPR_RET word(const type& value) : base_type(value) {}
-#ifdef FEATURE_CPP_MOVESEMANTIC
-    word() = default;
-    ESTD_CPP_CONSTEXPR_RET word(type&& value) : base_type(std::move(value)) {}
-#else
-    word() {}
+#ifdef __cpp_rvalue_reference
+    constexpr word(type&& value) : base_type(std::move(value)) {}
 #endif
 
     // DEBT: This can be optimized by skipping any masking altogether when the source
