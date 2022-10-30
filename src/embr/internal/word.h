@@ -94,10 +94,12 @@ protected:
     EMBR_CPP_DEFAULT_CTOR(word_base)
 
 #if FEATURE_EMBR_WORD_STRICTNESS
+    static constexpr bool do_init_masking() { return any<strict, word_strictness::init_masking>(); }
+
     constexpr word_base(const type& value) : value_
-        {any<strict, word_strictness::masking>() ? mask(value) : value} {}
-    constexpr word_base(type&& value) : value_{
-        any<strict, h::e::masking>() ? mask(value) : value} {}
+        {do_init_masking() ? mask(value) : value} {}
+    constexpr word_base(type&& value) : value_
+        {do_init_masking() ? mask(value) : value} {}
 #else
     ESTD_CPP_CONSTEXPR_RET word_base(const type& value) : value_(value) {}
 #ifdef FEATURE_CPP_MOVESEMANTIC
@@ -106,8 +108,12 @@ protected:
 #endif
 
 public:
-    ESTD_CPP_CONSTEXPR_RET const type& value() const { return value_; }
-    ESTD_CPP_CONSTEXPR_RET const type& cvalue() const { return value_; }
+    ESTD_CPP_CONSTEXPR_RET type cvalue() const
+    {
+        return any<strict, word_strictness::storage_masking>() ? mask(value_) : value_;
+    }
+
+    ESTD_CPP_CONSTEXPR_RET type value() const { return cvalue(); }
 
 #if FEATURE_EMBR_WORD_STRICTNESS
     // EXPERIMENTAL

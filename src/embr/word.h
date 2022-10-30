@@ -105,7 +105,8 @@ public:
     inline
 #endif
     word(const word<incoming_bits>& copy_from) :
-#if FEATURE_EMBR_WORD_STRICTNESS
+#if FEATURE_EMBR_WORD_STRICTNESS_DISABLED
+        // base_type handles all masking now.  Keeping around just incase I forgot something
         base_type(h::template all<h::e::masking>() ?
             base_type::mask(copy_from.cvalue()) :
             copy_from.cvalue())

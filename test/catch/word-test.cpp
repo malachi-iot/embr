@@ -82,21 +82,16 @@ TEST_CASE("word type test", "[word]")
         v = 0;
 
         v2.set<8>(1);
-        unsigned v3 = storage.value();
-
-        v3 &= storage.mask();
 
         REQUIRE(v == 0x0100);
         REQUIRE(v2 == 0x0100);
-        REQUIRE(v3 == 0);
+        REQUIRE(storage.value() == 0);
 
-        v2.set<10>(1);
+        v2.set<4>(1);
 
-        REQUIRE(v == 0x0500);
-        REQUIRE(v2 == 0x0500);
-
-        // Ahh, in this case we want to force embr::word to be 16 bits wide.  Code auto deduces down to 8 bits
-        //REQUIRE(storage.value() == 1);
+        REQUIRE(v == 0x0110);
+        REQUIRE(v2 == 0x0110);
+        REQUIRE(storage.value() == 16);
     }
     SECTION("chrono")
     {
