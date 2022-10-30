@@ -6,10 +6,14 @@
 #include "gpio.h"
 #include "queue.h"
 
+#include "timer-scheduler.h"
+
 namespace embr { namespace esp_idf {
 
-
 class Debouncer;
+
+
+namespace internal {
 
 struct Item
 {
@@ -25,13 +29,8 @@ struct Item
 
     detail::Debouncer& debouncer() { return debouncer_; }
     const detail::Debouncer& debouncer() const { return debouncer_; }
-    gpio pin() const { return pin_; }
+    const gpio& pin() const { return pin_; }
     time_point event_due() const { return wakeup_; }
-
-    bool on() const
-    {
-        return pin_.level();
-    }
 
     //Item() = default;
     Item(const Item& copy_from) = default;
@@ -40,8 +39,33 @@ struct Item
 
 
 
+
+template <int divider_ = 80>
+struct ThresholdImpl : DurationImpl2<Item*, divider_>
+{
+    static constexpr const char* TAG = "ThreadholdImpl";
+
+    typedef DurationImpl2<Item*, divider_> base_type;
+    using typename base_type::value_type;
+    using typename base_type::time_point;
+
+    // we're scheduled to reach here optimisitcally thinking up or down energy is high
+    // enough to yield a state change
+    bool process(value_type v, time_point now);
+
+    constexpr ThresholdImpl(const Timer& timer) : base_type{timer} {}
+    constexpr ThresholdImpl(timer_group_t group, timer_idx_t idx) : base_type(group, idx) {}
+};
+
+
+
+}
+
+
 class Debouncer
 {
+    typedef internal::Item item_type;
+
 public:
     enum States
     {
@@ -75,10 +99,12 @@ private:
     static bool timer_group0_callback(void *param);
 #endif
 
+    embr::internal::layer1::Scheduler<5, internal::ThresholdImpl<> > scheduler;
+    
 public:
     // DEBT: Don't expose as public - however, most of these will be in the impl eventually
     // anyhow
-    void emit_state(const Item& item);
+    void emit_state(const item_type& item);
     // DEBT: Not sure I want to expose the whole queue here, but seems OK
     embr::freertos::layer1::queue<Notification, 10> queue;
 

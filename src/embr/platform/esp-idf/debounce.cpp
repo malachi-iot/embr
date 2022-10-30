@@ -16,59 +16,7 @@
 namespace embr { namespace esp_idf {
 
 
-struct ThresholdImpl : DurationImpl2<Item*, 80>
-{
-    static constexpr const char* TAG = "ThreadholdImpl";
-
-    typedef DurationImpl2<Item*, 80> base_type;
-    using typename base_type::value_type;
-
-    // we're scheduled to reach here optimisitcally thinking up or down energy is high
-    // enough to yield a state change
-    bool process(value_type v, time_point now)
-    {
-        time_point delta = now - v->last_wakeup_;
-
-        detail::Debouncer::duration d_now(now);
-
-        detail::Debouncer& d = v->debouncer();
-        const detail::Debouncer& d2 = d;    // DEBT: Workaround to get at const noise_or_signal
-        bool level = v->on();
-        ESP_DRAM_LOGV(TAG, "process: state=%s:%s, level=%u, event_due=%llu, now=%llu, d_now=%llu, delta=%llu",
-            to_string(d.state()), to_string(d.substate()), level,
-            v->event_due(), now.count(), d_now.count(), delta.count());
-        bool state_changed = d.time_passed(delta, level);
-        ESP_DRAM_LOGD(TAG, "process: state=%s:%s, changed=%u, strength=%u",
-            to_string(d.state()), to_string(d.substate()), state_changed, d2.noise_or_signal());
-
-        if(state_changed)
-        {
-            v->parent_->emit_state(*v);
-        }
-        else
-        {
-            // evaluate whether we need more time and if so, reschedule
-            if(d.substate() != detail::Debouncer::Idle)
-            {
-                auto amt = d2.noise_or_signal() - d2.signal_threshold();
-
-                // DEBT: Fudge factor
-                amt += estd::chrono::milliseconds(1);
-
-                v->last_wakeup_ = v->wakeup_;
-                v->wakeup_ = now + amt;
-                return true;
-            }
-        }
-        return false;
-    }
-
-    constexpr ThresholdImpl(const Timer& timer) : base_type{timer} {}
-    constexpr ThresholdImpl(timer_group_t group, timer_idx_t idx) : base_type(group, idx) {}
-};
-
-
-
+using internal::Item;
 
 // Guidance from:
 // https://esp32.com/viewtopic.php?t=345 
@@ -78,9 +26,6 @@ struct ThresholdImpl : DurationImpl2<Item*, 80>
 // in our basic use cases
 //static estd::layer1::map<uint8_t, detail::Debouncer, 5> debouncers;
 static std::map<uint8_t, Item> debouncers;
-static embr::internal::layer1::Scheduler<5, ThresholdImpl> scheduler(
-    embr::internal::scheduler::impl_params_tag{},
-    TIMER_GROUP_0, TIMER_0);
 
 using namespace estd::chrono;
 using namespace estd::chrono_literals;
@@ -94,6 +39,8 @@ embr::freertos::timer<> held_timer("held", 3s, false, nullptr, held_callback);
 
 inline void Debouncer::gpio_isr()
 {
+    static constexpr const char* TAG = "gpio_isr";
+
     uint32_t gpio_intr_status = READ_PERI_REG(GPIO_STATUS_REG);   //read status to get interrupt status for GPIO0-31
     uint32_t gpio_intr_status_h = READ_PERI_REG(GPIO_STATUS1_REG);//read status1 to get interrupt status for GPIO32-39
     // Fun fact - your ESP32 will reset if you don't clear your interrupts :)
@@ -117,14 +64,14 @@ inline void Debouncer::gpio_isr()
 
             int level = gpio_get_level((gpio_num_t)pin);
 
-            ets_printf("1 Intr GPIO%d, val: %d, duration=%lldms\n", pin, level,
+            ESP_DRAM_LOGD(TAG, "GPIO%d, val: %d, duration=%lldms", pin, level,
                 duration.count() / 1000);
 
             if(it != std::end(debouncers))
             {
                 Item& item = it->second;
                 embr::detail::Debouncer& d = item.debouncer();
-                ets_printf("3 Intr state=%s:%s\n", to_string(d.state()), to_string(d.substate()));
+                ESP_DRAM_LOGD(TAG, "state=%s:%s", to_string(d.state()), to_string(d.substate()));
                 bool state_changed = d.time_passed(duration, level);
                 if(state_changed)
                 {
@@ -161,7 +108,7 @@ inline void Debouncer::gpio_isr()
                     timer.start();
 
                 }
-                ets_printf("4 Intr state=%s:%s\n", to_string(d.state()), to_string(d.substate()));
+                ESP_DRAM_LOGD(TAG, "state=%s:%s", to_string(d.state()), to_string(d.substate()));
             }
         }
 
@@ -309,6 +256,7 @@ void Debouncer::timer_init(bool callback_mode)
 
 
 Debouncer::Debouncer(bool callback_mode) //: queue(10)
+    : scheduler(embr::internal::scheduler::impl_params_tag{}, TIMER_GROUP_0, TIMER_0)
 {
     ESP_ERROR_CHECK(
         gpio_isr_register(gpio_isr, this, ESP_INTR_FLAG_LEVEL1, &gpio_isr_handle));

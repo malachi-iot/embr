@@ -95,7 +95,7 @@ void DurationImplBaseBase::init(TScheduler* scheduler, uint32_t divider)
 
 template <class TScheduler>
 inline void DurationImpl::on_scheduling(value_type& value,
-    internal::SchedulerContextBase<TScheduler>& context)
+    embr::internal::SchedulerContextBase<TScheduler>& context)
 {
     // Putting this in here rather than scheduled because it makes timestamps look more accurate.
     // Didn't dig into the whys and hows at all
@@ -105,7 +105,8 @@ inline void DurationImpl::on_scheduling(value_type& value,
 
 // NOTE: All this happens while in the locked mutex 
 template <class TScheduler>
-inline void DurationImpl::on_scheduled(const value_type& value, internal::SchedulerContextBase<TScheduler>& context)
+inline void DurationImpl::on_scheduled(const value_type& value,
+    embr::internal::SchedulerContextBase<TScheduler>& context)
 {
     time_point t = get_time_point(value);
 
@@ -128,7 +129,7 @@ template <class T, int divider_, typename TTimePoint, class TReference>
 template <class TScheduler>
 inline void DurationImpl2<T, divider_, TTimePoint, TReference>::on_scheduled(
     const value_type& value,
-    const internal::SchedulerContextBase<TScheduler>& context)
+    const embr::internal::SchedulerContextBase<TScheduler>& context)
 {
     ESP_DRAM_LOGV(TAG, "on_scheduled: entry");
     
@@ -159,7 +160,7 @@ template <class T, int divider_, typename TTimePoint, class TReference>
 template <class TScheduler>
 inline void DurationImpl2<T, divider_, TTimePoint, TReference>::on_processed(
     const value_type* value, time_point t,
-    const internal::SchedulerContextBase<TScheduler>& context)
+    const embr::internal::SchedulerContextBase<TScheduler>& context)
 {
     if(value == nullptr)
     {

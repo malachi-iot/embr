@@ -154,11 +154,11 @@ struct DurationImpl2 : DurationImplBase<TTimePoint>,
 
     template <class TScheduler>
     void on_scheduled(const value_type& value,
-        const internal::SchedulerContextBase<TScheduler>& context);
+        const embr::internal::SchedulerContextBase<TScheduler>& context);
 
     template <class TScheduler>
     void on_processed(const value_type* value, time_point,
-        const internal::SchedulerContextBase<TScheduler>& context);
+        const embr::internal::SchedulerContextBase<TScheduler>& context);
 
     constexpr DurationImpl2(const Timer& timer) : base_type{timer} {}
     constexpr DurationImpl2(timer_group_t group, timer_idx_t idx) : base_type(group, idx) {}
@@ -241,11 +241,11 @@ struct DurationImpl : DurationImplBaseBase
 
     template <class TScheduler>
     void on_scheduling(value_type& value,
-        internal::SchedulerContextBase<TScheduler>& context);
+        embr::internal::SchedulerContextBase<TScheduler>& context);
 
     template <class TScheduler>
     void on_scheduled(const value_type& value,
-        internal::SchedulerContextBase<TScheduler>& context);
+        embr::internal::SchedulerContextBase<TScheduler>& context);
 
     constexpr DurationImpl(const Timer& timer) : DurationImplBaseBase{timer} {}
     constexpr DurationImpl(timer_group_t group, timer_idx_t idx) : DurationImplBaseBase(group, idx) {}
