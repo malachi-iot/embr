@@ -277,14 +277,14 @@ ESTD_CPP_CONSTEXPR_RET word<bits> operator >>(word<bits> l, TInt r)
 }
 
 
-template <size_t bits, bool is_signed, word_strictness s, typename TInt>
-ESTD_CPP_CONSTEXPR_RET bool operator !=(word<bits, is_signed, s> l, TInt r)
+template <size_t bits, bool is_signed, word_strictness s, typename T, typename TInt>
+ESTD_CPP_CONSTEXPR_RET bool operator !=(word<bits, is_signed, s, T> l, TInt r)
 {
     return l.cvalue() != r;
 }
 
-template <size_t bits, bool is_signed, word_strictness s, typename TInt>
-ESTD_CPP_CONSTEXPR_RET bool operator ==(word<bits, is_signed, s> l, TInt r)
+template <size_t bits, bool is_signed, word_strictness s, typename T, typename TInt>
+ESTD_CPP_CONSTEXPR_RET bool operator ==(word<bits, is_signed, s, T> l, TInt r)
 {
     return l.cvalue() == r;
 }

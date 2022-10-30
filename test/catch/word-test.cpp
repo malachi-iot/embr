@@ -108,7 +108,22 @@ TEST_CASE("word type test", "[word]")
         estd::chrono::milliseconds ms = seconds;
         //estd::chrono::duration_cast<estd::chrono::milliseconds>(seconds)
 
+        union
+        {
+            estd::chrono::duration<embr::word<5, false, flags, uint16_t> > seconds2;
+            uint16_t storage;
+        };
+
         REQUIRE(seconds.count() == 3);
         REQUIRE(ms.count() == 3000);
+
+        storage = 31;
+
+        REQUIRE(seconds2.count() == 31);
+
+        // Overflow, on purpose
+        ++storage;
+
+        REQUIRE(seconds2.count() == 0);
     }
 }
