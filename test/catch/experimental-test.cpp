@@ -66,7 +66,9 @@ typedef const value_type& const_reference; \
 typedef T* pointer;
 
 // NOTE: scheduler defaults to a flavor of 'greater'
-// remember std::priority_queue 'less' results in a max queue
+// std::priority_queue 'less' results in a max queue.  I like to think of this
+// as priority_queue sorts things backwards.  So, returning 'true' from your
+// comparison means the 'left' will tumble to the end.
 template <class T, class TCompare = estd::less<typename T::key_type> >
 struct BatchCompareTraits
 {
@@ -79,6 +81,8 @@ struct BatchCompareTraits
     static constexpr const key_type& key(const_reference v) { return v.key(); }
 };
 
+static int breakpointCondition = 0;
+
 template <class T, class TTraits = BatchCompareTraits<T> >
 struct BatchCompare : TTraits::key_compare
 {
@@ -87,29 +91,31 @@ struct BatchCompare : TTraits::key_compare
     typedef TTraits traits_type;
     typedef typename traits_type::key_compare key_compare;
 
-    int current_batch_ = 0;
+    int* current_batch_;
 
     void flip()
     {
-        current_batch_ = !current_batch_;
+        *current_batch_ = !*current_batch_;
     }
 
-    int current_batch() const { return current_batch_; }
+    int current_batch() const { return *current_batch_; }
 
-    bool operator ()(const_reference left, const_reference right)
+    BatchCompare(int* current_batch) : current_batch_(current_batch) {}
+
+    bool operator ()(const_reference left, const_reference right) const
     {
         // TODO: We'll need to return to this for scheduler
         //time_point l_tp = impl_type::get_time_point(left);
         //time_point r_tp = impl_type::get_time_point(right);
         //return l_tp > r_tp;
 
-        bool is_left_current_batch = current_batch_ == traits_type::batch_id(left);
-        bool is_right_current_batch = current_batch_ == traits_type::batch_id(right);
+        bool is_left_current_batch = current_batch() == traits_type::batch_id(left);
+        bool is_right_current_batch = current_batch() == traits_type::batch_id(right);
 
-        // left is current, right is not, therefore left is greater
+        // left is current, right is not, therefore right comes first (older batch comes first)
         if(is_left_current_batch && !is_right_current_batch) return true;
 
-        // right is current, left is not, therefore right is greater
+        // right is current, left is not, therefore left comes first (older batch comes first)
         if(!is_left_current_batch && is_right_current_batch) return false;
 
         // both right and left are in the same batch, so regular key compare ensues
@@ -315,7 +321,8 @@ TEST_CASE("experimental test", "[experimental]")
     }
     SECTION("batched priority queue")
     {
-        BatchCompare<BatchKey> c;
+        int current_batch = 0;
+        BatchCompare<BatchKey> c(&current_batch);
         estd::layer1::priority_queue<BatchKey, 10, BatchCompare<BatchKey> > q(c);
 
         constexpr BatchKey k1(0, 5), k2(0, 10), k3(1, 3), k4(1, 7);
@@ -343,14 +350,13 @@ TEST_CASE("experimental test", "[experimental]")
         }
         SECTION("batched operation")
         {
-            c.flip();
+            c.flip();           // 1:xxx elements are now current ones
 
+            REQUIRE(c.current_batch() == 1);
+
+            breakpointCondition = 1;
             q.push(k3);         // 1:3
-
-            k = q.top();
-            q.pop();
-
-            REQUIRE(k == k3);   // 1:3
+            breakpointCondition = 0;
 
             k = q.top();
             q.pop();
@@ -362,15 +368,34 @@ TEST_CASE("experimental test", "[experimental]")
             k = q.top();
             q.pop();
 
+            REQUIRE(k == k1);   // 0:5
+
+            k = q.top();
+            q.pop();
+
+            // batch_id==0 elements must be fully popped before flipping batch_id=0 back to current
+            REQUIRE(k.batch_id() != 0); // TODO: Bake this into flip mechanism itself to catch undefined behaviors
+            c.flip();
+            REQUIRE(c.current_batch() == 0);
+
+            // Now 1:xxx elements are the non-current ones
+
+            q.push(k1);         // 0:5
+
             REQUIRE(k == k4);   // 1:7
 
             k = q.top();
+            q.pop();
 
+            REQUIRE(k == k3);   // 1:3
+
+            k = q.top();
+            q.pop();
+            
             REQUIRE(k == k1);   // 0:5
 
-            // batch_id==0 elements must be fully popped before flipping batch_id=0 back to active
-            // that means batch comparisons may be backwards
-            c.flip();
+
+            REQUIRE(q.empty());
         }
     }
 }
