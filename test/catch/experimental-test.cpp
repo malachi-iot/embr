@@ -59,6 +59,71 @@ void test_alloc(TAllocator& a)
 #endif
 }
 
+
+#define EMBR_CPP_VALUE_TYPE(T) \
+typedef T value_type;           \
+typedef const value_type& const_reference; \
+typedef T* pointer;
+
+template <class T>
+struct BatchCompareTraits
+{
+    EMBR_CPP_VALUE_TYPE(T)
+
+    typedef typename value_type::key_type key_type;
+
+    static constexpr int batch_id(const_reference v) { return v.batch_id(); }
+    static constexpr const key_type& key(const_reference v) { return v.key(); }
+};
+
+template <class T, class TTraits = BatchCompareTraits<T> >
+struct BatchCompare
+{
+    EMBR_CPP_VALUE_TYPE(T)
+
+    typedef TTraits traits_type;
+
+    int current_batch_ = 0;
+
+    bool operator ()(const_reference left, const_reference right)
+    {
+        // TODO: We'll need to return to this for scheduler
+        //time_point l_tp = impl_type::get_time_point(left);
+        //time_point r_tp = impl_type::get_time_point(right);
+        //return l_tp > r_tp;
+
+        return traits_type::batch_id(left) > traits_type::batch_id(right) &&
+            traits_type::key(left) > traits_type::key(right);
+    }
+};
+
+struct BatchKey
+{
+    typedef int key_type;
+
+    const int batch_id_;
+    const int key_;
+
+    constexpr int batch_id() const { return batch_id_; }
+    constexpr const key_type& key() const { return key_; }
+
+    // DEBT: single_allocator_base needs this and I keep forgetting if that's reasonable
+    // (i.e. std::vector also demands a default constructor.... right?)
+    BatchKey() : batch_id_(0), key_(0) {}
+
+    BatchKey(int batch_id, int key) :
+        batch_id_(batch_id),
+        key_(key)
+    {}
+    BatchKey(const BatchKey& copy_from) = default;
+
+    // DEBT: Priority queue demands this - perhaps reasonably so
+    BatchKey& operator=(const BatchKey& copy_from)
+    {
+        return * new (this) BatchKey(copy_from);
+    }
+};
+
 TEST_CASE("experimental test", "[experimental]")
 {
     SECTION("Retry v3")
@@ -215,5 +280,12 @@ TEST_CASE("experimental test", "[experimental]")
                 }
             }
         }
+    }
+    SECTION("batched priority queue")
+    {
+        //BatchCompare<int> compare;
+        estd::layer1::priority_queue<BatchKey, 10, BatchCompare<BatchKey> > q;
+
+        q.emplace(0, 0);
     }
 }
