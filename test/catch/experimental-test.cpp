@@ -174,12 +174,13 @@ struct BatchHelper
     typedef estd::priority_queue<T, Container, comp_type > queue_type;
     typedef typename queue_type::accessor accessor;
     typedef typename comp_type::key_type key_type;
+    typedef typename comp_type::value_type value_type;
 
     comp_type& comp;
     queue_type& queue;
 
     key_type current;
-    static constexpr key_type max() { return 15; }
+    static constexpr key_type max() { return 20; }
 
     BatchHelper(comp_type& comp, queue_type& queue) :
         comp(comp),
@@ -198,11 +199,27 @@ struct BatchHelper
     accessor emplace(key_type delta, TArgs&&...args)
     {
         if(would_add_rollover(current, delta, max()))
+        {
+            // DEBT: This technically doesn't avoid a rollover, only used for synthetic testing
+            // DEBT: Even if it did handle rollover, we want to selectively use explicit rollover code
+            // based on numeric_limits::max
+            current = current + delta - max();
+
             comp.flip();
+        }
+        else
+            current += delta;
 
-        current += delta;
+        return queue.emplace(comp.current_batch(), current, std::forward<TArgs>(args)...);
+    }
 
-        queue.emplace(comp.current_batch(), current, std::forward<TArgs>(args)...);
+    // Helper just for unit testing
+    void pop_and_compare(value_type compare_to)
+    {
+        value_type v = queue.top();
+        queue.pop();
+
+        REQUIRE(v == compare_to);
     }
 };
 
@@ -458,8 +475,16 @@ TEST_CASE("experimental test", "[experimental]")
             REQUIRE(helper.would_add_rollover(5, 2, 10) == false);
             REQUIRE(helper.would_add_rollover(5, 7, 10) == true);
 
-            // underlying estd::priority_queue needs work first
-            //helper.emplace(1);
+            helper.current = 10;    // sync up with q.push(0:10) from above
+            helper.emplace(1);      // helper takes deltas, so this is an 11
+            helper.emplace(7);      // 0:18
+            helper.emplace(5);      // 0:23 -> 1:3
+
+            helper.pop_and_compare(BatchKey(0, 18));
+            helper.pop_and_compare(BatchKey(0, 11));
+            helper.pop_and_compare(k2); // 0:10
+            helper.pop_and_compare(k1); // 0:5
+            helper.pop_and_compare(k3); // 1:3
         }
     }
 }
