@@ -93,6 +93,7 @@ struct BatchCompare : TTraits::key_compare
 
     typedef TTraits traits_type;
     typedef typename traits_type::key_compare key_compare;
+    typedef typename traits_type::key_type key_type;
 
     int* current_batch_;
 
@@ -172,9 +173,13 @@ struct BatchHelper
     typedef BatchCompare<T, TTraits> comp_type;
     typedef estd::priority_queue<T, Container, comp_type > queue_type;
     typedef typename queue_type::accessor accessor;
+    typedef typename comp_type::key_type key_type;
 
     comp_type& comp;
     queue_type& queue;
+
+    key_type current;
+    static constexpr key_type max() { return 15; }
 
     BatchHelper(comp_type& comp, queue_type& queue) :
         comp(comp),
@@ -182,15 +187,22 @@ struct BatchHelper
     {}
 
     // Undefined if to_add itself is greater than max
-    static bool would_add_rollover(unsigned v, unsigned to_add, unsigned max)
+    static bool would_add_rollover(key_type v, key_type to_add, key_type max)
     {
-        return (max - to_add) > v;
+        // v + to_add > max
+        // v > max - to_add
+        return v > (max - to_add);
     }
 
     template <class ...TArgs>
-    accessor emplace(TArgs&&...args)
+    accessor emplace(key_type delta, TArgs&&...args)
     {
-        queue.emplace(comp.current_batch(), std::forward<TArgs>(args)...);
+        if(would_add_rollover(current, delta, max()))
+            comp.flip();
+
+        current += delta;
+
+        queue.emplace(comp.current_batch(), current, std::forward<TArgs>(args)...);
     }
 };
 
@@ -440,6 +452,14 @@ TEST_CASE("experimental test", "[experimental]")
 
 
             REQUIRE(q.empty());
+        }
+        SECTION("limit finder")
+        {
+            REQUIRE(helper.would_add_rollover(5, 2, 10) == false);
+            REQUIRE(helper.would_add_rollover(5, 7, 10) == true);
+
+            // underlying estd::priority_queue needs work first
+            //helper.emplace(1);
         }
     }
 }
