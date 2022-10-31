@@ -2,9 +2,11 @@
 
 #include <driver/timer.h>
 
+#include <estd/port/freertos/queue.h>
+
 #include "../../detail/debounce.h"
 #include "gpio.h"
-#include "queue.h"
+
 
 #include "timer-scheduler.h"
 
@@ -106,7 +108,7 @@ public:
     // anyhow
     void emit_state(const item_type& item);
     // DEBT: Not sure I want to expose the whole queue here, but seems OK
-    embr::freertos::layer1::queue<Notification, 10> queue;
+    estd::freertos::layer1::queue<Notification, 10> queue;
 
 public:
     Debouncer(timer_group_t, timer_idx_t);
