@@ -133,6 +133,8 @@ struct ReferenceBaseBase
 
     template <class TScheduler>
     inline void start(TScheduler*) {}
+
+    inline void stop() {}
 };
 
 template <typename TTimePoint = void>

@@ -89,7 +89,7 @@ bool IRAM_ATTR DurationImpl::timer_callback (void *param)
 */
 
 template <class TScheduler>
-void DurationImplBaseBase::init(TScheduler* scheduler, uint32_t divider)
+void DurationImplBaseBase::start(TScheduler* scheduler, uint32_t divider)
 {
     timer_scheduler_init(timer(), divider, &helper<TScheduler>::timer_callback, scheduler);
 }

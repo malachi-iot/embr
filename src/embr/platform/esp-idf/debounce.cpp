@@ -254,7 +254,7 @@ Debouncer::Debouncer(timer_group_t timer_group, timer_idx_t timer_idx) //: queue
 {
     ESP_ERROR_CHECK(
         gpio_isr_register(gpio_isr, this, ESP_INTR_FLAG_LEVEL1, &gpio_isr_handle));
-    scheduler.init();
+    scheduler.start();
     last_now = esp_clock::now();
     held_timer.start(1s);
 }

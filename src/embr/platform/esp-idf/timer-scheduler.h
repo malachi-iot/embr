@@ -37,7 +37,7 @@ protected:
     template <class TScheduler>
     // for example, 80 = prescaler for 1 MHz clock - remember, we're dividing
     // "default is APB_CLK running at 80 MHz"
-    void init(TScheduler* scheduler, uint32_t divider);
+    void start(TScheduler* scheduler, uint32_t divider);
 
     inline uint64_t get_counter(bool in_isr) const
     {
@@ -139,18 +139,18 @@ struct DurationImpl2 : DurationImplBase<TTimePoint>,
 
     template <class TScheduler, int shadowed = divider_,
         typename = typename estd::enable_if<shadowed == -1>::type >
-    void init(TScheduler* scheduler, uint32_t divider)
+    void start(TScheduler* scheduler, uint32_t divider)
     {
         // DEBT: Sloppy way of initializing numerator
         this->numerator_ = divider;
-        base_type::init(scheduler, divider);
+        base_type::start(scheduler, divider);
     }
 
     template <class TScheduler, int shadowed = divider_,
         typename = typename estd::enable_if<shadowed != -1>::type >
-    void init(TScheduler* scheduler)
+    void start(TScheduler* scheduler)
     {
-        base_type::init(scheduler, divider_);
+        base_type::start(scheduler, divider_);
     }
 
     // NOTE: Beware, do not name 'context_type' because impl already has that reserved for

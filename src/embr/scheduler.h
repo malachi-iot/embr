@@ -490,18 +490,16 @@ public:
     }
 
 #ifdef __cpp_variadic_templates
-    // EXPERIMENTAL
-    template <class ...TArgs>
-    inline void init(TArgs&&...args)
-    {
-        impl_type::init(this, std::forward<TArgs>(args)...);
-    }
-
-    // EXPERIMENTAL but liking this better - scheduler start/stop is intuitive
+    // EXPERIMENTAL but liking this - "self hosted" schedulers
     template <class ...TArgs>
     inline void start(TArgs&&...args)
     {
         impl_type::start(this, std::forward<TArgs>(args)...);
+    }
+
+    inline void stop()
+    {
+        impl_type::stop();
     }
 #endif
 };
