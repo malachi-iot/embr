@@ -70,6 +70,9 @@ typedef T* pointer;
 // as priority_queue sorts things backwards.  So, returning 'true' from your
 // comparison means the 'left' will tumble to the end.
 template <class T, class TCompare = estd::less<typename T::key_type> >
+struct BatchCompareTraits;
+
+template <class T, class TCompare>
 struct BatchCompareTraits
 {
     EMBR_CPP_VALUE_TYPE(T)
@@ -119,8 +122,7 @@ struct BatchCompare : TTraits::key_compare
         if(!is_left_current_batch && is_right_current_batch) return false;
 
         // both right and left are in the same batch, so regular key compare ensues
-
-        return key_compare().operator()(traits_type::key(left), traits_type::key(right));
+        return key_compare::operator()(traits_type::key(left), traits_type::key(right));
     }
 };
 
@@ -391,7 +393,7 @@ TEST_CASE("experimental test", "[experimental]")
 
             k = q.top();
             q.pop();
-            
+
             REQUIRE(k == k1);   // 0:5
 
 
