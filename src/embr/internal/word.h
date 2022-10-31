@@ -110,7 +110,11 @@ protected:
 public:
     ESTD_CPP_CONSTEXPR_RET type cvalue() const
     {
+#if FEATURE_EMBR_WORD_STRICTNESS
         return any<strict, word_strictness::storage_masking>() ? mask(value_) : value_;
+#else
+        return value_;
+#endif
     }
 
     ESTD_CPP_CONSTEXPR_RET type value() const { return cvalue(); }
