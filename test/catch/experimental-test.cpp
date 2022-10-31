@@ -159,9 +159,47 @@ struct BatchKey
     }
 };
 
-std::ostream& operator << ( std::ostream& os, const BatchKey& value ) {
+std::ostream& operator << ( std::ostream& os, const BatchKey& value )
+{
     os << value.batch_id() << ':' << value.key();
     return os;
+}
+
+
+template <class T, class Container, class TTraits = BatchCompareTraits<T> >
+struct BatchHelper
+{
+    typedef BatchCompare<T, TTraits> comp_type;
+    typedef estd::priority_queue<T, Container, comp_type > queue_type;
+    typedef typename queue_type::accessor accessor;
+
+    comp_type& comp;
+    queue_type& queue;
+
+    BatchHelper(comp_type& comp, queue_type& queue) :
+        comp(comp),
+        queue(queue)
+    {}
+
+    // Undefined if to_add itself is greater than max
+    static bool would_add_rollover(unsigned v, unsigned to_add, unsigned max)
+    {
+        return (max - to_add) > v;
+    }
+
+    template <class ...TArgs>
+    accessor emplace(TArgs&&...args)
+    {
+        queue.emplace(comp.current_batch(), std::forward<TArgs>(args)...);
+    }
+};
+
+template <class T, class Container, class TTraits = BatchCompareTraits<T> >
+BatchHelper<T, Container, TTraits> make_batch_helper(
+    BatchCompare<T, TTraits>& comp,
+    estd::priority_queue<T, Container, BatchCompare<T, TTraits> >& q)
+{
+    return BatchHelper<T, Container, TTraits>(comp, q);
 }
 
 TEST_CASE("experimental test", "[experimental]")
@@ -323,11 +361,15 @@ TEST_CASE("experimental test", "[experimental]")
     }
     SECTION("batched priority queue")
     {
+        // TODO: Next up, helpers to detect when it's time to flip and auto-injecting the current
+        // batch as part of 'push' / 'emplace'
         int current_batch = 0;
         BatchCompare<BatchKey> c(&current_batch);
         estd::layer1::priority_queue<BatchKey, 10, BatchCompare<BatchKey> > q(c);
+        auto helper = make_batch_helper(c, q);
 
-        constexpr BatchKey k1(0, 5), k2(0, 10), k3(1, 3), k4(1, 7);
+        constexpr BatchKey k1(0, 5), k2(0, 10), k3(1, 3), k4(1, 7), k5(1, 11);
+        constexpr int max = 10;
 
         // Works also, I just like the succinctness of k1, k2, etc
         //q.emplace(c.current_batch(), 5);
