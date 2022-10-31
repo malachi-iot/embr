@@ -95,16 +95,17 @@ struct BatchCompare : TTraits::key_compare
     typedef typename traits_type::key_compare key_compare;
     typedef typename traits_type::key_type key_type;
 
+    /*
     int* current_batch_;
 
-    void flip()
-    {
-        *current_batch_ = !*current_batch_;
-    }
+    void flip() { *current_batch_ = !*current_batch_; }
 
     int current_batch() const { return *current_batch_; }
 
-    BatchCompare(int* current_batch) : current_batch_(current_batch) {}
+    BatchCompare(int* current_batch) : current_batch_(current_batch) {} */
+    int current_batch_ = 0;
+    void flip() { current_batch_ = !current_batch_; }
+    int current_batch() const { return current_batch_; }
 
     bool operator ()(const_reference left, const_reference right) const
     {
@@ -182,8 +183,8 @@ struct BatchHelper
     key_type current;
     static constexpr key_type max() { return 20; }
 
-    BatchHelper(comp_type& comp, queue_type& queue) :
-        comp(comp),
+    BatchHelper(queue_type& queue) :
+        comp(queue.compare()),
         queue(queue)
     {}
 
@@ -225,10 +226,9 @@ struct BatchHelper
 
 template <class T, class Container, class TTraits = BatchCompareTraits<T> >
 BatchHelper<T, Container, TTraits> make_batch_helper(
-    BatchCompare<T, TTraits>& comp,
     estd::priority_queue<T, Container, BatchCompare<T, TTraits> >& q)
 {
-    return BatchHelper<T, Container, TTraits>(comp, q);
+    return BatchHelper<T, Container, TTraits>(q);
 }
 
 TEST_CASE("experimental test", "[experimental]")
@@ -390,12 +390,13 @@ TEST_CASE("experimental test", "[experimental]")
     }
     SECTION("batched priority queue")
     {
-        // TODO: Next up, helpers to detect when it's time to flip and auto-injecting the current
-        // batch as part of 'push' / 'emplace'
-        int current_batch = 0;
-        BatchCompare<BatchKey> c(&current_batch);
-        estd::layer1::priority_queue<BatchKey, 10, BatchCompare<BatchKey> > q(c);
-        auto helper = make_batch_helper(c, q);
+        //int current_batch = 0;
+        //BatchCompare<BatchKey> c(&current_batch);
+        //estd::layer1::priority_queue<BatchKey, 10, BatchCompare<BatchKey> > q(c);
+        estd::layer1::priority_queue<BatchKey, 10, BatchCompare<BatchKey> > q;
+        BatchCompare<BatchKey>& c = q.compare();    // DEBT: Not sure I like naming the accessor 'compare'
+
+        auto helper = make_batch_helper(q);
 
         constexpr BatchKey k1(0, 5), k2(0, 10), k3(1, 3), k4(1, 7), k5(1, 11);
         constexpr int max = 10;
