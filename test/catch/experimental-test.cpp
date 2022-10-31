@@ -65,25 +65,36 @@ typedef T value_type;           \
 typedef const value_type& const_reference; \
 typedef T* pointer;
 
-template <class T>
+// NOTE: scheduler defaults to a flavor of 'greater'
+// remember std::priority_queue 'less' results in a max queue
+template <class T, class TCompare = estd::less<typename T::key_type> >
 struct BatchCompareTraits
 {
     EMBR_CPP_VALUE_TYPE(T)
 
     typedef typename value_type::key_type key_type;
+    typedef TCompare key_compare;
 
     static constexpr int batch_id(const_reference v) { return v.batch_id(); }
     static constexpr const key_type& key(const_reference v) { return v.key(); }
 };
 
 template <class T, class TTraits = BatchCompareTraits<T> >
-struct BatchCompare
+struct BatchCompare : TTraits::key_compare
 {
     EMBR_CPP_VALUE_TYPE(T)
 
     typedef TTraits traits_type;
+    typedef typename traits_type::key_compare key_compare;
 
     int current_batch_ = 0;
+
+    void flip()
+    {
+        current_batch_ = !current_batch_;
+    }
+
+    int current_batch() const { return current_batch_; }
 
     bool operator ()(const_reference left, const_reference right)
     {
@@ -92,8 +103,18 @@ struct BatchCompare
         //time_point r_tp = impl_type::get_time_point(right);
         //return l_tp > r_tp;
 
-        return traits_type::batch_id(left) > traits_type::batch_id(right) &&
-            traits_type::key(left) > traits_type::key(right);
+        bool is_left_current_batch = current_batch_ == traits_type::batch_id(left);
+        bool is_right_current_batch = current_batch_ == traits_type::batch_id(right);
+
+        // left is current, right is not, therefore left is greater
+        if(is_left_current_batch && !is_right_current_batch) return true;
+
+        // right is current, left is not, therefore right is greater
+        if(!is_left_current_batch && is_right_current_batch) return false;
+
+        // both right and left are in the same batch, so regular key compare ensues
+
+        return key_compare().operator()(traits_type::key(left), traits_type::key(right));
     }
 };
 
@@ -111,7 +132,7 @@ struct BatchKey
     // (i.e. std::vector also demands a default constructor.... right?)
     BatchKey() : batch_id_(0), key_(0) {}
 
-    BatchKey(int batch_id, int key) :
+    constexpr BatchKey(int batch_id, int key) :
         batch_id_(batch_id),
         key_(key)
     {}
@@ -122,7 +143,18 @@ struct BatchKey
     {
         return * new (this) BatchKey(copy_from);
     }
+
+    constexpr bool operator==(const BatchKey& compare_to) const
+    {
+        return batch_id_ == compare_to.batch_id_ &&
+            key_ == compare_to.key_;
+    }
 };
+
+std::ostream& operator << ( std::ostream& os, const BatchKey& value ) {
+    os << value.batch_id() << ':' << value.key();
+    return os;
+}
 
 TEST_CASE("experimental test", "[experimental]")
 {
@@ -283,9 +315,46 @@ TEST_CASE("experimental test", "[experimental]")
     }
     SECTION("batched priority queue")
     {
-        //BatchCompare<int> compare;
-        estd::layer1::priority_queue<BatchKey, 10, BatchCompare<BatchKey> > q;
+        BatchCompare<BatchKey> c;
+        estd::layer1::priority_queue<BatchKey, 10, BatchCompare<BatchKey> > q(c);
 
-        q.emplace(0, 0);
+        constexpr BatchKey k1(0, 5), k2(0, 10), k3(1, 3);
+
+        // Works also, I just like the succinctness of k1, k2, etc
+        //q.emplace(c.current_batch(), 5);
+        //q.emplace(c.current_batch(), 10);
+
+        q.push(k1);
+        q.push(k2);
+
+        BatchKey k;
+
+        SECTION("normal operations")
+        {
+            k = q.top();
+
+            REQUIRE(k == k2);
+
+            q.pop();
+
+            k = q.top();
+
+            REQUIRE(k == k1);
+        }
+        SECTION("batched operation")
+        {
+            c.flip();
+
+            q.push(k3);
+
+            k = q.top();
+
+            REQUIRE(k == k3);
+
+            q.pop();
+            k = q.top();
+
+            REQUIRE(k == k2);
+        }
     }
 }
