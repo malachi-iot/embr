@@ -52,6 +52,11 @@ protected:
     }
 
 public:
+    // DEBT: Should be protected
+    // DEBT: Since I can't easily reset timer to 0, we're tracking an offset to subtract down
+    // to a relative zero
+    uint64_t offset = 0;
+
     // DEBT: should be protected - impl() trick interrupts that
     // DEBT: This in particular is a better candidate for subject/observer
     template <class T, class Rep, class Period, class TContext>

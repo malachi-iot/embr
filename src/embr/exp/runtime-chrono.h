@@ -76,10 +76,11 @@ template <typename TInt, int numerator_, int denominator_>
 struct DurationConverter
 {
     typedef TInt int_type;
+    typedef estd::ratio<numerator_, denominator_> period_type;
 
     static constexpr int numerator() { return numerator_; }
 
-    typedef estd::chrono::duration<int_type, estd::ratio<numerator_, denominator_> > duration;
+    typedef estd::chrono::duration<int_type, period_type> duration;
 
     template <typename Rep, typename Period>
     static constexpr int_type convert(const estd::chrono::duration<Rep, Period>& convert_from)

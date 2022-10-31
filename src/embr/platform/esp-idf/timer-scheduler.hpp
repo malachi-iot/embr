@@ -1,10 +1,25 @@
 #pragma once
 
+#include <estd/string.h>
+
 #include "timer-scheduler.h"
 #include "../../scheduler.hpp"
 #include "../../exp/runtime-chrono.h"
 
 namespace embr { namespace esp_idf {
+
+// DEBT: Would like to do a const_string here, but estd conversion/availability
+// for a layer1 const_string seems to be impacted
+inline estd::layer1::string<8> to_string(const Timer& timer)
+{
+    estd::layer1::string<8> timer_str;
+
+    timer_str += estd::to_string((int)timer.group);
+    timer_str += ':';
+    timer_str += estd::to_string((int)timer.idx);
+
+    return timer_str;
+}
 
 // DEBT: Move this out of static/global namespace and conditionally compile only for
 // diagnostic scenarios
@@ -16,17 +31,24 @@ bool IRAM_ATTR DurationImplBaseBase::helper<TScheduler>::timer_callback (void* a
     TScheduler& scheduler = * (TScheduler*) arg;
     Timer& timer = scheduler.timer();
     typedef typename TScheduler::time_point time_point;
-    uint64_t counter;
+    uint64_t counter = scheduler.timer().get_counter_value_in_isr();
+    counter -= scheduler.offset;
+    // Get maximum number of timer ticks we can accumulate before rolling over scheduler's timebase
+    // NOTE: counter itself we don't worry about it rolling over, even at highest precision it would take thousands
+    // of years for it to do so
+    uint64_t max = scheduler.duration_converter().convert(time_point::max());
+    estd::layer1::string<8> timer_str = to_string(timer);
 
-    //ets_printf("0 TimerScheduler Intr: group=%d, idx=%d\n", timer.group, timer.idx);
-
-    counter = scheduler.timer().get_counter_value_in_isr();
+    ESP_DRAM_LOGV(TAG, "timer_callback: [%s] (%p) offset=%llu, max=%llu", timer_str,
+        &scheduler,
+        scheduler.offset,
+        max);
 
     auto now = estd::chrono::esp_clock::now();
     auto duration = now - last_now_diagnostic;
 
-    ESP_DRAM_LOGD(TAG, "timer_callback: [%d:%d] (%p) duration=%lldus, timer_counter=%lld",
-        timer.group, timer.idx, &scheduler,
+    ESP_DRAM_LOGD(TAG, "timer_callback: [%s] duration=%lldus, counter=%lld",
+        timer_str, &scheduler,
         duration.count(), counter);
 
     // DEBT: Don't do auto here
@@ -38,6 +60,10 @@ bool IRAM_ATTR DurationImplBaseBase::helper<TScheduler>::timer_callback (void* a
 
     // convert native esp32 Timer format back to scheduler format
     time_point current_time;
+    if(counter > max)
+    {
+        ESP_DRAM_LOGI(TAG, "timer_callback: [%s], overflow", timer_str);
+    }
     scheduler.duration_converter().convert(counter, &current_time);
 
     scheduler.process(current_time, context);
