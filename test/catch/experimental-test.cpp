@@ -318,7 +318,7 @@ TEST_CASE("experimental test", "[experimental]")
         BatchCompare<BatchKey> c;
         estd::layer1::priority_queue<BatchKey, 10, BatchCompare<BatchKey> > q(c);
 
-        constexpr BatchKey k1(0, 5), k2(0, 10), k3(1, 3);
+        constexpr BatchKey k1(0, 5), k2(0, 10), k3(1, 3), k4(1, 7);
 
         // Works also, I just like the succinctness of k1, k2, etc
         //q.emplace(c.current_batch(), 5);
@@ -345,16 +345,32 @@ TEST_CASE("experimental test", "[experimental]")
         {
             c.flip();
 
-            q.push(k3);
+            q.push(k3);         // 1:3
 
             k = q.top();
-
-            REQUIRE(k == k3);
-
             q.pop();
+
+            REQUIRE(k == k3);   // 1:3
+
+            k = q.top();
+            q.pop();
+
+            REQUIRE(k == k2);   // 0:10
+
+            q.push(k4);         // 1:7
+
+            k = q.top();
+            q.pop();
+
+            REQUIRE(k == k4);   // 1:7
+
             k = q.top();
 
-            REQUIRE(k == k2);
+            REQUIRE(k == k1);   // 0:5
+
+            // batch_id==0 elements must be fully popped before flipping batch_id=0 back to active
+            // that means batch comparisons may be backwards
+            c.flip();
         }
     }
 }
