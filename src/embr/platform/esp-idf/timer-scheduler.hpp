@@ -93,6 +93,8 @@ bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
 
     scheduler.process(current_time, context);
 
+    uint64_t native_now = scheduler.timer().get_counter_value_in_isr();
+
     // DEBT: We need mutex protection down here too
     if(!scheduler.empty())
     {
@@ -100,10 +102,11 @@ bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
 
         uint64_t native = scheduler.duration_converter().convert(next);
 
-        ESP_DRAM_LOGD(TAG, "timer_callback: size=%d, next=%llu / %llu(ticks)",
+        ESP_DRAM_LOGD(TAG, "timer_callback: size=%d, next=%llu / %llu(ticks), native_now=%llu",
             scheduler.size(),
             next.count(),
-            native);
+            native,
+            native_now);
 
         native += scheduler.offset;
 
@@ -114,7 +117,7 @@ bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
     {
         // fake-zero it out
         // grab time again because ISR service can be slow when debugging
-        scheduler.offset = scheduler.timer().get_counter_value_in_isr();
+        scheduler.offset = native_now;
         //scheduler.offset = initial_counter;   // DEBT: Bring this back in if debug level is minimal
 
         ESP_DRAM_LOGD(TAG, "timer_callback: no further events: offset=%llu", scheduler.offset);
