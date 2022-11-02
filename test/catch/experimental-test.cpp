@@ -490,6 +490,11 @@ TEST_CASE("experimental test", "[experimental]")
     {
         using namespace embr::internal;
 
+        // DEBT: would prefer to use estd here but cannot
+        // since lower estd::chrono::steady_clock aliases out to std::chrono
+        constexpr std::chrono::seconds s1(5);
+        constexpr std::chrono::seconds s2(10);
+
         SECTION("intrinsic time_point")
         {
             std::vector<test::rebase::Item> items;
@@ -503,6 +508,16 @@ TEST_CASE("experimental test", "[experimental]")
             REQUIRE(items[0].event_due() == 5);
             REQUIRE(items[1].event_due() == 15);
         }
+        SECTION("chrono time_point detector")
+        {
+            estd::chrono::steady_clock::time_point t1(s1);
+
+            constexpr bool v1 = is_time_point<decltype(t1)>::value;
+            constexpr bool v2 = is_time_point<int>::value;
+
+            REQUIRE(v1 == true);
+            REQUIRE(v2 == false);
+        }
         SECTION("chrono time_point")
         {
             std::vector<test::rebase::ChronoItem> items;
@@ -510,24 +525,19 @@ TEST_CASE("experimental test", "[experimental]")
 
             test::rebase::ChronoItem item1, item2;
 
-            // DEBT: would prefer to use estd here but cannot
-            // since lower estd::chrono::steady_clock aliases out to std::chrono
-            constexpr std::chrono::seconds v1(5);
-            constexpr std::chrono::seconds v2(10);
-
-            item1.t = estd::chrono::steady_clock::time_point(v2);
-            item2.t = item1.t + v2;
+            item1.t = estd::chrono::steady_clock::time_point(s2);
+            item2.t = item1.t + s2;
 
             items.push_back(item1);
             items.push_back(item2);
 
-            rebaser.rebase2(v1);
+            rebaser.rebase(s1);
 
             auto t0 = items[0].t;
             auto t1 = items[1].t;
 
-            REQUIRE(t0.time_since_epoch() == v1);
-            REQUIRE(t1.time_since_epoch() == v1 + v2);
+            REQUIRE(t0.time_since_epoch() == s1);
+            REQUIRE(t1.time_since_epoch() == s1 + s2);
         }
     }
 }

@@ -20,11 +20,26 @@ struct rebase_traits
     typedef typename value_type::time_point duration;
 
     inline static void rebase(reference v, duration t) { v.rebase(t); }
+};
 
-    // Competing technique, neither are proven yet - this flavor avoids having to detect
-    // whether we even need to use a different duration type
-    template <typename TDuration>
-    inline static void rebase2(reference v, TDuration t) { v.rebase(t); }
+template <class T, typename = void>
+struct is_time_point : estd::false_type {};
+
+template <class Clock, class Duration>
+struct is_time_point<estd::chrono::time_point<Clock, Duration> > : estd::true_type {};
+
+template <class Clock, class Duration>
+struct is_time_point<std::chrono::time_point<Clock, Duration> > : estd::true_type {};
+
+template <class T>
+struct rebase_traits<T,
+    typename estd::enable_if<is_time_point<typename T::time_point>::value>::type >
+{
+    EMBR_CPP_VALUE_TYPE(T)
+
+    typedef typename value_type::time_point::duration duration;
+
+    inline static void rebase(reference v, duration t) { v.rebase(t); }
 };
 
 
@@ -40,13 +55,10 @@ class Rebaser
 
     container_type& container_;
 
-public:
-    Rebaser(container_type& container) : container_(container)
-    {
-
-    }
-
-    void rebase(duration d) const
+    // Just keeping around in case we still want the more fluid template
+    // flavor of this - and doesn't hurt code behavior
+    template <typename TDuration>
+    void rebase_internal(TDuration d) const
     {
         for(iterator i = container_.begin(); i != container_.end(); ++i)
         {
@@ -56,17 +68,14 @@ public:
         }
     }
 
-
-    template <typename TDuration>
-    void rebase2(TDuration d) const
+public:
+    Rebaser(container_type& container) : container_(container)
     {
-        for(iterator i = container_.begin(); i != container_.end(); ++i)
-        {
-            value_type& v = *i;
 
-            traits_type::rebase2(v, d);
-        }
     }
+
+    /// Subtracts duration 'd' from all event_due() in container
+    void rebase(duration d) const { rebase_internal(d); }
 };
 
 }}
