@@ -14,4 +14,16 @@ menu "Embr config"
                 and go as quickly as possible leaving heavy processing for other tasks
     endmenu
 
+    menu "esp-idf"
+
+        menu "High Resolution Timer Scheduler"
+
+            config EMBR_ESP_IDF_TIMER_PROFILING
+                bool "Turn on or off esp-idf Timer Scheduler ISR profiler"
+                default 0
+
+        endmenu
+
+    endmenu
+
 endmenu

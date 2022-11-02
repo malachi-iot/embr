@@ -1,6 +1,20 @@
 # ESP32 esp-idf Support
 
-Tested agains v4.4.2
+Tested against v4.4.2
+
+## Timer Scheduler
+
+Fully ISR based
+
+### Performance
+
+With (most) logging disabled, we see microsecond counts in the ISR typically in the double digits
+during debouncer usage.
+
+## Debouncer
+
+Fully ISR based
+Relies heavily on Timer Scheduler
 
 ## Notes
 

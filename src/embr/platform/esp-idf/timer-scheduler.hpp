@@ -6,6 +6,8 @@
 #include "../../scheduler.hpp"
 #include "../../exp/runtime-chrono.h"
 
+#define EMBR_ESP_IDF_TIMER_PROFILING CONFIG_EMBR_ESP_IDF_TIMER_PROFILING
+
 namespace embr { namespace esp_idf {
 
 // DEBT: Would like to do a const_string here, but estd conversion/availability
@@ -64,17 +66,22 @@ bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
     // It works!  Should we do it.... ?
     static_cast<Wrapper<TScheduler>*>(arg)->timer_callback();
 
+    // Switching from verbose mode to regular debug goes from ~40-60ms to < 15ms
+    // This #if goes from 13-14.5ms to 11-12.5ms
+#if DISABLED_WHILE_DIAGNOSING_SPEED
     ESP_DRAM_LOGV(TAG, "timer_callback: [%s] (%p) offset=%llu, max=%llu", timer_str,
         &scheduler,
         scheduler.offset,
         max);
-
     auto now = estd::chrono::esp_clock::now();
     auto duration = now - last_now_diagnostic;
 
     ESP_DRAM_LOGD(TAG, "timer_callback: [%s] duration=%lldus, counter(ticks)=%lld",
-        timer_str, &scheduler,
-        duration.count(), counter);
+        timer_str, duration.count(), counter);
+#else
+    ESP_DRAM_LOGD(TAG, "timer_callback: [%s] counter(ticks)=%lld",
+        timer_str, counter);
+#endif
 
     // DEBT: Don't do auto here
     // DEBT: Pass in something like 'in_isr_tag' do disambiguate inputs to create_context
@@ -82,6 +89,15 @@ bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
 
     // DEBT: Pretty sure our context_factory handles this now, but keeping around until 100% sure
     context.higherPriorityTaskWoken = false;
+
+    uint64_t native_now;
+#if EMBR_ESP_IDF_TIMER_PROFILING
+    int debug_counter1, debug_counter2, debug_counter3;
+    
+    native_now = scheduler.timer().get_counter_value_in_isr();
+
+    debug_counter1 = native_now - initial_counter;
+#endif
 
     // convert native esp32 Timer format back to scheduler format
     time_point current_time;
@@ -93,7 +109,11 @@ bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
 
     scheduler.process(current_time, context);
 
-    uint64_t native_now = scheduler.timer().get_counter_value_in_isr();
+    native_now = scheduler.timer().get_counter_value_in_isr();
+
+#if EMBR_ESP_IDF_TIMER_PROFILING
+    debug_counter2 = native_now - initial_counter;
+#endif
 
     // DEBT: We need mutex protection down here too
     if(!scheduler.empty())
@@ -126,6 +146,18 @@ bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
         //timer.set_counter_value(0);
         timer.pause();
     }
+
+
+#if EMBR_ESP_IDF_TIMER_PROFILING
+    native_now = scheduler.timer().get_counter_value_in_isr();
+
+    debug_counter3 = native_now - initial_counter;
+
+    ESP_DRAM_LOGI(TAG, "timer_callback: debug_counter1=%d, debug_counter2=%d, debug_counter3=%d",
+        debug_counter1,
+        debug_counter2,
+        debug_counter3);
+#endif
 
     // "The callback should return a bool value to determine whether need to do YIELD at the end of the ISR."
     // effectively https://www.freertos.org/a00124.html
@@ -233,7 +265,7 @@ inline void DurationImpl2<T, divider_, TTimePoint, TReference>::on_processed(
     {
         // we finished a batch of processing and arrive here
 
-        ESP_DRAM_LOGD(TAG, "on_processed: finished processing - count=%d",
+        ESP_DRAM_LOGV(TAG, "on_processed: finished processing - count=%d",
             context.scheduler().size());
     }
 }
