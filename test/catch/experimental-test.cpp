@@ -10,7 +10,10 @@
 
 #include <embr/bits/bits.hpp>
 
+#include <embr/platform/esp-idf/rebase.h>
+
 #include "test-data.h"
+#include "rebase-test.h"
 
 using namespace embr::experimental;
 
@@ -59,11 +62,6 @@ void test_alloc(TAllocator& a)
 #endif
 }
 
-
-#define EMBR_CPP_VALUE_TYPE(T) \
-typedef T value_type;           \
-typedef const value_type& const_reference; \
-typedef T* pointer;
 
 // NOTE: scheduler defaults to a flavor of 'greater'
 // std::priority_queue 'less' results in a max queue.  I like to think of this
@@ -486,6 +484,29 @@ TEST_CASE("experimental test", "[experimental]")
             helper.pop_and_compare(k2); // 0:10
             helper.pop_and_compare(k1); // 0:5
             helper.pop_and_compare(k3); // 1:3
+        }
+    }
+    SECTION("rebaser")
+    {
+        using namespace embr::internal;
+
+        SECTION("intrinsic time_point")
+        {
+            std::vector<test::rebase::Item> items;
+            Rebaser<decltype(items)> rebaser(items);
+
+            items.emplace_back(10);
+            items.emplace_back(20);
+
+            rebaser.rebase(5);
+
+            REQUIRE(items[0].event_due() == 5);
+            REQUIRE(items[1].event_due() == 15);
+        }
+        SECTION("chrono time_point")
+        {
+            std::vector<test::rebase::ChronoItem> items;
+            Rebaser<decltype(items)> rebaser(items);
         }
     }
 }
