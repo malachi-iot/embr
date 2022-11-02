@@ -193,8 +193,10 @@ inline void DurationImpl2<T, divider_, TTimePoint, TReference>::on_scheduled(
     time_point t = get_time_point(value);
     uint64_t native = duration_converter().convert(t);
 
+    auto timer_str = to_string(timer());
+
     // DEBT: Do we need a non-chrono version?
-    ESP_DRAM_LOGD(TAG, "on_scheduled: group=%d, idx=%d, scheduled=%llu / %llu(ticks)", timer().group, timer().idx,
+    ESP_DRAM_LOGD(TAG, "on_scheduled: [%s], scheduled=%llu / %llu(ticks)", timer_str,
         t.count(),
         native);
 
@@ -208,6 +210,8 @@ inline void DurationImpl2<T, divider_, TTimePoint, TReference>::on_scheduled(
     // DEBT: Works, but sloppy - clean up semi-lazy init of timer when outside ISR
     if(context.scheduler().size() == 1 && !context.in_isr())
     {
+        ESP_DRAM_LOGV(TAG, "on_scheduled: setting alarm=%llu(ticks)", native);
+
         timer().set_alarm(TIMER_ALARM_EN);
         timer().set_alarm_value(native);
     }

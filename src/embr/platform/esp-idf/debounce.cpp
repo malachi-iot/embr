@@ -96,7 +96,7 @@ inline void Debouncer::gpio_isr()
                     // call isr-specific now()
                     item.wakeup_ = scheduler.now(true) + d.signal_threshold();
                     // DEBT: Sloppy assignment of last_wakeup_
-                    item.last_wakeup_ = item.wakeup_;
+                    item.last_wakeup_ = scheduler.now(true);
                     
                     scheduler.schedule_with_context(context, &item);
 
