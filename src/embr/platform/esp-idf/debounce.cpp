@@ -92,11 +92,15 @@ inline void Debouncer::gpio_isr()
                     // NOTE: Not sure if we can/should do this in an ISR
                     //timer_set_counter_value(timer_group, timer_idx, 0);   // This works -- now trying pause method
                     
+                    uint64_t native = scheduler.timer().get_counter_value_in_isr();
+                    auto scheduler_now = scheduler.now(true);
+                    ESP_DRAM_LOGV(TAG, "now=%llu, raw=%llu", scheduler_now.count(), native);
+
                     auto context = scheduler.create_context(true);  // isr context
                     // call isr-specific now()
-                    item.wakeup_ = scheduler.now(true) + d.signal_threshold();
+                    item.wakeup_ = scheduler_now + d.signal_threshold();
                     // DEBT: Sloppy assignment of last_wakeup_
-                    item.last_wakeup_ = scheduler.now(true);
+                    item.last_wakeup_ = scheduler_now;
                     
                     scheduler.schedule_with_context(context, &item);
 

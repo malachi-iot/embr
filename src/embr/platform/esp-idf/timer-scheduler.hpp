@@ -100,12 +100,12 @@ bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
 
         uint64_t native = scheduler.duration_converter().convert(next);
 
-        native += scheduler.offset;
-
         ESP_DRAM_LOGD(TAG, "timer_callback: size=%d, next=%llu / %llu(ticks)",
             scheduler.size(),
             next.count(),
             native);
+
+        native += scheduler.offset;
 
         timer.set_alarm_value_in_isr(native);
         timer.start();
@@ -113,7 +113,9 @@ bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
     else
     {
         // fake-zero it out
-        scheduler.offset += counter;
+        // grab time again because ISR service can be slow when debugging
+        scheduler.offset = scheduler.timer().get_counter_value_in_isr();
+        //scheduler.offset = initial_counter;   // DEBT: Bring this back in if debug level is minimal
 
         ESP_DRAM_LOGD(TAG, "timer_callback: no further events: offset=%llu", scheduler.offset);
 
