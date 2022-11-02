@@ -50,7 +50,8 @@ bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
     TScheduler& scheduler = * (TScheduler*) arg;
     Timer& timer = scheduler.timer();
     typedef typename TScheduler::time_point time_point;
-    uint64_t counter = scheduler.timer().get_counter_value_in_isr();
+    uint64_t initial_counter = timer.get_counter_value_in_isr();
+    uint64_t counter = initial_counter;
     counter -= scheduler.offset;
     // Get maximum number of timer ticks we can accumulate before rolling over scheduler's timebase
     // NOTE: counter itself we don't worry about it rolling over, even at highest precision it would take thousands
@@ -71,7 +72,7 @@ bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
     auto now = estd::chrono::esp_clock::now();
     auto duration = now - last_now_diagnostic;
 
-    ESP_DRAM_LOGD(TAG, "timer_callback: [%s] duration=%lldus, counter=%lld",
+    ESP_DRAM_LOGD(TAG, "timer_callback: [%s] duration=%lldus, counter(ticks)=%lld",
         timer_str, &scheduler,
         duration.count(), counter);
 
@@ -109,7 +110,10 @@ bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
     }
     else
     {
-        ESP_DRAM_LOGD(TAG, "timer_callback: no further events");
+        // fake-zero it out
+        //scheduler.offset += counter;
+
+        ESP_DRAM_LOGD(TAG, "timer_callback: no further events: offset=%llu", scheduler.offset);
 
         // Can't do this because this refers only to initial counter value
         //timer.set_counter_value(0);
