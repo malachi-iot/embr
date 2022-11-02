@@ -100,6 +100,8 @@ bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
 
         uint64_t native = scheduler.duration_converter().convert(next);
 
+        native += scheduler.offset;
+
         ESP_DRAM_LOGD(TAG, "timer_callback: size=%d, next=%llu / %llu(ticks)",
             scheduler.size(),
             next.count(),
@@ -111,7 +113,7 @@ bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
     else
     {
         // fake-zero it out
-        //scheduler.offset += counter;
+        scheduler.offset += counter;
 
         ESP_DRAM_LOGD(TAG, "timer_callback: no further events: offset=%llu", scheduler.offset);
 
@@ -195,6 +197,8 @@ inline void DurationImpl2<T, divider_, TTimePoint, TReference>::on_scheduled(
     ESP_DRAM_LOGD(TAG, "on_scheduled: group=%d, idx=%d, scheduled=%llu / %llu(ticks)", timer().group, timer().idx,
         t.count(),
         native);
+
+    native += context.scheduler().offset;
 
     if(context.is_processing())
     {

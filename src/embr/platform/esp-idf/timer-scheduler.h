@@ -138,7 +138,8 @@ struct DurationImpl2 : DurationImplBase<TTimePoint>,
     inline time_point now(bool in_isr = false)
     {
         time_point v;
-        duration_converter().convert(base_type::get_counter(in_isr), &v);
+        uint64_t counter = base_type::get_counter(in_isr);
+        duration_converter().convert(counter - base_type::offset, &v);
         return v;
     }
 
