@@ -26,10 +26,23 @@ inline estd::layer1::string<8> to_string(const Timer& timer)
 static auto last_now_diagnostic = estd::chrono::esp_clock::now();
 
 template <class TScheduler>
-bool IRAM_ATTR DurationImplBaseBase::timer_callback (TScheduler& scheduler)
+inline bool IRAM_ATTR DurationImplBaseBase::timer_callback (TScheduler& scheduler)
 {
     return false;
 }
+
+template <class TScheduler>
+inline bool IRAM_ATTR DurationImplBaseBase::Wrapper<TScheduler>::timer_callback()
+{
+    constexpr const char* TAG = "Wrapper::timer_callback";
+
+    auto& q = this_type::event_queue;
+
+    ESP_DRAM_LOGV(TAG, "event_queue size=%d", q.size());
+
+    return false;
+}
+
 
 template <class TScheduler>
 bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
@@ -46,6 +59,9 @@ bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
     estd::layer1::string<8> timer_str = to_string(timer);
 
     scheduler.timer_callback(scheduler);
+
+    // It works!  Should we do it.... ?
+    static_cast<Wrapper<TScheduler>*>(arg)->timer_callback();
 
     ESP_DRAM_LOGV(TAG, "timer_callback: [%s] (%p) offset=%llu, max=%llu", timer_str,
         &scheduler,
@@ -123,7 +139,7 @@ bool IRAM_ATTR DurationImpl::timer_callback (void *param)
 */
 
 template <class TScheduler>
-void DurationImplBaseBase::start(TScheduler* scheduler, uint32_t divider)
+inline void DurationImplBaseBase::start(TScheduler* scheduler, uint32_t divider)
 {
     timer_scheduler_init(timer(), divider, &DurationImplBaseBase::timer_callback<TScheduler>, scheduler);
 }

@@ -26,8 +26,20 @@ struct DurationImplBaseBase : embr::internal::scheduler::impl::ReferenceBaseBase
     typedef embr::freertos::experimental::FunctorImpl::context_type context_type;
     typedef embr::freertos::experimental::FunctorImpl::context_factory context_factory;
 
+private:
     template <class TScheduler>
     static bool timer_callback(void* arg);
+
+    // Like the old helper, but semi-cheats so that we can get to protected members
+    // Not 100% convinced this is a good idea
+    // NOTE: DO NOT add any member variables or virtual methods to this class!
+    template <class TScheduler>
+    struct Wrapper : TScheduler
+    {
+        typedef TScheduler this_type;
+
+        bool timer_callback();
+    };
 
     template <class TScheduler>
     bool timer_callback(TScheduler& scheduler);
