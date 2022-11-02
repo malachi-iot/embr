@@ -6,6 +6,8 @@
 #include "../../scheduler.hpp"
 #include "../../exp/runtime-chrono.h"
 
+#include "log.h"
+
 #define EMBR_ESP_IDF_TIMER_PROFILING CONFIG_EMBR_ESP_IDF_TIMER_PROFILING
 
 namespace embr { namespace esp_idf {
@@ -79,8 +81,8 @@ bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
     ESP_DRAM_LOGD(TAG, "timer_callback: [%s] duration=%lldus, counter(ticks)=%lld",
         timer_str, duration.count(), counter);
 #else
-    ESP_DRAM_LOGD(TAG, "timer_callback: [%s] counter(ticks)=%lld",
-        timer_str, counter);
+    ESP_GROUP_LOGD(1, TAG, "timer_callback: [%s] counter(ticks)=%lld",
+        timer_str.data(), counter);
 #endif
 
     // DEBT: Don't do auto here
@@ -103,7 +105,8 @@ bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
     time_point current_time;
     if(counter > max)
     {
-        ESP_DRAM_LOGI(TAG, "timer_callback: [%s], overflow", timer_str);
+        // DEBT: Somehow my wrapper doesn't autocast timer_str to const char*
+        ESP_GROUP_LOGI(1, TAG, "timer_callback: [%s], overflow", timer_str.data());
     }
     scheduler.duration_converter().convert(counter, &current_time);
 
@@ -122,7 +125,7 @@ bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
 
         uint64_t native = scheduler.duration_converter().convert(next);
 
-        ESP_DRAM_LOGD(TAG, "timer_callback: size=%d, next=%llu / %llu(ticks), native_now=%llu",
+        ESP_GROUP_LOGD(1, TAG, "timer_callback: size=%d, next=%llu / %llu(ticks), native_now=%llu",
             scheduler.size(),
             next.count(),
             native,
@@ -140,13 +143,12 @@ bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
         scheduler.offset = native_now;
         //scheduler.offset = initial_counter;   // DEBT: Bring this back in if debug level is minimal
 
-        ESP_DRAM_LOGD(TAG, "timer_callback: no further events: offset=%llu", scheduler.offset);
+        ESP_GROUP_LOGD(1, TAG, "timer_callback: no further events: offset=%llu", scheduler.offset);
 
         // Can't do this because this refers only to initial counter value
         //timer.set_counter_value(0);
         timer.pause();
     }
-
 
 #if EMBR_ESP_IDF_TIMER_PROFILING
     native_now = scheduler.timer().get_counter_value_in_isr();

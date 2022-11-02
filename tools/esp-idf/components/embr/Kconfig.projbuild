@@ -24,6 +24,13 @@ menu "Embr config"
 
         endmenu
 
+        menu "Logging Groups"
+
+            config EMBR_LOG_GROUP
+                bool "TEST, not yet active"
+
+        endmenu
+
     endmenu
 
 endmenu
