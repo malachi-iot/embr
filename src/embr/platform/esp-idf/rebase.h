@@ -12,7 +12,7 @@ typedef T* pointer;
 
 namespace embr { namespace internal {
 
-template <class T>
+template <class T, typename = void>
 struct rebase_traits
 {
     EMBR_CPP_VALUE_TYPE(T)
@@ -20,6 +20,11 @@ struct rebase_traits
     typedef typename value_type::time_point duration;
 
     inline static void rebase(reference v, duration t) { v.rebase(t); }
+
+    // Competing technique, neither are proven yet - this flavor avoids having to detect
+    // whether we even need to use a different duration type
+    template <typename TDuration>
+    inline static void rebase2(reference v, TDuration t) { v.rebase(t); }
 };
 
 
@@ -41,15 +46,25 @@ public:
 
     }
 
-    void rebase(duration d)
+    void rebase(duration d) const
     {
-        iterator i = container_.begin();
-
-        for(;i != container_.end(); ++i)
+        for(iterator i = container_.begin(); i != container_.end(); ++i)
         {
             value_type& v = *i;
 
             traits_type::rebase(v, d);
+        }
+    }
+
+
+    template <typename TDuration>
+    void rebase2(TDuration d) const
+    {
+        for(iterator i = container_.begin(); i != container_.end(); ++i)
+        {
+            value_type& v = *i;
+
+            traits_type::rebase2(v, d);
         }
     }
 };

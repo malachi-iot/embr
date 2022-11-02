@@ -22,11 +22,11 @@ struct ChronoItem : test::scheduler::Item3ControlStructure1
 {
     typedef test::scheduler::Item3ControlStructure1 base_type;
     typedef typename base_type::time_point time_point;
+    typedef typename base_type::time_point::duration duration;
 
-    void rebase(time_point v)
+    inline void rebase(duration v)
     {
-        // TODO: We need a duration here
-        //base_type::t -= v;
+        base_type::t -= v;
     }
 
     ESTD_CPP_FORWARDING_CTOR(ChronoItem)

@@ -507,6 +507,27 @@ TEST_CASE("experimental test", "[experimental]")
         {
             std::vector<test::rebase::ChronoItem> items;
             Rebaser<decltype(items)> rebaser(items);
+
+            test::rebase::ChronoItem item1, item2;
+
+            // DEBT: would prefer to use estd here but cannot
+            // since lower estd::chrono::steady_clock aliases out to std::chrono
+            constexpr std::chrono::seconds v1(5);
+            constexpr std::chrono::seconds v2(10);
+
+            item1.t = estd::chrono::steady_clock::time_point(v2);
+            item2.t = item1.t + v2;
+
+            items.push_back(item1);
+            items.push_back(item2);
+
+            rebaser.rebase2(v1);
+
+            auto t0 = items[0].t;
+            auto t1 = items[1].t;
+
+            REQUIRE(t0.time_since_epoch() == v1);
+            REQUIRE(t1.time_since_epoch() == v1 + v2);
         }
     }
 }
