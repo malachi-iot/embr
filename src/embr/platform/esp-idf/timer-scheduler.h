@@ -27,10 +27,10 @@ struct DurationImplBaseBase : embr::internal::scheduler::impl::ReferenceBaseBase
     typedef embr::freertos::experimental::FunctorImpl::context_factory context_factory;
 
     template <class TScheduler>
-    struct helper
-    {
-        static bool timer_callback(void* arg);
-    };
+    static bool timer_callback(void* arg);
+
+    template <class TScheduler>
+    bool timer_callback(TScheduler& scheduler);
 
 protected:
     // We pass this in to avoid downcasting

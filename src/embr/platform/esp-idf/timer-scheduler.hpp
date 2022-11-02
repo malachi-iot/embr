@@ -26,7 +26,13 @@ inline estd::layer1::string<8> to_string(const Timer& timer)
 static auto last_now_diagnostic = estd::chrono::esp_clock::now();
 
 template <class TScheduler>
-bool IRAM_ATTR DurationImplBaseBase::helper<TScheduler>::timer_callback (void* arg)
+bool IRAM_ATTR DurationImplBaseBase::timer_callback (TScheduler& scheduler)
+{
+    return false;
+}
+
+template <class TScheduler>
+bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
 {
     TScheduler& scheduler = * (TScheduler*) arg;
     Timer& timer = scheduler.timer();
@@ -38,6 +44,8 @@ bool IRAM_ATTR DurationImplBaseBase::helper<TScheduler>::timer_callback (void* a
     // of years for it to do so
     uint64_t max = scheduler.duration_converter().convert(time_point::max());
     estd::layer1::string<8> timer_str = to_string(timer);
+
+    scheduler.timer_callback(scheduler);
 
     ESP_DRAM_LOGV(TAG, "timer_callback: [%s] (%p) offset=%llu, max=%llu", timer_str,
         &scheduler,
@@ -117,7 +125,7 @@ bool IRAM_ATTR DurationImpl::timer_callback (void *param)
 template <class TScheduler>
 void DurationImplBaseBase::start(TScheduler* scheduler, uint32_t divider)
 {
-    timer_scheduler_init(timer(), divider, &helper<TScheduler>::timer_callback, scheduler);
+    timer_scheduler_init(timer(), divider, &DurationImplBaseBase::timer_callback<TScheduler>, scheduler);
 }
 
 /*
