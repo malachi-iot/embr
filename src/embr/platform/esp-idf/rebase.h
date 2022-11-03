@@ -2,6 +2,10 @@
 // NOTE: Goal is portability - in the short term we'll put this in esp-idf category
 #pragma once
 
+#include <estd/chrono.h>
+#include <estd/type_traits.h>
+
+
 // DEBT: Move this elsewhere
 #define EMBR_CPP_VALUE_TYPE(T) \
 typedef T value_type;           \
@@ -41,6 +45,8 @@ struct rebase_traits<T,
 
     inline static void rebase(reference v, duration t) { v.rebase(t); }
 };
+
+
 
 
 template <class TContainer, class TTraits = rebase_traits<typename TContainer::value_type> >

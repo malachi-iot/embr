@@ -1,5 +1,6 @@
 #pragma once
 
+#include "rebase.h"
 #include "timer.h"
 #include "timer-scheduler.h"
 #include "../../scheduler.hpp"
@@ -16,7 +17,8 @@ namespace embr { namespace esp_idf {
 
 #define EMBR_LOG_GROUP_ISR 1
 
-ASSERT_EMBR_LOG_GROUP_MODE(EMBR_LOG_GROUP_ISR, EMBR_LOG_GROUP_MODE_ISR)
+//ASSERT_EMBR_LOG_GROUP_MODE(EMBR_LOG_GROUP_ISR, EMBR_LOG_GROUP_MODE_ISR)
+ASSERT_EMBR_LOG_GROUP_MODE(1, 2)
 
 static constexpr int isr_log_group = EMBR_LOG_GROUP_ISR;
 
@@ -37,11 +39,23 @@ inline bool IRAM_ATTR DurationImplBaseBase::Wrapper<TScheduler>::timer_callback(
 
     auto& q = this_type::event_queue;
 
-    ESP_DRAM_LOGV(TAG, "event_queue size=%d", q.size());
+    ESP_GROUP_LOGV(1, TAG, "event_queue size=%d", q.size());
 
     return false;
 }
 
+template <class TScheduler>
+inline void IRAM_ATTR DurationImplBaseBase::Wrapper<TScheduler>::rebase(uint64_t native_now)
+{
+    constexpr const char* TAG = "Wrapper::rebase";
+
+    ESP_GROUP_LOGV(1, TAG, "entry");
+
+    // TODO: rebase_traits doesn't yet work with pointers
+    //typedef typename TScheduler::container_type container_type;
+
+    //embr::internal::Rebaser<container_type> r(this_type::event_queue.container());
+}
 
 template <class TScheduler>
 bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
@@ -61,7 +75,9 @@ bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
     scheduler.timer_callback(scheduler);
 
     // It works!  Should we do it.... ?
-    static_cast<Wrapper<TScheduler>*>(arg)->timer_callback();
+    auto wrapper = static_cast<Wrapper<TScheduler>*>(arg);
+
+    wrapper->timer_callback();
 
     // Switching from verbose mode to regular debug goes from ~40-60ms to < 15ms
     // This #if goes from 13-14.5ms to 11-12.5ms
@@ -76,7 +92,7 @@ bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
     ESP_DRAM_LOGD(TAG, "timer_callback: [%s] duration=%lldus, counter(ticks)=%lld",
         timer_str, duration.count(), counter);
 #else
-    ESP_GROUP_LOGD(isr_log_group, TAG, "timer_callback: [%s] counter(ticks)=%lld",
+    ESP_GROUP_LOGD(1, TAG, "timer_callback: [%s] counter(ticks)=%lld",
         timer_str.data(), counter);
 #endif
 
@@ -101,7 +117,7 @@ bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
     if(counter > max)
     {
         // DEBT: Somehow my wrapper doesn't autocast timer_str to const char*
-        ESP_GROUP_LOGI(isr_log_group, TAG, "timer_callback: [%s], overflow", timer_str.data());
+        ESP_GROUP_LOGI(1, TAG, "timer_callback: [%s], overflow", timer_str.data());
     }
     scheduler.duration_converter().convert(counter, &current_time);
 
@@ -120,11 +136,21 @@ bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
 
         uint64_t native = scheduler.duration_converter().convert(next);
 
-        ESP_GROUP_LOGD(isr_log_group, TAG, "timer_callback: size=%d, next=%llu / %llu(ticks), native_now=%llu",
+        ESP_GROUP_LOGD(1, TAG, "timer_callback: size=%d, next=%llu / %llu(ticks), native_now=%llu",
             scheduler.size(),
             (uint64_t)next.count(),
             native,
             native_now);
+
+        // DEBT: Need a much more precise and configrable mechanism here
+        // Estimate if we are coming at risk of overflow
+        if(native > max / 2)
+        {
+            // If so, rebase now - presumably this is the space after time critical processing has happened
+            // and before another time critical process needs to happen.
+            // DEBT: It might be better to trigger this behavior in an outside task?  But then again, rebase is gonna be pretty fast
+            wrapper->rebase(native_now);
+        }
 
         native += scheduler.offset;
 
@@ -138,7 +164,7 @@ bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
         scheduler.offset = native_now;
         //scheduler.offset = initial_counter;   // DEBT: Bring this back in if debug level is minimal
 
-        ESP_GROUP_LOGD(isr_log_group, TAG, "timer_callback: no further events: offset=%llu", scheduler.offset);
+        ESP_GROUP_LOGD(1, TAG, "timer_callback: no further events: offset=%llu", scheduler.offset);
 
         // Can't do this because this refers only to initial counter value
         //timer.set_counter_value(0);
@@ -174,7 +200,7 @@ template <class TScheduler>
 inline void DurationImpl2<T, divider_, TTimePoint, TReference>::on_scheduled(
     const value_type& value, const scheduler_context_type<TScheduler>& context)
 {
-    ESP_GROUP_LOGV(isr_log_group, TAG, "on_scheduled: entry");
+    ESP_GROUP_LOGV(1, TAG, "on_scheduled: entry");
     
     time_point t = get_time_point(value);
     uint64_t native = duration_converter().convert(t);

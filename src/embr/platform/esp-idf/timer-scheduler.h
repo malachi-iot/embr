@@ -39,6 +39,7 @@ private:
         typedef TScheduler this_type;
 
         bool timer_callback();
+        void rebase(uint64_t native_now);
     };
 
     template <class TScheduler>
