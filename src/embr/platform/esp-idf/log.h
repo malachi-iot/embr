@@ -12,7 +12,8 @@
 #define EMBR_LOG_GROUP_3    CONFIG_EMBR_LOG_GROUP_3
 #define EMBR_LOG_GROUP_4    CONFIG_EMBR_LOG_GROUP_4
 
-//#define ASSERT_EMBR_LOG_GROUP_MODE(group, mode) 
+#define ASSERT_EMBR_LOG_GROUP_MODE(group, mode)     \
+static_assert(EMBR_LOG_GROUP_ ## group == mode, "embr log group " #group " must be mode " #mode);
 
 #ifndef EMBR_LOG_GROUP_0
 #define EMBR_LOG_GROUP_0 0
