@@ -1,5 +1,6 @@
 #pragma once
 
+#include "scheduler.h"
 #include "../../exp/platform/freertos/scheduler.h"
 
 #include <estd/chrono.h>

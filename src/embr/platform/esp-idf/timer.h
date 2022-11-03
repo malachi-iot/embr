@@ -7,6 +7,8 @@
 
 #include <new>
 
+#include <estd/string.h>
+
 #include <driver/timer.h>
 
 // DEBT: Work out if we want camel case or not, look at other esp_idf specific (non estd flavor)
@@ -138,5 +140,19 @@ struct Timer
         return timer_isr_callback_add(group, idx, isr_handler, arg, intr_alloc_flags);
     }
 };
+
+
+// DEBT: Would like to do a const_string here, but estd conversion/availability
+// for a layer1 const_string seems to be impacted
+inline estd::layer1::string<8> to_string(const Timer& timer)
+{
+    estd::layer1::string<8> timer_str;
+
+    timer_str += estd::to_string((int)timer.group);
+    timer_str += ':';
+    timer_str += estd::to_string((int)timer.idx);
+
+    return timer_str;
+}
 
 }}

@@ -12,12 +12,14 @@
 #define EMBR_LOG_GROUP_3    CONFIG_EMBR_LOG_GROUP_3
 #define EMBR_LOG_GROUP_4    CONFIG_EMBR_LOG_GROUP_4
 
+//#define ASSERT_EMBR_LOG_GROUP_MODE(group, mode) 
+
 #ifndef EMBR_LOG_GROUP_0
 #define EMBR_LOG_GROUP_0 0
 #endif
 
 #ifndef EMBR_LOG_GROUP_1
-#define EMBR_LOG_GROUP_1 EMBR_LOG_GROUP_MODE_ISR
+#define EMBR_LOG_GROUP_1 0
 #endif
 
 #ifndef EMBR_LOG_GROUP_2

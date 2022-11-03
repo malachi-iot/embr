@@ -1,29 +1,18 @@
 #pragma once
 
-#include <estd/string.h>
-
+#include "timer.h"
 #include "timer-scheduler.h"
 #include "../../scheduler.hpp"
 #include "../../exp/runtime-chrono.h"
 
 #include "log.h"
 
+// TODO: Do something like https://en.cppreference.com/w/cpp/chrono/duration/operator_ltlt
+// to more comfortably feed durations into logger
+
 #define EMBR_ESP_IDF_TIMER_PROFILING CONFIG_EMBR_ESP_IDF_TIMER_PROFILING
 
 namespace embr { namespace esp_idf {
-
-// DEBT: Would like to do a const_string here, but estd conversion/availability
-// for a layer1 const_string seems to be impacted
-inline estd::layer1::string<8> to_string(const Timer& timer)
-{
-    estd::layer1::string<8> timer_str;
-
-    timer_str += estd::to_string((int)timer.group);
-    timer_str += ':';
-    timer_str += estd::to_string((int)timer.idx);
-
-    return timer_str;
-}
 
 // DEBT: Move this out of static/global namespace and conditionally compile only for
 // diagnostic scenarios
@@ -127,7 +116,7 @@ bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
 
         ESP_GROUP_LOGD(1, TAG, "timer_callback: size=%d, next=%llu / %llu(ticks), native_now=%llu",
             scheduler.size(),
-            next.count(),
+            (uint64_t)next.count(),
             native,
             native_now);
 
@@ -166,22 +155,6 @@ bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
     return context.higherPriorityTaskWoken;
 }
 
-/*
-template <class TScheduler>
-bool IRAM_ATTR DurationImpl::timer_callback (void *param)
-{
-    //timer.pause();
-
-    static_cast<this_type*>(param)->timer_callback();
-
-    // DEBT: Pretty sure we need an ISR-friendly version of this.  However, I can't find one
-    //timer_set_alarm(timer_group, timer_idx, TIMER_ALARM_DIS);
-    // Above not needed, becase
-    // "Once triggered, the alarm is disabled automatically and needs to be re-enabled to trigger again."
-
-    return false;
-}
-*/
 
 template <class TScheduler>
 inline void DurationImplBaseBase::start(TScheduler* scheduler, uint32_t divider)
@@ -189,38 +162,6 @@ inline void DurationImplBaseBase::start(TScheduler* scheduler, uint32_t divider)
     timer_scheduler_init(timer(), divider, &DurationImplBaseBase::timer_callback<TScheduler>, scheduler);
 }
 
-/*
-template <class TScheduler>
-inline void DurationImpl::on_scheduling(value_type& value,
-    embr::internal::SchedulerContextBase<TScheduler>& context)
-{
-    // Putting this in here rather than scheduled because it makes timestamps look more accurate.
-    // Didn't dig into the whys and hows at all
-    last_now_diagnostic = estd::chrono::esp_clock::now();
-}
-
-
-// NOTE: All this happens while in the locked mutex 
-template <class TScheduler>
-inline void DurationImpl::on_scheduled(const value_type& value,
-    embr::internal::SchedulerContextBase<TScheduler>& context)
-{
-    time_point t = get_time_point(value);
-
-    ESP_LOGV(TAG, "on_scheduled: entry");
-    ESP_LOGD(TAG, "on_scheduled: group=%d, idx=%d, scheduled=%u", timer().group, timer().idx,
-        t.count());
-
-    uint64_t native = duration_converter().convert(t);
-
-    if(context.scheduler().size() == 1)
-    {
-        timer().set_alarm(TIMER_ALARM_EN);
-        timer().set_alarm_value(native);
-        timer().start();
-    }
-}
-*/
 
 template <class T, int divider_, typename TTimePoint, class TReference>
 template <class TScheduler>
@@ -236,7 +177,7 @@ inline void DurationImpl2<T, divider_, TTimePoint, TReference>::on_scheduled(
 
     // DEBT: Do we need a non-chrono version?
     ESP_GROUP_LOGD(1, TAG, "on_scheduled: [%s], scheduled=%llu / %llu(ticks)", timer_str.data(),
-        t.count(),
+        (uint64_t)t.count(),
         native);
 
     native += context.scheduler().offset;
