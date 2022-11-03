@@ -25,10 +25,42 @@ menu "Embr config"
         endmenu
 
         menu "Logging Groups"
+        #menuconfig M
+        #if M
+            #help
+            #    Value of 0 = disabled
+            #    Value of 1 = normal logging
+            #    Value of 2 = ISR logging 
+            # Cannot get help text to work for the life of me here
+                    
+            config EMBR_LOG_GROUP_0
+                int "Log Group 0"
+                range 0 2
+                default 0
 
-            config EMBR_LOG_GROUP
-                bool "TEST, not yet active"
+            config EMBR_LOG_GROUP_1
+                int "Log Group 1"
+                range 0 2
+                default 0
 
+            config EMBR_LOG_GROUP_2
+                int "Log Group 2"
+                range 0 2
+                default 0
+                    
+            config EMBR_LOG_GROUP_3
+                int "Log Group 3"
+                range 0 2
+                default 0
+
+            config EMBR_LOG_GROUP_4
+                int "Log Group 4"
+                range 0 2
+                default 0
+
+            help
+                hello
+        #endif
         endmenu
 
     endmenu

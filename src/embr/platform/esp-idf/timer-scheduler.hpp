@@ -227,7 +227,7 @@ template <class TScheduler>
 inline void DurationImpl2<T, divider_, TTimePoint, TReference>::on_scheduled(
     const value_type& value, const scheduler_context_type<TScheduler>& context)
 {
-    ESP_DRAM_LOGV(TAG, "on_scheduled: entry");
+    ESP_GROUP_LOGV(1, TAG, "on_scheduled: entry");
     
     time_point t = get_time_point(value);
     uint64_t native = duration_converter().convert(t);
@@ -235,7 +235,7 @@ inline void DurationImpl2<T, divider_, TTimePoint, TReference>::on_scheduled(
     auto timer_str = to_string(timer());
 
     // DEBT: Do we need a non-chrono version?
-    ESP_DRAM_LOGD(TAG, "on_scheduled: [%s], scheduled=%llu / %llu(ticks)", timer_str,
+    ESP_GROUP_LOGD(1, TAG, "on_scheduled: [%s], scheduled=%llu / %llu(ticks)", timer_str.data(),
         t.count(),
         native);
 
