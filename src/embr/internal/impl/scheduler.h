@@ -166,6 +166,7 @@ struct ReferenceBase : ReferenceBaseBase
         value_type(const value_type& copy_from) = default;
 
         bool process(time_point) { return false; }
+        void rebase(time_point v) { event_due_ -= v; }
     };
 };
 

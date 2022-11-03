@@ -1,5 +1,7 @@
 #include <catch.hpp>
 
+#include <memory>
+
 #include <estd/string.h>
 #include <estd/string_view.h>
 
@@ -508,6 +510,23 @@ TEST_CASE("experimental test", "[experimental]")
             REQUIRE(items[0].event_due() == 5);
             REQUIRE(items[1].event_due() == 15);
         }
+        SECTION("intrinsic time_point with pointers")
+        {
+            std::vector<test::rebase::Item*> items;
+            Rebaser<decltype(items)> rebaser(items);
+
+            std::unique_ptr<test::rebase::Item>
+                item1(new test::rebase::Item(10)),
+                item2(new test::rebase::Item(20));
+
+            items.push_back(item1.get());
+            items.push_back(item2.get());
+
+            rebaser.rebase(5);
+
+            REQUIRE(item1->event_due() == 5);
+            REQUIRE(item2->event_due() == 15);
+        }
         SECTION("chrono time_point detector")
         {
             estd::chrono::steady_clock::time_point t1(s1);
@@ -538,6 +557,21 @@ TEST_CASE("experimental test", "[experimental]")
 
             REQUIRE(t0.time_since_epoch() == s1);
             REQUIRE(t1.time_since_epoch() == s1 + s2);
+        }
+        SECTION("chrono time_point with pointers")
+        {
+            std::vector<test::rebase::ChronoItem*> items;
+            Rebaser<decltype(items)> rebaser(items);
+
+            //auto item1 = std::make_unique<test::rebase::ChronoItem>(s2);  // Not available in c++11
+            std::unique_ptr<test::rebase::ChronoItem> item1(new test::rebase::ChronoItem);
+            item1->t = estd::chrono::steady_clock::time_point(s2);
+
+            items.push_back(item1.get());
+
+            rebaser.rebase(s1);
+
+            REQUIRE(item1->t.time_since_epoch() == s1);
         }
     }
 }

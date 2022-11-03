@@ -16,8 +16,8 @@ typedef T* pointer;
 
 namespace embr { namespace internal {
 
-template <class T, typename = void>
-struct rebase_traits
+template <class T>
+struct reference_rebase_traits
 {
     EMBR_CPP_VALUE_TYPE(T)
 
@@ -25,6 +25,25 @@ struct rebase_traits
 
     inline static void rebase(reference v, duration t) { v.rebase(t); }
 };
+
+
+template <class T>
+struct reference_rebase_traits<T*>
+{
+    EMBR_CPP_VALUE_TYPE(T)
+
+    typedef typename value_type::time_point duration;
+
+    inline static void rebase(pointer v, duration t) { v->rebase(t); }
+};
+
+
+template <class T, typename = void>
+struct rebase_traits : reference_rebase_traits<T>
+{
+};
+
+
 
 template <class T, typename = void>
 struct is_time_point : estd::false_type {};
@@ -47,6 +66,17 @@ struct rebase_traits<T,
 };
 
 
+template <class T>
+struct rebase_traits<T*,
+    typename estd::enable_if<is_time_point<typename T::time_point>::value>::type >
+{
+    EMBR_CPP_VALUE_TYPE(T)
+
+    typedef typename value_type::time_point::duration duration;
+
+    inline static void rebase(pointer v, duration t) { v->rebase(t); }
+};
+
 
 
 template <class TContainer, class TTraits = rebase_traits<typename TContainer::value_type> >
@@ -55,10 +85,12 @@ class Rebaser
     typedef TContainer container_type;
     typedef typename container_type::iterator iterator;
 
+public:
     typedef typename container_type::value_type value_type;
     typedef TTraits traits_type;
     typedef typename traits_type::duration duration;
 
+private:
     container_type& container_;
 
     // Just keeping around in case we still want the more fluid template

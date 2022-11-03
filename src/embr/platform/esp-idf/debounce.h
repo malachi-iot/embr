@@ -37,6 +37,12 @@ struct Item
     //Item() = default;
     Item(const Item& copy_from) = default;
     Item(Debouncer* parent, gpio pin) : parent_{parent}, pin_{pin} {}
+
+    inline void rebase(duration v)
+    {
+        last_wakeup_ -= v;       // DEBT: Could get an underflow here, though probably thats OK
+        wakeup_ -= v;
+    }
 };
 
 

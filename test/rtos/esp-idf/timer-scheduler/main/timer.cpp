@@ -11,6 +11,8 @@ using namespace estd::chrono_literals;
 
 typedef embr::internal::scheduler::impl::ReferenceBase<
     estd::chrono::duration<uint32_t, estd::milli> >::value_type control_structure;
+typedef embr::internal::scheduler::impl::ReferenceBase<
+    estd::chrono::duration<uint8_t, estd::milli> >::value_type control_structure2;
 
 typedef DurationImpl2<control_structure> impl_type;
 typedef embr::internal::layer1::Scheduler<5, impl_type> scheduler_type;
@@ -21,6 +23,7 @@ struct control_structure1
     static constexpr const char* TAG = "control_structure1";
 
     typedef estd::chrono::milliseconds time_point;
+    typedef typename time_point::duration duration;
 
     time_point wakeup_;
 
@@ -37,6 +40,8 @@ struct control_structure1
 
         return true;    // Signal we want a reschedule
     }
+
+    inline void rebase(duration d) { wakeup_ -= d; }
 };
 
 void timer_scheduler_tester()
@@ -44,7 +49,7 @@ void timer_scheduler_tester()
     constexpr embr::esp_idf::Timer timer(TIMER_GROUP_0, TIMER_1);
 
     DurationImpl2<control_structure, -1, int> test1(timer);
-    DurationImpl2<control_structure, 80, unsigned> test2(timer);
+    DurationImpl2<control_structure2, 80, unsigned> test2(timer);
     DurationImpl2<control_structure1*, 80> test3(timer);
 
     auto v1 = test1.numerator();
@@ -52,9 +57,11 @@ void timer_scheduler_tester()
     //auto v3 = test3.now();    // "works" but crashes since timer isn't yet initialized
     //auto v3_count = v3.count();
 
+    static embr::internal::layer1::Scheduler<5, decltype(test2)> s2(params_tag, TIMER_GROUP_1, TIMER_0);
     static embr::internal::layer1::Scheduler<5, decltype(test3)> s3(params_tag, TIMER_GROUP_0, TIMER_0);
     static control_structure1 c1{1s};
 
+    //s2.start();   // FIX: time_point::max() causing an issue here
     s3.start();
     s3.schedule(&c1);
 

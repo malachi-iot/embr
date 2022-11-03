@@ -2,6 +2,7 @@
 
 #include <estd/mutex.h>
 
+#include "rebase.h"
 #include "timer.h"
 
 #include "../../scheduler.h"
@@ -37,9 +38,12 @@ private:
     struct Wrapper : TScheduler
     {
         typedef TScheduler this_type;
+        typedef typename this_type::container_type container_type;
+        typedef typename embr::internal::Rebaser<container_type> rebaser_type;
+        typedef typename rebaser_type::duration duration;
 
         bool timer_callback();
-        void rebase(uint64_t native_now);
+        void rebase(duration next, uint64_t native_now);
     };
 
     template <class TScheduler>

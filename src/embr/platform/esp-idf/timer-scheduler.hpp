@@ -1,6 +1,5 @@
 #pragma once
 
-#include "rebase.h"
 #include "timer.h"
 #include "timer-scheduler.h"
 #include "../../scheduler.hpp"
@@ -45,16 +44,15 @@ inline bool IRAM_ATTR DurationImplBaseBase::Wrapper<TScheduler>::timer_callback(
 }
 
 template <class TScheduler>
-inline void IRAM_ATTR DurationImplBaseBase::Wrapper<TScheduler>::rebase(uint64_t native_now)
+inline void IRAM_ATTR DurationImplBaseBase::Wrapper<TScheduler>::rebase(duration next, uint64_t native_now)
 {
     constexpr const char* TAG = "Wrapper::rebase";
 
     ESP_GROUP_LOGV(1, TAG, "entry");
 
-    // TODO: rebase_traits doesn't yet work with pointers
-    //typedef typename TScheduler::container_type container_type;
-
-    //embr::internal::Rebaser<container_type> r(this_type::event_queue.container());
+    rebaser_type r(this_type::event_queue.container());
+    
+    r.rebase(next);
 }
 
 template <class TScheduler>
@@ -134,27 +132,34 @@ bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
     {
         time_point next = scheduler.top_time();
 
-        uint64_t native = scheduler.duration_converter().convert(next);
+        uint64_t native_next = scheduler.duration_converter().convert(next);
 
         ESP_GROUP_LOGD(1, TAG, "timer_callback: size=%d, next=%llu / %llu(ticks), native_now=%llu",
             scheduler.size(),
             (uint64_t)next.count(),
-            native,
+            native_next,
             native_now);
 
+        // Estimate if we are coming at risk of overflow (of time_point, not uint64_t)
         // DEBT: Need a much more precise and configrable mechanism here
-        // Estimate if we are coming at risk of overflow
-        if(native > max / 2)
+        if(native_next > max / 2)
         {
+            // NOT TESTED YET
+
+            // don't rebase *exactly* to 0, but rather the shortest upcoming event_due.
+            // this way if someone wants to slide their schedule in before, it's possible
+            time_point delta = next - current_time;
             // If so, rebase now - presumably this is the space after time critical processing has happened
             // and before another time critical process needs to happen.
             // DEBT: It might be better to trigger this behavior in an outside task?  But then again, rebase is gonna be pretty fast
-            wrapper->rebase(native_now);
+            wrapper->rebase(delta, native_now);     // yank all scheduled values down starting from delta
+            native_next += scheduler.offset;        // native_next is an absolute value, so current offset is still accurate
+            scheduler.offset = native_now;          // fake zero out our native counter
         }
+        else
+            native_next += scheduler.offset;
 
-        native += scheduler.offset;
-
-        timer.set_alarm_value_in_isr(native);
+        timer.set_alarm_value_in_isr(native_next);
         timer.start();
     }
     else
