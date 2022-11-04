@@ -121,8 +121,13 @@ class Scheduler :
 {
     typedef Scheduler this_type;
 
-    // EXPERIMENTAL
-    friend embr::internal::scheduler::impl::ReferenceBaseBase::Buddy<this_type>;
+    // EXPERIMENTAL - this_type maybe TOO specific?
+    //friend class embr::internal::scheduler::impl::ReferenceBaseBase::Buddy<this_type>;
+
+    // EXPERIMENTAL - this flavor works, thanks to
+    // https://stackoverflow.com/questions/3292795/how-to-declare-a-templated-struct-class-as-a-friend
+    template <typename>
+    friend class embr::internal::scheduler::impl::ReferenceBaseBase::Buddy;
 
 protected:
     typedef TContainer container_type;

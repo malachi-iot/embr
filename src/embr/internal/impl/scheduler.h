@@ -148,6 +148,11 @@ protected:
         {
             return s.event_queue.container();
         }
+
+        static int container_sz(scheduler_type& s)
+        {
+            return s.event_queue.container().size();
+        }
     };
 };
 

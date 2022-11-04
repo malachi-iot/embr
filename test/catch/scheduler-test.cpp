@@ -263,9 +263,7 @@ TEST_CASE("scheduler test", "[scheduler]")
         {
             embr::internal::layer1::Scheduler<5, ItemTraits> scheduler;
 
-            // 'container_type' is protected -- still something we might be
-            // able to do about it
-            //scheduler.buddy_test(scheduler);
+            scheduler.buddy_test(scheduler);
         }
         // Works well, but overly verbose on account of estd::experimental::function
         // indeed being in progress and experimental
