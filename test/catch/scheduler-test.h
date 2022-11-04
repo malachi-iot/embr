@@ -24,6 +24,7 @@ struct Item
 
 struct ItemTraits : embr::internal::scheduler::impl::Reference<Item>
 {
+    typedef embr::internal::scheduler::impl::Reference<Item> base_type;
     typedef int time_point;
 
     static bool process(Item& item, time_point)
@@ -32,6 +33,13 @@ struct ItemTraits : embr::internal::scheduler::impl::Reference<Item>
             ++(*item.counter);
 
         return false;
+    }
+
+    template <class TScheduler>
+    void buddy_test(TScheduler& s)
+    {
+        typedef typename base_type::Buddy<TScheduler> buddy;
+        auto& container = buddy::container(s);
     }
 };
 

@@ -135,6 +135,20 @@ struct ReferenceBaseBase
     inline void start(TScheduler*) {}
 
     inline void stop() {}
+
+protected:
+    // EXPERIMENTAL accessor class
+    template <class TScheduler>
+    struct Buddy
+    {
+        typedef TScheduler scheduler_type;
+        typedef typename scheduler_type::container_type container_type;
+
+        static container_type& container(scheduler_type& s)
+        {
+            return s.event_queue.container();
+        }
+    };
 };
 
 template <typename TTimePoint = void>

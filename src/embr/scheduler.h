@@ -121,6 +121,9 @@ class Scheduler :
 {
     typedef Scheduler this_type;
 
+    // EXPERIMENTAL
+    friend embr::internal::scheduler::impl::ReferenceBaseBase::Buddy<this_type>;
+
 protected:
     typedef TContainer container_type;
 
