@@ -85,33 +85,40 @@ public:
 
 
 template <typename TTimePoint>
-struct DurationImplBase;
+struct DurationImplHelper;
 
 template <typename TInt>
-struct DurationImplBase : DurationImplBaseBase
+struct DurationImplHelper
 {
     typedef TInt time_point;
     typedef TInt int_type;
 
     static constexpr bool is_chrono() { return false; }
-
-    constexpr DurationImplBase(const Timer& timer) : DurationImplBaseBase{timer} {}
-    constexpr DurationImplBase(timer_group_t group, timer_idx_t idx) : DurationImplBaseBase(group, idx) {}
 };
 
 // DEBT: Move some of this specialization magic out to Reference
 template <typename Rep, typename Period>
-struct DurationImplBase<estd::chrono::duration<Rep, Period> > : DurationImplBaseBase
+struct DurationImplHelper<estd::chrono::duration<Rep, Period> >
 {
     typedef estd::chrono::duration<Rep, Period> duration;
     typedef duration time_point;
     typedef Rep int_type;
 
     static constexpr bool is_chrono() { return true; }
-
-    constexpr DurationImplBase(const Timer& timer) : DurationImplBaseBase{timer} {}
-    constexpr DurationImplBase(timer_group_t group, timer_idx_t idx) : DurationImplBaseBase(group, idx) {}
 };
+
+
+// NOTE: Untested, but a similar mechanism is working in Catch unit testing
+template <typename TClock, typename TDuration>
+struct DurationImplHelper<estd::chrono::time_point<TClock, TDuration> >
+{
+    typedef TDuration duration;
+    typedef estd::chrono::time_point<TClock, TDuration> time_point;
+    typedef typename TDuration::rep int_type;
+
+    static constexpr bool is_chrono() { return true; }
+};
+
 
 template <class T, int divider_ = -1,
     typename TTimePoint = typename std::remove_pointer<T>::type::time_point,
@@ -119,15 +126,18 @@ template <class T, int divider_ = -1,
 struct DurationImpl2;
 
 template <class T, int divider_, typename TTimePoint, class TReference>
-struct DurationImpl2 : DurationImplBase<TTimePoint>,
+struct DurationImpl2 : 
+    DurationImplBaseBase,
+    DurationImplHelper<TTimePoint>,
     embr::experimental::DurationConverter<
-        typename DurationImplBase<TTimePoint>::int_type, divider_, Timer::base_clock_hz()>
+        typename DurationImplHelper<TTimePoint>::int_type, divider_, Timer::base_clock_hz()>
 {
     static constexpr const char* TAG = "DurationImpl2";
 
-    typedef DurationImplBase<TTimePoint> base_type;
-    typedef typename base_type::time_point time_point;
-    typedef embr::experimental::DurationConverter<typename base_type::int_type, divider_, Timer::base_clock_hz()> converter_type;
+    typedef DurationImplBaseBase base_type;
+    typedef DurationImplHelper<TTimePoint> helper_type;
+    typedef typename helper_type::time_point time_point;
+    typedef embr::experimental::DurationConverter<typename helper_type::int_type, divider_, Timer::base_clock_hz()> converter_type;
 
     // reference_impl comes in handy for supporting both value and pointer of T.  Also
     // if one *really* wants to deviate from 'event_due' and 'process' paradigm, it's done
