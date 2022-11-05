@@ -17,6 +17,11 @@ struct DurationImplBaseBase : embr::internal::scheduler::impl::ReferenceBaseBase
 
     Timer timer_;
 
+    // EXPERIMENTAL -
+    // 1) I would think we could interrogate esp-idf API for this
+    // 2) I am not sure we need to track this but maybe, getting an odd crash when starting an already-started timer
+    bool is_started_ = false;
+
     inline Timer& timer() { return timer_; }
     constexpr const Timer& timer() const { return timer_; }
 
