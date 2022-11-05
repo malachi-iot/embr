@@ -48,8 +48,13 @@ void timer_scheduler_tester()
 {
     constexpr embr::esp_idf::Timer timer(TIMER_GROUP_0, TIMER_1);
 
+    // FIX: time_point::max() and similar not fleshed out yet - explicit time_point specified here
+    // must match up with control_structure
+    // TODO: Along with above, we have the notion of a 'native' time base for scheduler - for those
+    // who don't want to do all the divisor conversions
     DurationImpl2<control_structure, -1, int> test1(timer);
-    DurationImpl2<control_structure2, 80, unsigned> test2(timer);
+
+    DurationImpl2<control_structure2, 80> test2(timer);
     DurationImpl2<control_structure1*, 80> test3(timer);
 
     auto v1 = test1.numerator();
@@ -61,7 +66,9 @@ void timer_scheduler_tester()
     static embr::internal::layer1::Scheduler<5, decltype(test3)> s3(params_tag, TIMER_GROUP_0, TIMER_0);
     static control_structure1 c1{1s};
 
-    //s2.start();   // FIX: time_point::max() causing an issue here
+    s2.start();
+    s2.schedule(50ms);  // For overflow testing
+
     s3.start();
     s3.schedule(&c1);
 
