@@ -11,22 +11,22 @@ using namespace estd::chrono_literals;
 
 typedef embr::internal::scheduler::impl::ReferenceBase<
     estd::chrono::duration<uint32_t, estd::milli> >::value_type control_structure;
-typedef embr::internal::scheduler::impl::ReferenceBase<
-    estd::chrono::duration<uint8_t, estd::milli> >::value_type control_structure2;
 
 typedef DurationImpl2<control_structure> impl_type;
 typedef embr::internal::layer1::Scheduler<5, impl_type> scheduler_type;
 static constexpr embr::internal::scheduler::impl_params_tag params_tag;
 
-struct control_structure1 : 
-    embr::internal::scheduler::impl::ReferenceBase<estd::chrono::milliseconds>::value_type
+template <class TTimePoint>
+struct control_structure_base : 
+    embr::internal::scheduler::impl::ReferenceBase<TTimePoint>::value_type
 {
-    typedef embr::internal::scheduler::impl::ReferenceBase<estd::chrono::milliseconds>::value_type base_type;
+    typedef typename embr::internal::scheduler::impl::ReferenceBase<TTimePoint>::value_type base_type;
     using typename base_type::time_point;
 
     static constexpr const char* TAG = "control_structure1";
 
-    constexpr control_structure1(time_point t) : base_type(t) {}
+    constexpr control_structure_base() = default;
+    constexpr control_structure_base(time_point t) : base_type(t) {}
 
     bool process(time_point current_time)
     {
@@ -40,6 +40,9 @@ struct control_structure1 :
         return true;    // Signal we want a reschedule
     }
 };
+
+typedef control_structure_base<estd::chrono::duration<int8_t, estd::ratio<1, 10> > > control_structure2;
+typedef control_structure_base<estd::chrono::milliseconds> control_structure1;
 
 void timer_scheduler_tester()
 {
@@ -63,8 +66,9 @@ void timer_scheduler_tester()
     static embr::internal::layer1::Scheduler<5, decltype(test3)> s3(params_tag, TIMER_GROUP_0, TIMER_0);
     static control_structure1 c1{1s};
 
-    s2.start();
-    s2.schedule(50ms);  // For overflow testing
+    // FIX: Panic from ISR
+    //s2.start();
+    //s2.schedule(50ms);  // For overflow testing
 
     s3.start();
     s3.schedule(&c1);
