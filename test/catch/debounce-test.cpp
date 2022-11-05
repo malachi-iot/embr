@@ -71,7 +71,7 @@ TEST_CASE("Debounce and friends state machine tests", "[debounce]")
         }
         SECTION("runtime chrono")
         {
-            SECTION("converter (default 80)")
+            SECTION("converter (runtime default 80)")
             {
                 DurationConverter<int, -1> converter;
 
@@ -85,8 +85,20 @@ TEST_CASE("Debounce and friends state machine tests", "[debounce]")
                 // 5/33 of a second = 0.151515151_ forever
                 v = converter.convert(estd::chrono::duration<uint16_t, estd::ratio<5, 33> >(1));
                 REQUIRE(v == 151515);
+
+                SECTION("low precision")
+                {
+                    typedef estd::chrono::duration<uint8_t, estd::milli> duration;
+                    v = converter.convert(duration(50));
+
+                    REQUIRE(v == 50000);
+
+                    v = converter.convert(duration::max());
+
+                    REQUIRE(v == 255000);
+                }
             }
-            SECTION("converter (400)")
+            SECTION("converter (runtime 400)")
             {
                 DurationConverter<int, -1> converter;
 
@@ -96,7 +108,7 @@ TEST_CASE("Debounce and friends state machine tests", "[debounce]")
 
                 REQUIRE(v == 2000);
             }
-            SECTION("converter (8000)")
+            SECTION("converter (runtime 8000)")
             {
                 DurationConverter<int, -1> converter;
 
@@ -115,17 +127,34 @@ TEST_CASE("Debounce and friends state machine tests", "[debounce]")
             SECTION("constexpr converter (80)")
             {
                 DurationConverter<int, 80> converter;
+                uint64_t v;
 
-                uint64_t v = converter.convert(estd::chrono::milliseconds(10));
+                SECTION("basic")
+                {
+                    v = converter.convert(estd::chrono::milliseconds(10));
 
-                REQUIRE(v == 10000);
+                    REQUIRE(v == 10000);
+                }
+                SECTION("edge case")
+                {
+                    v = converter.convert(estd::chrono::duration<uint16_t, estd::ratio<1, 3> >(1));
+                    REQUIRE(v == 333333);
 
-                v = converter.convert(estd::chrono::duration<uint16_t, estd::ratio<1, 3> >(1));
-                REQUIRE(v == 333333);
+                    // 5/33 of a second = 0.151515151_ forever
+                    v = converter.convert(estd::chrono::duration<uint16_t, estd::ratio<5, 33> >(1));
+                    REQUIRE(v == 151515);
+                }
+                SECTION("low precision")
+                {
+                    typedef estd::chrono::duration<uint8_t, estd::milli> duration;
+                    v = converter.convert(duration(50));
 
-                // 5/33 of a second = 0.151515151_ forever
-                v = converter.convert(estd::chrono::duration<uint16_t, estd::ratio<5, 33> >(1));
-                REQUIRE(v == 151515);
+                    REQUIRE(v == 50000);
+
+                    v = converter.convert(duration::max());
+
+                    REQUIRE(v == 255000);
+                }
             }
             SECTION("constexpr converter (400)")
             {

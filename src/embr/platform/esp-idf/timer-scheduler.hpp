@@ -67,7 +67,7 @@ bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
     // Get maximum number of timer ticks we can accumulate before rolling over scheduler's timebase
     // NOTE: counter itself we don't worry about it rolling over, even at highest precision it would take thousands
     // of years for it to do so
-    uint64_t max = scheduler.duration_converter().convert(time_point::max());
+    const uint64_t max = scheduler.duration_converter().convert(time_point::max());
     estd::layer1::string<8> timer_str = to_string(timer);
 
     scheduler.timer_callback(scheduler);
@@ -115,7 +115,10 @@ bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
     if(counter > max)
     {
         // DEBT: Somehow my wrapper doesn't autocast timer_str to const char*
-        ESP_GROUP_LOGI(1, TAG, "timer_callback: [%s], overflow", timer_str.data());
+        ESP_GROUP_LOGI(1, TAG, "timer_callback: [%s] overflow max(time_point)=%llu, max(ticks)=%llu", 
+            timer_str.data(),
+            (uint64_t)time_point::max().count(),
+            max);
     }
     scheduler.duration_converter().convert(counter, &current_time);
 

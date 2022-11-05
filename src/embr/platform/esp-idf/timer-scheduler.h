@@ -129,15 +129,14 @@ template <class T, int divider_, typename TTimePoint, class TReference>
 struct DurationImpl2 : 
     DurationImplBaseBase,
     DurationImplHelper<TTimePoint>,
-    embr::experimental::DurationConverter<
-        typename DurationImplHelper<TTimePoint>::int_type, divider_, Timer::base_clock_hz()>
+    embr::experimental::DurationConverter<uint64_t, divider_, Timer::base_clock_hz()>
 {
     static constexpr const char* TAG = "DurationImpl2";
 
     typedef DurationImplBaseBase base_type;
     typedef DurationImplHelper<TTimePoint> helper_type;
     typedef typename helper_type::time_point time_point;
-    typedef embr::experimental::DurationConverter<typename helper_type::int_type, divider_, Timer::base_clock_hz()> converter_type;
+    typedef embr::experimental::DurationConverter<uint64_t, divider_, Timer::base_clock_hz()> converter_type;
 
     // reference_impl comes in handy for supporting both value and pointer of T.  Also
     // if one *really* wants to deviate from 'event_due' and 'process' paradigm, it's done
