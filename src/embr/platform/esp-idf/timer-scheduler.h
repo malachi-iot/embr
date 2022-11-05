@@ -84,40 +84,6 @@ public:
 };
 
 
-template <typename TTimePoint>
-struct DurationImplHelper;
-
-template <typename TInt>
-struct DurationImplHelper
-{
-    typedef TInt time_point;
-    typedef TInt int_type;
-
-    static constexpr bool is_chrono() { return false; }
-};
-
-// DEBT: Move some of this specialization magic out to Reference
-template <typename Rep, typename Period>
-struct DurationImplHelper<estd::chrono::duration<Rep, Period> >
-{
-    typedef estd::chrono::duration<Rep, Period> duration;
-    typedef duration time_point;
-    typedef Rep int_type;
-
-    static constexpr bool is_chrono() { return true; }
-};
-
-
-// NOTE: Untested, but a similar mechanism is working in Catch unit testing
-template <typename TClock, typename TDuration>
-struct DurationImplHelper<estd::chrono::time_point<TClock, TDuration> >
-{
-    typedef TDuration duration;
-    typedef estd::chrono::time_point<TClock, TDuration> time_point;
-    typedef typename TDuration::rep int_type;
-
-    static constexpr bool is_chrono() { return true; }
-};
 
 
 template <class T, int divider_ = -1,
@@ -128,13 +94,13 @@ struct DurationImpl2;
 template <class T, int divider_, typename TTimePoint, class TReference>
 struct DurationImpl2 : 
     DurationImplBaseBase,
-    DurationImplHelper<TTimePoint>,
+    embr::internal::scheduler::impl::DurationImplHelper<TTimePoint>,
     embr::experimental::DurationConverter<uint64_t, divider_, Timer::base_clock_hz()>
 {
     static constexpr const char* TAG = "DurationImpl2";
 
     typedef DurationImplBaseBase base_type;
-    typedef DurationImplHelper<TTimePoint> helper_type;
+    typedef embr::internal::scheduler::impl::DurationImplHelper<TTimePoint> helper_type;
     typedef typename helper_type::time_point time_point;
     typedef embr::experimental::DurationConverter<uint64_t, divider_, Timer::base_clock_hz()> converter_type;
 

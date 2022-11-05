@@ -18,30 +18,27 @@ typedef DurationImpl2<control_structure> impl_type;
 typedef embr::internal::layer1::Scheduler<5, impl_type> scheduler_type;
 static constexpr embr::internal::scheduler::impl_params_tag params_tag;
 
-struct control_structure1
+struct control_structure1 : 
+    embr::internal::scheduler::impl::ReferenceBase<estd::chrono::milliseconds>::value_type
 {
+    typedef embr::internal::scheduler::impl::ReferenceBase<estd::chrono::milliseconds>::value_type base_type;
+    using typename base_type::time_point;
+
     static constexpr const char* TAG = "control_structure1";
 
-    typedef estd::chrono::milliseconds time_point;
-    typedef typename time_point::duration duration;
-
-    time_point wakeup_;
-
-    const time_point& event_due() const { return wakeup_; }
+    constexpr control_structure1(time_point t) : base_type(t) {}
 
     bool process(time_point current_time)
     {
         // This variant of log macro works inside ISRs
         ESP_DRAM_LOGI(TAG, "process: wake=%llu, current=%llu",
-            wakeup_.count(),
+            base_type::event_due_.count(),
             current_time.count());
 
-        wakeup_ += 1s;
+        base_type::event_due_ += 1s;
 
         return true;    // Signal we want a reschedule
     }
-
-    inline void rebase(duration d) { wakeup_ -= d; }
 };
 
 void timer_scheduler_tester()
