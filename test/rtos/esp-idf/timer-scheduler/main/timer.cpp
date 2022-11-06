@@ -66,7 +66,7 @@ void timer_scheduler_tester()
     static embr::internal::layer1::Scheduler<5, decltype(test3)> s3(params_tag, TIMER_GROUP_0, TIMER_0);
     static control_structure1 c1{1s};
 
-    // FIX: Panic from ISR
+    // FIX: Panic from ISR, relates somehow to 'process' running super early on
     s2.start();
     s2.schedule(50ms);  // For overflow testing
 
