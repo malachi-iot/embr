@@ -67,8 +67,8 @@ void timer_scheduler_tester()
     static control_structure1 c1{1s};
 
     // FIX: Panic from ISR
-    //s2.start();
-    //s2.schedule(50ms);  // For overflow testing
+    s2.start();
+    s2.schedule(50ms);  // For overflow testing
 
     s3.start();
     s3.schedule(&c1);

@@ -11,16 +11,21 @@
 
 namespace embr { namespace esp_idf {
 
+// Doesn't affect our mutex glitch at all, so keeping off
+//#define EMBR_TIMER_TRACK_START 1
+
 struct DurationImplBaseBase : embr::internal::scheduler::impl::ReferenceBaseBase
 {
     static constexpr const char* TAG = "DurationImplBaseBase";
 
     Timer timer_;
 
+#if EMBR_TIMER_TRACK_START
     // EXPERIMENTAL -
     // 1) I would think we could interrogate esp-idf API for this
     // 2) I am not sure we need to track this but maybe, getting an odd crash when starting an already-started timer
-    bool is_started_ = false;
+    bool is_timer_started_ = false;
+#endif
 
     inline Timer& timer() { return timer_; }
     constexpr const Timer& timer() const { return timer_; }

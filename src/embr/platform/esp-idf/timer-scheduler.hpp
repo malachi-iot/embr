@@ -164,6 +164,9 @@ bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
 
         timer.set_alarm_value_in_isr(native_next);
         timer.start();
+#if EMBR_TIMER_TRACK_START
+        scheduler.is_timer_started_ = true;
+#endif
     }
     else
     {
@@ -177,6 +180,9 @@ bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
         // Can't do this because this refers only to initial counter value
         //timer.set_counter_value(0);
         timer.pause();
+#if EMBR_TIMER_TRACK_START
+        scheduler.is_timer_started_ = false;
+#endif
     }
 
 #if EMBR_ESP_IDF_TIMER_PROFILING
@@ -236,7 +242,14 @@ inline void DurationImpl2<T, divider_, TTimePoint, TReference>::on_scheduled(
         timer().set_alarm_value(native);
     }
 
+#if EMBR_TIMER_TRACK_START
+    if(is_timer_started_) return;
+#endif
+
     timer().start();
+#if EMBR_TIMER_TRACK_START
+    is_timer_started_ = true;
+#endif
 }
 
 template <class T, int divider_, typename TTimePoint, class TReference>
