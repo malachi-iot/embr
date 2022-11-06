@@ -6,7 +6,7 @@
 
 #include "debounce.hpp"
 #include "timer.h"
-#include "freertos/timer.h"
+#include <estd/port/freertos/wrapper/timer.h>
 
 #include <esp_log.h>
 
@@ -33,7 +33,7 @@ static esp_clock::time_point last_now;
 
 void held_callback(TimerHandle_t);
 
-embr::freertos::timer<> held_timer("held", 3s, false, nullptr, held_callback);
+estd::freertos::timer<> held_timer("held", 3s, false, nullptr, held_callback);
 
 
 inline void Debouncer::gpio_isr()
@@ -308,7 +308,7 @@ void held_callback(TimerHandle_t xTimer)
 {
     const char* TAG = "held_callback";
 
-    auto timer = (embr::freertos::timer<>&) xTimer; 
+    auto timer = (estd::freertos::timer<>&) xTimer; 
 
     ESP_LOGI(TAG, "Callback name: \"%s\"", timer.name());
 }
