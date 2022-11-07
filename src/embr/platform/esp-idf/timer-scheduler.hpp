@@ -77,6 +77,35 @@ bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
 
     wrapper->timer_callback();
 
+    // FIX: mutex isn't supported in ISR, we need a binary semaphore.  At the moment
+    // mutex does actually function as a binary sempahore here though.  Unreliable enough
+    // to be a FIX and not a DEBT
+    auto result = scheduler.mutex().native_handle().take_from_isr(nullptr);
+
+    if(result == pdFALSE)
+    {
+        ESP_GROUP_LOGD(1, TAG, "timer_callback: [%s] could not grab mutex native=%llu",
+            timer_str.data(),
+            initial_counter);
+
+        // Effectively do a spinwait
+
+        // FIX: This huge value is needed because otherwise ISR lights right back up again
+        // due to slowness incurred by debug messages, subsequently triggering WDT (appropriately)
+        // this is despite ESP_INTR_FLAG_LEVEL1 which is the lowest priority interrupt
+        //timer.set_alarm_value_in_isr(initial_counter + 100000);
+
+        // DEBT: slightly better than above FIX - wake up 1000 ticks after this point in time,
+        // generally accounting for debug log slowness.  That said:
+        // 1.  1000 ticks is too arbitrary and should be more configurable or at least deduced better
+        // 2.  in non-diagnostic-logging scenarios the simpler + to initial_counter works well and is better
+        uint64_t spinwait_wakeup = timer.get_counter_value_in_isr() + 1000;
+        timer.set_alarm_value_in_isr(spinwait_wakeup);
+
+        // NOTE: This return true doesn't help above WDT issue, but keeping it for now anyway
+        return true;
+    }
+
     // Switching from verbose mode to regular debug goes from ~40-60ms to < 15ms
     // This #if goes from 13-14.5ms to 11-12.5ms
 #if DISABLED_WHILE_DIAGNOSING_SPEED
@@ -96,7 +125,9 @@ bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
 
     // DEBT: Don't do auto here
     // DEBT: Pass in something like 'in_isr_tag' do disambiguate inputs to create_context
-    auto context = scheduler.create_context(true);  // create an in_isr context
+    // DEBT: We disable mutex as is appropriate since we handle it ourselves, but it's confusing
+    // that this context still locks/unlocks when manually activated
+    auto context = scheduler.create_context(true, false);  // create an in_isr context, but disable mutex anyway since we manually manage it
 
     // DEBT: Pretty sure our context_factory handles this now, but keeping around until 100% sure
     context.higherPriorityTaskWoken = false;
@@ -195,6 +226,8 @@ bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
         debug_counter2,
         debug_counter3);
 #endif
+
+    scheduler.mutex().unlock(context);
 
     // "The callback should return a bool value to determine whether need to do YIELD at the end of the ISR."
     // effectively https://www.freertos.org/a00124.html

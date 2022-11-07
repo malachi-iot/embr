@@ -66,14 +66,12 @@ void timer_scheduler_tester()
     static embr::internal::layer1::Scheduler<5, decltype(test3)> s3(params_tag, TIMER_GROUP_0, TIMER_0);
     static control_structure1 c1{1s};
 
-    // FIX: Panic from ISR, because FreeRTOS mutex is not designed to function
-    // inside an ISR.  That said, the failure is likely that the 'take' fails due
-    // to non-ISR still holding on to mutex which is the behavior we'd see with
-    // the supported semaphore mechanism (may have to semi spinwait)
-    //s2.start();
-    //s2.schedule(50ms);  // For overflow testing
+    s2.start();
+    s2.schedule(50ms);  // For overflow testing
 
     s3.start();
+    // DEBT: Something happening here generating create_context twice - things still work
+    // and I have a feeling it's RVO related in which case it's harmless, but it bears investigation
     s3.schedule(&c1);
 
     const char* TAG = "timer_scheduler_tester";
