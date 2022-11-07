@@ -20,6 +20,12 @@ struct DurationImplBaseBase : embr::internal::scheduler::impl::ReferenceBaseBase
 
     Timer timer_;
 
+    // Not yet used
+    // This is a spinwait for the short duration that the isr is unable to acquire the mutex/binary semaphore
+    // doing this effectively grants ISR higher priority to get the mutex because everyone else has to wait
+    // for this variable to be false
+    volatile bool isr_acquiring_mutex_ = false;
+
 #if EMBR_TIMER_TRACK_START
     // EXPERIMENTAL -
     // 1) I would think we could interrogate esp-idf API for this

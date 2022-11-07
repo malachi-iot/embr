@@ -77,6 +77,8 @@ bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
 
     wrapper->timer_callback();
 
+    scheduler.isr_acquiring_mutex_ = true;
+
     // FIX: mutex isn't supported in ISR, we need a binary semaphore.  At the moment
     // mutex does actually function as a binary sempahore here though.  Unreliable enough
     // to be a FIX and not a DEBT
@@ -106,6 +108,8 @@ bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
         return true;
     }
 
+    scheduler.isr_acquiring_mutex_ = false;
+    
     // Switching from verbose mode to regular debug goes from ~40-60ms to < 15ms
     // This #if goes from 13-14.5ms to 11-12.5ms
 #if DISABLED_WHILE_DIAGNOSING_SPEED
