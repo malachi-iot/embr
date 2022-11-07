@@ -70,9 +70,15 @@ struct FunctorImpl :
         }
     };
 
+    template <bool binary_semaphore>
     // 'true' designates static allocation
-    struct mutex : estd::freertos::timed_mutex<true>
+    struct timed_mutex : estd::freertos::timed_mutex<true>
     {
+        typedef estd::freertos::timed_mutex<true> base_type;
+
+        // DEBT: Not 100% convinved binary-sempahore-mutex is the way to go
+        timed_mutex() : base_type(binary_semaphore) {}
+
         enum TimeoutModes
         {
             Blocking,       ///< Blocks until mutex is acquired
@@ -85,8 +91,6 @@ struct FunctorImpl :
 
             Abort           ///< Times out and signals an abort program if mutex is not acquired
         };
-
-        typedef estd::freertos::timed_mutex<true> base_type;
 
         template <class TScheduler>
         inline void lock(embr::internal::SchedulerContextBase<TScheduler>& context)
@@ -126,6 +130,9 @@ struct FunctorImpl :
                 base_type::unlock();
         }
     };
+
+    typedef timed_mutex<false> mutex;
+    typedef timed_mutex<true> binary_semaphore;
 
     inline static time_point now()
     { return estd::chrono::freertos_clock::now(); }
