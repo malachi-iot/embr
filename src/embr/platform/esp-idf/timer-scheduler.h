@@ -1,5 +1,6 @@
 #pragma once
 
+#include <estd/port/freertos/event_groups.h>
 #include <estd/mutex.h>
 
 #include "rebase.h"
@@ -20,11 +21,22 @@ struct DurationImplBaseBase : embr::internal::scheduler::impl::ReferenceBaseBase
 
     Timer timer_;
 
-    // Not yet used
     // This is a spinwait for the short duration that the isr is unable to acquire the mutex/binary semaphore
     // doing this effectively grants ISR higher priority to get the mutex because everyone else has to wait
     // for this variable to be false
     volatile bool isr_acquiring_mutex_ = false;
+
+    // Represents a kind of "clear to send" - in other words, if bit 1 is set,
+    // normal scheduling may proceed.  if bit 1 is clear, that means ISR is busy
+    estd::freertos::event_group<true> event_;
+
+    static constexpr EventBits_t event_clear_to_schedule = 1;
+
+    // this and event_ are alternatives to above spinlock.  However, mechanism is not fully used yet
+    inline bool wait_for_isr(estd::chrono::freertos_clock::duration wait)
+    {
+        return event_.wait_bits(event_clear_to_schedule, false, true, wait);
+    }
 
 #if EMBR_TIMER_TRACK_START
     // EXPERIMENTAL -
@@ -36,8 +48,8 @@ struct DurationImplBaseBase : embr::internal::scheduler::impl::ReferenceBaseBase
     inline Timer& timer() { return timer_; }
     constexpr const Timer& timer() const { return timer_; }
 
-    constexpr DurationImplBaseBase(const Timer& timer) : timer_{timer} {}
-    constexpr DurationImplBaseBase(timer_group_t group, timer_idx_t idx) : timer_(group, idx) {}
+    DurationImplBaseBase(const Timer& timer) : timer_{timer} {}
+    DurationImplBaseBase(timer_group_t group, timer_idx_t idx) : timer_(group, idx) {}
 
     struct mutex : embr::scheduler::freertos::timed_mutex<true, true>
     {

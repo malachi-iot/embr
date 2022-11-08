@@ -77,12 +77,25 @@ bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
 
     wrapper->timer_callback();
 
+    // DEBT: Don't do auto here
+    // DEBT: Pass in something like 'in_isr_tag' do disambiguate inputs to create_context
+    // DEBT: We disable mutex as is appropriate since we handle it ourselves, but it's confusing
+    // that this context still locks/unlocks when manually activated
+    auto context = scheduler.create_context(true, false);  // create an in_isr context, but disable mutex anyway since we manually manage it
+
+    // DEBT: Pretty sure our context_factory handles this now, but keeping around until 100% sure
+    context.higherPriorityTaskWoken = false;
+
     scheduler.isr_acquiring_mutex_ = true;
 
-    // FIX: mutex isn't supported in ISR, we need a binary semaphore.  At the moment
-    // mutex does actually function as a binary sempahore here though.  Unreliable enough
-    // to be a FIX and not a DEBT
-    auto result = scheduler.mutex().native_handle().take_from_isr(nullptr);
+    // mutex isn't supported in ISR, we need a binary semaphore.  
+    // mutex does actually function as a binary sempahore here, as per
+    // embr::scheduler::freertos::timed_mutex<true, ...>
+    auto result = scheduler.mutex().native_handle().take_from_isr(&context.higherPriorityTaskWoken);
+
+    // DEBT: Unknown implications for repeated calls to this when already clear.
+    // Likely nothing but a bit of queue overhead, but we should be sure
+    scheduler.event_.clear_bits_from_isr(event_clear_to_schedule);
 
     if(result == pdFALSE)
     {
@@ -126,15 +139,6 @@ bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
     ESP_GROUP_LOGD(1, TAG, "timer_callback: [%s] counter(ticks)=%lld",
         timer_str.data(), counter);
 #endif
-
-    // DEBT: Don't do auto here
-    // DEBT: Pass in something like 'in_isr_tag' do disambiguate inputs to create_context
-    // DEBT: We disable mutex as is appropriate since we handle it ourselves, but it's confusing
-    // that this context still locks/unlocks when manually activated
-    auto context = scheduler.create_context(true, false);  // create an in_isr context, but disable mutex anyway since we manually manage it
-
-    // DEBT: Pretty sure our context_factory handles this now, but keeping around until 100% sure
-    context.higherPriorityTaskWoken = false;
 
     uint64_t native_now;
 #if EMBR_ESP_IDF_TIMER_PROFILING
@@ -231,6 +235,9 @@ bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
         debug_counter3);
 #endif
 
+    // DEBT: Double check that 'higherPriorityTaskWoken' doesn't get clobbered by both a mutex unlock
+    // and a set_bits_from_isr
+    scheduler.event_.set_bits_from_isr(event_clear_to_schedule, &context.higherPriorityTaskWoken);
     scheduler.mutex().unlock(context);
 
     // "The callback should return a bool value to determine whether need to do YIELD at the end of the ISR."
@@ -242,6 +249,8 @@ bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
 template <class TScheduler>
 inline void DurationImplBaseBase::start(TScheduler* scheduler, uint32_t divider)
 {
+    event_.set_bits(event_clear_to_schedule);
+
     timer_scheduler_init(timer(), divider, &DurationImplBaseBase::timer_callback<TScheduler>, scheduler);
 }
 
