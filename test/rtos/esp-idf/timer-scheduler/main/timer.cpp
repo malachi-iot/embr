@@ -6,7 +6,7 @@
 
 #include <embr/platform/esp-idf/timer-scheduler.hpp>
 
-using namespace embr::esp_idf;
+using namespace embr::scheduler::esp_idf::impl;
 using namespace estd::chrono_literals;
 
 typedef embr::internal::scheduler::impl::ReferenceBase<

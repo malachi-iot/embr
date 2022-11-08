@@ -49,11 +49,11 @@ struct Item
 
 
 template <int divider_ = 80>
-struct ThresholdImpl : DurationImpl2<Item*, divider_>
+struct ThresholdImpl : embr::scheduler::esp_idf::impl::DurationImpl2<Item*, divider_>
 {
     static constexpr const char* TAG = "ThreadholdImpl";
 
-    typedef DurationImpl2<Item*, divider_> base_type;
+    typedef embr::scheduler::esp_idf::impl::DurationImpl2<Item*, divider_> base_type;
     using typename base_type::value_type;
     using typename base_type::time_point;
 

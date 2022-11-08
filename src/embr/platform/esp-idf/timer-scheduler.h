@@ -12,14 +12,23 @@
 
 namespace embr { namespace esp_idf {
 
+// DEBT: Wrap all this up in a templatized class
+void timer_scheduler_init(Timer& timer, uint32_t divider, timer_isr_t, void*);
+void timer_scheduler_tester();
+
+}}
+
+namespace embr { namespace scheduler { namespace esp_idf { namespace impl {
+
 // Doesn't affect our mutex glitch at all, so keeping off
 //#define EMBR_TIMER_TRACK_START 1
 
-struct DurationImplBaseBase : embr::internal::scheduler::impl::ReferenceBaseBase
+struct DurationBaseBase : embr::internal::scheduler::impl::ReferenceBaseBase
 {
     static constexpr const char* TAG = "DurationImplBaseBase";
+    typedef embr::esp_idf::Timer timer_type;
 
-    Timer timer_;
+    timer_type timer_;
 
     // This is a spinwait for the short duration that the isr is unable to acquire the mutex/binary semaphore
     // doing this effectively grants ISR higher priority to get the mutex because everyone else has to wait
@@ -45,11 +54,11 @@ struct DurationImplBaseBase : embr::internal::scheduler::impl::ReferenceBaseBase
     bool is_timer_started_ = false;
 #endif
 
-    inline Timer& timer() { return timer_; }
-    constexpr const Timer& timer() const { return timer_; }
+    inline timer_type& timer() { return timer_; }
+    constexpr const timer_type& timer() const { return timer_; }
 
-    DurationImplBaseBase(const Timer& timer) : timer_{timer} {}
-    DurationImplBaseBase(timer_group_t group, timer_idx_t idx) : timer_(group, idx) {}
+    DurationBaseBase(const timer_type& timer) : timer_{timer} {}
+    DurationBaseBase(timer_group_t group, timer_idx_t idx) : timer_(group, idx) {}
 
     struct mutex : embr::scheduler::freertos::timed_mutex<true, true>
     {
@@ -137,16 +146,17 @@ struct DurationImpl2;
 
 template <class T, int divider_, typename TTimePoint, class TReference>
 struct DurationImpl2 : 
-    DurationImplBaseBase,
+    DurationBaseBase,
     embr::internal::scheduler::impl::DurationHelper<TTimePoint>,
-    embr::experimental::DurationConverter<uint64_t, divider_, Timer::base_clock_hz()>
+    embr::experimental::DurationConverter<uint64_t, divider_, embr::esp_idf::Timer::base_clock_hz()>
 {
     static constexpr const char* TAG = "DurationImpl2";
 
-    typedef DurationImplBaseBase base_type;
+    typedef DurationBaseBase base_type;
+    using typename base_type::timer_type;
     typedef embr::internal::scheduler::impl::DurationHelper<TTimePoint> helper_type;
     typedef typename helper_type::time_point time_point;
-    typedef embr::experimental::DurationConverter<uint64_t, divider_, Timer::base_clock_hz()> converter_type;
+    typedef embr::experimental::DurationConverter<uint64_t, divider_, timer_type::base_clock_hz()> converter_type;
 
     // reference_impl comes in handy for supporting both value and pointer of T.  Also
     // if one *really* wants to deviate from 'event_due' and 'process' paradigm, it's done
@@ -167,7 +177,7 @@ struct DurationImpl2 :
         return v;
     }
 
-    Timer& timer() { return base_type::timer(); }
+    timer_type& timer() { return base_type::timer(); }
 
     // Indicates how much further in the future we should wake up and try to acquire binary semaphore
     // again
@@ -215,14 +225,10 @@ struct DurationImpl2 :
     template <class TScheduler>
     void on_processed(const value_type* value, time_point, const scheduler_context_type<TScheduler>&);
 
-    constexpr DurationImpl2(const Timer& timer) : base_type{timer} {}
+    constexpr DurationImpl2(const timer_type& timer) : base_type{timer} {}
     constexpr DurationImpl2(timer_group_t group, timer_idx_t idx) : base_type(group, idx) {}
 };
 
-
-// DEBT: Wrap all this up in a templatized class
-void timer_scheduler_init(Timer& timer, uint32_t divider, timer_isr_t, void*);
-void timer_scheduler_tester();
 
 struct TimerSchedulerObserver
 {
@@ -264,4 +270,4 @@ public:
 }; */
 
 
-}}
+}}}}

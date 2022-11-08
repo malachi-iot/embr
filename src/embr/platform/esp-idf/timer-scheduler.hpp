@@ -12,7 +12,7 @@
 
 #define EMBR_ESP_IDF_TIMER_PROFILING CONFIG_EMBR_ESP_IDF_TIMER_PROFILING
 
-namespace embr { namespace esp_idf {
+namespace embr { namespace scheduler { namespace esp_idf { namespace impl {
 
 #define EMBR_LOG_GROUP_ISR 1
 
@@ -26,13 +26,13 @@ static constexpr int isr_log_group = EMBR_LOG_GROUP_ISR;
 static auto last_now_diagnostic = estd::chrono::esp_clock::now();
 
 template <class TScheduler>
-inline bool IRAM_ATTR DurationImplBaseBase::timer_callback (TScheduler& scheduler)
+inline bool IRAM_ATTR DurationBaseBase::timer_callback (TScheduler& scheduler)
 {
     return false;
 }
 
 template <class TScheduler>
-inline bool IRAM_ATTR DurationImplBaseBase::Wrapper<TScheduler>::timer_callback()
+inline bool IRAM_ATTR DurationBaseBase::Wrapper<TScheduler>::timer_callback()
 {
     constexpr const char* TAG = "Wrapper::timer_callback";
 
@@ -44,7 +44,7 @@ inline bool IRAM_ATTR DurationImplBaseBase::Wrapper<TScheduler>::timer_callback(
 }
 
 template <class TScheduler>
-inline void IRAM_ATTR DurationImplBaseBase::Wrapper<TScheduler>::rebase(duration next, uint64_t native_now)
+inline void IRAM_ATTR DurationBaseBase::Wrapper<TScheduler>::rebase(duration next, uint64_t native_now)
 {
     constexpr const char* TAG = "Wrapper::rebase";
 
@@ -56,10 +56,10 @@ inline void IRAM_ATTR DurationImplBaseBase::Wrapper<TScheduler>::rebase(duration
 }
 
 template <class TScheduler>
-bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
+bool IRAM_ATTR DurationBaseBase::timer_callback (void* arg)
 {
     TScheduler& scheduler = * (TScheduler*) arg;
-    Timer& timer = scheduler.timer();
+    timer_type& timer = scheduler.timer();
     typedef typename TScheduler::time_point time_point;
     uint64_t native_now;
     uint64_t initial_counter = timer.get_counter_value_in_isr();
@@ -245,11 +245,11 @@ bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
 
 
 template <class TScheduler>
-inline void DurationImplBaseBase::start(TScheduler* scheduler, uint32_t divider)
+inline void DurationBaseBase::start(TScheduler* scheduler, uint32_t divider)
 {
     event_.set_bits(event_clear_to_schedule);
 
-    timer_scheduler_init(timer(), divider, &DurationImplBaseBase::timer_callback<TScheduler>, scheduler);
+    timer_scheduler_init(timer(), divider, &DurationBaseBase::timer_callback<TScheduler>, scheduler);
 }
 
 
@@ -320,4 +320,4 @@ inline void TimerScheduler<TScheduler>::schedule(value_type& v)
 */
 
 
-}} // namespace embr { namespace esp_idf 
+}}}}
