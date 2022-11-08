@@ -25,9 +25,9 @@ namespace embr { namespace scheduler { namespace esp_idf { namespace impl {
 // Doesn't affect our mutex glitch at all, so keeping off
 //#define EMBR_TIMER_TRACK_START 1
 
-struct DurationBaseBase : embr::internal::scheduler::impl::ReferenceBaseBase
+struct TimerBase : embr::internal::scheduler::impl::ReferenceBaseBase
 {
-    static constexpr const char* TAG = "DurationImplBaseBase";
+    static constexpr const char* TAG = "impl::TimerBase";
     typedef embr::esp_idf::Timer timer_type;
 
     timer_type timer_;
@@ -59,8 +59,8 @@ struct DurationBaseBase : embr::internal::scheduler::impl::ReferenceBaseBase
     inline timer_type& timer() { return timer_; }
     constexpr const timer_type& timer() const { return timer_; }
 
-    DurationBaseBase(const timer_type& timer) : timer_{timer} {}
-    DurationBaseBase(timer_group_t group, timer_idx_t idx) : timer_(group, idx) {}
+    TimerBase(const timer_type& timer) : timer_{timer} {}
+    TimerBase(timer_group_t group, timer_idx_t idx) : timer_(group, idx) {}
 
     struct mutex : embr::scheduler::freertos::timed_mutex<true, true>
     {
@@ -148,13 +148,13 @@ struct Timer;
 
 template <class T, int divider_, typename TTimePoint, class TReference>
 struct Timer : 
-    DurationBaseBase,
+    TimerBase,
     embr::internal::scheduler::impl::DurationHelper<TTimePoint>,
     embr::experimental::DurationConverter<uint64_t, divider_, embr::esp_idf::Timer::base_clock_hz()>
 {
     static constexpr const char* TAG = "impl::Timer";
 
-    typedef DurationBaseBase base_type;
+    typedef TimerBase base_type;
     using typename base_type::timer_type;
     typedef embr::internal::scheduler::impl::DurationHelper<TTimePoint> helper_type;
     typedef typename helper_type::time_point time_point;
@@ -170,6 +170,12 @@ struct Timer :
 
     static constexpr bool is_runtime_divider() { return divider_ == -1; }
     const converter_type& duration_converter() const { return *this; }
+
+    // Get maximum number of timer ticks we can accumulate before rolling over scheduler's timebase
+    const uint64_t overflow_max() const
+    {
+        return scheduler.duration_converter().convert(time_point::max());
+    }
 
     inline time_point now(bool in_isr = false)
     {

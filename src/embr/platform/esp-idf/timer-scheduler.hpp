@@ -17,7 +17,7 @@ namespace embr { namespace scheduler { namespace esp_idf { namespace impl {
 #define EMBR_LOG_GROUP_ISR 1
 
 //ASSERT_EMBR_LOG_GROUP_MODE(EMBR_LOG_GROUP_ISR, EMBR_LOG_GROUP_MODE_ISR)
-ASSERT_EMBR_LOG_GROUP_MODE(1, 2)
+ASSERT_EMBR_LOG_GROUP_MODE(1, EMBR_LOG_GROUP_MODE_ISR)
 
 static constexpr int isr_log_group = EMBR_LOG_GROUP_ISR;
 
@@ -26,13 +26,13 @@ static constexpr int isr_log_group = EMBR_LOG_GROUP_ISR;
 static auto last_now_diagnostic = estd::chrono::esp_clock::now();
 
 template <class TScheduler>
-inline bool IRAM_ATTR DurationBaseBase::timer_callback (TScheduler& scheduler)
+inline bool IRAM_ATTR TimerBase::timer_callback (TScheduler& scheduler)
 {
     return false;
 }
 
 template <class TScheduler>
-inline bool IRAM_ATTR DurationBaseBase::Wrapper<TScheduler>::timer_callback()
+inline bool IRAM_ATTR TimerBase::Wrapper<TScheduler>::timer_callback()
 {
     constexpr const char* TAG = "Wrapper::timer_callback";
 
@@ -44,7 +44,7 @@ inline bool IRAM_ATTR DurationBaseBase::Wrapper<TScheduler>::timer_callback()
 }
 
 template <class TScheduler>
-inline void IRAM_ATTR DurationBaseBase::Wrapper<TScheduler>::rebase(duration next, uint64_t native_now)
+inline void IRAM_ATTR TimerBase::Wrapper<TScheduler>::rebase(duration next, uint64_t native_now)
 {
     constexpr const char* TAG = "Wrapper::rebase";
 
@@ -56,7 +56,7 @@ inline void IRAM_ATTR DurationBaseBase::Wrapper<TScheduler>::rebase(duration nex
 }
 
 template <class TScheduler>
-bool IRAM_ATTR DurationBaseBase::timer_callback (void* arg)
+bool IRAM_ATTR TimerBase::timer_callback (void* arg)
 {
     TScheduler& scheduler = * (TScheduler*) arg;
     timer_type& timer = scheduler.timer();
@@ -65,10 +65,9 @@ bool IRAM_ATTR DurationBaseBase::timer_callback (void* arg)
     uint64_t initial_counter = timer.get_counter_value_in_isr();
     uint64_t counter = initial_counter;
     counter -= scheduler.offset;
-    // Get maximum number of timer ticks we can accumulate before rolling over scheduler's timebase
     // NOTE: counter itself we don't worry about it rolling over, even at highest precision it would take thousands
     // of years for it to do so
-    const uint64_t max = scheduler.duration_converter().convert(time_point::max());
+    const uint64_t max = scheduler.overflow_max();
     estd::layer1::string<8> timer_str = to_string(timer);
 
     scheduler.timer_callback(scheduler);
@@ -184,7 +183,8 @@ bool IRAM_ATTR DurationBaseBase::timer_callback (void* arg)
         // DEBT: Need a much more precise and configrable mechanism here
         if(native_next > max / 2)
         {
-            // NOT TESTED YET
+            // LIGHTLY TESTED
+            // Doesn't crash, but wakeup comes way too late
 
             // don't rebase *exactly* to 0, but rather the shortest upcoming event_due.
             // this way if someone wants to slide their schedule in before, it's possible
@@ -245,11 +245,11 @@ bool IRAM_ATTR DurationBaseBase::timer_callback (void* arg)
 
 
 template <class TScheduler>
-inline void DurationBaseBase::start(TScheduler* scheduler, uint32_t divider)
+inline void TimerBase::start(TScheduler* scheduler, uint32_t divider)
 {
     event_.set_bits(event_clear_to_schedule);
 
-    timer_scheduler_init(timer(), divider, &DurationBaseBase::timer_callback<TScheduler>, scheduler);
+    timer_scheduler_init(timer(), divider, &TimerBase::timer_callback<TScheduler>, scheduler);
 }
 
 
@@ -305,7 +305,7 @@ inline void Timer<T, divider_, TTimePoint, TReference>::on_processed(
     {
         // we finished a batch of processing and arrive here
 
-        ESP_DRAM_LOGV(TAG, "on_processed: finished processing - count=%d",
+        ESP_GROUP_LOGV(1, TAG, "on_processed: finished processing - count=%d",
             context.scheduler().size());
     }
 }
