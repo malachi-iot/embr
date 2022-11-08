@@ -39,9 +39,9 @@ struct DurationImplBaseBase : embr::internal::scheduler::impl::ReferenceBaseBase
     constexpr DurationImplBaseBase(const Timer& timer) : timer_{timer} {}
     constexpr DurationImplBaseBase(timer_group_t group, timer_idx_t idx) : timer_(group, idx) {}
 
-    struct mutex : embr::freertos::experimental::FunctorImpl::binary_semaphore
+    struct mutex : embr::scheduler::freertos::timed_mutex<true, true>
     {
-        typedef embr::freertos::experimental::FunctorImpl::binary_semaphore base_type;
+        typedef embr::scheduler::freertos::timed_mutex<true, true> base_type;
 
         template <class TScheduler>
         inline void lock(embr::internal::SchedulerContextBase<TScheduler>& context)
@@ -52,12 +52,12 @@ struct DurationImplBaseBase : embr::internal::scheduler::impl::ReferenceBaseBase
                     estd::this_thread::yield();
             }
 
-            base_type::lock(context);            
+            base_type::lock(context);
         }
     };
 
-    typedef embr::freertos::experimental::FunctorImpl::context_type context_type;
-    typedef embr::freertos::experimental::FunctorImpl::context_factory context_factory;
+    typedef embr::scheduler::freertos::context_type context_type;
+    typedef embr::scheduler::freertos::context_factory context_factory;
 
 private:
     template <class TScheduler>
