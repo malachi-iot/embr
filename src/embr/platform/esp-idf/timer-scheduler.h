@@ -138,13 +138,13 @@ struct DurationImpl2;
 template <class T, int divider_, typename TTimePoint, class TReference>
 struct DurationImpl2 : 
     DurationImplBaseBase,
-    embr::internal::scheduler::impl::DurationImplHelper<TTimePoint>,
+    embr::internal::scheduler::impl::DurationHelper<TTimePoint>,
     embr::experimental::DurationConverter<uint64_t, divider_, Timer::base_clock_hz()>
 {
     static constexpr const char* TAG = "DurationImpl2";
 
     typedef DurationImplBaseBase base_type;
-    typedef embr::internal::scheduler::impl::DurationImplHelper<TTimePoint> helper_type;
+    typedef embr::internal::scheduler::impl::DurationHelper<TTimePoint> helper_type;
     typedef typename helper_type::time_point time_point;
     typedef embr::experimental::DurationConverter<uint64_t, divider_, Timer::base_clock_hz()> converter_type;
 
@@ -168,6 +168,15 @@ struct DurationImpl2 :
     }
 
     Timer& timer() { return base_type::timer(); }
+
+    // Indicates how much further in the future we should wake up and try to acquire binary semaphore
+    // again
+    // 1.  1000 ticks is too arbitrary and should be more configurable or at least deduced better
+    // 2.  in non-diagnostic-logging scenarios the simpler + to initial_counter works well and is better
+    static constexpr uint64_t get_spinwait_wakeup(uint64_t now)
+    {
+        return now + 1000;
+    }
 
     static inline time_point get_time_point(const value_type& v)
     {

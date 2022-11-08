@@ -166,12 +166,12 @@ struct ReferenceBase<void> : ReferenceBaseBase
 
 };
 
-// DEBT: Yanked in from esp32 timer-scheduler code - naming needs work
+// Deduces int_type and duration from more complicated TTimePoints
 template <typename TTimePoint>
-struct DurationImplHelper;
+struct DurationHelper;
 
 template <typename TInt>
-struct DurationImplHelper
+struct DurationHelper
 {
     typedef TInt time_point;
     typedef TInt int_type;
@@ -180,9 +180,9 @@ struct DurationImplHelper
     static constexpr bool is_chrono() { return false; }
 };
 
-// DEBT: Move some of this specialization magic out to Reference
+
 template <typename Rep, typename Period>
-struct DurationImplHelper<estd::chrono::duration<Rep, Period> >
+struct DurationHelper<estd::chrono::duration<Rep, Period> >
 {
     typedef estd::chrono::duration<Rep, Period> duration;
     typedef duration time_point;
@@ -192,9 +192,8 @@ struct DurationImplHelper<estd::chrono::duration<Rep, Period> >
 };
 
 
-// NOTE: Untested, but a similar mechanism is working in Catch unit testing
 template <typename TClock, typename TDuration>
-struct DurationImplHelper<estd::chrono::time_point<TClock, TDuration> >
+struct DurationHelper<estd::chrono::time_point<TClock, TDuration> >
 {
     typedef TDuration duration;
     typedef estd::chrono::time_point<TClock, TDuration> time_point;
@@ -209,7 +208,7 @@ struct ReferenceBase : ReferenceBaseBase
 {
     typedef TTimePoint time_point;
     // DEBT: Needs cleanup, and not used quite yet
-    typedef DurationImplHelper<time_point> helper_type;
+    typedef DurationHelper<time_point> helper_type;
     typedef typename helper_type::duration duration;
 
     // Reference implementation only.  Yours may be quite different

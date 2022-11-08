@@ -61,6 +61,7 @@ bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
     TScheduler& scheduler = * (TScheduler*) arg;
     Timer& timer = scheduler.timer();
     typedef typename TScheduler::time_point time_point;
+    uint64_t native_now;
     uint64_t initial_counter = timer.get_counter_value_in_isr();
     uint64_t counter = initial_counter;
     counter -= scheduler.offset;
@@ -111,11 +112,9 @@ bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
         //timer.set_alarm_value_in_isr(initial_counter + 100000);
 
         // DEBT: slightly better than above FIX - wake up 1000 ticks after this point in time,
-        // generally accounting for debug log slowness.  That said:
-        // 1.  1000 ticks is too arbitrary and should be more configurable or at least deduced better
-        // 2.  in non-diagnostic-logging scenarios the simpler + to initial_counter works well and is better
-        uint64_t spinwait_wakeup = timer.get_counter_value_in_isr() + 1000;
-        timer.set_alarm_value_in_isr(spinwait_wakeup);
+        // generally accounting for debug log slowness.  See 'get_spinwait_wakeup'
+        native_now = timer.get_counter_value_in_isr();
+        timer.set_alarm_value_in_isr(scheduler.get_spinwait_wakeup(native_now));
 
         // NOTE: This return true doesn't help above WDT issue, but keeping it for now anyway
         return true;
@@ -140,7 +139,6 @@ bool IRAM_ATTR DurationImplBaseBase::timer_callback (void* arg)
         timer_str.data(), counter);
 #endif
 
-    uint64_t native_now;
 #if EMBR_ESP_IDF_TIMER_PROFILING
     int debug_counter1, debug_counter2, debug_counter3;
     
