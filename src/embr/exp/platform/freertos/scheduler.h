@@ -77,7 +77,14 @@ struct FunctorImpl :
         typedef estd::freertos::timed_mutex<true> base_type;
 
         // DEBT: Not 100% convinved binary-sempahore-mutex is the way to go
-        timed_mutex() : base_type(binary_semaphore) {}
+        timed_mutex() : base_type(binary_semaphore)
+        {
+            if(binary_semaphore)
+            {
+                // DEBT: Clumsy, but seems to work
+                base_type::unlock();
+            }
+        }
 
         enum TimeoutModes
         {
@@ -92,30 +99,54 @@ struct FunctorImpl :
             Abort           ///< Times out and signals an abort program if mutex is not acquired
         };
 
+    protected:
+        template <class TScheduler>
+        inline void lock_in_isr(embr::internal::SchedulerContextBase<TScheduler>& context)
+        {
+            native_handle().take_from_isr(&context.higherPriorityTaskWoken);
+        }
+
+
+        template <class TScheduler>
+        inline void lock_non_isr(embr::internal::SchedulerContextBase<TScheduler>& context)
+        {
+            switch(context.mutex_timeout_mode())
+            {
+                default:
+                case Blocking:
+                    base_type::lock();
+                    break;
+
+                //case Silent:
+                    //context.timedLockResult = base_type::try_lock_for(context.mutex_timeout());
+                    //break;
+
+                case Abort:
+                    assert(base_type::try_lock_for(context.mutex_timeout()));
+                    break;
+            }
+        }
+
+
+        template <class TScheduler>
+        inline void unlock_non_isr(embr::internal::SchedulerContextBase<TScheduler>& context)
+        {
+            base_type::unlock();
+        }
+
+
+    public:
+
         template <class TScheduler>
         inline void lock(embr::internal::SchedulerContextBase<TScheduler>& context)
         {
             if(context.in_isr())
             {
-                native_handle().take_from_isr(&context.higherPriorityTaskWoken);
+                lock_in_isr(context);
             }
             else
             {
-                switch(context.mutex_timeout_mode())
-                {
-                    default:
-                    case Blocking:
-                        base_type::lock();
-                        break;
-
-                    //case Silent:
-                        //context.timedLockResult = base_type::try_lock_for(context.mutex_timeout());
-                        //break;
-
-                    case Abort:
-                        assert(base_type::try_lock_for(context.mutex_timeout()));
-                        break;
-                }
+                lock_non_isr(context);
             }
         }
 
@@ -127,7 +158,7 @@ struct FunctorImpl :
                 native_handle().give_from_isr(&context.higherPriorityTaskWoken);
             }
             else
-                base_type::unlock();
+                unlock_non_isr(context);
         }
     };
 
