@@ -10,33 +10,37 @@
 
 #include "timer-scheduler.h"
 
-namespace embr { namespace esp_idf {
+namespace embr { 
+    
+namespace esp_idf {
 
 class Debouncer;
 
+}
 
-namespace internal {
+namespace scheduler { namespace esp_idf { namespace impl {
 
+// FIX: Naming - should be DebounceControlStructure or similar
 struct Item
 {
     typedef estd::chrono::milliseconds duration;
     typedef duration time_point;
 
     detail::Debouncer debouncer_;
-    Debouncer* parent_;
-    gpio pin_;
+    embr::esp_idf::Debouncer* parent_;
+    embr::esp_idf::gpio pin_;
     bool low_means_pressed = true;
     duration last_wakeup_;
     duration wakeup_;
 
     detail::Debouncer& debouncer() { return debouncer_; }
     const detail::Debouncer& debouncer() const { return debouncer_; }
-    const gpio& pin() const { return pin_; }
+    const embr::esp_idf::gpio& pin() const { return pin_; }
     time_point event_due() const { return wakeup_; }
 
     //Item() = default;
     Item(const Item& copy_from) = default;
-    Item(Debouncer* parent, gpio pin) : parent_{parent}, pin_{pin} {}
+    Item(embr::esp_idf::Debouncer* parent, embr::esp_idf::gpio pin) : parent_{parent}, pin_{pin} {}
 
     inline void rebase(duration v)
     {
@@ -49,11 +53,11 @@ struct Item
 
 
 template <int divider_ = 80>
-struct ThresholdImpl : embr::scheduler::esp_idf::impl::DurationImpl2<Item*, divider_>
+struct Threshold : embr::scheduler::esp_idf::impl::Timer<Item*, divider_>
 {
-    static constexpr const char* TAG = "ThreadholdImpl";
+    static constexpr const char* TAG = "Threadhold";
 
-    typedef embr::scheduler::esp_idf::impl::DurationImpl2<Item*, divider_> base_type;
+    typedef embr::scheduler::esp_idf::impl::Timer<Item*, divider_> base_type;
     using typename base_type::value_type;
     using typename base_type::time_point;
 
@@ -61,18 +65,19 @@ struct ThresholdImpl : embr::scheduler::esp_idf::impl::DurationImpl2<Item*, divi
     // enough to yield a state change
     bool process(value_type v, time_point now);
 
-    constexpr ThresholdImpl(const Timer& timer) : base_type{timer} {}
-    constexpr ThresholdImpl(timer_group_t group, timer_idx_t idx) : base_type(group, idx) {}
+    constexpr Threshold(const embr::esp_idf::Timer& timer) : base_type{timer} {}
+    constexpr Threshold(timer_group_t group, timer_idx_t idx) : base_type(group, idx) {}
 };
 
 
 
-}
+}}}
 
+namespace esp_idf {
 
 class Debouncer
 {
-    typedef internal::Item item_type;
+    typedef scheduler::esp_idf::impl::Item item_type;
 
 public:
     enum States
@@ -107,7 +112,9 @@ private:
     static bool timer_group0_callback(void *param);
 #endif
 
-    embr::internal::layer1::Scheduler<5, internal::ThresholdImpl<> > scheduler;
+    embr::internal::layer1::Scheduler<5,
+        scheduler::esp_idf::impl::Threshold<>
+        > scheduler;
 
 public:
     // DEBT: Don't expose as public - however, most of these will be in the impl eventually

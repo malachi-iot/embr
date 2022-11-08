@@ -6,13 +6,13 @@
 
 #include <embr/platform/esp-idf/timer-scheduler.hpp>
 
-using namespace embr::scheduler::esp_idf::impl;
+using namespace embr::scheduler::esp_idf;
 using namespace estd::chrono_literals;
 
 typedef embr::internal::scheduler::impl::ReferenceBase<
     estd::chrono::duration<uint32_t, estd::milli> >::value_type control_structure;
 
-typedef DurationImpl2<control_structure> impl_type;
+typedef impl::Timer<control_structure> impl_type;
 typedef embr::internal::layer1::Scheduler<5, impl_type> scheduler_type;
 static constexpr embr::internal::scheduler::impl_params_tag params_tag;
 
@@ -52,10 +52,10 @@ void timer_scheduler_tester()
     // must match up with control_structure
     // TODO: Along with above, we have the notion of a 'native' time base for scheduler - for those
     // who don't want to do all the divisor conversions
-    DurationImpl2<control_structure, -1, int> test1(timer);
+    impl::Timer<control_structure, -1, int> test1(timer);
 
-    DurationImpl2<control_structure2, 80> test2(timer);
-    DurationImpl2<control_structure1*, 80> test3(timer);
+    impl::Timer<control_structure2, 80> test2(timer);
+    impl::Timer<control_structure1*, 80> test3(timer);
 
     auto v1 = test1.numerator();
     auto v2 = test2.numerator();

@@ -255,7 +255,7 @@ inline void DurationBaseBase::start(TScheduler* scheduler, uint32_t divider)
 
 template <class T, int divider_, typename TTimePoint, class TReference>
 template <class TScheduler>
-inline void DurationImpl2<T, divider_, TTimePoint, TReference>::on_scheduled(
+inline void Timer<T, divider_, TTimePoint, TReference>::on_scheduled(
     const value_type& value, const scheduler_context_type<TScheduler>& context)
 {
     ESP_GROUP_LOGV(1, TAG, "on_scheduled: entry");
@@ -298,7 +298,7 @@ inline void DurationImpl2<T, divider_, TTimePoint, TReference>::on_scheduled(
 
 template <class T, int divider_, typename TTimePoint, class TReference>
 template <class TScheduler>
-inline void DurationImpl2<T, divider_, TTimePoint, TReference>::on_processed(
+inline void Timer<T, divider_, TTimePoint, TReference>::on_processed(
     const value_type* value, time_point t, const scheduler_context_type<TScheduler>& context)
 {
     if(value == nullptr)

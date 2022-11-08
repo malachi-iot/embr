@@ -1,3 +1,5 @@
+// All references pertain to README.md
+// ISR-level Scheduler support for General Purpose timers [2]
 #pragma once
 
 #include <estd/port/freertos/event_groups.h>
@@ -142,15 +144,15 @@ public:
 template <class T, int divider_ = -1,
     typename TTimePoint = typename std::remove_pointer<T>::type::time_point,
     class TReference = embr::internal::scheduler::impl::Reference<T, TTimePoint> >
-struct DurationImpl2;
+struct Timer;
 
 template <class T, int divider_, typename TTimePoint, class TReference>
-struct DurationImpl2 : 
+struct Timer : 
     DurationBaseBase,
     embr::internal::scheduler::impl::DurationHelper<TTimePoint>,
     embr::experimental::DurationConverter<uint64_t, divider_, embr::esp_idf::Timer::base_clock_hz()>
 {
-    static constexpr const char* TAG = "DurationImpl2";
+    static constexpr const char* TAG = "impl::Timer";
 
     typedef DurationBaseBase base_type;
     using typename base_type::timer_type;
@@ -225,8 +227,8 @@ struct DurationImpl2 :
     template <class TScheduler>
     void on_processed(const value_type* value, time_point, const scheduler_context_type<TScheduler>&);
 
-    constexpr DurationImpl2(const timer_type& timer) : base_type{timer} {}
-    constexpr DurationImpl2(timer_group_t group, timer_idx_t idx) : base_type(group, idx) {}
+    constexpr Timer(const timer_type& timer) : base_type{timer} {}
+    constexpr Timer(timer_group_t group, timer_idx_t idx) : base_type(group, idx) {}
 };
 
 

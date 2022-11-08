@@ -15,7 +15,7 @@
 namespace embr { namespace esp_idf {
 
 
-using internal::Item;
+using embr::scheduler::esp_idf::impl::Item;
 
 // Guidance from:
 // https://esp32.com/viewtopic.php?t=345 

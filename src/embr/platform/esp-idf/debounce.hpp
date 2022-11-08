@@ -3,13 +3,17 @@
 #include "../../detail/debounce.hpp"
 #include "debounce.h"
 
-namespace embr { namespace esp_idf {
+#include "log.h"
 
-namespace internal {
+ASSERT_EMBR_LOG_GROUP_MODE(2, EMBR_LOG_GROUP_MODE_ISR)
+
+namespace embr { 
+
+namespace scheduler { namespace esp_idf { namespace impl {
 
 // NOTE: IRAM_ATTR doesn't make any ms-visible speed difference
 template <int divider_>
-bool ThresholdImpl<divider_>::process(value_type v, time_point now)
+bool Threshold<divider_>::process(value_type v, time_point now)
 {
     time_point delta = now - v->last_wakeup_;
 
@@ -52,6 +56,6 @@ bool ThresholdImpl<divider_>::process(value_type v, time_point now)
 }
 
 
-}
+}}}
 
-}}
+}
