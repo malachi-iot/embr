@@ -172,9 +172,9 @@ struct Timer :
     const converter_type& duration_converter() const { return *this; }
 
     // Get maximum number of timer ticks we can accumulate before rolling over scheduler's timebase
-    const uint64_t overflow_max() const
+    uint64_t overflow_max() const
     {
-        return scheduler.duration_converter().convert(time_point::max());
+        return duration_converter().convert(time_point::max());
     }
 
     inline time_point now(bool in_isr = false)
