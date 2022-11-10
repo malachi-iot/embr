@@ -158,6 +158,7 @@ struct Timer :
     using typename base_type::timer_type;
     typedef embr::internal::scheduler::impl::DurationHelper<TTimePoint> helper_type;
     typedef typename helper_type::time_point time_point;
+    typedef typename helper_type::duration duration;
     typedef embr::experimental::DurationConverter<uint64_t, divider_, timer_type::base_clock_hz()> converter_type;
 
     // reference_impl comes in handy for supporting both value and pointer of T.  Also
@@ -174,7 +175,7 @@ struct Timer :
     // Get maximum number of timer ticks we can accumulate before rolling over scheduler's timebase
     uint64_t overflow_max() const
     {
-        return duration_converter().convert(time_point::max());
+        return duration_converter().convert(helper_type::time_point_max());
     }
 
     inline time_point now(bool in_isr = false)
@@ -195,6 +196,14 @@ struct Timer :
     {
         return now + 1000;
     }
+
+    // EXPERIMENTAL - different way of overcoming overflow/rollover
+    // let it happen on time point, since the main importance is that scheduling sorts things right
+    // time_point_offset can help that by subtracting back down when grabbing time point
+    // NOTE: Can't use this yet because Compare class in Scheduler needs get_time_point to be static
+    // NOTE: This technique isn't 100% better than a rebase, because the rebase only does the extra subtractions
+    // once in a while - while this does it all the time
+    duration time_point_offset = helper_type::duration_zero();
 
     static inline time_point get_time_point(const value_type& v)
     {

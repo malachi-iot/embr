@@ -178,6 +178,9 @@ struct DurationHelper
     typedef TInt duration;  // EXPERIMENTAL
 
     static constexpr bool is_chrono() { return false; }
+
+    static constexpr int_type duration_zero() { return 0; }
+    static constexpr int_type time_point_max() { return estd::numeric_limits<int_type>::max(); }
 };
 
 
@@ -189,6 +192,9 @@ struct DurationHelper<estd::chrono::duration<Rep, Period> >
     typedef Rep int_type;
 
     static constexpr bool is_chrono() { return true; }
+
+    static constexpr duration duration_zero() { return duration::zero(); }
+    static constexpr time_point time_point_max() { return time_point::max(); }
 };
 
 
@@ -200,6 +206,9 @@ struct DurationHelper<estd::chrono::time_point<TClock, TDuration> >
     typedef typename TDuration::rep int_type;
 
     static constexpr bool is_chrono() { return true; }
+
+    static constexpr duration duration_zero() { return duration::zero(); }
+    static constexpr time_point time_point_max() { return time_point::max(); }
 };
 
 

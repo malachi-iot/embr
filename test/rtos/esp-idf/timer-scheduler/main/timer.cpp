@@ -69,7 +69,7 @@ void timer_scheduler_tester()
     s2.start();
     s2.schedule(50ms);  // For overflow testing
 
-    s3.start();
+    //s3.start();       // DEBT: Temporarily disabled as we flesh out overflow code
     // DEBT: Something happening here generating create_context twice - things still work
     // and I have a feeling it's RVO related in which case it's harmless, but it bears investigation
     s3.schedule(&c1);

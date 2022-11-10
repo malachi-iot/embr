@@ -48,7 +48,7 @@ inline void IRAM_ATTR TimerBase::Wrapper<TScheduler>::rebase(duration next, uint
 {
     constexpr const char* TAG = "Wrapper::rebase";
 
-    ESP_GROUP_LOGV(1, TAG, "entry");
+    ESP_GROUP_LOGV(1, TAG, "entry: next=%llu", (uint64_t)next.count());
 
     rebaser_type r(this_type::event_queue.container());
     
@@ -63,6 +63,7 @@ bool IRAM_ATTR TimerBase::timer_callback (void* arg)
     typedef typename TScheduler::time_point time_point;
     uint64_t native_now;
     uint64_t initial_counter = timer.get_counter_value_in_isr();
+    // DEBT: 'counter' needs better name, something like native_now_offset
     uint64_t counter = initial_counter;
     counter -= scheduler.offset;
     // NOTE: counter itself we don't worry about it rolling over, even at highest precision it would take thousands
@@ -189,6 +190,8 @@ bool IRAM_ATTR TimerBase::timer_callback (void* arg)
             // don't rebase *exactly* to 0, but rather the shortest upcoming event_due.
             // this way if someone wants to slide their schedule in before, it's possible
             time_point delta = next - current_time;
+            uint64_t native_delta = native_next - counter;
+
             // If so, rebase now - presumably this is the space after time critical processing has happened
             // and before another time critical process needs to happen.
             // DEBT: It might be better to trigger this behavior in an outside task?  But then again, rebase is gonna be pretty fast
