@@ -25,17 +25,26 @@ struct control_structure_base :
 
     static constexpr const char* TAG = "control_structure1";
 
+    const char* name = "1";
+    unsigned local_counter = 0;
+    estd::chrono::milliseconds bump = 1s;
+
     constexpr control_structure_base() = default;
     constexpr control_structure_base(time_point t) : base_type(t) {}
 
     bool process(time_point current_time)
     {
-        // This variant of log macro works inside ISRs
-        ESP_DRAM_LOGI(TAG, "process: wake=%llu, current=%llu",
-            base_type::event_due_.count(),
-            current_time.count());
+        unsigned event_due_count = base_type::event_due_.count();
+        unsigned current_time_count = (unsigned)current_time.count();
 
-        base_type::event_due_ += 1s;
+        // This variant of log macro works inside ISRs
+        ESP_DRAM_LOGI(TAG, "process: name=%s, wake=%u, current=%u, local_counter=%u",
+            name,
+            event_due_count,
+            current_time_count,
+            (++local_counter));
+
+        base_type::event_due_ += bump;
 
         return true;    // Signal we want a reschedule
     }

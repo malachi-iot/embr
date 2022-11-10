@@ -127,7 +127,7 @@ public:
     // DEBT: Should be protected
     // DEBT: Since I can't easily reset timer to 0, we're tracking an offset to subtract down
     // to a relative zero
-    uint64_t offset = 0;
+    uint64_t native_offset = 0;
 
     // DEBT: should be protected - impl() trick interrupts that
     // DEBT: This in particular is a better candidate for subject/observer
@@ -182,7 +182,7 @@ struct Timer :
     {
         time_point v;
         uint64_t counter = base_type::get_counter(in_isr);
-        duration_converter().convert(counter - base_type::offset, &v);
+        duration_converter().convert(counter - base_type::native_offset, &v);
         return v;
     }
 

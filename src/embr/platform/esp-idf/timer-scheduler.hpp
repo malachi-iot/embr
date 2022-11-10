@@ -65,7 +65,7 @@ bool IRAM_ATTR TimerBase::timer_callback (void* arg)
     uint64_t initial_counter = timer.get_counter_value_in_isr();
     // DEBT: 'counter' needs better name, something like native_now_offset
     uint64_t counter = initial_counter;
-    counter -= scheduler.offset;
+    counter -= scheduler.native_offset;
     // NOTE: counter itself we don't worry about it rolling over, even at highest precision it would take thousands
     // of years for it to do so
     const uint64_t max = scheduler.overflow_max();
@@ -127,7 +127,7 @@ bool IRAM_ATTR TimerBase::timer_callback (void* arg)
 #if DISABLED_WHILE_DIAGNOSING_SPEED
     ESP_DRAM_LOGV(TAG, "timer_callback: [%s] (%p) offset=%llu, max=%llu", timer_str,
         &scheduler,
-        scheduler.offset,
+        scheduler.native_offset,
         max);
     auto now = estd::chrono::esp_clock::now();
     auto duration = now - last_now_diagnostic;
@@ -187,6 +187,8 @@ bool IRAM_ATTR TimerBase::timer_callback (void* arg)
             // LIGHTLY TESTED
             // Doesn't crash, but wakeup comes way too late
 
+            // I think I overengineered this part
+#if UNUSED
             // don't rebase *exactly* to 0, but rather the shortest upcoming event_due.
             // this way if someone wants to slide their schedule in before, it's possible
             time_point delta = next - current_time;
@@ -196,11 +198,18 @@ bool IRAM_ATTR TimerBase::timer_callback (void* arg)
             // and before another time critical process needs to happen.
             // DEBT: It might be better to trigger this behavior in an outside task?  But then again, rebase is gonna be pretty fast
             wrapper->rebase(delta, native_now);     // yank all scheduled values down starting from delta
-            native_next += scheduler.offset;        // native_next is an absolute value, so current offset is still accurate
-            scheduler.offset = native_now;          // fake zero out our native counter
+            native_next += scheduler.native_offset;        // native_next is an absolute value, so current offset is still accurate
+            scheduler.native_offset = native_now;          // fake zero out our native counter
+#else
+            // yank all scheduled values by current_time - remember, 'next' is still ahead of current_time so
+            // there's still space to schedule something beforehand
+            wrapper->rebase(current_time, native_now);
+            native_next += scheduler.native_offset;        // native_next is an absolute value, so current offset is still accurate
+            scheduler.native_offset = initial_counter;          // fake zero out our native counter
+#endif
         }
         else
-            native_next += scheduler.offset;
+            native_next += scheduler.native_offset;
 
         timer.set_alarm_value_in_isr(native_next);
         timer.start();
@@ -212,10 +221,10 @@ bool IRAM_ATTR TimerBase::timer_callback (void* arg)
     {
         // fake-zero it out
         // grab time again because ISR service can be slow when debugging
-        scheduler.offset = native_now;
+        scheduler.native_offset = native_now;
         //scheduler.offset = initial_counter;   // DEBT: Bring this back in if debug level is minimal
 
-        ESP_GROUP_LOGD(1, TAG, "timer_callback: no further events: offset=%llu", scheduler.offset);
+        ESP_GROUP_LOGD(1, TAG, "timer_callback: no further events: offset=%llu", scheduler.native_offset);
 
         // Can't do this because this refers only to initial counter value
         //timer.set_counter_value(0);
@@ -273,7 +282,7 @@ inline void Timer<T, divider_, TTimePoint, TReference>::on_scheduled(
         (uint64_t)t.count(),
         native);
 
-    native += context.scheduler().offset;
+    native += context.scheduler().native_offset;
 
     if(context.is_processing())
     {
