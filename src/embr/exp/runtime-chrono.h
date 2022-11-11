@@ -64,7 +64,7 @@ struct DurationConverter<TInt, -1, denominator_>
     estd::chrono::duration<Rep, Period>& convert(int_type convert_from, estd::chrono::duration<Rep, Period>* convert_to) const
     {
         //typedef estd::ratio<Period::den, denominator_ * Period::num> r;       // FIX: Ours doesn't do reduction
-        typedef std::ratio<Period::den, denominator_ * Period::num> r;
+        typedef typename std::ratio<Period::den, denominator_ * Period::num>::type r;
         constexpr auto num = r::num;
         constexpr auto den = r::den;
         Rep raw = numerator() * convert_from * num / den;
@@ -76,7 +76,7 @@ template <typename TInt, int numerator_, int denominator_>
 struct DurationConverter
 {
     typedef TInt int_type;
-    typedef estd::ratio<numerator_, denominator_> period_type;
+    typedef typename estd::ratio<numerator_, denominator_>::type period_type;
 
     static constexpr int numerator() { return numerator_; }
 
