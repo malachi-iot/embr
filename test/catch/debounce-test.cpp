@@ -1,6 +1,7 @@
 #include <catch.hpp>
 
 #include <embr/detail/debounce.hpp>
+#include <embr/detail/button.hpp>
 
 #include <embr/exp/runtime-chrono.h>
 #include <embr/exp/filter.h>
@@ -165,5 +166,30 @@ TEST_CASE("Debounce and friends state machine tests", "[debounce]")
                 REQUIRE(v == 2000);
             }
         }
+    }
+    SECTION("button")
+    {
+        embr::detail::Button b;
+        bool r;
+
+        r = down(b, estd::chrono::seconds(1));    // NOTE: first time duration passed in doesn't matter
+
+        REQUIRE(r == false);
+        REQUIRE(b.state() == embr::detail::Button::Evaluating);
+
+        r = up(b, estd::chrono::milliseconds(300));
+
+        REQUIRE(r == true);
+        REQUIRE(b.state() == embr::detail::Button::Clicked);
+
+        r = down(b, estd::chrono::seconds(1));
+
+        REQUIRE(r == false);
+        REQUIRE(b.state() == embr::detail::Button::Evaluating);
+
+        r = down(b, estd::chrono::seconds(1));
+
+        REQUIRE(r == true);
+        REQUIRE(b.state() == embr::detail::Button::LongPressed);
     }
 }
