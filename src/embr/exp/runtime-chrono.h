@@ -2,11 +2,23 @@
 
 namespace embr { namespace experimental {
 
-template <typename Rep>
-struct runtime_ratio
+enum runtime_ratio_types
+{
+    runtime_ratio_both,     ///< numerator and denominator both runtime
+    runtime_ratio_den,      ///< numerator compile time, denominator run time
+    runtime_ratio_num       ///< numerator runtime, denominator compile time
+};
+
+template <typename Rep, Rep default_ = 1, runtime_ratio_types = runtime_ratio_both>
+struct runtime_ratio;
+
+template <typename Rep, Rep default_>
+struct runtime_ratio<Rep, default_, runtime_ratio_both>
 {
     const Rep num;
     const Rep den;
+
+    ESTD_CPP_CONSTEXPR_RET runtime_ratio(Rep num, Rep den) : num(num), den(den) {}
 };
 
 // ratio with only a runtime denominator portion - numerator is constexpr
@@ -37,6 +49,21 @@ struct runtime_multiplier
 };
 
 
+template <typename Rep, Rep num_>
+struct runtime_ratio<Rep, num_, runtime_ratio_den>
+{
+    const Rep den;
+
+    static CONSTEXPR Rep num = num_;
+};
+
+template <typename Rep, Rep den_>
+struct runtime_ratio<Rep, den_, runtime_ratio_num>
+{
+
+};
+
+
 template <typename Rep, class TRatio = runtime_ratio<Rep> >
 struct runtime_duration
 {
@@ -45,6 +72,34 @@ struct runtime_duration
     ratio_type ratio_;
     Rep count_;
 };
+
+template <class Rep, Rep lhs_num, std::intmax_t rhs_num, std::intmax_t rhs_den>
+inline runtime_ratio<Rep> runtime_multiply(
+    const runtime_ratio<Rep, lhs_num, runtime_ratio_den>& lhs,
+    estd::ratio<rhs_num, rhs_den> rhs)
+{
+    constexpr std::intmax_t gcd = estd::internal::gcd<lhs_num, rhs_den>::value;
+    constexpr Rep reduced_lhs_num = lhs_num / gcd;
+    constexpr intmax_t reduced_rhs_den = rhs_den / gcd;
+    return runtime_ratio<Rep>(reduced_lhs_num * rhs.num, lhs.den * reduced_rhs_den);
+    //return runtime_ratio<Rep, reduced_lhs_num * rhs.num, runtime_ratio_den>(lhs.den * reduced_rhs_den);
+}
+
+
+template <class Rep, Rep lhs_den, std::intmax_t rhs_num, std::intmax_t rhs_den>
+ESTD_CPP_CONSTEXPR_RET runtime_ratio<Rep> runtime_divider(
+    const runtime_multiplier<Rep, lhs_den>& lhs,
+    estd::ratio<rhs_num, rhs_den> rhs)
+{
+    return runtime_ratio<Rep>(lhs.num, lhs.den);
+}
+
+// https://www.wolframalpha.com/input?i2d=true&i=Divide%5Bh%2Cd%5D%3Df*Divide%5By%2Cx%5D
+// h = hz, d = divisor, x = numerator of chrono ratio, y = denomenator of chrono ratio,
+// h/d = number of ticks to form one esp32 counter second
+// y/x = number of ticks to form one chrono second
+// f = factor to convert y/x into h/d
+// f = (x/y)
 
 // This exists so that we can convert timepoints to
 // esp32 timer native 64-bit divided value.  Note that this is a kind of

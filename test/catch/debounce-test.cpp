@@ -165,6 +165,30 @@ TEST_CASE("Debounce and friends state machine tests", "[debounce]")
 
                 REQUIRE(v == 2000);
             }
+            SECTION("multiply")
+            {
+                SECTION("2/8 x 3/2")
+                {
+                    // 2/8 * 3/2 = 1/4 * 3/2 = 3/8
+                    runtime_ratio<uint8_t, 2, runtime_ratio_den> lhs{8};
+
+                    auto v = runtime_multiply(lhs, estd::ratio<3, 2>());
+
+                    REQUIRE(v.num == 3);
+                    REQUIRE(v.den == 8);
+                }
+                SECTION("80,000,000/80 x 1/1000")
+                {
+                    // 80,000,000/80 x 1/1000 = 1,000,000 x 1/1000 = 1000
+                    runtime_ratio<uint32_t, 80000000, runtime_ratio_den> lhs{80};
+
+                    auto v = runtime_multiply(lhs, estd::ratio<1, 1000>());
+
+                    // 'v' is not auto reduced, so it's coming back as 80,000:80
+                    //REQUIRE(v.num == 1000);
+                    //REQUIRE(v.den == 1);
+                }
+            }
         }
     }
     SECTION("button")
