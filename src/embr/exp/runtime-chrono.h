@@ -19,6 +19,11 @@ struct runtime_ratio<Rep, default_, runtime_ratio_both>
     const Rep den;
 
     ESTD_CPP_CONSTEXPR_RET runtime_ratio(Rep num, Rep den) : num(num), den(den) {}
+
+    template <Rep val, runtime_ratio_types rrt>
+    runtime_ratio(const runtime_ratio<Rep, val, rrt>& copy_from) :
+        num(copy_from.num), den(copy_from.den)
+    {}
 };
 
 // ratio with only a runtime denominator portion - numerator is constexpr
@@ -84,6 +89,19 @@ inline runtime_ratio<Rep> runtime_multiply(
     return runtime_ratio<Rep>(reduced_lhs_num * rhs.num, lhs.den * reduced_rhs_den);
     //return runtime_ratio<Rep, reduced_lhs_num * rhs.num, runtime_ratio_den>(lhs.den * reduced_rhs_den);
 }
+
+template <class Rep, Rep lhs_den, std::intmax_t rhs_num, std::intmax_t rhs_den>
+inline runtime_ratio<Rep> runtime_multiply(
+    const runtime_ratio<Rep, lhs_den, runtime_ratio_num>& lhs,
+    estd::ratio<rhs_num, rhs_den> rhs)
+{
+    constexpr std::intmax_t gcd = estd::internal::gcd<lhs_den, rhs_num>::value;
+    constexpr Rep reduced_lhs_den = lhs_den / gcd;
+    constexpr intmax_t reduced_rhs_num = rhs_num / gcd;
+    return runtime_ratio<Rep>(lhs.num * reduced_rhs_num, reduced_lhs_den * rhs.den);
+    //return runtime_ratio<Rep, reduced_lhs_num * rhs.num, runtime_ratio_den>(lhs.den * reduced_rhs_den);
+}
+
 
 
 template <class Rep, Rep lhs_den, std::intmax_t rhs_num, std::intmax_t rhs_den>
