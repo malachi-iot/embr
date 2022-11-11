@@ -5,41 +5,35 @@ namespace embr { namespace experimental {
 template <typename Rep>
 struct runtime_ratio
 {
-    const Rep num_;
-    const Rep den_;
-
-    const Rep& num() const { return num_; }
-    const Rep& den() const { return den_; }
+    const Rep num;
+    const Rep den;
 };
 
 // ratio with only a runtime denominator portion - numerator is constexpr
 template <typename Rep, Rep num_ = 1>
 struct runtime_divisor
 {
-    const Rep den_;
+    const Rep den;
 
-    static ESTD_CPP_CONSTEXPR_RET Rep num() { return num_; }
-    const Rep& den() const { return den_; }
+    static CONSTEXPR Rep num = num_;
 };
 
 template <typename Rep, Rep den_ = 1>
 struct runtime_multiplier
 {
-private:
-    const Rep num_;
+    const Rep num;
 
-public:
-    ESTD_CPP_CONSTEXPR_RET runtime_multiplier(Rep num_) : num_(num_) {}
-    ESTD_CPP_CONSTEXPR_RET runtime_multiplier(const runtime_multiplier& copy_from) : num_(copy_from.num_) {}
+    ESTD_CPP_CONSTEXPR_RET runtime_multiplier(Rep num_) : num(num_) {}
+    ESTD_CPP_CONSTEXPR_RET runtime_multiplier(const runtime_multiplier& copy_from) : num(copy_from.num_) {}
 
     // DEBT: This is cheating
+    /*
     inline runtime_multiplier& operator=(const runtime_multiplier& copy_from)
     {
         return * new (this) runtime_multiplier(copy_from);
-    }
+    } */
 
-    const Rep& num() const { return num_; }
-    static ESTD_CPP_CONSTEXPR_RET Rep den() { return den_; }
+    static CONSTEXPR Rep den = den_;
 };
 
 
@@ -81,8 +75,8 @@ struct DurationConverter<TInt, -1, denominator_>
     {
         // NOTE: timor divisor generally represents 80MHz (APB) / divisor()
         constexpr int precision_helper = adjuster();
-        constexpr int_type hz = ratio_.den() << precision_helper;
-        int_type den = hz / ratio_.num();    // aka timer counts per second
+        constexpr int_type hz = ratio_.den << precision_helper;
+        int_type den = hz / ratio_.num;    // aka timer counts per second
         int_type mul = Period::num * den / Period::den;
         return (convert_from.count() * mul) >> precision_helper;
     }
@@ -94,7 +88,7 @@ struct DurationConverter<TInt, -1, denominator_>
         typedef typename estd::ratio<Period::den, denominator_ * Period::num>::type r;
         constexpr auto num = r::num;
         constexpr auto den = r::den;
-        Rep raw = ratio_.num() * convert_from * num / den;
+        Rep raw = ratio_.num * convert_from * num / den;
         return * new (convert_to) estd::chrono::duration<Rep, Period>(raw);
     }
 };

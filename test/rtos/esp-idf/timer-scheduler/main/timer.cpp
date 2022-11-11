@@ -66,8 +66,8 @@ void timer_scheduler_tester()
     impl::Timer<control_structure2, 80> test2(timer);
     impl::Timer<control_structure1*, 80> test3(timer);
 
-    // DEBT: runtime ratio having different signature than compile time ratio is sloppy
-    auto v1 = test1.ratio().num();
+    // v1 uses runtime ratio, v2 is a compile time
+    auto v1 = test1.ratio().num;
     auto v2 = test2.ratio().num;
     //auto v3 = test3.now();    // "works" but crashes since timer isn't yet initialized
     //auto v3_count = v3.count();
