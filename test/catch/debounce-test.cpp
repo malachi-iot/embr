@@ -180,13 +180,23 @@ TEST_CASE("Debounce and friends state machine tests", "[debounce]")
                 SECTION("80,000,000/80 x 1/1000")
                 {
                     // 80,000,000/80 x 1/1000 = 1,000,000 x 1/1000 = 1000
+                    // although currently, algorithm does:
+                    // 80,000,000/80 x 1/1000 = 80,000/80 x 1/1
                     runtime_ratio<uint32_t, 80000000, runtime_ratio_den> lhs{80};
 
-                    auto v = runtime_multiply(lhs, estd::ratio<1, 1000>());
+                    auto v = runtime_multiply(lhs, estd::milli());
 
                     // 'v' is not auto reduced, so it's coming back as 80,000:80
                     //REQUIRE(v.num == 1000);
                     //REQUIRE(v.den == 1);
+
+                    runtime_ratio<uint32_t, 80000000, runtime_ratio_den, 1> lhs2{80};
+                    auto v2 = lhs.multiply(estd::milli());
+                    // Catch doesn't like referencing constexpr static member variables directly
+                    constexpr int num = v2.num;
+
+                    REQUIRE(num == 80000);
+                    REQUIRE(v2.den == 80);
                 }
             }
         }

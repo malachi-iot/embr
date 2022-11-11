@@ -9,7 +9,8 @@ enum runtime_ratio_types
     runtime_ratio_num       ///< numerator runtime, denominator compile time
 };
 
-template <typename Rep, Rep default_ = 1, runtime_ratio_types = runtime_ratio_both>
+// precision_assist is EXPERIMENTAL and behavior varies depending on specialization
+template <typename Rep, Rep default_ = 1, runtime_ratio_types = runtime_ratio_both, unsigned precision_assist = 0>
 struct runtime_ratio;
 
 template <typename Rep, Rep default_>
@@ -54,12 +55,42 @@ struct runtime_multiplier
 };
 
 
-template <typename Rep, Rep num_>
-struct runtime_ratio<Rep, num_, runtime_ratio_den>
+// (disabled) precision assist shifts to the right:
+// lhs numerator POST reduction
+// rhs denominator POST reduction
+template <typename Rep, Rep num_, unsigned precision_assist>
+struct runtime_ratio<Rep, num_, runtime_ratio_den, precision_assist>
 {
     const Rep den;
 
     static CONSTEXPR Rep num = num_;
+
+    // reduce the left (this) numerator against the right denominator
+    template <Rep rhs_den>
+    using mult_reducer = typename estd::ratio<num_, rhs_den>::type;
+
+    // reduces left numerator against right denominator, then multiplies by rhs_num
+    template <Rep rhs_den, Rep rhs_num>
+    static constexpr Rep mult_helper()
+    {
+        return mult_reducer<rhs_den>::num * rhs_num;
+        //return mult_reducer<rhs_den>::num >> precision_assist * rhs_num;
+    };
+
+    template <std::intmax_t rhs_num, std::intmax_t rhs_den>
+    constexpr runtime_ratio<Rep, mult_helper<rhs_den, rhs_num>(), runtime_ratio_den>
+        multiply(estd::ratio<rhs_num, rhs_den> rhs)
+    {
+        typedef mult_reducer<rhs_den> reducer;
+        return runtime_ratio<
+            Rep,
+            mult_helper<rhs_den, rhs_num>(),
+            runtime_ratio_den>
+        {(Rep)(den * reducer::den)};
+        //{(Rep)(den * reducer::den >> precision_assist)};
+        //return runtime_ratio<Rep, reducer::num * rhs_num, runtime_ratio_den>{(Rep)(den * reducer::den)};
+        //return runtime_ratio<Rep, reduced_lhs_num * rhs.num, runtime_ratio_den>(lhs.den * reduced_rhs_den);
+    }
 };
 
 template <typename Rep, Rep den_>
@@ -83,10 +114,8 @@ inline runtime_ratio<Rep> runtime_multiply(
     const runtime_ratio<Rep, lhs_num, runtime_ratio_den>& lhs,
     estd::ratio<rhs_num, rhs_den> rhs)
 {
-    constexpr std::intmax_t gcd = estd::internal::gcd<lhs_num, rhs_den>::value;
-    constexpr Rep reduced_lhs_num = lhs_num / gcd;
-    constexpr intmax_t reduced_rhs_den = rhs_den / gcd;
-    return runtime_ratio<Rep>(reduced_lhs_num * rhs.num, lhs.den * reduced_rhs_den);
+    typedef typename estd::ratio<lhs_num, rhs_den>::type reducer;
+    return runtime_ratio<Rep>(reducer::num * rhs.num, lhs.den * reducer::den);
     //return runtime_ratio<Rep, reduced_lhs_num * rhs.num, runtime_ratio_den>(lhs.den * reduced_rhs_den);
 }
 
