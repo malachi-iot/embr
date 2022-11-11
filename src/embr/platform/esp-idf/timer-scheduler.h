@@ -105,6 +105,9 @@ private:
     bool timer_callback(TScheduler& scheduler);
 
 protected:
+    template <class TScheduler, class TDuration>
+    void rebase(TScheduler& scheduler, TDuration);
+
     // We pass this in to avoid downcasting
     template <class TScheduler>
     // for example, 80 = prescaler for 1 MHz clock - remember, we're dividing

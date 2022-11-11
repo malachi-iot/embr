@@ -43,6 +43,26 @@ inline bool IRAM_ATTR TimerBase::Wrapper<TScheduler>::timer_callback()
     return false;
 }
 
+template <class TScheduler, class TDuration>
+inline void TimerBase::rebase(TScheduler& scheduler, TDuration next)
+{
+    typedef TScheduler scheduler_type;
+    typedef Buddy<scheduler_type> buddy_type;
+    // This works, but we don't use it which makes gcc mad.
+    // DEBT: Use this instead of passing in TDuration, which means we are making 'duration' an official
+    // member of impl/scheduler which I think is a good idea
+    //typedef typename scheduler_type::duration duration;
+    typedef typename buddy_type::container_type container_type;
+    typedef typename embr::internal::Rebaser<container_type> rebaser_type;
+
+    container_type& c = buddy_type::container(scheduler);
+
+    rebaser_type r(c);
+    
+    // Not active yet, other one below is doing the lifting
+    //r.rebase(next);
+}
+
 template <class TScheduler>
 inline void IRAM_ATTR TimerBase::Wrapper<TScheduler>::rebase(duration next, uint64_t native_now)
 {
@@ -204,6 +224,8 @@ bool IRAM_ATTR TimerBase::timer_callback (void* arg)
             // yank all scheduled values by current_time - remember, 'next' is still ahead of current_time so
             // there's still space to schedule something beforehand
             wrapper->rebase(current_time, native_now);
+            scheduler.rebase(scheduler, current_time);
+
             native_next += scheduler.native_offset;        // native_next is an absolute value, so current offset is still accurate
             scheduler.native_offset = initial_counter;          // fake zero out our native counter
 #endif
