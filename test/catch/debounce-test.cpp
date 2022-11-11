@@ -103,7 +103,7 @@ TEST_CASE("Debounce and friends state machine tests", "[debounce]")
             {
                 DurationConverter<int, -1> converter;
 
-                converter.numerator_ = 400;
+                converter.numerator(400);
 
                 uint64_t v = converter.convert(estd::chrono::milliseconds(10));
 
@@ -113,7 +113,7 @@ TEST_CASE("Debounce and friends state machine tests", "[debounce]")
             {
                 DurationConverter<int, -1> converter;
 
-                converter.numerator_ = 8000;
+                converter.numerator(8000);
 
                 uint64_t v = converter.convert(estd::chrono::milliseconds(100));
 

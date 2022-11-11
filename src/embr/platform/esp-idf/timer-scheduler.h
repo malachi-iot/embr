@@ -222,7 +222,7 @@ struct Timer :
     void start(TScheduler* scheduler, uint32_t divider)
     {
         // DEBT: Sloppy way of initializing numerator
-        this->numerator_ = divider;
+        this->numerator(divider);
         base_type::start(scheduler, divider);
     }
 

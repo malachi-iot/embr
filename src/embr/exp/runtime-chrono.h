@@ -18,8 +18,28 @@ struct runtime_divisor
 {
     const Rep den_;
 
-    Rep num() { return num; }
+    static ESTD_CPP_CONSTEXPR_RET Rep num() { return num_; }
     const Rep& den() const { return den_; }
+};
+
+template <typename Rep, Rep den_ = 1>
+struct runtime_multiplier
+{
+private:
+    const Rep num_;
+
+public:
+    ESTD_CPP_CONSTEXPR_RET runtime_multiplier(Rep num_) : num_(num_) {}
+    ESTD_CPP_CONSTEXPR_RET runtime_multiplier(const runtime_multiplier& copy_from) : num_(copy_from.num_) {}
+
+    // DEBT: This is cheating
+    inline runtime_multiplier& operator=(const runtime_multiplier& copy_from)
+    {
+        return * new (this) runtime_multiplier(copy_from);
+    }
+
+    const Rep& num() const { return num_; }
+    static ESTD_CPP_CONSTEXPR_RET Rep den() { return den_; }
 };
 
 
@@ -42,9 +62,17 @@ template <typename TInt, int denominator_>
 struct DurationConverter<TInt, -1, denominator_>
 {
     typedef TInt int_type;
+    typedef runtime_multiplier<uint32_t, denominator_> period_type;
+    period_type ratio_{80};
+    void numerator(uint32_t n)
+    {
+        new (&ratio_) period_type(n);
+    }
+    ESTD_CPP_CONSTEXPR_RET const period_type& ratio() const { return ratio_; }
+    /*
     uint32_t numerator_ = 80;
     uint32_t numerator() const { return numerator_; }
-    static constexpr int denominator() { return denominator_; }
+    static constexpr int denominator() { return denominator_; } */
     // bits of precision to lose in order to avoid overflow/underflow
     static constexpr unsigned adjuster() { return 2;}
 
@@ -53,8 +81,8 @@ struct DurationConverter<TInt, -1, denominator_>
     {
         // NOTE: timor divisor generally represents 80MHz (APB) / divisor()
         constexpr int precision_helper = adjuster();
-        constexpr int_type hz = denominator_ << precision_helper;
-        int_type den = hz / numerator();    // aka timer counts per second
+        constexpr int_type hz = ratio_.den() << precision_helper;
+        int_type den = hz / ratio_.num();    // aka timer counts per second
         int_type mul = Period::num * den / Period::den;
         return (convert_from.count() * mul) >> precision_helper;
     }
@@ -63,11 +91,10 @@ struct DurationConverter<TInt, -1, denominator_>
     template <typename Rep, typename Period>
     estd::chrono::duration<Rep, Period>& convert(int_type convert_from, estd::chrono::duration<Rep, Period>* convert_to) const
     {
-        //typedef estd::ratio<Period::den, denominator_ * Period::num> r;       // FIX: Ours doesn't do reduction
-        typedef typename std::ratio<Period::den, denominator_ * Period::num>::type r;
+        typedef typename estd::ratio<Period::den, denominator_ * Period::num>::type r;
         constexpr auto num = r::num;
         constexpr auto den = r::den;
-        Rep raw = numerator() * convert_from * num / den;
+        Rep raw = ratio_.num() * convert_from * num / den;
         return * new (convert_to) estd::chrono::duration<Rep, Period>(raw);
     }
 };
@@ -78,7 +105,7 @@ struct DurationConverter
     typedef TInt int_type;
     typedef typename estd::ratio<numerator_, denominator_>::type period_type;
 
-    static constexpr int numerator() { return numerator_; }
+    static period_type ratio() { return period_type(); }
 
     typedef estd::chrono::duration<int_type, period_type> duration;
 

@@ -66,8 +66,9 @@ void timer_scheduler_tester()
     impl::Timer<control_structure2, 80> test2(timer);
     impl::Timer<control_structure1*, 80> test3(timer);
 
-    auto v1 = test1.numerator();
-    auto v2 = test2.numerator();
+    // DEBT: runtime ratio having different signature than compile time ratio is sloppy
+    auto v1 = test1.ratio().num();
+    auto v2 = test2.ratio().num;
     //auto v3 = test3.now();    // "works" but crashes since timer isn't yet initialized
     //auto v3_count = v3.count();
 
@@ -82,6 +83,15 @@ void timer_scheduler_tester()
     // DEBT: Something happening here generating create_context twice - things still work
     // and I have a feeling it's RVO related in which case it's harmless, but it bears investigation
     s3.schedule(&c1);
+
+    /*
+    Getting this:    
+E (2416) timer_group: timer_set_alarm(179): HW TIMER NEVER INIT ERROR
+E (2416) timer_group: timer_set_alarm_value(155): HW TIMER NEVER INIT ERROR
+E (2426) timer_group: timer_start(97): HW TIMER NEVER INIT ERROR
+
+    Presumably because s3 is only partially initialized
+    */
 
     const char* TAG = "timer_scheduler_tester";
 
