@@ -156,27 +156,25 @@ protected:
     };
 };
 
-template <typename TTimePoint = void>
-struct ReferenceBase;
-
-
-template <>
-struct ReferenceBase<void> : ReferenceBaseBase
-{
-
-};
-
 // Deduces int_type and duration from more complicated TTimePoints
 template <typename TTimePoint>
-struct DurationHelper;
+struct TimePointTraits;
+
+template <typename TTimePoint = void, class TTimePointTraits = TimePointTraits<TTimePoint> >
+struct ReferenceBase;
+
+struct ReferenceBaseTag {};
+
+
 
 template <typename TInt>
-struct DurationHelper
+struct TimePointTraits
 {
-    typedef TInt time_point;
-    typedef TInt int_type;
-    typedef TInt duration;  // EXPERIMENTAL
+    typedef TInt time_point;    ///< Core time_point on which scheduling is based
+    typedef TInt int_type;      ///< Underlying int type - useful for complex time_points like chrono's
+    typedef TInt duration;      ///< Type to do additions, subtractions, etc. on time_point - mimic/aliases chrono
 
+    // EXPERIMENTAL
     static constexpr bool is_chrono() { return false; }
 
     static constexpr int_type duration_zero() { return 0; }
@@ -185,7 +183,7 @@ struct DurationHelper
 
 
 template <typename Rep, typename Period>
-struct DurationHelper<estd::chrono::duration<Rep, Period> >
+struct TimePointTraits<estd::chrono::duration<Rep, Period> >
 {
     typedef estd::chrono::duration<Rep, Period> duration;
     typedef duration time_point;
@@ -199,7 +197,7 @@ struct DurationHelper<estd::chrono::duration<Rep, Period> >
 
 
 template <typename TClock, typename TDuration>
-struct DurationHelper<estd::chrono::time_point<TClock, TDuration> >
+struct TimePointTraits<estd::chrono::time_point<TClock, TDuration> >
 {
     typedef TDuration duration;
     typedef estd::chrono::time_point<TClock, TDuration> time_point;
@@ -212,18 +210,17 @@ struct DurationHelper<estd::chrono::time_point<TClock, TDuration> >
 };
 
 
-template <typename TTimePoint>
-struct ReferenceBase : ReferenceBaseBase
+template <typename TTimePoint, class TTimePointTraits>
+struct ReferenceBase : ReferenceBaseBase, ReferenceBaseTag
 {
-    typedef TTimePoint time_point;
-    // DEBT: Needs cleanup, and not used quite yet
-    typedef DurationHelper<time_point> helper_type;
-    typedef typename helper_type::duration duration;
+    typedef TTimePointTraits time_point_traits;
+    typedef typename time_point_traits::time_point time_point;
+    typedef typename time_point_traits::duration duration;
 
     // Reference implementation only.  Yours may be quite different
     struct value_type
     {
-        typedef TTimePoint time_point;
+        typedef typename time_point_traits::time_point time_point;
 
         time_point event_due_;
 
@@ -305,7 +302,8 @@ struct Reference<T, TTimePoint, typename estd::enable_if<estd::is_pointer<T>::va
 
 struct TraditionalBase : ReferenceBase<unsigned long>
 {
-    typedef unsigned long time_point;
+    typedef ReferenceBase<unsigned long> base_type;
+    typedef typename base_type::time_point time_point;
 
     struct control_structure
     {

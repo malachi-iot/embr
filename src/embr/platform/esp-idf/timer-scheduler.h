@@ -152,14 +152,13 @@ struct Timer;
 template <class T, int divider_, typename TTimePoint, class TReference>
 struct Timer : 
     TimerBase,
-    embr::internal::scheduler::impl::DurationHelper<TTimePoint>,
     embr::experimental::DurationConverter<uint64_t, divider_, embr::esp_idf::Timer::base_clock_hz()>
 {
     static constexpr const char* TAG = "impl::Timer";
 
     typedef TimerBase base_type;
     using typename base_type::timer_type;
-    typedef embr::internal::scheduler::impl::DurationHelper<TTimePoint> helper_type;
+    typedef embr::internal::scheduler::impl::TimePointTraits<TTimePoint> helper_type;
     typedef typename helper_type::time_point time_point;
     typedef typename helper_type::duration duration;
     typedef embr::experimental::DurationConverter<uint64_t, divider_, timer_type::base_clock_hz()> converter_type;
