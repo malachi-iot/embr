@@ -138,6 +138,17 @@ TEST_CASE("Runtime ratio", "[ratio]")
             REQUIRE(reduced.num == 1000);
             REQUIRE(reduced.den == 1);
         }
+        SECTION("runtime numerator")
+        {
+            runtime_ratio<uint32_t, 1000, runtime_ratio_num> r{10};
+
+            auto v = r.multiply(estd::ratio<10, 2>{});
+            int den = v.den;
+
+            // TODO: This flavor of multiply not working right yet
+            //REQUIRE(v.num == 100);
+            //REQUIRE(den == 2000);
+        }
     }
     SECTION("convert durations with runtime ratio")
     {

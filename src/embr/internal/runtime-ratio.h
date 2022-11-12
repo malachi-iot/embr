@@ -107,7 +107,27 @@ struct runtime_ratio<Rep, den_, runtime_ratio_num>
     template <Rep rhs_num>
     using mult_reducer = typename estd::ratio<den_, rhs_num>::type;
 
+    // reduces left denominator against right numerator, then multiplies by rhs_den
+    template <Rep rhs_den, Rep rhs_num>
+    static constexpr Rep mult_helper()
+    {
+        return mult_reducer<rhs_num>::den * rhs_den;
+    };
+
     ESTD_CPP_CONSTEXPR_RET runtime_ratio(Rep num) : num(num) {}
+
+
+    template <std::intmax_t rhs_num, std::intmax_t rhs_den>
+    constexpr runtime_ratio<Rep, mult_helper<rhs_den, rhs_num>(), runtime_ratio_num>
+        multiply(estd::ratio<rhs_num, rhs_den>) const
+    {
+        typedef mult_reducer<rhs_den> reducer;
+        return runtime_ratio<
+            Rep,
+            mult_helper<rhs_den, rhs_num>(),
+            runtime_ratio_num>
+        {(Rep)(num * reducer::num)};
+    }
 };
 
 
