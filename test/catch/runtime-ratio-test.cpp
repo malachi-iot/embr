@@ -53,7 +53,7 @@ TEST_CASE("Runtime ratio", "[ratio]")
 
         REQUIRE(v == 1000);
 
-        estd::chrono::duration<int, std::ratio<3, 1000> > v2;
+        estd::chrono::duration<int, estd::ratio<3, 1000> > v2;
 
         converter.convert(v, &v2);
 
@@ -209,8 +209,7 @@ TEST_CASE("Runtime ratio", "[ratio]")
 
         REQUIRE(val2 == 100000);
 
-        // EXPERIMENTAL int-only flavor
-        val2 = converter.multiply(val);
+        val2 = integer_multiply(converter, val);
 
         REQUIRE(val2 == 100000);
     }

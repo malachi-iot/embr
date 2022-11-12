@@ -29,6 +29,13 @@ struct runtime_ratio<Rep, default_, runtime_ratio_both>
     {}
 };
 
+// EXPERIMENTAL naming
+template <typename Rep, Rep den>
+using runtime_numerator_ratio = runtime_ratio<Rep, den, runtime_ratio_num>;
+
+template <typename Rep, Rep den>
+using runtime_denominator_ratio = runtime_ratio<Rep, den, runtime_ratio_den>;
+
 // Lifted from https://www.geeksforgeeks.org/euclidean-algorithms-basic-and-extended/
 template <class T>
 constexpr T gcd(T a, T b)
@@ -44,6 +51,8 @@ template <typename Rep, Rep num_, unsigned precision_assist>
 struct runtime_ratio<Rep, num_, runtime_ratio_den, precision_assist>
 {
     const Rep den;
+
+    constexpr runtime_ratio(Rep den) : den(den) {}
 
     static CONSTEXPR Rep num = num_;
 
@@ -81,11 +90,9 @@ struct runtime_ratio<Rep, num_, runtime_ratio_den, precision_assist>
         return runtime_ratio<Rep>(reducer::num * rhs.num, reducer::den * den);
     }
 
-    // EXPERIMENTAL - multiplies by integer (or float maybe?) and returns the same
-    template <typename Rep2>
-    constexpr Rep2 multiply(const Rep2 v) const
+    constexpr runtime_ratio<Rep, num_, runtime_ratio_num> inverse() const
     {
-        return num * v / den;
+        return runtime_ratio<Rep, num_, runtime_ratio_num>(den);
     }
 };
 
@@ -130,6 +137,11 @@ struct runtime_ratio<Rep, den_, runtime_ratio_num>
         typedef mult_reducer<rhs_num> reducer;
         return runtime_ratio<Rep>(reducer::num * num, reducer::den * rhs.den);
     }
+
+    constexpr runtime_ratio<Rep, den_, runtime_ratio_den> inverse() const
+    {
+        return runtime_ratio<Rep, den_, runtime_ratio_den>(num);
+    }
 };
 
 template <typename Rep, Rep default_, runtime_ratio_types rrt>
@@ -139,6 +151,15 @@ runtime_ratio<Rep> reduce(const runtime_ratio<Rep, default_, rrt>& v)
 
     return runtime_ratio<Rep>(v.num / divisor, v.den / divisor);
 }
+
+// multiplies by integer (or float maybe?) and returns the same
+// DEBT - naming and location not ideal
+template <typename Rep, Rep default_, runtime_ratio_types rrt>
+constexpr Rep integer_multiply(const runtime_ratio<Rep, default_, rrt> ratio, Rep v)
+{
+    return ratio.num * v / ratio.den;
+}
+
 
 
 template <typename Rep, class TRatio = runtime_ratio<Rep> >
@@ -159,19 +180,6 @@ inline runtime_ratio<Rep> runtime_multiply(
     return runtime_ratio<Rep>(reducer::num * rhs.num, lhs.den * reducer::den);
     //return runtime_ratio<Rep, reduced_lhs_num * rhs.num, runtime_ratio_den>(lhs.den * reduced_rhs_den);
 }
-
-template <class Rep, Rep lhs_den, std::intmax_t rhs_num, std::intmax_t rhs_den>
-inline runtime_ratio<Rep> runtime_multiply(
-    const runtime_ratio<Rep, lhs_den, runtime_ratio_num>& lhs,
-    estd::ratio<rhs_num, rhs_den> rhs)
-{
-    constexpr std::intmax_t gcd = estd::internal::gcd<lhs_den, rhs_num>::value;
-    constexpr Rep reduced_lhs_den = lhs_den / gcd;
-    constexpr intmax_t reduced_rhs_num = rhs_num / gcd;
-    return runtime_ratio<Rep>(lhs.num * reduced_rhs_num, reduced_lhs_den * rhs.den);
-    //return runtime_ratio<Rep, reduced_lhs_num * rhs.num, runtime_ratio_den>(lhs.den * reduced_rhs_den);
-}
-
 
 
 
@@ -194,13 +202,17 @@ struct DurationConverter<TInt, -1, denominator_>
     static ESTD_CPP_CONSTEXPR_RET int denominator() { return denominator_; }
 
     typedef TInt int_type;
-    typedef runtime_ratio<uint32_t, denominator_, runtime_ratio_num> period_type;
-    period_type ratio_{80};
-    void numerator(uint32_t n)
+    typedef runtime_numerator_ratio<int_type, denominator_> period_type;
+    period_type ratio_;
+    void numerator(TInt n)
     {
         new (&ratio_) period_type(n);
     }
     ESTD_CPP_CONSTEXPR_RET const period_type& ratio() const { return ratio_; }
+
+    // DEBT: Remove default and pass in v
+    DurationConverter(TInt v = 80) : ratio_(v) {}
+
     /*
     uint32_t numerator_ = 80;
     uint32_t numerator() const { return numerator_; }
@@ -208,6 +220,7 @@ struct DurationConverter<TInt, -1, denominator_>
     // bits of precision to lose in order to avoid overflow/underflow
     static constexpr unsigned adjuster() { return 2;}
 
+    // convert from duration to ticks
     template <typename Rep, typename Period>
     int_type convert(const estd::chrono::duration<Rep, Period>& convert_from) const
     {
@@ -219,10 +232,17 @@ struct DurationConverter<TInt, -1, denominator_>
         return (convert_from.count() * mul) >> precision_helper;
     }
 
+    // convert from ticks to duration
     // https://bit.ly/3TQ6AJ2
     template <typename Rep, typename Period>
     estd::chrono::duration<Rep, Period>& convert(int_type convert_from, estd::chrono::duration<Rep, Period>* convert_to) const
     {
+        /* Experimenting, doesn't quite work
+        auto r2 = ratio_.inverse();
+        auto rr2 = r2.multiply(Period{});
+        Rep _convert_to = integer_multiply(rr2, convert_from);
+         */
+
         typedef typename estd::ratio<Period::den, denominator_ * Period::num>::type r;
         constexpr auto num = r::num;
         constexpr auto den = r::den;

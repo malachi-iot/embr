@@ -9,7 +9,7 @@
 #include "timer.h"
 
 #include "../../scheduler.h"
-#include "../../exp/runtime-chrono.h"
+#include "../../internal/runtime-ratio.h"
 #include "../../exp/platform/freertos/scheduler.h"
 
 namespace embr { namespace esp_idf {
@@ -152,7 +152,7 @@ struct Timer;
 template <class T, int divider_, typename TTimePoint, class TReference>
 struct Timer : 
     TimerBase,
-    embr::experimental::DurationConverter<uint64_t, divider_, embr::esp_idf::Timer::base_clock_hz()>
+    embr::internal::DurationConverter<uint64_t, divider_, embr::esp_idf::Timer::base_clock_hz()>
 {
     static constexpr const char* TAG = "impl::Timer";
 
@@ -161,7 +161,7 @@ struct Timer :
     typedef embr::internal::scheduler::impl::TimePointTraits<TTimePoint> helper_type;
     typedef typename helper_type::time_point time_point;
     typedef typename helper_type::duration duration;
-    typedef embr::experimental::DurationConverter<uint64_t, divider_, timer_type::base_clock_hz()> converter_type;
+    typedef embr::internal::DurationConverter<uint64_t, divider_, timer_type::base_clock_hz()> converter_type;
 
     // reference_impl comes in handy for supporting both value and pointer of T.  Also
     // if one *really* wants to deviate from 'event_due' and 'process' paradigm, it's done

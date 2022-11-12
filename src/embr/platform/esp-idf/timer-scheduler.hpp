@@ -3,7 +3,6 @@
 #include "timer.h"
 #include "timer-scheduler.h"
 #include "../../scheduler.hpp"
-#include "../../exp/runtime-chrono.h"
 
 #include "log.h"
 
@@ -177,6 +176,7 @@ bool IRAM_ATTR TimerBase::timer_callback (void* arg)
             (uint64_t)time_point::max().count(),
             max);
     }
+
     scheduler.duration_converter().convert(counter, &current_time);
 
     scheduler.process(current_time, context);
