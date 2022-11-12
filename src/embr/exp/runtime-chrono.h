@@ -1,5 +1,7 @@
 #pragma once
 
+#include <estd/chrono.h>
+
 namespace embr { namespace experimental {
 
 enum runtime_ratio_types
