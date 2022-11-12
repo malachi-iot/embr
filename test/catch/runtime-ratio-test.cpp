@@ -133,7 +133,7 @@ TEST_CASE("Runtime ratio", "[ratio]")
             REQUIRE(v2.den == 80);
 
             // Downside to doing this is a runtime gcd and a full num+den runtime ratio
-            auto reduced = v2.reduce();
+            auto reduced = reduce(v2);
 
             REQUIRE(reduced.num == 1000);
             REQUIRE(reduced.den == 1);
@@ -146,6 +146,7 @@ TEST_CASE("Runtime ratio", "[ratio]")
 
             int num, den;;
 
+            // lhs den (1000) and rhs num (2) reduce against one another
             typedef r_type::mult_reducer<2> reduced2;
 
             num = reduced2::num;
@@ -154,6 +155,7 @@ TEST_CASE("Runtime ratio", "[ratio]")
             REQUIRE(num == 1);
             REQUIRE(den == 500);
 
+            // lhs den (1000) and rhs num (10) reduce against one another
             typedef r_type::mult_reducer<10> reduced;
 
             num = reduced::num;
@@ -165,17 +167,22 @@ TEST_CASE("Runtime ratio", "[ratio]")
             // 10/1000 x 10/2 = 100/2000 = 1/20
 
             // 10/2
-            // lhs den (reduced) * rhs den
+            // lhs den (reduced) * rhs den ->
+            // 100 * 2
             den = r_type::mult_helper<10, 2>();
 
-            //REQUIRE(den == 2000);
+            REQUIRE(den == 200);
 
             auto v = r.multiply(estd::ratio<10, 2>{});
             den = v.den;
 
-            // TODO: This flavor of multiply not working right yet
-            //REQUIRE(v.num == 100);
-            //REQUIRE(den == 2000);
+            REQUIRE(v.num == 10);
+            REQUIRE(den == 200);
+
+            auto _reduced = reduce(v);
+
+            REQUIRE(_reduced.num == 1);
+            REQUIRE(_reduced.den == 20);
         }
     }
     SECTION("convert durations with runtime ratio")

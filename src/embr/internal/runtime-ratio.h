@@ -81,13 +81,6 @@ struct runtime_ratio<Rep, num_, runtime_ratio_den, precision_assist>
         return runtime_ratio<Rep>(reducer::num * rhs.num, reducer::den * den);
     }
 
-    runtime_ratio<Rep> reduce() const
-    {
-        Rep divisor = gcd(num, den);
-
-        return runtime_ratio<Rep>(num / divisor, den / divisor);
-    }
-
     // EXPERIMENTAL - multiplies by integer (or float maybe?) and returns the same
     template <typename Rep2>
     constexpr Rep2 multiply(const Rep2 v) const
@@ -129,7 +122,23 @@ struct runtime_ratio<Rep, den_, runtime_ratio_num>
             runtime_ratio_num>
         {(Rep)(num * reducer::num)};
     }
+
+    // UNTESTED
+    template <typename Rep2, Rep2 rhs_num>
+    constexpr runtime_ratio<Rep> multiply(const runtime_ratio<Rep2, rhs_num, runtime_ratio_den>& rhs) const
+    {
+        typedef mult_reducer<rhs_num> reducer;
+        return runtime_ratio<Rep>(reducer::num * num, reducer::den * rhs.den);
+    }
 };
+
+template <typename Rep, Rep default_, runtime_ratio_types rrt>
+runtime_ratio<Rep> reduce(const runtime_ratio<Rep, default_, rrt>& v)
+{
+    const Rep divisor = gcd(v.num, v.den);
+
+    return runtime_ratio<Rep>(v.num / divisor, v.den / divisor);
+}
 
 
 template <typename Rep, class TRatio = runtime_ratio<Rep> >
