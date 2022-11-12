@@ -88,7 +88,7 @@ struct runtime_ratio<Rep, num_, runtime_ratio_den, precision_assist>
 
     template <std::intmax_t rhs_num, std::intmax_t rhs_den>
     constexpr runtime_ratio<Rep, mult_helper<rhs_den, rhs_num>(), runtime_ratio_den>
-        multiply(estd::ratio<rhs_num, rhs_den> rhs)
+        multiply(estd::ratio<rhs_num, rhs_den> rhs) const
     {
         typedef mult_reducer<rhs_den> reducer;
         return runtime_ratio<
@@ -100,12 +100,39 @@ struct runtime_ratio<Rep, num_, runtime_ratio_den, precision_assist>
         //return runtime_ratio<Rep, reducer::num * rhs_num, runtime_ratio_den>{(Rep)(den * reducer::den)};
         //return runtime_ratio<Rep, reduced_lhs_num * rhs.num, runtime_ratio_den>(lhs.den * reduced_rhs_den);
     }
+
+    template <typename Rep2, Rep2 rhs_den>
+    constexpr runtime_ratio<Rep> multiply(const runtime_ratio<Rep2, rhs_den, runtime_ratio_num>& rhs) const
+    {
+        typedef mult_reducer<rhs_den> reducer;
+        return runtime_ratio<Rep>(reducer::num * rhs.num, reducer::den * den);
+    }
+
+    runtime_ratio<Rep> reduce() const
+    {
+        Rep divisor = gcd(num, den);
+
+        return runtime_ratio<Rep>(num / divisor, den / divisor);
+    }
+
+    // EXPERIMENTAL - multiplies by integer (or float maybe?) and returns the same
+    template <typename Rep2>
+    constexpr Rep2 multiply(const Rep2 v) const
+    {
+        return num * v / den;
+    }
 };
 
 template <typename Rep, Rep den_>
 struct runtime_ratio<Rep, den_, runtime_ratio_num>
 {
+    const Rep num;
 
+    static CONSTEXPR Rep den = den_;
+
+    // reduce the left (this) denominator against the right numerator
+    template <Rep rhs_num>
+    using mult_reducer = typename estd::ratio<den_, rhs_num>::type;
 };
 
 

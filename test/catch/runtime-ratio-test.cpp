@@ -5,7 +5,7 @@
 TEST_CASE("Runtime ratio", "[ratio]")
 {
     using namespace embr::experimental;
-    
+
     SECTION("converter (runtime default 80)")
     {
         DurationConverter<int, -1> converter;
@@ -131,6 +131,41 @@ TEST_CASE("Runtime ratio", "[ratio]")
 
             REQUIRE(num == 80000);
             REQUIRE(v2.den == 80);
+
+            // Downside to doing this is a runtime gcd and a full num+den runtime ratio
+            auto reduced = v2.reduce();
+
+            REQUIRE(reduced.num == 1000);
+            REQUIRE(reduced.den == 1);
         }
+    }
+    SECTION("convert durations with runtime ratio")
+    {
+        unsigned val = 100;  // milliseconds
+
+        // aka microseconds
+        runtime_ratio<uint32_t, 80000000, runtime_ratio_den> lhs{80};
+        runtime_ratio<uint32_t, estd::milli::den, runtime_ratio_num> rhs{(uint32_t)estd::milli::num * val};
+
+        REQUIRE(rhs.num == val);
+
+        // converter is the ratio needed to multiply against to convert to esp32 us counter from
+        // milliseconds
+        auto converter = lhs.multiply(estd::milli{});
+
+        auto val2 = converter.num * val / converter.den;
+
+        REQUIRE(val2 == 100000);
+
+        auto v = lhs.multiply(rhs);
+
+        val2 = v.num / v.den;
+
+        REQUIRE(val2 == 100000);
+
+        // EXPERIMENTAL int-only flavor
+        val2 = converter.multiply(val);
+
+        REQUIRE(val2 == 100000);
     }
 }
