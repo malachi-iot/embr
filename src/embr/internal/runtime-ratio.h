@@ -52,7 +52,7 @@ struct runtime_ratio<Rep, num_, runtime_ratio_den, precision_assist>
     using mult_reducer = typename estd::ratio<num_, rhs_den>::type;
 
     // reduces left numerator against right denominator, then multiplies by rhs_num
-    template <Rep rhs_den, Rep rhs_num>
+    template <Rep rhs_num, Rep rhs_den>
     static constexpr Rep mult_helper()
     {
         return mult_reducer<rhs_den>::num * rhs_num;
@@ -60,13 +60,13 @@ struct runtime_ratio<Rep, num_, runtime_ratio_den, precision_assist>
     };
 
     template <std::intmax_t rhs_num, std::intmax_t rhs_den>
-    constexpr runtime_ratio<Rep, mult_helper<rhs_den, rhs_num>(), runtime_ratio_den>
+    constexpr runtime_ratio<Rep, mult_helper<rhs_num, rhs_den>(), runtime_ratio_den>
         multiply(estd::ratio<rhs_num, rhs_den> rhs) const
     {
         typedef mult_reducer<rhs_den> reducer;
         return runtime_ratio<
             Rep,
-            mult_helper<rhs_den, rhs_num>(),
+            mult_helper<rhs_num, rhs_den>(),
             runtime_ratio_den>
         {(Rep)(den * reducer::den)};
         //{(Rep)(den * reducer::den >> precision_assist)};
@@ -109,7 +109,7 @@ struct runtime_ratio<Rep, den_, runtime_ratio_num>
 
     // reduces left denominator against right numerator,
     // then multiplies that left denominator by rhs_den
-    template <Rep rhs_den, Rep rhs_num>
+    template <Rep rhs_num, Rep rhs_den>
     static constexpr Rep mult_helper()
     {
         return mult_reducer<rhs_num>::den * rhs_den;
@@ -119,13 +119,13 @@ struct runtime_ratio<Rep, den_, runtime_ratio_num>
 
 
     template <std::intmax_t rhs_num, std::intmax_t rhs_den>
-    constexpr runtime_ratio<Rep, mult_helper<rhs_den, rhs_num>(), runtime_ratio_num>
+    constexpr runtime_ratio<Rep, mult_helper<rhs_num, rhs_den>(), runtime_ratio_num>
         multiply(estd::ratio<rhs_num, rhs_den>) const
     {
         typedef mult_reducer<rhs_den> reducer;
         return runtime_ratio<
             Rep,
-            mult_helper<rhs_den, rhs_num>(),
+            mult_helper<rhs_num, rhs_den>(),
             runtime_ratio_num>
         {(Rep)(num * reducer::num)};
     }
