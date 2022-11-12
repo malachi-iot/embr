@@ -1,10 +1,10 @@
 #include <catch.hpp>
 
-#include <embr/exp/runtime-chrono.h>
+#include <embr/internal/runtime-ratio.h>
 
 TEST_CASE("Runtime ratio", "[ratio]")
 {
-    using namespace embr::experimental;
+    using namespace embr::internal;
 
     SECTION("converter (runtime default 80)")
     {

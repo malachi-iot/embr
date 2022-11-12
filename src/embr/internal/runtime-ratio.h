@@ -2,7 +2,7 @@
 
 #include <estd/chrono.h>
 
-namespace embr { namespace experimental {
+namespace embr { namespace internal {
 
 enum runtime_ratio_types
 {
