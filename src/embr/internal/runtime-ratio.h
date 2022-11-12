@@ -105,9 +105,10 @@ struct runtime_ratio<Rep, den_, runtime_ratio_num>
 
     // reduce the left (this) denominator against the right numerator
     template <Rep rhs_num>
-    using mult_reducer = typename estd::ratio<den_, rhs_num>::type;
+    using mult_reducer = typename estd::ratio<rhs_num, den_>::type;
 
-    // reduces left denominator against right numerator, then multiplies by rhs_den
+    // reduces left denominator against right numerator,
+    // then multiplies that left denominator by rhs_den
     template <Rep rhs_den, Rep rhs_num>
     static constexpr Rep mult_helper()
     {

@@ -140,10 +140,38 @@ TEST_CASE("Runtime ratio", "[ratio]")
         }
         SECTION("runtime numerator")
         {
+            // 10/1000
             runtime_ratio<uint32_t, 1000, runtime_ratio_num> r{10};
+            typedef decltype(r) r_type;
+
+            int num, den;;
+
+            typedef r_type::mult_reducer<2> reduced2;
+
+            num = reduced2::num;
+            den = reduced2::den;
+
+            REQUIRE(num == 1);
+            REQUIRE(den == 500);
+
+            typedef r_type::mult_reducer<10> reduced;
+
+            num = reduced::num;
+            den = reduced::den;
+
+            REQUIRE(num == 1);
+            REQUIRE(den == 100);
+
+            // 10/1000 x 10/2 = 100/2000 = 1/20
+
+            // 10/2
+            // lhs den (reduced) * rhs den
+            den = r_type::mult_helper<10, 2>();
+
+            REQUIRE(den == 2000);
 
             auto v = r.multiply(estd::ratio<10, 2>{});
-            int den = v.den;
+            den = v.den;
 
             // TODO: This flavor of multiply not working right yet
             //REQUIRE(v.num == 100);
