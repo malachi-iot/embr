@@ -54,6 +54,13 @@ struct runtime_multiplier
     static CONSTEXPR Rep den = den_;
 };
 
+// Lifted from https://www.geeksforgeeks.org/euclidean-algorithms-basic-and-extended/
+template <class T>
+constexpr T gcd(T a, T b)
+{
+    return (a == 0) ? b : gcd(b % a, a);
+}
+
 
 // (disabled) precision assist shifts to the right:
 // lhs numerator POST reduction
