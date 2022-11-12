@@ -29,33 +29,6 @@ struct runtime_ratio<Rep, default_, runtime_ratio_both>
     {}
 };
 
-// ratio with only a runtime denominator portion - numerator is constexpr
-template <typename Rep, Rep num_ = 1>
-struct runtime_divisor
-{
-    const Rep den;
-
-    static CONSTEXPR Rep num = num_;
-};
-
-template <typename Rep, Rep den_ = 1>
-struct runtime_multiplier
-{
-    const Rep num;
-
-    ESTD_CPP_CONSTEXPR_RET runtime_multiplier(Rep num_) : num(num_) {}
-    ESTD_CPP_CONSTEXPR_RET runtime_multiplier(const runtime_multiplier& copy_from) : num(copy_from.num_) {}
-
-    // DEBT: This is cheating
-    /*
-    inline runtime_multiplier& operator=(const runtime_multiplier& copy_from)
-    {
-        return * new (this) runtime_multiplier(copy_from);
-    } */
-
-    static CONSTEXPR Rep den = den_;
-};
-
 // Lifted from https://www.geeksforgeeks.org/euclidean-algorithms-basic-and-extended/
 template <class T>
 constexpr T gcd(T a, T b)
@@ -133,6 +106,8 @@ struct runtime_ratio<Rep, den_, runtime_ratio_num>
     // reduce the left (this) denominator against the right numerator
     template <Rep rhs_num>
     using mult_reducer = typename estd::ratio<den_, rhs_num>::type;
+
+    ESTD_CPP_CONSTEXPR_RET runtime_ratio(Rep num) : num(num) {}
 };
 
 
@@ -169,13 +144,6 @@ inline runtime_ratio<Rep> runtime_multiply(
 
 
 
-template <class Rep, Rep lhs_den, std::intmax_t rhs_num, std::intmax_t rhs_den>
-ESTD_CPP_CONSTEXPR_RET runtime_ratio<Rep> runtime_divider(
-    const runtime_multiplier<Rep, lhs_den>& lhs,
-    estd::ratio<rhs_num, rhs_den> rhs)
-{
-    return runtime_ratio<Rep>(lhs.num, lhs.den);
-}
 
 // https://www.wolframalpha.com/input?i2d=true&i=Divide%5Bh%2Cd%5D%3Df*Divide%5By%2Cx%5D
 // h = hz, d = divisor, x = numerator of chrono ratio, y = denomenator of chrono ratio,
@@ -193,8 +161,10 @@ struct DurationConverter;
 template <typename TInt, int denominator_>
 struct DurationConverter<TInt, -1, denominator_>
 {
+    static ESTD_CPP_CONSTEXPR_RET int denominator() { return denominator_; }
+
     typedef TInt int_type;
-    typedef runtime_multiplier<uint32_t, denominator_> period_type;
+    typedef runtime_ratio<uint32_t, denominator_, runtime_ratio_num> period_type;
     period_type ratio_{80};
     void numerator(uint32_t n)
     {
@@ -213,7 +183,7 @@ struct DurationConverter<TInt, -1, denominator_>
     {
         // NOTE: timor divisor generally represents 80MHz (APB) / divisor()
         constexpr int precision_helper = adjuster();
-        constexpr int_type hz = ratio_.den << precision_helper;
+        constexpr int_type hz = denominator() << precision_helper;
         int_type den = hz / ratio_.num;    // aka timer counts per second
         int_type mul = Period::num * den / Period::den;
         return (convert_from.count() * mul) >> precision_helper;

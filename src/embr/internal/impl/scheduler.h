@@ -30,7 +30,7 @@ struct SchedulerContextBase : SchedulerContextFlags,
 
     scheduler_type& scheduler_;
 
-    constexpr scheduler_type& scheduler() { return scheduler_; }
+    constexpr const scheduler_type& scheduler() { return scheduler_; }
 
     inline typename scheduler_type::mutex_provider::evaporated_type mutex()
     {
