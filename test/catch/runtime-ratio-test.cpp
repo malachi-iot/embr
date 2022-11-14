@@ -234,31 +234,49 @@ TEST_CASE("Runtime ratio", "[ratio]")
     }
     SECTION("unit converter")
     {
-        SECTION("timer")
+        SECTION("runtime numerator")
         {
-            // FIX: A lot of inversions to make this happen - is it because the denominator is more of the variable here?
+            SECTION("timer")
+            {
+                // FIX: A lot of inversions to make this happen - is it because the denominator is more of the variable here?
 
-            // 80,000,000 / 80
-            //typedef runtime_ratio<uint32_t, 80000000, runtime_ratio_den> ticks_per_second_type;
-            // 80 / 80,000,000
-            typedef runtime_ratio<uint32_t, 80000000, runtime_ratio_num> seconds_per_tick_type; // aka seconds in a tick
-            typedef ratio_converter<seconds_per_tick_type, estd::milli> converter_type;
-            converter_type c(80);
+                // 80,000,000 / 80
+                //typedef runtime_ratio<uint32_t, 80000000, runtime_ratio_den> ticks_per_second_type;
+                // 80 / 80,000,000
+                typedef runtime_ratio<uint32_t, 80000000, runtime_ratio_num> seconds_per_tick_type; // aka seconds in a tick
+                typedef ratio_converter<seconds_per_tick_type, estd::milli> converter_type;
+                converter_type c(80);
 
-            auto v = c.lhs_to_rhs(5000);
+                auto v = c.lhs_to_rhs(5000);
 
-            REQUIRE(v == 5);
+                REQUIRE(v == 5);
+            }
+            SECTION("mp/h -> kp/h")
+            {
+                typedef runtime_ratio<uint32_t, 1, runtime_ratio_num> kph_type;
+                typedef estd::mega mph_type;
+                typedef ratio_converter<kph_type, mph_type> converter_type;
+                converter_type c(1609344);
+
+                auto v = c.lhs_to_rhs(100);
+
+                // As expected this gets upset and goes from mph -> kph
+                //REQUIRE(v == 62);
+            }
         }
-        SECTION("mp/h -> kp/h")
+        SECTION("runtime denominator")
         {
-            typedef runtime_ratio<uint32_t, 1609344, runtime_ratio_den> kph_type;
-            typedef estd::mega mph_type;
-            typedef ratio_converter<kph_type, mph_type> converter_type;
-            converter_type c(1);
+            SECTION("mp/h -> kp/h")
+            {
+                typedef runtime_ratio<uint32_t, 1609344, runtime_ratio_den> kph_type;
+                typedef estd::mega mph_type;
+                typedef ratio_converter<kph_type, mph_type> converter_type;
+                converter_type c(1);
 
-            auto v = c.lhs_to_rhs(100);
+                auto v = c.lhs_to_rhs(100);
 
-            REQUIRE(v == 62);
+                REQUIRE(v == 62);
+            }
         }
     }
 }
