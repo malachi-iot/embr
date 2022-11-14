@@ -185,6 +185,25 @@ TEST_CASE("Runtime ratio", "[ratio]")
             REQUIRE(_reduced.den == 20);
         }
     }
+    SECTION("manual convert kph to mph")
+    {
+        typedef runtime_ratio<uint32_t, 1609344, runtime_ratio_den> kph_type;
+        typedef estd::mega mph_type;
+        kph_type kph{1};
+
+        auto inverse = kph.inverse();
+
+        //typedef decltype(inverse)::mult_reducer<estd::mega::num> reducer;
+
+        //int num = reducer::num;
+        //int den = reducer::den;
+
+        auto kph_to_mph = inverse.multiply(mph_type{});
+
+        int v = integer_multiply(kph_to_mph, 100U);
+
+        REQUIRE(v == 62);
+    }
     SECTION("convert durations with runtime ratio")
     {
         unsigned val = 100;  // milliseconds
@@ -212,5 +231,27 @@ TEST_CASE("Runtime ratio", "[ratio]")
         val2 = integer_multiply(converter, val);
 
         REQUIRE(val2 == 100000);
+    }
+    SECTION("unit converter")
+    {
+        SECTION("timer")
+        {
+            typedef runtime_ratio<uint32_t, 80000000, runtime_ratio_den> ticks_per_second_type;
+            typedef ratio_converter<ticks_per_second_type, estd::milli> converter_type;
+            converter_type c(80);
+
+            //c.lhs_to_rhs(5);
+        }
+        SECTION("mp/h -> kp/h")
+        {
+            typedef runtime_ratio<uint32_t, 1609344, runtime_ratio_den> kph_type;
+            typedef estd::mega mph_type;
+            typedef ratio_converter<kph_type, mph_type> converter_type;
+            converter_type c(1);
+
+            auto v = c.lhs_to_rhs(100);
+
+            REQUIRE(v == 62);
+        }
     }
 }

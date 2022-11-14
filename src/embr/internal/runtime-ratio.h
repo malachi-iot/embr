@@ -2,6 +2,8 @@
 
 #include <estd/chrono.h>
 
+// DEBT: Combine this with the j1939 embr units code
+
 namespace embr { namespace internal {
 
 enum runtime_ratio_types
@@ -122,7 +124,7 @@ struct runtime_ratio<Rep, den_, runtime_ratio_num>
     constexpr runtime_ratio<Rep, mult_helper<rhs_num, rhs_den>(), runtime_ratio_num>
         multiply(estd::ratio<rhs_num, rhs_den>) const
     {
-        typedef mult_reducer<rhs_den> reducer;
+        typedef mult_reducer<rhs_num> reducer;
         return runtime_ratio<
             Rep,
             mult_helper<rhs_num, rhs_den>(),
@@ -180,6 +182,42 @@ inline runtime_ratio<Rep> runtime_multiply(
     return runtime_ratio<Rep>(reducer::num * rhs.num, lhs.den * reducer::den);
     //return runtime_ratio<Rep, reduced_lhs_num * rhs.num, runtime_ratio_den>(lhs.den * reduced_rhs_den);
 }
+
+// EXPERIMENTAL
+template <class TFrom, class TTo>
+struct ratio_converter;
+
+template <typename TFromRep, TFromRep num, std::intmax_t rhs_num, std::intmax_t rhs_den>
+struct ratio_converter<runtime_ratio<TFromRep, num, runtime_ratio_den>, estd::ratio<rhs_num, rhs_den> >
+{
+    runtime_ratio<TFromRep, num, runtime_ratio_den> lhs;
+    typedef estd::ratio<rhs_num, rhs_den> rhs_type;
+
+    ratio_converter(TFromRep lhs_num) : lhs(lhs_num) {}
+
+    template <typename T>
+    T lhs_to_rhs(T v)
+    {
+        auto inverse = lhs.inverse();
+        auto r = inverse.multiply(rhs_type{});
+        return integer_multiply(r, (TFromRep)v);
+    }
+};
+
+
+template <typename TFromRep, TFromRep den, std::intmax_t rhs_num, std::intmax_t rhs_den>
+struct ratio_converter<runtime_ratio<TFromRep, den, runtime_ratio_num>, estd::ratio<rhs_num, rhs_den> >
+{
+    runtime_ratio<TFromRep, den, runtime_ratio_num> lhs;
+
+    ratio_converter(TFromRep lhs_num) : lhs(lhs_num) {}
+
+    template <typename T>
+    T lhs_to_rhs(T v)
+    {
+        return v;
+    }
+};
 
 
 
