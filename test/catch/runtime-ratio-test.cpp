@@ -236,16 +236,29 @@ TEST_CASE("Runtime ratio", "[ratio]")
     {
         SECTION("runtime numerator")
         {
+            // discrepancy is because in
+            // timer conversions it's using time/ticks and we want to convert the ticks part,
+            // where in distance conversion it's distance/time and we want to convert the distance part
             SECTION("timer")
             {
                 // FIX: A lot of inversions to make this happen - is it because the denominator is more of the variable here?
 
                 // 80,000,000 / 80
-                //typedef runtime_ratio<uint32_t, 80000000, runtime_ratio_den> ticks_per_second_type;
+                //typedef runtime_ratio<uint32_t, 80000000, runtime_ratio_den> ticks_in_a_second_type;
                 // 80 / 80,000,000
                 typedef runtime_ratio<uint32_t, 80000000, runtime_ratio_num> seconds_per_tick_type; // aka seconds in a tick
                 typedef ratio_converter<seconds_per_tick_type, estd::milli> converter_type;
                 converter_type c(80);
+
+                // 80/80,000,000 -> 1/1000 =
+                // 80,000/80,000,000 =
+                // 1/1000
+
+                // Theoretical
+                // 80/80,000,000 -> 2/1000 =
+                // 80,000/160,000,000 =
+                // 1/2000
+                // would be 10,000 esp32 ticks become 5 psuedo millisecond ticks, which is right
 
                 auto v = c.lhs_to_rhs(5000);
 
@@ -257,6 +270,10 @@ TEST_CASE("Runtime ratio", "[ratio]")
                 typedef estd::mega mph_type;
                 typedef ratio_converter<kph_type, mph_type> converter_type;
                 converter_type c(1609344);
+
+                // 1609344/1 -> 1000000/1 =
+                // 1609344/1000000 =
+                // 25146/15625
 
                 auto v = c.lhs_to_rhs(100);
 
@@ -272,6 +289,10 @@ TEST_CASE("Runtime ratio", "[ratio]")
                 typedef estd::mega mph_type;
                 typedef ratio_converter<kph_type, mph_type> converter_type;
                 converter_type c(1);
+
+                // 1609344/1 -> 1000000/1 =
+                // 1000000/1609344 =
+                // 15625/25146
 
                 auto v = c.lhs_to_rhs(100);
 
