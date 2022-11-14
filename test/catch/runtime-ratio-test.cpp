@@ -236,11 +236,18 @@ TEST_CASE("Runtime ratio", "[ratio]")
     {
         SECTION("timer")
         {
-            typedef runtime_ratio<uint32_t, 80000000, runtime_ratio_den> ticks_per_second_type;
-            typedef ratio_converter<ticks_per_second_type, estd::milli> converter_type;
+            // FIX: A lot of inversions to make this happen - is it because the denominator is more of the variable here?
+
+            // 80,000,000 / 80
+            //typedef runtime_ratio<uint32_t, 80000000, runtime_ratio_den> ticks_per_second_type;
+            // 80 / 80,000,000
+            typedef runtime_ratio<uint32_t, 80000000, runtime_ratio_num> seconds_per_tick_type; // aka seconds in a tick
+            typedef ratio_converter<seconds_per_tick_type, estd::milli> converter_type;
             converter_type c(80);
 
-            //c.lhs_to_rhs(5);
+            auto v = c.lhs_to_rhs(5000);
+
+            REQUIRE(v == 5);
         }
         SECTION("mp/h -> kp/h")
         {

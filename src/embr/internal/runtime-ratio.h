@@ -201,7 +201,8 @@ struct ratio_converter<runtime_ratio<TFromRep, num, runtime_ratio_den>, estd::ra
     typedef runtime_ratio<TFromRep, num, runtime_ratio_num> inverse_lhs_type;
     lhs_type lhs;
     typedef estd::ratio<rhs_num, rhs_den> rhs_type;
-    typedef typename inverse_lhs_type::template mult_ret_type<rhs_num, rhs_den> converter_type;
+    //typedef typename inverse_lhs_type::template mult_ret_type<rhs_num, rhs_den> converter_type;
+    typedef decltype(lhs.inverse().multiply(rhs_type{})) converter_type;
     converter_type converter;
 
     // gets numerator... right?
@@ -221,10 +222,12 @@ struct ratio_converter<runtime_ratio<TFromRep, num, runtime_ratio_den>, estd::ra
     template <typename T>
     T lhs_to_rhs(T v)
     {
+        auto v2 = integer_multiply(converter, (TFromRep)v);
+        return v2;
+        /*
         auto inverse = lhs.inverse();
         auto r = inverse.multiply(rhs_type{});
-        auto v2 = integer_multiply(converter, (TFromRep)v);
-        return integer_multiply(r, (TFromRep)v);
+        return integer_multiply(r, (TFromRep)v); */
     }
 };
 
@@ -232,14 +235,31 @@ struct ratio_converter<runtime_ratio<TFromRep, num, runtime_ratio_den>, estd::ra
 template <typename TFromRep, TFromRep den, std::intmax_t rhs_num, std::intmax_t rhs_den>
 struct ratio_converter<runtime_ratio<TFromRep, den, runtime_ratio_num>, estd::ratio<rhs_num, rhs_den> >
 {
-    runtime_ratio<TFromRep, den, runtime_ratio_num> lhs;
+    typedef runtime_ratio<TFromRep, den, runtime_ratio_num> lhs_type;
+    lhs_type lhs;
+    typedef estd::ratio<rhs_num, rhs_den> rhs_type;
+    //typedef typename inverse_lhs_type::template mult_ret_type<rhs_num, rhs_den> converter_type;
+    typedef decltype(lhs.inverse().multiply(rhs_type{}).inverse()) converter_type;
+    converter_type converter;
 
-    ratio_converter(TFromRep lhs_num) : lhs(lhs_num) {}
+    static TFromRep init_helper(const lhs_type& lhs)
+    {
+        auto inverse = lhs.inverse();
+        auto r = inverse.multiply(rhs_type{}).inverse();
+
+        return r.num;
+    }
+
+    ratio_converter(TFromRep lhs_num) :
+        lhs(lhs_num),
+        converter(init_helper(lhs))
+    {}
 
     template <typename T>
     T lhs_to_rhs(T v)
     {
-        return v;
+        auto v2 = integer_multiply(converter, (TFromRep)v);
+        return v2;
     }
 };
 
