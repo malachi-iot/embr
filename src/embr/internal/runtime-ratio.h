@@ -70,6 +70,10 @@ struct runtime_ratio<Rep, num_, runtime_ratio_den, precision_assist>
         //return mult_reducer<rhs_den>::num >> precision_assist * rhs_num;
     };
 
+
+    template <std::intmax_t rhs_num, std::intmax_t rhs_den>
+    using mult_ret_type = runtime_ratio<Rep, mult_helper<rhs_num, rhs_den>(), runtime_ratio_den>;
+
     template <std::intmax_t rhs_num, std::intmax_t rhs_den>
     constexpr runtime_ratio<Rep, mult_helper<rhs_num, rhs_den>(), runtime_ratio_den>
         multiply(estd::ratio<rhs_num, rhs_den> rhs) const
@@ -116,6 +120,9 @@ struct runtime_ratio<Rep, den_, runtime_ratio_num>
     {
         return mult_reducer<rhs_num>::den * rhs_den;
     };
+
+    template <std::intmax_t rhs_num, std::intmax_t rhs_den>
+    using mult_ret_type = runtime_ratio<Rep, mult_helper<rhs_num, rhs_den>(), runtime_ratio_num>;
 
     ESTD_CPP_CONSTEXPR_RET runtime_ratio(Rep num) : num(num) {}
 
@@ -190,16 +197,33 @@ struct ratio_converter;
 template <typename TFromRep, TFromRep num, std::intmax_t rhs_num, std::intmax_t rhs_den>
 struct ratio_converter<runtime_ratio<TFromRep, num, runtime_ratio_den>, estd::ratio<rhs_num, rhs_den> >
 {
-    runtime_ratio<TFromRep, num, runtime_ratio_den> lhs;
+    typedef runtime_ratio<TFromRep, num, runtime_ratio_den> lhs_type;
+    typedef runtime_ratio<TFromRep, num, runtime_ratio_num> inverse_lhs_type;
+    lhs_type lhs;
     typedef estd::ratio<rhs_num, rhs_den> rhs_type;
+    typedef typename inverse_lhs_type::template mult_ret_type<rhs_num, rhs_den> converter_type;
+    converter_type converter;
 
-    ratio_converter(TFromRep lhs_num) : lhs(lhs_num) {}
+    // gets numerator... right?
+    static TFromRep init_helper(const lhs_type& lhs)
+    {
+        auto inverse = lhs.inverse();
+        auto r = inverse.multiply(rhs_type{});
+
+        return r.num;
+    }
+
+    ratio_converter(TFromRep lhs_num) :
+        lhs(lhs_num),
+        converter(init_helper(lhs))
+    {}
 
     template <typename T>
     T lhs_to_rhs(T v)
     {
         auto inverse = lhs.inverse();
         auto r = inverse.multiply(rhs_type{});
+        auto v2 = integer_multiply(converter, (TFromRep)v);
         return integer_multiply(r, (TFromRep)v);
     }
 };
