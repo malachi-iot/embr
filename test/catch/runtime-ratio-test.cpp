@@ -247,7 +247,13 @@ TEST_CASE("Runtime ratio", "[ratio]")
                 //typedef runtime_ratio<uint32_t, 80000000, runtime_ratio_den> ticks_in_a_second_type;
                 // 80 / 80,000,000
                 typedef runtime_ratio<uint32_t, 80000000, runtime_ratio_num> seconds_per_tick_type; // aka seconds in a tick
-                typedef ratio_converter<seconds_per_tick_type, estd::milli> converter_type;
+
+                // estd::milli and friends represent divisor/ticks (1/1000) to produce one second aka
+                // seconds per tick aka seconds in a tick.
+                // Since  we want to calculate ticks here, we have to invert that to ticks/divisor
+                // aka ticks per second aka ticks in a second
+
+                typedef ratio_converter<seconds_per_tick_type, estd::milli>::inverted_type converter_type;
                 converter_type c(80);
 
                 // 80/80,000,000 -> 1/1000 =
@@ -264,7 +270,7 @@ TEST_CASE("Runtime ratio", "[ratio]")
 
                 REQUIRE(v == 5);
             }
-            SECTION("mp/h -> kp/h")
+            SECTION("kp/h -> mp/h")
             {
                 typedef runtime_ratio<uint32_t, 1, runtime_ratio_num> kph_type;
                 typedef estd::mega mph_type;
@@ -278,12 +284,17 @@ TEST_CASE("Runtime ratio", "[ratio]")
                 auto v = c.lhs_to_rhs(100);
 
                 // As expected this gets upset and goes from mph -> kph
-                //REQUIRE(v == 62);
+                REQUIRE(v == 62);
+
+                auto vf = c.lhs_to_rhs(100.0);
+
+                // DEBT: Annoying that there isn't a round with precision specifier
+                REQUIRE(std::floor(vf * 1000) / 1000 == 62.137);
             }
         }
         SECTION("runtime denominator")
         {
-            SECTION("mp/h -> kp/h")
+            SECTION("kp/h -> mp/h")
             {
                 typedef runtime_ratio<uint32_t, 1609344, runtime_ratio_den> kph_type;
                 typedef estd::mega mph_type;

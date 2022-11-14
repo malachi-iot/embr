@@ -45,6 +45,9 @@ constexpr T gcd(T a, T b)
     return (a == 0) ? b : gcd(b % a, a);
 }
 
+template <class T>
+using ratio_inverse = estd::ratio<T::den, T::num>;
+
 
 // (disabled) precision assist shifts to the right:
 // lhs numerator POST reduction
@@ -163,8 +166,8 @@ runtime_ratio<Rep> reduce(const runtime_ratio<Rep, default_, rrt>& v)
 
 // multiplies by integer (or float maybe?) and returns the same
 // DEBT - naming and location not ideal
-template <typename Rep, Rep default_, runtime_ratio_types rrt>
-constexpr Rep integer_multiply(const runtime_ratio<Rep, default_, rrt> ratio, Rep v)
+template <typename T, typename Rep, Rep default_, runtime_ratio_types rrt>
+constexpr T integer_multiply(const runtime_ratio<Rep, default_, rrt> ratio, T v)
 {
     return ratio.num * v / ratio.den;
 }
@@ -190,7 +193,7 @@ inline runtime_ratio<Rep> runtime_multiply(
     //return runtime_ratio<Rep, reduced_lhs_num * rhs.num, runtime_ratio_den>(lhs.den * reduced_rhs_den);
 }
 
-// EXPERIMENTAL
+// See https://www.wolframcloud.com/obj/malachiburke/Unit%20Conversions
 template <class TFrom, class TTo>
 struct ratio_converter;
 
@@ -198,12 +201,18 @@ template <typename TFromRep, TFromRep num, std::intmax_t rhs_num, std::intmax_t 
 struct ratio_converter<runtime_ratio<TFromRep, num, runtime_ratio_den>, estd::ratio<rhs_num, rhs_den> >
 {
     typedef runtime_ratio<TFromRep, num, runtime_ratio_den> lhs_type;
-    typedef runtime_ratio<TFromRep, num, runtime_ratio_num> inverse_lhs_type;
     lhs_type lhs;
     typedef estd::ratio<rhs_num, rhs_den> rhs_type;
     //typedef typename inverse_lhs_type::template mult_ret_type<rhs_num, rhs_den> converter_type;
     typedef decltype(lhs.inverse().multiply(rhs_type{})) converter_type;
     converter_type converter;
+
+    typedef ratio_converter<runtime_ratio<TFromRep, num, runtime_ratio_num>, estd::ratio<rhs_den, rhs_num> > inverted_type;
+
+    inverted_type invert() const
+    {
+        return inverted_type(lhs.den);
+    }
 
     // gets numerator... right?
     static TFromRep init_helper(const lhs_type& lhs)
@@ -222,7 +231,7 @@ struct ratio_converter<runtime_ratio<TFromRep, num, runtime_ratio_den>, estd::ra
     template <typename T>
     T lhs_to_rhs(T v)
     {
-        auto v2 = integer_multiply(converter, (TFromRep)v);
+        auto v2 = integer_multiply(converter, v);
         return v2;
         /*
         auto inverse = lhs.inverse();
@@ -239,15 +248,23 @@ struct ratio_converter<runtime_ratio<TFromRep, den, runtime_ratio_num>, estd::ra
     lhs_type lhs;
     typedef estd::ratio<rhs_num, rhs_den> rhs_type;
     //typedef typename inverse_lhs_type::template mult_ret_type<rhs_num, rhs_den> converter_type;
-    typedef decltype(lhs.inverse().multiply(rhs_type{}).inverse()) converter_type;
+    typedef decltype(lhs.inverse().multiply(rhs_type{})) converter_type;
     converter_type converter;
+
+    typedef ratio_converter<runtime_ratio<TFromRep, den, runtime_ratio_den>, estd::ratio<rhs_den, rhs_num> > inverted_type;
+
+    inverted_type invert() const
+    {
+        return inverted_type(lhs.num);
+    }
+
 
     static TFromRep init_helper(const lhs_type& lhs)
     {
         auto inverse = lhs.inverse();
-        auto r = inverse.multiply(rhs_type{}).inverse();
+        auto r = inverse.multiply(rhs_type{});
 
-        return r.num;
+        return r.den;
     }
 
     ratio_converter(TFromRep lhs_num) :
@@ -258,7 +275,7 @@ struct ratio_converter<runtime_ratio<TFromRep, den, runtime_ratio_num>, estd::ra
     template <typename T>
     T lhs_to_rhs(T v)
     {
-        auto v2 = integer_multiply(converter, (TFromRep)v);
+        auto v2 = integer_multiply(converter, v);
         return v2;
     }
 };
