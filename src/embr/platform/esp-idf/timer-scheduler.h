@@ -87,8 +87,9 @@ private:
     static bool timer_callback(void* arg);
 
     // Like the old helper, but semi-cheats so that we can get to protected members
-    // Not 100% convinced this is a good idea
+    // Not 100% convinced this is a good idea - 'Buddy' class is way better
     // NOTE: DO NOT add any member variables or virtual methods to this class!
+    // Not performing any function other than proving a concept
     template <class TScheduler>
     struct Wrapper : TScheduler
     {
@@ -98,7 +99,6 @@ private:
         typedef typename rebaser_type::duration duration;
 
         bool timer_callback();
-        void rebase(duration next, uint64_t native_now);
     };
 
     template <class TScheduler>
