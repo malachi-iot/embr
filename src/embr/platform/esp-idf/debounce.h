@@ -55,7 +55,7 @@ struct Item
 template <int divider_ = 80>
 struct Threshold : embr::scheduler::esp_idf::impl::Timer<Item*, divider_>
 {
-    static constexpr const char* TAG = "impl::Threshhold";
+    static constexpr const char* TAG = "impl::Threshold";
 
     typedef embr::scheduler::esp_idf::impl::Timer<Item*, divider_> base_type;
     using typename base_type::value_type;

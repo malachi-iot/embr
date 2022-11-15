@@ -8,7 +8,7 @@
 #include "timer.h"
 #include <estd/port/freertos/timer.h>
 
-#include <esp_log.h>
+#include "log.h"
 
 #include "timer-scheduler.hpp"
 
@@ -63,18 +63,18 @@ inline void Debouncer::gpio_isr()
 
             int level = gpio_get_level((gpio_num_t)pin);
 
-            ESP_DRAM_LOGD(TAG, "GPIO%d, val: %d, duration=%lldms", pin, level,
+            ESP_GROUP_LOGD(1, TAG, "GPIO%d, val: %d, duration=%lldms", pin, level,
                 duration.count() / 1000);
 
             if(it != std::end(debouncers))
             {
                 Item& item = it->second;
                 embr::detail::Debouncer& d = item.debouncer();
-                ESP_DRAM_LOGD(TAG, "state=%s:%s", to_string(d.state()), to_string(d.substate()));
+                ESP_GROUP_LOGD(1, TAG, "state=%s:%s", to_string(d.state()), to_string(d.substate()));
                 bool state_changed = d.time_passed(duration, level);
                 if(state_changed)
                 {
-                    ets_printf("2 Intr debounce state changed\n");
+                    ESP_GROUP_LOGV(1, TAG, "debounce state changed");
                     emit_state(item);
 
                     // If there was a timer waiting for state change, disable it
@@ -94,7 +94,7 @@ inline void Debouncer::gpio_isr()
                     
                     uint64_t native = scheduler.timer().get_counter_value_in_isr();
                     auto scheduler_now = scheduler.now(true);
-                    ESP_DRAM_LOGV(TAG, "now=%llu, raw=%llu", scheduler_now.count(), native);
+                    ESP_GROUP_LOGV(1, TAG, "now=%llu, raw=%llu", scheduler_now.count(), native);
 
                     auto context = scheduler.create_context(true);  // isr context
                     // call isr-specific now()
@@ -111,7 +111,7 @@ inline void Debouncer::gpio_isr()
                     timer.start();
 
                 }
-                ESP_DRAM_LOGD(TAG, "state=%s:%s", to_string(d.state()), to_string(d.substate()));
+                ESP_GROUP_LOGD(1, TAG, "state=%s:%s", to_string(d.state()), to_string(d.substate()));
             }
         }
 

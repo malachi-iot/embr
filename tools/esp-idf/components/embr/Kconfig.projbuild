@@ -19,8 +19,11 @@ menu "Embr config"
         menu "High Resolution Timer Scheduler"
 
             config EMBR_ESP_IDF_TIMER_PROFILING
-                bool "Turn on or off esp-idf Timer Scheduler ISR profiler"
+                bool "Timer Scheduler ISR profiler"
                 default 0
+                help
+                    Turn on or off esp-idf Timer Scheduler ISR profiler, which collects
+                    a few timestamps of the lifecycle of the ISR then renders them via ESP_DRAM_LOGI
 
         endmenu
 
