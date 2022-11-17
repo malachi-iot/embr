@@ -83,6 +83,9 @@ inline void Debouncer::gpio_isr()
                 }
                 else if(d.substate() != embr::detail::Debouncer::Idle)
                 {
+                    // If no state change, but we are in eval mode, schedule a timer wakeup
+                    // to finish the eval
+
                     //auto future = now + estd::chrono::milliseconds(40);
                     //timer_set_alarm_value(timer_group, timer_idx, future.time_since_epoch().count());
                     //timer_set_alarm_value(timer_group, timer_idx, 40000);
@@ -93,14 +96,13 @@ inline void Debouncer::gpio_isr()
                     //timer_set_counter_value(timer_group, timer_idx, 0);   // This works -- now trying pause method
                     
                     uint64_t native = scheduler.timer().get_counter_value_in_isr();
+                    // call isr-specific now()
                     auto scheduler_now = scheduler.now(true);
                     ESP_GROUP_LOGV(1, TAG, "now=%llu, raw=%llu", scheduler_now.count(), native);
 
                     auto context = scheduler.create_context(true);  // isr context
-                    // call isr-specific now()
-                    item.wakeup_ = scheduler_now + d.signal_threshold();
-                    // DEBT: Sloppy assignment of last_wakeup_
-                    item.last_wakeup_ = scheduler_now;
+
+                    item.recalculate_event_due(scheduler_now);
                     
                     scheduler.schedule_with_context(context, &item);
 
@@ -127,43 +129,6 @@ void Debouncer::gpio_isr(void* context)
     static_cast<Debouncer*>(context)->gpio_isr();
 }
 
-#if UNUSED
-inline void IRAM_ATTR Debouncer::timer_group0_isr()
-{
-    uint64_t counter;
-    
-    //timer_get_counter_value(timer_group, timer_idx, &counter);
-    //counter = timer_group_get_counter_value_in_isr(timer_group, timer_idx);
-    counter = timer.get_counter_value_in_isr();
-
-    // DEBT: This is an expensive call, and we can compute
-    // the time pretty handily by inspecting our own timer instead
-    // as per https://esp32.com/viewtopic.php?t=16228
-    auto now = estd::chrono::esp_clock::now();
-    auto duration = now - last_now;
-
-    // Since GPIO ISR was presumably not called yet, state hasn't changed
-    //bool level = d.state();
-    bool level = gpio_get_level((gpio_num_t)0);
-
-    ets_printf("1 Timer Intr, duration=%lldus, timer_counter=%lld, level=%d\n",
-        duration.count(), counter, level);
-        
-    auto& item = debouncers[0];
-    auto& d = item.debouncer();
-    ets_printf("2 Timer Intr state=%s:%s\n", to_string(d.state()), to_string(d.substate()));
-    bool state_changed = d.time_passed(duration, level);
-    ets_printf("3 Timer Intr state=%s:%s\n", to_string(d.state()), to_string(d.substate()));
-
-    if(state_changed)
-    {
-        ets_printf("3.1 Timer Intr debounce state changed\n");
-        emit_state(item);
-    }
-
-    last_now = now;
-}
-#endif
 
 void Debouncer::emit_state(const Item& item)
 {
@@ -174,83 +139,6 @@ void Debouncer::emit_state(const Item& item)
     queue.send_from_isr(Notification{item.pin(), (States)on});
 }
 
-#if UNUSED
-// Guidance from
-// https://www.esp32.com/viewtopic.php?t=12931 
-void IRAM_ATTR Debouncer::timer_group0_isr (void *param)
-{
-    // NOTE: Last I checked, this flavor doesn't work quite right.
-
-    TIMERG0.int_clr_timers.t0 = 1; //clear interrupt bit
-
-    static_cast<Debouncer*>(param)->timer_group0_isr();
-}
-
-
-bool IRAM_ATTR Debouncer::timer_group0_callback (void *param)
-{
-    timer.pause();
-
-    static_cast<Debouncer*>(param)->timer_group0_isr();
-
-    // DEBT: Pretty sure we need an ISR-friendly version of this.  However, I can't find one
-    //timer_set_alarm(timer_group, timer_idx, TIMER_ALARM_DIS);
-    // Above not needed, becase
-    // "Once triggered, the alarm is disabled automatically and needs to be re-enabled to trigger again."
-
-    return false;
-}
-
-void Debouncer::timer_init(bool callback_mode)
-{
-    const char* TAG = "Debouncer::timer_init";
-
-    embr::esp_idf::Timer& timer_alias = timer;
-
-    {
-    timer_config_t timer;
-    
-    // Set prescaler for 1 MHz clock - remember, we're dividing
-    // "default is APB_CLK running at 80 MHz"
-    timer.divider = 80; 
-
-    timer.counter_dir = TIMER_COUNT_UP;
-    timer.alarm_en = TIMER_ALARM_DIS;
-    timer.intr_type = TIMER_INTR_LEVEL;
-    //timer.auto_reload = TIMER_AUTORELOAD_DIS;
-    timer.auto_reload = TIMER_AUTORELOAD_EN; // Reset timer to 0 when end condition is triggered
-    timer.counter_en = TIMER_PAUSE;
-#if SOC_TIMER_GROUP_SUPPORT_XTAL
-    timer.clk_src = TIMER_SRC_CLK_APB;
-#endif
-    timer_alias.init(&timer);
-    }
-
-    timer.set_counter_value(0);
-
-    if(callback_mode == false)
-    {
-        ESP_LOGD(TAG, "ISR low level mode");
-        timer_isr_register(timer.group, timer.idx, timer_group0_isr, this, 
-            ESP_INTR_FLAG_LEVEL1 | ESP_INTR_FLAG_IRAM,
-            &timer_isr_handle);
-    }
-    else
-    {
-        ESP_LOGD(TAG, "ISR callback mode");
-        timer_isr_callback_add(timer.group, timer.idx, timer_group0_callback, this,
-            ESP_INTR_FLAG_LEVEL1 | ESP_INTR_FLAG_IRAM);
-    }
-    
-    // Brings us to an alarm at 41ms when enabled.  This is to give us 1ms wiggle room
-    // when detecting debounce threshold of 40ms
-    // DEBT: All that needs to be configurable
-    timer.set_alarm_value(41000);
-    //timer_start(timer_group, timer_idx);
-
-    timer.enable_intr();
-}
-#endif
 
 
 Debouncer::Debouncer(timer_group_t timer_group, timer_idx_t timer_idx) //: queue(10)
@@ -266,18 +154,6 @@ Debouncer::Debouncer(timer_group_t timer_group, timer_idx_t timer_idx) //: queue
 Debouncer::~Debouncer()
 {
     esp_intr_free(gpio_isr_handle);    
-
-#if UNUSED
-    timer.set_alarm(TIMER_ALARM_DIS);
-    timer.disable_intr();
-
-#if CONFIG_ISR_LOW_LEVEL_MODE
-#elif CONFIG_ISR_CALLBACK_MODE
-    timer_isr_callback_remove(timer.group, timer.idx);
-#endif
-
-    esp_intr_free(timer_isr_handle);    
-#endif
 }
 
 void Debouncer::track(int pin)

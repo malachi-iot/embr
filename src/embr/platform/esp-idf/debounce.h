@@ -37,6 +37,13 @@ struct Item
     const detail::Debouncer& debouncer() const { return debouncer_; }
     const embr::esp_idf::gpio& pin() const { return pin_; }
     time_point event_due() const { return wakeup_; }
+    void recalculate_event_due(time_point now)
+    {
+        wakeup_ = now + debouncer_.signal_threshold();
+        // DEBT: Somewhat sloppy assignment of last_wakeup_ - we call this inside gpio isr
+        // when initially scheduling 'Item' so we need to force feed last_wakeup_ value
+        last_wakeup_ = now;
+    }
 
     //Item() = default;
     Item(const Item& copy_from) = default;
