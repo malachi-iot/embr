@@ -73,9 +73,20 @@ bool IRAM_ATTR TimerBase::timer_callback (void* arg)
     timer_type& timer = scheduler.timer();
     typedef typename TScheduler::time_point time_point;
     uint64_t native_now;
-    uint64_t initial_counter = timer.get_counter_value_in_isr();
+
+    // DEBT: Don't do auto here
+    // DEBT: Pass in something like 'in_isr_tag' do disambiguate inputs to create_context and also enables
+    //       specialized isr context vs non isr context
+    // DEBT: We disable mutex as is appropriate since we handle it ourselves, but it's confusing
+    // that this context still locks/unlocks when manually activated
+    auto context = scheduler.create_context(true, false);  // create an in_isr context, but disable mutex anyway since we manually manage it
+
+    context.initial_counter = timer.get_counter_value_in_isr();
+    // DEBT: Pretty sure our context_factory handles this now, but keeping around until 100% sure
+    context.higherPriorityTaskWoken = false;
+
     // DEBT: 'counter' needs better name, something like native_now_offset
-    uint64_t counter = initial_counter;
+    uint64_t counter = context.initial_counter;
     counter -= scheduler.native_offset;
     // NOTE: counter itself we don't worry about it rolling over, even at highest precision it would take thousands
     // of years for it to do so
@@ -89,14 +100,6 @@ bool IRAM_ATTR TimerBase::timer_callback (void* arg)
 
     wrapper->timer_callback();
 
-    // DEBT: Don't do auto here
-    // DEBT: Pass in something like 'in_isr_tag' do disambiguate inputs to create_context
-    // DEBT: We disable mutex as is appropriate since we handle it ourselves, but it's confusing
-    // that this context still locks/unlocks when manually activated
-    auto context = scheduler.create_context(true, false);  // create an in_isr context, but disable mutex anyway since we manually manage it
-
-    // DEBT: Pretty sure our context_factory handles this now, but keeping around until 100% sure
-    context.higherPriorityTaskWoken = false;
 
     scheduler.isr_acquiring_mutex_ = true;
 
@@ -113,7 +116,7 @@ bool IRAM_ATTR TimerBase::timer_callback (void* arg)
     {
         ESP_GROUP_LOGD(1, TAG, "timer_callback: [%s] could not grab mutex native=%llu",
             timer_str.data(),
-            initial_counter);
+            context.initial_counter);
 
         // Effectively do a spinwait
 
@@ -171,6 +174,8 @@ bool IRAM_ATTR TimerBase::timer_callback (void* arg)
 
     scheduler.duration_converter().convert(counter, &current_time);
 
+    context.current_time = current_time;
+
     scheduler.process(current_time, context);
 
     native_now = scheduler.timer().get_counter_value_in_isr();
@@ -203,13 +208,13 @@ bool IRAM_ATTR TimerBase::timer_callback (void* arg)
             scheduler.rebase(scheduler, current_time);
 
             native_next += scheduler.native_offset;        // native_next is an absolute value, so current offset is still accurate
-            scheduler.native_offset = initial_counter;          // fake zero out our native counter
+            scheduler.native_offset = context.initial_counter;          // fake zero out our native counter
         }
         else
             native_next += scheduler.native_offset;
 
         timer.set_alarm_value_in_isr(native_next);
-        //timer.start();
+        timer.start();
     }
     else
     {

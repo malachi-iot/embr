@@ -79,9 +79,6 @@ struct TimerBase : embr::internal::scheduler::impl::ReferenceBaseBase
         }
     };
 
-    typedef embr::scheduler::freertos::context_type context_type;
-    typedef embr::scheduler::freertos::context_factory context_factory;
-
 private:
     template <class TScheduler>
     static bool timer_callback(void* arg);
@@ -162,6 +159,22 @@ struct Timer :
     typedef typename helper_type::time_point time_point;
     typedef typename helper_type::duration duration;
     typedef embr::internal::DurationConverter<uint64_t, divider_, timer_type::base_clock_hz()> converter_type;
+
+    struct context_type : embr::scheduler::freertos::context_type
+    {
+        // When in an ISR...
+
+        // ... this value represents the entry time of the ISR in native ticks
+        uint64_t initial_counter;
+
+        // ... this value represents the current time in offset timebase
+        time_point current_time;
+
+        // DEBT: Do specialized ISR context since these only populate in ISR scenarios
+    };
+
+    typedef embr::scheduler::freertos::context_factory context_factory;
+
 
     // reference_impl comes in handy for supporting both value and pointer of T.  Also
     // if one *really* wants to deviate from 'event_due' and 'process' paradigm, it's done
