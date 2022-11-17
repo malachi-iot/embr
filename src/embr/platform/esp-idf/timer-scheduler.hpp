@@ -202,10 +202,12 @@ bool IRAM_ATTR TimerBase::timer_callback (void* arg)
         if(native_next > max / 2)
         {
             // LIGHTLY TESTED
+            // NOTE: If we attempt to move this into on_scheduled, we get crashes on rebase because
+            // scheduler::process is still running and this probably confuses it
 
             // yank all scheduled values by current_time - remember, 'next' is still ahead of current_time so
             // there's still space to schedule something beforehand
-            scheduler.rebase(scheduler, current_time);
+            scheduler.rebase(scheduler, context.current_time);
 
             native_next += scheduler.native_offset;        // native_next is an absolute value, so current offset is still accurate
             scheduler.native_offset = context.initial_counter;          // fake zero out our native counter
