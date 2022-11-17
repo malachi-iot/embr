@@ -179,7 +179,7 @@ bool IRAM_ATTR TimerBase::timer_callback (void* arg)
     debug_counter2 = native_now - initial_counter;
 #endif
 
-    // DEBT: We need mutex protection down here too
+    // Remember, all this is protected by 'mutex' aka binary semaphore
     if(!scheduler.empty())
     {
         time_point next = scheduler.top_time();
@@ -197,38 +197,19 @@ bool IRAM_ATTR TimerBase::timer_callback (void* arg)
         if(native_next > max / 2)
         {
             // LIGHTLY TESTED
-            // Doesn't crash, but wakeup comes way too late
 
-            // I think I overengineered this part
-#if UNUSED
-            // don't rebase *exactly* to 0, but rather the shortest upcoming event_due.
-            // this way if someone wants to slide their schedule in before, it's possible
-            time_point delta = next - current_time;
-            uint64_t native_delta = native_next - counter;
-
-            // If so, rebase now - presumably this is the space after time critical processing has happened
-            // and before another time critical process needs to happen.
-            // DEBT: It might be better to trigger this behavior in an outside task?  But then again, rebase is gonna be pretty fast
-            wrapper->rebase(delta, native_now);     // yank all scheduled values down starting from delta
-            native_next += scheduler.native_offset;        // native_next is an absolute value, so current offset is still accurate
-            scheduler.native_offset = native_now;          // fake zero out our native counter
-#else
             // yank all scheduled values by current_time - remember, 'next' is still ahead of current_time so
             // there's still space to schedule something beforehand
             scheduler.rebase(scheduler, current_time);
 
             native_next += scheduler.native_offset;        // native_next is an absolute value, so current offset is still accurate
             scheduler.native_offset = initial_counter;          // fake zero out our native counter
-#endif
         }
         else
             native_next += scheduler.native_offset;
 
         timer.set_alarm_value_in_isr(native_next);
-        timer.start();
-#if EMBR_TIMER_TRACK_START
-        scheduler.is_timer_started_ = true;
-#endif
+        //timer.start();
     }
     else
     {
