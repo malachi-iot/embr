@@ -105,6 +105,14 @@ protected:
     template <class TScheduler, class TDuration>
     void rebase(TScheduler& scheduler, TDuration);
 
+    // NOTE: Beware, do not name 'context_type' because impl already has that reserved for
+    // impl-specialized context
+    template <class TScheduler>
+    using scheduler_context_type = embr::internal::SchedulerContextBase<TScheduler>;
+
+    template <class TScheduler>
+    uint64_t rebase_eval(TScheduler& scheduler, scheduler_context_type<TScheduler>& context);
+
     // We pass this in to avoid downcasting
     template <class TScheduler>
     // for example, 80 = prescaler for 1 MHz clock - remember, we're dividing
@@ -245,11 +253,6 @@ struct Timer :
     {
         base_type::start(scheduler, divider_);
     }
-
-    // NOTE: Beware, do not name 'context_type' because impl already has that reserved for
-    // impl-specialized context
-    template <class TScheduler>
-    using scheduler_context_type = embr::internal::SchedulerContextBase<TScheduler>;
 
     template <class TScheduler>
     void on_scheduled(const value_type& value, const scheduler_context_type<TScheduler>&);

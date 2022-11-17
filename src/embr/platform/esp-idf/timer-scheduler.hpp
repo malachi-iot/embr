@@ -67,6 +67,13 @@ inline void TimerBase::rebase(TScheduler& scheduler, TDuration next)
 
 
 template <class TScheduler>
+inline uint64_t TimerBase::rebase_eval(TScheduler& scheduler, scheduler_context_type<TScheduler>& context)
+{
+    return 0;
+}
+
+
+template <class TScheduler>
 bool IRAM_ATTR TimerBase::timer_callback (void* arg)
 {
     TScheduler& scheduler = * (TScheduler*) arg;
@@ -187,6 +194,8 @@ bool IRAM_ATTR TimerBase::timer_callback (void* arg)
     // Remember, all this is protected by 'mutex' aka binary semaphore
     if(!scheduler.empty())
     {
+        scheduler.rebase_eval(scheduler, context);
+
         time_point next = scheduler.top_time();
 
         uint64_t native_next = scheduler.duration_converter().convert(next);
@@ -316,10 +325,19 @@ inline void Timer<T, divider_, TTimePoint, TReference>::on_processed(
 {
     if(value == nullptr)
     {
+        // FIX: naught const-away
+        TScheduler& scheduler = (TScheduler&)context.scheduler();
+
         // we finished a batch of processing and arrive here
 
         ESP_GROUP_LOGV(1, TAG, "on_processed: finished processing - count=%d",
             context.scheduler().size());
+
+        // Anticipating rebase here
+        if(!scheduler.empty())
+        {
+
+        }
     }
 }
 
