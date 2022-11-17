@@ -110,8 +110,11 @@ protected:
     template <class TScheduler>
     using scheduler_context_type = embr::internal::SchedulerContextBase<TScheduler>;
 
+    /// Do a rebase if we've met near-overflow criteria
+    /// @return true native timebase of next event, with no offset on it
+    /// @remarks undefined if there are no scheduled events
     template <class TScheduler>
-    uint64_t rebase_eval(TScheduler& scheduler, scheduler_context_type<TScheduler>& context);
+    uint64_t rebase_eval(TScheduler& scheduler, scheduler_context_type<TScheduler>& context, uint64_t native_now);
 
     // We pass this in to avoid downcasting
     template <class TScheduler>

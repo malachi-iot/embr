@@ -66,10 +66,45 @@ inline void TimerBase::rebase(TScheduler& scheduler, TDuration next)
 }
 
 
+// DEBT: un-inline this once we can confirm we don't need that or IRAM_ATTR here
 template <class TScheduler>
-inline uint64_t TimerBase::rebase_eval(TScheduler& scheduler, scheduler_context_type<TScheduler>& context)
+inline uint64_t TimerBase::rebase_eval(TScheduler& scheduler, scheduler_context_type<TScheduler>& context, uint64_t native_now)
 {
-    return 0;
+    typedef typename TScheduler::time_point time_point;
+
+    // NOTE: counter itself we don't worry about it rolling over, even at highest precision it would take thousands
+    // of years for it to do so
+    const uint64_t max = scheduler.overflow_max();
+
+    time_point next = scheduler.top_time();
+
+    uint64_t native_next = scheduler.duration_converter().convert(next);
+
+    ESP_GROUP_LOGD(1, TAG, "timer_callback: size=%d, next=%llu / %llu(ticks), native_now=%llu",
+        scheduler.size(),
+        (uint64_t)next.count(),
+        native_next,
+        native_now);
+
+    // Estimate if we are coming at risk of overflow (of time_point, not uint64_t)
+    // DEBT: Need a much more precise and configrable mechanism here
+    if(native_next > max * 3 / 4)
+    {
+        // LIGHTLY TESTED
+        // NOTE: If we attempt to move this into on_scheduled, we get crashes on rebase because
+        // scheduler::process is still running and this probably confuses it
+
+        // yank all scheduled values by current_time - remember, 'next' is still ahead of current_time so
+        // there's still space to schedule something beforehand
+        scheduler.rebase(scheduler, context.current_time);
+
+        native_next += scheduler.native_offset;        // native_next is an absolute value, so current offset is still accurate
+        scheduler.native_offset = context.initial_counter;          // fake zero out our native counter
+    }
+    else
+        native_next += scheduler.native_offset;
+
+    return native_next;
 }
 
 
@@ -194,35 +229,7 @@ bool IRAM_ATTR TimerBase::timer_callback (void* arg)
     // Remember, all this is protected by 'mutex' aka binary semaphore
     if(!scheduler.empty())
     {
-        scheduler.rebase_eval(scheduler, context);
-
-        time_point next = scheduler.top_time();
-
-        uint64_t native_next = scheduler.duration_converter().convert(next);
-
-        ESP_GROUP_LOGD(1, TAG, "timer_callback: size=%d, next=%llu / %llu(ticks), native_now=%llu",
-            scheduler.size(),
-            (uint64_t)next.count(),
-            native_next,
-            native_now);
-
-        // Estimate if we are coming at risk of overflow (of time_point, not uint64_t)
-        // DEBT: Need a much more precise and configrable mechanism here
-        if(native_next > max / 2)
-        {
-            // LIGHTLY TESTED
-            // NOTE: If we attempt to move this into on_scheduled, we get crashes on rebase because
-            // scheduler::process is still running and this probably confuses it
-
-            // yank all scheduled values by current_time - remember, 'next' is still ahead of current_time so
-            // there's still space to schedule something beforehand
-            scheduler.rebase(scheduler, context.current_time);
-
-            native_next += scheduler.native_offset;        // native_next is an absolute value, so current offset is still accurate
-            scheduler.native_offset = context.initial_counter;          // fake zero out our native counter
-        }
-        else
-            native_next += scheduler.native_offset;
+        uint64_t native_next = scheduler.rebase_eval(scheduler, context, native_now);
 
         timer.set_alarm_value_in_isr(native_next);
         timer.start();
