@@ -200,7 +200,7 @@ bool IRAM_ATTR TimerBase::timer_callback (void* arg)
     
     native_now = scheduler.timer().get_counter_value_in_isr();
 
-    debug_counter1 = native_now - initial_counter;
+    debug_counter1 = native_now - context.initial_counter;
 #endif
 
     // convert native esp32 Timer format back to scheduler format
@@ -223,7 +223,7 @@ bool IRAM_ATTR TimerBase::timer_callback (void* arg)
     native_now = scheduler.timer().get_counter_value_in_isr();
 
 #if EMBR_ESP_IDF_TIMER_PROFILING
-    debug_counter2 = native_now - initial_counter;
+    debug_counter2 = native_now - context.initial_counter;
 #endif
 
     // Remember, all this is protected by 'mutex' aka binary semaphore
@@ -254,7 +254,7 @@ bool IRAM_ATTR TimerBase::timer_callback (void* arg)
 #if EMBR_ESP_IDF_TIMER_PROFILING
     native_now = scheduler.timer().get_counter_value_in_isr();
 
-    debug_counter3 = native_now - initial_counter;
+    debug_counter3 = native_now - context.initial_counter;
 
     ESP_DRAM_LOGI(TAG, "timer_callback: debug_counter1=%d, debug_counter2=%d, debug_counter3=%d",
         debug_counter1,
