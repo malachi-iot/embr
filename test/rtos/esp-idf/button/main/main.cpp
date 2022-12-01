@@ -31,10 +31,10 @@ extern "C" void app_main()
 #endif
 
 #if CONFIG_ISR_MODE
-    ESP_LOGD(TAG, "Starting ISR test");
+    ESP_LOGI(TAG, "Starting ISR test");
     test_isr();
 #else
-    ESP_LOGD(TAG, "Starting polled test");
+    ESP_LOGI(TAG, "Starting polled test");
     test_polled();
 #endif
 }

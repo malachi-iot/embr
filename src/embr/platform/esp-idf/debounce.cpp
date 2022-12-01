@@ -3,6 +3,7 @@
 // DEBT: Don't want to do this dynamic alloc version, though not SO bad because it's the
 // "alloc once" category
 #include <map>
+#include <unordered_map>
 
 #include "debounce.hpp"
 #include "timer.h"
@@ -24,7 +25,7 @@ using embr::scheduler::esp_idf::impl::Item;
 // DEBT: upgrade estd map to use vector, since maps indeed should be dynamic even
 // in our basic use cases
 //static estd::layer1::map<uint8_t, detail::Debouncer, 5> debouncers;
-static std::map<uint8_t, Item> debouncers;
+static std::unordered_map<uint8_t, Item> debouncers;
 
 using namespace estd::chrono;
 using namespace estd::chrono_literals;

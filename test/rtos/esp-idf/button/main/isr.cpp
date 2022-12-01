@@ -21,6 +21,8 @@ void test_isr()
 
     embr::esp_idf::Debouncer d(TIMER_GROUP_0, TIMER_0);
 
+    // NOTE: Setting up esp-idf GPIO interrupt characteristics for this pin is handled elsewhere
+    // in gpio.cpp
     d.track(CONFIG_BUTTON_PIN);
 
     int counter = 0;
