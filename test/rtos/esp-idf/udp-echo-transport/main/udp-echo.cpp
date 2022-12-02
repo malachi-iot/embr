@@ -60,6 +60,8 @@ void udp_echo_init(void)
     transport_results r = traits::begin_write(p, &transaction);
 
     traits::end_write(p, &transaction);
+
+    // Hmm, stack problems
     traits::read(p, [](const traits::read_callback_type& e)
     {
 
