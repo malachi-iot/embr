@@ -47,7 +47,10 @@ struct buffer_traits;
 
 enum class transport_results
 {
-    OK = 0    
+    OK = 0,
+    MemoryError,
+    RouteError,
+    TransportError
 };
 
 template <>
@@ -117,9 +120,11 @@ public:
 
     }
 
-    static void write(native_type* pcb, obuf_type buffer, endpoint_type e)
+    // Fire and forget
+    // DEBT: Except for return codes
+    static void write(pcb_type pcb, obuf_type buffer, endpoint_type e)
     {
-
+        pcb.send(buffer, e.addr, e.port);
     }
 
     struct read_callback_type
@@ -127,6 +132,10 @@ public:
         pcb_type transport;
         ibuf_type in;
         endpoint_type endpoint;
+
+        read_callback_type(pcb_type transport, ibuf_type in, const endpoint_type& endpoint) :
+            transport{transport}, in{in}, endpoint{endpoint}
+        {}
     };
 
     template <typename F>
@@ -229,15 +238,61 @@ struct Transport<udp_pcb, TTraits>
     typedef TTraits traits_type;
     typedef typename traits_type::transport_type transport_type;
 
-    transport_type native;
+    transport_type pcb;
 
     typedef embr::lwip::opbuf_streambuf ostreambuf_type;
     typedef embr::lwip::ipbuf_streambuf istreambuf_type;
 
-    Transport(transport_type native) : native{native} {}
+    using endpoint_type = typename traits_type::endpoint_type;
+    using ibuf_type = typename traits_type::ibuf_type;
+
+    struct read_callback_type : traits_type::read_callback_type
+    {
+        istreambuf_type& streambuf;
+        Transport transport;
+
+        read_callback_type(Transport transport, istreambuf_type& streambuf, const endpoint_type& endpoint) :
+            traits_type::read_callback_type(transport.pcb, nullptr, endpoint),
+            streambuf(streambuf),
+            transport(transport)
+        {
+            
+        }
+    };
+
+    Transport(transport_type native) : pcb{native} {}
 
     void begin_read() {}
     void end_read() {}
+
+
+    template <typename F, typename TContext>
+    static void recv_fn_no_closure(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port)
+    {
+        F& f = *(F*) nullptr; // DEBT: This will cause nasty problems if not used precisely right
+        auto context = (TContext*) arg;
+
+        endpoint_type e{addr, port};
+        istreambuf_type in(p, false);   // will auto-free p since it's not bumping reference
+        Transport t(pcb);
+
+        read_callback_type rct{t, in, e};
+
+        f(rct, context);
+    }
+
+    template <typename F, typename TContext>
+    void read(F&& f, TContext* context)
+    {
+        pcb.recv(recv_fn_no_closure<F, TContext>, context);
+    }
+
+
+    inline void write(ostreambuf_type& out, endpoint_type e)
+    {
+        out.shrink();
+        traits_type::write(pcb, out.pbuf(), e);
+    }
 };
 
 

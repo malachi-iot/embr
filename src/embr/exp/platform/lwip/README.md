@@ -9,6 +9,7 @@ Potential readable feature indicator flags:
 - read flags for blocking, async/transaction and callback 
     - callback likely to have some platform specificity
     - callback traits: per transport/singleton or per request
+    - callback indicates duration which variables live: callback only, or longer
 - write flags for blocking, async/transaction and callback (CTS style, probably)
 
 async/transaction model useful for chained read/writes which pbuf somewhat resembles

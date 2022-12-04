@@ -74,6 +74,23 @@ void udp_echo_init(void)
 
     traits::begin_read(p, &transaction);
 
+    struct fake_context
+    {
+
+    } fc;
+
+    // In this case, no closure or even context is actually needed
+    ts.read([](stream_transport_type::read_callback_type& rct, fake_context* c)
+    {
+        ipbufstream in(rct.in);
+        opbufstream out(16);        // auto chain-grows itspbuf if necessary
+
+        process_out(in, out);
+
+        rct.transport.write(*out.rdbuf(), rct.endpoint);
+
+    }, &fc);
+
     // get new pcb
     if (!pcb.alloc()) {
         LWIP_DEBUGF(UDP_DEBUG, ("pcb.alloc failed!\n"));
