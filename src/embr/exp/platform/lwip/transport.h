@@ -62,12 +62,12 @@ struct transport_traits<udp_pcb> :
 {
 private:
     typedef udp_pcb native_type;
-    typedef embr::lwip::udp::Pcb pcb_type;
     typedef pbuf* raw_pbuf;
     typedef const ip_addr_t* addr_pointer;
     typedef embr::lwip::PbufBase pbuf_type;
 
 public:
+    typedef embr::lwip::udp::Pcb pcb_type;
     typedef pcb_type transport_type;
     typedef pbuf_type obuf_type;
     typedef pbuf_type ibuf_type;
@@ -237,30 +237,55 @@ struct Transport<udp_pcb, TTraits>
 {
     typedef TTraits traits_type;
     typedef typename traits_type::transport_type transport_type;
-
+    
     transport_type pcb;
 
     typedef embr::lwip::opbuf_streambuf ostreambuf_type;
     typedef embr::lwip::ipbuf_streambuf istreambuf_type;
 
+    using pcb_type = typename traits_type::pcb_type;
     using endpoint_type = typename traits_type::endpoint_type;
     using ibuf_type = typename traits_type::ibuf_type;
 
     struct read_callback_type : traits_type::read_callback_type
     {
+        typedef typename traits_type::read_callback_type base_type;
+
         istreambuf_type& streambuf;
-        Transport transport;
+        Transport transport()
+        {
+            return Transport(base_type::transport);
+        }
 
         read_callback_type(Transport transport, istreambuf_type& streambuf, const endpoint_type& endpoint) :
-            traits_type::read_callback_type(transport.pcb, nullptr, endpoint),
-            streambuf(streambuf),
-            transport(transport)
+            base_type(transport.pcb, nullptr, endpoint),
+            streambuf(streambuf)
         {
             
         }
     };
 
-    Transport(transport_type native) : pcb{native} {}
+    //Transport() : pcb{pcb_type::create()} {}
+
+//protected:
+    Transport(transport_type native = nullptr) : pcb{native} {}
+
+public:
+    transport_results alloc_and_bind(uint16_t port)
+    {
+        // get new pcb
+        if (!pcb.alloc()) {
+            LWIP_DEBUGF(UDP_DEBUG, ("transport.alloc failed!\n"));
+            return transport_results::MemoryError;
+        }
+        /* bind to any IP address on port */
+        if (pcb.bind(port) != ERR_OK) {
+            LWIP_DEBUGF(UDP_DEBUG, ("transport.bind failed!\n"));
+            return transport_results::MemoryError;
+        }
+
+        return transport_results::OK;
+    }
 
     void begin_read() {}
     void end_read() {}

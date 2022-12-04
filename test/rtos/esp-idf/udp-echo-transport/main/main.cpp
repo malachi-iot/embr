@@ -4,6 +4,7 @@
 #include "esp_wifi.h"
 
 void udp_echo_init();
+void udp_echo_init2();
 
 extern "C" void app_main()
 {
@@ -15,6 +16,7 @@ extern "C" void app_main()
     wifi_init_sta(event_handler);
 #endif
 
-    udp_echo_init();
+    //udp_echo_init();
+    udp_echo_init2();
 }
 

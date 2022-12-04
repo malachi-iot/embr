@@ -47,15 +47,41 @@ void udp_echo_recv(void *arg,
     }
 }
 
+void udp_echo_init2()
+{
+    typedef Transport<udp_pcb> stream_transport_type;
+    
+    stream_transport_type ts;
+
+    ts.alloc_and_bind(7);
+
+    static struct fake_context
+    {
+
+    } fc;
+
+    // In this case, no closure or even context is actually needed
+    ts.read([](stream_transport_type::read_callback_type& rct, fake_context* c)
+    {
+        ipbufstream in(rct.in);
+        opbufstream out(16);        // auto chain-grows itspbuf if necessary
+
+        process_out(in, out);
+
+        rct.transport().write(*out.rdbuf(), rct.endpoint);
+
+    }, &fc);
+}
+
 void udp_echo_init(void)
 {
     embr::lwip::udp::Pcb pcb;
     typedef transport_traits<udp_pcb> traits;
     typedef Transport<udp_pcb> stream_transport_type;
     
-    struct udp_pcb* p = embr::lwip::udp::Pcb::create();
+    stream_transport_type ts(embr::lwip::udp::Pcb::create());
 
-    stream_transport_type ts(p);
+    embr::lwip::udp::Pcb p = ts.pcb;
 
     //opbufstream out(128);
 
@@ -73,23 +99,6 @@ void udp_echo_init(void)
     });
 
     traits::begin_read(p, &transaction);
-
-    struct fake_context
-    {
-
-    } fc;
-
-    // In this case, no closure or even context is actually needed
-    ts.read([](stream_transport_type::read_callback_type& rct, fake_context* c)
-    {
-        ipbufstream in(rct.in);
-        opbufstream out(16);        // auto chain-grows itspbuf if necessary
-
-        process_out(in, out);
-
-        rct.transport.write(*out.rdbuf(), rct.endpoint);
-
-    }, &fc);
 
     // get new pcb
     if (!pcb.alloc()) {
