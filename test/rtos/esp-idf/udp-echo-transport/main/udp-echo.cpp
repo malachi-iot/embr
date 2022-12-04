@@ -63,6 +63,7 @@ void udp_echo_init2()
     // In this case, no closure or even context is actually needed
     ts.read([](stream_transport_type::read_callback_type& rct, fake_context* c)
     {
+        //ipbufstream in(rct.streambuf);    // FIX: This should work
         ipbufstream in(rct.in);
         opbufstream out(16);        // auto chain-grows itspbuf if necessary
 
