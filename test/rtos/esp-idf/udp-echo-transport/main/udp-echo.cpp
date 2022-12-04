@@ -51,8 +51,12 @@ void udp_echo_init(void)
 {
     embr::lwip::udp::Pcb pcb;
     typedef transport_traits<udp_pcb> traits;
-
+    typedef Transport<udp_pcb> stream_transport_type;
+    
     struct udp_pcb* p = embr::lwip::udp::Pcb::create();
+
+    stream_transport_type ts(p);
+
     //opbufstream out(128);
 
     //traits::write(p, out.rdbuf()->pbuf().pbuf());
@@ -61,7 +65,8 @@ void udp_echo_init(void)
 
     traits::end_write(p, &transaction);
 
-    // Hmm, stack problems
+    // Hmm, danger of stack problems - although in this case no closure means
+    // we sidestep it
     traits::read(p, [](const traits::read_callback_type& e)
     {
 
