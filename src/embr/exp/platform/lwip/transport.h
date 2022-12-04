@@ -34,6 +34,8 @@ struct write_callback {};
 struct write_transaction {};
 struct write_fire_and_forget {};
 
+struct buf_chained {};
+
 }
 
 template <class TNativeTransport>
@@ -51,7 +53,9 @@ enum class transport_results
 template <>
 struct transport_traits<udp_pcb> :
     tags::read_callback,
-    tags::write_fire_and_forget
+    tags::read_transaction, // emulated
+    tags::write_fire_and_forget,
+    tags::write_transaction // emulated
 {
 private:
     typedef udp_pcb native_type;
@@ -199,10 +203,19 @@ public:
 };
 
 
+// NOTE: Avoid effort into buffer_traits as we hope streambufs will carry that load
 template <>
-struct buffer_traits<pbuf>
+struct buffer_traits<pbuf> : tags::buf_chained
 {
+    typedef pbuf* native_type;
 
+    static native_type next(native_type p)
+    {
+        return p->next;
+    }
+
+    static void* data(native_type p) { return p->payload; }
+    static uint16_t size(native_type p) { return p->len; }
 };
 
 
