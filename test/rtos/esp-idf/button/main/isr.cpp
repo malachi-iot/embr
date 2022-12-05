@@ -22,6 +22,7 @@ void test_isr()
 
 #if CONFIG_DRIVER_MODE
     constexpr bool driver_mode = true;
+    gpio_install_isr_service(ESP_INTR_FLAG_LEVEL1);
 #else
     constexpr bool driver_mode = false;
 #endif

@@ -32,7 +32,7 @@ menu "Embr Button Test"
             default 0
 
         config DRIVER_MODE
-            bool "Whether to use driver supported per-GPIO ISRs"
+            bool "Use driver supported per-GPIO ISRs"
 
     endmenu
 

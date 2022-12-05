@@ -1,5 +1,7 @@
 #pragma once
 
+#include <unordered_map>
+
 #include <driver/timer.h>
 
 #include <estd/port/freertos/queue.h>
@@ -85,6 +87,7 @@ namespace esp_idf {
 class Debouncer
 {
     typedef scheduler::esp_idf::impl::Item item_type;
+    using esp_clock = estd::chrono::esp_clock;
 
 public:
     enum States
@@ -110,7 +113,7 @@ private:
     gpio_isr_handle_t gpio_isr_handle;
 
     void gpio_isr();
-    void gpio_isr_pin(item_type& item, estd::chrono::esp_clock::duration duration);
+    void gpio_isr_pin(item_type& item, esp_clock::duration duration);
 
     static void gpio_isr(void*);
     static void gpio_isr_pin(void*);
@@ -125,6 +128,15 @@ private:
         scheduler::esp_idf::impl::Threshold<>
         > scheduler;
 
+    // DEBT: upgrade estd map to use vector, since maps indeed should be dynamic even
+    // in our basic use cases
+    //static estd::layer1::map<uint8_t, detail::Debouncer, 5> debouncers;
+    // DEBT: For driver mode, a mere vector would do just fine
+    std::unordered_map<uint8_t, item_type> debouncers;
+
+    // DEBT: Document this guy
+    esp_clock::time_point last_now;
+
 public:
     // DEBT: Don't expose as public - however, most of these will be in the impl eventually
     // anyhow
@@ -132,7 +144,7 @@ public:
     // DEBT: Not sure I want to expose the whole queue here, but seems OK
     estd::freertos::layer1::queue<Notification, 10> queue;
 
-    bool is_driver_mode() const { return gpio_isr_handle != nullptr; }
+    bool is_driver_mode() const { return gpio_isr_handle == nullptr; }
 
 public:
     Debouncer(timer_group_t, timer_idx_t, bool driver_mode = false);

@@ -3,7 +3,6 @@
 // DEBT: Don't want to do this dynamic alloc version, though not SO bad because it's the
 // "alloc once" category
 #include <map>
-#include <unordered_map>
 
 #include "debounce.hpp"
 #include "timer.h"
@@ -24,18 +23,9 @@ using embr::scheduler::esp_idf::impl::Item;
 // Guidance from:
 // https://esp32.com/viewtopic.php?t=345 
 
-// DEBT: Place these inside 'Debouncer'
-// DEBT: upgrade estd map to use vector, since maps indeed should be dynamic even
-// in our basic use cases
-//static estd::layer1::map<uint8_t, detail::Debouncer, 5> debouncers;
-static std::unordered_map<uint8_t, Item> debouncers;
-
 using namespace estd::chrono;
 using namespace estd::chrono_literals;
 
-// DEBT: Place this inside 'Debouncer'
-// DEBT: Document this guy
-static esp_clock::time_point last_now;
 
 void held_callback(TimerHandle_t);
 
@@ -43,7 +33,7 @@ estd::freertos::timer<> held_timer("held", 3s, false, nullptr, held_callback);
 
 inline void Debouncer::gpio_isr_pin(Item& item, esp_clock::duration duration)
 {
-    static constexpr const char* TAG = "gpio_isr";
+    static constexpr const char* TAG = "gpio_isr_pin";
 
     int level = item.pin().level();
 
@@ -146,11 +136,11 @@ void Debouncer::gpio_isr(void* context)
 void Debouncer::gpio_isr_pin(void* context)
 {
     auto item = static_cast<Item*>(context);
+    Debouncer* debouncer = item->parent_;
 
-    auto now = esp_clock::now();
-    auto duration = now - last_now;
+    auto duration = esp_clock::now() - debouncer->last_now;
 
-    item->parent_->gpio_isr_pin(*item, duration);
+    debouncer->gpio_isr_pin(*item, duration);
 }
 
 
@@ -168,6 +158,8 @@ void Debouncer::emit_state(const Item& item)
 Debouncer::Debouncer(timer_group_t timer_group, timer_idx_t timer_idx, bool driver_mode) //: queue(10)
     : scheduler(embr::internal::scheduler::impl_params_tag{}, timer_group, timer_idx)
 {
+    ESP_LOGI(TAG, "ctor: driver_mode=%u", driver_mode);
+
     if(driver_mode)
     {
         gpio_isr_handle = nullptr;
