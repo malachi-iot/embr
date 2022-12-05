@@ -110,7 +110,7 @@ private:
     gpio_isr_handle_t gpio_isr_handle;
 
     void gpio_isr();
-    void timer_group0_isr();
+    void gpio_isr_pin(item_type& item, estd::chrono::esp_clock::duration duration);
 
     static void gpio_isr(void*);
 #if UNUSED

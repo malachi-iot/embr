@@ -22,6 +22,7 @@ These tests are all for variants of Espressif ESP32
 
 |   Date  | Project      | Board                | Chip           | esp-idf  | Result |
 | ------- | ------------ | -------------------- | -------------- | -------  | ------ |
+| 05DEC22 | button       | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v4.4.3   | Pass   |
 | 04DEC22 | scheduler    | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v4.4.3   | Pass   |
 | 04DEC22 | udp-echo     | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v4.4.3   | Pass   |
 | 04DEC22 | unity        | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v4.4.3   | Pass   |

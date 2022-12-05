@@ -36,6 +36,62 @@ void held_callback(TimerHandle_t);
 
 estd::freertos::timer<> held_timer("held", 3s, false, nullptr, held_callback);
 
+inline void Debouncer::gpio_isr_pin(Item& item, esp_clock::duration duration)
+{
+    static constexpr const char* TAG = "gpio_isr";
+
+    int level = item.pin().level();
+
+    ESP_GROUP_LOGD(1, TAG, "GPIO%d, val: %d, duration=%lldms", (int)item.pin(), level,
+        duration.count() / 1000);
+
+    embr::detail::Debouncer& d = item.debouncer();
+    ESP_GROUP_LOGD(1, TAG, "state=%s:%s", to_string(d.state()), to_string(d.substate()));
+    bool state_changed = d.time_passed(duration, level);
+    if(state_changed)
+    {
+        ESP_GROUP_LOGV(1, TAG, "debounce state changed");
+        emit_state(item);
+
+        // If there was a timer waiting for state change, disable it
+        //timer_set_alarm(timer_group, timer_idx, TIMER_ALARM_DIS);
+        //timer_group_disable_alarm_in_isr(timer_group, timer_idx);
+    }
+    else if(d.substate() != embr::detail::Debouncer::Idle)
+    {
+        // If no state change, but we are in eval mode, schedule a timer wakeup
+        // to finish the eval
+
+        //auto future = now + estd::chrono::milliseconds(40);
+        //timer_set_alarm_value(timer_group, timer_idx, future.time_since_epoch().count());
+        //timer_set_alarm_value(timer_group, timer_idx, 40000);
+        //timer_set_alarm(timer_group, timer_idx, TIMER_ALARM_EN);
+        //timer_group_set_alarm_value_in_isr(timer_group, timer_idx, 40000);
+
+        // NOTE: Not sure if we can/should do this in an ISR
+        //timer_set_counter_value(timer_group, timer_idx, 0);   // This works -- now trying pause method
+        
+        uint64_t native = scheduler.timer().get_counter_value_in_isr();
+        // call isr-specific now()
+        auto scheduler_now = scheduler.now(true);
+        ESP_GROUP_LOGV(1, TAG, "now=%llu, raw=%llu", scheduler_now.count(), native);
+
+        auto context = scheduler.create_context(true);  // isr context
+
+        item.recalculate_event_due(scheduler_now);
+        
+        scheduler.schedule_with_context(context, &item);
+
+        // DEBT: Wrap the following up inside scheduler impl on_xxx itself, and
+        // set actual alarm_value also
+        Timer& timer = scheduler.timer();
+        timer.enable_alarm_in_isr();
+        timer.start();
+
+    }
+    ESP_GROUP_LOGD(1, TAG, "state=%s:%s", to_string(d.state()), to_string(d.substate()));
+}
+
 
 inline void Debouncer::gpio_isr()
 {
@@ -62,59 +118,10 @@ inline void Debouncer::gpio_isr()
             // to see if we are masked to care
             auto it = debouncers.find(pin);
 
-            int level = gpio_get_level((gpio_num_t)pin);
-
-            ESP_GROUP_LOGD(1, TAG, "GPIO%d, val: %d, duration=%lldms", pin, level,
-                duration.count() / 1000);
-
             if(it != std::end(debouncers))
             {
                 Item& item = it->second;
-                embr::detail::Debouncer& d = item.debouncer();
-                ESP_GROUP_LOGD(1, TAG, "state=%s:%s", to_string(d.state()), to_string(d.substate()));
-                bool state_changed = d.time_passed(duration, level);
-                if(state_changed)
-                {
-                    ESP_GROUP_LOGV(1, TAG, "debounce state changed");
-                    emit_state(item);
-
-                    // If there was a timer waiting for state change, disable it
-                    //timer_set_alarm(timer_group, timer_idx, TIMER_ALARM_DIS);
-                    //timer_group_disable_alarm_in_isr(timer_group, timer_idx);
-                }
-                else if(d.substate() != embr::detail::Debouncer::Idle)
-                {
-                    // If no state change, but we are in eval mode, schedule a timer wakeup
-                    // to finish the eval
-
-                    //auto future = now + estd::chrono::milliseconds(40);
-                    //timer_set_alarm_value(timer_group, timer_idx, future.time_since_epoch().count());
-                    //timer_set_alarm_value(timer_group, timer_idx, 40000);
-                    //timer_set_alarm(timer_group, timer_idx, TIMER_ALARM_EN);
-                    //timer_group_set_alarm_value_in_isr(timer_group, timer_idx, 40000);
-
-                    // NOTE: Not sure if we can/should do this in an ISR
-                    //timer_set_counter_value(timer_group, timer_idx, 0);   // This works -- now trying pause method
-                    
-                    uint64_t native = scheduler.timer().get_counter_value_in_isr();
-                    // call isr-specific now()
-                    auto scheduler_now = scheduler.now(true);
-                    ESP_GROUP_LOGV(1, TAG, "now=%llu, raw=%llu", scheduler_now.count(), native);
-
-                    auto context = scheduler.create_context(true);  // isr context
-
-                    item.recalculate_event_due(scheduler_now);
-                    
-                    scheduler.schedule_with_context(context, &item);
-
-                    // DEBT: Wrap the following up inside scheduler impl on_xxx itself, and
-                    // set actual alarm_value also
-                    Timer& timer = scheduler.timer();
-                    timer.enable_alarm_in_isr();
-                    timer.start();
-
-                }
-                ESP_GROUP_LOGD(1, TAG, "state=%s:%s", to_string(d.state()), to_string(d.substate()));
+                gpio_isr_pin(item, duration);
             }
         }
 
