@@ -30,7 +30,6 @@ void udp_echo_recv(void *arg,
     if (p != NULL)
     {
         ipbufstream in(p, false);   // will auto-free p since it's not bumping reference
-        // FIX: byte at position 16 gets swallowed up
         opbufstream out(16);        // auto chain-grows itspbuf if necessary
 
         process_out(in, out);
