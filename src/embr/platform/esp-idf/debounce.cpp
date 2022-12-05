@@ -167,6 +167,11 @@ static void begin_long_hold_evaluation(void* pvParameter1, uint32_t ulParameter2
     //held_timer.reset(100ms);    // DEBT: Don't want to do this from pend call, could cause a deadlock maybe?
 
     // FIX: Somehow this causes a catastrophic failure in FreeRTOS *and* LwIP
+    // Specifically it dies within prvProcessReceivedCommands while calling uxListRemove
+    // and crashes in or around lwip_cyclic_timer/uxListRemove - almost like a data race
+    // while updating the 'pxItemToRemove' in uxListRemove.  Most likely cause of that is
+    // my wrapper not managing the timer id/handle right
+    
     //BaseType_t  pxHigherPriorityTaskWoken;
     //held_timer.reset_from_isr(&pxHigherPriorityTaskWoken);
     
