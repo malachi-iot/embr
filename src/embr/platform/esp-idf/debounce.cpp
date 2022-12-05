@@ -29,7 +29,7 @@ using namespace estd::chrono_literals;
 
 void held_callback(TimerHandle_t);
 
-estd::freertos::timer<> held_timer("held", 3s, false, nullptr, held_callback);
+static estd::freertos::timer<> held_timer("held", 3s, false, nullptr, held_callback);
 
 inline void Debouncer::gpio_isr_pin(Item& item, esp_clock::duration duration)
 {
@@ -162,6 +162,13 @@ static void begin_long_hold_evaluation(void* pvParameter1, uint32_t ulParameter2
 {
     auto& item = *(Item*) pvParameter1;
     item.long_hold_evaluating = true;
+
+    //held_timer.id(pvParameter1);  // not safe from ISR - FIX: Need a workaround
+    //held_timer.reset(100ms);    // DEBT: Don't want to do this from pend call, could cause a deadlock maybe?
+
+    // FIX: Somehow this causes a catastrophic failure in FreeRTOS *and* LwIP
+    //BaseType_t  pxHigherPriorityTaskWoken;
+    //held_timer.reset_from_isr(&pxHigherPriorityTaskWoken);
     
     /*
     estd::freertos::internal::timer::pend_function_call(
@@ -187,7 +194,8 @@ void Debouncer::emit_state(const Item& item)
         if(item.long_hold_evaluating == false)
         {
             // DEBT: Retrieve higherpriority task part
-            xTimerPendFunctionCallFromISR(begin_long_hold_evaluation, (void*)&item, 0, nullptr);
+            //xTimerPendFunctionCallFromISR(begin_long_hold_evaluation, (void*)&item, 0, nullptr);
+            begin_long_hold_evaluation((void*)&item, 0);
         }
     }
 
@@ -274,8 +282,9 @@ void held_callback(TimerHandle_t xTimer)
     const char* TAG = "held_callback";
 
     auto timer = (estd::freertos::timer<>&) xTimer; 
+    auto item = (Item*) timer.id();
 
-    ESP_LOGI(TAG, "Callback name: \"%s\"", timer.name());
+    ESP_LOGI(TAG, "Callback name: \"%s\", item=%p", timer.name(), item);
 }
 
 
