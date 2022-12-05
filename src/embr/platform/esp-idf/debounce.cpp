@@ -144,11 +144,52 @@ void Debouncer::gpio_isr_pin(void* context)
 }
 
 
+// these eval code blocks are disabled because I misunderstood that timer pend
+// FreeRTOS calls are for scheduling immediate callbacks, not later one-shots
+
+/*
+static void end_long_hold_evaluation(void* pvParameter1, uint32_t ulParameter2)
+{
+    auto& item = *(Item*) pvParameter1;
+
+    //ESP_LOGD(TAG, "end_long_hold_evaluation");
+
+    item.long_hold_evaluating = false;
+}
+*/
+
+static void begin_long_hold_evaluation(void* pvParameter1, uint32_t ulParameter2)
+{
+    auto& item = *(Item*) pvParameter1;
+    item.long_hold_evaluating = true;
+    
+    /*
+    estd::freertos::internal::timer::pend_function_call(
+        end_long_hold_evaluation,
+        pvParameter1,
+        ulParameter2,
+        10s);
+        */
+
+    //xTimerPendFunctionCall(pvParameter1, pvParameter2);
+}
+
+
 void Debouncer::emit_state(const Item& item)
 {
     bool on = item.debouncer().state();
 
     if(item.low_means_pressed) on = !on;
+
+    if(on)
+    {
+        // EXPERIMENTAL
+        if(item.long_hold_evaluating == false)
+        {
+            // DEBT: Retrieve higherpriority task part
+            xTimerPendFunctionCallFromISR(begin_long_hold_evaluation, (void*)&item, 0, nullptr);
+        }
+    }
 
     queue.send_from_isr(Notification{item.pin(), (States)on});
 }

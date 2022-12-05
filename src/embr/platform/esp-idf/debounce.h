@@ -31,7 +31,15 @@ struct Item
     detail::Debouncer debouncer_;
     embr::esp_idf::Debouncer* parent_;
     embr::esp_idf::gpio pin_;
-    bool low_means_pressed = true;
+
+    struct
+    {
+        bool low_means_pressed : 1;
+
+        // EXPERIMENTAL
+        bool long_hold_evaluating : 1;
+    };
+
     duration last_wakeup_;
     duration wakeup_;
 
@@ -49,7 +57,11 @@ struct Item
 
     //Item() = default;
     Item(const Item& copy_from) = default;
-    Item(embr::esp_idf::Debouncer* parent, embr::esp_idf::gpio pin) : parent_{parent}, pin_{pin} {}
+    Item(embr::esp_idf::Debouncer* parent, embr::esp_idf::gpio pin) :
+        parent_{parent}, pin_{pin},
+        low_means_pressed{true},
+        long_hold_evaluating{false}
+    {}
 
     inline void rebase(duration v)
     {
