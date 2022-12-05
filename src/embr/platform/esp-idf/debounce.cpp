@@ -90,7 +90,7 @@ inline void Debouncer::gpio_isr_pin(Item& item, esp_clock::duration duration)
 
 inline void Debouncer::gpio_isr()
 {
-    static constexpr const char* TAG = "gpio_isr";
+    //static constexpr const char* TAG = "gpio_isr";
 
     uint32_t gpio_intr_status = READ_PERI_REG(GPIO_STATUS_REG);   //read status to get interrupt status for GPIO0-31
     uint32_t gpio_intr_status_h = READ_PERI_REG(GPIO_STATUS1_REG);//read status1 to get interrupt status for GPIO32-39
@@ -163,6 +163,9 @@ static void begin_long_hold_evaluation(void* pvParameter1, uint32_t ulParameter2
     auto& item = *(Item*) pvParameter1;
     item.long_hold_evaluating = true;
 
+    //ESP_GROUP_LOGD(1, TAG, "begin_long_hold_evaluation");
+    ESP_DRAM_LOGD(TAG, "begin_long_hold_evaluation");
+
     //held_timer.id(pvParameter1);  // not safe from ISR - FIX: Need a workaround
     //held_timer.reset(100ms);    // DEBT: Don't want to do this from pend call, could cause a deadlock maybe?
 
@@ -172,8 +175,17 @@ static void begin_long_hold_evaluation(void* pvParameter1, uint32_t ulParameter2
     // while updating the 'pxItemToRemove' in uxListRemove.  Most likely cause of that is
     // my wrapper not managing the timer id/handle right
     
-    //BaseType_t  pxHigherPriorityTaskWoken;
-    //held_timer.reset_from_isr(&pxHigherPriorityTaskWoken);
+    // Plot thickens:
+    // If pressed before held_timer expires the first time, it does not crash.
+    // This suggests once expiry hits, reset may not be viable.  We don't auto delete the timer
+    // estd testing indicates reset DOES work from inside the timer callback
+
+    BaseType_t  pxHigherPriorityTaskWoken;
+    //held_timer.native().start_from_isr(&pxHigherPriorityTaskWoken);   // EXPERIMENTING, doesn't help
+    held_timer.reset_from_isr(&pxHigherPriorityTaskWoken);
+
+    // Also:
+    // FreeRTOS timers are missing ISR-safe ways to interact with ID, which may become an important factor here
     
     /*
     estd::freertos::internal::timer::pend_function_call(
