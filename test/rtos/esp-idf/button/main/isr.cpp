@@ -1,6 +1,7 @@
 #include <estd/thread.h>
 
 #include "esp_log.h"
+#include "esp_system.h"
 #include <driver/gpio.h>
 
 #include <embr/platform/esp-idf/debounce.hpp>
@@ -19,7 +20,13 @@ void test_isr()
 {
     const char* TAG = "test_isr";
 
-    embr::esp_idf::Debouncer d(TIMER_GROUP_0, TIMER_0);
+#if CONFIG_DRIVER_MODE
+    constexpr bool driver_mode = true;
+#else
+    constexpr bool driver_mode = false;
+#endif
+
+    embr::esp_idf::Debouncer d(TIMER_GROUP_0, TIMER_0, driver_mode);
 
     // NOTE: Setting up esp-idf GPIO interrupt characteristics for this pin is handled elsewhere
     // in gpio.cpp

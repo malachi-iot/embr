@@ -113,6 +113,8 @@ private:
     void gpio_isr_pin(item_type& item, estd::chrono::esp_clock::duration duration);
 
     static void gpio_isr(void*);
+    static void gpio_isr_pin(void*);
+
 #if UNUSED
     void timer_init(bool callback_mode);
     static void timer_group0_isr(void*);
@@ -130,8 +132,10 @@ public:
     // DEBT: Not sure I want to expose the whole queue here, but seems OK
     estd::freertos::layer1::queue<Notification, 10> queue;
 
+    bool is_driver_mode() const { return gpio_isr_handle != nullptr; }
+
 public:
-    Debouncer(timer_group_t, timer_idx_t);
+    Debouncer(timer_group_t, timer_idx_t, bool driver_mode = false);
     ~Debouncer();
 
     void track(int pin);

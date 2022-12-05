@@ -16,6 +16,9 @@
 namespace embr { namespace esp_idf {
 
 
+static const char* TAG = "Debouncer";
+
+
 using embr::scheduler::esp_idf::impl::Item;
 
 // Guidance from:
@@ -30,6 +33,8 @@ static std::unordered_map<uint8_t, Item> debouncers;
 using namespace estd::chrono;
 using namespace estd::chrono_literals;
 
+// DEBT: Place this inside 'Debouncer'
+// DEBT: Document this guy
 static esp_clock::time_point last_now;
 
 void held_callback(TimerHandle_t);
@@ -138,6 +143,17 @@ void Debouncer::gpio_isr(void* context)
 }
 
 
+void Debouncer::gpio_isr_pin(void* context)
+{
+    auto item = static_cast<Item*>(context);
+
+    auto now = esp_clock::now();
+    auto duration = now - last_now;
+
+    item->parent_->gpio_isr_pin(*item, duration);
+}
+
+
 void Debouncer::emit_state(const Item& item)
 {
     bool on = item.debouncer().state();
@@ -149,11 +165,19 @@ void Debouncer::emit_state(const Item& item)
 
 
 
-Debouncer::Debouncer(timer_group_t timer_group, timer_idx_t timer_idx) //: queue(10)
+Debouncer::Debouncer(timer_group_t timer_group, timer_idx_t timer_idx, bool driver_mode) //: queue(10)
     : scheduler(embr::internal::scheduler::impl_params_tag{}, timer_group, timer_idx)
 {
-    ESP_ERROR_CHECK(
-        gpio_isr_register(gpio_isr, this, ESP_INTR_FLAG_LEVEL1, &gpio_isr_handle));
+    if(driver_mode)
+    {
+        gpio_isr_handle = nullptr;
+    }
+    else
+    {
+        ESP_ERROR_CHECK(
+            gpio_isr_register(gpio_isr, this, ESP_INTR_FLAG_LEVEL1, &gpio_isr_handle));
+    }
+
     scheduler.start();
     last_now = esp_clock::now();
     held_timer.start(1s);
@@ -161,7 +185,16 @@ Debouncer::Debouncer(timer_group_t timer_group, timer_idx_t timer_idx) //: queue
 
 Debouncer::~Debouncer()
 {
-    esp_intr_free(gpio_isr_handle);    
+    if(is_driver_mode())
+    {
+        // NOTE: Consider putting this into destructor.  Somehow feels more natural here though
+        for(std::pair<const uint8_t, Item>& item : debouncers)
+        {
+            ESP_ERROR_CHECK(gpio_isr_handler_remove(item.second.pin()));
+        }
+    }
+    else
+        esp_intr_free(gpio_isr_handle);    
 }
 
 void Debouncer::track(int pin)
@@ -171,9 +204,24 @@ void Debouncer::track(int pin)
     // regular 'insert' and 'emplace' work
     //Item item(this, (gpio_num_t)pin);
     //debouncers[pin] = item;
-    debouncers.emplace(std::make_pair(
+    
+    // DEBT: Avoid auto here
+    auto emplaced = debouncers.emplace(std::make_pair(
         pin,
         Item(this, (gpio_num_t)pin)));
+
+    if(emplaced.second)
+    {
+        // DEBT: This magic will be unveiled when above avoiding auto debt is fulfilled
+        Item& item = emplaced.first->second;
+
+        if(is_driver_mode())
+        {
+            ESP_ERROR_CHECK(gpio_isr_handler_add(item.pin(), gpio_isr_pin, &item));
+        }
+    }
+    else
+        ESP_LOGE(TAG, "track: failed to emplace gpio tracking");
 }
 
 
