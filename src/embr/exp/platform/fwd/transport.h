@@ -62,7 +62,7 @@ template <class TTraits, typename TTraits::protocol_type v>
 struct transport_traits_wrapper;
 
 template <class TNativeTransport, typename protocol_traits<TNativeTransport>::type v = monostate_enum{}>
-struct transport_traits_wrapper2;
+struct transport_traits2;
 
 template <class TNativeBuffer>
 struct buffer_traits;

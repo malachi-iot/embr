@@ -257,7 +257,7 @@ public:
 
 
 template <>
-struct transport_traits_wrapper2<udp_pcb>
+struct transport_traits2<udp_pcb> : transport_traits<udp_pcb>
 {
 
 };
