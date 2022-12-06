@@ -8,7 +8,7 @@
 #include "embr/platform/lwip/pbuf.h"
 #include "embr/platform/lwip/udp.h"
 
-#include "../fwd/transport.h"
+#include "core.h"
 #include "pbuf.h"
 
 namespace embr { namespace experimental {
@@ -216,12 +216,12 @@ public:
         // get new pcb
         if (!pcb.alloc()) {
             LWIP_DEBUGF(UDP_DEBUG, ("transport.alloc failed!\n"));
-            return transport_results::MemoryError;
+            return transport_results::Memory;
         }
         /* bind to any IP address on port */
         if (pcb.bind(port) != ERR_OK) {
             LWIP_DEBUGF(UDP_DEBUG, ("transport.bind failed!\n"));
-            return transport_results::MemoryError;
+            return transport_results::Memory;
         }
 
         return transport_results::OK;

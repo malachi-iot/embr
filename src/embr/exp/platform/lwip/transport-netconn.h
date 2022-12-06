@@ -8,7 +8,7 @@
 // we can fall back to non-wrapped true LwIP API
 //#include "embr/platform/lwip/netconn.h"
 
-#include "../fwd/transport.h"
+#include "core.h"
 #include "pbuf.h"
 #include "netbuf.h"
 
@@ -24,11 +24,17 @@ public:
     typedef native_type* transport_type;
     typedef netbuf* ibuf_type;
     typedef netbuf* obuf_type;
+    typedef transport_result_wrapper<err_t> result_type;
 
     // System allocates netbuf here
     static void read(transport_type n, ibuf_type* new_buf)
     {
 
+    }
+
+    static result_type write(transport_type n, obuf_type buf)
+    {
+        return netconn_send(n, buf);
     }
 };
 

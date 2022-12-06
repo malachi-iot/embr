@@ -52,17 +52,38 @@ struct transport_traits;
 template <class TNativeBuffer>
 struct buffer_traits;
 
+// DEBT: Move out to enum.h if we can forward an enum too
 enum class transport_results
 {
     OK = 0,
-    MemoryError,
-    RouteError,
-    TransportError
+    TransportErrorBoundary = 100,
+    Memory = TransportErrorBoundary,
+    Route,
+    Transport,
+    AlreadyConnecting,
+    AlreadyConnected,
+    Reset,
+
+    EmbrErrorBoundary = 1000,
+    Undefined
 };
 
 
 template <typename TNativeTransport, class TTraits = transport_traits<TNativeTransport> >
 struct Transport;
+
+template <typename TResult>
+transport_results unify_result(TResult);
+
+template <typename TResult>
+struct transport_result_wrapper
+{
+    const transport_results result;
+
+    transport_result_wrapper(TResult r) : result(unify_result(r)) {}
+
+    operator transport_results() const { return result; }
+};
 
 
 }}
