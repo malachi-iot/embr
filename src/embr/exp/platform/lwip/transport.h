@@ -32,12 +32,7 @@ public:
     typedef pbuf_type obuf_type;
     typedef pbuf_type ibuf_type;
 
-    struct endpoint_type
-    {
-        addr_pointer addr;
-        uint16_t port;
-    };
-
+    typedef lwip::endpoint endpoint_type;
 
     static void connect(pcb_type p, const endpoint_type& e)
     {

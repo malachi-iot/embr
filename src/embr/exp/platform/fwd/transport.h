@@ -63,6 +63,8 @@ enum class transport_results
     AlreadyConnecting,
     AlreadyConnected,
     Reset,
+    Timeout,
+    Buffer,
 
     EmbrErrorBoundary = 1000,
     Undefined

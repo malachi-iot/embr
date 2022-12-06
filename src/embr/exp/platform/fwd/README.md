@@ -19,3 +19,11 @@ then again, it adds complication to transport and perhaps should be relegated on
 
 - chain/chunkable
 - seekable
+
+### buffer location / zerocopy
+
+- system-provided buffer which can be peeked into
+-- either signal or ref counter to indicate buffer usage is over (might be optional)
+- user-provided buffer which must be passed to API
+-- async hold on buffer, signal complete
+-- block until buffer is complete
