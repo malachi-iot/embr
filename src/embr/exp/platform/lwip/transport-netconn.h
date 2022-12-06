@@ -10,6 +10,7 @@
 
 #include "../fwd/transport.h"
 #include "pbuf.h"
+#include "netbuf.h"
 
 namespace embr { namespace experimental {
 
@@ -18,6 +19,17 @@ struct transport_traits<netconn>
 {
 private:
     typedef struct netconn native_type;
+
+public:
+    typedef native_type* transport_type;
+    typedef netbuf* ibuf_type;
+    typedef netbuf* obuf_type;
+
+    // System allocates netbuf here
+    static void read(transport_type n, ibuf_type* new_buf)
+    {
+
+    }
 };
 
 }}
