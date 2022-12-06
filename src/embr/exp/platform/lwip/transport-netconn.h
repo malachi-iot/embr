@@ -14,6 +14,7 @@
 
 namespace embr { namespace experimental {
 
+
 template <>
 struct transport_traits<netconn> :
     tags::write_polling
@@ -26,6 +27,16 @@ public:
     typedef netbuf* ibuf_type;
     typedef netbuf* obuf_type;
     typedef transport_result_wrapper<err_t> result_type;
+
+/*
+    enum class protocol_type
+    {
+        tcp_ipv4,
+        tcp_ipv6,
+        udp_ipv4,
+        udp_ipv6
+    }; */
+    typedef netconn_type protocol_type;
 
 
     struct transaction
@@ -72,5 +83,46 @@ public:
 
     }
 };
+
+
+/*
+template <>
+struct transport_traits_wrapper<transport_traits<netconn>, transport_traits<netconn>::protocol_type::tcp_ipv4>
+{
+    static constexpr int got_here() { return 1; }
+}; */
+
+template <>
+struct protocol_traits<netconn>
+{
+    typedef netconn_type type;
+};
+
+
+template <>
+struct transport_traits_wrapper<transport_traits<netconn>, NETCONN_TCP>
+{
+    static constexpr int got_here() { return 1; }
+};
+
+template <>
+struct transport_traits_wrapper2<netconn, NETCONN_TCP>
+{
+    static constexpr int got_here() { return 1; }
+};
+
+
+template <class TTransport, typename TTransport::protocol_type p>
+void auxliary_usage_test(transport_traits_wrapper<TTransport, p>& v)
+{
+
+}
+
+template <class TNativeTransport, typename protocol_traits<TNativeTransport>::type p>
+void auxliary_usage_test2(transport_traits_wrapper2<TNativeTransport, p>& v)
+{
+
+}
+
 
 }}

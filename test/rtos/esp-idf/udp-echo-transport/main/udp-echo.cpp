@@ -80,6 +80,14 @@ void udp_echo_init(void)
     embr::lwip::udp::Pcb pcb;
     typedef transport_traits<udp_pcb> traits;
     typedef Transport<udp_pcb> stream_transport_type;
+    //typedef transport_traits<netconn> netconn_traits;
+    //typedef transport_traits_wrapper<netconn_traits, netconn_traits::protocol_type::tcp_ipv4> wrapper_test1;
+    //typedef transport_traits_wrapper<netconn_traits, NETCONN_TCP> wrapper_test1;
+    transport_traits_wrapper2<netconn, NETCONN_TCP> wrapper_test1;
+
+    wrapper_test1.got_here();
+
+    auxliary_usage_test2(wrapper_test1);
     
     stream_transport_type ts(embr::lwip::udp::Pcb::create());
 

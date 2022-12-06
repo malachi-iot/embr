@@ -45,9 +45,24 @@ struct buf_runtime_allocated {};    // Any of the above 3 can be true
 
 }
 
+// because specialization on values wants integral types
+enum monostate_enum {};
+
+template <class TNativeTransport>
+struct protocol_traits
+{
+    typedef monostate_enum type;
+};
+
+
 template <class TNativeTransport>
 struct transport_traits;
 
+template <class TTraits, typename TTraits::protocol_type v>
+struct transport_traits_wrapper;
+
+template <class TNativeTransport, typename protocol_traits<TNativeTransport>::type v = monostate_enum{}>
+struct transport_traits_wrapper2;
 
 template <class TNativeBuffer>
 struct buffer_traits;

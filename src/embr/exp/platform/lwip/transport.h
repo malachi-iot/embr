@@ -256,4 +256,11 @@ public:
 };
 
 
+template <>
+struct transport_traits_wrapper2<udp_pcb>
+{
+
+};
+
+
 }}
