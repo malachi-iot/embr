@@ -158,7 +158,8 @@ static void end_long_hold_evaluation(void* pvParameter1, uint32_t ulParameter2)
 }
 */
 
-static void begin_long_hold_evaluation(void* pvParameter1, uint32_t ulParameter2)
+// NOTE: Put IRAM_ATTR to help with strange timer related crash only.  It didn't help
+static void IRAM_ATTR begin_long_hold_evaluation(void* pvParameter1, uint32_t ulParameter2)
 {
     auto& item = *(Item*) pvParameter1;
     item.long_hold_evaluating = true;
@@ -180,9 +181,9 @@ static void begin_long_hold_evaluation(void* pvParameter1, uint32_t ulParameter2
     // This suggests once expiry hits, reset may not be viable.  We don't auto delete the timer
     // estd testing indicates reset DOES work from inside the timer callback
 
-    BaseType_t  pxHigherPriorityTaskWoken;
+    //BaseType_t  pxHigherPriorityTaskWoken;
     //held_timer.native().start_from_isr(&pxHigherPriorityTaskWoken);   // EXPERIMENTING, doesn't help
-    held_timer.reset_from_isr(&pxHigherPriorityTaskWoken);
+    //held_timer.reset_from_isr(&pxHigherPriorityTaskWoken);
 
     // Also:
     // FreeRTOS timers are missing ISR-safe ways to interact with ID, which may become an important factor here
