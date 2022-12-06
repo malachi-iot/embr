@@ -10,6 +10,7 @@
 //#define RAW_LWIP_STYLE
 #include <embr/platform/lwip/iostream.h>
 #include <embr/exp/platform/lwip/transport.h>
+#include <embr/exp/platform/lwip/transport-netconn.h>
 
 #include <estd/string.h>
 #include <estd/ostream.h>

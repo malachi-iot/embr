@@ -1,3 +1,5 @@
+#pragma once
+
 namespace embr { namespace experimental {
 
 
@@ -44,5 +46,10 @@ enum class transport_results
     RouteError,
     TransportError
 };
+
+
+template <typename TNativeTransport, class TTraits = transport_traits<TNativeTransport> >
+struct Transport;
+
 
 }}
