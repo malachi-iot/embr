@@ -71,7 +71,7 @@ public:
         udp_ipv4,
         udp_ipv6
     }; */
-    typedef netconn_type protocol_type;
+    //typedef netconn_type protocol_type;
 
 
     struct transaction

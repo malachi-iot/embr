@@ -27,3 +27,21 @@ then again, it adds complication to transport and perhaps should be relegated on
 - user-provided buffer which must be passed to API
 -- async hold on buffer, signal complete
 -- block until buffer is complete
+
+## tags
+
+Tags make promises about the expected api
+
+### connection
+
+Connection oriented traits have:
+
+* `connect`
+* `disconnect`
+
+And indicate that read and write operations exist without explicit endpoint parameters
+
+### connectionless
+
+Indicates that read and write operations have endpoints specified
+

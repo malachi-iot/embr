@@ -20,9 +20,11 @@ struct _support_level
 };
 
 
-// Connection oriented can co-exist with datagram
+// Connection oriented can co-exist with connectionless
 struct connection {};
-struct datagram {};
+struct connectionless {};
+
+struct datagram : connectionless {};
 struct stream : connection {};
 
 // Not sure what we're gonna do about broadcast, but tagging it here anyway
@@ -75,7 +77,7 @@ struct transport_traits_wrapper;
 template <class TNativeTransport, typename protocol_traits<TNativeTransport>::type v
     //= monostate_enum{}>
     = protocol_traits<TNativeTransport>::def()>
-    
+
 struct transport_traits2;
 
 template <class TNativeBuffer>
