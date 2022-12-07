@@ -16,6 +16,12 @@
 
 namespace embr { namespace experimental {
 
+// TODO: Add consideration for LWIP_SO_RCVTIMEO as mentioned:
+// https://stackoverflow.com/questions/10848851/lwip-rtos-how-to-avoid-netconn-block-the-thread-forever
+// https://lwip.fandom.com/wiki/Netconn_receive_timeout 
+// https://www.nongnu.org/lwip/2_0_x/group__lwip__opts__socket.html#ga91af3ade95b20b9a60c65ed0380fa0ed
+// appears to be always on for esp-idf, conveniently
+
 
 template <>
 struct protocol_traits<netconn>
@@ -124,6 +130,16 @@ struct transport_traits2<netconn, NETCONN_UDP> :
     typedef native_type* transport_type;
     typedef netbuf* ibuf_type;
     typedef netbuf* obuf_type;
+
+    static transport_type create()
+    {
+        return netconn_new(NETCONN_UDP);
+    }
+
+    static result_type read(transport_type n, ibuf_type* in)
+    {
+        return netconn_recv(n, in);
+    }
 
     static result_type write(transport_type n, obuf_type buf)
     {

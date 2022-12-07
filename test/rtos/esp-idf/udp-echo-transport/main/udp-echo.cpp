@@ -48,6 +48,18 @@ void udp_echo_recv(void *arg,
     }
 }
 
+void udp_echo_init_netconn()
+{
+    typedef transport_traits2<netconn, NETCONN_UDP> traits;
+
+    traits::transport_type t = traits::create();
+    traits::ibuf_type in;
+
+    traits::read(t, &in);
+
+    traits::free(t);
+}
+
 void udp_echo_init2()
 {
     typedef Transport<udp_pcb> stream_transport_type;
