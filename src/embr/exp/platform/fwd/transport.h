@@ -31,14 +31,14 @@ struct stream : connection {};
 struct broadcast {};
 
 struct read_sequential {};
-struct read_blocking : read_sequential {};
-struct read_polling : read_sequential {};
+struct read_blocking : read_sequential {};  // infinite block
+struct read_polling : read_sequential {};   // implies a timeout is available
 struct read_callback {};
 struct read_transaction {};
 
 struct write_sequential {};
-struct write_blocking : write_sequential {};
-struct write_polling : write_sequential {};
+struct write_blocking : write_sequential {};// infinite block
+struct write_polling : write_sequential {}; // implies a timeout is available
 struct write_callback {};
 struct write_transaction {};
 struct write_fire_and_forget {};

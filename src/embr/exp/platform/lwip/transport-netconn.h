@@ -124,7 +124,16 @@ public:
 template <>
 struct transport_traits2<netconn, NETCONN_UDP> :
     netconn_transport_traits_base,
+#if LWIP_SO_RCVTIMEO
+    tags::read_polling,
+#else
+    tags::read_blocking,
+#endif
+#if LWIP_SO_SNDTIMEO
     tags::write_polling,
+#else
+    tags::write_blocking,
+#endif
     tags::datagram
 {
     typedef native_type* transport_type;
