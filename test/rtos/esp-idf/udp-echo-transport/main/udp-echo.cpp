@@ -51,14 +51,36 @@ void udp_echo_recv(void *arg,
 void udp_echo_init_netconn()
 {
     typedef transport_traits2<netconn, NETCONN_UDP> traits;
+    typedef tuple_traits<traits::ibuf_type> tuple_traits;
 
     traits::transport_type t = traits::create();
     traits::ibuf_type in;
 
     traits::read(t, &in);
+    traits::endpoint_type endpoint = tuple_traits::endpoint(in);
 
     traits::free(t);
 }
+
+
+void udp_echo_init_pcb()
+{
+    typedef transport_traits2<udp_pcb> traits;
+    typedef tuple_traits<traits::tuple> tuple_traits;
+    traits::transport_type t = traits::create();
+
+    traits::tuple in;
+    traits::endpoint_type endpoint = tuple_traits::endpoint(in);
+
+/*
+    traits::ibuf_type in;
+
+    traits::read(t, &in);
+    traits::endpoint_type endpoint = tuple_traits::endpoint(in); */
+
+    traits::free(t);
+}
+
 
 void udp_echo_init2()
 {

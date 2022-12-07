@@ -22,8 +22,15 @@ then again, it adds complication to transport and perhaps should be relegated on
 
 ### buffer location / zerocopy
 
+Use cases
+
 - system-provided buffer which can be peeked into
 -- either signal or ref counter to indicate buffer usage is over (might be optional)
+-- allocate freestanding/empty to pass into a read who then allocates it
+-- allocate more traditionally (but with transport alloc) and pass in 'sparse' buffer for read
+-- allocate more traditionally (but with transport alloc) and pass in filled buffer for write (this closely resembles a user buffer, but just satisfies a technical requirement that transport use its own memory)
+-- allocated by a read callback system in which case it is handed directly to us
+-- allocated by a write callback system, in which it's like the traditional write buffer mentioned above
 - user-provided buffer which must be passed to API
 -- async hold on buffer, signal complete
 -- block until buffer is complete
@@ -44,4 +51,8 @@ And indicate that read and write operations exist without explicit endpoint para
 ### connectionless
 
 Indicates that read and write operations have endpoints specified
+
+### read_polling / write_polling
+
+Both of these imply a timeout is at play, though the timeout may be 0 - instant.
 

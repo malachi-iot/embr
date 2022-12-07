@@ -16,6 +16,7 @@ namespace lwip {
 
 typedef const ip_addr_t* addr_pointer;
 
+// DEBT: There's a reason the existing experimental Endpoint has a addr specialization
 struct endpoint
 {
     addr_pointer addr;

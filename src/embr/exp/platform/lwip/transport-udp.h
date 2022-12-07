@@ -26,7 +26,7 @@ template <>
 struct transport_traits<udp_pcb> :
     tags::read_callback,
     tags::read_transaction, // emulated
-    tags::write_fire_and_forget,
+    tags::write_polling,
     tags::write_transaction, // emulated
     tags::datagram,
     tags::connection
@@ -45,6 +45,12 @@ public:
     typedef transport_result_wrapper<err_t> result_type;
 
     typedef lwip::endpoint endpoint_type;
+
+    struct tuple
+    {
+        raw_pbuf pbuf;
+        endpoint_type endpoint;
+    };
 
     static pcb_type create() { return pcb_type::create(); }
 
@@ -92,6 +98,8 @@ public:
         t->buf = nullptr;
     }
 
+    // sequential style - very technically a poll, but I tend to treat this as
+    // fire and forget
     static result_type write(pcb_type pcb, obuf_type buffer)
     {
         return pcb.send(buffer);
@@ -284,6 +292,20 @@ template <>
 struct transport_traits2<udp_pcb, IPADDR_TYPE_ANY> : transport_traits<udp_pcb>
 {
 
+};
+
+
+template <>
+struct tuple_traits<transport_traits<udp_pcb>::tuple>
+{
+    typedef transport_traits<udp_pcb> transport_type;
+    typedef typename transport_type::tuple tuple_type;
+    typedef lwip::endpoint endpoint_type;
+
+    const static endpoint_type& endpoint(const tuple_type& tuple)
+    {
+        return tuple.endpoint;
+    }
 };
 
 

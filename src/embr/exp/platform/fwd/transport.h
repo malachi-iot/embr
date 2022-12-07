@@ -41,6 +41,8 @@ struct write_blocking : write_sequential {};// infinite block
 struct write_polling : write_sequential {}; // implies a timeout is available
 struct write_callback {};
 struct write_transaction {};
+
+// Only use for scenarios which return no status at all as to whether write succeeded
 struct write_fire_and_forget {};
 
 
@@ -82,6 +84,9 @@ struct transport_traits2;
 
 template <class TNativeBuffer>
 struct buffer_traits;
+
+template <class TTuple>
+struct tuple_traits;
 
 // DEBT: Move out to enum.h if we can forward an enum too
 enum class transport_results

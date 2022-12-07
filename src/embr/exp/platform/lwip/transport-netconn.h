@@ -136,9 +136,9 @@ struct transport_traits2<netconn, NETCONN_UDP> :
 #endif
     tags::datagram
 {
-    typedef native_type* transport_type;
     typedef netbuf* ibuf_type;
     typedef netbuf* obuf_type;
+    typedef netbuf* tuple;
 
     static transport_type create()
     {
@@ -167,6 +167,23 @@ struct transport_traits2<netconn, NETCONN_UDP> :
         return netconn_disconnect(conn);
     }
 };
+
+
+template <>
+struct tuple_traits<netbuf*>
+{
+    typedef netbuf* buffer_type;
+    typedef netbuf* tuple_type;
+
+    typedef lwip::endpoint endpoint_type;
+
+    static buffer_type buffer(tuple_type tuple) { return tuple; }
+    static endpoint_type endpoint(tuple_type tuple)
+    {
+        return endpoint_type{netbuf_fromaddr(tuple), netbuf_fromport(tuple)};
+    }
+};
+
 
 /*
 template <>
