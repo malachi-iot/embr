@@ -61,6 +61,8 @@ template <class TNativeTransport>
 struct protocol_traits
 {
     typedef monostate_enum type;
+
+    static constexpr type def() { return monostate_enum{}; }
 };
 
 
@@ -70,7 +72,10 @@ struct transport_traits;
 template <class TTraits, typename TTraits::protocol_type v>
 struct transport_traits_wrapper;
 
-template <class TNativeTransport, typename protocol_traits<TNativeTransport>::type v = monostate_enum{}>
+template <class TNativeTransport, typename protocol_traits<TNativeTransport>::type v
+    //= monostate_enum{}>
+    = protocol_traits<TNativeTransport>::def()>
+    
 struct transport_traits2;
 
 template <class TNativeBuffer>

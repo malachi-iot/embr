@@ -14,6 +14,15 @@
 namespace embr { namespace experimental {
 
 template <>
+struct protocol_traits<udp_pcb>
+{
+    typedef lwip_ip_addr_type type;
+
+    static constexpr lwip_ip_addr_type def() { return IPADDR_TYPE_ANY; }
+};
+
+
+template <>
 struct transport_traits<udp_pcb> :
     tags::read_callback,
     tags::read_transaction, // emulated
@@ -33,12 +42,23 @@ public:
     typedef pcb_type transport_type;
     typedef pbuf_type obuf_type;
     typedef pbuf_type ibuf_type;
+    typedef transport_result_wrapper<err_t> result_type;
 
     typedef lwip::endpoint endpoint_type;
 
-    static void connect(pcb_type p, const endpoint_type& e)
+    static pcb_type create() { return pcb_type::create(); }
+
+    static void free(pcb_type pcb) { return pcb.free(); }
+
+    static result_type connect(pcb_type p, const endpoint_type& e)
     {
-        p.connect(e.addr, e.port);
+        return p.connect(e.addr, e.port);
+    }
+
+
+    static void disconnect(pcb_type p)
+    {
+        p.disconnect();
     }
 
 
@@ -72,16 +92,16 @@ public:
         t->buf = nullptr;
     }
 
-    static void write(native_type* pcb, obuf_type buffer)
+    static result_type write(pcb_type pcb, obuf_type buffer)
     {
-
+        return pcb.send(buffer);
     }
 
     // Fire and forget
     // DEBT: Except for return codes
-    static void write(pcb_type pcb, obuf_type buffer, endpoint_type e)
+    static result_type write(pcb_type pcb, obuf_type buffer, endpoint_type e)
     {
-        pcb.send(buffer, e.addr, e.port);
+        return pcb.send(buffer, e.addr, e.port);
     }
 
     struct read_callback_type
@@ -167,6 +187,8 @@ public:
 
     }
 };
+
+
 
 
 template <class TTraits>
@@ -259,7 +281,7 @@ public:
 
 
 template <>
-struct transport_traits2<udp_pcb> : transport_traits<udp_pcb>
+struct transport_traits2<udp_pcb, IPADDR_TYPE_ANY> : transport_traits<udp_pcb>
 {
 
 };
