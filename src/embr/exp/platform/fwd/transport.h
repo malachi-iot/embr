@@ -19,6 +19,15 @@ struct _support_level
     static constexpr transport_support support_level() { return s; }
 };
 
+
+// Connection oriented can co-exist with datagram
+struct connection {};
+struct datagram {};
+struct stream : connection {};
+
+// Not sure what we're gonna do about broadcast, but tagging it here anyway
+struct broadcast {};
+
 struct read_sequential {};
 struct read_blocking : read_sequential {};
 struct read_polling : read_sequential {};
@@ -92,14 +101,31 @@ struct Transport;
 template <typename TResult>
 transport_results unify_result(TResult);
 
+// Experimenting with post_calculate for optimization - may not matter at all
+template <typename TResult, bool post_calculate = false>
+struct transport_result_wrapper;
+
+
 template <typename TResult>
-struct transport_result_wrapper
+struct transport_result_wrapper<TResult, false>
 {
     const transport_results result;
 
     transport_result_wrapper(TResult r) : result(unify_result(r)) {}
 
     operator transport_results() const { return result; }
+};
+
+
+
+template <typename TResult>
+struct transport_result_wrapper<TResult, true>
+{
+    const TResult result;
+
+    constexpr transport_result_wrapper(TResult r) : result(r) {}
+
+    operator transport_results() const { return unify_result(result); }
 };
 
 

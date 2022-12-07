@@ -18,7 +18,9 @@ struct transport_traits<udp_pcb> :
     tags::read_callback,
     tags::read_transaction, // emulated
     tags::write_fire_and_forget,
-    tags::write_transaction // emulated
+    tags::write_transaction, // emulated
+    tags::datagram,
+    tags::connection
 {
 private:
     typedef udp_pcb native_type;

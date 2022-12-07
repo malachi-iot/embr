@@ -24,7 +24,8 @@ struct protocol_traits<netconn>
 };
 
 
-struct netconn_transport_traits_base
+struct netconn_transport_traits_base :
+    tags::connection
 {
 protected:
     typedef struct netconn native_type;
@@ -32,6 +33,17 @@ protected:
 public:
     typedef native_type* transport_type;
     typedef transport_result_wrapper<err_t> result_type;
+    typedef lwip::endpoint endpoint_type;
+
+    static result_type connect(transport_type conn, const endpoint_type& endpoint)
+    {
+        return netconn_connect(conn, endpoint.addr, endpoint.port);
+    }
+
+    static result_type free(transport_type conn)
+    {
+        return netconn_delete(conn);
+    }
 };
 
 
@@ -39,7 +51,8 @@ public:
 template <>
 struct transport_traits2<netconn, NETCONN_TCP> :
     netconn_transport_traits_base,
-    tags::write_polling
+    tags::write_polling,
+    tags::stream
 {
 public:
     typedef netbuf* ibuf_type;
@@ -93,13 +106,20 @@ public:
     }
 
     static constexpr int got_here() { return 1; }
+
+    static result_type disconnect(transport_type conn)
+    {
+        // shuts down both read and write parts of the connection
+        return netconn_shutdown(conn, 1, 1);
+    }
 };
 
 
 template <>
 struct transport_traits2<netconn, NETCONN_UDP> :
     netconn_transport_traits_base,
-    tags::write_polling
+    tags::write_polling,
+    tags::datagram
 {
     typedef native_type* transport_type;
     typedef netbuf* ibuf_type;
@@ -115,6 +135,11 @@ struct transport_traits2<netconn, NETCONN_UDP> :
     {
         // udp or raw only
         return netconn_sendto(n, buf, endpoint.addr, endpoint.port);
+    }
+
+    static result_type disconnect(transport_type conn)
+    {
+        return netconn_disconnect(conn);
     }
 };
 
