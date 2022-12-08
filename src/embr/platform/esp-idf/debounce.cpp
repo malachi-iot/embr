@@ -38,6 +38,9 @@ static estd::freertos::timer<> held_timer("held", 3s, true, nullptr, held_callba
 static estd::freertos::timer<> held_timer("held", 3s, false, nullptr, held_callback);
 #endif
 
+// DEBT: Only 1 GPIO handled in long-held mode
+static int gpio_long_held = -1;
+
 inline void Debouncer::gpio_isr_pin(Item& item, esp_clock::duration duration)
 {
     static constexpr const char* TAG = "gpio_isr_pin";
@@ -168,17 +171,17 @@ static void end_long_hold_evaluation(void* pvParameter1, uint32_t ulParameter2)
 // NOTE: Put IRAM_ATTR to help with strange timer related crash only.  It didn't help
 static void IRAM_ATTR begin_long_hold_evaluation(void* pvParameter1, uint32_t ulParameter2)
 {
-    static volatile bool mutex = false; // NOTE: Put fake-mutex in here to help with crash, still doesn't help
+    //static volatile bool mutex = false; // NOTE: Put fake-mutex in here to help with crash, still doesn't help
 
-    if(mutex) return;
+    //if(mutex) return;
 
-    mutex = true;
+    //mutex = true;
 
-    //auto& item = *(Item*) pvParameter1;
+    auto& item = *(Item*) pvParameter1;
     //item.long_hold_evaluating = true;
 
     //ESP_GROUP_LOGD(1, TAG, "begin_long_hold_evaluation");
-    ESP_DRAM_LOGD(TAG, "begin_long_hold_evaluation");
+    ESP_DRAM_LOGV(TAG, "begin_long_hold_evaluation");
 
     //held_timer.id(pvParameter1);  // not safe from ISR - FIX: Need a workaround
     //held_timer.reset(100ms);    // DEBT: Don't want to do this from pend call, could cause a deadlock maybe?
@@ -197,6 +200,7 @@ static void IRAM_ATTR begin_long_hold_evaluation(void* pvParameter1, uint32_t ul
     BaseType_t  pxHigherPriorityTaskWoken;
     //held_timer.native().start_from_isr(&pxHigherPriorityTaskWoken);   // EXPERIMENTING, doesn't help
     held_timer.reset_from_isr(&pxHigherPriorityTaskWoken);
+    gpio_long_held = item.pin();
 
     // Also:
     // FreeRTOS timers are missing ISR-safe ways to interact with ID, which may become an important factor here
@@ -211,7 +215,7 @@ static void IRAM_ATTR begin_long_hold_evaluation(void* pvParameter1, uint32_t ul
 
     //xTimerPendFunctionCall(pvParameter1, pvParameter2);
 
-    mutex = false;
+    //mutex = false;
 }
 
 
@@ -230,6 +234,11 @@ void Debouncer::emit_state(const Item& item)
             //xTimerPendFunctionCallFromISR(begin_long_hold_evaluation, (void*)&item, 0, nullptr);
             begin_long_hold_evaluation((void*)&item, 0);
         }
+    }
+    else
+    {
+        BaseType_t  pxHigherPriorityTaskWoken;
+        held_timer.stop_from_isr(&pxHigherPriorityTaskWoken);
     }
 
     queue.send_from_isr(Notification{item.pin(), (States)on});
@@ -254,7 +263,8 @@ Debouncer::Debouncer(timer_group_t timer_group, timer_idx_t timer_idx, bool driv
 
     scheduler.start();
     last_now = esp_clock::now();
-    held_timer.start(1s);
+    held_timer.id(this);    // DEBT: This will eventually be Item* if we continue to use FreeRTOS timers
+    //held_timer.start(1s);
 }
 
 Debouncer::~Debouncer()
@@ -319,9 +329,12 @@ void held_callback(TimerHandle_t xTimer)
     //auto timer = (estd::freertos::timer<>&) xTimer; 
 
     estd::freertos::internal::timer timer(xTimer);
-    auto item = (Item*) timer.id();
+    auto debouncer = (Debouncer*) timer.id();
+    //auto item = (Item*) timer.id();
 
-    ESP_LOGI(TAG, "Callback name: \"%s\", item=%p", timer.name(), item);
+    ESP_LOGI(TAG, "Callback name: \"%s\", id=%p", timer.name(), debouncer);
+
+    debouncer->queue.send(Debouncer::Notification{gpio_long_held, Debouncer::Held}, 50ms);
 }
 
 
