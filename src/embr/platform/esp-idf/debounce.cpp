@@ -31,7 +31,12 @@ using namespace estd::chrono_literals;
 
 void held_callback(TimerHandle_t);
 
+#if CONFIG_TIMER_CRASH_DIAGNOSTIC
+#warning Compiling in crash diagnostic mode
+static estd::freertos::timer<> held_timer("held", 3s, true, nullptr, held_callback);
+#else
 static estd::freertos::timer<> held_timer("held", 3s, false, nullptr, held_callback);
+#endif
 
 inline void Debouncer::gpio_isr_pin(Item& item, esp_clock::duration duration)
 {
@@ -163,8 +168,14 @@ static void end_long_hold_evaluation(void* pvParameter1, uint32_t ulParameter2)
 // NOTE: Put IRAM_ATTR to help with strange timer related crash only.  It didn't help
 static void IRAM_ATTR begin_long_hold_evaluation(void* pvParameter1, uint32_t ulParameter2)
 {
-    auto& item = *(Item*) pvParameter1;
-    item.long_hold_evaluating = true;
+    static volatile bool mutex = false; // NOTE: Put fake-mutex in here to help with crash, still doesn't help
+
+    if(mutex) return;
+
+    mutex = true;
+
+    //auto& item = *(Item*) pvParameter1;
+    //item.long_hold_evaluating = true;
 
     //ESP_GROUP_LOGD(1, TAG, "begin_long_hold_evaluation");
     ESP_DRAM_LOGD(TAG, "begin_long_hold_evaluation");
@@ -183,9 +194,11 @@ static void IRAM_ATTR begin_long_hold_evaluation(void* pvParameter1, uint32_t ul
     // This suggests once expiry hits, reset may not be viable.  We don't auto delete the timer
     // estd testing indicates reset DOES work from inside the timer callback
 
-    //BaseType_t  pxHigherPriorityTaskWoken;
+#if CONFIG_TIMER_CRASH_DIAGNOSTIC
+    BaseType_t  pxHigherPriorityTaskWoken;
     //held_timer.native().start_from_isr(&pxHigherPriorityTaskWoken);   // EXPERIMENTING, doesn't help
-    //held_timer.reset_from_isr(&pxHigherPriorityTaskWoken);
+    held_timer.reset_from_isr(&pxHigherPriorityTaskWoken);
+#endif
 
     // Also:
     // FreeRTOS timers are missing ISR-safe ways to interact with ID, which may become an important factor here
@@ -199,6 +212,8 @@ static void IRAM_ATTR begin_long_hold_evaluation(void* pvParameter1, uint32_t ul
         */
 
     //xTimerPendFunctionCall(pvParameter1, pvParameter2);
+
+    mutex = false;
 }
 
 

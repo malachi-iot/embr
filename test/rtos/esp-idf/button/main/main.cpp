@@ -24,10 +24,12 @@ extern "C" void app_main()
     init_flash();
     init_gpio();
     
+#if CONFIG_WIFI_ENABLED
 #ifdef FEATURE_IDF_DEFAULT_EVENT_LOOP
     wifi_init_sta();
 #else
     wifi_init_sta(event_handler);
+#endif
 #endif
 
 #if CONFIG_ISR_MODE

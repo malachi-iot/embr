@@ -1,4 +1,9 @@
 menu "Embr Button Test"
+    config WIFI_ENABLED
+        bool "Try to sign onto WiFi network"
+
+    config TIMER_CRASH_DIAGNOSTIC
+        bool "Sorting out nasty FreeRTOS timer glitch"
 
     choice
         prompt "Test mode"
