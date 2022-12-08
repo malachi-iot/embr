@@ -194,11 +194,9 @@ static void IRAM_ATTR begin_long_hold_evaluation(void* pvParameter1, uint32_t ul
     // This suggests once expiry hits, reset may not be viable.  We don't auto delete the timer
     // estd testing indicates reset DOES work from inside the timer callback
 
-#if CONFIG_TIMER_CRASH_DIAGNOSTIC
     BaseType_t  pxHigherPriorityTaskWoken;
     //held_timer.native().start_from_isr(&pxHigherPriorityTaskWoken);   // EXPERIMENTING, doesn't help
     held_timer.reset_from_isr(&pxHigherPriorityTaskWoken);
-#endif
 
     // Also:
     // FreeRTOS timers are missing ISR-safe ways to interact with ID, which may become an important factor here
@@ -316,7 +314,11 @@ void held_callback(TimerHandle_t xTimer)
 {
     const char* TAG = "held_callback";
 
-    auto timer = (estd::freertos::timer<>&) xTimer; 
+    // NOTE: This highly nasty shenanigan somehow corrupts memory.  Keeping here as a comment
+    // for further study.  Consumed hours of my life.
+    //auto timer = (estd::freertos::timer<>&) xTimer; 
+
+    estd::freertos::internal::timer timer(xTimer);
     auto item = (Item*) timer.id();
 
     ESP_LOGI(TAG, "Callback name: \"%s\", item=%p", timer.name(), item);
