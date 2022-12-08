@@ -20,7 +20,7 @@ void timer_scheduler_init(Timer& timer, uint32_t divider, timer_isr_t isr_handle
     config.auto_reload = TIMER_AUTORELOAD_DIS;
     //config.auto_reload = TIMER_AUTORELOAD_EN; // Reset timer to 0 when end condition is triggered
     config.counter_en = TIMER_PAUSE;
-#if SOC_TIMER_GROUP_SUPPORT_XTAL
+#if SOC_TIMER_GROUP_SUPPORT_XTAL || SOC_TIMER_GROUP_SUPPORT_APB
     config.clk_src = TIMER_SRC_CLK_APB;
 #endif
     timer.init(&config);

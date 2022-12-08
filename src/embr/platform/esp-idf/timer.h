@@ -30,8 +30,12 @@ struct Timer
 
     // ++ EXPERIMENTAL
     // Typically 80Mhz, but can be reconfigured
-    static constexpr unsigned base_clock_hz() { return TIMER_BASE_CLK; }
     static constexpr unsigned apb_hz() { return APB_CLK_FREQ; }
+#if ESTD_IDF_VER >= ESTD_BUILD_IDF_VER(5, 0, 0, 0)
+    static constexpr unsigned base_clock_hz() { return apb_hz(); }
+#else
+    static constexpr unsigned base_clock_hz() { return TIMER_BASE_CLK; }
+#endif
     // --
 
     constexpr Timer(timer_group_t group, timer_idx_t idx) :

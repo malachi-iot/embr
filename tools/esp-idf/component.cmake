@@ -1,7 +1,7 @@
 set(ROOT_DIR ${CMAKE_CURRENT_LIST_DIR}/../..)
 set(SRC_DIR ${ROOT_DIR}/src)
 
-set(COMPONENT_REQUIRES estdlib)
+set(COMPONENT_REQUIRES estdlib driver esp_timer)
 
 # Get ESP_IDF_SOURCE_FILES from here
 include(${SRC_DIR}/sources.cmake)

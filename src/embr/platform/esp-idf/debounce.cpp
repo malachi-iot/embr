@@ -12,6 +12,8 @@
 
 #include "timer-scheduler.hpp"
 
+#include <soc/gpio_reg.h>
+
 namespace embr { namespace esp_idf {
 
 

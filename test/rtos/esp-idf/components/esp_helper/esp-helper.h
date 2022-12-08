@@ -1,6 +1,7 @@
 #pragma once
 
 #include "esp-helper-platform.h"
+#include "esp_netif.h"
 
 #ifdef FEATURE_IDF_DEFAULT_EVENT_LOOP
 void event_handler(void* arg, esp_event_base_t event_base,
