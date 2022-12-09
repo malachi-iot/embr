@@ -1,5 +1,7 @@
 #pragma once
 
+#include <new>
+
 #include <driver/gpio.h>
 
 
