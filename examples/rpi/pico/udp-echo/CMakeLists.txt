@@ -2,8 +2,9 @@ cmake_minimum_required(VERSION 3.13)
 
 # initialize the SDK directly
 include($ENV{PICO_SDK_PATH}/pico_sdk_init.cmake)
+include(wifi.cmake)
 
-project(chrono-example LANGUAGES C CXX)
+project(udp-echo LANGUAGES C CXX)
 
 set(ROOT_DIR ../../../..)
 
@@ -16,11 +17,28 @@ set(FEATURE_ESTD_FREERTOS 0)
 
 add_subdirectory(${ROOT_DIR}/src embr)
 
+set(LWIP_SOURCES
+    ${ROOT_DIR}/test/rtos/esp-idf/udp-echo/main/udp-echo.cpp
+    ${ROOT_DIR}/test/rtos/esp-idf/udp-echo/main/process.cpp
+    )
+
 add_executable(${PROJECT_NAME}
     main.cpp
+    ${LWIP_SOURCES}
 )
 
-target_link_libraries(${PROJECT_NAME} pico_stdlib embr estd)
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+        WIFI_SSID=\"${WIFI_SSID}\"
+        WIFI_PASSWORD=\"${WIFI_PASSWORD}\"
+        )
+
+target_link_libraries(${PROJECT_NAME}
+    #pico_cyw43_arch_lwip_threadsafe_background
+    pico_cyw43_arch_lwip_poll
+    pico_stdlib
+    embr estd)
+
+target_include_directories(${PROJECT_NAME} PRIVATE .)
 
 # enable usb output, disable uart output
 pico_enable_stdio_usb(${PROJECT_NAME} 1)
