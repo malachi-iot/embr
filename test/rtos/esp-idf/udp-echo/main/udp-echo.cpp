@@ -25,7 +25,7 @@ void udp_echo_recv(void *arg,
     struct udp_pcb *pcb, struct pbuf *p,  
     const ip_addr_t *addr, u16_t port)
 {
-    const char* TAG = "udp_echo_recv";
+    static const char* TAG = "udp_echo_recv";
 
     if (p != NULL)
     {
@@ -46,6 +46,8 @@ void udp_echo_recv(void *arg,
 
 void udp_echo_init(void)
 {
+    static const char* TAG = "udp_echo_init";
+
     embr::lwip::udp::Pcb pcb;
 
     // get new pcb
@@ -59,6 +61,9 @@ void udp_echo_init(void)
         LWIP_DEBUGF(UDP_DEBUG, ("pcb.bind failed!\n"));
         return;
     }
+
+    // DEBT: rpi fake ESP_LOGX needs a parameter
+    ESP_LOGV(TAG, "successful: listening on port %d", 7);
 
     /* set udp_echo_recv() as callback function
        for received packets */

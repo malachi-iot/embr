@@ -6,8 +6,14 @@
 #include <pico/time.h>
 
 static estd::pico_ostream cout(stdio_usb);
-static estd::pico_ostream& clog = cout;
 
+namespace estd {
+
+estd::pico_ostream& clog = cout;
+
+}
+
+using namespace estd;
 using namespace estd::chrono_literals;
 
 typedef estd::chrono::experimental::pico_clock steady_clock;
@@ -39,6 +45,8 @@ int main()
 
     auto now = steady_clock::now();
 
+    const ip4_addr_t* addr = nullptr;
+
     for(;;)
     {
 #if PICO_CYW43_ARCH_POLL
@@ -46,14 +54,31 @@ int main()
         // main loop (not from a timer) to check for WiFi driver or lwIP work that needs to be done.
         cyw43_arch_poll();
         sleep_ms(1);
+
+        int new_status = cyw43_tcpip_link_status(
+             &cyw43_state,CYW43_ITF_STA);
+	
         if((++counter % 1000) == 0)
-            cout << "Hello Chrono: " << ++counter << estd::endl;
+            cout << "Polled: " << (counter / 1000) << estd::endl;
 #else
         // if you are not using pico_cyw43_arch_poll, then WiFI driver and lwIP work
         // is done via interrupt in the background. This sleep is just an example of some (blocking)
         // work you might be doing.
-        cout << "Hello Chrono: " << ++counter << estd::endl;
+        cout << "Background: " << ++counter << estd::endl;
         estd::this_core::sleep_until(now + 1s * counter);
 #endif
+
+        if(netif_is_link_up(netif_default) && !ip4_addr_isany_val(*netif_ip4_addr(netif_default)))
+        {
+            if(addr == nullptr)
+            {
+                addr = netif_ip4_addr(netif_default);
+
+                char temp[32];
+                ip4addr_ntoa_r(addr, temp, sizeof(temp));
+
+                cout << "Got IP: " << temp << endl;
+            }
+        }
     }
 }
