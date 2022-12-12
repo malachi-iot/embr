@@ -47,6 +47,7 @@ void udp_echo_recv(void *arg,
 void udp_echo_init(void)
 {
     static const char* TAG = "udp_echo_init";
+    constexpr int port = 7;
 
     embr::lwip::udp::Pcb pcb;
 
@@ -57,13 +58,12 @@ void udp_echo_init(void)
     }
 
     /* bind to any IP address on port 7 */
-    if (pcb.bind(7) != ERR_OK) {
+    if (pcb.bind(port) != ERR_OK) {
         LWIP_DEBUGF(UDP_DEBUG, ("pcb.bind failed!\n"));
         return;
     }
 
-    // DEBT: rpi fake ESP_LOGX needs a parameter
-    ESP_LOGV(TAG, "successful: listening on port %d", 7);
+    ESP_LOGV(TAG, "successful: listening on port %d", port);
 
     /* set udp_echo_recv() as callback function
        for received packets */
