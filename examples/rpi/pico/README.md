@@ -1,10 +1,22 @@
 # Raspberry Pi Pico examples
 
+## CMake
+
 Copy `wifi.cmake.template` to `wifi.cmake` to specify credentials
 
-## udp-echo
+Remember to specify `-DCMAKE_BUILD_TYPE=Debug` if you want to see LwIP debug output
 
-Remember to specify -DCMAKE_BUILD_TYPE=Debug if you want to see LWiP debug output
+## Project
+
+### udp-echo
+
+Utilizes `udpecho.py` associated with esp32 udp-echo test
+
+## Results
+
+|   Date  | Project      | Board                | Chip           | pico-sdk | Result  | Notes
+| ------- | ------------ | -------------------- | -------------- | -------- | ------- | -----
+| 11DEC22 | udp-echo     | Raspberry Pi Pico W  | RP2040         | v1.4.0   | Pass    | Works in background+polled modes
 
 # References
 
@@ -14,4 +26,4 @@ Remember to specify -DCMAKE_BUILD_TYPE=Debug if you want to see LWiP debug outpu
 4. https://www.i-programmer.info/programming/hardware/15838-the-picow-in-c-simple-web-client.html?start=2
 5. https://forums.raspberrypi.com/viewtopic.php?t=309441
 5. https://github.com/raspberrypi/pico-sdk
-    5.1. https://github.com/raspberrypi/pico-sdk/blob/1.4.0/src/board_setup.cmake
+   1. https://github.com/raspberrypi/pico-sdk/blob/1.4.0/src/board_setup.cmake

@@ -35,7 +35,9 @@ int main()
 
     if (cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 10000))
     {
-        clog << "failed to connect: ssid=" << WIFI_SSID << ", pass=" << WIFI_PASSWORD << estd::endl;
+        clog << "failed to connect: ssid=" << WIFI_SSID;
+        //clog << ", pass=" << WIFI_PASSWORD;
+        clog << endl;
         return 1;
     }
 
@@ -68,6 +70,7 @@ int main()
         estd::this_core::sleep_until(now + 1s * counter);
 #endif
 
+        // Guidance from [3]
         if(netif_is_link_up(netif_default) && !ip4_addr_isany_val(*netif_ip4_addr(netif_default)))
         {
             if(addr == nullptr)
