@@ -1,6 +1,6 @@
 #include "unit-test.h"
 
-#if defined(ESP_PLATFORM)
+#if defined(ESP_PLATFORM) || defined(EMBR_PICOW_BOARD)
 
 #include "esp_log.h"
 
@@ -72,6 +72,11 @@ static void reply_listener(void* arg, struct udp_pcb* _pcb, struct pbuf* p, cons
     ESP_LOGI(TAG, "exit");
 }
 
+// It seems these only get defined at all if an RTOS is involved
+#if NO_SYS
+#define LOCK_TCPIP_CORE()
+#define UNLOCK_TCPIP_CORE()
+#endif
 
 static void test_basic_loopback()
 {

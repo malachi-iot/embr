@@ -21,7 +21,19 @@ set(FEATURE_ESTD_FREERTOS 0)
 # initialize the Raspberry Pi Pico SDK
 pico_sdk_init()
 
+message(DEBUG "unity: board=${PICO_BOARD}")
+# DEBT: I'd much prefer to merely elevate/reuse existing PICO_BOARD definition, but:
+# a) it's not available to unit-tests lib, presumably because of SDK's interface behavior
+# b) if I name this PICO_BOARD, we get duplicate definitions when compiling actual SDK
+add_compile_definitions(EMBR_PICO_BOARD=${PICO_BOARD})
+if(PICO_BOARD STREQUAL pico_w)
+add_compile_definitions(EMBR_PICOW_BOARD=${PICO_BOARD})
+endif()
+
 add_subdirectory(${ROOT_DIR}/test/unity unit-tests)
+
+# DEBT: This sneaks in our esp_log.h shim - viable, but confusing
+target_include_directories(unity-tests-lib PRIVATE ../udp-echo)
 
 add_executable(${PROJECT_NAME}
     main.cpp
@@ -33,11 +45,17 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
         )
 
 target_link_libraries(${PROJECT_NAME}
-    #pico_cyw43_arch_lwip_threadsafe_background
-    pico_cyw43_arch_lwip_poll
     pico_stdlib
     unity-tests-lib unity
     embr estd)
+
+if(PICO_BOARD STREQUAL pico_w)
+    target_link_libraries(${PROJECT_NAME}
+        #pico_cyw43_arch_lwip_threadsafe_background
+        pico_cyw43_arch_lwip_poll)
+    target_link_libraries(unity-tests-lib
+        pico_cyw43_arch_lwip_poll)
+endif()
 
 target_include_directories(${PROJECT_NAME} PRIVATE .)
 
