@@ -1,5 +1,14 @@
 #pragma once
 
+#include <estd/chrono.h>
+#include <estd/thread.h>    // Brings in FreeRTOS task notify, BaseType_t and friends
+
+#include <estd/port/freertos/mutex.h>
+
+// DEBT: For SchedulerContext, but feels like context_factory should be
+// elsewhere entirely
+#include "../../internal/impl/scheduler.h"
+
 #ifdef ESP_PLATFORM
 #include "esp_log.h"
 #endif

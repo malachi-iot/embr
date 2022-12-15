@@ -3,9 +3,6 @@
 #include "scheduler.h"
 #include "../../exp/platform/freertos/scheduler.h"
 
-#include <estd/chrono.h>
-#include <estd/thread.h>    // Brings in FreeRTOS task notify and friends
-
 #ifdef ESP_PLATFORM
 #include "esp_log.h"
 #endif
