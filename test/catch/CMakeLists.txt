@@ -10,11 +10,11 @@ add_definitions(-DUNIT_TESTING)
 set(ROOT_DIR ../..)
 set(EXT_DIR ${ROOT_DIR}/ext)
 set(ESTD_DIR ${EXT_DIR}/estdlib/src)
-set(CATCH_DIR ${EXT_DIR}/Catch2/single_include/catch2)
 set(EMBR_DIR ${ROOT_DIR}/src)
 
 include_directories(${CATCH_DIR})
 
+add_subdirectory(${EXT_DIR}/estdlib/ext/Catch2 catch)
 add_subdirectory(${EMBR_DIR} embr)
 
 set(SOURCE_FILES
@@ -32,4 +32,4 @@ set(SOURCE_FILES
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 
-target_link_libraries(${PROJECT_NAME} embr malachi-iot::estd)
+target_link_libraries(${PROJECT_NAME} embr malachi-iot::estd Catch2)

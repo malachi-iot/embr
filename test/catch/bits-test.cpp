@@ -4,7 +4,7 @@
  * 1. https://github.com/malachib/chariot/tree/main/lib/j1939/j1939 v0.1
  * 2. bits/README.md
  */
-#include <catch.hpp>
+#include <catch2/catch.hpp>
 
 #include <embr/bits/bits.hpp>
 
