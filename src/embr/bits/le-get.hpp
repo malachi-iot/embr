@@ -1,7 +1,7 @@
 /**
  * References:
  *
- * 1. https://github.com/malachib/chariot/tree/main/lib/j1939/j1939 v0.1
+ * 1. Reserved
  * 2. README.md
  */
 #pragma once

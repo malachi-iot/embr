@@ -1,7 +1,7 @@
 /**
  * References:
  *
- * 1. https://github.com/malachib/chariot/tree/main/lib/j1939/j1939 v0.1
+ * 1. Reserved
  * 2. bits/README.md
  */
 #include <catch2/catch.hpp>
@@ -158,7 +158,7 @@ TEST_CASE("bits2")
         }
         SECTION("little endian")
         {
-            // [1] 2.1.3
+            // [2] 2.1.3
             SECTION("decoder, lsb_to_msb")
             {
                 bits::decoder<bits::little_endian, bits::lsb_to_msb, bits::msb_to_lsb> d{le_example1};
@@ -194,7 +194,7 @@ TEST_CASE("bits2")
                     REQUIRE(v == 0x12345678);
                 }
             }
-            // [1] 2.1.3
+            // [2] 2.1.3
             SECTION("encoder, lsb_to_msb")
             {
                 bits::encoder<bits::little_endian, bits::lsb_to_msb, bits::msb_to_lsb> e{raw};
