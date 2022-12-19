@@ -12,9 +12,6 @@
 
 namespace embr {
 
-// DEBT: There are limited forms of this observer code which can work with
-// c++03 (namely, lacking variadic templates), but at present we
-// require c++11 for this feature to come online
 #if FEATURE_EMBR_OBSERVER
 
 namespace layer0 {

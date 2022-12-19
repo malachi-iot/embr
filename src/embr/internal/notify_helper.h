@@ -2,8 +2,9 @@
 
 #include <estd/functional.h>
 
-#ifdef FEATURE_CPP_VARIADIC
-#define FEATURE_EMBR_OBSERVER 1
+#include "features.h"
+
+#if FEATURE_EMBR_OBSERVER
 
 namespace embr { namespace internal {
 
