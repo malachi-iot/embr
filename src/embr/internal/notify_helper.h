@@ -3,6 +3,7 @@
 #include <estd/functional.h>
 
 #include "features.h"
+#include "allow_notify.h"
 
 #if FEATURE_EMBR_OBSERVER
 
@@ -93,6 +94,9 @@ template <class TObserver, class TEvent, class TContext>
 inline static auto notify_helper(const TEvent& n, TContext& context, bool)
     -> decltype(TObserver::on_notify(n), void(), bool{})
 {
+    if(!experimental::allow_notify_helper(TObserver(), n, context, true))
+        return false;
+
     TObserver::on_notify(n);
 
     return true;
@@ -103,6 +107,9 @@ template <class TObserver, class TEvent, class TContext>
 inline static auto notify_helper(const TEvent& n, TContext& context, bool)
     -> decltype(TObserver::on_notify(n, context), void(), bool{})
 {
+    if(!experimental::allow_notify_helper(TObserver(), n, context, true))
+        return false;
+
     TObserver::on_notify(n, context);
 
     return true;
