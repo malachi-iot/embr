@@ -5,6 +5,8 @@
 #include <embr/observer.h>
 #include <embr/platform/lwip/iostream.h>
 
+// DEBT: Put this all into unity testing
+
 struct event1 {};
 
 struct Context
@@ -45,6 +47,9 @@ void notify_from_event1_with_ipbuf(TSubject& s)
     s.notify(event1(), i);
 }
 
+
+int allow_counter = 0;
+
 struct Observer1
 {
     static constexpr const char* TAG = "Observer1";
@@ -58,6 +63,12 @@ struct Observer1
     {
         ESP_LOGI(TAG, "Got event1 notify");
     }
+
+    static bool allow_notify(event1)
+    {
+        ++allow_counter;
+        return true;
+    }
 };
 
 
@@ -68,6 +79,11 @@ struct Observer2
     static void on_notify(event1)
     {
         ESP_LOGI(TAG, "Got event1 notify");
+    }
+
+    static void on_notify(event1, Context&)
+    {
+        ESP_LOGI(TAG, "Got event1 notify w/ context");
     }
 };
 
@@ -83,9 +99,15 @@ extern "C" void app_main()
 
     auto s = embr::layer0::subject<Observer1, Observer2>();
 
+    // Observer2 won't participate in this one
     notify_from_int(s);
+
     notify_from_event1(s);
     notify_from_event1_with_context(s);
+    
+    // remember, this one notifies twice
     notify_from_event1_with_ipbuf(s);
+
+    ESP_LOGI(TAG, "allow_counter=%d", allow_counter);
 }
 

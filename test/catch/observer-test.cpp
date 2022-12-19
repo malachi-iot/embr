@@ -43,6 +43,14 @@ public:
         counter++;
     }
 
+    /*
+     * just for experimentation
+    template <class TContext>
+    static void on_notify(event_1 val, TContext&)
+    {
+
+    } */
+
     static void on_notify(event_1 val, const int& context)
     {
         counter += val.data;
