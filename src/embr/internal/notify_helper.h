@@ -37,6 +37,9 @@ template <class TObserver, class TEvent>
 inline static auto notify_helper(TObserver& observer, const TEvent& n, bool)
     -> decltype(std::declval<TObserver>().on_notify(n), void(), bool{})
 {
+    if(!experimental::allow_notify_helper<TObserver>(n, true))
+        return false;
+
     observer.on_notify(n);
 
     return true;
@@ -47,6 +50,9 @@ template <class TObserver, class TEvent, class TContext>
 inline static auto notify_helper(TObserver& observer, const TEvent& n, TContext& context, int)
     -> decltype(std::declval<TObserver>().on_notify(n), void(), bool{})
 {
+    if(!experimental::allow_notify_helper<TObserver>(n, context, true))
+        return false;
+
     observer.on_notify(n);
 
     return true;
@@ -57,6 +63,9 @@ template <class TObserver, class TEvent, class TContext>
 inline static auto notify_helper(TObserver& observer, const TEvent& n, TContext& context, bool)
     -> decltype(std::declval<TObserver>().on_notify(n, context), void(), bool{})
 {
+    if(!experimental::allow_notify_helper<TObserver>(n, context, true))
+        return false;
+
     observer.on_notify(n, context);
 
     return true;
@@ -83,6 +92,9 @@ template <class TObserver, class TEvent>
 inline static auto notify_helper(const TEvent& n, bool)
     -> decltype(TObserver::on_notify(n), void(), bool{})
 {
+    if(!experimental::allow_notify_helper<TObserver>(n, true))
+        return false;
+
     TObserver::on_notify(n);
 
     return true;
@@ -94,7 +106,7 @@ template <class TObserver, class TEvent, class TContext>
 inline static auto notify_helper(const TEvent& n, TContext& context, bool)
     -> decltype(TObserver::on_notify(n), void(), bool{})
 {
-    if(!experimental::allow_notify_helper(TObserver(), n, context, true))
+    if(!experimental::allow_notify_helper<TObserver>(n, context, true))
         return false;
 
     TObserver::on_notify(n);
@@ -107,7 +119,7 @@ template <class TObserver, class TEvent, class TContext>
 inline static auto notify_helper(const TEvent& n, TContext& context, bool)
     -> decltype(TObserver::on_notify(n, context), void(), bool{})
 {
-    if(!experimental::allow_notify_helper(TObserver(), n, context, true))
+    if(!experimental::allow_notify_helper<TObserver>(n, context, true))
         return false;
 
     TObserver::on_notify(n, context);

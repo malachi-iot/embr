@@ -32,6 +32,7 @@ struct sequence_event : id_event {};
 struct noop_event {};
 
 static int counter = 0;
+static int allow_counter = 0;   // increases every time allow is evaluated
 
 class StatelessObserver
 {
@@ -44,7 +45,20 @@ public:
 
     static void on_notify(event_1 val, const int& context)
     {
+        counter += val.data;
+    }
 
+    template <class TEvent>
+    static bool allow_notify(TEvent)
+    {
+        ++allow_counter;
+        return true;
+    }
+
+    static bool allow_notify(event_1 val, const int& context)
+    {
+        ++allow_counter;
+        return context != 8;
     }
 };
 
@@ -171,9 +185,33 @@ TEST_CASE("observer")
 
                 s.notify(3);
                 REQUIRE(counter == 2);
-                s.notify(event_1 { 3 }); // goes nowhere
+                REQUIRE(allow_counter == 2);
+
+                s.notify(event_1 { 3 }); // goes nowhere due to lack of context to match
+
+                REQUIRE(counter == 2);
+                REQUIRE(allow_counter == 2);    // Never increases because notify wasn't found in the first place
 
                 REQUIRE(sz == 1);
+
+                int context = 7;
+
+                // now we have a context match it will proceed
+                s.notify(event_1 { 3 }, context);
+
+                // remember, there's two of them - so 2 + 3 + 3 == 8
+                REQUIRE(counter == 8);
+                REQUIRE(allow_counter == 4);
+
+                context = 8;
+
+                // value 8 is a special context which filters out do_notify via
+                // experimental allow_notify mechanism
+                s.notify(event_1 { 3 }, context);
+
+                // filtered out notify via allow counter, so no counter increase
+                REQUIRE(counter == 8);
+                REQUIRE(allow_counter == 6);
             }
         }
         SECTION("layer1")
