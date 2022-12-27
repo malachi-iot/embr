@@ -10,15 +10,11 @@ using namespace estd;
 
 namespace test { namespace v1 {
 
-void poll()
+void lwip_poll()
 {
     static const ip4_addr_t* addr = nullptr;
 
-    // if you are using pico_cyw43_arch_poll, then you must poll periodically from your
-    // main loop (not from a timer) to check for WiFi driver or lwIP work that needs to be done.
-    cyw43_arch_poll();
-    sleep_ms(1);
-
+    // Guidance from [3]
     if(addr == nullptr && netif_is_link_up(netif_default))
     {
         if(!ip4_addr_isany_val(*netif_ip4_addr(netif_default)))
@@ -31,6 +27,17 @@ void poll()
             clog << "Got IP: " << temp << endl;
         }
     }
+}
+
+
+void cyw43_poll()
+{
+    // if you are using pico_cyw43_arch_poll, then you must poll periodically from your
+    // main loop (not from a timer) to check for WiFi driver or lwIP work that needs to be done.
+    cyw43_arch_poll();
+    sleep_ms(1);
+
+    lwip_poll();
 }
 
 }}

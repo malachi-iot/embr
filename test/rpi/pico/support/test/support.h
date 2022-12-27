@@ -13,7 +13,8 @@ namespace test {
 namespace v1 {
 
 int init(const char* ssid, const char* wifi_password);
-void poll();
+void cyw43_poll();
+void lwip_poll();
 
 }
 
