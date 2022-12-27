@@ -25,4 +25,9 @@ int main()
     test_lwip();
     test_word();
     UNITY_END();
+
+    for(;;)
+    {
+        test::v1::sleep();
+    }
 }
