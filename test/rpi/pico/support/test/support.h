@@ -26,6 +26,11 @@ void cyw43_poll();
 // clog's it
 void lwip_poll();
 
+// Prints a debug counter and sleeps for 5s
+// NOTE: Only for use in background/non polled mode
+void sleep();
+
+
 }
 
 }

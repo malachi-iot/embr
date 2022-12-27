@@ -39,7 +39,7 @@ LwIP + USB specific setup
 |   Date  | Project      | Board                | Chip           | pico-sdk | Result  | Notes
 | ------- | ------------ | -------------------- | -------------- | -------- | ------- | -----
 | 26DEC22 | unity        | Raspberry Pi Pico W  | RP2040         | v1.4.0   | Fail    | Almost works, but one of the LwIP test fails
-| 26DEC22 | udp-echo     | Raspberry Pi Pico W  | RP2040         | v1.4.0   | Pass    | Works in background+polled modes
+| 27DEC22 | udp-echo     | Raspberry Pi Pico W  | RP2040         | v1.4.0   | Pass    | Works in background+polled modes
 
 # References
 
@@ -51,3 +51,5 @@ LwIP + USB specific setup
 5. https://github.com/raspberrypi/pico-sdk
    1. https://github.com/raspberrypi/pico-sdk/blob/1.4.0/src/board_setup.cmake
 6. https://admantium.medium.com/getting-started-with-raspberry-pico-and-cmake-f536e18512e6
+7. https://raspberrypi.github.io/pico-sdk-doxygen/group__pico__cyw43__arch.html
+

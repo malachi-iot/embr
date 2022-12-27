@@ -1,3 +1,6 @@
+#include <estd/chrono.h>
+#include <estd/ostream.h>
+
 #include <stdio.h>
 #include <pico/stdlib.h>
 
@@ -7,8 +10,25 @@
 #include "test/support.h"
 
 using namespace estd;
+using namespace estd::chrono_literals;
+
 
 namespace test { namespace v1 {
+
+static unsigned counter = 0;
+
+typedef estd::chrono::experimental::pico_clock steady_clock;
+
+void sleep()
+{
+    static auto now = steady_clock::now();
+
+    // if you are not using pico_cyw43_arch_poll, then WiFI driver and lwIP work
+    // is done via interrupt in the background. This sleep is just an example of some (blocking)
+    // work you might be doing.
+    estd::this_core::sleep_until(now + 1s * counter);
+    clog << "Background: " << (counter += 5) << estd::endl;
+}
 
 void lwip_poll()
 {
@@ -30,6 +50,7 @@ void lwip_poll()
 }
 
 
+#if PICO_CYW43_ARCH_POLL
 void cyw43_poll()
 {
     // if you are using pico_cyw43_arch_poll, then you must poll periodically from your
@@ -38,6 +59,10 @@ void cyw43_poll()
     sleep_ms(1);
 
     lwip_poll();
+
+    if((++counter % 5000) == 0)
+        clog << "Polled: " << (counter / 1000) << estd::endl;
 }
+#endif
 
 }}
