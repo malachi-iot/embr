@@ -6,7 +6,21 @@ Copy `wifi.cmake.template` to `wifi.cmake` to specify credentials
 
 Remember to specify `-DCMAKE_BUILD_TYPE=Debug` if you want to see LwIP debug output
 
-It seems `include($ENV{PICO_SDK_PATH}/pico_sdk_init.cmake)` must be specified before `PROJECT`
+### sdk caveats
+
+As per [6] there are some unknowns/caveats to the particular placement of that
+include and subsequent `pico_sdk_init`.  For the time being, it seems that
+include MAY precede `project` and it is verified that `pico_sdk_init` SHOULD
+be called after `project` (warnings from SDK indicate this) - which is in 
+contrast to recommendation from [6]
+
+SDK warning in particular:
+
+```
+CMake Warning at /home/malachi/Projects/ext/rpi/pico-sdk/pico_sdk_init.cmake:53 (message):
+  pico_sdk_init() should be called after the project is created (and
+  languages added)
+```
 
 ## Projects
 
@@ -36,3 +50,4 @@ LwIP + USB specific setup
 5. https://forums.raspberrypi.com/viewtopic.php?t=309441
 5. https://github.com/raspberrypi/pico-sdk
    1. https://github.com/raspberrypi/pico-sdk/blob/1.4.0/src/board_setup.cmake
+6. https://admantium.medium.com/getting-started-with-raspberry-pico-and-cmake-f536e18512e6

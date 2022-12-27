@@ -19,8 +19,6 @@ int main()
 {
     test::v1::init(WIFI_SSID, WIFI_PASSWORD);
 
-    stdio_init_all();
-
     udp_echo_init();
 
     unsigned counter = 0;

@@ -1,13 +1,14 @@
 cmake_minimum_required(VERSION 3.13)
 
-project(support LANGUAGES C CXX)
-
 # initialize the SDK directly
 include($ENV{PICO_SDK_PATH}/pico_sdk_init.cmake)
 
+project(support LANGUAGES C CXX)
+
 include(../setup.cmake)
 
-set(ROOT_DIR ${ROOT_DIR} PARENT_SCOPE)
+set(EMBR_ROOT_DIR ${ROOT_DIR} PARENT_SCOPE)
+set(PICO_CYW43_ARCH_LIB ${PICO_CYW43_ARCH_LIB} PARENT_SCOPE)
 
 set(SOURCE_FILES init.cpp loop.cpp)
 add_library(${PROJECT_NAME} STATIC)
