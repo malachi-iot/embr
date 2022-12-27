@@ -22,6 +22,8 @@ set(LWIP_SOURCES
     ${ROOT_DIR}/test/rtos/esp-idf/udp-echo/main/process.cpp
     )
 
+add_subdirectory(../support support)
+
 add_executable(${PROJECT_NAME}
     main.cpp
     ${LWIP_SOURCES}
@@ -36,7 +38,7 @@ target_link_libraries(${PROJECT_NAME}
     #pico_cyw43_arch_lwip_threadsafe_background
     pico_cyw43_arch_lwip_poll
     pico_stdlib
-    embr estd)
+    support embr estd)
 
 target_include_directories(${PROJECT_NAME} PRIVATE .)
 
