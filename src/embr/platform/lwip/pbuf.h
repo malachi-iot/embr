@@ -68,6 +68,11 @@ public:
         pbuf_realloc(p, to_size);
     }
 
+    void free()
+    {
+        pbuf_free(p);
+    }
+
     size_type copy_partial(void* s, size_type len, size_type offset) const
     {
         return pbuf_copy_partial(p, s, len, offset);
@@ -78,10 +83,15 @@ public:
         pbuf_cat(p, t);
     }
 
+    void chain(pointer t)
+    {
+        pbuf_chain(p, t);
+    }
+
     /// "Skip a number of bytes at the start of a pbuf"
     /// @returns the pbuf in the queue where the offset is
     /// @link https://www.nongnu.org/lwip/2_1_x/group__pbuf.html#ga6a961522d81f0327aaf4d4ee6d96c583
-    PbufBase skip(size_type in_offset, size_type* out_offset)
+    PbufBase skip(size_type in_offset, size_type* out_offset) const
     {
         return pbuf_skip(p, in_offset, out_offset);
     }
