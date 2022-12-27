@@ -8,18 +8,12 @@ include($ENV{PICO_SDK_PATH}/pico_sdk_init.cmake)
 
 project(embr-unity LANGUAGES C CXX)
 
-set(ROOT_DIR ${CMAKE_CURRENT_LIST_DIR}/../../../..)
-
 include(../setup.cmake)
 #include(wifi.cmake)
 
 # Forcefully disable any FreeRTOS inclusion.  Not necessary for most
 # people as the system usually auto deduces whether you want it.
 set(FEATURE_ESTD_FREERTOS 0)
-
-
-# initialize the Raspberry Pi Pico SDK
-#pico_sdk_init()
 
 message(DEBUG "unity: board=${PICO_BOARD}")
 # DEBT: I'd much prefer to merely elevate/reuse existing PICO_BOARD definition, but:
@@ -49,6 +43,9 @@ target_link_libraries(${PROJECT_NAME}
     pico_stdlib
     unity-tests-lib unity
     support embr estd)
+
+# This line grants "lwipopts.h" visibiliy to unity-tests-lib
+target_link_libraries(unity-tests-lib support)
 
 if(PICO_BOARD STREQUAL pico_w)
     target_link_libraries(${PROJECT_NAME} ${PICO_CYW43_ARCH_LIB})

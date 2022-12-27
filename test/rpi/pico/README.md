@@ -6,13 +6,19 @@ Copy `wifi.cmake.template` to `wifi.cmake` to specify credentials
 
 Remember to specify `-DCMAKE_BUILD_TYPE=Debug` if you want to see LwIP debug output
 
-## Project
+It seems `include($ENV{PICO_SDK_PATH}/pico_sdk_init.cmake)` must be specified before `PROJECT`
+
+## Projects
 
 ### udp-echo
 
 Utilizes `udpecho.py` associated with esp32 udp-echo test
 
 ### unity
+
+### support
+
+LwIP + USB specific setup
 
 ## Results
 
