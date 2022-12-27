@@ -7,7 +7,7 @@
 
 #include <unit-test.h>
 
-static estd::pico_ostream clog(stdio_usb);
+#include <test/support.h>
 
 void setUp()
 {
@@ -18,15 +18,7 @@ void tearDown() {}
 
 int main()
 {
-    stdio_init_all();
-
-    clog << "starting..." << estd::endl;
-
-    if (cyw43_arch_init())
-    {
-        clog << "setUp: failed to initialise" << estd::endl;
-        return -1;
-    }
+    test::v1::init();
 
     UNITY_BEGIN();
     test_bits();

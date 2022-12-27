@@ -1,8 +1,5 @@
 cmake_minimum_required(VERSION 3.13)
 
-# initialize the SDK directly
-include($ENV{PICO_SDK_PATH}/pico_sdk_init.cmake)
-
 project(support LANGUAGES C CXX)
 
 include(../setup.cmake)
@@ -25,8 +22,8 @@ target_include_directories(${PROJECT_NAME} PUBLIC .)
 
 target_link_libraries(${PROJECT_NAME}
     pico_stdlib
-    pico_cyw43_arch_lwip_poll
     estd embr
+    ${PICO_CYW43_ARCH_LIB}
     )
 
 # DEBT: Unsure how this meshes with app also setting this variable

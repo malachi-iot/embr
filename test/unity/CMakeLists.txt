@@ -10,8 +10,10 @@ set(UNITY_DIR ${ESTDLIB_DIR}/ext/Unity)
 # add_subdirectory embr brings in estd for the ride, but we add in our own anyway just
 # to test that the conditional add_subdirectory is behavior
 # just
-add_subdirectory(${ESTDLIB_DIR}/src estd)
-add_subdirectory(${EMBR_DIR} embr)
+#add_subdirectory(${ESTDLIB_DIR}/src estd)
+if(NOT TARGET embr)
+    add_subdirectory(${EMBR_DIR} embr)
+endif()
 add_subdirectory(${UNITY_DIR} unity)
 
 include(sources.cmake)

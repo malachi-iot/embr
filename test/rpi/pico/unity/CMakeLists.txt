@@ -1,17 +1,17 @@
 # All references see README.md
 cmake_minimum_required(VERSION 3.13)
 
-# As per 5.1 this enables pico_w if someone isn't already specifying it in ENV
-set(PICO_BOARD "pico_w")
+set(FEATURE_EMBR_TEST_RPI_PICO_W_POLL 0)
 
+# initialize the SDK directly
 include($ENV{PICO_SDK_PATH}/pico_sdk_init.cmake)
+
+project(embr-unity LANGUAGES C CXX)
 
 set(ROOT_DIR ${CMAKE_CURRENT_LIST_DIR}/../../../..)
 
-#include(../setenv.cmake)
+include(../setup.cmake)
 #include(wifi.cmake)
-
-project(embr-unity LANGUAGES C CXX)
 
 # Forcefully disable any FreeRTOS inclusion.  Not necessary for most
 # people as the system usually auto deduces whether you want it.
@@ -19,7 +19,7 @@ set(FEATURE_ESTD_FREERTOS 0)
 
 
 # initialize the Raspberry Pi Pico SDK
-pico_sdk_init()
+#pico_sdk_init()
 
 message(DEBUG "unity: board=${PICO_BOARD}")
 # DEBT: I'd much prefer to merely elevate/reuse existing PICO_BOARD definition, but:
@@ -31,6 +31,7 @@ add_compile_definitions(EMBR_PICOW_BOARD=${PICO_BOARD})
 endif()
 
 add_subdirectory(${ROOT_DIR}/test/unity unit-tests)
+add_subdirectory(../support support)
 
 # DEBT: This sneaks in our esp_log.h shim - viable, but confusing
 target_include_directories(unity-tests-lib PRIVATE ../udp-echo)
@@ -47,17 +48,11 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 target_link_libraries(${PROJECT_NAME}
     pico_stdlib
     unity-tests-lib unity
-    embr estd)
+    support embr estd)
 
 if(PICO_BOARD STREQUAL pico_w)
-    target_link_libraries(${PROJECT_NAME}
-        pico_cyw43_arch_lwip_threadsafe_background
-        #pico_cyw43_arch_lwip_poll
-        )
-    target_link_libraries(unity-tests-lib
-        pico_cyw43_arch_lwip_threadsafe_background
-        #pico_cyw43_arch_lwip_poll
-        )
+    target_link_libraries(${PROJECT_NAME} ${PICO_CYW43_ARCH_LIB})
+    target_link_libraries(unity-tests-lib ${PICO_CYW43_ARCH_LIB})
 endif()
 
 target_include_directories(${PROJECT_NAME} PRIVATE .)

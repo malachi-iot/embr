@@ -17,7 +17,7 @@ pico_ostream clog(stdio_usb);
 
 namespace test { namespace v1 {
 
-int init(const char* ssid, const char* wifi_password)
+int init()
 {
     stdio_init_all();
 
@@ -27,12 +27,21 @@ int init(const char* ssid, const char* wifi_password)
         return 1;
     }
 
+    return 0;
+}
+
+int init(const char* ssid, const char* wifi_password)
+{
+    int code = init();
+
+    if(code != 0) return code;
+
     cyw43_arch_enable_sta_mode();
 
     clog << "connecting to " << ssid << endl;
 
     //pico_error_codes code;
-    int code;
+    //int code;
 
     // DEBT: Something odd about the return code, docs say returns int and also a pico_error_code -
     // AND we get back a nonzero pretty quickly, yet we then get an IP address denoting connectivity,
