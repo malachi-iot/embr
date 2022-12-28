@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.13)
 # initialize the SDK directly
 include($ENV{PICO_SDK_PATH}/pico_sdk_init.cmake)
 
-project(support LANGUAGES C CXX)
+project(embr-support LANGUAGES C CXX)
 
 include(../setup.cmake)
 
@@ -12,6 +12,9 @@ set(PICO_CYW43_ARCH_LIB ${PICO_CYW43_ARCH_LIB} PARENT_SCOPE)
 
 set(SOURCE_FILES init.cpp loop.cpp)
 add_library(${PROJECT_NAME} STATIC)
+add_library(support ALIAS ${PROJECT_NAME})
+add_library(embr::support ALIAS ${PROJECT_NAME})
+
 target_sources(${PROJECT_NAME} PRIVATE ${SOURCE_FILES})
 
 # Gets esp_log.h wrapper - might be better as a tiny interface library instead though. hmm
