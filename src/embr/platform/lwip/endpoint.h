@@ -11,6 +11,7 @@ typedef const ip_addr_t* addr_pointer;
 
 // DEBT: Consolidate with value_evaporator's instance_provider & pointer_from_instance_provider
 
+// First template paramter is whether or not we're using addr pointer
 template <class TAddress>
 class EndpointAddressBase<true, TAddress>
 {
@@ -19,12 +20,16 @@ public:
     typedef const value_type* pointer;
 
 private:    
-    pointer address_;
+    pointer const address_;
 
 public:
-    EndpointAddressBase(pointer address_) : address_(address_) {}
+    ESTD_CPP_CONSTEXPR_RET EndpointAddressBase(pointer address_) : address_(address_) {}
 
-    pointer address() const { return address_; }
+    ESTD_CPP_CONSTEXPR_RET EndpointAddressBase(const EndpointAddressBase& copy_from) : 
+        address_(copy_from.address_)
+    {}
+
+    ESTD_CPP_CONSTEXPR_RET pointer address() const { return address_; }
 };
 
 template <class TAddress>
@@ -38,9 +43,17 @@ private:
     const value_type address_;
 
 public:
-    EndpointAddressBase(pointer address_) : address_(*address_) {}
+    ESTD_CPP_CONSTEXPR_RET EndpointAddressBase(pointer address_) : address_(*address_) {}
 
-    pointer address() const { return &address_; }
+    template <bool use_pointer>
+    ESTD_CPP_CONSTEXPR_RET EndpointAddressBase(
+        const EndpointAddressBase<use_pointer, TAddress>& copy_from) :
+        address_(copy_from.address())
+    {
+
+    }
+
+    ESTD_CPP_CONSTEXPR_RET pointer address() const { return &address_; }
 };
 
 template <bool use_pointer>
@@ -103,7 +116,13 @@ public:
         port_(port)
     {}
 
-    uint16_t port() const { return port_; }
+    template <bool uap>
+    Endpoint(const Endpoint<uap>& copy_from) :
+        base_type(copy_from.address()),
+        port_(copy_from.port())
+    {}
+
+    ESTD_CPP_CONSTEXPR_RET uint16_t port() const { return port_; }
 };
 
 
