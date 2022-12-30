@@ -6,14 +6,6 @@ menu "Embr Helper config"
 
         config WIFI_PASSWORD
             string "WiFi Password"
-
-        # TODO: Move this out to main Kconfig.projbuild under tools/esp-idf
-        config PBUF_CHAIN
-            bool "Utilize PBUF chaining for embr::lwip::PbufNetbuf"
-            default "y"
-            help
-                Turn this off only if you are 100% positive no PBUF chains are
-                going to appear
     endmenu
 
 endmenu
