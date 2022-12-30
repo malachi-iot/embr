@@ -10,7 +10,7 @@ TEST_CASE("general purpose timer v4", "[gptimer v4]")
     v4::Timer timer(TIMER_GROUP_0, TIMER_0);
 }
 
-TEST_CASE("general purpose timer v4", "[gptimer v4]")
+TEST_CASE("general purpose timer v5", "[gptimer v5]")
 {
     v5::Timer timer;
 }
