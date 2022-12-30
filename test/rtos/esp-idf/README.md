@@ -27,9 +27,9 @@ These tests are all for variants of Espressif ESP32
 | 19DEC22 | observer     | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v4.4.3   | Pass    |
 | 15DEC22 | scheduler    | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v4.4.3   | Pass    |
 | 30DEC22 | scheduler    | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v5.0.0   | Fail    | Minor SDK incompatibilities inhibit compilation
-| 15DEC22 | udp-echo     | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v4.4.3   | Pass    |
+| 30DEC22 | udp-echo     | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v4.4.3   | Pass    |
 | 30DEC22 | udp-echo     | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v5.0.0   | Pass    |
-| 19DEC22 | unity        | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v4.4.3   | Pass    |
+| 30DEC22 | unity        | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v4.4.3   | Pass    |
 | 30DEC22 | unity        | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v5.0.0   | Pass    |
 
 
