@@ -11,7 +11,8 @@ set(COMPONENT_SRCS
     ${COMPONENT_SRCS2}
     "dummy.cpp"
     "experimental.cpp"
-    "dataport.cpp")
+    "dataport.cpp"
+    "timer.cpp")
 
 set(COMPONENT_REQUIRES estdlib embr unity testable esp_helper)
 

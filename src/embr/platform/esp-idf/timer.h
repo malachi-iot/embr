@@ -15,6 +15,8 @@
 // code
 namespace embr { namespace esp_idf {
 
+inline namespace v4 {
+
 struct TimerGroup
 {
     timer_group_t group;
@@ -157,6 +159,8 @@ inline estd::layer1::string<8> to_string(const Timer& timer)
     timer_str += estd::to_string((int)timer.idx);
 
     return timer_str;
+}
+
 }
 
 }}
