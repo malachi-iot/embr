@@ -12,9 +12,10 @@ set(COMPONENT_SRCS
     "dummy.cpp"
     "experimental.cpp"
     "dataport.cpp"
+    power.cpp
     "timer.cpp")
 
-set(COMPONENT_REQUIRES estdlib embr unity testable esp_helper)
+set(COMPONENT_REQUIRES estdlib embr unity testable esp_helper bootloader_support)
 
 register_component()
 

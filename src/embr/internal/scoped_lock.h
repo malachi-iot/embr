@@ -8,7 +8,7 @@ namespace internal {
 
 // TODO: Move this out to estd
 // TODO: Document that this is tuned for an acquirable resource lock
-// DEBT: Consider a name change to lock_guard
+// DEBT: Refactor this into either estd::unique_lock or estd::lock_guard
 // DEBT: Consider upgrading it to detect lightweight
 // guard-style locking (such as mutex) vs resource acquisition guarding (done here, memory locking)
 // One could probably do this by looking for the presence of 'value_type'
