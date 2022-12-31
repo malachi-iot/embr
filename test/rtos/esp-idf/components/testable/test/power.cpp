@@ -1,5 +1,7 @@
 #include "unity.h"
 
+#include <esp_log.h>
+
 #include <estd/variant.h>
 
 #include <embr/platform/esp-idf/timer.h>
@@ -40,11 +42,11 @@ template <>
 struct scoped_status_traits<esp_err_t>
 {
     static bool good(esp_err_t e) { return e == ESP_OK; }
-    static void log(esp_err_t e)
+    inline static void log(esp_err_t e)
     {
         ESP_ERROR_CHECK_WITHOUT_ABORT(e);
     }
-    static void assert_(esp_err_t e)
+    inline static void assert_(esp_err_t e)
     {
         ESP_ERROR_CHECK(e);
     }
@@ -56,11 +58,13 @@ struct scoped_guard_traits
     typedef estd::monostate status_type;
 };
 
-template <class T, bool with_status = false>
+
+
+template <class T, bool with_status, scoped_guard_fail_action action>
 class scoped_guard_base;
 
-template <class T>
-class scoped_guard_base<T, false>
+template <class T, scoped_guard_fail_action action>
+class scoped_guard_base<T, false, action>
 {
 public:
     typedef T value_type;
@@ -75,11 +79,23 @@ public:
 protected:
     T value_;
 
-    reference value() { return value_; }
+    ESTD_CPP_CONSTEXPR_RET reference value() { return value_; }
 
     void status(status_type s)
     {
-        status_traits::assert_(s);
+        switch(action)
+        {
+            case SCOPED_GUARD_ASSERT:
+                status_traits::assert_(s);
+                break;
+
+            case SCOPED_GUARD_WARN:
+                status_traits::log(s);
+                break;
+
+            // implicit action is silent
+            default:    break;
+        }
     }
 
 public:
@@ -95,10 +111,10 @@ public:
     constexpr bool good() const { return true; }
 };
 
-template <class T>
-class scoped_guard_base<T, true> : public scoped_guard_base<T, false>
+template <class T, scoped_guard_fail_action action>
+class scoped_guard_base<T, true, action> : public scoped_guard_base<T, false, action>
 {
-    typedef scoped_guard_base<T, false> base_type;
+    typedef scoped_guard_base<T, false, action> base_type;
 
 public:
     typedef typename base_type::guard_traits guard_traits;
@@ -111,7 +127,7 @@ protected:
     void status(status_type s)
     {
         status_ = s;
-        status_traits::log(s);
+        base_type::status(s);
     }
 
 public:
@@ -129,32 +145,42 @@ struct scoped_guard_traits<embr::esp_idf::pm_lock>
 
 template <scoped_guard_fail_action fail_action>
 class scoped_guard<embr::esp_idf::pm_lock, fail_action> :
-    public scoped_guard_base<embr::esp_idf::pm_lock, fail_action != SCOPED_GUARD_ASSERT>
+    public scoped_guard_base<embr::esp_idf::pm_lock, fail_action != SCOPED_GUARD_ASSERT, fail_action>
 {
-    typedef scoped_guard_base<embr::esp_idf::pm_lock, fail_action != SCOPED_GUARD_ASSERT> base_type;
+    typedef scoped_guard_base<embr::esp_idf::pm_lock, fail_action != SCOPED_GUARD_ASSERT, fail_action> base_type;
 
 public:
     scoped_guard(esp_pm_lock_type_t type, int arg = 0, const char* name = nullptr)
     {
-        base_type::status(base_type::value_.create(type, arg, name));
+        base_type::status(base_type::value().create(type, arg, name));
     }
 
     ~scoped_guard()
     {
-        base_type::status(base_type::value_.free());
+        base_type::status(base_type::value().free());
     }
 };
 
 
+
 TEST_CASE("power management", "[esp_pm]")
 {
-    esp_chip_id_t id = ESP_CHIP_ID_ESP32;
+    static const char* TAG = "esp_pm test";
 
-    scoped_guard<pm_lock, SCOPED_GUARD_WARN> pml(ESP_PM_NO_LIGHT_SLEEP);
+    typedef chip_traits<chip_id()> chip_traits;
 
+    ESP_LOGI(TAG, "chip_id=%s", chip_traits::name());
+
+    scoped_guard<pm_lock, SCOPED_GUARD_SILENT> pml(ESP_PM_NO_LIGHT_SLEEP);
+
+#if CONFIG_PM_ENABLE
+    TEST_ASSERT_EQUAL(ESP_OK, pml.status());
     TEST_ASSERT_TRUE(pml.good());
     
     pml->acquire();
     pml->release();
+#else
+    TEST_ASSERT_EQUAL(ESP_ERR_NOT_SUPPORTED, pml.status());
+#endif
 }
 

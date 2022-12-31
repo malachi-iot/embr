@@ -5,6 +5,7 @@
 
 namespace embr { namespace esp_idf {
 
+// What ESP32 variant specifically we are compiling for
 constexpr esp_chip_id_t chip_id()
 {
 #if CONFIG_IDF_TARGET_ESP32
@@ -24,6 +25,17 @@ constexpr esp_chip_id_t chip_id()
     return ESP_CHIP_ID_ESP32;
 #endif
 }
+
+
+template <esp_chip_id_t>
+struct chip_traits;
+
+
+template <>
+struct chip_traits<ESP_CHIP_ID_ESP32>
+{
+    static const char* name() { return "ESP32"; }
+};
 
 
 
