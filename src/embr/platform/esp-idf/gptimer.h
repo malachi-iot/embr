@@ -11,6 +11,9 @@ class Timer
     gptimer_handle_t h;
 
 public:
+    constexpr Timer() = default;
+    constexpr Timer(gptimer_handle_t h) : h{h} {}
+
     esp_err_t init(const gptimer_config_t* config)
     {
         return gptimer_new_timer(config, &h);
@@ -65,6 +68,8 @@ public:
     {
         return gptimer_register_event_callbacks(h, cbs, user_data);
     }
+
+    constexpr operator gptimer_handle_t() const { return h; }
 };
 
 
