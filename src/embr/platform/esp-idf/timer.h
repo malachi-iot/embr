@@ -33,7 +33,10 @@ struct Timer
     // ++ EXPERIMENTAL
     // Typically 80Mhz, but can be reconfigured
     static constexpr unsigned apb_hz() { return APB_CLK_FREQ; }
-#if ESTD_IDF_VER >= ESTD_BUILD_IDF_VER(5, 0, 0, 0)
+// still some mysteries with version_finder.cmake's defines showing up
+// By now it's fine to use Espressif's official version of this, so we'll do so
+//#if ESTD_IDF_VER >= ESTD_BUILD_IDF_VER(5, 0, 0, 0)
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
     static constexpr unsigned base_clock_hz() { return apb_hz(); }
 #else
     static constexpr unsigned base_clock_hz() { return TIMER_BASE_CLK; }
