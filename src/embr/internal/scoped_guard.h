@@ -46,21 +46,28 @@ template <class T, bool with_status, scoped_guard_fail_action action>
 class scoped_guard_base;
 
 
+// DEBT: I could swear I did one of these for estd already
+#define EMBR_CPP_STANDARD_TYPEDEF(T)            \
+    typedef T value_type;                       \
+    typedef value_type& reference;              \
+    typedef const value_type& const_reference;  \
+    typedef value_type* pointer;                \
+    typedef const value_type* const_pointer;
+
+
+
 template <class T, scoped_guard_fail_action action>
 class scoped_guard_base<T, false, action>
 {
 public:
-    typedef T value_type;
-    typedef value_type& reference;
-    typedef const value_type& const_reference;
-    typedef value_type* pointer;
-    typedef const value_type* const_pointer;
+    EMBR_CPP_STANDARD_TYPEDEF(T)
+
     typedef scoped_guard_traits<T> guard_traits;
     typedef typename guard_traits::status_type status_type;
     typedef scoped_status_traits<status_type> status_traits;
 
 protected:
-    T value_;
+    value_type value_;
 
     ESTD_CPP_CONSTEXPR_RET reference value() { return value_; }
 
