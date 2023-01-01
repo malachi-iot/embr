@@ -2,41 +2,16 @@
 
 #include <esp_log.h>
 
-#include <estd/variant.h>
-
 #include <embr/platform/esp-idf/timer.h>
 #include <embr/platform/esp-idf/app_format.h>
 #include <embr/platform/esp-idf/pm.h>
 
+#include <embr/internal/scoped_guard.h>
+
 using namespace embr::esp_idf;
 
-enum scoped_guard_fail_action
-{
-    SCOPED_GUARD_ASSERT = 0,
 
-    // These two retain status
-    SCOPED_GUARD_WARN = 1,
-    SCOPED_GUARD_SILENT = 2
-};
-
-// DEBT: I've done something like this elsewhere, but this naming matches
-// std c++11 fairly well so cascade this out to estd
-// See: https://en.cppreference.com/w/cpp/thread/scoped_lock for similar naming
-// All that said, something like 'unique_value' would match the expected behavior
-// better, so maybe consider that (ala unique_ptr)
-
-// NOTE: Using scoped_guard implies an assert/exception style behavior - expect
-// the system to halt if ctor/dtor is not fully successful
-template <class T, scoped_guard_fail_action = SCOPED_GUARD_WARN>
-class scoped_guard;
-
-template <class T>
-struct scoped_status_traits
-{
-    constexpr static bool good(T) { return true; }
-    constexpr static void log(T) {}
-    constexpr static void assert_(T) {}
-};
+namespace embr { namespace internal {
 
 template <>
 struct scoped_status_traits<esp_err_t>
@@ -52,88 +27,8 @@ struct scoped_status_traits<esp_err_t>
     }
 };
 
-template <class T>
-struct scoped_guard_traits
-{
-    typedef estd::monostate status_type;
-};
 
 
-
-template <class T, bool with_status, scoped_guard_fail_action action>
-class scoped_guard_base;
-
-template <class T, scoped_guard_fail_action action>
-class scoped_guard_base<T, false, action>
-{
-public:
-    typedef T value_type;
-    typedef value_type& reference;
-    typedef const value_type& const_reference;
-    typedef value_type* pointer;
-    typedef const value_type* const_pointer;
-    typedef scoped_guard_traits<T> guard_traits;
-    typedef typename guard_traits::status_type status_type;
-    typedef scoped_status_traits<status_type> status_traits;
-
-protected:
-    T value_;
-
-    ESTD_CPP_CONSTEXPR_RET reference value() { return value_; }
-
-    void status(status_type s)
-    {
-        switch(action)
-        {
-            case SCOPED_GUARD_ASSERT:
-                status_traits::assert_(s);
-                break;
-
-            case SCOPED_GUARD_WARN:
-                status_traits::log(s);
-                break;
-
-            // implicit action is silent
-            default:    break;
-        }
-    }
-
-public:
-    //operator reference() { return value_; }
-    //operator const_reference() const { return value_; }
-    ESTD_CPP_CONSTEXPR_RET const_pointer get() const { return &value_; }
-
-    ESTD_CPP_CONSTEXPR_RET const_pointer operator*() { return get(); }
-    ESTD_CPP_CONSTEXPR_RET pointer operator->() { return &value_; }
-    ESTD_CPP_CONSTEXPR_RET const_pointer operator->() const { return &value_; }
-
-    // Success is always implied when no status is specifically tracked
-    constexpr bool good() const { return true; }
-};
-
-template <class T, scoped_guard_fail_action action>
-class scoped_guard_base<T, true, action> : public scoped_guard_base<T, false, action>
-{
-    typedef scoped_guard_base<T, false, action> base_type;
-
-public:
-    typedef typename base_type::guard_traits guard_traits;
-    typedef typename guard_traits::status_type status_type;
-    typedef typename base_type::status_traits status_traits;
-
-protected:
-    status_type status_;
-
-    void status(status_type s)
-    {
-        status_ = s;
-        base_type::status(s);
-    }
-
-public:
-    constexpr status_type status() const { return status_; }
-    constexpr bool good() const { return status_traits::good(status_); }
-};
 
 template <>
 struct scoped_guard_traits<embr::esp_idf::pm_lock>
@@ -160,6 +55,9 @@ public:
         base_type::status(base_type::value().free());
     }
 };
+
+
+}}
 
 
 template <esp_chip_id_t>
@@ -203,7 +101,7 @@ TEST_CASE("power management", "[esp_pm]")
 
     ESP_LOGI(TAG, "chip_id=%s", chip_traits::name());
 
-    scoped_guard<pm_lock, SCOPED_GUARD_SILENT> pml(ESP_PM_NO_LIGHT_SLEEP);
+    embr::internal::scoped_guard<pm_lock, embr::internal::SCOPED_GUARD_SILENT> pml(ESP_PM_NO_LIGHT_SLEEP);
 
 #if CONFIG_PM_ENABLE
     typedef pm_traits<chip_id()> pm_traits;
