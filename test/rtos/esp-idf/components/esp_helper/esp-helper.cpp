@@ -52,8 +52,8 @@ void event_handler(void* arg, esp_event_base_t event_base,
 {
     static const char* TAG = "event_handler";
 
-//#if ESTD_IDF_VER >= ESTD_BUILD_IDF_VER(5, 0, 0, 0)
-#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
+#if ESTD_IDF_VER >= ESTD_BUILD_IDF_VER(5, 0, 0, 0)
+//#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
     ESP_LOGV(TAG, "event_base=%s, event_id=%ld", event_base, event_id);
 #else
     ESP_LOGV(TAG, "event_base=%s, event_id=%d", event_base, event_id);
