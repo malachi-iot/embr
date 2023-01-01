@@ -15,7 +15,7 @@ set(COMPONENT_SRCS
     power.cpp
     "timer.cpp")
 
-set(COMPONENT_REQUIRES estdlib embr unity testable esp_helper bootloader_support)
+set(COMPONENT_REQUIRES estdlib embr unity testable esp_helper)
 
 register_component()
 

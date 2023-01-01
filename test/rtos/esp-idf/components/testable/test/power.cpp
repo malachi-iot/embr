@@ -60,32 +60,6 @@ public:
 }}
 
 
-template <esp_chip_id_t>
-struct pm_traits;
-
-template <>
-struct pm_traits<ESP_CHIP_ID_ESP32>
-{
-    typedef esp_pm_config_esp32_t config_type;
-};
-
-
-#ifdef ESP_CHIP_ID_ESP32H2
-template <>
-struct pm_traits<ESP_CHIP_ID_ESP32H2>
-{
-    typedef esp_pm_config_esp32h2_t config_type;
-};
-#endif
-
-
-#ifdef ESP_CHIP_ID_ESP32C2
-template <>
-struct pm_traits<ESP_CHIP_ID_ESP32C2>
-{
-    typedef esp_pm_config_esp32c2_t config_type;
-};
-#endif
 
 // For esp_clk_cpu_freq
 #include "esp_private/esp_clk.h"
@@ -97,14 +71,15 @@ TEST_CASE("power management", "[esp_pm]")
 {
     static const char* TAG = "esp_pm test";
 
-    typedef chip_traits<chip_id()> chip_traits;
+    constexpr chip_id chip = chip_id::Current;
+    typedef chip_traits<chip> chip_traits;
 
     ESP_LOGI(TAG, "chip_id=%s", chip_traits::name());
 
     embr::internal::scoped_guard<pm_lock, embr::internal::SCOPED_GUARD_SILENT> pml(ESP_PM_NO_LIGHT_SLEEP);
 
 #if CONFIG_PM_ENABLE
-    typedef pm_traits<chip_id()> pm_traits;
+    typedef pm_traits<chip> pm_traits;
 
     //int cur_freq_mhz = esp_clk_cpu_freq() / MHZ;
     //int xtal_freq_mhz = esp_clk_xtal_freq() / MHZ;
