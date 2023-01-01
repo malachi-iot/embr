@@ -1,5 +1,7 @@
 #include <esp_pm.h>
 
+#include "traits.h"
+
 namespace embr { namespace esp_idf {
 
 class pm_lock
