@@ -40,11 +40,13 @@ public:
 
 inline namespace internal {
 
+#ifdef ESP_CHIP_ID_ESP32
 template <>
 struct pm_traits<chip_id::ESP32>
 {
     typedef esp_pm_config_esp32_t config_type;
 };
+#endif
 
 
 #ifdef ESP_CHIP_ID_ESP32H2
@@ -57,6 +59,15 @@ struct pm_traits<chip_id::ESP32H2>
 
 
 #ifdef ESP_CHIP_ID_ESP32C2
+template <>
+struct pm_traits<chip_id::ESP32C2>
+{
+    typedef esp_pm_config_esp32c2_t config_type;
+};
+#endif
+
+
+#ifdef ESP_CHIP_ID_ESP32C3
 template <>
 struct pm_traits<chip_id::ESP32C2>
 {

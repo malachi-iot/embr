@@ -45,6 +45,12 @@ struct chip_traits<chip_id::ESP32>
     static const char* name() { return "ESP32"; }
 };
 
+template <>
+struct chip_traits<chip_id::ESP32C3>
+{
+    static const char* name() { return "ESP32C3"; }
+};
+
 
 inline namespace internal {
 

@@ -15,7 +15,6 @@
 
 #include "main.h"
 #include "gpio.h"
-#include "xthal_clock.h"
 
 extern "C" void app_main()
 {

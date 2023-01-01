@@ -103,16 +103,23 @@ inline void Debouncer::gpio_isr()
     //static constexpr const char* TAG = "gpio_isr";
 
     uint32_t gpio_intr_status = READ_PERI_REG(GPIO_STATUS_REG);   //read status to get interrupt status for GPIO0-31
-    uint32_t gpio_intr_status_h = READ_PERI_REG(GPIO_STATUS1_REG);//read status1 to get interrupt status for GPIO32-39
     // Fun fact - your ESP32 will reset if you don't clear your interrupts :)
     SET_PERI_REG_MASK(GPIO_STATUS_W1TC_REG, gpio_intr_status);    //Clear intr for gpio0-gpio31
+
+    // Some devices have less than 32 GPIO
+    // For example esp32-c3 has 22 or 16
+#ifdef GPIO_STATUS1_REG
+    uint32_t gpio_intr_status_h = READ_PERI_REG(GPIO_STATUS1_REG);//read status1 to get interrupt status for GPIO32-39
     SET_PERI_REG_MASK(GPIO_STATUS1_W1TC_REG, gpio_intr_status_h); //Clear intr for gpio32-39
+#endif
 
     // https://www.esp32.com/viewtopic.php?t=20123 indicates we can call this here
     auto now = esp_clock::now();
     auto duration = now - last_now;
 
     int pin = 0;
+
+    // DEBT: Upper gpio_intr_status_h not yet supported
 
     while(gpio_intr_status)
     {
