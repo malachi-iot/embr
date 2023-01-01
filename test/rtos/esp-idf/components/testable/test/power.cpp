@@ -162,6 +162,38 @@ public:
 };
 
 
+template <esp_chip_id_t>
+struct pm_traits;
+
+template <>
+struct pm_traits<ESP_CHIP_ID_ESP32>
+{
+    typedef esp_pm_config_esp32_t config_type;
+};
+
+
+#ifdef ESP_CHIP_ID_ESP32H2
+template <>
+struct pm_traits<ESP_CHIP_ID_ESP32H2>
+{
+    typedef esp_pm_config_esp32h2_t config_type;
+};
+#endif
+
+
+#ifdef ESP_CHIP_ID_ESP32C2
+template <>
+struct pm_traits<ESP_CHIP_ID_ESP32C2>
+{
+    typedef esp_pm_config_esp32c2_t config_type;
+};
+#endif
+
+// For esp_clk_cpu_freq
+#include "esp_private/esp_clk.h"
+
+// Guidance from https://github.com/espressif/esp-idf/blob/v5.0/examples/wifi/power_save/main/power_save.c
+
 
 TEST_CASE("power management", "[esp_pm]")
 {
@@ -174,6 +206,30 @@ TEST_CASE("power management", "[esp_pm]")
     scoped_guard<pm_lock, SCOPED_GUARD_SILENT> pml(ESP_PM_NO_LIGHT_SLEEP);
 
 #if CONFIG_PM_ENABLE
+    typedef pm_traits<chip_id()> pm_traits;
+
+    //int cur_freq_mhz = esp_clk_cpu_freq() / MHZ;
+    //int xtal_freq_mhz = esp_clk_xtal_freq() / MHZ;
+    //int min_mhz = estd::min(cur_freq_mhz, xtal_freq_mhz);
+
+    // DEBT: Just getting something in here to compile
+
+    int max_mhz = 160;
+    int min_mhz = 20;
+
+    pm_traits::config_type config =
+    {
+        .max_freq_mhz = max_mhz,
+        .min_freq_mhz = min_mhz,
+#if CONFIG_FREERTOS_USE_TICKLESS_IDLE
+        .light_sleep_enable = true
+#else
+        .light_sleep_enable = false
+#endif
+    };
+
+    ESP_ERROR_CHECK(esp_pm_configure(&config));
+
     TEST_ASSERT_EQUAL(ESP_OK, pml.status());
     TEST_ASSERT_TRUE(pml.good());
     
