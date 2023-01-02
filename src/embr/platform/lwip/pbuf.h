@@ -24,6 +24,13 @@
 
 namespace embr { namespace lwip {
 
+#ifdef FEATURE_CPP_INLINE_NAMESPACE
+// The somewhat automatic behavior of these Pbuf wrappers can be
+// confusing, and the naming as well.  Planning to revise this
+// in v2
+inline namespace v1 {
+#endif
+
 // If using this directly, know this is just a thin wrapper around
 // pbuf itself.  No auto-reference magic
 struct PbufBase
@@ -208,9 +215,11 @@ struct Pbuf : PbufBase
     }
 };
 
+#ifdef FEATURE_CPP_INLINE_NAMESPACE
+}   // v1
+#endif
 
 }}
 
 
-//#include "legacy/pbuf-netbuf.h"
 #include "../guard-out.h"
