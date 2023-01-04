@@ -115,6 +115,7 @@ ESTD_CPP_CONSTEXPR_RET bool operator==(descriptor_base<bitness1> lhs, descriptor
 
 // Using this instead of layer2 array because there are time we don't even want to imply that
 // we are observing an upper bound
+// DEBT: We can replace this with internal::span_base
 template <class T>
 class base
 {
