@@ -39,16 +39,18 @@ using material = embr::bits::internal::material<e, direction, direction, estd::a
 // Since we derive from array, you get access to size() etc
 namespace layer2 {
 
+// DEBT: use estd::span here - not doing so now because it flips out eval/comparison
+
 template <endianness e, size_t N,
     length_direction direction = default_direction,
     resume_direction rd = direction
     >
-using material = embr::bits::internal::material<e, direction, rd, estd::layer2::array<uint8_t, N> >;
+using material = embr::bits::internal::material<e, direction, rd, estd::legacy::layer2::array<uint8_t, N> >;
 
 
 template <endianness e, size_t N, length_direction direction = default_direction, resume_direction rd = direction>
 using decoder = embr::bits::decoder<e, direction, rd,
-    internal::provider<e, estd::layer2::array<uint8_t, N> > >;
+    internal::provider<e, estd::legacy::layer2::array<uint8_t, N> > >;
 
 }
 

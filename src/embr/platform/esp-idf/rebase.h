@@ -6,20 +6,12 @@
 #include <estd/type_traits.h>
 
 
-// DEBT: Move this elsewhere
-#define EMBR_CPP_VALUE_TYPE(T) \
-typedef T value_type;           \
-typedef value_type& reference;  \
-typedef const value_type& const_reference; \
-typedef T* pointer;
-
-
 namespace embr { namespace internal {
 
 template <class T>
 struct reference_rebase_traits
 {
-    EMBR_CPP_VALUE_TYPE(T)
+    ESTD_CPP_STD_VALUE_TYPE(T)
 
     typedef typename value_type::time_point duration;
 
@@ -30,7 +22,7 @@ struct reference_rebase_traits
 template <class T>
 struct reference_rebase_traits<T*>
 {
-    EMBR_CPP_VALUE_TYPE(T)
+    ESTD_CPP_STD_VALUE_TYPE(T)
 
     typedef typename value_type::time_point duration;
 
@@ -58,7 +50,7 @@ template <class T>
 struct rebase_traits<T,
     typename estd::enable_if<is_time_point<typename T::time_point>::value>::type >
 {
-    EMBR_CPP_VALUE_TYPE(T)
+    ESTD_CPP_STD_VALUE_TYPE(T)
 
     typedef typename value_type::time_point::duration duration;
 
@@ -70,7 +62,7 @@ template <class T>
 struct rebase_traits<T*,
     typename estd::enable_if<is_time_point<typename T::time_point>::value>::type >
 {
-    EMBR_CPP_VALUE_TYPE(T)
+    ESTD_CPP_STD_VALUE_TYPE(T)
 
     typedef typename value_type::time_point::duration duration;
 

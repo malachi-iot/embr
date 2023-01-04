@@ -75,7 +75,7 @@ struct BatchCompareTraits;
 template <class T, class TCompare>
 struct BatchCompareTraits
 {
-    EMBR_CPP_VALUE_TYPE(T)
+    ESTD_CPP_STD_VALUE_TYPE(T)
 
     typedef typename value_type::key_type key_type;
     typedef TCompare key_compare;
@@ -89,7 +89,7 @@ static int breakpointCondition = 0;
 template <class T, class TTraits = BatchCompareTraits<T> >
 struct BatchCompare : TTraits::key_compare
 {
-    EMBR_CPP_VALUE_TYPE(T)
+    ESTD_CPP_STD_VALUE_TYPE(T)
 
     typedef TTraits traits_type;
     typedef typename traits_type::key_compare key_compare;
@@ -321,7 +321,7 @@ TEST_CASE("experimental test", "[experimental]")
                 // DEBT: Use layer2 here
                 bits::layer1::decoder<bits::little_endian, 8> d;
 
-                estd::copy_n(le_example1, 4, d.value());
+                estd::copy_n(le_example1, 4, d.data());
 
                 // grabs middle of LE 32-bit integer, 4 bits in and treated
                 // as an 8-bit value

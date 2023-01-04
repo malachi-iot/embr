@@ -1,6 +1,7 @@
 #pragma once
 
 #include "descriptor.h"
+#include <estd/span.h>
 
 namespace embr { namespace bits {
 
@@ -60,7 +61,7 @@ namespace layer2 {
 
 template <endianness e, size_t N, length_direction direction = default_direction>
 using encoder = embr::bits::encoder<e, direction, direction,
-    internal::provider<e, estd::layer2::array<uint8_t, N> > >;
+    internal::provider<e, estd::span<uint8_t, N> > >;
 
 
 }
