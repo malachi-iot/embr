@@ -10,10 +10,10 @@ namespace legacy {
 
 #ifdef FEATURE_CPP_ALIASTEMPLATE
 template <class CharT, class CharTraits = std::char_traits<CharT> >
-using basic_opbufstream = estd::internal::basic_ostream<basic_opbuf_streambuf<CharT, CharTraits> >;
+using basic_opbufstream = estd::detail::basic_ostream<basic_opbuf_streambuf<CharT, CharTraits> >;
 #endif
 
-typedef estd::internal::basic_ostream<opbuf_streambuf> opbufstream;
+typedef estd::detail::basic_ostream<opbuf_streambuf> opbufstream;
 
 }
 #endif
@@ -23,7 +23,7 @@ inline
 #endif
 namespace upgrading {
 
-typedef estd::internal::basic_ostream<embr::lwip::upgrading::opbuf_streambuf> opbufstream;
+typedef estd::detail::basic_ostream<embr::lwip::upgrading::opbuf_streambuf> opbufstream;
 
 }
 
