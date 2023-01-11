@@ -158,6 +158,10 @@ struct ring_buffer
 };
 
 
+// TODO: Consider an implementation of this using xMessageBuffer for better
+// cross platform ability.  Note that that is not zero copy.  ring buffer
+// promises zero copy, but F&& f behaviors might interrupt that - it depends
+// on if compiler truly inlines 'enqueue'
 template <class TUser = estd::monostate>
 struct delegate_queue
 {
@@ -184,7 +188,7 @@ struct delegate_queue
     };
 
     template <class F, class ...TArgs>
-    void enqueue(F&& f, TArgs&&...args)
+    inline void enqueue(F&& f, TArgs&&...args)
     {
         typedef item<F> item_type;
 
@@ -261,7 +265,11 @@ struct fasio2
         {
             xTaskNotifyWait(0, 0, &v, portMAX_DELAY);
 
-        } while (v != value);
+        // The way task notification works we might miss one,
+        // so keep checking until we get a v >= what we're looking for.
+        // this is safe because delegate queue convention is to sequentially
+        // process the items
+        } while (v < value);
     }
 };
 
