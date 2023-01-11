@@ -256,19 +256,23 @@ struct delegate_queue
         bool valid() const { return valid_; }
         T get() const { return retval_; }
         
-        template <class F, class ...TArgs>
-        async_wrapper2(delegate_queue q, F&& f, TArgs&&...args)
+        template <class E, class F, class ...TArgs>
+        async_wrapper2(E&& emit, F&& f, TArgs&&...args)
         {
             static const char* TAG = "async_wrapper2";
 
             //ESP_LOGI(TAG, "ctor");
 
+            // Make functor here because this is the soonest place in which retval_
+            // is available
             auto f2 = [&]()
             {
                 retval_ = f(std::forward<TArgs>(args)...);
                 valid_ = true;
             };
-            q.enqueue(std::move(f2));
+            // TODO: For this to really work, we need an impl
+            // so that any extra enqueue processing also happens here
+            emit(std::move(f2));
         }
     };
 
@@ -292,7 +296,10 @@ struct delegate_queue
     {
         typedef estd::invoke_result_t<estd::decay_t<F>, TArgs... > result_type;
         typedef async_wrapper2<result_type> wrapper;
-        return wrapper(*this, std::move(f), std::forward<TArgs>(args)...);
+        return wrapper([this](auto&& f2)
+        {
+            enqueue(std::move(f2));
+        }, std::move(f), std::forward<TArgs>(args)...);
     }
 
     template <class F>
