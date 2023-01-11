@@ -3,6 +3,8 @@
 #include <nvs_flash.h>
 #include <nvs.h>
 
+#include <esp_log.h>
+
 // NOTE: esp-idf has its own C++ thing going on with full unique_ptr and virtual
 // methods.  We're going a different toute
 namespace embr { namespace esp_idf { namespace nvs {
