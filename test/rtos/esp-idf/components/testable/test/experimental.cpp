@@ -142,6 +142,7 @@ TEST_CASE("freertos retry", "[experimental]")
 }
 
 static embr::experimental::fasio fasio;
+static embr::experimental::fasio2 fasio2;
 
 
 TEST_CASE("fake asio", "[experimental]")
@@ -166,4 +167,28 @@ TEST_CASE("fake asio", "[experimental]")
     BaseType_t r = fasio.end_invoke(handle, 10);
 
     TEST_ASSERT_EQUAL(pdFALSE, r);
+}
+
+
+TEST_CASE("fake asio2", "[experimental]")
+{
+    int counter = 0;
+
+    uint32_t handle;
+    
+    handle = fasio2.begin_invoke(
+        [&](){ ++counter; });
+    handle = fasio2.begin_invoke(
+        [&](){ ++counter; });
+
+    fasio2.service();
+    fasio2.service();
+
+    fasio2.end_invoke(handle);
+
+    TEST_ASSERT_EQUAL(2, counter);
+
+    //BaseType_t r = fasio2.end_invoke(handle, 10);
+
+    //TEST_ASSERT_EQUAL(pdFALSE, r);
 }

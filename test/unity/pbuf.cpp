@@ -11,6 +11,9 @@
 
 #include "esp_log.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-variable"
+
 using namespace embr;
 using namespace embr::mem;
 
@@ -314,3 +317,6 @@ TEST_CASE("lwip ostream", "[lwip-ios]")
     TEST_ASSERT_EQUAL(s1_size + 1, out.tellp());
     TEST_ASSERT_EQUAL(s1[0], *payload);
 }
+
+#pragma GCC diagnostic pop
+
