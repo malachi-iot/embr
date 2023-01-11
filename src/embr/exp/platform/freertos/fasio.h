@@ -167,6 +167,8 @@ struct ring_buffer
 template <class TUser = estd::monostate>
 struct delegate_queue
 {
+    static constexpr const char* TAG = "delegate_queue";
+
     ring_buffer buffer;
 
     typedef TUser item_base;
@@ -200,7 +202,7 @@ struct delegate_queue
 
         buffer.send_acquire(&pvItem, sizeof(item_type), portMAX_DELAY);
 
-        //ESP_LOGI(TAG, "begin_invoke: sz=%u", sizeof(item_type));
+        ESP_LOGI(TAG, "enqueue: sz=%u", sizeof(item_type));
 
         new (pvItem) item_type(std::move(f), std::forward<TArgs>(args)...);
 
@@ -222,23 +224,53 @@ struct delegate_queue
         buffer.return_item(i);
     }
 
+    void dequeue() { dequeue([](auto){}); }
+
+    template <class T>
+    struct wrapper_promise
+    {
+        T retval;
+    };
+
     template <class T>
     struct async_wrapper
     {
         T retval;
 
+    };
 
+    // https://fekir.info/post/how-to-force-return-value-optimization/
+    // because f2 below's this->retval MUST NOT move around
+    template <class T>
+    class async_wrapper2
+    {
+        T retval_;
+        bool valid_ = false;
+
+        async_wrapper2() = delete;
+        async_wrapper2(const async_wrapper2&) = delete;
+        async_wrapper2(async_wrapper2&&) = delete;
+        async_wrapper2 operator=(const async_wrapper2&) = delete;
+
+    public:
+        bool valid() const { return valid_; }
+        T get() const { return retval_; }
+        
         template <class F, class ...TArgs>
-        void do_wrap(delegate_queue q, F&& f, TArgs&&...args)
+        async_wrapper2(delegate_queue q, F&& f, TArgs&&...args)
         {
+            static const char* TAG = "async_wrapper2";
+
+            //ESP_LOGI(TAG, "ctor");
+
             auto f2 = [&]()
             {
-                retval = f(std::forward<TArgs>(args)...);
+                retval_ = f(std::forward<TArgs>(args)...);
+                valid_ = true;
             };
             q.enqueue(std::move(f2));
         }
     };
-
 
     template <class F, class ...TArgs>
     async_wrapper<estd::invoke_result_t<estd::decay_t<F>, TArgs... > > test2(F&& f, TArgs&&...args)
@@ -253,6 +285,14 @@ struct delegate_queue
         wrapper.retval = f2();
 
         return wrapper;
+    }
+
+    template <class F, class ...TArgs>
+    async_wrapper2<estd::invoke_result_t<estd::decay_t<F>, TArgs... > > test3(F&& f, TArgs&&...args)
+    {
+        typedef estd::invoke_result_t<estd::decay_t<F>, TArgs... > result_type;
+        typedef async_wrapper2<result_type> wrapper;
+        return wrapper(*this, std::move(f), std::forward<TArgs>(args)...);
     }
 
     template <class F>
@@ -277,8 +317,6 @@ struct fasio2
 
     delegate_queue<item_base> buffer;
     int counter = 0;
-
-    static constexpr const char* TAG = "fasio2";
 
     fasio2()
     {
