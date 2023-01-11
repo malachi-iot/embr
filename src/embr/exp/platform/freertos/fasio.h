@@ -1,6 +1,8 @@
 #pragma once
 
 #include <estd/functional.h>
+#include <estd/variant.h>
+
 #include <estd/port/freertos/queue.h>
 #include <estd/port/freertos/thread.h>
 
@@ -155,32 +157,24 @@ struct ring_buffer
     operator RingbufHandle_t() const { return h; }
 };
 
-// Depends on non-standard esp-idf ring buffer
-// https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/freertos_additions.html#ring-buffer-api
-struct fasio2
+
+template <class TUser = estd::monostate>
+struct delegate_queue
 {
     ring_buffer buffer;
-    int counter = 0;
 
-    static constexpr const char* TAG = "fasio2";
-
-    fasio2()
-    {
-        buffer.create(512, RINGBUF_TYPE_NOSPLIT);
-    }
-
-    struct item_base
-    {
-        estd::freertos::wrapper::task owner;
-        uint32_t ulValue;
-    };
+    typedef TUser item_base;
 
     template <typename F>
     struct item : item_base
     {
         estd::experimental::inline_function<F, void(void)> delegate;
 
-        item(F&& f) : delegate(std::move(f)) {}
+        template <class ...TArgs>
+        item(F&& f, TArgs&&...args) :
+            item_base(std::forward<TArgs>(args)...),
+            delegate(std::move(f))
+        {}
     };
 
     // Think of this as a brute force union
@@ -189,8 +183,8 @@ struct fasio2
         estd::detail::function<void(void)> delegate;
     };
 
-    template <class F>
-    uint32_t begin_invoke(F&& f)
+    template <class F, class ...TArgs>
+    void enqueue(F&& f, TArgs&&...args)
     {
         typedef item<F> item_type;
 
@@ -198,28 +192,64 @@ struct fasio2
 
         buffer.send_acquire(&pvItem, sizeof(item_type), portMAX_DELAY);
 
-        ESP_LOGI(TAG, "begin_invoke: sz=%u", sizeof(item_type));
+        //ESP_LOGI(TAG, "begin_invoke: sz=%u", sizeof(item_type));
 
-        auto i = new (pvItem) item_type(std::move(f));
-
-        i->owner = xTaskGetCurrentTaskHandle();
-        i->ulValue = ++counter;
+        new (pvItem) item_type(std::move(f), std::forward<TArgs>(args)...);
 
         buffer.send_complete(pvItem);
-
-        return i->ulValue;
     }
 
-    void service()
+    template <class F>
+    void dequeue(F&& f)
     {
         size_t sz;
         auto i = (item_assist*)buffer.receive(&sz, portMAX_DELAY);
 
         i->delegate();
-        i->owner.notify(i->ulValue, eSetValueWithOverwrite);
+
+        f(i);
+
         i->~item_assist();
 
         buffer.return_item(i);
+    }
+};
+
+
+// Depends on non-standard esp-idf ring buffer
+// https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/freertos_additions.html#ring-buffer-api
+struct fasio2
+{
+    struct item_base
+    {
+        estd::freertos::wrapper::task owner;
+        uint32_t ulValue;
+    };
+
+    delegate_queue<item_base> buffer;
+    int counter = 0;
+
+    static constexpr const char* TAG = "fasio2";
+
+    fasio2()
+    {
+        buffer.buffer.create(512, RINGBUF_TYPE_NOSPLIT);
+    }
+
+    template <class F>
+    uint32_t begin_invoke(F&& f)
+    {
+        buffer.enqueue(std::move(f), xTaskGetCurrentTaskHandle(), ++counter);
+
+        return counter;
+    }
+
+    void service()
+    {
+        buffer.dequeue([](auto i)
+        {
+            i->owner.notify(i->ulValue, eSetValueWithOverwrite);
+        });
     }
 
 
