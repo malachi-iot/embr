@@ -169,6 +169,11 @@ TEST_CASE("fake asio", "[experimental]")
     TEST_ASSERT_EQUAL(pdFALSE, r);
 }
 
+static int test_fn(int value)
+{
+    return value * 2;
+}
+
 
 TEST_CASE("fake asio2", "[experimental]")
 {
@@ -191,4 +196,9 @@ TEST_CASE("fake asio2", "[experimental]")
     //BaseType_t r = fasio2.end_invoke(handle, 10);
 
     //TEST_ASSERT_EQUAL(pdFALSE, r);
+
+    auto v = fasio2.buffer.test2([](){ return 5; });
+    auto v2 = fasio2.buffer.test2(test_fn, 10);
+
+    TEST_ASSERT_EQUAL(20, v2.retval);
 }

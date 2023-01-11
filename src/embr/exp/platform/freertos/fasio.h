@@ -6,6 +6,8 @@
 #include <estd/port/freertos/queue.h>
 #include <estd/port/freertos/thread.h>
 
+#include <embr/internal/argtype.h>
+
 #include "freertos/ringbuf.h"
 #include "esp_log.h"
 
@@ -187,6 +189,8 @@ struct delegate_queue
         estd::detail::function<void(void)> delegate;
     };
 
+    // 'F' signature *must* be void(), TArgs are to construct
+    // the tracking item itself
     template <class F, class ...TArgs>
     inline void enqueue(F&& f, TArgs&&...args)
     {
@@ -216,6 +220,47 @@ struct delegate_queue
         i->~item_assist();
 
         buffer.return_item(i);
+    }
+
+    template <class T>
+    struct async_wrapper
+    {
+        T retval;
+
+
+        template <class F, class ...TArgs>
+        void do_wrap(delegate_queue q, F&& f, TArgs&&...args)
+        {
+            auto f2 = [&]()
+            {
+                retval = f(std::forward<TArgs>(args)...);
+            };
+            q.enqueue(std::move(f2));
+        }
+    };
+
+
+    template <class F, class ...TArgs>
+    async_wrapper<estd::invoke_result_t<estd::decay_t<F>, TArgs... > > test2(F&& f, TArgs&&...args)
+    {
+        typedef estd::invoke_result_t<estd::decay_t<F>, TArgs... > result_type;
+        async_wrapper<result_type> wrapper;
+        auto f2 = [&]()
+        {
+            return f(std::forward<TArgs>(args)...);
+        };
+
+        wrapper.retval = f2();
+
+        return wrapper;
+    }
+
+    template <class F>
+    typename embr::internal::ArgType<F>::result_type test(F&& f)
+    {
+        typedef typename embr::internal::ArgType<F>::result_type result_type;
+
+        return result_type();
     }
 };
 
