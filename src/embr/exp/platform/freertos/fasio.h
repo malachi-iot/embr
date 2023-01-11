@@ -224,7 +224,7 @@ struct delegate_queue
         buffer.return_item(i);
     }
 
-    void dequeue() { dequeue([](auto){}); }
+    void dequeue() { dequeue([](item_assist*){}); }
 
     template <class T>
     struct wrapper_promise
