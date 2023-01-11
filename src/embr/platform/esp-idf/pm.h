@@ -1,3 +1,5 @@
+#include "internal/scoped_guard.h"
+
 #include <esp_pm.h>
 
 #include "traits.h"

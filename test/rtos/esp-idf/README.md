@@ -32,6 +32,10 @@ These tests are all for variants of Espressif ESP32
 | 30DEC22 | udp-echo     | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v5.0.0   | Pass    |
 | 30DEC22 | unity        | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v4.4.3   | Pass    |
 | 03JAN23 | unity        | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v5.0.0   | Pass    |
-| 04JAN23 | unity        | ESP32-C3-DevKitM-1   | ESP32C3        | v5.0.0   | Pass    |
+| 10JAN23 | unity        | ESP32-C3-DevKitM-1   | ESP32C3        | v5.0.0   | Fail    | LWIP_TCPIP_CORE_LOCKING glitch [1]
+
+# References
+
+1. https://github.com/espressif/esp-idf/issues/10466 
 
 

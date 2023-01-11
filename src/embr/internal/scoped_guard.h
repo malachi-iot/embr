@@ -3,6 +3,8 @@
 #include <estd/type_traits.h>
 #include <estd/variant.h>
 
+#include "fwd.h"
+
 namespace embr { namespace internal {
 
 enum scoped_guard_fail_action
@@ -19,6 +21,7 @@ enum scoped_guard_fail_action
 // See: https://en.cppreference.com/w/cpp/thread/scoped_lock for similar naming
 // All that said, something like 'unique_value' would match the expected behavior
 // better, so maybe consider that (ala unique_ptr)
+// DEBT: If this all works really well, consider moving to estd
 
 // NOTE: Using scoped_guard implies an assert/exception style behavior - expect
 // the system to halt if ctor/dtor is not fully successful
@@ -28,9 +31,9 @@ class scoped_guard;
 template <class T>
 struct scoped_status_traits
 {
-    constexpr static bool good(T) { return true; }
-    constexpr static void log(T) {}
-    constexpr static void assert_(T) {}
+    ESTD_CPP_CONSTEXPR_RET static bool good(T) { return true; }
+    ESTD_CPP_CONSTEXPR_RET static void log(T) {}
+    ESTD_CPP_CONSTEXPR_RET static void assert_(T) {}
 };
 
 
@@ -69,7 +72,8 @@ public:
 protected:
     value_type value_;
 
-    ESTD_CPP_CONSTEXPR_RET reference value() { return value_; }
+    reference value() { return value_; }
+    ESTD_CPP_CONSTEXPR_RET const_reference value() const { return value_; }
 
     void status(status_type s)
     {
@@ -94,7 +98,7 @@ public:
     ESTD_CPP_CONSTEXPR_RET const_pointer get() const { return &value_; }
 
     ESTD_CPP_CONSTEXPR_RET const_pointer operator*() { return get(); }
-    ESTD_CPP_CONSTEXPR_RET pointer operator->() { return &value_; }
+    pointer operator->() { return &value_; }
     ESTD_CPP_CONSTEXPR_RET const_pointer operator->() const { return &value_; }
 
     // Success is always implied when no status is specifically tracked
