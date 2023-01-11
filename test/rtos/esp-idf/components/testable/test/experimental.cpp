@@ -1,6 +1,7 @@
 #include <experimental/observer-event-handler.hpp>
 #include <embr/platform/freertos/exp/transport-retry.h>
 #include <embr/platform/lwip/transport.h>
+#include <embr/exp/platform/freertos/fasio.h>
 
 //#include <estd/iostream.h>    // FIX: This fails rather badly, look into why
 #include <embr/observer.h>
@@ -138,4 +139,10 @@ TEST_CASE("freertos retry", "[experimental]")
     }
 
     TEST_ASSERT_EQUAL(1, dummy_item_count);
+}
+
+
+TEST_CASE("fake asio", "[experimental]")
+{
+
 }
