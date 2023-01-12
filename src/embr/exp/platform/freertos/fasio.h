@@ -217,6 +217,10 @@ struct fasio2
     {
         estd::freertos::wrapper::task owner;
         uint32_t ulValue;
+
+        item() = default;
+        item(estd::freertos::wrapper::task owner, uint32_t v) :
+            owner{owner}, ulValue{v} {}
     };
 
     delegate_queue<embr::internal::impl::reference_delegate_queue<item> > buffer;
