@@ -7,8 +7,8 @@
 #include <estd/port/freertos/thread.h>
 
 #include <embr/internal/argtype.h>
+#include <embr/internal/delegate_queue.h>
 
-#include "freertos/ringbuf.h"
 #include "esp_log.h"
 
 // EXPERIMENTAL
@@ -115,116 +115,12 @@ struct fasio
     }
 };
 
-struct ring_buffer
+template <class TBase>
+struct delegate_queue : embr::internal::delegate_queue<TBase>
 {
-    RingbufHandle_t h;
+    typedef embr::internal::delegate_queue<TBase> base_type;
 
-    void create(size_t sz, RingbufferType_t type)
-    {
-        h = xRingbufferCreate(sz, type);
-    }
-
-    void create(size_t sz, RingbufferType_t type,
-        uint8_t* pucRingbufferStorage,
-        StaticRingbuffer_t* pxStaticRingbuffer)
-    {
-        h = xRingbufferCreateStatic(sz, type, pucRingbufferStorage, pxStaticRingbuffer);
-    }
-
-    void free()
-    {
-        vRingbufferDelete(h);
-    }
-
-    BaseType_t send_acquire(void **ppvItem, size_t xItemSize, TickType_t xTicksToWait)
-    {
-        return xRingbufferSendAcquire(h, ppvItem, xItemSize, xTicksToWait);
-    }
-
-    BaseType_t send_complete(void *pvItem)
-    {
-        return xRingbufferSendComplete(h, pvItem);
-    }
-
-    void* receive(size_t* sz,  TickType_t xTicksToWait)
-    {
-        return xRingbufferReceive(h, sz, xTicksToWait);
-    }
-
-    void return_item(void* pvItem)
-    {
-        vRingbufferReturnItem(h, pvItem);
-    }
-
-    operator RingbufHandle_t() const { return h; }
-};
-
-
-// TODO: Consider an implementation of this using xMessageBuffer for better
-// cross platform ability.  Note that that is not zero copy.  ring buffer
-// promises zero copy, but F&& f behaviors might interrupt that - it depends
-// on if compiler truly inlines 'enqueue'
-template <class TUser = estd::monostate>
-struct delegate_queue
-{
-    static constexpr const char* TAG = "delegate_queue";
-
-    ring_buffer buffer;
-
-    typedef TUser item_base;
-
-    template <typename F>
-    struct item : item_base
-    {
-        estd::experimental::inline_function<F, void(void)> delegate;
-
-        template <class ...TArgs>
-        item(F&& f, TArgs&&...args) :
-            item_base(std::forward<TArgs>(args)...),
-            delegate(std::move(f))
-        {}
-    };
-
-    // Think of this as a brute force union
-    struct item_assist : item_base
-    {
-        estd::detail::function<void(void)> delegate;
-    };
-
-    // 'F' signature *must* be void(), TArgs are to construct
-    // the tracking item itself
-    template <class F, class ...TArgs>
-    inline void enqueue(F&& f, TArgs&&...args)
-    {
-        typedef item<F> item_type;
-
-        void* pvItem;
-
-        buffer.send_acquire(&pvItem, sizeof(item_type), portMAX_DELAY);
-
-        ESP_LOGI(TAG, "enqueue: sz=%u", sizeof(item_type));
-
-        new (pvItem) item_type(std::move(f), std::forward<TArgs>(args)...);
-
-        buffer.send_complete(pvItem);
-    }
-
-    template <class F>
-    void dequeue(F&& f)
-    {
-        size_t sz;
-        auto i = (item_assist*)buffer.receive(&sz, portMAX_DELAY);
-
-        i->delegate();
-
-        f(i);
-
-        i->~item_assist();
-
-        buffer.return_item(i);
-    }
-
-    void dequeue() { dequeue([](item_assist*){}); }
+    delegate_queue() : base_type(512) {}
 
     template <class T>
     struct wrapper_promise
@@ -291,6 +187,7 @@ struct delegate_queue
         return wrapper;
     }
 
+#if __cpp_generic_lambdas
     template <class F, class ...TArgs>
     async_wrapper2<estd::invoke_result_t<estd::decay_t<F>, TArgs... > > test3(F&& f, TArgs&&...args)
     {
@@ -298,9 +195,10 @@ struct delegate_queue
         typedef async_wrapper2<result_type> wrapper;
         return wrapper([this](auto&& f2)
         {
-            enqueue(std::move(f2));
+            base_type::enqueue(std::move(f2));
         }, std::move(f), std::forward<TArgs>(args)...);
     }
+#endif
 
     template <class F>
     typename embr::internal::ArgType<F>::result_type test(F&& f)
@@ -310,7 +208,6 @@ struct delegate_queue
         return result_type();
     }
 };
-
 
 // Depends on non-standard esp-idf ring buffer
 // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/freertos_additions.html#ring-buffer-api
@@ -324,11 +221,6 @@ struct fasio2
 
     delegate_queue<item_base> buffer;
     int counter = 0;
-
-    fasio2()
-    {
-        buffer.buffer.create(512, RINGBUF_TYPE_NOSPLIT);
-    }
 
     template <class F>
     uint32_t begin_invoke(F&& f)

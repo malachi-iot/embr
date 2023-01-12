@@ -202,6 +202,7 @@ TEST_CASE("fake asio2", "[experimental]")
 
     TEST_ASSERT_EQUAL(20, v2.retval);
 
+#if __cpp_generic_lambdas
     auto v3 = fasio2.buffer.test3(test_fn, 10);
 
     TEST_ASSERT_FALSE(v3.valid());
@@ -210,4 +211,5 @@ TEST_CASE("fake asio2", "[experimental]")
 
     TEST_ASSERT_TRUE(v3.valid());
     TEST_ASSERT_EQUAL(20, v3.get());
+#endif
 }
