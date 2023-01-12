@@ -232,7 +232,7 @@ struct fasio2
 
     void service()
     {
-        buffer.dequeue([](auto i)
+        buffer.dequeue([](item* i)
         {
             i->owner.notify(i->ulValue, eSetValueWithOverwrite);
         }, portMAX_DELAY);
