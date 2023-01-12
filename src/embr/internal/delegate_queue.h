@@ -10,18 +10,35 @@
 
 namespace embr { namespace internal {
 
+namespace impl {
+
+template <class TItem = estd::monostate>
+struct reference_delegate_queue
+{
+    typedef TItem item;
+
+    // DEBT: Imperfect, but at least there's a way to do this
+    // without dancing the variadic template dance
+    static void on_enqueue(TItem*) {}
+    static void on_dequeue(TItem*) {}
+};
+
+}
+
 // TODO: Consider an implementation of this using xMessageBuffer for better
 // cross platform ability.  Note that that is not zero copy.  ring buffer
 // promises zero copy, but F&& f behaviors might interrupt that - it depends
 // on if compiler truly inlines 'enqueue'
-template <class TUser = estd::monostate>
-struct delegate_queue
+template <class TImpl = impl::reference_delegate_queue<> >
+struct delegate_queue : TImpl
 {
     static constexpr const char* TAG = "delegate_queue";
 
+    typedef TImpl impl_type;
+
     estd::freertos::wrapper::ring_buffer buffer;
 
-    typedef TUser item_base;
+    using item_base = typename impl_type::item;
 
     delegate_queue(size_t sz)
     {
@@ -48,6 +65,8 @@ struct delegate_queue
 
     // 'F' signature *must* be void(), TArgs are to construct
     // the tracking item itself
+    // Code still in flux, args are flexibly and good practice, but confusing
+    // impl configure_item is clumsy, breaks RAII, but easier to understand
     template <class F, class ...TArgs>
     inline void enqueue(F&& f, TArgs&&...args)
     {
@@ -59,7 +78,9 @@ struct delegate_queue
 
         ESP_LOGV(TAG, "enqueue: sz=%u", sizeof(item_type));
 
-        new (pvItem) item_type(std::move(f), std::forward<TArgs>(args)...);
+        item_type* i = new (pvItem) item_type(std::move(f), std::forward<TArgs>(args)...);
+
+        impl_type::on_enqueue(i);
 
         buffer.send_complete(pvItem);
     }
@@ -73,6 +94,8 @@ struct delegate_queue
         i->delegate();
 
         f(i);
+
+        impl_type::on_dequeue(i);
 
         i->~item_assist();
 

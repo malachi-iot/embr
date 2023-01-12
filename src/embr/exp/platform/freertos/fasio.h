@@ -213,13 +213,13 @@ struct delegate_queue : embr::internal::delegate_queue<TBase>
 // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/freertos_additions.html#ring-buffer-api
 struct fasio2
 {
-    struct item_base
+    struct item
     {
         estd::freertos::wrapper::task owner;
         uint32_t ulValue;
     };
 
-    delegate_queue<item_base> buffer;
+    delegate_queue<embr::internal::impl::reference_delegate_queue<item> > buffer;
     int counter = 0;
 
     template <class F>
