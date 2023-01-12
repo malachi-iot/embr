@@ -35,6 +35,7 @@ struct delegate_queue : TImpl
     static constexpr const char* TAG = "delegate_queue";
 
     typedef TImpl impl_type;
+    typedef estd::detail::function<void(void)> delegate_type;
 
     estd::freertos::wrapper::ring_buffer buffer;
 
@@ -61,6 +62,12 @@ struct delegate_queue : TImpl
     struct item_assist : item_base
     {
         estd::detail::function<void(void)> delegate;
+
+        template <class ...TArgs>
+        item_assist(const delegate_type& f, TArgs&&...args) :
+            item_base(std::forward<TArgs>(args)...),
+            delegate(f)
+        {}
     };
 
     // 'F' signature *must* be void(), TArgs are to construct
@@ -105,13 +112,32 @@ struct delegate_queue : TImpl
     // BROKEN
     // Won't work because estd::detail::function can't be moved around
     template <class F, class ...TArgs>
-    inline BaseType_t enqueue_from_isr(F&& f, BaseType_t* pxHigherPriorityTaskWoke, TArgs&&...args)
+    inline BaseType_t enqueue_from_isr_broken(F&& f, BaseType_t* pxHigherPriorityTaskWoke, TArgs&&...args)
     {
         typedef item<F> item_type;
 
         // DEBT: there's no isr xRingbufferSendAcquire variant that I could find, sure
         // wish there was
         item_type i(std::move(f), std::forward<TArgs>(args)...);
+
+        impl_type::on_enqueue(&i);
+
+        ESP_DRAM_LOGV(TAG, "enqueue_from_isr: sz=%u", sizeof(item_type));
+
+        //return pdFALSE;
+        return buffer.send_from_isr(&i, sizeof(item_type), pxHigherPriorityTaskWoke);
+    }
+
+    // EXPERIMENTAL
+    // Works, but how useful is it really?
+    template <class ...TArgs>
+    inline BaseType_t enqueue_from_isr(const delegate_type& f, BaseType_t* pxHigherPriorityTaskWoke, TArgs&&...args)
+    {
+        typedef item_assist item_type;
+
+        // DEBT: there's no isr xRingbufferSendAcquire variant that I could find, sure
+        // wish there was
+        item_type i(f, std::forward<TArgs>(args)...);
 
         impl_type::on_enqueue(&i);
 
@@ -164,6 +190,14 @@ struct delegate_queue : TImpl
         buffer.return_item_from_isr(i, pxHigherPriorityTaskWoken);
 
         return pdTRUE;
+    }
+
+    // DEBT: copy/paste from estd::experimental::function - some kind of general factory would be better
+    // DEBT: need to enforce RVO rules more
+    template <typename F>
+    ESTD_CPP_CONSTEXPR_FUNCTION static estd::experimental::inline_function<F, void(void)> make_inline(F&& f)
+    {
+        return estd::experimental::inline_function<F, void(void)>(std::move(f));
     }
 };
 

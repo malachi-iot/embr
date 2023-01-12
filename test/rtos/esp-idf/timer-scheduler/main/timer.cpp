@@ -41,6 +41,15 @@ struct control_structure_base :
         unsigned event_due_count = base_type::event_due_.count();
         unsigned current_time_count = (unsigned)current_time.count();
 
+        // DEBT: global state here is cheating.  enqueue_from_isr has trouble
+        // with local state
+        static unsigned cheater_counter;
+
+        static auto cheater = dq.make_inline([]
+        {
+            if((cheater_counter % 5) == 0) ESP_LOGI("dq", "local_counter=%u", cheater_counter);
+        });
+
         // This variant of log macro works inside ISRs
         ESP_DRAM_LOGI(TAG, "process: name=%s, wake=%u, current=%u, local_counter=%u",
             name,
@@ -48,11 +57,13 @@ struct control_structure_base :
             current_time_count,
             (++local_counter));
 
+        BaseType_t pxHigherPriorityTaskWoke;
         /*
          * Not ready yet, see enqueue_from_isr
-        BaseType_t pxHigherPriorityTaskWoke;
         dq.enqueue_from_isr(
             []{ ESP_LOGI("dq", "local_counter=%u", 0); }, &pxHigherPriorityTaskWoke); */
+        cheater_counter = local_counter;
+        dq.enqueue_from_isr(cheater, &pxHigherPriorityTaskWoke);
 
         base_type::event_due_ += bump;
 
