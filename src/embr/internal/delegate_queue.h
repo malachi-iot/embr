@@ -102,7 +102,8 @@ struct delegate_queue : TImpl
         return buffer.send(&i, sizeof(item_type), ticksToWait);
     }
 
-    // UNTESTED
+    // BROKEN
+    // Won't work because estd::detail::function can't be moved around
     template <class F, class ...TArgs>
     inline BaseType_t enqueue_from_isr(F&& f, BaseType_t* pxHigherPriorityTaskWoke, TArgs&&...args)
     {
@@ -116,14 +117,17 @@ struct delegate_queue : TImpl
 
         ESP_DRAM_LOGV(TAG, "enqueue_from_isr: sz=%u", sizeof(item_type));
 
+        //return pdFALSE;
         return buffer.send_from_isr(&i, sizeof(item_type), pxHigherPriorityTaskWoke);
     }
 
     template <class F>
-    void dequeue(F&& f, TickType_t ticksToWait)
+    BaseType_t dequeue(F&& f, TickType_t ticksToWait)
     {
         size_t sz;
         auto i = (item_assist*)buffer.receive(&sz, ticksToWait);
+
+        if(i == nullptr) return pdFALSE;
 
         i->delegate();
 
@@ -134,18 +138,22 @@ struct delegate_queue : TImpl
         i->~item_assist();
 
         buffer.return_item(i);
+
+        return pdTRUE;
     }
 
-    void dequeue(TickType_t ticksToWait)
+    BaseType_t dequeue(TickType_t ticksToWait)
     {
-        dequeue([](item_assist*){}, ticksToWait);
+        return dequeue([](item_assist*){}, ticksToWait);
     }
 
     // UNTESTED
-    void dequeue_from_isr(BaseType_t *pxHigherPriorityTaskWoken)
+    BaseType_t dequeue_from_isr(BaseType_t *pxHigherPriorityTaskWoken)
     {
         size_t sz;
         auto i = (item_assist*)buffer.receive_from_isr(&sz);
+
+        if(i == nullptr) return pdFALSE;
 
         i->delegate();
 
@@ -154,6 +162,8 @@ struct delegate_queue : TImpl
         i->~item_assist();
 
         buffer.return_item_from_isr(i, pxHigherPriorityTaskWoken);
+
+        return pdTRUE;
     }
 };
 

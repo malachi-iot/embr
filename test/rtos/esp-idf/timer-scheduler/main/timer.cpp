@@ -6,6 +6,8 @@
 
 #include <embr/platform/esp-idf/timer-scheduler.hpp>
 
+#include <embr/internal/delegate_queue.h>
+
 using namespace embr::scheduler::esp_idf;
 using namespace estd::chrono_literals;
 
@@ -15,6 +17,8 @@ typedef embr::internal::scheduler::impl::ReferenceBase<
 typedef impl::Timer<control_structure> impl_type;
 typedef embr::internal::layer1::Scheduler<5, impl_type> scheduler_type;
 static constexpr embr::internal::scheduler::impl_params_tag params_tag;
+
+static embr::internal::delegate_queue<> dq(512);
 
 template <class TTimePoint>
 struct control_structure_base : 
@@ -43,6 +47,12 @@ struct control_structure_base :
             event_due_count,
             current_time_count,
             (++local_counter));
+
+        /*
+         * Not ready yet, see enqueue_from_isr
+        BaseType_t pxHigherPriorityTaskWoke;
+        dq.enqueue_from_isr(
+            []{ ESP_LOGI("dq", "local_counter=%u", 0); }, &pxHigherPriorityTaskWoke); */
 
         base_type::event_due_ += bump;
 
@@ -101,6 +111,12 @@ E (2426) timer_group: timer_start(97): HW TIMER NEVER INIT ERROR
 
     scheduler.schedule(estd::chrono::milliseconds(250));
     scheduler.schedule(estd::chrono::milliseconds(500));
+
+    // Does nothing until enqueue_from_isr is sorted out
+    for(;;)
+    {
+        dq.dequeue(portMAX_DELAY);
+    }
 }
 
 
