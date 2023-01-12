@@ -68,13 +68,14 @@ struct delegate_queue : TImpl
     // Code still in flux, args are flexibly and good practice, but confusing
     // impl configure_item is clumsy, breaks RAII, but easier to understand
     template <class F, class ...TArgs>
-    inline void enqueue(F&& f, TArgs&&...args)
+    inline BaseType_t enqueue(F&& f, TickType_t ticksToWait, TArgs&&...args)
     {
         typedef item<F> item_type;
 
         void* pvItem;
 
-        buffer.send_acquire(&pvItem, sizeof(item_type), portMAX_DELAY);
+        if(buffer.send_acquire(&pvItem, sizeof(item_type), ticksToWait) == pdFALSE)
+            return pdFALSE;
 
         ESP_LOGV(TAG, "enqueue: sz=%u", sizeof(item_type));
 
@@ -82,14 +83,47 @@ struct delegate_queue : TImpl
 
         impl_type::on_enqueue(i);
 
-        buffer.send_complete(pvItem);
+        return buffer.send_complete(pvItem);
+    }
+
+    // UNTESTED
+    // Mainly for testing, the regular enqueue is likely preferable
+    template <class F, class ...TArgs>
+    inline BaseType_t enqueue_copy(F&& f, TickType_t ticksToWait, TArgs&&...args)
+    {
+        typedef item<F> item_type;
+
+        item_type i(std::move(f), std::forward<TArgs>(args)...);
+
+        impl_type::on_enqueue(&i);
+
+        ESP_DRAM_LOGV(TAG, "enqueue_from_isr: sz=%u", sizeof(item_type));
+
+        return buffer.send(&i, sizeof(item_type), ticksToWait);
+    }
+
+    // UNTESTED
+    template <class F, class ...TArgs>
+    inline BaseType_t enqueue_from_isr(F&& f, BaseType_t* pxHigherPriorityTaskWoke, TArgs&&...args)
+    {
+        typedef item<F> item_type;
+
+        // DEBT: there's no isr xRingbufferSendAcquire variant that I could find, sure
+        // wish there was
+        item_type i(std::move(f), std::forward<TArgs>(args)...);
+
+        impl_type::on_enqueue(&i);
+
+        ESP_DRAM_LOGV(TAG, "enqueue_from_isr: sz=%u", sizeof(item_type));
+
+        return buffer.send_from_isr(&i, sizeof(item_type), pxHigherPriorityTaskWoke);
     }
 
     template <class F>
-    void dequeue(F&& f)
+    void dequeue(F&& f, TickType_t ticksToWait)
     {
         size_t sz;
-        auto i = (item_assist*)buffer.receive(&sz, portMAX_DELAY);
+        auto i = (item_assist*)buffer.receive(&sz, ticksToWait);
 
         i->delegate();
 
@@ -102,7 +136,25 @@ struct delegate_queue : TImpl
         buffer.return_item(i);
     }
 
-    void dequeue() { dequeue([](item_assist*){}); }
+    void dequeue(TickType_t ticksToWait)
+    {
+        dequeue([](item_assist*){}, ticksToWait);
+    }
+
+    // UNTESTED
+    void dequeue_from_isr(BaseType_t *pxHigherPriorityTaskWoken)
+    {
+        size_t sz;
+        auto i = (item_assist*)buffer.receive_from_isr(&sz);
+
+        i->delegate();
+
+        impl_type::on_dequeue(i);
+
+        i->~item_assist();
+
+        buffer.return_item_from_isr(i, pxHigherPriorityTaskWoken);
+    }
 };
 
 }}

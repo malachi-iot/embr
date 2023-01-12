@@ -207,7 +207,7 @@ TEST_CASE("fake asio2", "[experimental]")
 
     TEST_ASSERT_FALSE(v3.valid());
 
-    fasio2.buffer.dequeue();
+    fasio2.buffer.dequeue(portMAX_DELAY);
 
     TEST_ASSERT_TRUE(v3.valid());
     TEST_ASSERT_EQUAL(20, v3.get());

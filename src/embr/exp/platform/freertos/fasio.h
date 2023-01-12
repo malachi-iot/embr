@@ -195,7 +195,7 @@ struct delegate_queue : embr::internal::delegate_queue<TBase>
         typedef async_wrapper2<result_type> wrapper;
         return wrapper([this](auto&& f2)
         {
-            base_type::enqueue(std::move(f2));
+            base_type::enqueue(std::move(f2), portMAX_DELAY);
         }, std::move(f), std::forward<TArgs>(args)...);
     }
 #endif
@@ -225,7 +225,7 @@ struct fasio2
     template <class F>
     uint32_t begin_invoke(F&& f)
     {
-        buffer.enqueue(std::move(f), xTaskGetCurrentTaskHandle(), ++counter);
+        buffer.enqueue(std::move(f), portMAX_DELAY, xTaskGetCurrentTaskHandle(), ++counter);
 
         return counter;
     }
@@ -235,7 +235,7 @@ struct fasio2
         buffer.dequeue([](auto i)
         {
             i->owner.notify(i->ulValue, eSetValueWithOverwrite);
-        });
+        }, portMAX_DELAY);
     }
 
 
