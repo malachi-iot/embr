@@ -2,7 +2,9 @@
 #include "freertos/task.h"
 
 #include "driver/gpio.h"
+#if ESP_IDF_VERSION < ESP_IDF_VERSION_VAL(5, 0, 0)
 #include "driver/periph_ctrl.h"
+#endif
 
 #include "scheduler.h"
 
@@ -22,7 +24,13 @@ static constexpr embr::esp_idf::gpio fast_pin((gpio_num_t)CONFIG_FAST_LED_PIN);
 
 void gpio_init()
 {
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
+    gpio_reset_pin(SLOW_LED_PIN);
+#else
+    // DEBT: Pretty sure reset pin is gonna be 100% OK here too
     gpio_pad_select_gpio(SLOW_LED_PIN);
+#endif
+
     gpio_set_direction(SLOW_LED_PIN, GPIO_MODE_OUTPUT);
 
     fast_pin.reset();
@@ -102,7 +110,9 @@ void scheduler_init()
 
     for(;;)
     {
-        ESP_LOGD(TAG, "counter=%d", ++counter);
+        ++counter;
+
+        ESP_LOGD(TAG, "counter=%d", counter);
 
         estd::this_thread::sleep_for(1s);
     }

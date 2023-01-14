@@ -78,7 +78,7 @@ static void notify_daemon_task(void* data)
             uint32_t r = ulTaskNotifyTake(pdTRUE, duration.count());
 
 #ifdef ESP_PLATFORM
-            ESP_LOGD(TAG, "wake: %u", r);
+            ESP_LOGD(TAG, "wake: %" PRIu32, r);
 #endif
         }
     }
