@@ -8,14 +8,20 @@ template <class T, T id_>
 struct PropertyTraits;
 
 
+
+
 namespace event {
 
-template <typename T, int id = -1>
+struct traits_tag {};
+
+template <typename T, int id = -1, class enabled = void>
 struct PropertyChanged;
 
 
 template <typename T>
-struct PropertyChanged<T, -1>
+struct PropertyChanged<T, -1, typename estd::enable_if<
+    !estd::is_base_of<traits_tag, T>::value
+    >::type>
 {
     const int id_;
     int id() const { return id_; }
@@ -32,10 +38,20 @@ struct PropertyChanged<T, -1>
         id_{copy_from.id()},
         value{copy_from.value}
     {}
+
+    // Mainly for converting traits flavor to baseline (this one) flavor
+    // Can also convert from two baselines with slightly varying T
+    template <class T2>
+    PropertyChanged(const PropertyChanged<T2, -1>& copy_from) :
+        id_{copy_from.id()},
+        value{copy_from.value}
+    {}
 };
 
 template <typename T, int id_>
-struct PropertyChanged
+struct PropertyChanged<T, id_, typename estd::enable_if<
+    !estd::is_base_of<traits_tag, T>::value &&
+    id_ >= 0>::type>
 {
     const T value;
 
@@ -44,8 +60,23 @@ struct PropertyChanged
     PropertyChanged(T value) : value{value} {}
 };
 
+template <typename T>
+struct PropertyChanged<T, -1, typename estd::enable_if<
+    estd::is_base_of<traits_tag, T>::value
+    >::type>
+{
+    typedef typename T::value_type value_type;
+
+    const value_type value;
+
+    static constexpr int id() { return T::id(); }
+    static const char* name() { return T::name(); }
+
+    PropertyChanged(value_type value) : value{value} {}
+};
 
 }
+
 
 // Copy/pasted/adapter from chariot project
 namespace service {
@@ -97,6 +128,34 @@ enum Substates
 
 }
 
+namespace impl {
+
+struct Service
+{
+    struct id
+    {
+        struct state : event::traits_tag
+        {
+            typedef service::States value_type;
+            static const char* name() { return "Service state"; }
+            static constexpr int id() { return 0; }
+        };
+
+        struct substate : event::traits_tag
+        {
+            typedef service::Substates value_type;
+            static const char* name() { return "Service sub state"; }
+            static constexpr int id() { return 1; }
+        };
+    };
+
+protected:
+    bool start() { return true; }
+    bool stop() { return true; }
+};
+
+}
+
 template <>
 struct PropertyTraits<service::Properties, service::PROPERTY_STATE>
 {
@@ -133,6 +192,12 @@ protected:
         subject_type::notify(event::PropertyChanged<T, id>{v}, context);
     }
 
+    template <typename TTrait, class TContext>
+    void fire_changed3(typename TTrait::value_type v, TContext& context)
+    {
+        subject_type::notify(event::PropertyChanged<TTrait>{v}, context);
+    }
+
 public:
     PropertyNotifier() = default;
     PropertyNotifier(TSubject&& subject) : subject_type(std::move(subject))
@@ -159,7 +224,8 @@ protected:
         {
             state_.service_ = s;
 
-            base_type::template fire_changed2<service::PROPERTY_STATE>(s, context);
+            base_type::template fire_changed3<experimental::impl::Service::id::state>(s, context);
+            //base_type::template fire_changed2<service::PROPERTY_STATE>(s, context);
         }
     }
 
@@ -193,7 +259,8 @@ protected:
             state_.service_ = s;
             state_.service_substate_ = ss;
 
-            base_type::template fire_changed2<service::PROPERTY_STATE>(s, context);
+            base_type::template fire_changed3<experimental::impl::Service::id::state>(s, context);
+            //base_type::template fire_changed2<service::PROPERTY_STATE>(s, context);
         }
     }
 

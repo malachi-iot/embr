@@ -12,16 +12,15 @@ class DependentService2;
 
 namespace impl {
 
-struct Service
-{
-protected:
-    bool start() { return true; }
-    bool stop() { return true; }
-};
 
-struct DependentService2 : Service
+struct DependentService2 : embr::experimental::impl::Service
 {
     bool is_happy = false;
+
+    struct id : Service::id
+    {
+
+    };
 };
 
 }
@@ -33,6 +32,7 @@ class DependerService : Service<>
 
 public:
     int counter = 0;
+    int counter2 = 0;
 
     //template <class TSubject>
     void on_notify(event::PropertyChanged<service::States> s)//, DependentService<TSubject>&)
@@ -41,7 +41,8 @@ public:
         //FAIL("got here");
     }
 
-    void on_notify(event::PropertyChanged<service::Substates, service::PROPERTY_SUBSTATE> s, impl::DependentService2& c)
+    void on_notify(event::PropertyChanged<service::Substates, service::PROPERTY_SUBSTATE> s,
+        ::impl::DependentService2& c)
     {
         if(s.value == service::Starting)
         {
@@ -49,10 +50,17 @@ public:
         }
     }
 
+    /*
     void on_notify(event::PropertyChanged<service::States> s, impl::DependentService2& c)
     {
         ++counter;
         //FAIL("got here");
+    } */
+    void on_notify(event::PropertyChanged<embr::experimental::impl::Service::id::state> s, ::impl::DependentService2& c)
+    {
+        ++counter;
+        ++counter2;
+        printf("'%s': id=%d, value=%d\n", s.name(), s.id(), s.value);
     }
 };
 
@@ -76,9 +84,9 @@ public:
 };
 
 template <class TSubject>
-class DependentService2 : public Service2<impl::DependentService2, TSubject>
+class DependentService2 : public Service2<::impl::DependentService2, TSubject>
 {
-    typedef Service2<impl::DependentService2, TSubject> base_type;
+    typedef Service2<::impl::DependentService2, TSubject> base_type;
 
 public:
     DependentService2(TSubject&& subject) : base_type(std::move(subject))
@@ -97,4 +105,5 @@ TEST_CASE("Services", "[services]")
     dependent2.start();
 
     REQUIRE(depender.counter == 3);
+    REQUIRE(depender.counter2 == 1);
 }
