@@ -19,7 +19,10 @@ struct DependentService2 : embr::experimental::impl::Service
 
     struct id : Service::id
     {
-
+        struct is_happy : event::traits_base<bool, 0>
+        {
+            static constexpr const char* name() { return "are we happy?"; }
+        };
     };
 };
 
@@ -62,6 +65,12 @@ public:
         ++counter2;
         printf("'%s': id=%d, value=%d\n", s.name(), s.id(), s.value);
     }
+
+    void on_notify(event::PropertyChanged<::impl::DependentService2::id::is_happy> e)
+    {
+        ++counter2;
+        REQUIRE(e.value == true);
+    }
 };
 
 
@@ -91,6 +100,19 @@ class DependentService2 : public Service2<::impl::DependentService2, TSubject>
 public:
     DependentService2(TSubject&& subject) : base_type(std::move(subject))
     {}
+
+    void happy(bool v)
+    {
+        if(base_type::impl().is_happy != v)
+        {
+            base_type::impl().is_happy = v;
+            typedef ::impl::DependentService2::id::is_happy traits_type;
+            event::PropertyChanged<traits_type> p{v};
+            REQUIRE(traits_type::id() == 0);
+            //base_type::template fire_changed3<base_type::impl_type::id::is_happy>(v, *this);
+            base_type::template fire_changed3<traits_type>(v, *this);
+        }
+    }
 };
 
 TEST_CASE("Services", "[services]")
@@ -103,7 +125,8 @@ TEST_CASE("Services", "[services]")
 
     dependent.start();
     dependent2.start();
+    dependent2.happy(true);
 
     REQUIRE(depender.counter == 3);
-    REQUIRE(depender.counter2 == 1);
+    REQUIRE(depender.counter2 == 2);
 }

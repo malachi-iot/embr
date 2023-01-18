@@ -14,6 +14,13 @@ namespace event {
 
 struct traits_tag {};
 
+template <class T, int id_>
+struct traits_base : traits_tag
+{
+    typedef T value_type;
+    static constexpr int id() { return id_; }
+};
+
 template <typename T, int id = -1, class enabled = void>
 struct PropertyChanged;
 
@@ -39,12 +46,15 @@ struct PropertyChanged<T, -1, typename estd::enable_if<
         value{copy_from.value}
     {}
 
-    // Mainly for converting traits flavor to baseline (this one) flavor
-    // Can also convert from two baselines with slightly varying T
-    template <class T2>
+    // For converting traits flavor to baseline (this one) flavor
+    template <class T2,
+        typename estd::enable_if<
+            estd::is_base_of<traits_tag, T2>::value &&
+            estd::is_same<typename T2::value_type, T>::value
+            , bool>::type = true>
     PropertyChanged(const PropertyChanged<T2, -1>& copy_from) :
         id_{copy_from.id()},
-        value{copy_from.value}
+        value(copy_from.value)
     {}
 };
 
@@ -303,9 +313,9 @@ class Service2 : public Service<TSubject>,
     TImpl
 {
     typedef Service<TSubject> base_type;
-    typedef TImpl impl_type;
 
 protected:
+    typedef TImpl impl_type;
     //impl_type impl_;
 
     impl_type& impl() { return *this; }
