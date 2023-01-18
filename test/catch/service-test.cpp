@@ -12,9 +12,12 @@ class DependerService : Service<>
     typedef Service<> base_type;
 
 public:
+    int counter = 0;
+
     //template <class TSubject>
     void on_notify(event::PropertyChanged<service::States> s)//, DependentService<TSubject>&)
     {
+        ++counter;
         //FAIL("got here");
     }
 };
@@ -43,8 +46,9 @@ TEST_CASE("Services", "[services]")
     DependerService depender;
 
     auto subject = embr::layer1::make_subject(depender);
-
-    DependentService<decltype(subject)> dependent(std::move(subject));
+    auto dependent = make_service<DependentService>(std::move(subject));
 
     dependent.start();
+
+    REQUIRE(depender.counter == 1);
 }

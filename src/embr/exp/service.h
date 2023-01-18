@@ -147,4 +147,10 @@ public:
     {}
 };
 
+template <template <class> class TService, class TSubject>
+TService<TSubject> make_service(TSubject&& subject)
+{
+    return TService<TSubject>(std::move(subject));
+}
+
 }}
