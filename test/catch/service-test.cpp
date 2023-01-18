@@ -7,23 +7,23 @@ using namespace embr::experimental;
 template <class TSubject>
 class DependentService;
 
-class DependerService : PropertyNotifier<>
+class DependerService : Service<>
 {
-    typedef PropertyNotifier<> base_type;
+    typedef Service<> base_type;
 
 public:
     //template <class TSubject>
-    void on_notify(event::PropertyChanged)
+    void on_notify(event::PropertyChanged<service::States> s)//, DependentService<TSubject>&)
     {
-        FAIL("got here");
+        //FAIL("got here");
     }
 };
 
 
 template <class TSubject>
-class DependentService : PropertyNotifier<TSubject>
+class DependentService : Service<TSubject>
 {
-    typedef PropertyNotifier<TSubject> base_type;
+    typedef Service<TSubject> base_type;
 
 public:
     DependentService(TSubject&& subject) : base_type(std::move(subject))
@@ -31,7 +31,10 @@ public:
 
     void start()
     {
-        base_type::state(service::Starting);
+        base_type::start([]
+        {
+            return true;
+        });
     }
 };
 
