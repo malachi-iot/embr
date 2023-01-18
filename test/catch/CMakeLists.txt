@@ -26,6 +26,7 @@ set(SOURCE_FILES
     experimental-test.cpp
     runtime-ratio-test.cpp
     scheduler-test.cpp
+    service-test.cpp
     streambuf-test.cpp
     word-test.cpp
     )
