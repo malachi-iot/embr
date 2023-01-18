@@ -46,6 +46,17 @@ struct PropertyChanged<T, -1, typename estd::enable_if<
         value{copy_from.value}
     {}
 
+    /*
+    // NOTE: Won't work since traits_base isn't an EXACT match but rather a base class
+    template <int id__>
+    PropertyChanged(const PropertyChanged<traits_base<T, id__> >& copy_from) :
+        id_{copy_from.id()},
+        value(copy_from.value)
+    {
+
+    }
+     */
+
     // For converting traits flavor to baseline (this one) flavor
     template <class T2,
         typename estd::enable_if<

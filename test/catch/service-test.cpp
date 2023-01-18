@@ -16,13 +16,26 @@ namespace impl {
 struct DependentService2 : embr::experimental::impl::Service
 {
     bool is_happy = false;
+    bool is_smiling = false;
+
+    enum Properties
+    {
+        IS_HAPPY = 0,
+        IS_SMILING = 1
+    };
 
     struct id : Service::id
     {
-        struct is_happy : event::traits_base<bool, 0>
+        struct is_happy : event::traits_base<bool, IS_HAPPY>
         {
             static constexpr const char* name() { return "are we happy?"; }
+
+            // Experimental - don't really need to do this, but it's viable.  Maybe useful for updated
+            // update-only-if-truly-changed helpers
+            static bool get(const DependentService2& d) { return d.is_happy; }
         };
+
+        typedef event::traits_base<bool, IS_SMILING> is_smiling;
     };
 };
 
@@ -36,6 +49,7 @@ class DependerService : Service<>
 public:
     int counter = 0;
     int counter2 = 0;
+    bool is_smiling = false;
 
     //template <class TSubject>
     void on_notify(event::PropertyChanged<service::States> s)//, DependentService<TSubject>&)
@@ -71,6 +85,11 @@ public:
         ++counter2;
         REQUIRE(e.value == true);
     }
+
+    void on_notify(event::PropertyChanged<::impl::DependentService2::id::is_smiling> e)
+    {
+        is_smiling = e.value;
+    }
 };
 
 
@@ -92,6 +111,24 @@ public:
     }
 };
 
+#define GETTER_HELPER(field_name) \
+    (base_type::impl(). field_name)
+
+#define SETTER_HELPER(field_name) \
+    if(base_type::impl(). field_name != v) \
+{                                 \
+    base_type::impl(). field_name = v;     \
+    typedef typename base_type::impl_type::id:: field_name traits_type; \
+    base_type::template fire_changed3<traits_type>(v, *this);   \
+}
+
+#define PROPERTY_HELPER(field_name) \
+    typedef typename base_type::impl_type::id:: field_name ::value_type field_name##_value_type    \
+    field_name##_value_type field_name() const                                                     \
+{ return GETTER_HELPER(field_name);}       \
+    void field_name(field_name##_value_type v)                                                     \
+    { SETTER_HELPER(field_name); }
+
 template <class TSubject>
 class DependentService2 : public Service2<::impl::DependentService2, TSubject>
 {
@@ -106,13 +143,22 @@ public:
         if(base_type::impl().is_happy != v)
         {
             base_type::impl().is_happy = v;
-            typedef ::impl::DependentService2::id::is_happy traits_type;
+            //typedef ::impl::DependentService2::id::is_happy traits_type;
+            typedef typename base_type::impl_type::id::is_happy traits_type;
             event::PropertyChanged<traits_type> p{v};
             REQUIRE(traits_type::id() == 0);
             //base_type::template fire_changed3<base_type::impl_type::id::is_happy>(v, *this);
             base_type::template fire_changed3<traits_type>(v, *this);
         }
     }
+
+    void smiling(bool v)
+    {
+        SETTER_HELPER(is_smiling)
+    }
+
+    bool smiling() const
+    { return GETTER_HELPER(is_smiling); }
 };
 
 TEST_CASE("Services", "[services]")
@@ -125,8 +171,11 @@ TEST_CASE("Services", "[services]")
 
     dependent.start();
     dependent2.start();
+
     dependent2.happy(true);
+    dependent2.smiling(true);
 
     REQUIRE(depender.counter == 3);
     REQUIRE(depender.counter2 == 2);
+    REQUIRE(depender.is_smiling);
 }
