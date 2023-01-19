@@ -360,6 +360,29 @@ protected:
         subject_type::notify(event::PropertyChanging<TOwner, id>{&context, v_old, v}, context);
     }
 
+    template <int id, class TImpl>
+    static typename PropertyTraits2<TImpl, id>::value_type getter(TImpl& impl)
+    {
+        typedef PropertyTraits2<TImpl, id> traits_type;
+
+        return traits_type::get(impl);
+    }
+
+    template <int id, typename T, class TImpl>
+    void setter(T v, TImpl& impl)
+    {
+        typedef PropertyTraits2<TImpl, id> traits_type;
+
+        T current_v = traits_type::get(impl);
+
+        if(current_v != v)
+        {
+            fire_changing4<id>(current_v, v, impl);
+            traits_type::set(impl, v);
+            fire_changed4<id>(v, impl);
+        }
+    }
+
 public:
     PropertyNotifier() = default;
     PropertyNotifier(TSubject&& subject) : subject_type(std::move(subject))
@@ -371,12 +394,17 @@ class Service : public PropertyNotifier<TSubject>
 {
     typedef PropertyNotifier<TSubject> base_type;
 
-    struct
+    union
     {
-        service::States service_ : 4;
-        service::Substates service_substate_ : 6;
+        struct
+        {
+            service::States service_: 4;
+            service::Substates service_substate_: 6;
 
-    }   state_;
+        } state_;
+
+        unsigned raw = 0;
+    };
 
 protected:
     template <class TContext>
@@ -476,6 +504,13 @@ protected:
     //impl_type impl_;
 
     impl_type& impl() { return *this; }
+
+    template <int id, typename T>
+    void setter(T v)
+    {
+        return base_type::template setter<id>(v, impl());
+    }
+
 
     void state(service::States s)
     {
