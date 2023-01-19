@@ -57,6 +57,9 @@ struct DependentService2 : embr::experimental::impl::Service
 
     struct id : Service::id
     {
+        template <int id, bool = true>
+        struct lookup;
+
         struct is_happy : event::traits_base<bool, IS_HAPPY>
         {
             static constexpr const char* name() { return "are we happy?"; }
@@ -70,6 +73,9 @@ struct DependentService2 : embr::experimental::impl::Service
         typedef event::traits_base<bool, IS_SHINY> is_shiny;
         //typedef event::traits_base<int, PEOPLE> people;
         EMBR_PROPERTY_ID2(people, PEOPLE, "people");
+
+        template <bool dummy>
+        struct lookup<PEOPLE, dummy> : people {};
     };
 };
 
@@ -86,6 +92,9 @@ struct PropertyTraits2<owner, owner::id::name_::id()> : \
     owner::id::name_ {};
 
 namespace embr { namespace experimental {
+
+template <class TOwner, int id_>
+struct PropertyTraits3 : TOwner::id::template lookup<id_> {};
 
 template <>
 struct PropertyTraits2<::impl::DependentService2, ::impl::DependentService2::IS_HAPPY> :
@@ -142,11 +151,15 @@ public:
         ++counter;
         //FAIL("got here");
     } */
+
+    // Code marker: HERE -- this code inexplicably does not get invoked somehow depending on the presence
+    // of a later-on-down-the-line REQUIRE call
     void on_notify(event::PropertyChanged<embr::experimental::impl::Service::id::state> s, ::impl::DependentService2& c)
     {
         ++counter;
         ++counter2;
         printf("'%s': id=%d, value=%d\n", s.name(), s.id(), s.value);
+        fflush(stdout);
     }
 
     void on_notify(event::PropertyChanged<::impl::DependentService2::id::is_happy> e)
@@ -324,6 +337,15 @@ TEST_CASE("Services", "[services]")
     event::PropertyChanged<
             ::impl::DependentService2, service::PROPERTY_STATE>
             e2(nullptr, true);
+
+    event::PropertyChanged<embr::experimental::impl::Service::id::state> e3(service::Stopped);
+
+    typedef PropertyTraits3<::impl::DependentService2, ::impl::DependentService2::PEOPLE> traits1;
+    constexpr int id = traits1::id();
+
+    // FIX: Somehow, this REQUIRE has a side-effect which inhibits code marked 'HERE' from functioning
+    //REQUIRE(traits1::id() == ::impl::DependentService2::PEOPLE);
+    REQUIRE(id == ::impl::DependentService2::PEOPLE);
 
     REQUIRE(e2.value == true);
 }
