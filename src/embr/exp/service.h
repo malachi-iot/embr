@@ -14,6 +14,8 @@ namespace event {
 
 struct traits_tag {};
 
+struct owner_tag {};
+
 template <class T, int id_>
 struct traits_base : traits_tag
 {
@@ -122,6 +124,15 @@ struct PropertyChanging<TTraits, -1, typename estd::enable_if<
         old_value{old},
         new_value{new_value}
     {}
+};
+
+
+template <typename TOwner>
+struct PropertyChanged<TOwner, -1, typename estd::enable_if<
+    estd::is_base_of<owner_tag, TOwner>::value
+    >::type>
+{
+
 };
 
 }
