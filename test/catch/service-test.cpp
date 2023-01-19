@@ -17,6 +17,22 @@ class DependentService2;
         static constexpr const char* name() { return desc; }               \
     };
 
+#define EMBR_PROPERTY_TRAITS_BASE(owner, name_, id, desc) \
+    event::traits_base<decltype(owner::name_), id>         \
+{                                                          \
+    typedef event::traits_base<decltype(owner::name_), id> base_type; \
+    typedef owner owner_type;                              \
+    using typename base_type::value_type;                  \
+    static constexpr const char* name() { return desc; }   \
+    static constexpr value_type get(owner_type& o)       \
+    { return o.name_; }                                    \
+    static inline void set(owner_type& o, value_type v)       \
+    { o.name_ = v; }                                       \
+}
+
+#define EMBR_PROPERTY_ID2(name, id, desc) \
+    struct name : EMBR_PROPERTY_TRAITS_BASE(this_type, name, this_type::id, desc);
+
 namespace impl {
 
 
@@ -52,30 +68,22 @@ struct DependentService2 : embr::experimental::impl::Service
 
         typedef event::traits_base<bool, IS_SMILING> is_smiling;
         typedef event::traits_base<bool, IS_SHINY> is_shiny;
-        typedef event::traits_base<int, PEOPLE> people;
+        //typedef event::traits_base<int, PEOPLE> people;
+        EMBR_PROPERTY_ID2(people, PEOPLE, "people");
     };
 };
 
 }
 
+
 #define EMBR_PROPERTY_DECLARATION(owner, name_, id, desc)  \
+template <> struct PropertyTraits2<owner, owner::id> : \
+    EMBR_PROPERTY_TRAITS_BASE(owner, name_, owner::id, desc)
+
+#define EMBR_PROPERTY_DECLARATION2(owner, name_)  \
 template <> \
-struct PropertyTraits2<owner, owner::id> :    \
-    event::traits_base<decltype(owner::name_), owner::id>         \
-{                                                          \
-    typedef event::traits_base<decltype(owner::name_), owner::id> base_type; \
-    typedef owner owner_type;                              \
-    using typename base_type::value_type;                                                       \
-    static constexpr const char* name() { return desc; }   \
-    static constexpr value_type get(owner_type& o)       \
-{                                                          \
-    return o.name_;                                                       \
-    }                                                          \
-    static inline void set(owner_type& o, value_type v)       \
-{                                                          \
-        o.name_ = v;                                                       \
-    }                                                          \
-};
+struct PropertyTraits2<owner, owner::id::name_::id()> : \
+    owner::id::name_ {};
 
 namespace embr { namespace experimental {
 
@@ -94,7 +102,8 @@ struct PropertyTraits2<::impl::DependentService2, ::impl::DependentService2::IS_
 }; */
 
 EMBR_PROPERTY_DECLARATION(::impl::DependentService2, is_shiny, IS_SHINY, "shiny");
-EMBR_PROPERTY_DECLARATION(::impl::DependentService2, people, PEOPLE, "people");
+//EMBR_PROPERTY_DECLARATION(::impl::DependentService2, people, PEOPLE, "people");
+EMBR_PROPERTY_DECLARATION2(::impl::DependentService2, people)
 
 }}
 
