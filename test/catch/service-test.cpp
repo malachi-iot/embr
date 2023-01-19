@@ -63,8 +63,18 @@ template <> \
 struct PropertyTraits2<owner, owner::id> :    \
     event::traits_base<decltype(owner::name_), owner::id>         \
 {                                                          \
-    typedef owner owner_type;   \
-    static constexpr const char* name() { return desc; }\
+    typedef event::traits_base<decltype(owner::name_), owner::id> base_type; \
+    typedef owner owner_type;                              \
+    using typename base_type::value_type;                                                       \
+    static constexpr const char* name() { return desc; }   \
+    static constexpr value_type get(owner_type& o)       \
+{                                                          \
+    return o.name_;                                                       \
+    }                                                          \
+    static inline void set(owner_type& o, value_type v)       \
+{                                                          \
+        o.name_ = v;                                                       \
+    }                                                          \
 };
 
 namespace embr { namespace experimental {
@@ -76,14 +86,14 @@ struct PropertyTraits2<::impl::DependentService2, ::impl::DependentService2::IS_
     static constexpr const char* name() { return "are we happy?"; }
 };
 
-template <>
+/*template <>
 struct PropertyTraits2<::impl::DependentService2, ::impl::DependentService2::IS_SHINY> :
         ::impl::DependentService2::id::is_shiny
 {
 
-};
+}; */
 
-
+EMBR_PROPERTY_DECLARATION(::impl::DependentService2, is_shiny, IS_SHINY, "shiny");
 EMBR_PROPERTY_DECLARATION(::impl::DependentService2, people, PEOPLE, "people");
 
 }}
@@ -246,15 +256,35 @@ public:
         }
     }
 
-    void shiny(bool v)
+    template <int id>
+    typename PropertyTraits2<impl_type, id>::value_type _getter()
     {
-        if(impl().is_shiny != v)
+        typedef PropertyTraits2<impl_type, id> traits_type;
+
+        return traits_type::get(impl());
+    }
+
+    template <int id, typename T>
+    void _setter(T v)
+    {
+        typedef PropertyTraits2<impl_type, id> traits_type;
+
+        T current_v = traits_type::get(impl());
+
+        if(current_v != v)
         {
-            base_type::template fire_changing4<impl_type::IS_SHINY>(impl().is_shiny, v, impl());
-            impl().is_shiny= v;
-            base_type::template fire_changed4<impl_type::IS_SHINY>(v, impl());
+            base_type::template fire_changing4<id>(current_v, v, impl());
+            traits_type::set(impl(), v);
+            base_type::template fire_changed4<id>(v, impl());
         }
     }
+
+    void shiny(bool v)
+    {
+        _setter<impl_type::IS_SHINY>(v);
+    }
+
+    bool shiny() const { return _getter<impl_type::IS_SHINY>(); }
 };
 
 TEST_CASE("Services", "[services]")
