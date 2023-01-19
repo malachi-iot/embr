@@ -25,6 +25,16 @@ template <typename T, int id = -1, class enabled = void>
 struct PropertyChanged;
 
 
+template <typename T, int id = -1, class enabled = void>
+struct PropertyChanging;
+
+struct Registration
+{
+    const char* name;
+    const char* instance;
+};
+
+
 template <typename T>
 struct PropertyChanged<T, -1, typename estd::enable_if<
     !estd::is_base_of<traits_tag, T>::value
@@ -96,6 +106,24 @@ struct PropertyChanged<T, -1, typename estd::enable_if<
     PropertyChanged(value_type value) : value{value} {}
 };
 
+
+template <typename TTraits>
+struct PropertyChanging<TTraits, -1, typename estd::enable_if<
+    estd::is_base_of<traits_tag, TTraits>::value
+    >::type> :
+    TTraits
+{
+    typedef typename TTraits::value_type value_type;
+
+    const value_type old_value;
+    const value_type new_value;
+
+    PropertyChanging(value_type old, value_type new_value) :
+        old_value{old},
+        new_value{new_value}
+    {}
+};
+
 }
 
 
@@ -104,7 +132,7 @@ namespace service {
 
 enum Properties
 {
-    PROPERTY_STATE,
+    PROPERTY_STATE = 0,
     PROPERTY_SUBSTATE
 };
 
@@ -153,20 +181,23 @@ namespace impl {
 
 struct Service
 {
+    constexpr static const char* name() { return "Generic service"; }
+    constexpr static const char* instance() { return ""; }
+
     struct id
     {
         struct state : event::traits_tag
         {
             typedef service::States value_type;
             static const char* name() { return "Service state"; }
-            static constexpr int id() { return 0; }
+            static constexpr int id() { return service::PROPERTY_STATE; }
         };
 
         struct substate : event::traits_tag
         {
             typedef service::Substates value_type;
             static const char* name() { return "Service sub state"; }
-            static constexpr int id() { return 1; }
+            static constexpr int id() { return service::PROPERTY_SUBSTATE; }
         };
     };
 
@@ -219,6 +250,14 @@ protected:
         subject_type::notify(event::PropertyChanged<TTrait>{v}, context);
     }
 
+    template <typename TTrait, class TContext>
+    void fire_changing(
+        const typename TTrait::value_type& v_old,
+        const typename TTrait::value_type& v, TContext& context)
+    {
+        subject_type::notify(event::PropertyChanging<TTrait>{v_old, v}, context);
+    }
+
 public:
     PropertyNotifier() = default;
     PropertyNotifier(TSubject&& subject) : subject_type(std::move(subject))
@@ -243,6 +282,7 @@ protected:
     {
         if(s != state_.service_)
         {
+            base_type::template fire_changing<impl::Service::id::state>(state_.service_, s, context);
             state_.service_ = s;
 
             base_type::template fire_changed3<experimental::impl::Service::id::state>(s, context);
@@ -263,6 +303,7 @@ protected:
         {
             state_.service_substate_ = s;
 
+            //base_type::template fire_changed3<experimental::impl::Service::id::substate>(s, context);
             base_type::template fire_changed2<service::PROPERTY_SUBSTATE>(s, context);
         }
     }
@@ -277,6 +318,8 @@ protected:
     {
         if(s != state_.service_)
         {
+            base_type::template fire_changing<impl::Service::id::state>(state_.service_, s, context);
+
             state_.service_ = s;
             state_.service_substate_ = ss;
 
@@ -324,6 +367,7 @@ class Service2 : public Service<TSubject>,
     TImpl
 {
     typedef Service<TSubject> base_type;
+    //using subject_base = typename base_type::subject_type;
 
 protected:
     typedef TImpl impl_type;
@@ -349,7 +393,9 @@ protected:
 public:
     Service2() = default;
     Service2(TSubject&& subject) : base_type(std::move(subject))
-    {}
+    {
+        base_type::notify(event::Registration{impl().name(), impl().instance()}, *this);
+    }
 
     void start()
     {

@@ -117,8 +117,9 @@ public:
 #define SETTER_HELPER(field_name) \
     if(base_type::impl(). field_name != v) \
 {                                 \
-    base_type::impl(). field_name = v;     \
     typedef typename base_type::impl_type::id:: field_name traits_type; \
+    base_type::template fire_changing<traits_type>(base_type::impl(). field_name, v, *this);   \
+    base_type::impl(). field_name = v;     \
     base_type::template fire_changed3<traits_type>(v, *this);   \
 }
 
