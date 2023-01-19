@@ -7,6 +7,8 @@ namespace embr { namespace experimental {
 template <class T, T id_>
 struct PropertyTraits;
 
+template <class T, int id_>
+struct PropertyTraits2;
 
 
 
@@ -39,7 +41,8 @@ struct Registration
 
 template <typename T>
 struct PropertyChanged<T, -1, typename estd::enable_if<
-    !estd::is_base_of<traits_tag, T>::value
+    !estd::is_base_of<traits_tag, T>::value &&
+    !estd::is_base_of<owner_tag, T>::value
     >::type>
 {
     const int id_;
@@ -84,6 +87,7 @@ struct PropertyChanged<T, -1, typename estd::enable_if<
 template <typename T, int id_>
 struct PropertyChanged<T, id_, typename estd::enable_if<
     !estd::is_base_of<traits_tag, T>::value &&
+    !estd::is_base_of<owner_tag, T>::value &&
     id_ >= 0>::type>
 {
     const T value;
@@ -127,12 +131,17 @@ struct PropertyChanging<TTraits, -1, typename estd::enable_if<
 };
 
 
-template <typename TOwner>
-struct PropertyChanged<TOwner, -1, typename estd::enable_if<
+template <typename TOwner, int id_>
+struct PropertyChanged<TOwner, id_, typename estd::enable_if<
     estd::is_base_of<owner_tag, TOwner>::value
-    >::type>
+    >::type> : PropertyTraits2<TOwner, id_>
 {
+    typedef PropertyTraits2<TOwner, id_> traits;
+    typedef typename traits::value_type value_type;
 
+    const value_type value;
+
+    PropertyChanged(value_type v) : value(v) {}
 };
 
 }
@@ -195,7 +204,7 @@ struct Service
     constexpr static const char* name() { return "Generic service"; }
     constexpr static const char* instance() { return ""; }
 
-    struct id
+    struct id : event::owner_tag
     {
         struct state : event::traits_tag
         {
@@ -218,6 +227,22 @@ protected:
 };
 
 }
+
+template <>
+struct PropertyTraits2<impl::Service::id, service::PROPERTY_STATE> :
+        event::traits_base<service::States, service::PROPERTY_STATE>
+{
+
+};
+
+
+template <>
+struct PropertyTraits2<impl::Service::id, service::PROPERTY_SUBSTATE> :
+        event::traits_base<service::Substates, service::PROPERTY_SUBSTATE>
+{
+    static constexpr const char* name() { return "Service sub state"; }
+};
+
 
 template <>
 struct PropertyTraits<service::Properties, service::PROPERTY_STATE>

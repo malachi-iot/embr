@@ -179,4 +179,8 @@ TEST_CASE("Services", "[services]")
     REQUIRE(depender.counter == 3);
     REQUIRE(depender.counter2 == 2);
     REQUIRE(depender.is_smiling);
+
+    event::PropertyChanged<
+            embr::experimental::impl::Service::id, service::PROPERTY_STATE>
+            e1(service::Stopped);
 }
