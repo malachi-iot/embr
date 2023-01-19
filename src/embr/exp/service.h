@@ -144,6 +144,21 @@ struct PropertyChanged<TOwner, id_, typename estd::enable_if<
     PropertyChanged(value_type v) : value(v) {}
 };
 
+
+template <typename TOwner>
+struct PropertyChanged<TOwner, -1, typename estd::enable_if<
+    estd::is_base_of<owner_tag, TOwner>::value
+    >::type>
+{
+    TOwner* owner;
+    const int id_;
+
+    int id() const { return id_; }
+
+    PropertyChanged(TOwner* owner, int v) : owner(owner), id_(v) {}
+};
+
+
 }
 
 
@@ -199,12 +214,35 @@ enum Substates
 
 namespace impl {
 
-struct Service
+struct Service;
+
+}
+
+template <>
+struct PropertyTraits2<impl::Service, service::PROPERTY_STATE> :
+        event::traits_base<service::States, service::PROPERTY_STATE>
+{
+
+};
+
+
+template <>
+struct PropertyTraits2<impl::Service, service::PROPERTY_SUBSTATE> :
+        event::traits_base<service::Substates, service::PROPERTY_SUBSTATE>
+{
+    static constexpr const char* name() { return "Service sub state"; }
+};
+
+
+
+namespace impl {
+
+struct Service : event::owner_tag
 {
     constexpr static const char* name() { return "Generic service"; }
     constexpr static const char* instance() { return ""; }
 
-    struct id : event::owner_tag
+    struct id
     {
         struct state : event::traits_tag
         {
@@ -227,22 +265,6 @@ protected:
 };
 
 }
-
-template <>
-struct PropertyTraits2<impl::Service::id, service::PROPERTY_STATE> :
-        event::traits_base<service::States, service::PROPERTY_STATE>
-{
-
-};
-
-
-template <>
-struct PropertyTraits2<impl::Service::id, service::PROPERTY_SUBSTATE> :
-        event::traits_base<service::Substates, service::PROPERTY_SUBSTATE>
-{
-    static constexpr const char* name() { return "Service sub state"; }
-};
-
 
 template <>
 struct PropertyTraits<service::Properties, service::PROPERTY_STATE>
