@@ -10,11 +10,20 @@ class DependentService;
 template <class TSubject>
 class DependentService2;
 
+#define EMBR_PROPERTY_ID(name, id, desc)  \
+    struct property_##name##_type : event::traits_base<decltype(name), id> \
+    {                                     \
+        typedef this_type owner_type;                                  \
+        static constexpr const char* name() { return desc; }               \
+    };
+
 namespace impl {
 
 
 struct DependentService2 : embr::experimental::impl::Service
 {
+    typedef DependentService2 this_type;
+
     bool is_shiny = false;
     bool is_happy = false;
     bool is_smiling = false;
@@ -27,6 +36,8 @@ struct DependentService2 : embr::experimental::impl::Service
         IS_SHINY,
         PEOPLE
     };
+
+    EMBR_PROPERTY_ID(people, PEOPLE, "people");
 
     struct id : Service::id
     {
@@ -47,6 +58,16 @@ struct DependentService2 : embr::experimental::impl::Service
 
 }
 
+#define EMBR_PROPERTY_DECLARATION(owner, name_, id, desc)  \
+template <> \
+struct PropertyTraits2<owner, owner::id> :    \
+    event::traits_base<decltype(owner::name_), owner::id>         \
+{                                                          \
+    typedef owner owner_type;   \
+    static constexpr const char* name() { return desc; }\
+};
+
+namespace embr { namespace experimental {
 
 template <>
 struct PropertyTraits2<::impl::DependentService2, ::impl::DependentService2::IS_HAPPY> :
@@ -63,12 +84,10 @@ struct PropertyTraits2<::impl::DependentService2, ::impl::DependentService2::IS_
 };
 
 
-template <>
-struct PropertyTraits2<::impl::DependentService2, ::impl::DependentService2::PEOPLE> :
-        ::impl::DependentService2::id::people
-{
+EMBR_PROPERTY_DECLARATION(::impl::DependentService2, people, PEOPLE, "people");
 
-};
+}}
+
 
 
 class DependerService : Service<>
@@ -80,6 +99,7 @@ public:
     int counter2 = 0;
     bool is_smiling = false;
     bool is_shiny = false;
+    bool shiny_happy_people = false;
 
     //template <class TSubject>
     void on_notify(event::PropertyChanged<service::States> s)//, DependentService<TSubject>&)
@@ -125,7 +145,7 @@ public:
         ::impl::DependentService2,
         ::impl::DependentService2::IS_SHINY> e)
     {
-        is_smiling = e.value;
+        is_shiny = e.value;
     }
 
 
@@ -134,6 +154,8 @@ public:
         switch(e.id())
         {
             case ::impl::DependentService2::PEOPLE:
+                if(e.owner->people == 10 && is_shiny)
+                    shiny_happy_people = true;
                 break;
 
             default: break;
@@ -183,6 +205,9 @@ template <class TSubject>
 class DependentService2 : public Service2<::impl::DependentService2, TSubject>
 {
     typedef Service2<::impl::DependentService2, TSubject> base_type;
+    using typename base_type::impl_type;
+
+    impl_type& impl() { return base_type::impl(); }
 
 public:
     DependentService2(TSubject&& subject) : base_type(std::move(subject))
@@ -209,6 +234,27 @@ public:
 
     bool smiling() const
     { return GETTER_HELPER(is_smiling); }
+
+    void people(int v)
+    {
+        if(impl().people != v)
+        {
+            impl().people = v;
+            //typedef PropertyTraits2<impl_type, impl_type::PEOPLE> traits_type;
+            event::PropertyChanged<impl_type> e(&impl(), v);
+            base_type::template fire_changed4<impl_type::PEOPLE>(v, impl());
+        }
+    }
+
+    void shiny(bool v)
+    {
+        if(impl().is_shiny != v)
+        {
+            base_type::template fire_changing4<impl_type::IS_SHINY>(impl().is_shiny, v, impl());
+            impl().is_shiny= v;
+            base_type::template fire_changed4<impl_type::IS_SHINY>(v, impl());
+        }
+    }
 };
 
 TEST_CASE("Services", "[services]")
@@ -222,20 +268,23 @@ TEST_CASE("Services", "[services]")
     dependent.start();
     dependent2.start();
 
+    dependent2.shiny(true);
     dependent2.happy(true);
     dependent2.smiling(true);
+    dependent2.people(10);
 
     REQUIRE(depender.counter == 3);
     REQUIRE(depender.counter2 == 2);
     REQUIRE(depender.is_smiling);
+    REQUIRE(depender.shiny_happy_people == true);
 
     event::PropertyChanged<
             embr::experimental::impl::Service, service::PROPERTY_STATE>
-            e1(service::Stopped);
+            e1(nullptr, service::Stopped);
 
     event::PropertyChanged<
             ::impl::DependentService2, service::PROPERTY_STATE>
-            e2(true);
+            e2(nullptr, true);
 
     REQUIRE(e2.value == true);
 }

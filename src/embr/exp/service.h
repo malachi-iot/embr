@@ -139,9 +139,10 @@ struct PropertyChanged<TOwner, id_, typename estd::enable_if<
     typedef PropertyTraits2<TOwner, id_> traits;
     typedef typename traits::value_type value_type;
 
+    TOwner* owner;
     const value_type value;
 
-    PropertyChanged(value_type v) : value(v) {}
+    PropertyChanged(TOwner* owner, value_type v) : owner(owner), value(v) {}
 };
 
 
@@ -156,7 +157,36 @@ struct PropertyChanged<TOwner, -1, typename estd::enable_if<
     int id() const { return id_; }
 
     PropertyChanged(TOwner* owner, int v) : owner(owner), id_(v) {}
+
+    template <int id>
+    PropertyChanged(const PropertyChanged<TOwner, id>& copy_from) :
+        owner(copy_from.owner),
+        id_(copy_from.id())
+    {}
 };
+
+
+template <typename TOwner, int id_>
+struct PropertyChanging<TOwner, id_, typename estd::enable_if<
+    estd::is_base_of<owner_tag, TOwner>::value
+>::type> : PropertyTraits2<TOwner, id_>
+{
+    typedef PropertyTraits2<TOwner, id_> traits_type;
+    typedef typename traits_type::value_type value_type;
+
+    TOwner* owner;
+    const value_type old_value;
+    const value_type new_value;
+
+    PropertyChanging(TOwner* owner, value_type old, value_type new_value) :
+        owner(owner),
+        old_value{old},
+        new_value{new_value}
+    {}
+};
+
+
+
 
 
 }
@@ -308,12 +338,26 @@ protected:
         subject_type::notify(event::PropertyChanged<TTrait>{v}, context);
     }
 
+    template <int id_, class T, class TContext>
+    void fire_changed4(T v, TContext& context)
+    {
+        subject_type::notify(event::PropertyChanged<TContext, id_>{&context, v}, context);
+    }
+
     template <typename TTrait, class TContext>
     void fire_changing(
         const typename TTrait::value_type& v_old,
         const typename TTrait::value_type& v, TContext& context)
     {
         subject_type::notify(event::PropertyChanging<TTrait>{v_old, v}, context);
+    }
+
+    template <int id, class T, class TOwner>
+    void fire_changing4(
+        const T& v_old,
+        const T& v, TOwner& context)
+    {
+        subject_type::notify(event::PropertyChanging<TOwner, id>{&context, v_old, v}, context);
     }
 
 public:
