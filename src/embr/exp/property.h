@@ -15,10 +15,11 @@
     { o.name_ = v; }                                       \
 }
 
-#define EMBR_PROPERTY_ID_ALIAS(name, id, alias, desc) \
-    struct alias : EMBR_PROPERTY_TRAITS_BASE(this_type, name, this_type::id, desc);
+#define EMBR_PROPERTY_ID_ALIAS(name, id_, alias, desc) \
+    struct alias : EMBR_PROPERTY_TRAITS_BASE(this_type, name, this_type::id_, desc);    \
+    template <bool dummy> struct lookup<id_, dummy> : alias {};
 
-#define EMBR_PROPERTY_ID2(name, id, desc) EMBR_PROPERTY_ID_ALIAS(name, id, name, desc)
+#define EMBR_PROPERTY_ID(name, id, desc) EMBR_PROPERTY_ID_ALIAS(name, id, name, desc)
 
 #define EMBR_PROPERTY_BEGIN \
 struct id : event::lookup_tag  \
@@ -27,9 +28,6 @@ struct id : event::lookup_tag  \
 
 #define EMBR_PROPERTY_END };
 
-#define EMBR_PROPERTY_ID3(name_, id_, desc_) \
-    EMBR_PROPERTY_ID2(name_, id_, desc_)     \
-    template <bool dummy> struct lookup<id_, dummy> : name_ {};
 
 
 

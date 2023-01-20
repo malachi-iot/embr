@@ -13,7 +13,29 @@ class DependentService2;
 
 class DependentService4;
 
-#define EMBR_PROPERTY_ID(name, id, desc)  \
+#define _GETTER_HELPER2(type_, name_)   \
+    type_ name_() const { return base_type::impl().name_; }
+
+#define _SETTER_HELPER_ALIAS(type_, name_, alias_)   \
+    void alias_(const type_& v)  \
+{ base_type::template setter<typename impl_type::id::name_>(v); }
+
+#define _SETTER_HELPER2(type_, name_)   _SETTER_HELPER_ALIAS(type_, name_, name_)
+
+#define GETTER_HELPER2(name_) \
+    _GETTER_HELPER2(typename impl_type::id::name_::value_type, name_)
+
+#define _PROPERTY_HELPER2(type_, name_, alias_) \
+    _GETTER_HELPER2(type_, name_)       \
+    _SETTER_HELPER_ALIAS(type_, name_, alias_)
+
+#define PROPERTY_HELPER2(name_) \
+        _PROPERTY_HELPER2(typename impl_type::id::name_::value_type, name_, name_)
+
+#define PROPERTY_HELPER_ALIAS(name_, alias_) \
+        _PROPERTY_HELPER2(typename impl_type::id::name_::value_type, name_, alias_)
+
+#define EMBR_PROPERTY_ID_EXP(name, id, desc)  \
     struct property_##name##_type : event::traits_base<decltype(name), id> \
     {                                     \
         typedef this_type owner_type;                                  \
@@ -43,7 +65,7 @@ struct DependentService2 : embr::experimental::impl::Service
 
     static const char* name() { return "DependentService2"; }
 
-    EMBR_PROPERTY_ID(people, PEOPLE, "people");
+    EMBR_PROPERTY_ID_EXP(people, PEOPLE, "people");
 
     struct id : Service::id
     {
@@ -60,16 +82,12 @@ struct DependentService2 : embr::experimental::impl::Service
             static bool get(const DependentService2& d) { return d.is_happy; }
         };
 
-        //typedef event::traits_base<bool, IS_SMILING> is_smiling;
-        EMBR_PROPERTY_ID2(is_smiling, IS_SMILING, "smiling");
-        EMBR_PROPERTY_ID2(is_shiny, IS_SHINY, "shiny");
-        EMBR_PROPERTY_ID3(people, PEOPLE, "people");
-
         template <bool dummy>
         struct lookup<IS_HAPPY, dummy> : is_happy {};
 
-        template <bool dummy>
-        struct lookup<IS_SHINY, dummy> : is_shiny {};
+        EMBR_PROPERTY_ID(is_smiling, IS_SMILING, "smiling");
+        EMBR_PROPERTY_ID(is_shiny, IS_SHINY, "shiny");
+        EMBR_PROPERTY_ID(people, PEOPLE, "people");
     };
 
     template <class TSubject, class TImpl = this_type>
@@ -103,9 +121,9 @@ struct DependentService3 : embr::experimental::impl::Service
     // NOTE: I think we could actually define the variables at the same
     // time with these macros...
 
-    EMBR_PROPERTY_ID3(value1, VALUE1, "desc for value1");
-    EMBR_PROPERTY_ID3(value2, VALUE2, "desc for value2");
-    EMBR_PROPERTY_ID3(value3, VALUE3, "desc for value3");
+    EMBR_PROPERTY_ID(value1, VALUE1, "desc for value1");
+    EMBR_PROPERTY_ID(value2, VALUE2, "desc for value2");
+    EMBR_PROPERTY_ID(value3, VALUE3, "desc for value3");
 
     EMBR_PROPERTY_END
 };
@@ -238,19 +256,6 @@ public:
 
 
 
-#define GETTER_HELPER(field_name) \
-    (base_type::impl(). field_name)
-
-#define SETTER_HELPER(field_name) \
-    if(base_type::impl(). field_name != v) \
-{                                 \
-    typedef typename base_type::impl_type::id:: field_name traits_type; \
-    base_type::template fire_changing<traits_type>(base_type::impl(). field_name, v, *this);   \
-    base_type::impl(). field_name = v;     \
-    base_type::template fire_changed3<traits_type>(v, *this);   \
-}
-
-
 template <class TSubject>
 class DependentService2 : public Service<::impl::DependentService2, TSubject>
 {
@@ -277,13 +282,7 @@ public:
         }
     }
 
-    void smiling(bool v)
-    {
-        SETTER_HELPER(is_smiling)
-    }
-
-    bool smiling() const
-    { return GETTER_HELPER(is_smiling); }
+    PROPERTY_HELPER_ALIAS(is_smiling, smiling)
 
     void people(int v)
     {
@@ -295,6 +294,7 @@ public:
         }
     }
 
+
     void shiny(bool v)
     {
         base_type::template setter<impl_type::IS_SHINY>(v);
@@ -303,24 +303,7 @@ public:
     bool shiny() const { return impl().is_shiny; }
 };
 
-#define _GETTER_HELPER2(type_, name_)   \
-    type_ name_() const { return base_type::impl().name_; }
 
-#define _SETTER_HELPER_ALIAS(type_, name_, alias_)   \
-    void alias_(const type_& v)  \
-{ base_type::template setter<typename impl_type::id::name_>(v); }
-
-#define _SETTER_HELPER2(type_, name_)   _SETTER_HELPER_ALIAS(type_, name_, name_)
-
-#define GETTER_HELPER2(name_) \
-    _GETTER_HELPER2(typename impl_type::id::name_::value_type, name_)
-
-#define _PROPERTY_HELPER2(type_, name_) \
-    _GETTER_HELPER2(type_, name_)       \
-    _SETTER_HELPER2(type_, name_)
-
-#define PROPERTY_HELPER2(name_) \
-        _PROPERTY_HELPER2(typename impl_type::id::name_::value_type, name_)
 
 
 namespace embr { namespace experimental {
@@ -366,8 +349,8 @@ public:
 
     EMBR_PROPERTY_BEGIN
 
-        EMBR_PROPERTY_ID3(value1, VALUE1, "value1 desc")
-        EMBR_PROPERTY_ID3(value2, VALUE2, "value1 desc")
+        EMBR_PROPERTY_ID(value1, VALUE1, "value1 desc")
+        EMBR_PROPERTY_ID(value2, VALUE2, "value1 desc")
 
     EMBR_PROPERTY_END
 
