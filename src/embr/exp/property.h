@@ -33,6 +33,8 @@ struct PropertyTraits;
 template <class T, int id_>
 struct PropertyTraits2;
 
+template <class TOwner, int id_>
+struct PropertyTraits3 : TOwner::id::template lookup<id_> {};
 
 
 namespace event {
@@ -40,6 +42,8 @@ namespace event {
 struct traits_tag {};
 
 struct owner_tag {};
+
+struct lookup_tag {};
 
 template <class T, int id_>
 struct traits_base : traits_tag
@@ -268,6 +272,25 @@ protected:
     void setter(T v, TImpl& impl)
     {
         typedef PropertyTraits2<TOwner, id> traits_type;
+
+//#ifdef DEBUG
+        const char* name = traits_type::name();
+//#endif
+        T current_v = traits_type::get(impl);
+
+        if(current_v != v)
+        {
+            fire_changing4<id, TOwner>(current_v, v, impl);
+            traits_type::set(impl, v);
+            fire_changed4<id, TOwner>(v, impl);
+        }
+    }
+
+
+    template <int id, class TOwner, typename T, class TImpl>
+    void setter3(T v, TImpl& impl)
+    {
+        typedef PropertyTraits3<TOwner, id> traits_type;
 
 //#ifdef DEBUG
         const char* name = traits_type::name();

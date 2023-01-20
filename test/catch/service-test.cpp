@@ -75,6 +75,17 @@ struct DependentService2 : embr::experimental::impl::Service
     };
 };
 
+#define EMBR_PROPERTY_BEGIN \
+struct id : event::lookup_tag  \
+{\
+    template <int id_, bool = true> struct lookup;
+
+#define EMBR_PROPERTY_END };
+
+#define EMBR_PROPERTY_ID3(name_, id_, desc_) \
+    EMBR_PROPERTY_ID2(name_, id_, desc_)     \
+    template <bool dummy> struct lookup<id_, dummy> : name_ {};
+
 struct DependentService3 : embr::experimental::impl::Service
 {
     typedef DependentService3 this_type;
@@ -92,15 +103,16 @@ struct DependentService3 : embr::experimental::impl::Service
         VALUE3
     };
 
-    struct id
-    {
-        // NOTE: I think we could actually define the variables at the same
-        // time with these macros...
+    EMBR_PROPERTY_BEGIN
 
-        EMBR_PROPERTY_ID2(value1, VALUE1, "desc for vaue1");
-        EMBR_PROPERTY_ID2(value2, VALUE2, "desc for vaue2");
-        EMBR_PROPERTY_ID2(value3, VALUE3, "desc for vaue3");
-    };
+    // NOTE: I think we could actually define the variables at the same
+    // time with these macros...
+
+    EMBR_PROPERTY_ID3(value1, VALUE1, "desc for value1");
+    EMBR_PROPERTY_ID3(value2, VALUE2, "desc for value2");
+    EMBR_PROPERTY_ID3(value3, VALUE3, "desc for value3");
+
+    EMBR_PROPERTY_END
 };
 
 }
@@ -116,9 +128,6 @@ struct PropertyTraits2<owner, owner::id::name_::id()> : \
     owner::id::name_ {};
 
 namespace embr { namespace experimental {
-
-template <class TOwner, int id_>
-struct PropertyTraits3 : TOwner::id::template lookup<id_> {};
 
 template <>
 struct PropertyTraits2<::impl::DependentService2, ::impl::DependentService2::IS_HAPPY> :
@@ -340,7 +349,7 @@ public:
 #define _PROPERTY_HELPER2(type_, name_)     \
     type_ name_() const { return base_type::impl().name_; } \
     void name_(const type_& v)  \
-{ base_type::template setter<impl_type::id::name_::id(), impl_type>(v); }
+{ base_type::template setter3<impl_type::id::name_::id(), impl_type>(v, base_type::impl()); }
 
 #define PROPERTY_HELPER2(name_) \
         _PROPERTY_HELPER2(impl_type::id::name_::value_type, name_)
@@ -385,7 +394,9 @@ TEST_CASE("Services", "[services]")
     dependent2.smiling(true);
     dependent2.people(10);
 
-    REQUIRE(depender.counter == 3);
+    //dependent3.value1(7);
+
+    REQUIRE(depender.counter == 4);
     REQUIRE(depender.counter2 == 2);
     REQUIRE(depender.is_smiling);
     REQUIRE(depender.shiny_happy_people == true);
