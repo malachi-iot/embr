@@ -148,8 +148,11 @@ public:
     }
 
     //template <class TSubject>
-    void on_notify(event::PropertyChanged<service::States> s)//, DependentService<TSubject>&)
+    void on_notify(event::PropertyChanged<service::States> e)//, DependentService<TSubject>&)
     {
+        if(e.owner == ds2)  // FIX: This isn't working, but given all the impl() and conversion going on, that's not surprising
+            impl().state_.child1 = e.value;
+
         ++counter;
         //FAIL("got here");
     }
@@ -160,7 +163,6 @@ public:
     void on_notify(event::PropertyChanged<embr::experimental::impl::Service, service::PROPERTY_SUBSTATE> e,
         ::impl::DependentService2& c)
     {
-        // FIX: Never reaching here, almost definitely relates to the lookup reverse mapping
         if(e.value == service::Starting)
         {
             ++counter;
@@ -248,12 +250,6 @@ public:
     base_type::template fire_changed3<traits_type>(v, *this);   \
 }
 
-#define PROPERTY_HELPER(field_name) \
-    typedef typename base_type::impl_type::id:: field_name ::value_type field_name##_value_type    \
-    field_name##_value_type field_name() const                                                     \
-{ return GETTER_HELPER(field_name);}       \
-    void field_name(field_name##_value_type v)                                                     \
-    { SETTER_HELPER(field_name); }
 
 template <class TSubject>
 class DependentService2 : public Service<::impl::DependentService2, TSubject>
@@ -294,7 +290,6 @@ public:
         if(impl().people != v)
         {
             impl().people = v;
-            //typedef PropertyTraits2<impl_type, impl_type::PEOPLE> traits_type;
             event::PropertyChanged<impl_type> e(&impl(), v);
             base_type::template fire_changed4<impl_type::PEOPLE, impl_type>(v, impl());
         }
@@ -311,9 +306,11 @@ public:
 #define _GETTER_HELPER2(type_, name_)   \
     type_ name_() const { return base_type::impl().name_; }
 
-#define _SETTER_HELPER2(type_, name_)   \
-    void name_(const type_& v)  \
+#define _SETTER_HELPER_ALIAS(type_, name_, alias_)   \
+    void alias_(const type_& v)  \
 { base_type::template setter<typename impl_type::id::name_>(v); }
+
+#define _SETTER_HELPER2(type_, name_)   _SETTER_HELPER_ALIAS(type_, name_, name_)
 
 #define GETTER_HELPER2(name_) \
     _GETTER_HELPER2(typename impl_type::id::name_::value_type, name_)
@@ -423,12 +420,11 @@ TEST_CASE("Services", "[services]")
     dependent2.smiling(true);
     dependent2.people(10);
 
-    //dependent3.value1(7);
+    dependent3.value1(7);
 
     dependent4.proxy();
 
-    //REQUIRE(depender.counter == 5);   // FIX: This is broken due to lack of substate event firing
-    REQUIRE(depender.counter == 4);
+    REQUIRE(depender.counter == 5);
     REQUIRE(depender.counter2 == 2);
     REQUIRE(depender.is_smiling);
     REQUIRE(depender.shiny_happy_people == true);

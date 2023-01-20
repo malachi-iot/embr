@@ -15,8 +15,10 @@
     { o.name_ = v; }                                       \
 }
 
-#define EMBR_PROPERTY_ID2(name, id, desc) \
-    struct name : EMBR_PROPERTY_TRAITS_BASE(this_type, name, this_type::id, desc);
+#define EMBR_PROPERTY_ID_ALIAS(name, id, alias, desc) \
+    struct alias : EMBR_PROPERTY_TRAITS_BASE(this_type, name, this_type::id, desc);
+
+#define EMBR_PROPERTY_ID2(name, id, desc) EMBR_PROPERTY_ID_ALIAS(name, id, name, desc)
 
 #define EMBR_PROPERTY_BEGIN \
 struct id : event::lookup_tag  \
@@ -61,27 +63,29 @@ template <typename T, int id = -1, class enabled = void>
 struct PropertyChanging;
 
 
-template <typename T>
-struct PropertyChanged<T, -1, typename estd::enable_if<
+template <typename TEnum>
+struct PropertyChanged<TEnum, -1, typename estd::enable_if<
     //!estd::is_base_of<traits_tag, T>::value &&
     //!estd::is_base_of<owner_tag, T>::value &&
-    estd::is_enum<T>::value
+    estd::is_enum<TEnum>::value
 >::type>
 {
-    typedef T value_type;
+    typedef TEnum value_type;
 
     const int id_;
     int id() const { return id_; }
 
+    void* owner;
     const value_type value;
 
-    PropertyChanged(int id, T value) :
+    PropertyChanged(int id, value_type value) :
         id_{id},
         value{value}
     {}
 
     template <int id_>
-    PropertyChanged(const PropertyChanged<T, id_>& copy_from) :
+    PropertyChanged(const PropertyChanged<value_type, id_>& copy_from) :
+        owner(copy_from.owner),
         id_{copy_from.id()},
         value{copy_from.value}
     {}
@@ -101,9 +105,10 @@ struct PropertyChanged<T, -1, typename estd::enable_if<
     template <class T2,
         typename estd::enable_if<
             estd::is_base_of<traits_tag, T2>::value &&
-            estd::is_same<typename T2::value_type, T>::value
+            estd::is_same<typename T2::value_type, value_type>::value
             , bool>::type = true>
     PropertyChanged(const PropertyChanged<T2, -1>& copy_from) :
+        owner(copy_from.owner),
         id_{copy_from.id()},
         value(copy_from.value)
     {}
@@ -333,7 +338,7 @@ protected:
     {
         //impl_type& context = impl();
         TSubject& subject = *this;
-        typename impl_type::template responder<TSubject> context{impl(), subject};
+        typename impl_type::template responder<TSubject, impl_type> context{impl(), subject};
         base_type::template setter<id, impl_type>(v, context);
     }
 
@@ -342,7 +347,7 @@ protected:
     {
         typedef typename TTraits::owner_type owner_type;
         TSubject& subject = *this;
-        typename impl_type::template responder<TSubject, owner_type> context{impl(), subject};
+        typename impl_type::template responder<TSubject, impl_type> context{impl(), subject};
         base_type::template setter<TTraits>(v, context);
     }
 
