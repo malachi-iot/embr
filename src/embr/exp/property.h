@@ -233,7 +233,9 @@ protected:
     template <int id_, class TOwner, class T, class TImpl>
     void fire_changed4(T v, TImpl& context)
     {
-        subject_type::notify(event::PropertyChanged<TOwner, id_>{&context, v}, context);
+        TOwner& owner = context;    // Give conversions a chance to run
+
+        subject_type::notify(event::PropertyChanged<TOwner, id_>{&owner, v}, context);
     }
 
     template <typename TTrait, class TContext>
@@ -249,7 +251,9 @@ protected:
         const T& v_old,
         const T& v, TContext& context)
     {
-        subject_type::notify(event::PropertyChanging<TOwner, id>{&context, v_old, v}, context);
+        TOwner& owner = context;    // Give conversions a chance to run
+
+        subject_type::notify(event::PropertyChanging<TOwner, id>{&owner, v_old, v}, context);
     }
 
     template <int id, class TImpl>

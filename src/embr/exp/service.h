@@ -114,11 +114,14 @@ struct Service : event::owner_tag
             EMBR_PROPERTY_TRAITS_BASE(this_type, state_.service_substate_, service::PROPERTY_SUBSTATE, "substate");
     };
 
-    template <class TImpl, class TSubject>
-    struct responder
+    template <class TSubject, class TImpl = this_type>
+    struct responder //: PropertyNotifier<TSubject&>
     {
         TImpl& impl;
         TSubject& subject;
+
+        constexpr responder(TImpl& impl, TSubject& subject) :
+            impl(impl), subject(subject) {}
 
         operator TImpl& () { return impl; }
     };
@@ -172,8 +175,9 @@ protected:
     template <int id, typename T>
     void setter(T v)
     {
-        impl_type& context = impl();
-        //typename impl_type::template responder<TImpl, TSubject> context{impl(), *this};
+        //impl_type& context = impl();
+        TSubject& subject = *this;
+        typename impl_type::template responder<TSubject> context{impl(), subject};
         base_type::template setter<id, impl_type>(v, context);
     }
 

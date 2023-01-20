@@ -22,6 +22,7 @@ namespace impl {
 
 struct DependentService2 : embr::experimental::impl::Service
 {
+    typedef embr::experimental::impl::Service base_type_;
     typedef DependentService2 this_type;
 
     bool is_shiny = false;
@@ -63,6 +64,14 @@ struct DependentService2 : embr::experimental::impl::Service
 
         template <bool dummy>
         struct lookup<PEOPLE, dummy> : people {};
+    };
+
+    template <class TSubject, class TImpl = this_type>
+    struct responder : base_type_::responder<TSubject, TImpl>
+    {
+        typedef base_type_::responder<TSubject, TImpl> base_type;
+
+        ESTD_CPP_FORWARDING_CTOR(responder)
     };
 };
 
