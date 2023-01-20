@@ -2,6 +2,30 @@
 
 #include "../observer.h"
 
+
+#define EMBR_PROPERTY_TRAITS_BASE(owner, name_, id, desc) \
+    event::traits_base<decltype(owner::name_), id>         \
+{                                                          \
+    typedef event::traits_base<decltype(owner::name_), id> base_type; \
+    typedef owner owner_type;                              \
+    using typename base_type::value_type;                  \
+    static constexpr const char* name() { return desc; }   \
+    static constexpr value_type get(owner_type& o)       \
+    { return o.name_; }                                    \
+    static inline void set(owner_type& o, value_type v)       \
+    { o.name_ = v; }                                       \
+}
+
+#define EMBR_PROPERTY_ID2(name, id, desc) \
+    struct name : EMBR_PROPERTY_TRAITS_BASE(this_type, name, this_type::id, desc);
+
+#define EMBR_PROPERTY_DECLARATION2(owner, name_)  \
+template <> \
+struct PropertyTraits2<owner, owner::id::name_::id()> : \
+    owner::id::name_ {};
+
+
+
 namespace embr { namespace experimental {
 
 template <class T, T id_>
@@ -248,20 +272,6 @@ struct Service;
 
 }
 
-template <>
-struct PropertyTraits2<impl::Service, service::PROPERTY_STATE> :
-        event::traits_base<service::States, service::PROPERTY_STATE>
-{
-
-};
-
-
-template <>
-struct PropertyTraits2<impl::Service, service::PROPERTY_SUBSTATE> :
-        event::traits_base<service::Substates, service::PROPERTY_SUBSTATE>
-{
-    static constexpr const char* name() { return "Service sub state"; }
-};
 
 
 
@@ -269,24 +279,30 @@ namespace impl {
 
 struct Service : event::owner_tag
 {
+    typedef Service this_type;
+
     constexpr static const char* name() { return "Generic service"; }
     constexpr static const char* instance() { return ""; }
 
+    union
+    {
+        struct
+        {
+            service::States service_: 4;
+            service::Substates service_substate_: 6;
+
+        } state_;
+
+        unsigned raw = 0;
+    };
+
     struct id
     {
-        struct state : event::traits_tag
-        {
-            typedef service::States value_type;
-            static const char* name() { return "Service state"; }
-            static constexpr int id() { return service::PROPERTY_STATE; }
-        };
+        struct state :
+            EMBR_PROPERTY_TRAITS_BASE(this_type, state_.service_, service::PROPERTY_STATE, "state");
 
-        struct substate : event::traits_tag
-        {
-            typedef service::Substates value_type;
-            static const char* name() { return "Service sub state"; }
-            static constexpr int id() { return service::PROPERTY_SUBSTATE; }
-        };
+        struct substate :
+            EMBR_PROPERTY_TRAITS_BASE(this_type, state_.service_substate_, service::PROPERTY_SUBSTATE, "substate");
     };
 
 protected:
@@ -312,6 +328,8 @@ struct PropertyTraits<service::Properties, service::PROPERTY_SUBSTATE>
     static constexpr const char* name() { return "Service sub-state"; }
 };
 
+EMBR_PROPERTY_DECLARATION2(impl::Service, state)
+EMBR_PROPERTY_DECLARATION2(impl::Service, substate)
 
 
 template <class TSubject = embr::void_subject>
@@ -338,10 +356,10 @@ protected:
         subject_type::notify(event::PropertyChanged<TTrait>{v}, context);
     }
 
-    template <int id_, class T, class TContext>
-    void fire_changed4(T v, TContext& context)
+    template <int id_, class TOwner, class T, class TImpl>
+    void fire_changed4(T v, TImpl& context)
     {
-        subject_type::notify(event::PropertyChanged<TContext, id_>{&context, v}, context);
+        subject_type::notify(event::PropertyChanged<TOwner, id_>{&context, v}, context);
     }
 
     template <typename TTrait, class TContext>
@@ -352,10 +370,10 @@ protected:
         subject_type::notify(event::PropertyChanging<TTrait>{v_old, v}, context);
     }
 
-    template <int id, class T, class TOwner>
+    template <int id, class TOwner, class T, class TImpl>
     void fire_changing4(
         const T& v_old,
-        const T& v, TOwner& context)
+        const T& v, TImpl& context)
     {
         subject_type::notify(event::PropertyChanging<TOwner, id>{&context, v_old, v}, context);
     }
@@ -368,20 +386,24 @@ protected:
         return traits_type::get(impl);
     }
 
-    template <int id, typename T, class TImpl>
+    template <int id, class TOwner, typename T, class TImpl>
     void setter(T v, TImpl& impl)
     {
-        typedef PropertyTraits2<TImpl, id> traits_type;
+        typedef PropertyTraits2<TOwner, id> traits_type;
 
+//#ifdef DEBUG
+        const char* name = traits_type::name();
+//#endif
         T current_v = traits_type::get(impl);
 
         if(current_v != v)
         {
-            fire_changing4<id>(current_v, v, impl);
+            fire_changing4<id, TOwner>(current_v, v, impl);
             traits_type::set(impl, v);
-            fire_changed4<id>(v, impl);
+            fire_changed4<id, TOwner>(v, impl);
         }
     }
+
 
 public:
     PropertyNotifier() = default;
@@ -389,82 +411,57 @@ public:
     {}
 };
 
-template <class TSubject = embr::void_subject>
-class Service : public PropertyNotifier<TSubject>
+
+template <class TImpl = impl::Service, class TSubject = embr::void_subject>
+class Service : public PropertyNotifier<TSubject>,
+    TImpl
 {
     typedef PropertyNotifier<TSubject> base_type;
+    //using subject_base = typename base_type::subject_type;
 
-    union
+    template <int id, typename T>
+    void service_setter(T v)
     {
-        struct
-        {
-            service::States service_: 4;
-            service::Substates service_substate_: 6;
-
-        } state_;
-
-        unsigned raw = 0;
-    };
+        base_type::template setter<id, impl::Service>(v, impl());
+    }
 
 protected:
-    template <class TContext>
-    void state(service::States s, TContext& context)
-    {
-        if(s != state_.service_)
-        {
-            base_type::template fire_changing<impl::Service::id::state>(state_.service_, s, context);
-            state_.service_ = s;
+    typedef TImpl impl_type;
+    //impl_type impl_;
 
-            base_type::template fire_changed3<experimental::impl::Service::id::state>(s, context);
-            //base_type::template fire_changed2<service::PROPERTY_STATE>(s, context);
-        }
+    impl_type& impl() { return *this; }
+
+    template <int id, typename T>
+    void setter(T v)
+    {
+        base_type::template setter<id, impl_type>(v, impl());
     }
 
-
+protected:
     void state(service::States s)
     {
-        state(s, *this);
+        service_setter<service::PROPERTY_STATE>(s);
     }
 
-    template <class TContext>
-    void state(service::Substates s, TContext& context)
-    {
-        if(s != state_.service_substate_)
-        {
-            state_.service_substate_ = s;
-
-            //base_type::template fire_changed3<experimental::impl::Service::id::substate>(s, context);
-            base_type::template fire_changed2<service::PROPERTY_SUBSTATE>(s, context);
-        }
-    }
 
     void state(service::Substates s)
     {
-        state(s, *this);
+        service_setter<service::PROPERTY_SUBSTATE>(s);
     }
-
-    template <class TContext>
-    void state(service::States s, service::Substates ss, TContext& context)
-    {
-        if(s != state_.service_)
-        {
-            base_type::template fire_changing<impl::Service::id::state>(state_.service_, s, context);
-
-            state_.service_ = s;
-            state_.service_substate_ = ss;
-
-            base_type::template fire_changed3<experimental::impl::Service::id::state>(s, context);
-            //base_type::template fire_changed2<service::PROPERTY_STATE>(s, context);
-        }
-    }
-
 
     void state(service::States s, service::Substates ss)
     {
-        state(s, ss, *this);
+        if(s != impl().state_.service_)
+        {
+            base_type::template fire_changing<impl::Service::id::state>(impl().state_.service_, s, impl());
+
+            impl().state_.service_ = s;
+            impl().state_.service_substate_ = ss;
+
+            base_type::template fire_changed3<experimental::impl::Service::id::state>(s, impl());
+            //base_type::template fire_changed2<service::PROPERTY_STATE>(s, context);
+        }
     }
-
-
 
 
     template <class F>
@@ -488,48 +485,6 @@ protected:
 public:
     Service() = default;
     Service(TSubject&& subject) : base_type(std::move(subject))
-    {}
-};
-
-
-template <class TImpl, class TSubject = embr::void_subject>
-class Service2 : public Service<TSubject>,
-    TImpl
-{
-    typedef Service<TSubject> base_type;
-    //using subject_base = typename base_type::subject_type;
-
-protected:
-    typedef TImpl impl_type;
-    //impl_type impl_;
-
-    impl_type& impl() { return *this; }
-
-    template <int id, typename T>
-    void setter(T v)
-    {
-        return base_type::template setter<id>(v, impl());
-    }
-
-
-    void state(service::States s)
-    {
-        base_type::state(s, impl());
-    }
-
-    void state(service::Substates s)
-    {
-        base_type::state(s, impl());
-    }
-
-    void state(service::States s, service::Substates ss)
-    {
-        base_type::state(s, ss, impl());
-    }
-
-public:
-    Service2() = default;
-    Service2(TSubject&& subject) : base_type(std::move(subject))
     {
         base_type::notify(event::Registration{impl().name(), impl().instance()}, *this);
     }

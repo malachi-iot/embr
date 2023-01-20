@@ -17,22 +17,6 @@ class DependentService2;
         static constexpr const char* name() { return desc; }               \
     };
 
-#define EMBR_PROPERTY_TRAITS_BASE(owner, name_, id, desc) \
-    event::traits_base<decltype(owner::name_), id>         \
-{                                                          \
-    typedef event::traits_base<decltype(owner::name_), id> base_type; \
-    typedef owner owner_type;                              \
-    using typename base_type::value_type;                  \
-    static constexpr const char* name() { return desc; }   \
-    static constexpr value_type get(owner_type& o)       \
-    { return o.name_; }                                    \
-    static inline void set(owner_type& o, value_type v)       \
-    { o.name_ = v; }                                       \
-}
-
-#define EMBR_PROPERTY_ID2(name, id, desc) \
-    struct name : EMBR_PROPERTY_TRAITS_BASE(this_type, name, this_type::id, desc);
-
 namespace impl {
 
 
@@ -69,7 +53,8 @@ struct DependentService2 : embr::experimental::impl::Service
             static bool get(const DependentService2& d) { return d.is_happy; }
         };
 
-        typedef event::traits_base<bool, IS_SMILING> is_smiling;
+        //typedef event::traits_base<bool, IS_SMILING> is_smiling;
+        EMBR_PROPERTY_ID2(is_smiling, IS_SMILING, "smiling");
         typedef event::traits_base<bool, IS_SHINY> is_shiny;
         //typedef event::traits_base<int, PEOPLE> people;
         EMBR_PROPERTY_ID2(people, PEOPLE, "people");
@@ -112,6 +97,7 @@ struct PropertyTraits2<::impl::DependentService2, ::impl::DependentService2::IS_
 
 EMBR_PROPERTY_DECLARATION(::impl::DependentService2, is_shiny, IS_SHINY, "shiny");
 //EMBR_PROPERTY_DECLARATION(::impl::DependentService2, people, PEOPLE, "people");
+EMBR_PROPERTY_DECLARATION2(::impl::DependentService2, is_smiling)
 EMBR_PROPERTY_DECLARATION2(::impl::DependentService2, people)
 
 }}
@@ -136,10 +122,13 @@ public:
         //FAIL("got here");
     }
 
-    void on_notify(event::PropertyChanged<service::Substates, service::PROPERTY_SUBSTATE> s,
+    // TODO: This "legacy" way is broken now, but for limited scenarios we would still like
+    // this approach to function
+    //void on_notify(event::PropertyChanged<service::Substates, service::PROPERTY_SUBSTATE> e,
+    void on_notify(event::PropertyChanged<embr::experimental::impl::Service, service::PROPERTY_SUBSTATE> e,
         ::impl::DependentService2& c)
     {
-        if(s.value == service::Starting)
+        if(e.value == service::Starting)
         {
             ++counter;
         }
@@ -152,8 +141,6 @@ public:
         //FAIL("got here");
     } */
 
-    // Code marker: HERE -- this code inexplicably does not get invoked somehow depending on the presence
-    // of a later-on-down-the-line REQUIRE call
     void on_notify(event::PropertyChanged<embr::experimental::impl::Service::id::state> s, ::impl::DependentService2& c)
     {
         ++counter;
@@ -197,9 +184,9 @@ public:
 
 
 template <class TSubject>
-class DependentService : Service<TSubject>
+class DependentService : Service<embr::experimental::impl::Service, TSubject>
 {
-    typedef Service<TSubject> base_type;
+    typedef Service<embr::experimental::impl::Service, TSubject> base_type;
 
 public:
     DependentService(TSubject&& subject) : base_type(std::move(subject))
@@ -234,9 +221,9 @@ public:
     { SETTER_HELPER(field_name); }
 
 template <class TSubject>
-class DependentService2 : public Service2<::impl::DependentService2, TSubject>
+class DependentService2 : public Service<::impl::DependentService2, TSubject>
 {
-    typedef Service2<::impl::DependentService2, TSubject> base_type;
+    typedef Service<::impl::DependentService2, TSubject> base_type;
     using typename base_type::impl_type;
 
     impl_type& impl() { return base_type::impl(); }
@@ -274,7 +261,7 @@ public:
             impl().people = v;
             //typedef PropertyTraits2<impl_type, impl_type::PEOPLE> traits_type;
             event::PropertyChanged<impl_type> e(&impl(), v);
-            base_type::template fire_changed4<impl_type::PEOPLE>(v, impl());
+            base_type::template fire_changed4<impl_type::PEOPLE, impl_type>(v, impl());
         }
     }
 
@@ -318,11 +305,8 @@ TEST_CASE("Services", "[services]")
     event::PropertyChanged<embr::experimental::impl::Service::id::state> e3(service::Stopped);
 
     typedef PropertyTraits3<::impl::DependentService2, ::impl::DependentService2::PEOPLE> traits1;
-    constexpr int id = traits1::id();
 
-    // FIX: Somehow, this REQUIRE has a side-effect which inhibits code marked 'HERE' from functioning
-    //REQUIRE(traits1::id() == ::impl::DependentService2::PEOPLE);
-    REQUIRE(id == ::impl::DependentService2::PEOPLE);
+    REQUIRE(traits1::id() == ::impl::DependentService2::PEOPLE);
 
     REQUIRE(e2.value == true);
 }
