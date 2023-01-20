@@ -50,6 +50,15 @@ enum States
 
 enum Substates
 {
+    // stopped states
+    Unstarted,
+    Configuring,        ///< pre-start step announcing preliminiry configuration
+    Configured,         ///< pre-start step finishing preliminiry configuration
+    Finished,
+    Starting,
+    Paused,
+    Resuming,
+
     // running states
     Running,
     Connecting,
@@ -60,15 +69,6 @@ enum Substates
     Pausing,
     Stopping,
     Resetting,
-
-    // stopped states
-    Unstarted,
-    Configuring,        ///< pre-start step announcing preliminiry configuration
-    Configured,         ///< pre-start step finishing preliminiry configuration
-    Finished,
-    Starting,
-    Paused,
-    Resuming,
 
     // error states
     ErrConfig,         ///< service configuration error, usually on startup or configuring
@@ -112,14 +112,18 @@ struct Service : event::owner_tag
         unsigned raw = 0;
     };
 
-    struct id
-    {
+    EMBR_PROPERTY_BEGIN
+
         struct state :
             EMBR_PROPERTY_TRAITS_BASE(this_type, state_.service_, service::PROPERTY_STATE, "state");
 
         struct substate :
             EMBR_PROPERTY_TRAITS_BASE(this_type, state_.service_substate_, service::PROPERTY_SUBSTATE, "substate");
-    };
+
+        template <bool dummy> struct lookup<service::PROPERTY_STATE, dummy> : state {};
+        template <bool dummy> struct lookup<service::PROPERTY_SUBSTATE, dummy> : substate {};
+
+    EMBR_PROPERTY_END
 
     // Kinda-sorta creates an alias to original service.  Ultimately we combine
     // this and the original service into one code chunk, likely here
@@ -146,21 +150,6 @@ public:
 
 }
 
-template <>
-struct PropertyTraits<service::Properties, service::PROPERTY_STATE>
-{
-    typedef service::States value_type;
-
-    static constexpr const char* name() { return "Service State"; }
-};
-
-template <>
-struct PropertyTraits<service::Properties, service::PROPERTY_SUBSTATE>
-{
-    typedef service::Substates value_type;
-
-    static constexpr const char* name() { return "Service sub-state"; }
-};
 
 EMBR_PROPERTY_DECLARATION2(impl::Service, state)
 EMBR_PROPERTY_DECLARATION2(impl::Service, substate)
@@ -176,26 +165,16 @@ protected:
     using typename base_type::impl_type;
     using base_type::impl;
 
-    template <int id, typename T>
-    void service_setter(T v)
-    {
-        // DEBT: Easy to get wrong, clean this double base_type up
-        base_type::base_type::template setter<id, impl::Service>(v, impl());
-    }
-
 protected:
     void state(service::States s)
     {
         base_type::template setter<impl::Service::id::state>(s);
-        //service_setter<service::PROPERTY_STATE>(s);
     }
 
 
     void state(service::Substates s)
     {
-        // FIX: This doesn't compile
-        //base_type::template setter<impl::Service::id::substate>(s);
-        service_setter<service::PROPERTY_SUBSTATE>(s);
+        base_type::template setter<impl::Service::id::substate>(s);
     }
 
     void state(service::States s, service::Substates ss)

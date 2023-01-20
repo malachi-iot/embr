@@ -23,6 +23,17 @@ template <> \
 struct PropertyTraits2<owner, owner::id::name_::id()> : \
     owner::id::name_ {};
 
+#define EMBR_PROPERTY_BEGIN \
+struct id : event::lookup_tag  \
+{\
+    template <int id_, bool = true> struct lookup;
+
+#define EMBR_PROPERTY_END };
+
+#define EMBR_PROPERTY_ID3(name_, id_, desc_) \
+    EMBR_PROPERTY_ID2(name_, id_, desc_)     \
+    template <bool dummy> struct lookup<id_, dummy> : name_ {};
+
 
 
 namespace embr { namespace experimental {
@@ -220,18 +231,6 @@ class PropertyNotifier : public TSubject
     typedef TSubject subject_type;
 
 protected:
-    template <typename T, class TContext>
-    void fire_changed(int id, T v, TContext& context)
-    {
-        subject_type::notify(event::PropertyChanged<T>{id, v}, context);
-    }
-
-    template <int id, typename T, class TContext>
-    void fire_changed2(T v, TContext& context)
-    {
-        subject_type::notify(event::PropertyChanged<T, id>{v}, context);
-    }
-
     template <typename TTrait, class TContext>
     void fire_changed3(typename TTrait::value_type v, TContext& context)
     {
@@ -283,14 +282,15 @@ protected:
         owner_type& impl = context;    // give conversion a chance
 //#ifdef DEBUG
         const char* name = traits_type::name();
+        const char* owner_name = owner_type::name();
 //#endif
         auto current_v = traits_type::get(impl);
 
         if(current_v != v)
         {
-            fire_changing4<id, owner_type>(current_v, v, impl);
+            fire_changing4<id, owner_type>(current_v, v, context);
             traits_type::set(impl, v);
-            fire_changed4<id, owner_type>(v, impl);
+            fire_changed4<id, owner_type>(v, context);
         }
     }
 
