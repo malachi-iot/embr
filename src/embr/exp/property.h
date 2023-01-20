@@ -274,12 +274,13 @@ protected:
         return traits_type::get(impl);
     }
 
-    template <class TTraits, class TImpl>
-    void setter(typename TTraits::value_type v, TImpl& impl)
+    template <class TTraits, class TContext>
+    void setter(typename TTraits::value_type v, TContext& context)
     {
         typedef TTraits traits_type;
         constexpr int id = traits_type::id();
         typedef typename TTraits::owner_type owner_type;
+        owner_type& impl = context;    // give conversion a chance
 //#ifdef DEBUG
         const char* name = traits_type::name();
 //#endif
@@ -352,6 +353,15 @@ protected:
         TSubject& subject = *this;
         typename impl_type::template responder<TSubject> context{impl(), subject};
         base_type::template setter<id, impl_type>(v, context);
+    }
+
+    template <typename TTraits>
+    void setter(typename TTraits::value_type v)
+    {
+        typedef typename TTraits::owner_type owner_type;
+        TSubject& subject = *this;
+        typename impl_type::template responder<TSubject, owner_type> context{impl(), subject};
+        base_type::template setter<TTraits>(v, context);
     }
 
 public:

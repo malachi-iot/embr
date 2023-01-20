@@ -39,7 +39,7 @@ struct DependentService2 : embr::experimental::impl::Service
         PEOPLE
     };
 
-    static const char* name() { return "DeendentService2"; }
+    static const char* name() { return "DependentService2"; }
 
     EMBR_PROPERTY_ID(people, PEOPLE, "people");
 
@@ -348,17 +348,23 @@ public:
 
 #define _GETTER_HELPER2(type_, name_)   \
     type_ name_() const { return base_type::impl().name_; }
+
+// Almost there, but not quite
+/*
 #define _SETTER_HELPER2(type_, name_)   \
     void name_(const type_& v)  \
-{ base_type::template setter<impl_type::id::name_>(v, base_type::impl()); }
+{ base_type::template setter<typename impl_type::id::name_>(v); } */
+
+#define _SETTER_HELPER2(type_, name_) \
+    void name_(const type_& v)  \
+{ base_type::template setter3<impl_type::id::name_::id(), impl_type>(v, base_type::impl()); }
 
 #define GETTER_HELPER2(name_) \
     _GETTER_HELPER2(typename impl_type::id::name_::value_type, name_)
 
-#define _PROPERTY_HELPER2(type_, name_)     \
-    type_ name_() const { return base_type::impl().name_; } \
-    void name_(const type_& v)  \
-{ base_type::template setter3<impl_type::id::name_::id(), impl_type>(v, base_type::impl()); }
+#define _PROPERTY_HELPER2(type_, name_) \
+    _GETTER_HELPER2(type_, name_)       \
+    _SETTER_HELPER2(type_, name_)
 
 #define PROPERTY_HELPER2(name_) \
         _PROPERTY_HELPER2(typename impl_type::id::name_::value_type, name_)
@@ -397,6 +403,8 @@ private:
     }
 
 public:
+    static const char* name() { return "DependentService4"; }
+
     enum Properties
     {
         VALUE1,
