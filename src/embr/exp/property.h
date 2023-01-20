@@ -74,14 +74,17 @@ struct PropertyChanging;
 
 template <typename T>
 struct PropertyChanged<T, -1, typename estd::enable_if<
-    !estd::is_base_of<traits_tag, T>::value &&
-    !estd::is_base_of<owner_tag, T>::value
+    //!estd::is_base_of<traits_tag, T>::value &&
+    //!estd::is_base_of<owner_tag, T>::value &&
+    estd::is_enum<T>::value
 >::type>
 {
+    typedef T value_type;
+
     const int id_;
     int id() const { return id_; }
 
-    const T value;
+    const value_type value;
 
     PropertyChanged(int id, T value) :
         id_{id},
@@ -119,8 +122,9 @@ struct PropertyChanged<T, -1, typename estd::enable_if<
 
 template <typename T, int id_>
 struct PropertyChanged<T, id_, typename estd::enable_if<
-    !estd::is_base_of<traits_tag, T>::value &&
-    !estd::is_base_of<owner_tag, T>::value &&
+    //!estd::is_base_of<traits_tag, T>::value &&
+    //!estd::is_base_of<owner_tag, T>::value &&
+    estd::is_enum<T>::value &&
     id_ >= 0>::type>
 {
     const T value;
