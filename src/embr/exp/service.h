@@ -5,6 +5,16 @@
 
 namespace embr { namespace experimental {
 
+namespace event {
+
+struct Registration
+{
+    const char* name;
+    const char* instance;
+};
+
+
+}
 
 
 // Copy/pasted/adapter from chariot project

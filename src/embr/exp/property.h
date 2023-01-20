@@ -55,12 +55,6 @@ struct PropertyChanged;
 template <typename T, int id = -1, class enabled = void>
 struct PropertyChanging;
 
-struct Registration
-{
-    const char* name;
-    const char* instance;
-};
-
 
 template <typename T>
 struct PropertyChanged<T, -1, typename estd::enable_if<

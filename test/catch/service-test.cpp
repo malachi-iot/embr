@@ -37,6 +37,8 @@ struct DependentService2 : embr::experimental::impl::Service
         PEOPLE
     };
 
+    static const char* name() { return "DeendentService2"; }
+
     EMBR_PROPERTY_ID(people, PEOPLE, "people");
 
     struct id : Service::id
@@ -114,6 +116,12 @@ public:
     bool is_smiling = false;
     bool is_shiny = false;
     bool shiny_happy_people = false;
+
+    void on_notify(event::Registration e)
+    {
+        printf("Service registered: %s (%s)\n", e.name, e.instance);
+        fflush(stdout);
+    }
 
     //template <class TSubject>
     void on_notify(event::PropertyChanged<service::States> s)//, DependentService<TSubject>&)
