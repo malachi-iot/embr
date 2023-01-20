@@ -174,9 +174,7 @@ class Service : public PropertyHost<TImpl, TSubject>
 
 protected:
     using typename base_type::impl_type;
-
-    impl_type& impl() { return base_type::impl(); }
-    const impl_type& impl() const { return base_type::impl(); }
+    using base_type::impl;
 
     template <int id, typename T>
     void service_setter(T v)

@@ -312,9 +312,9 @@ protected:
 
         if(current_v != v)
         {
-            fire_changing4<id, TOwner>(current_v, v, impl);
+            fire_changing<traits_type>(current_v, v, impl);
             traits_type::set(impl, v);
-            fire_changed4<id, TOwner>(v, impl);
+            fire_changed3<traits_type, TOwner>(v, impl);
         }
     }
 
@@ -343,6 +343,7 @@ public:
 
 protected:
     impl_type& impl() { return *this; }
+    const impl_type& impl() const { return *this; }
 
     template <int id, typename T>
     void setter(T v)

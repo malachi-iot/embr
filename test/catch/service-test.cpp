@@ -1,6 +1,7 @@
 #include <catch2/catch.hpp>
 
 #include <embr/exp/service.h>
+#include <embr/exp/service.hpp>
 
 using namespace embr::experimental;
 
@@ -345,6 +346,14 @@ public:
     bool shiny() const { return impl().is_shiny; }
 };
 
+#define _GETTER_HELPER2(type_, name_)   \
+    type_ name_() const { return base_type::impl().name_; }
+#define _SETTER_HELPER2(type_, name_)   \
+    void name_(const type_& v)  \
+{ base_type::template setter<impl_type::id::name_>(v, base_type::impl()); }
+
+#define GETTER_HELPER2(name_) \
+    _GETTER_HELPER2(typename impl_type::id::name_::value_type, name_)
 
 #define _PROPERTY_HELPER2(type_, name_)     \
     type_ name_() const { return base_type::impl().name_; } \
@@ -378,12 +387,13 @@ class DependentService4 : public embr::experimental::impl::Service
     typedef DependentService4 this_type;
 
 private:
-    int value1;
+    int value1 = 0;
     const char* value2;
 
-    void do_private_stuff() const
+    int do_private_stuff() const
     {
         INFO("DependentService4: doing private stuff")
+        return value1 + 1;
     }
 
 public:
@@ -405,19 +415,26 @@ public:
     {
         typedef embr::experimental::Service<TImpl, TSubject> base_type;
         using typename base_type::impl_type;
+        using base_type::impl;
 
         ESTD_CPP_FORWARDING_CTOR(service)
 
+        void proxy();
+
+    private:
         PROPERTY_HELPER2(value1)
         PROPERTY_HELPER2(value2)
-
-        void proxy()
-        {
-            base_type::impl().do_private_stuff();
-        }
     };
 };
 
+
+template <class TSubject, class TImpl>
+void DependentService4::service<TSubject, TImpl>::proxy()
+{
+    int v = impl().do_private_stuff();
+
+    value1(v);
+}
 
 TEST_CASE("Services", "[services]")
 {
