@@ -119,20 +119,33 @@ class DependerService : Service<>
 {
     typedef Service<> base_type;
 
-    ::impl::DependentService2* ds2;
-
 public:
+    ::impl::DependentService2* ds2 = nullptr;
+
     int counter = 0;
     int counter2 = 0;
     bool is_smiling = false;
     bool is_shiny = false;
     bool shiny_happy_people = false;
 
-    void on_notify(event::Registration e, ::impl::DependentService2& context)
+    template <class TDummy>
+    void register_helper(const TDummy&) {}
+
+    void register_helper(::impl::DependentService2& s)
+    {
+        ds2 = &s;
+    }
+
+    // FIX: Doesn't reach here, perhaps due to reference wrapping?
+    template <class TSubject, class TImpl>
+    void on_notify(event::Registration e, embr::experimental::impl::Service::responder<TSubject, TImpl>& context)
+    //void on_notify(event::Registration e, ::impl::DependentService2& context)
     {
         printf("Service registered: %s (%s)\n", e.name, e.instance);
         fflush(stdout);
-        ds2 = &context;
+        TImpl& impl = context;
+        register_helper(impl);
+        //ds2 = &context;
     }
 
     //template <class TSubject>
@@ -313,6 +326,7 @@ TEST_CASE("Services", "[services]")
     REQUIRE(depender.counter2 == 2);
     REQUIRE(depender.is_smiling);
     REQUIRE(depender.shiny_happy_people == true);
+    REQUIRE(depender.ds2 != nullptr);
 
     event::PropertyChanged<
             embr::experimental::impl::Service, service::PROPERTY_STATE>

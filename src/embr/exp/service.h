@@ -77,6 +77,9 @@ struct Service;
 
 }
 
+template <class TImpl = impl::Service, class TSubject = embr::void_subject>
+class Service;
+
 
 
 
@@ -114,16 +117,19 @@ struct Service : event::owner_tag
             EMBR_PROPERTY_TRAITS_BASE(this_type, state_.service_substate_, service::PROPERTY_SUBSTATE, "substate");
     };
 
+    // Kinda-sorta creates an alias to original service.  Ultimately we combine
+    // this and the original service into one code chunk, likely here
     template <class TSubject, class TImpl = this_type>
-    struct responder //: PropertyNotifier<TSubject&>
+    struct responder : embr::experimental::Service<
+        std::reference_wrapper<TImpl>, std::reference_wrapper<TSubject> >
     {
-        TImpl& impl;
-        TSubject& subject;
+        typedef embr::experimental::Service<
+            std::reference_wrapper<TImpl>, std::reference_wrapper<TSubject> > base_type;
 
-        constexpr responder(TImpl& impl, TSubject& subject) :
-            impl(impl), subject(subject) {}
+        constexpr responder(TImpl& impl, TSubject& subject) : base_type(impl, subject)
+        {}
 
-        operator TImpl& () { return impl; }
+        operator TImpl& () { return base_type::impl(); }
     };
 
 protected:
@@ -153,7 +159,7 @@ EMBR_PROPERTY_DECLARATION2(impl::Service, state)
 EMBR_PROPERTY_DECLARATION2(impl::Service, substate)
 
 
-template <class TImpl = impl::Service, class TSubject = embr::void_subject>
+template <class TImpl, class TSubject>
 class Service : public PropertyNotifier<TSubject>,
     TImpl
 {
@@ -228,9 +234,14 @@ protected:
 
 public:
     Service() = default;
+    Service(const TImpl& impl, const TSubject& subject) :
+        base_type(subject),
+        TImpl(impl) {}
+
     Service(TSubject&& subject) : base_type(std::move(subject))
     {
-        base_type::notify(event::Registration{impl().name(), impl().instance()}, impl());
+        typename impl_type::template responder<TSubject, impl_type> r(impl(), subject);
+        base_type::notify(event::Registration{impl().name(), impl().instance()}, r);
     }
 
     void start()

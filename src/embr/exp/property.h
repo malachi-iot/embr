@@ -285,6 +285,10 @@ protected:
 
 public:
     PropertyNotifier() = default;
+
+    PropertyNotifier(const TSubject& subject) : subject_type(subject)
+    {}
+
     PropertyNotifier(TSubject&& subject) : subject_type(std::move(subject))
     {}
 };
