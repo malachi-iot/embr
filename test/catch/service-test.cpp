@@ -52,6 +52,7 @@ struct DependentService2 : embr::experimental::impl::Service
 
         struct is_happy : event::traits_base<bool, IS_HAPPY>
         {
+            typedef this_type owner_type;
             static constexpr const char* name() { return "are we happy?"; }
 
             // Experimental - don't really need to do this, but it's viable.  Maybe useful for updated
@@ -61,12 +62,14 @@ struct DependentService2 : embr::experimental::impl::Service
 
         //typedef event::traits_base<bool, IS_SMILING> is_smiling;
         EMBR_PROPERTY_ID2(is_smiling, IS_SMILING, "smiling");
-        typedef event::traits_base<bool, IS_SHINY> is_shiny;
-        //typedef event::traits_base<int, PEOPLE> people;
-        EMBR_PROPERTY_ID2(people, PEOPLE, "people");
+        EMBR_PROPERTY_ID2(is_shiny, IS_SHINY, "shiny");
+        EMBR_PROPERTY_ID3(people, PEOPLE, "people");
 
         template <bool dummy>
-        struct lookup<PEOPLE, dummy> : people {};
+        struct lookup<IS_HAPPY, dummy> : is_happy {};
+
+        template <bool dummy>
+        struct lookup<IS_SHINY, dummy> : is_shiny {};
     };
 
     template <class TSubject, class TImpl = this_type>
@@ -109,38 +112,6 @@ struct DependentService3 : embr::experimental::impl::Service
 
 }
 
-
-#define EMBR_PROPERTY_DECLARATION(owner, name_, id, desc)  \
-template <> struct PropertyTraits2<owner, owner::id> : \
-    EMBR_PROPERTY_TRAITS_BASE(owner, name_, owner::id, desc)
-
-#define EMBR_PROPERTY_DECLARATION2(owner, name_)  \
-template <> \
-struct PropertyTraits2<owner, owner::id::name_::id()> : \
-    owner::id::name_ {};
-
-namespace embr { namespace experimental {
-
-template <>
-struct PropertyTraits2<::impl::DependentService2, ::impl::DependentService2::IS_HAPPY> :
-        event::traits_base<bool, ::impl::DependentService2::IS_HAPPY>
-{
-    static constexpr const char* name() { return "are we happy?"; }
-};
-
-/*template <>
-struct PropertyTraits2<::impl::DependentService2, ::impl::DependentService2::IS_SHINY> :
-        ::impl::DependentService2::id::is_shiny
-{
-
-}; */
-
-EMBR_PROPERTY_DECLARATION(::impl::DependentService2, is_shiny, IS_SHINY, "shiny");
-//EMBR_PROPERTY_DECLARATION(::impl::DependentService2, people, PEOPLE, "people");
-EMBR_PROPERTY_DECLARATION2(::impl::DependentService2, is_smiling)
-EMBR_PROPERTY_DECLARATION2(::impl::DependentService2, people)
-
-}}
 
 
 
@@ -303,7 +274,7 @@ public:
             base_type::impl().is_happy = v;
             //typedef ::impl::DependentService2::id::is_happy traits_type;
             typedef typename base_type::impl_type::id::is_happy traits_type;
-            event::PropertyChanged<traits_type> p{v};
+            event::PropertyChanged<traits_type> p{nullptr, v};
             REQUIRE(traits_type::id() == 0);
             //base_type::template fire_changed3<base_type::impl_type::id::is_happy>(v, *this);
             base_type::template fire_changed3<traits_type>(v, *this);
@@ -477,7 +448,7 @@ TEST_CASE("Services", "[services]")
             ::impl::DependentService2, service::PROPERTY_STATE>
             e2(nullptr, true);
 
-    event::PropertyChanged<embr::experimental::impl::Service::id::state> e3(service::Stopped);
+    event::PropertyChanged<embr::experimental::impl::Service::id::state> e3(nullptr, service::Stopped);
 
     typedef PropertyTraits3<::impl::DependentService2, ::impl::DependentService2::PEOPLE> traits1;
 

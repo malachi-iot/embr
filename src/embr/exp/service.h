@@ -151,10 +151,6 @@ public:
 }
 
 
-EMBR_PROPERTY_DECLARATION2(impl::Service, state)
-EMBR_PROPERTY_DECLARATION2(impl::Service, substate)
-
-
 template <class TImpl, class TSubject>
 class Service : public PropertyHost<TImpl, TSubject>
 {

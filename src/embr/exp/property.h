@@ -18,11 +18,6 @@
 #define EMBR_PROPERTY_ID2(name, id, desc) \
     struct name : EMBR_PROPERTY_TRAITS_BASE(this_type, name, this_type::id, desc);
 
-#define EMBR_PROPERTY_DECLARATION2(owner, name_)  \
-template <> \
-struct PropertyTraits2<owner, owner::id::name_::id()> : \
-    owner::id::name_ {};
-
 #define EMBR_PROPERTY_BEGIN \
 struct id : event::lookup_tag  \
 {\
@@ -38,12 +33,6 @@ struct id : event::lookup_tag  \
 
 namespace embr { namespace experimental {
 
-
-template <class T, T id_>
-struct PropertyTraits;
-
-template <class T, int id_>
-struct PropertyTraits2;
 
 template <class TOwner, int id_>
 struct PropertyTraits3 : TOwner::id::template lookup<id_> {};
@@ -134,19 +123,24 @@ struct PropertyChanged<T, id_, typename estd::enable_if<
     PropertyChanged(T value) : value{value} {}
 };
 
-template <typename T>
-struct PropertyChanged<T, -1, typename estd::enable_if<
-    estd::is_base_of<traits_tag, T>::value
+template <typename TTraits>
+struct PropertyChanged<TTraits, -1, typename estd::enable_if<
+    estd::is_base_of<traits_tag, TTraits>::value
 >::type>
 {
-    typedef typename T::value_type value_type;
+    typedef typename TTraits::value_type value_type;
+    typedef typename TTraits::owner_type owner_type;
 
+    owner_type* owner;
     const value_type value;
 
-    static constexpr int id() { return T::id(); }
-    static const char* name() { return T::name(); }
+    static constexpr int id() { return TTraits::id(); }
+    static const char* name() { return TTraits::name(); }
 
-    PropertyChanged(value_type value) : value{value} {}
+    PropertyChanged(owner_type* owner, value_type value) :
+        owner(owner),
+        value{value}
+    {}
 };
 
 
@@ -174,15 +168,26 @@ struct PropertyChanging<TTraits, -1, typename estd::enable_if<
 template <typename TOwner, int id_>
 struct PropertyChanged<TOwner, id_, typename estd::enable_if<
     estd::is_base_of<owner_tag, TOwner>::value
->::type> : PropertyTraits2<TOwner, id_>
+>::type> : PropertyTraits3<TOwner, id_>
 {
-    typedef PropertyTraits2<TOwner, id_> traits;
+    typedef PropertyTraits3<TOwner, id_> traits;
     typedef typename traits::value_type value_type;
 
     TOwner* owner;
     const value_type value;
 
     PropertyChanged(TOwner* owner, value_type v) : owner(owner), value(v) {}
+
+    // For converting traits flavor to owner (this one) flavor
+    template <class T2,
+        typename estd::enable_if<
+            estd::is_base_of<traits_tag, T2>::value &&
+            estd::is_same<typename T2::value_type, value_type>::value
+            , bool>::type = true>
+    PropertyChanged(const PropertyChanged<T2, -1>& copy_from) :
+        owner(copy_from.owner),
+        value(copy_from.value)
+    {}
 };
 
 
@@ -209,9 +214,9 @@ struct PropertyChanged<TOwner, -1, typename estd::enable_if<
 template <typename TOwner, int id_>
 struct PropertyChanging<TOwner, id_, typename estd::enable_if<
     estd::is_base_of<owner_tag, TOwner>::value
->::type> : PropertyTraits2<TOwner, id_>
+>::type> : PropertyTraits3<TOwner, id_>
 {
-    typedef PropertyTraits2<TOwner, id_> traits_type;
+    typedef PropertyTraits3<TOwner, id_> traits_type;
     typedef typename traits_type::value_type value_type;
 
     TOwner* owner;
@@ -238,7 +243,8 @@ protected:
     template <typename TTrait, class TContext>
     void fire_changed3(typename TTrait::value_type v, TContext& context)
     {
-        subject_type::notify(event::PropertyChanged<TTrait>{v}, context);
+        typename TTrait::owner_type& owner = context;
+        subject_type::notify(event::PropertyChanged<TTrait>(&owner, v), context);
     }
 
     template <int id_, class TOwner, class T, class TImpl>
@@ -260,21 +266,13 @@ protected:
     }
 
     template <int id, class TOwner, class T, class TContext>
-    void fire_changing4(
+    void fire_changing(
         const T& v_old,
         const T& v, TContext& context)
     {
         TOwner& owner = context;    // Give conversions a chance to run
 
         subject_type::notify(event::PropertyChanging<TOwner, id>{&owner, v_old, v}, context);
-    }
-
-    template <int id, class TImpl>
-    static typename PropertyTraits2<TImpl, id>::value_type getter(TImpl& impl)
-    {
-        typedef PropertyTraits2<TImpl, id> traits_type;
-
-        return traits_type::get(impl);
     }
 
     template <class TTraits, class TContext>
@@ -292,16 +290,16 @@ protected:
 
         if(current_v != v)
         {
-            fire_changing4<id, owner_type>(current_v, v, context);
+            fire_changing<traits_type>(current_v, v, context);
             traits_type::set(impl, v);
-            fire_changed4<id, owner_type>(v, context);
+            fire_changed3<traits_type>(v, context);
         }
     }
 
     template <int id, class TOwner, typename T, class TImpl>
     inline void setter(T v, TImpl& impl)
     {
-        setter<PropertyTraits2<TOwner, id> >(v, impl);
+        setter<PropertyTraits3<TOwner, id> >(v, impl);
     }
 
 
