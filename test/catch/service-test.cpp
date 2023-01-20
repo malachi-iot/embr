@@ -75,6 +75,34 @@ struct DependentService2 : embr::experimental::impl::Service
     };
 };
 
+struct DependentService3 : embr::experimental::impl::Service
+{
+    typedef DependentService3 this_type;
+
+    static const char* name() { return "DependentService3"; }
+
+    int value1;
+    bool value2;
+    const char* value3;
+
+    enum Properties
+    {
+        VALUE1,
+        VALUE2,
+        VALUE3
+    };
+
+    struct id
+    {
+        // NOTE: I think we could actually define the variables at the same
+        // time with these macros...
+
+        EMBR_PROPERTY_ID2(value1, VALUE1, "desc for vaue1");
+        EMBR_PROPERTY_ID2(value2, VALUE2, "desc for vaue2");
+        EMBR_PROPERTY_ID2(value3, VALUE3, "desc for vaue3");
+    };
+};
+
 }
 
 
@@ -234,6 +262,8 @@ public:
     }
 };
 
+
+
 #define GETTER_HELPER(field_name) \
     (base_type::impl(). field_name)
 
@@ -306,16 +336,49 @@ public:
     bool shiny() const { return impl().is_shiny; }
 };
 
+
+#define _PROPERTY_HELPER2(type_, name_)     \
+    type_ name_() const { return base_type::impl().name_; } \
+    void name_(const type_& v)  \
+{ base_type::template setter<impl_type::id::name_::id(), impl_type>(v); }
+
+#define PROPERTY_HELPER2(name_) \
+        _PROPERTY_HELPER2(impl_type::id::name_::value_type, name_)
+
+
+namespace embr { namespace experimental {
+template <class TSubject>
+class ServiceSpec<::impl::DependentService3, TSubject> :
+        public Service<::impl::DependentService3, TSubject>
+{
+    typedef ::impl::DependentService3 impl_type;
+    typedef Service<impl_type, TSubject> base_type;
+
+public:
+    ESTD_CPP_FORWARDING_CTOR(ServiceSpec)
+
+    PROPERTY_HELPER2(value1)
+    PROPERTY_HELPER2(value2)
+    PROPERTY_HELPER2(value3)
+};
+
+}}
+
+
 TEST_CASE("Services", "[services]")
 {
     DependerService depender;
 
     auto subject = embr::layer1::make_subject(depender);
+
+    // FIX: These should be using reference, not rvalue
     auto dependent = make_service<DependentService>(std::move(subject));
     auto dependent2 = make_service<DependentService2>(std::move(subject));
+    auto dependent3 = make_service_spec<::impl::DependentService3>(std::move(subject));
 
     dependent.start();
     dependent2.start();
+    dependent3.start();
 
     dependent2.shiny(true);
     dependent2.happy(true);

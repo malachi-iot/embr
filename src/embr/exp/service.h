@@ -80,7 +80,8 @@ struct Service;
 template <class TImpl = impl::Service, class TSubject = embr::void_subject>
 class Service;
 
-
+template <class TImpl, class TSubject = embr::void_subject>
+class ServiceSpec;
 
 
 namespace impl {
@@ -259,6 +260,13 @@ template <template <class> class TService, class TSubject>
 TService<TSubject> make_service(TSubject&& subject)
 {
     return TService<TSubject>(std::move(subject));
+}
+
+
+template <class TImpl, class TSubject>
+ServiceSpec<TImpl, TSubject> make_service_spec(TSubject&& subject)
+{
+    return ServiceSpec<TImpl, TSubject>(std::move(subject));
 }
 
 
