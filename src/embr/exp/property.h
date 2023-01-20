@@ -244,10 +244,10 @@ protected:
         subject_type::notify(event::PropertyChanging<TTrait>{v_old, v}, context);
     }
 
-    template <int id, class TOwner, class T, class TImpl>
+    template <int id, class TOwner, class T, class TContext>
     void fire_changing4(
         const T& v_old,
-        const T& v, TImpl& context)
+        const T& v, TContext& context)
     {
         subject_type::notify(event::PropertyChanging<TOwner, id>{&context, v_old, v}, context);
     }

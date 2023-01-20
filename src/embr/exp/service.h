@@ -114,6 +114,15 @@ struct Service : event::owner_tag
             EMBR_PROPERTY_TRAITS_BASE(this_type, state_.service_substate_, service::PROPERTY_SUBSTATE, "substate");
     };
 
+    template <class TImpl, class TSubject>
+    struct responder
+    {
+        TImpl& impl;
+        TSubject& subject;
+
+        operator TImpl& () { return impl; }
+    };
+
 protected:
     bool start() { return true; }
     bool stop() { return true; }
@@ -163,7 +172,9 @@ protected:
     template <int id, typename T>
     void setter(T v)
     {
-        base_type::template setter<id, impl_type>(v, impl());
+        impl_type& context = impl();
+        //typename impl_type::template responder<TImpl, TSubject> context{impl(), *this};
+        base_type::template setter<id, impl_type>(v, context);
     }
 
 protected:
@@ -215,7 +226,7 @@ public:
     Service() = default;
     Service(TSubject&& subject) : base_type(std::move(subject))
     {
-        base_type::notify(event::Registration{impl().name(), impl().instance()}, *this);
+        base_type::notify(event::Registration{impl().name(), impl().instance()}, impl());
     }
 
     void start()

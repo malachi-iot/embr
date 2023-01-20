@@ -110,6 +110,8 @@ class DependerService : Service<>
 {
     typedef Service<> base_type;
 
+    ::impl::DependentService2* ds2;
+
 public:
     int counter = 0;
     int counter2 = 0;
@@ -117,10 +119,11 @@ public:
     bool is_shiny = false;
     bool shiny_happy_people = false;
 
-    void on_notify(event::Registration e)
+    void on_notify(event::Registration e, ::impl::DependentService2& context)
     {
         printf("Service registered: %s (%s)\n", e.name, e.instance);
         fflush(stdout);
+        ds2 = &context;
     }
 
     //template <class TSubject>
