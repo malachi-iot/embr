@@ -5,6 +5,13 @@
 
 namespace embr { namespace experimental {
 
+namespace impl {
+
+struct Service;
+
+}
+
+
 namespace event {
 
 struct Registration
@@ -68,12 +75,6 @@ enum Substates
     ErrMemory,         ///< service ran out of memory, or detected memory corruption
     ErrUnspecified,    ///< internal error code was not recognized or provided
 };
-
-}
-
-namespace impl {
-
-struct Service;
 
 }
 
@@ -161,42 +162,35 @@ EMBR_PROPERTY_DECLARATION2(impl::Service, substate)
 
 
 template <class TImpl, class TSubject>
-class Service : public PropertyNotifier<TSubject>,
-    TImpl
+class Service : public PropertyHost<TImpl, TSubject>
 {
-    typedef PropertyNotifier<TSubject> base_type;
+    typedef PropertyHost<TImpl, TSubject> base_type;
     //using subject_base = typename base_type::subject_type;
 
-    template <int id, typename T>
-    void service_setter(T v)
-    {
-        base_type::template setter<id, impl::Service>(v, impl());
-    }
-
 protected:
-    typedef TImpl impl_type;
-    //impl_type impl_;
+    using typename base_type::impl_type;
 
     impl_type& impl() { return *this; }
 
     template <int id, typename T>
-    void setter(T v)
+    void service_setter(T v)
     {
-        //impl_type& context = impl();
-        TSubject& subject = *this;
-        typename impl_type::template responder<TSubject> context{impl(), subject};
-        base_type::template setter<id, impl_type>(v, context);
+        // DEBT: Easy to get wrong, clean this double base_type up
+        base_type::base_type::template setter<id, impl::Service>(v, impl());
     }
 
 protected:
     void state(service::States s)
     {
-        service_setter<service::PROPERTY_STATE>(s);
+        base_type::template setter<impl::Service::id::state>(s);
+        //service_setter<service::PROPERTY_STATE>(s);
     }
 
 
     void state(service::Substates s)
     {
+        // FIX: This doesn't compile
+        //base_type::template setter<impl::Service::id::substate>(s);
         service_setter<service::PROPERTY_SUBSTATE>(s);
     }
 
@@ -234,10 +228,7 @@ protected:
     }
 
 public:
-    Service() = default;
-    Service(const TImpl& impl, const TSubject& subject) :
-        base_type(subject),
-        TImpl(impl) {}
+    ESTD_CPP_FORWARDING_CTOR(Service)
 
     Service(TSubject&& subject) : base_type(std::move(subject))
     {

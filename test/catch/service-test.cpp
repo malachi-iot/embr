@@ -352,7 +352,7 @@ public:
 { base_type::template setter3<impl_type::id::name_::id(), impl_type>(v, base_type::impl()); }
 
 #define PROPERTY_HELPER2(name_) \
-        _PROPERTY_HELPER2(impl_type::id::name_::value_type, name_)
+        _PROPERTY_HELPER2(typename impl_type::id::name_::value_type, name_)
 
 
 namespace embr { namespace experimental {
@@ -373,6 +373,51 @@ public:
 
 }}
 
+class DependentService4 : public embr::experimental::impl::Service
+{
+    typedef DependentService4 this_type;
+
+private:
+    int value1;
+    const char* value2;
+
+    void do_private_stuff() const
+    {
+        INFO("DependentService4: doing private stuff")
+    }
+
+public:
+    enum Properties
+    {
+        VALUE1,
+        VALUE2
+    };
+
+    EMBR_PROPERTY_BEGIN
+
+        EMBR_PROPERTY_ID3(value1, VALUE1, "value1 desc")
+        EMBR_PROPERTY_ID3(value2, VALUE2, "value1 desc")
+
+    EMBR_PROPERTY_END
+
+    template <class TSubject, class TImpl = this_type>
+    struct service : embr::experimental::Service<TImpl, TSubject>
+    {
+        typedef embr::experimental::Service<TImpl, TSubject> base_type;
+        using typename base_type::impl_type;
+
+        ESTD_CPP_FORWARDING_CTOR(service)
+
+        PROPERTY_HELPER2(value1)
+        PROPERTY_HELPER2(value2)
+
+        void proxy()
+        {
+            base_type::impl().do_private_stuff();
+        }
+    };
+};
+
 
 TEST_CASE("Services", "[services]")
 {
@@ -384,10 +429,13 @@ TEST_CASE("Services", "[services]")
     auto dependent = make_service<DependentService>(std::move(subject));
     auto dependent2 = make_service<DependentService2>(std::move(subject));
     auto dependent3 = make_service_spec<::impl::DependentService3>(std::move(subject));
+    //auto dependent4 = make_service<DependentService4::service>(std::move(subject));
+    auto dependent4 = DependentService4::service<decltype(subject)>(std::move(subject));
 
     dependent.start();
     dependent2.start();
     dependent3.start();
+    dependent4.start();
 
     dependent2.shiny(true);
     dependent2.happy(true);
@@ -396,7 +444,9 @@ TEST_CASE("Services", "[services]")
 
     //dependent3.value1(7);
 
-    REQUIRE(depender.counter == 4);
+    dependent4.proxy();
+
+    REQUIRE(depender.counter == 5);
     REQUIRE(depender.counter2 == 2);
     REQUIRE(depender.is_smiling);
     REQUIRE(depender.shiny_happy_people == true);

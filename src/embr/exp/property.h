@@ -27,6 +27,7 @@ struct PropertyTraits2<owner, owner::id::name_::id()> : \
 
 namespace embr { namespace experimental {
 
+
 template <class T, T id_>
 struct PropertyTraits;
 
@@ -268,22 +269,29 @@ protected:
         return traits_type::get(impl);
     }
 
-    template <int id, class TOwner, typename T, class TImpl>
-    void setter(T v, TImpl& impl)
+    template <class TTraits, class TImpl>
+    void setter(typename TTraits::value_type v, TImpl& impl)
     {
-        typedef PropertyTraits2<TOwner, id> traits_type;
-
+        typedef TTraits traits_type;
+        constexpr int id = traits_type::id();
+        typedef typename TTraits::owner_type owner_type;
 //#ifdef DEBUG
         const char* name = traits_type::name();
 //#endif
-        T current_v = traits_type::get(impl);
+        auto current_v = traits_type::get(impl);
 
         if(current_v != v)
         {
-            fire_changing4<id, TOwner>(current_v, v, impl);
+            fire_changing4<id, owner_type>(current_v, v, impl);
             traits_type::set(impl, v);
-            fire_changed4<id, TOwner>(v, impl);
+            fire_changed4<id, owner_type>(v, impl);
         }
+    }
+
+    template <int id, class TOwner, typename T, class TImpl>
+    inline void setter(T v, TImpl& impl)
+    {
+        setter<PropertyTraits2<TOwner, id> >(v, impl);
     }
 
 
@@ -316,7 +324,38 @@ public:
     {}
 };
 
+template <class TImpl, class TSubject>
+class PropertyHost : public PropertyNotifier<TSubject>,
+    public TImpl
+{
+protected:
+    typedef PropertyNotifier<TSubject> base_type;
+    //using subject_base = typename base_type::subject_type;
 
+public:
+    typedef TImpl impl_type;
+    //impl_type impl_;
+
+protected:
+    impl_type& impl() { return *this; }
+
+    template <int id, typename T>
+    void setter(T v)
+    {
+        //impl_type& context = impl();
+        TSubject& subject = *this;
+        typename impl_type::template responder<TSubject> context{impl(), subject};
+        base_type::template setter<id, impl_type>(v, context);
+    }
+
+public:
+    PropertyHost() = default;
+    PropertyHost(const TImpl& impl, const TSubject& subject) :
+        base_type(subject),
+        TImpl(impl) {}
+
+    PropertyHost(TSubject&& subject) : base_type(std::move(subject)) {}
+};
 
 
 }}
