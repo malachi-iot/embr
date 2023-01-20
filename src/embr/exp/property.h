@@ -109,18 +109,18 @@ struct PropertyChanged<T, -1, typename estd::enable_if<
     {}
 };
 
-template <typename T, int id_>
-struct PropertyChanged<T, id_, typename estd::enable_if<
+template <typename TEnum, int id_>
+struct PropertyChanged<TEnum, id_, typename estd::enable_if<
     //!estd::is_base_of<traits_tag, T>::value &&
     //!estd::is_base_of<owner_tag, T>::value &&
-    estd::is_enum<T>::value &&
+    estd::is_enum<TEnum>::value &&
     id_ >= 0>::type>
 {
-    const T value;
+    const TEnum value;
 
     static constexpr int id() { return id_; }
 
-    PropertyChanged(T value) : value{value} {}
+    PropertyChanged(TEnum value) : value{value} {}
 };
 
 template <typename TTraits>
@@ -301,26 +301,6 @@ protected:
     {
         setter<PropertyTraits3<TOwner, id> >(v, impl);
     }
-
-
-    template <int id, class TOwner, typename T, class TImpl>
-    void setter3(T v, TImpl& impl)
-    {
-        typedef PropertyTraits3<TOwner, id> traits_type;
-
-//#ifdef DEBUG
-        const char* name = traits_type::name();
-//#endif
-        T current_v = traits_type::get(impl);
-
-        if(current_v != v)
-        {
-            fire_changing<traits_type>(current_v, v, impl);
-            traits_type::set(impl, v);
-            fire_changed3<traits_type, TOwner>(v, impl);
-        }
-    }
-
 
 public:
     PropertyNotifier() = default;

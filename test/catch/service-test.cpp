@@ -311,15 +311,9 @@ public:
 #define _GETTER_HELPER2(type_, name_)   \
     type_ name_() const { return base_type::impl().name_; }
 
-// Almost there, but not quite
-/*
 #define _SETTER_HELPER2(type_, name_)   \
     void name_(const type_& v)  \
-{ base_type::template setter<typename impl_type::id::name_>(v); } */
-
-#define _SETTER_HELPER2(type_, name_) \
-    void name_(const type_& v)  \
-{ base_type::template setter3<impl_type::id::name_::id(), impl_type>(v, base_type::impl()); }
+{ base_type::template setter<typename impl_type::id::name_>(v); }
 
 #define GETTER_HELPER2(name_) \
     _GETTER_HELPER2(typename impl_type::id::name_::value_type, name_)
