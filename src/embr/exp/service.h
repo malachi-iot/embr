@@ -94,6 +94,8 @@ struct Service : event::owner_tag
     constexpr static const char* name() { return "Generic service"; }
     constexpr static const char* instance() { return ""; }
 
+    // DEBT: Make this private/protected
+// protected:
     union
     {
         struct
@@ -137,6 +139,9 @@ struct Service : event::owner_tag
 protected:
     bool start() { return true; }
     bool stop() { return true; }
+
+public:
+    service::States state() const { return state_.service_; }
 };
 
 }
@@ -170,7 +175,8 @@ class Service : public PropertyHost<TImpl, TSubject>
 protected:
     using typename base_type::impl_type;
 
-    impl_type& impl() { return *this; }
+    impl_type& impl() { return base_type::impl(); }
+    const impl_type& impl() const { return base_type::impl(); }
 
     template <int id, typename T>
     void service_setter(T v)

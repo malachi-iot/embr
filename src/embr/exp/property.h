@@ -142,11 +142,14 @@ struct PropertyChanging<TTraits, -1, typename estd::enable_if<
     TTraits
 {
     typedef typename TTraits::value_type value_type;
+    using typename TTraits::owner_type;
 
+    owner_type& owner;
     const value_type old_value;
     const value_type new_value;
 
-    PropertyChanging(value_type old, value_type new_value) :
+    PropertyChanging(owner_type& owner, value_type old, value_type new_value) :
+        owner(owner),
         old_value{old},
         new_value{new_value}
     {}
@@ -248,7 +251,9 @@ protected:
         const typename TTrait::value_type& v_old,
         const typename TTrait::value_type& v, TContext& context)
     {
-        subject_type::notify(event::PropertyChanging<TTrait>{v_old, v}, context);
+        typename TTrait::owner_type& owner = context;    // Give conversions a chance to run
+
+        subject_type::notify(event::PropertyChanging<TTrait>(owner, v_old, v), context);
     }
 
     template <int id, class TOwner, class T, class TContext>
