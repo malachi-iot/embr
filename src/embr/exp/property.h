@@ -351,6 +351,10 @@ protected:
 
 public:
     PropertyHost() = default;
+
+    PropertyHost(const TSubject& subject) :
+        base_type(subject) {}
+
     PropertyHost(const TImpl& impl, const TSubject& subject) :
         base_type(subject),
         TImpl(impl) {}

@@ -385,13 +385,14 @@ TEST_CASE("Services", "[services]")
     DependerService depender;
 
     auto subject = embr::layer1::make_subject(depender);
+    auto& s = subject;
 
     // FIX: These should be using reference, not rvalue
     auto dependent = make_service<DependentService>(std::move(subject));
     auto dependent2 = make_service<DependentService2>(std::move(subject));
     auto dependent3 = make_service_spec<::impl::DependentService3>(std::move(subject));
     //auto dependent4 = make_service<DependentService4::service>(std::move(subject));
-    auto dependent4 = DependentService4::service<decltype(subject)>(std::move(subject));
+    auto dependent4 = DependentService4::service<decltype(subject)>(s);
 
     dependent.start();
     dependent2.start();
