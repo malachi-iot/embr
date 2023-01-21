@@ -242,6 +242,7 @@ class DependentService : Service<embr::experimental::impl::Service, TSubject>
     typedef Service<embr::experimental::impl::Service, TSubject> base_type;
 
 public:
+    DependentService() = default;
     DependentService(TSubject&& subject) : base_type(std::move(subject))
     {}
 
@@ -265,6 +266,7 @@ class DependentService2 : public Service<::impl::DependentService2, TSubject>
     impl_type& impl() { return base_type::impl(); }
 
 public:
+    DependentService2() = default;
     DependentService2(TSubject&& subject) : base_type(std::move(subject))
     {}
 
@@ -380,19 +382,39 @@ void DependentService4::service<TSubject, TImpl>::proxy()
     value1(v);
 }
 
+static DependerService d;
+
 TEST_CASE("Services", "[services]")
 {
-    DependerService depender;
+    //DependerService depender;
+    DependerService& depender = d;
 
-    auto subject = embr::layer1::make_subject(depender);
+    typedef estd::integral_constant<DependerService*, &d> _type_;
+    //typedef embr::internal::static_wrapper<DependerService, &d> _type_;
+
+    _type_ v;
+    //DependerService& _d = (_type_());
+    //DependerService* __d = &_d;
+    DependerService* __d = _type_::value;
+    DependerService* ___d = &d;
+
+    typedef embr::layer0::subject<_type_> subject_type;
+    auto subject = subject_type();
+    //auto subject = embr::layer1::make_subject(depender);
     auto& s = subject;
 
     // FIX: These should be using reference, not rvalue
+    /*
     auto dependent = make_service<DependentService>(std::move(subject));
     auto dependent2 = make_service<DependentService2>(std::move(subject));
     auto dependent3 = make_service_spec<::impl::DependentService3>(std::move(subject));
     //auto dependent4 = make_service<DependentService4::service>(std::move(subject));
-    auto dependent4 = DependentService4::service<decltype(subject)>(s);
+    auto dependent4 = DependentService4::service<decltype(subject)>(s); */
+    DependentService<subject_type> dependent;
+    DependentService2<subject_type> dependent2(subject_type{}); // DEBT: layer0 subject presents a minor challenge
+    ServiceSpec<::impl::DependentService3, subject_type> dependent3;
+    DependentService4::service<subject_type> dependent4;
+
 
     dependent.start();
     dependent2.start();

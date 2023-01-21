@@ -50,6 +50,14 @@ public:
     }
 };
 
+template <class T, T* t>
+struct static_wrapper
+{
+    T& value() { return *t; }
+    operator T&() { return *t; }
+};
+
+
 // slightly abuses tuple type.  We pretend we have a tuple
 template <class ...TObservers>
 class stateless_base
@@ -57,12 +65,56 @@ class stateless_base
 protected:
     typedef estd::tuple<TObservers...> tuple_type;
 
+    // allocate a purely temporary observer, as this has
+    // been explicitly set up as stateless
+    template <class T>
+    struct provider
+    {
+        static T value() { return T(); }
+        typedef T type;
+    };
+
+    // Grab a global static wrapped up as a type, oftentimes a singleton
+    template <class T, T* t>
+    struct provider<static_wrapper<T, t> >
+    {
+        static T& value() { return *t; }
+        typedef T& type;
+    };
+
+    template <class T, T t>
+    struct provider<estd::integral_constant<T, t> >
+    {
+        // DEBT: estd doesn't have remove_pointer just yet
+        typedef typename std::remove_pointer<T>::type& type;
+
+        const static type value()
+        {
+            /*
+            T _t = estd::integral_constant<T, t>();
+            return *_t; */
+            return *t;
+        }
+    };
+
+#ifdef FEATURE_STD_TYPE_TRAITS
+    // UNTESTED
+    template <class T, T t>
+    struct provider<std::integral_constant<T, t> >
+    {
+        typedef typename std::remove_pointer<T>::type& type;
+
+        static type value() { return *t; }
+    };
+#endif
+
+    template <int index>
+    using p = provider<estd::tuple_element_t<index, tuple_type> >;
+
     template <int index, class TEvent>
     void _notify_helper(const TEvent& e)
     {
-        // allocate a purely temporary observer, as this has
-        // been explicitly set up as stateless
-        estd::tuple_element_t<index, tuple_type> observer;
+        typename p<index>::type observer = p<index>::value();
 
         // SFINAE magic to call best matching on_notify function
         notify_helper(
@@ -73,9 +125,7 @@ protected:
     template <int index, class TEvent, class TContext>
     void _notify_helper(const TEvent& e, TContext& c)
     {
-        // allocate a purely temporary observer, as this has
-        // been explicitly set up as stateless
-        estd::tuple_element_t<index, tuple_type> observer;
+        typename p<index>::type observer = p<index>::value();
 
         // SFINAE magic to call best matching on_notify function
         notify_helper(
