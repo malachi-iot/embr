@@ -107,6 +107,11 @@ struct PropertyChanged<TOwner, void,
     typedef TOwner owner_type;
 
     owner_type* const owner;
+//protected:
+    const int id_;
+
+//public:
+    const int id() { return id_; }
 };
 
 // DEBT: Fix naming and make this a specialization of PropertyChanged if we can
@@ -133,11 +138,32 @@ struct PropertyChanged<TTraits, void,
 
 
 // 100% runtime flavor - that being the case, we can't practically provide 'value' itself
+// Unless we do some tricky RTTI/forward cast magic which isn't ready for primetime AND
+// this particular object needs more info than a compile time one anyway, making it not
+// the best base class choice
+// TODO: Not usable yet because no runtime identifier for owner has been decided upon,
+// though leaning towards 'name'.  For that to work though we need some real honest to goodness
+// global static const char []/* names
 template <>
 struct PropertyChanged<> : internal::PropertyChanged<void>
 {
+    typedef internal::PropertyChanged<void> base_type;
+
 private:
+    const char* owner_name_ = nullptr;
+
 public:
+    const char* owner() const { return owner_name_; }
+
+    // For converting traits flavor to this one
+    template <class TTraits,
+        typename estd::enable_if<
+            estd::is_base_of<traits_tag, TTraits>::value
+            , bool>::type = true>
+    PropertyChanged(const PropertyChanged<TTraits>& copy_from) :
+        base_type{copy_from.owner, copy_from.id()},
+        owner_name_(TTraits::owner_type::name())
+    {}
 };
 
 template <typename TEnum>
@@ -197,6 +223,7 @@ struct PropertyChanged<TEnum, id_, typename estd::enable_if<
     PropertyChanged(TEnum value) : value{value} {}
 };
 
+// Primary traits flavor - most 1:1 with how we manage properties
 template <typename TTraits>
 struct PropertyChanged<TTraits, -1, typename estd::enable_if<
     estd::is_base_of<traits_tag, TTraits>::value
@@ -237,7 +264,6 @@ struct PropertyChanging<TTraits, -1, typename estd::enable_if<
 
 template <typename TOwner, int id_>
 struct PropertyChanged<TOwner, id_, typename estd::enable_if<
-    //estd::is_base_of<owner_tag, TOwner>::value ||
     estd::is_base_of<typename TOwner::id::lookup_tag, typename TOwner::id>::value
 >::type> : PropertyTraits3<TOwner, id_>
     , internal::PropertyChanged< PropertyTraits3<TOwner, id_> >
@@ -262,21 +288,16 @@ struct PropertyChanged<TOwner, id_, typename estd::enable_if<
 
 template <typename TOwner>
 struct PropertyChanged<TOwner, -1, typename estd::enable_if<
-    //estd::is_base_of<owner_tag, TOwner>::value
     estd::is_base_of<typename TOwner::id::lookup_tag, typename TOwner::id>::value
->::type>
+>::type> : internal::PropertyChanged<TOwner>
 {
-    TOwner* const owner;
-    const int id_;
+    typedef internal::PropertyChanged<TOwner> base_type;
 
-    int id() const { return id_; }
-
-    PropertyChanged(TOwner* owner, int v) : owner(owner), id_(v) {}
+    PropertyChanged(TOwner* owner, int v) : base_type{owner, v} {}
 
     template <int id>
     PropertyChanged(const PropertyChanged<TOwner, id>& copy_from) :
-        owner(copy_from.owner),
-        id_(copy_from.id())
+        base_type{copy_from.owner, copy_from.id()}
     {}
 };
 
