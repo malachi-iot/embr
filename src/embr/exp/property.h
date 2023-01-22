@@ -85,8 +85,12 @@ struct PropertyChanging;
 
 namespace internal {
 
-template <class TOwner, class TValue, class enabled = void>
-struct PropertyChanged
+template <class TOwner, class TValue = void, class enabled = void>
+struct PropertyChanged;
+
+template <class TOwner, class TValue>
+struct PropertyChanged<TOwner, TValue, estd::enable_if_t<
+    !estd::is_base_of<traits_tag, TOwner>::value> >
 {
     typedef TOwner owner_type;
     typedef TValue value_type;
@@ -96,7 +100,9 @@ struct PropertyChanged
 };
 
 template <class TOwner>
-struct PropertyChanged<TOwner, void>
+struct PropertyChanged<TOwner, void,
+    estd::enable_if_t<
+        !estd::is_base_of<traits_tag, TOwner>::value> >
 {
     typedef TOwner owner_type;
 
@@ -109,11 +115,18 @@ template <class TTraits>
 struct PropertyChangedTraits :
     PropertyChanged<typename TTraits::owner_type, typename TTraits::value_type>
 {};
-/*
+
 template <class TTraits>
-struct PropertyChanged<typename TTraits::owner_type, typename TTraits::value_type,
-    estd::enable_if<estd::is_base_of<traits_tag, TTraits>::value>::type>
-{}; */
+struct PropertyChanged<TTraits, void,
+    estd::enable_if_t<
+        estd::is_base_of<traits_tag, TTraits>::value> >
+{
+    typedef typename TTraits::owner_type owner_type;
+    typedef typename TTraits::value_type value_type;
+
+    owner_type* const owner;
+    const value_type value;
+};
 
 
 }
@@ -132,28 +145,18 @@ struct PropertyChanged<TEnum, -1, typename estd::enable_if<
     //!estd::is_base_of<traits_tag, T>::value &&
     //!estd::is_base_of<owner_tag, T>::value &&
     estd::is_enum<TEnum>::value
->::type>
+>::type> : internal::PropertyChanged<void, TEnum>
 {
+    typedef internal::PropertyChanged<void, TEnum> base_type;
     typedef TEnum value_type;
 
     const int id_;
     int id() const { return id_; }
 
-    // DEBT: This field not passing tests yet, but haven't looked into it much
-    void* owner;
-
-    const value_type value;
-
-    PropertyChanged(int id, value_type value) :
-        id_{id},
-        value{value}
-    {}
-
     template <int id_>
     PropertyChanged(const PropertyChanged<value_type, id_>& copy_from) :
-        owner(copy_from.owner),
-        id_{copy_from.id()},
-        value{copy_from.value}
+        base_type(copy_from.owner, copy_from.value),
+        id_(id_)
     {}
 
     /*
@@ -174,9 +177,8 @@ struct PropertyChanged<TEnum, -1, typename estd::enable_if<
             estd::is_same<typename T2::value_type, value_type>::value
             , bool>::type = true>
     PropertyChanged(const PropertyChanged<T2, -1>& copy_from) :
-        owner(copy_from.owner),
-        id_{copy_from.id()},
-        value(copy_from.value)
+        base_type{copy_from.owner, copy_from.value},
+        id_{copy_from.id()}
     {}
 };
 
@@ -200,10 +202,9 @@ struct PropertyChanged<TTraits, -1, typename estd::enable_if<
     estd::is_base_of<traits_tag, TTraits>::value
 >::type> :
     TTraits,
-    internal::PropertyChanged<typename TTraits::owner_type, typename TTraits::value_type>
+    internal::PropertyChanged<TTraits>
 {
-    typedef internal::PropertyChanged<
-        typename TTraits::owner_type, typename TTraits::value_type> base_type;
+    typedef internal::PropertyChanged<TTraits> base_type;
 
     using typename base_type::value_type;
     using typename base_type::owner_type;
