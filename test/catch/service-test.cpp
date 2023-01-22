@@ -15,7 +15,8 @@ class DependentService4;
 
 // Filter is a stateless observer which we expect to morph incoming property changes into its own
 // flavor
-struct Filter1Base
+// DEBT: A little fiddly, owner_tag is easy to forget here
+struct Filter1Base : event::owner_tag
 {
     typedef Filter1Base this_type;
 
@@ -270,9 +271,7 @@ public:
         battery_level = e.value;
     }
 
-    // FIX: This one should work too, but it is an incomplete type
-    // void on_notify(event::PropertyChanged<Filter1Base, Filter1Base::BATTERY_ALERT> e)
-    void on_notify(event::PropertyChanged<Filter1Base::id::battery_alert> e)
+    void on_notify(event::PropertyChanged<Filter1Base, Filter1Base::BATTERY_ALERT> e)
     {
         battery_alert = e.value;
     }

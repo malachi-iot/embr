@@ -55,8 +55,10 @@ namespace event {
 
 struct traits_tag {};
 
+// Phasing this one out in favor of id::lookup_tag presence
 struct owner_tag {};
 
+// TODO: Consider changing this to properties_tag
 struct lookup_tag {};
 
 template <class T, int id_>
@@ -183,7 +185,8 @@ struct PropertyChanging<TTraits, -1, typename estd::enable_if<
 
 template <typename TOwner, int id_>
 struct PropertyChanged<TOwner, id_, typename estd::enable_if<
-    estd::is_base_of<owner_tag, TOwner>::value
+    //estd::is_base_of<owner_tag, TOwner>::value ||
+    estd::is_base_of<typename TOwner::id::lookup_tag, typename TOwner::id>::value
 >::type> : PropertyTraits3<TOwner, id_>
 {
     typedef PropertyTraits3<TOwner, id_> traits;
@@ -198,6 +201,7 @@ struct PropertyChanged<TOwner, id_, typename estd::enable_if<
     template <class T2,
         typename estd::enable_if<
             estd::is_base_of<traits_tag, T2>::value &&
+            estd::is_same<typename T2::owner_type, TOwner>::value &&
             estd::is_same<typename T2::value_type, value_type>::value
             , bool>::type = true>
     PropertyChanged(const PropertyChanged<T2, -1>& copy_from) :
@@ -209,7 +213,8 @@ struct PropertyChanged<TOwner, id_, typename estd::enable_if<
 
 template <typename TOwner>
 struct PropertyChanged<TOwner, -1, typename estd::enable_if<
-    estd::is_base_of<owner_tag, TOwner>::value
+    //estd::is_base_of<owner_tag, TOwner>::value
+    estd::is_base_of<typename TOwner::id::lookup_tag, typename TOwner::id>::value
 >::type>
 {
     TOwner* owner;
@@ -229,7 +234,8 @@ struct PropertyChanged<TOwner, -1, typename estd::enable_if<
 
 template <typename TOwner, int id_>
 struct PropertyChanging<TOwner, id_, typename estd::enable_if<
-    estd::is_base_of<owner_tag, TOwner>::value
+    //estd::is_base_of<owner_tag, TOwner>::value
+    estd::is_base_of<typename TOwner::id::lookup_tag, typename TOwner::id>::value
 >::type> : PropertyTraits3<TOwner, id_>
 {
     typedef PropertyTraits3<TOwner, id_> traits_type;
