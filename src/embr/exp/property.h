@@ -2,13 +2,23 @@
 
 #include "../observer.h"
 
+#define EMBR_PROPERTY_TRAITS_BODY(owner, type, id, desc) \
+typedef event::traits_base<type, id> base_type; \
+typedef owner owner_type;                              \
+using typename base_type::value_type;                  \
+static constexpr const char* name() { return desc; }
+
+#define EMBR_PROPERTY_TRAITS_SPARSE_BASE(owner, type, id, desc) \
+    event::traits_base<type, id>         \
+{                                                               \
+    EMBR_PROPERTY_TRAITS_BODY(owner, type, id, desc) \
+}
+
+
 #define EMBR_PROPERTY_TRAITS_BASE(owner, name_, id, desc) \
     event::traits_base<decltype(owner::name_), id>         \
 {                                                          \
-    typedef event::traits_base<decltype(owner::name_), id> base_type; \
-    typedef owner owner_type;                              \
-    using typename base_type::value_type;                  \
-    static constexpr const char* name() { return desc; }   \
+    EMBR_PROPERTY_TRAITS_BODY(owner, decltype(owner::name_), id, desc) \
     static constexpr value_type get(owner_type& o)       \
     { return o.name_; }                                    \
     static inline void set(owner_type& o, value_type v)       \
@@ -20,6 +30,9 @@
     template <bool dummy> struct lookup<id_, dummy> : alias {};
 
 #define EMBR_PROPERTY_ID(name, id, desc) EMBR_PROPERTY_ID_ALIAS(name, id, name, desc)
+#define EMBR_PROPERTY_SPARSE_ID(name, type, id_, desc)   \
+    struct name : EMBR_PROPERTY_TRAITS_SPARSE_BASE(this_type, type, id_, desc); \
+    template <bool dummy> struct lookup<id_, dummy> : name {};
 
 #define EMBR_PROPERTY_BEGIN \
 struct id : event::lookup_tag  \

@@ -13,6 +13,35 @@ class DependentService2;
 
 class DependentService4;
 
+// Filter is a stateless observer which we expect to morph incoming property changes into its own
+// flavor
+struct Filter1Base
+{
+    typedef Filter1Base this_type;
+
+    enum Properties
+    {
+        BATTERY_LEVEL,
+        BATTERY_ALERT
+    };
+
+    EMBR_PROPERTY_BEGIN
+
+        struct battery_level : event::traits_base<int, BATTERY_LEVEL>
+        {
+            typedef this_type owner_type;
+        };
+
+        template <bool dummy>
+        struct lookup<BATTERY_LEVEL, dummy> : battery_level {};
+
+        EMBR_PROPERTY_SPARSE_ID(battery_alert, int, BATTERY_ALERT, "alert");
+
+    EMBR_PROPERTY_END
+};
+
+
+
 #define _GETTER_HELPER2(type_, name_)   \
     type_ name_() const { return base_type::impl().name_; }
 
@@ -142,6 +171,8 @@ public:
 
     int counter = 0;
     int counter2 = 0;
+    int battery_level = 0;
+    bool battery_alert = false;
     bool is_smiling = false;
     bool is_shiny = false;
     bool shiny_happy_people = false;
@@ -232,6 +263,18 @@ public:
 
             default: break;
         }
+    }
+
+    void on_notify(event::PropertyChanged<Filter1Base::id::battery_level> e)
+    {
+        battery_level = e.value;
+    }
+
+    // FIX: This one should work too, but it is an incomplete type
+    // void on_notify(event::PropertyChanged<Filter1Base, Filter1Base::BATTERY_ALERT> e)
+    void on_notify(event::PropertyChanged<Filter1Base::id::battery_alert> e)
+    {
+        battery_alert = e.value;
     }
 };
 
@@ -373,7 +416,7 @@ public:
     };
 };
 
-
+// increments private value1 by 1
 template <class TSubject, class TImpl>
 void DependentService4::service<TSubject, TImpl>::proxy()
 {
@@ -381,6 +424,24 @@ void DependentService4::service<TSubject, TImpl>::proxy()
 
     value1(v);
 }
+
+class Filter1 : Filter1Base
+{
+public:
+    template <class TSubject>
+    class service : public PropertyNotifier<TSubject>
+    {
+        typedef PropertyNotifier<TSubject> base_type;
+
+    public:
+        void on_notify(event::PropertyChanged<DependentService4::id::value1> e)
+        {
+            auto context = this_type{};  // DEBT
+            base_type::template fire_changed3<id::battery_level>(e.value * 10, context);
+            base_type::template fire_changed3<id::battery_alert>(e.value > 0, context);
+        }
+    };
+};
 
 static DependerService d;
 
@@ -403,6 +464,10 @@ TEST_CASE("Services", "[services]")
     //auto subject = embr::layer1::make_subject(depender);
     auto& s = subject;
 
+    typedef Filter1::service<subject_type> filter1_type;
+
+    typedef embr::layer0::subject<_type_, filter1_type> subject2_type;
+
     // FIX: These should be using reference, not rvalue
     /*
     auto dependent = make_service<DependentService>(std::move(subject));
@@ -413,7 +478,7 @@ TEST_CASE("Services", "[services]")
     DependentService<subject_type> dependent;
     DependentService2<subject_type> dependent2(subject_type{}); // DEBT: layer0 subject presents a minor challenge
     ServiceSpec<::impl::DependentService3, subject_type> dependent3;
-    DependentService4::service<subject_type> dependent4;
+    DependentService4::service<subject2_type> dependent4;
 
 
     dependent.start();
@@ -435,6 +500,8 @@ TEST_CASE("Services", "[services]")
     REQUIRE(depender.is_smiling);
     REQUIRE(depender.shiny_happy_people == true);
     REQUIRE(depender.ds2 != nullptr);
+    REQUIRE(depender.battery_level == 10);
+    REQUIRE(depender.battery_alert > 0);
 
     event::PropertyChanged<
             embr::experimental::impl::Service, service::PROPERTY_STATE>
