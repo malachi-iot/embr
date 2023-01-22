@@ -3,20 +3,20 @@
 #include "../observer.h"
 
 #define EMBR_PROPERTY_TRAITS_BODY(owner, type, id, desc) \
-typedef event::traits_base<type, id> base_type; \
+typedef event::traits_base<owner, type, id> base_type; \
 typedef owner owner_type;                              \
 using typename base_type::value_type;                  \
 static constexpr const char* name() { return desc; }
 
 #define EMBR_PROPERTY_TRAITS_SPARSE_BASE(owner, type, id, desc) \
-    event::traits_base<type, id>         \
+    event::traits_base<owner, type, id>         \
 {                                                               \
     EMBR_PROPERTY_TRAITS_BODY(owner, type, id, desc) \
 }
 
 
 #define EMBR_PROPERTY_TRAITS_BASE(owner, name_, id, desc) \
-    event::traits_base<decltype(owner::name_), id>         \
+    event::traits_base<owner, decltype(owner::name_), id>         \
 {                                                          \
     EMBR_PROPERTY_TRAITS_BODY(owner, decltype(owner::name_), id, desc) \
     static constexpr value_type get(owner_type& o)       \
@@ -61,20 +61,61 @@ struct owner_tag {};
 // TODO: Consider changing this to properties_tag
 struct lookup_tag {};
 
-template <class T, int id_>
+// TODO: Consider changing this to property_traits_base
+// and/or putting in a new 'properties' namespace
+template <class TOwner, class T, int id_>
 struct traits_base : traits_tag
 {
+    typedef TOwner owner_type;
     typedef T value_type;
     static constexpr int id() { return id_; }
 };
 
-template <typename T, int id = -1, class enabled = void>
+template <typename T = void, int id = -1, class enabled = void>
 struct PropertyChanged;
 
 
 template <typename T, int id = -1, class enabled = void>
 struct PropertyChanging;
 
+
+namespace internal {
+
+template <class TOwner, class TValue, class enabled = void>
+struct PropertyChanged
+{
+    typedef TOwner owner_type;
+    typedef TValue value_type;
+
+    owner_type* const owner;
+    const value_type value;
+};
+
+template <class TOwner>
+struct PropertyChanged<TOwner, void>
+{
+    typedef TOwner owner_type;
+
+    owner_type* const owner;
+};
+
+// DEBT: Fix naming and make this a specialization of PropertyChanged if we can
+// FIX: Not using anyway because initializer list doesn't flow through to base class smoothly
+template <class TTraits>
+struct PropertyChangedTraits :
+    PropertyChanged<typename TTraits::owner_type, typename TTraits::value_type>
+{};
+
+}
+
+
+// 100% runtime flavor - that being the case, we can't practically provide 'value' itself
+template <>
+struct PropertyChanged<>
+{
+private:
+public:
+};
 
 template <typename TEnum>
 struct PropertyChanged<TEnum, -1, typename estd::enable_if<
@@ -88,7 +129,9 @@ struct PropertyChanged<TEnum, -1, typename estd::enable_if<
     const int id_;
     int id() const { return id_; }
 
+    // DEBT: This field not passing tests yet, but haven't looked into it much
     void* owner;
+
     const value_type value;
 
     PropertyChanged(int id, value_type value) :
@@ -138,26 +181,25 @@ struct PropertyChanged<TEnum, id_, typename estd::enable_if<
 
     static constexpr int id() { return id_; }
 
+    // TODO: This needs a converting constructor to bring it in from traits flavor w/ owner
     PropertyChanged(TEnum value) : value{value} {}
 };
 
 template <typename TTraits>
 struct PropertyChanged<TTraits, -1, typename estd::enable_if<
     estd::is_base_of<traits_tag, TTraits>::value
->::type>
+>::type> : internal::PropertyChanged<typename TTraits::owner_type, typename TTraits::value_type>
 {
-    typedef typename TTraits::value_type value_type;
-    typedef typename TTraits::owner_type owner_type;
+    typedef internal::PropertyChanged<
+        typename TTraits::owner_type, typename TTraits::value_type> base_type;
 
-    owner_type* owner;
-    const value_type value;
+    using typename base_type::value_type;
+    using typename base_type::owner_type;
 
     static constexpr int id() { return TTraits::id(); }
     static const char* name() { return TTraits::name(); }
 
-    PropertyChanged(owner_type* owner, value_type value) :
-        owner(owner),
-        value{value}
+    PropertyChanged(owner_type* owner, value_type value) : base_type{owner, value}
     {}
 };
 
@@ -192,7 +234,7 @@ struct PropertyChanged<TOwner, id_, typename estd::enable_if<
     typedef PropertyTraits3<TOwner, id_> traits;
     typedef typename traits::value_type value_type;
 
-    TOwner* owner;
+    TOwner* const owner;
     const value_type value;
 
     PropertyChanged(TOwner* owner, value_type v) : owner(owner), value(v) {}
@@ -217,7 +259,7 @@ struct PropertyChanged<TOwner, -1, typename estd::enable_if<
     estd::is_base_of<typename TOwner::id::lookup_tag, typename TOwner::id>::value
 >::type>
 {
-    TOwner* owner;
+    TOwner* const owner;
     const int id_;
 
     int id() const { return id_; }
@@ -241,7 +283,7 @@ struct PropertyChanging<TOwner, id_, typename estd::enable_if<
     typedef PropertyTraits3<TOwner, id_> traits_type;
     typedef typename traits_type::value_type value_type;
 
-    TOwner* owner;
+    TOwner* const owner;
     const value_type old_value;
     const value_type new_value;
 

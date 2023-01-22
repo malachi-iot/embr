@@ -28,10 +28,7 @@ struct Filter1Base : event::owner_tag
 
     EMBR_PROPERTY_BEGIN
 
-        struct battery_level : event::traits_base<int, BATTERY_LEVEL>
-        {
-            typedef this_type owner_type;
-        };
+        typedef event::traits_base<this_type, int, BATTERY_LEVEL> battery_level;
 
         template <bool dummy>
         struct lookup<BATTERY_LEVEL, dummy> : battery_level {};
@@ -66,7 +63,7 @@ struct Filter1Base : event::owner_tag
         _PROPERTY_HELPER2(typename impl_type::id::name_::value_type, name_, alias_)
 
 #define EMBR_PROPERTY_ID_EXP(name, id, desc)  \
-    struct property_##name##_type : event::traits_base<decltype(name), id> \
+    struct property_##name##_type : event::traits_base<this_type, decltype(name), id> \
     {                                     \
         typedef this_type owner_type;                                  \
         static constexpr const char* name() { return desc; }               \
@@ -102,9 +99,8 @@ struct DependentService2 : embr::experimental::impl::Service
         template <int id, bool = true>
         struct lookup;
 
-        struct is_happy : event::traits_base<bool, IS_HAPPY>
+        struct is_happy : event::traits_base<this_type, bool, IS_HAPPY>
         {
-            typedef this_type owner_type;
             static constexpr const char* name() { return "are we happy?"; }
 
             // Experimental - don't really need to do this, but it's viable.  Maybe useful for updated
