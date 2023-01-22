@@ -52,7 +52,7 @@ namespace embr { namespace experimental {
 
 // Through lookup mechanism, resolves TOwner + property ID back to property traits
 template <class TOwner, int id_>
-struct PropertyTraits3 : TOwner::id::template lookup<id_> {};
+using PropertyTraits3 = typename TOwner::id::template lookup<id_>;
 
 
 namespace event {
@@ -134,7 +134,7 @@ struct PropertyChanged<TTraits, void,
 
 // 100% runtime flavor - that being the case, we can't practically provide 'value' itself
 template <>
-struct PropertyChanged<>
+struct PropertyChanged<> : internal::PropertyChanged<void>
 {
 private:
 public:
@@ -170,13 +170,13 @@ struct PropertyChanged<TEnum, -1, typename estd::enable_if<
     }
      */
 
-    // For converting traits flavor to baseline (this one) flavor
-    template <class T2,
+    // For converting traits flavor to enum (this one) flavor
+    template <class TTraits,
         typename estd::enable_if<
-            estd::is_base_of<traits_tag, T2>::value &&
-            estd::is_same<typename T2::value_type, value_type>::value
+            estd::is_base_of<traits_tag, TTraits>::value &&
+            estd::is_same<typename TTraits::value_type, value_type>::value
             , bool>::type = true>
-    PropertyChanged(const PropertyChanged<T2, -1>& copy_from) :
+    PropertyChanged(const PropertyChanged<TTraits>& copy_from) :
         base_type{copy_from.owner, copy_from.value},
         id_{copy_from.id()}
     {}
@@ -240,25 +240,22 @@ struct PropertyChanged<TOwner, id_, typename estd::enable_if<
     //estd::is_base_of<owner_tag, TOwner>::value ||
     estd::is_base_of<typename TOwner::id::lookup_tag, typename TOwner::id>::value
 >::type> : PropertyTraits3<TOwner, id_>
+    , internal::PropertyChanged< PropertyTraits3<TOwner, id_> >
 {
-    typedef PropertyTraits3<TOwner, id_> traits;
-    typedef typename traits::value_type value_type;
+    typedef internal::PropertyChanged< PropertyTraits3<TOwner, id_> > base_type;
+    using typename base_type::value_type;
 
-    TOwner* const owner;
-    const value_type value;
-
-    PropertyChanged(TOwner* owner, value_type v) : owner(owner), value(v) {}
+    PropertyChanged(TOwner* owner, value_type v) : base_type{owner, v} {}
 
     // For converting traits flavor to owner (this one) flavor
-    template <class T2,
+    template <class TTraits,
         typename estd::enable_if<
-            estd::is_base_of<traits_tag, T2>::value &&
-            estd::is_same<typename T2::owner_type, TOwner>::value &&
-            estd::is_same<typename T2::value_type, value_type>::value
+            estd::is_base_of<traits_tag, TTraits>::value &&
+            estd::is_same<typename TTraits::owner_type, TOwner>::value &&
+            estd::is_same<typename TTraits::value_type, value_type>::value
             , bool>::type = true>
-    PropertyChanged(const PropertyChanged<T2, -1>& copy_from) :
-        owner(copy_from.owner),
-        value(copy_from.value)
+    PropertyChanged(const PropertyChanged<TTraits>& copy_from) :
+        base_type{copy_from.owner, copy_from.value}
     {}
 };
 
