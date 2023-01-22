@@ -15,8 +15,7 @@ class DependentService4;
 
 // Filter is a stateless observer which we expect to morph incoming property changes into its own
 // flavor
-// DEBT: A little fiddly, owner_tag is easy to forget here
-struct Filter1Base : event::owner_tag
+struct Filter1Base
 {
     typedef Filter1Base this_type;
 

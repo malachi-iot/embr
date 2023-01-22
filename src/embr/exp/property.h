@@ -25,14 +25,17 @@ static constexpr const char* name() { return desc; }
     { o.name_ = v; }                                       \
 }
 
+#define EMBR_PROPERTY_ID_LOOKUP(name, id_)  \
+template <bool dummy> struct lookup<id_, dummy> : name {}
+
 #define EMBR_PROPERTY_ID_ALIAS(name, id_, alias, desc) \
     struct alias : EMBR_PROPERTY_TRAITS_BASE(this_type, name, this_type::id_, desc);    \
-    template <bool dummy> struct lookup<id_, dummy> : alias {};
+    EMBR_PROPERTY_ID_LOOKUP(alias, id_);
 
 #define EMBR_PROPERTY_ID(name, id, desc) EMBR_PROPERTY_ID_ALIAS(name, id, name, desc)
 #define EMBR_PROPERTY_SPARSE_ID(name, type, id_, desc)   \
     struct name : EMBR_PROPERTY_TRAITS_SPARSE_BASE(this_type, type, id_, desc); \
-    template <bool dummy> struct lookup<id_, dummy> : name {};
+    EMBR_PROPERTY_ID_LOOKUP(name, id_);
 
 #define EMBR_PROPERTY_BEGIN \
 struct id : event::lookup_tag  \
@@ -47,16 +50,16 @@ struct id : event::lookup_tag  \
 namespace embr { namespace experimental {
 
 
+// Through lookup mechanism, resolves TOwner + property ID back to property traits
 template <class TOwner, int id_>
 struct PropertyTraits3 : TOwner::id::template lookup<id_> {};
 
 
 namespace event {
 
+// TODO: Consider changing this to property_traits_tag, although
+// if under 'properties' namespace perhaps not needed
 struct traits_tag {};
-
-// Phasing this one out in favor of id::lookup_tag presence
-struct owner_tag {};
 
 // TODO: Consider changing this to properties_tag
 struct lookup_tag {};
@@ -69,6 +72,7 @@ struct traits_base : traits_tag
     typedef TOwner owner_type;
     typedef T value_type;
     static constexpr int id() { return id_; }
+    static constexpr const char* name() { return "N/A"; }
 };
 
 template <typename T = void, int id = -1, class enabled = void>
@@ -105,6 +109,12 @@ template <class TTraits>
 struct PropertyChangedTraits :
     PropertyChanged<typename TTraits::owner_type, typename TTraits::value_type>
 {};
+/*
+template <class TTraits>
+struct PropertyChanged<typename TTraits::owner_type, typename TTraits::value_type,
+    estd::enable_if<estd::is_base_of<traits_tag, TTraits>::value>::type>
+{}; */
+
 
 }
 
@@ -188,16 +198,15 @@ struct PropertyChanged<TEnum, id_, typename estd::enable_if<
 template <typename TTraits>
 struct PropertyChanged<TTraits, -1, typename estd::enable_if<
     estd::is_base_of<traits_tag, TTraits>::value
->::type> : internal::PropertyChanged<typename TTraits::owner_type, typename TTraits::value_type>
+>::type> :
+    TTraits,
+    internal::PropertyChanged<typename TTraits::owner_type, typename TTraits::value_type>
 {
     typedef internal::PropertyChanged<
         typename TTraits::owner_type, typename TTraits::value_type> base_type;
 
     using typename base_type::value_type;
     using typename base_type::owner_type;
-
-    static constexpr int id() { return TTraits::id(); }
-    static const char* name() { return TTraits::name(); }
 
     PropertyChanged(owner_type* owner, value_type value) : base_type{owner, value}
     {}

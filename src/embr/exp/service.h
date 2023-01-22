@@ -87,7 +87,7 @@ class ServiceSpec;
 
 namespace impl {
 
-struct Service : event::owner_tag
+struct Service
 {
     typedef Service this_type;
 
@@ -114,14 +114,16 @@ struct Service : event::owner_tag
 
     EMBR_PROPERTY_BEGIN
 
+        // DEBT: Have to do lower level versions here due to free-floating service::States enum,
+        // but I would prefer to have that macro supported too
         struct state :
             EMBR_PROPERTY_TRAITS_BASE(this_type, state_.service_, service::PROPERTY_STATE, "state");
 
         struct substate :
             EMBR_PROPERTY_TRAITS_BASE(this_type, state_.service_substate_, service::PROPERTY_SUBSTATE, "substate");
 
-        template <bool dummy> struct lookup<service::PROPERTY_STATE, dummy> : state {};
-        template <bool dummy> struct lookup<service::PROPERTY_SUBSTATE, dummy> : substate {};
+        EMBR_PROPERTY_ID_LOOKUP(state, service::PROPERTY_STATE);
+        EMBR_PROPERTY_ID_LOOKUP(substate, service::PROPERTY_SUBSTATE);
 
     EMBR_PROPERTY_END
 
