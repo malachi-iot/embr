@@ -122,11 +122,9 @@ struct DependentService2 : embr::experimental::impl::Service
             typedef event::traits_base<id_type, bool, EVERYWHERE> base_type;
         }; */
 
-        typedef id id_type;
-
         EMBR_PROPERTY_ID2(everywhere, bool, EVERYWHERE, "everywhere?");
         EMBR_PROPERTY_ID2(free_floating, float, "all by myself?");
-    } id_host_;
+    } fields_;
 
     template <class TSubject, class TImpl = this_type>
     struct responder : base_type_::responder<TSubject, TImpl>

@@ -46,8 +46,8 @@ type name##_;                                    \
 struct name : event::traits_base<this_type, type, id_> \
 {                                                  \
     EMBR_PROPERTY_TRAITS_BODY(this_type, type, id_, desc); \
-    EMBR_PROPERTY_TRAITS_GETTER_SETTER(id_type, name##_) \
-    static inline id_type& host(this_type& o) { return o.id_host_; } \
+    EMBR_PROPERTY_TRAITS_GETTER_SETTER(struct id, name##_) \
+    static inline struct id& host(this_type& o) { return o.fields_; } \
 };\
     EMBR_PROPERTY_ID_LOOKUP(name, id_);
 
@@ -62,11 +62,10 @@ struct name : event::traits_base<this_type, type, id_> \
 #define EMBR_PROPERTY_BEGIN \
 struct id : event::lookup_tag  \
 {\
-    typedef id id_type; \
     template <int id_, bool = true> struct lookup;
 
 #define EMBR_PROPERTY_END };
-#define EMBR_PROPERTY_END2 } id_host_;
+#define EMBR_PROPERTY_END2 } fields_;
 
 
 
