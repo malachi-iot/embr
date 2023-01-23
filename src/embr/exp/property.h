@@ -10,7 +10,7 @@ static constexpr const char* name() { return desc; }
 
 
 #define EMBR_PROPERTY_TRAITS_GETTER_SETTER(host_, name_) \
-    static constexpr value_type get(host_& o)       \
+    static constexpr value_type get(const host_& o)       \
     { return o.name_; }                                   \
     static inline void set(host_& o, value_type v)   \
     { o.name_ = v; }
@@ -23,7 +23,8 @@ struct alias : event::traits_base<this_type, decltype(this_type::name_), id_>   
 {                                                          \
     EMBR_INTERNAL_PROPERTY_TRAITS_BODY(this_type, decltype(this_type::name_), id_, desc) \
     EMBR_PROPERTY_TRAITS_GETTER_SETTER(owner_type, name_)  \
-    static inline owner_type& host(owner_type& o) { return o; } \
+    static constexpr owner_type& host(owner_type& o) { return o; } \
+    static constexpr const owner_type& host(const owner_type& o) { return o; } \
 };  \
 EMBR_PROPERTY_ID_LOOKUP(alias, id_);
 
@@ -41,7 +42,8 @@ struct name : event::traits_base<this_type, type, id_> \
 {                                                  \
     EMBR_INTERNAL_PROPERTY_TRAITS_BODY(this_type, type, id_, desc); \
     EMBR_PROPERTY_TRAITS_GETTER_SETTER(struct id, name##_) \
-    static inline struct id& host(this_type& o) { return o.fields_; } \
+    static constexpr struct id& host(this_type& o) { return o.fields_; } \
+    static constexpr const struct id& host(const this_type& o) { return o.fields_; } \
 }
 
 #define EMBR_PROPERTY_ID2_2(name, type, id_, desc) \
@@ -451,6 +453,14 @@ protected:
         TSubject& subject = *this;
         typename impl_type::template responder<TSubject, impl_type> context{impl(), subject};
         base_type::template setter<id, impl_type>(v, context);
+    }
+
+    template <class TTraits>
+    constexpr typename TTraits::value_type getter() const
+    {
+        typedef TTraits traits_type;
+        typedef typename TTraits::owner_type owner_type;
+        return traits_type::get(traits_type::host(impl()));
     }
 
     template <typename TTraits>

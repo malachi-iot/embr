@@ -40,7 +40,7 @@ struct Filter1Base
 
 
 #define _GETTER_HELPER2(type_, name_)   \
-    type_ name_() const { return base_type::impl().name_; }
+    type_ name_() const { return base_type::template getter<typename impl_type::id::name_>(); }
 
 #define _SETTER_HELPER_ALIAS(type_, name_, alias_)   \
     void alias_(const type_& v)  \
@@ -157,9 +157,9 @@ struct DependentService3 : embr::experimental::impl::Service
     // NOTE: I think we could actually define the variables at the same
     // time with these macros...
 
-    EMBR_PROPERTY_ID(value1, VALUE1, "desc for value1");
-    EMBR_PROPERTY_ID(value2, VALUE2, "desc for value2");
-    EMBR_PROPERTY_ID(value3, VALUE3, "desc for value3");
+    EMBR_PROPERTY_ID_EXT(value1, VALUE1, "desc for value1");
+    EMBR_PROPERTY_ID_EXT(value2, VALUE2, "desc for value2");
+    EMBR_PROPERTY_ID_EXT(value3, VALUE3, "desc for value3");
 
     EMBR_PROPERTY_END
 };
@@ -513,6 +513,8 @@ TEST_CASE("Services", "[services]")
     REQUIRE(depender.ds2 != nullptr);
     REQUIRE(depender.battery_level == 10);
     REQUIRE(depender.battery_alert > 0);
+
+    REQUIRE(dependent4.value3() == 12);
 
     event::PropertyChanged<
             embr::experimental::impl::Service, service::PROPERTY_STATE>
