@@ -8,17 +8,17 @@ typedef owner owner_type;                              \
 using typename base_type::value_type;                  \
 static constexpr const char* name() { return desc; }
 
-#define EMBR_PROPERTY_TRAITS_SPARSE_BASE(owner, type, id, desc) \
-    event::traits_base<owner, type, id>         \
+#define EMBR_PROPERTY_TRAITS_SPARSE_BASE(owner, type, id_, desc) \
+    event::traits_base<owner, type, id_>         \
 {                                                               \
-    EMBR_PROPERTY_TRAITS_BODY(owner, type, id, desc) \
+    EMBR_PROPERTY_TRAITS_BODY(owner, type, id_, desc) \
 }
 
 
-#define EMBR_PROPERTY_TRAITS_BASE(owner, name_, id, desc) \
-    event::traits_base<owner, decltype(owner::name_), id>         \
+#define EMBR_PROPERTY_TRAITS_BASE(owner, name_, id_, desc) \
+    event::traits_base<owner, decltype(owner::name_), id_>         \
 {                                                          \
-    EMBR_PROPERTY_TRAITS_BODY(owner, decltype(owner::name_), id, desc) \
+    EMBR_PROPERTY_TRAITS_BODY(owner, decltype(owner::name_), id_, desc) \
     static constexpr value_type get(owner_type& o)       \
     { return o.name_; }                                    \
     static inline void set(owner_type& o, value_type v)       \
@@ -37,9 +37,25 @@ template <bool dummy> struct lookup<id_, dummy> : name {}
     struct name : EMBR_PROPERTY_TRAITS_SPARSE_BASE(this_type, type, id_, desc); \
     EMBR_PROPERTY_ID_LOOKUP(name, id_);
 
+#define EMBR_PROPERTY_ID2_1(name, type, desc) \
+type name##_;                                    \
+struct name : EMBR_PROPERTY_TRAITS_BASE(id_type, name##_, -2, desc);
+
+#define EMBR_PROPERTY_ID2_2(name, type, id_, desc) \
+type name##_;                                    \
+struct name : EMBR_PROPERTY_TRAITS_BASE(id_type, name##_, this_type::id_, desc);    \
+    EMBR_PROPERTY_ID_LOOKUP(name, id_);
+
+// Guidance from
+// https://stackoverflow.com/questions/11761703/overloading-macro-on-number-of-arguments
+#define GET_MACRO(_1,_2,_3,_4,NAME,...) NAME
+#define EMBR_PROPERTY_ID2(...) GET_MACRO(__VA_ARGS__, EMBR_PROPERTY_ID2_2, EMBR_PROPERTY_ID2_1)(__VA_ARGS__)
+
+
 #define EMBR_PROPERTY_BEGIN \
 struct id : event::lookup_tag  \
 {\
+    typedef id id_type; \
     template <int id_, bool = true> struct lookup;
 
 #define EMBR_PROPERTY_END };

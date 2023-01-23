@@ -86,7 +86,8 @@ struct DependentService2 : embr::experimental::impl::Service
         IS_HAPPY = 0,
         IS_SMILING,
         IS_SHINY,
-        PEOPLE
+        PEOPLE,
+        EVERYWHERE
     };
 
     static const char* name() { return "DependentService2"; }
@@ -113,6 +114,18 @@ struct DependentService2 : embr::experimental::impl::Service
         EMBR_PROPERTY_ID(is_smiling, IS_SMILING, "smiling");
         EMBR_PROPERTY_ID(is_shiny, IS_SHINY, "shiny");
         EMBR_PROPERTY_ID(people, PEOPLE, "people");
+
+        /*
+        bool everywhere_;
+        struct everywhere : event::traits_base<id_type , bool, EVERYWHERE>
+        {
+            typedef event::traits_base<id_type, bool, EVERYWHERE> base_type;
+        }; */
+
+        typedef id id_type;
+
+        EMBR_PROPERTY_ID2(everywhere, bool, EVERYWHERE, "everywhere?");
+        EMBR_PROPERTY_ID2(free_floating, float, "all by myself?");
     };
 
     template <class TSubject, class TImpl = this_type>
@@ -390,6 +403,7 @@ public:
 
         EMBR_PROPERTY_ID(value1, VALUE1, "value1 desc")
         EMBR_PROPERTY_ID(value2, VALUE2, "value1 desc")
+        EMBR_PROPERTY_ID2(value3, float, "free floater")
 
     EMBR_PROPERTY_END
 
@@ -407,6 +421,9 @@ public:
     private:
         PROPERTY_HELPER2(value1)
         PROPERTY_HELPER2(value2)
+
+    public:
+        //PROPERTY_HELPER2(value3)
     };
 };
 
@@ -488,6 +505,7 @@ TEST_CASE("Services", "[services]")
     dependent3.value1(7);
 
     dependent4.proxy();
+    //dependent4.value3(12);
 
     REQUIRE(depender.counter == 5);
     REQUIRE(depender.counter2 == 2);
