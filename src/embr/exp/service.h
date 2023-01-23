@@ -119,11 +119,10 @@ struct Service
         struct state :
             EMBR_PROPERTY_TRAITS_BASE(this_type, state_.service_, service::PROPERTY_STATE, "state");
 
-        struct substate :
-            EMBR_PROPERTY_TRAITS_BASE(this_type, state_.service_substate_, service::PROPERTY_SUBSTATE, "substate");
+        EMBR_PROPERTY_ID_ALIAS(state_.service_substate_, service::PROPERTY_SUBSTATE,
+            substate, "substate")
 
         EMBR_PROPERTY_ID_LOOKUP(state, service::PROPERTY_STATE);
-        EMBR_PROPERTY_ID_LOOKUP(substate, service::PROPERTY_SUBSTATE);
 
     EMBR_PROPERTY_END
 

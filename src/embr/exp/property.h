@@ -33,25 +33,28 @@ static constexpr const char* name() { return desc; }
 template <bool dummy> struct lookup<id_, dummy> : name {}
 
 #define EMBR_PROPERTY_ID_ALIAS(name, id_, alias, desc) \
-    struct alias : EMBR_PROPERTY_TRAITS_BASE(this_type, name, this_type::id_, desc);    \
+    struct alias : EMBR_PROPERTY_TRAITS_BASE(this_type, name, id_, desc);    \
     EMBR_PROPERTY_ID_LOOKUP(alias, id_);
 
-#define EMBR_PROPERTY_ID(name, id, desc) EMBR_PROPERTY_ID_ALIAS(name, id, name, desc)
+#define EMBR_PROPERTY_ID(name, id, desc) EMBR_PROPERTY_ID_ALIAS(name, this_type::id, name, desc)
 #define EMBR_PROPERTY_SPARSE_ID(name, type, id_, desc)   \
     struct name : EMBR_PROPERTY_TRAITS_SPARSE_BASE(this_type, type, id_, desc); \
     EMBR_PROPERTY_ID_LOOKUP(name, id_);
 
-#define EMBR_PROPERTY_ID2_2(name, type, id_, desc) \
+#define EMBR_PROPERTY_ID2_BASE(name, type, id_, desc) \
 type name##_;                                    \
 struct name : event::traits_base<this_type, type, id_> \
 {                                                  \
     EMBR_PROPERTY_TRAITS_BODY(this_type, type, id_, desc); \
     EMBR_PROPERTY_TRAITS_GETTER_SETTER(struct id, name##_) \
     static inline struct id& host(this_type& o) { return o.fields_; } \
-};\
-    EMBR_PROPERTY_ID_LOOKUP(name, id_);
+}
 
-#define EMBR_PROPERTY_ID2_1(name, type, desc)   EMBR_PROPERTY_ID2_2(name, type, -2, desc)
+#define EMBR_PROPERTY_ID2_2(name, type, id_, desc) \
+EMBR_PROPERTY_ID2_BASE(name, type, id_, desc);     \
+EMBR_PROPERTY_ID_LOOKUP(name, id_)
+
+#define EMBR_PROPERTY_ID2_1(name, type, desc)   EMBR_PROPERTY_ID2_BASE(name, type, -2, desc);
 
 // Guidance from
 // https://stackoverflow.com/questions/11761703/overloading-macro-on-number-of-arguments
