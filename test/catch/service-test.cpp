@@ -399,8 +399,8 @@ public:
 
     EMBR_PROPERTY_BEGIN
 
-        EMBR_PROPERTY_ID(value1, VALUE1, "value1 desc")
-        EMBR_PROPERTY_ID(value2, VALUE2, "value1 desc")
+        EMBR_PROPERTY_ID_EXT(value1, VALUE1, "value1 desc")
+        EMBR_PROPERTY_ID_EXT(value2, VALUE2, "value1 desc")
         EMBR_PROPERTY_ID2(value3, float, "free floater")
         EMBR_PROPERTY_ID2(value4, float, "free floater #2")
 

@@ -114,15 +114,10 @@ struct Service
 
     EMBR_PROPERTY_BEGIN
 
-        // DEBT: Have to do lower level versions here due to free-floating service::States enum,
-        // but I would prefer to have that macro supported too
-        struct state :
-            EMBR_PROPERTY_TRAITS_BASE(this_type, state_.service_, service::PROPERTY_STATE, "state");
-
-        EMBR_PROPERTY_ID_ALIAS(state_.service_substate_, service::PROPERTY_SUBSTATE,
+        EMBR_PROPERTY_ID_EXT(state_.service_, service::PROPERTY_STATE,
+                               state, "substate")
+        EMBR_PROPERTY_ID_EXT(state_.service_substate_, service::PROPERTY_SUBSTATE,
             substate, "substate")
-
-        EMBR_PROPERTY_ID_LOOKUP(state, service::PROPERTY_STATE);
 
     EMBR_PROPERTY_END
 
