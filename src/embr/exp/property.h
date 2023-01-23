@@ -353,6 +353,8 @@ class PropertyNotifier : public TSubject
     typedef TSubject subject_type;
 
 protected:
+    subject_type& subject() { return *this; }
+
     template <typename TTrait, class TContext>
     void fire_changed3(typename TTrait::value_type v, TContext& context)
     {
@@ -462,6 +464,9 @@ protected:
 
 public:
     PropertyHost() = default;
+
+    PropertyHost(TSubject& subject) :
+        base_type(subject) {}
 
     PropertyHost(const TSubject& subject) :
         base_type(subject) {}

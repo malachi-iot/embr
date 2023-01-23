@@ -202,14 +202,37 @@ protected:
         state(service::Stopped, service::Finished);
     }
 
+    void fire_registration()
+    {
+        // DEBT: Make a special responder which handles stateless subject
+        typename impl_type::template responder<TSubject, impl_type> r(impl(), base_type::subject());
+        base_type::notify(event::Registration{impl().name(), impl().instance()}, r);
+    }
+
 public:
     ESTD_CPP_FORWARDING_CTOR(Service)
 
+    Service()
+    {
+        fire_registration();
+    }
+
+    Service(TSubject& subject) : base_type(subject)
+    {
+        fire_registration();
+    }
+
     Service(TSubject&& subject) : base_type(std::move(subject))
     {
-        typename impl_type::template responder<TSubject, impl_type> r(impl(), subject);
-        base_type::notify(event::Registration{impl().name(), impl().instance()}, r);
+        fire_registration();
     }
+
+    /*
+    ~Service()
+    {
+        typename impl_type::template responder<TSubject, impl_type> r(impl(), base_type::subject());
+        base_type::notify(event::Registration{impl().name(), impl().instance()}, r);
+    } */
 
     void start()
     {
