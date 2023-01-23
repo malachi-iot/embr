@@ -126,7 +126,7 @@ struct DependentService2 : embr::experimental::impl::Service
 
         EMBR_PROPERTY_ID2(everywhere, bool, EVERYWHERE, "everywhere?");
         EMBR_PROPERTY_ID2(free_floating, float, "all by myself?");
-    };
+    } id_host_;
 
     template <class TSubject, class TImpl = this_type>
     struct responder : base_type_::responder<TSubject, TImpl>
@@ -405,7 +405,7 @@ public:
         EMBR_PROPERTY_ID(value2, VALUE2, "value1 desc")
         EMBR_PROPERTY_ID2(value3, float, "free floater")
 
-    EMBR_PROPERTY_END
+    EMBR_PROPERTY_END2
 
     template <class TSubject, class TImpl = this_type>
     struct service : embr::experimental::Service<TImpl, TSubject>
@@ -423,7 +423,7 @@ public:
         PROPERTY_HELPER2(value2)
 
     public:
-        //PROPERTY_HELPER2(value3)
+        PROPERTY_HELPER2(value3)
     };
 };
 
@@ -505,7 +505,7 @@ TEST_CASE("Services", "[services]")
     dependent3.value1(7);
 
     dependent4.proxy();
-    //dependent4.value3(12);
+    dependent4.value3(12);
 
     REQUIRE(depender.counter == 5);
     REQUIRE(depender.counter2 == 2);

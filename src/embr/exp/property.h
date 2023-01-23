@@ -14,15 +14,19 @@ static constexpr const char* name() { return desc; }
     EMBR_PROPERTY_TRAITS_BODY(owner, type, id_, desc) \
 }
 
+#define EMBR_PROPERTY_TRAITS_GETTER_SETTER(host_, name_) \
+    static constexpr value_type get(host_& o)       \
+    { return o.name_; }                                   \
+    static inline void set(host_& o, value_type v)   \
+    { o.name_ = v; }                                       \
+
 
 #define EMBR_PROPERTY_TRAITS_BASE(owner, name_, id_, desc) \
     event::traits_base<owner, decltype(owner::name_), id_>         \
 {                                                          \
     EMBR_PROPERTY_TRAITS_BODY(owner, decltype(owner::name_), id_, desc) \
-    static constexpr value_type get(owner_type& o)       \
-    { return o.name_; }                                    \
-    static inline void set(owner_type& o, value_type v)       \
-    { o.name_ = v; }                                       \
+    EMBR_PROPERTY_TRAITS_GETTER_SETTER(owner_type, name_)  \
+    static inline owner& host(owner& o) { return o; } \
 }
 
 #define EMBR_PROPERTY_ID_LOOKUP(name, id_)  \
@@ -37,14 +41,17 @@ template <bool dummy> struct lookup<id_, dummy> : name {}
     struct name : EMBR_PROPERTY_TRAITS_SPARSE_BASE(this_type, type, id_, desc); \
     EMBR_PROPERTY_ID_LOOKUP(name, id_);
 
-#define EMBR_PROPERTY_ID2_1(name, type, desc) \
-type name##_;                                    \
-struct name : EMBR_PROPERTY_TRAITS_BASE(id_type, name##_, -2, desc);
-
 #define EMBR_PROPERTY_ID2_2(name, type, id_, desc) \
 type name##_;                                    \
-struct name : EMBR_PROPERTY_TRAITS_BASE(id_type, name##_, this_type::id_, desc);    \
+struct name : event::traits_base<this_type, type, id_> \
+{                                                  \
+    EMBR_PROPERTY_TRAITS_BODY(this_type, type, id_, desc); \
+    EMBR_PROPERTY_TRAITS_GETTER_SETTER(id_type, name##_) \
+    static inline id_type& host(this_type& o) { return o.id_host_; } \
+};\
     EMBR_PROPERTY_ID_LOOKUP(name, id_);
+
+#define EMBR_PROPERTY_ID2_1(name, type, desc)   EMBR_PROPERTY_ID2_2(name, type, -2, desc)
 
 // Guidance from
 // https://stackoverflow.com/questions/11761703/overloading-macro-on-number-of-arguments
@@ -59,6 +66,7 @@ struct id : event::lookup_tag  \
     template <int id_, bool = true> struct lookup;
 
 #define EMBR_PROPERTY_END };
+#define EMBR_PROPERTY_END2 } id_host_;
 
 
 
@@ -389,17 +397,18 @@ protected:
         typedef TTraits traits_type;
         constexpr int id = traits_type::id();
         typedef typename TTraits::owner_type owner_type;
+        auto& host = TTraits::host(context);
         owner_type& impl = context;    // give conversion a chance
 //#ifdef DEBUG
         const char* name = traits_type::name();
         const char* owner_name = owner_type::name();
 //#endif
-        auto current_v = traits_type::get(impl);
+        auto current_v = traits_type::get(host);
 
         if(current_v != v)
         {
             fire_changing<traits_type>(current_v, v, context);
-            traits_type::set(impl, v);
+            traits_type::set(host, v);
             fire_changed3<traits_type>(v, context);
         }
     }
