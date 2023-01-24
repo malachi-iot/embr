@@ -35,6 +35,7 @@ enum Substates
     Configuring,        ///< pre-start step announcing preliminiry configuration
     Configured,         ///< pre-start step finishing preliminiry configuration
     Finished,
+    Restarting,         ///< When restarting, only this is emitted - not Starting
     Starting,
     Paused,
     Resuming,

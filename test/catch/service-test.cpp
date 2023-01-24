@@ -266,14 +266,6 @@ public:
     DependentService() = default;
     DependentService(TSubject&& subject) : base_type(std::move(subject))
     {}
-
-    void start()
-    {
-        base_type::start([]
-        {
-            return true;
-        });
-    }
 };
 
 
@@ -351,7 +343,7 @@ class DependentService4 : public embr::Service
 {
     typedef DependentService4 this_type;
 
-private:
+protected:
     int value1 = 0;
     const char* value2;
 
@@ -360,6 +352,20 @@ private:
         INFO("DependentService4: doing private stuff")
         return value1 + 1;
     }
+
+
+    bool start(const char* value2)
+    {
+        this->value2 = value2;
+        return true;
+    }
+
+    /*
+     * DEBT: So far, no RAII for services
+    DependentService4(const char* special_init)
+    {
+
+    } */
 
 public:
     static const char* name() { return "DependentService4"; }
@@ -467,7 +473,7 @@ TEST_CASE("Services", "[services]")
     dependent.start();
     dependent2.start();
     dependent3.start();
-    dependent4.start();
+    dependent4.start("value2 initialized");
 
     dependent2.shiny(true);
     dependent2.happy(true);

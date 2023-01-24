@@ -49,6 +49,8 @@ struct Service : embr::PropertyContainer,
     using runtime = embr::service::v1::host::Service<TImpl, TSubject>;
 
 protected:
+    // DEBT: Probably should to a receive command signal switch here instead
+    bool restart() { return true; }
     bool start() { return true; }
     bool stop() { return true; }
 
@@ -98,15 +100,16 @@ protected:
     }
 
 
-    template <class F>
-    void start(F&& f)
+    /*
+    template <class F, class ...TArgs>
+    void start(F&& f, TArgs&&...args)
     {
         state(st::Starting);
-        if (f())
+        if (f(std::forward<TArgs>(args)...))
         {
             state(st::Started, st::Running);
         }
-    }
+    } */
 
     template <class F>
     void stop(F&& f)
@@ -148,10 +151,20 @@ public:
         base_type::notify(event::Registration{impl().name(), impl().instance()}, r);
     } */
 
-    void start()
+    template <class ...TArgs>
+    void start(TArgs&&...args)
     {
         state(st::Starting);
-        if (impl_type::start())
+        if (impl_type::start(std::forward<TArgs>(args)...))
+        {
+            state(st::Started, st::Running);
+        }
+    }
+
+    void restart()
+    {
+        state(st::Restarting);
+        if (impl_type::restart())
         {
             state(st::Started, st::Running);
         }
