@@ -2,24 +2,13 @@
 
 #include "property.h"
 #include "service-fwd.h"
+#include "../service.h"
 
 namespace embr { namespace experimental {
 
-namespace event {
-
-struct Registration
-{
-    const char* name;
-    const char* instance;
-};
-
-
-}
-
-
 namespace impl {
 
-struct Service : PropertyHost
+struct Service : embr::impl::PropertyHost
 {
     typedef Service this_type;
 

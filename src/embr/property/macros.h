@@ -1,7 +1,7 @@
 #pragma once
 
 #define EMBR_INTERNAL_PROPERTY_TRAITS_BODY(owner, type, id, desc) \
-typedef event::traits_base<owner, type, id> base_type; \
+typedef embr::internal::traits_base<owner, type, id> base_type; \
 typedef owner owner_type;                              \
 using typename base_type::value_type;                  \
 static constexpr const char* name() { return desc; }
@@ -17,7 +17,7 @@ static constexpr const char* name() { return desc; }
 template <bool dummy> struct lookup<id_, dummy> : name {}
 
 #define EMBR_PROPERTY_ID_ALIAS(name_, id_, alias, desc) \
-struct alias : event::traits_base<this_type, decltype(this_type::name_), id_>         \
+struct alias : embr::internal::traits_base<this_type, decltype(this_type::name_), id_>         \
 {                                                          \
     EMBR_INTERNAL_PROPERTY_TRAITS_BODY(this_type, decltype(this_type::name_), id_, desc) \
     EMBR_PROPERTY_TRAITS_GETTER_SETTER(owner_type, name_)  \
@@ -28,7 +28,7 @@ EMBR_PROPERTY_ID_LOOKUP(alias, id_);
 
 #define EMBR_INTERNAL_PROPERTY_ID_EXT(name, id, desc) EMBR_PROPERTY_ID_ALIAS(name, this_type::id, name, desc)
 #define EMBR_PROPERTY_SPARSE_ID(name, type, id_, desc) \
-struct name : event::traits_base<this_type, type, this_type::id_>         \
+struct name : embr::internal::traits_base<this_type, type, this_type::id_>         \
 {                                                               \
     EMBR_INTERNAL_PROPERTY_TRAITS_BODY(this_type, type, this_type::id_, desc) \
 };  \
@@ -36,7 +36,7 @@ EMBR_PROPERTY_ID_LOOKUP(name, this_type::id_);
 
 #define EMBR_PROPERTY_ID2_BASE(name, type, id_, desc) \
 type name##_;                                    \
-struct name : event::traits_base<this_type, type, id_> \
+struct name : embr::internal::traits_base<this_type, type, id_> \
 {                                                  \
     EMBR_INTERNAL_PROPERTY_TRAITS_BODY(this_type, type, id_, desc); \
     EMBR_PROPERTY_TRAITS_GETTER_SETTER(struct id, name##_) \
