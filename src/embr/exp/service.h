@@ -75,6 +75,8 @@ class Service : public PropertyHost<TImpl, TSubject>
 
 protected:
     using typename base_type::impl_type;
+
+public:
     using base_type::impl;
 
 protected:

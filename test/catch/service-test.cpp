@@ -168,10 +168,11 @@ public:
         fflush(stdout);
         // FIX: reference_wrapper doesn't appear to auto unwrap as expected,
         // have to nudge it along
-        embr::experimental::unwrap_t<TImpl>& impl = context;
+        //embr::experimental::unwrap_t<TImpl>& impl = context;
         //TImpl& impl = context;
+        register_helper(context.impl());
         //register_helper(context);
-        register_helper(impl);
+        //register_helper(impl);
         //ds2 = &context;
     }
 
@@ -257,7 +258,7 @@ public:
 
 
 template <class TSubject>
-class DependentService : Service<embr::experimental::impl::Service, TSubject>
+class DependentService : public Service<embr::experimental::impl::Service, TSubject>
 {
     typedef Service<embr::experimental::impl::Service, TSubject> base_type;
 

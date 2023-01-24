@@ -149,9 +149,22 @@ public:
     //typedef TImpl impl_type;
     //impl_type impl_;
 
-protected:
+    // DEBT: Temporarily making this public because operator() casting goes crazy, and
+    // reference_wrapper doesn't seem to be working nice with deduction/specialization
     impl_type& impl() { return *this; }
     const impl_type& impl() const { return *this; }
+
+    // Doesn't seem to help above use case
+    /*
+    inline operator impl_type& ()
+    {
+        // Need to do this explicit trickery rather than return *this
+        // otherwise we get in a recursive loop
+        TImpl& i = *this;
+        return i;
+    }   */
+
+protected:
 
     template <int id, typename T>
     void setter(T v)
