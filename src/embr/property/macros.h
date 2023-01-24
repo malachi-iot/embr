@@ -58,7 +58,7 @@ EMBR_PROPERTY_ID_LOOKUP(name, id_)
 
 
 #define EMBR_PROPERTY_BEGIN \
-struct id : event::lookup_tag  \
+struct id : embr::property::v1::tag::property_owner  \
 {\
     template <int id_, bool = true> struct lookup;
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../observer.h"
+#include "../property/fwd.h"
 #include "property-fwd.h"
 
 namespace embr { namespace experimental {
@@ -10,7 +11,7 @@ namespace event {
 // TODO: Consider changing this to property_traits_base
 // and/or putting in a new 'properties' namespace
 template <class TOwner, class T, int id_>
-struct traits_base : traits_tag
+struct traits_base : tag::property_traits
 {
     typedef TOwner owner_type;
     typedef T value_type;
@@ -25,7 +26,7 @@ struct PropertyChanged;
 
 template <class TOwner, class TValue>
 struct PropertyChanged<TOwner, TValue, estd::enable_if_t<
-    !estd::is_base_of<traits_tag, TOwner>::value> >
+    !estd::is_base_of<tag::property_traits, TOwner>::value> >
 {
     typedef TOwner owner_type;
     typedef TValue value_type;
@@ -37,7 +38,7 @@ struct PropertyChanged<TOwner, TValue, estd::enable_if_t<
 template <class TOwner>
 struct PropertyChanged<TOwner, void,
     estd::enable_if_t<
-        !estd::is_base_of<traits_tag, TOwner>::value> >
+        !estd::is_base_of<tag::property_traits, TOwner>::value> >
 {
     typedef TOwner owner_type;
 
@@ -59,7 +60,7 @@ struct PropertyChangedTraits :
 template <class TTraits>
 struct PropertyChanged<TTraits, void,
     estd::enable_if_t<
-        estd::is_base_of<traits_tag, TTraits>::value> >
+        estd::is_base_of<tag::property_traits, TTraits>::value> >
 {
     typedef typename TTraits::owner_type owner_type;
     typedef typename TTraits::value_type value_type;
@@ -93,7 +94,7 @@ public:
     // For converting traits flavor to this one
     template <class TTraits,
         typename estd::enable_if<
-            estd::is_base_of<traits_tag, TTraits>::value
+            estd::is_base_of<tag::property_traits, TTraits>::value
             , bool>::type = true>
     PropertyChanged(const PropertyChanged<TTraits>& copy_from) :
         base_type{copy_from.owner, copy_from.id()},
@@ -134,7 +135,7 @@ struct PropertyChanged<TEnum, -1, typename estd::enable_if<
     // For converting traits flavor to enum (this one) flavor
     template <class TTraits,
         typename estd::enable_if<
-            estd::is_base_of<traits_tag, TTraits>::value &&
+            estd::is_base_of<tag::property_traits, TTraits>::value &&
             estd::is_same<typename TTraits::value_type, value_type>::value
             , bool>::type = true>
     PropertyChanged(const PropertyChanged<TTraits>& copy_from) :
@@ -161,7 +162,7 @@ struct PropertyChanged<TEnum, id_, typename estd::enable_if<
 // Primary traits flavor - most 1:1 with how we manage properties
 template <typename TTraits>
 struct PropertyChanged<TTraits, -1, typename estd::enable_if<
-    estd::is_base_of<traits_tag, TTraits>::value
+    estd::is_base_of<tag::property_traits, TTraits>::value
 >::type> :
     TTraits,
     internal::PropertyChanged<TTraits>
@@ -178,7 +179,7 @@ struct PropertyChanged<TTraits, -1, typename estd::enable_if<
 
 template <typename TTraits>
 struct PropertyChanging<TTraits, -1, typename estd::enable_if<
-    estd::is_base_of<traits_tag, TTraits>::value
+    estd::is_base_of<tag::property_traits, TTraits>::value
 >::type> :
     TTraits
 {
@@ -199,7 +200,7 @@ struct PropertyChanging<TTraits, -1, typename estd::enable_if<
 
 template <typename TOwner, int id_>
 struct PropertyChanged<TOwner, id_, typename estd::enable_if<
-    estd::is_base_of<typename TOwner::id::lookup_tag, typename TOwner::id>::value
+    estd::is_base_of<typename TOwner::id::property_owner, typename TOwner::id>::value
 >::type> : PropertyTraits3<TOwner, id_>
     , internal::PropertyChanged< PropertyTraits3<TOwner, id_> >
 {
@@ -211,7 +212,7 @@ struct PropertyChanged<TOwner, id_, typename estd::enable_if<
     // For converting traits flavor to owner (this one) flavor
     template <class TTraits,
         typename estd::enable_if<
-            estd::is_base_of<traits_tag, TTraits>::value &&
+            estd::is_base_of<tag::property_traits, TTraits>::value &&
             estd::is_same<typename TTraits::owner_type, TOwner>::value &&
             estd::is_same<typename TTraits::value_type, value_type>::value
             , bool>::type = true>
@@ -223,7 +224,7 @@ struct PropertyChanged<TOwner, id_, typename estd::enable_if<
 
 template <typename TOwner>
 struct PropertyChanged<TOwner, -1, typename estd::enable_if<
-    estd::is_base_of<typename TOwner::id::lookup_tag, typename TOwner::id>::value
+    estd::is_base_of<typename TOwner::id::property_owner, typename TOwner::id>::value
 >::type> : internal::PropertyChanged<TOwner>
 {
     typedef internal::PropertyChanged<TOwner> base_type;
@@ -240,7 +241,7 @@ struct PropertyChanged<TOwner, -1, typename estd::enable_if<
 template <typename TOwner, int id_>
 struct PropertyChanging<TOwner, id_, typename estd::enable_if<
     //estd::is_base_of<owner_tag, TOwner>::value
-    estd::is_base_of<typename TOwner::id::lookup_tag, typename TOwner::id>::value
+    estd::is_base_of<typename TOwner::id::property_owner, typename TOwner::id>::value
 >::type> : PropertyTraits3<TOwner, id_>
 {
     typedef PropertyTraits3<TOwner, id_> traits_type;
