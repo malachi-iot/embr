@@ -24,7 +24,7 @@ struct Filter1Base
         BATTERY_ALERT
     };
 
-    EMBR_PROPERTY_BEGIN
+    EMBR_PROPERTIES_SPARSE_BEGIN
 
         typedef embr::internal::traits_base<this_type, int, BATTERY_LEVEL> battery_level;
 
@@ -33,7 +33,7 @@ struct Filter1Base
 
         EMBR_PROPERTY_SPARSE_ID(battery_alert, int, BATTERY_ALERT, "alert");
 
-    EMBR_PROPERTY_END
+    EMBR_PROPERTIES_SPARSE_END
 };
 
 
@@ -99,8 +99,8 @@ struct DependentService2 : embr::Service
             typedef event::traits_base<id_type, bool, EVERYWHERE> base_type;
         }; */
 
-        EMBR_PROPERTY_ID2(everywhere, bool, EVERYWHERE, "everywhere?");
-        EMBR_PROPERTY_ID2(free_floating, float, "all by myself?");
+        EMBR_PROPERTY_ID(everywhere, bool, EVERYWHERE, "everywhere?");
+        EMBR_PROPERTY_ID(free_floating, float, "all by myself?");
     } fields_;
 };
 
@@ -121,13 +121,13 @@ struct DependentService3 : embr::Service
         VALUE3
     };
 
-    EMBR_PROPERTY_BEGIN
+    EMBR_PROPERTIES_SPARSE_BEGIN
 
     EMBR_PROPERTY_ID_EXT(value1, VALUE1, "desc for value1");
     EMBR_PROPERTY_ID_EXT(value2, VALUE2, "desc for value2");
     EMBR_PROPERTY_ID_EXT(value3, VALUE3, "desc for value3");
 
-    EMBR_PROPERTY_END
+    EMBR_PROPERTIES_SPARSE_END
 };
 
 }
@@ -376,14 +376,14 @@ public:
         VALUE2
     };
 
-    EMBR_PROPERTY_BEGIN
+    EMBR_PROPERTIES_BEGIN
 
         EMBR_PROPERTY_ID_EXT(value1, VALUE1, "value1 desc")
         EMBR_PROPERTY_ID_EXT(value2, VALUE2, "value1 desc")
-        EMBR_PROPERTY_ID2(value3, float, "free floater")
-        EMBR_PROPERTY_ID2(value4, float, "free floater #2")
+        EMBR_PROPERTY_ID(value3, float, "free floater")
+        EMBR_PROPERTY_ID(value4, float, "free floater #2")
 
-    EMBR_PROPERTY_END2
+    EMBR_PROPERTIES_END
 
     template <class TSubject, class TImpl = this_type>
     struct runtime : Service::runtime<TSubject, TImpl>

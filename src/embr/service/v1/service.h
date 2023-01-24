@@ -35,7 +35,7 @@ struct Service : embr::PropertyContainer,
         unsigned raw = 0;
     };
 
-    EMBR_PROPERTY_BEGIN
+    EMBR_PROPERTIES_SPARSE_BEGIN
 
         EMBR_PROPERTY_ID_EXT(state_.service_, PROPERTY_STATE,
                              state, "substate")
@@ -43,7 +43,7 @@ struct Service : embr::PropertyContainer,
         EMBR_PROPERTY_ID_EXT(state_.service_substate_, PROPERTY_SUBSTATE,
                              substate, "substate")
 
-    EMBR_PROPERTY_END
+    EMBR_PROPERTIES_SPARSE_END
 
     template <class TSubject, class TImpl = this_type>
     using runtime = embr::service::v1::host::Service<TImpl, TSubject>;

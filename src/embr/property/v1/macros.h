@@ -53,17 +53,19 @@ EMBR_PROPERTY_ID_LOOKUP(name, id_)
 // Guidance from
 // https://stackoverflow.com/questions/11761703/overloading-macro-on-number-of-arguments
 #define GET_MACRO(_1,_2,_3,_4,NAME,...) NAME
-#define EMBR_PROPERTY_ID2(...) GET_MACRO(__VA_ARGS__, EMBR_PROPERTY_ID2_2, EMBR_PROPERTY_ID2_1)(__VA_ARGS__)
+#define EMBR_PROPERTY_ID(...) GET_MACRO(__VA_ARGS__, EMBR_PROPERTY_ID2_2, EMBR_PROPERTY_ID2_1)(__VA_ARGS__)
 #define EMBR_PROPERTY_ID_EXT(...) GET_MACRO(__VA_ARGS__, EMBR_PROPERTY_ID_ALIAS, EMBR_INTERNAL_PROPERTY_ID_EXT)(__VA_ARGS__)
 
 
-#define EMBR_PROPERTY_BEGIN \
+#define EMBR_PROPERTIES_BEGIN \
 struct id : embr::property::v1::tag::property_owner  \
 {\
     template <int id_, bool = true> struct lookup;
 
-#define EMBR_PROPERTY_END };
-#define EMBR_PROPERTY_END2 } fields_;
+#define EMBR_PROPERTIES_SPARSE_BEGIN EMBR_PROPERTIES_BEGIN
+
+#define EMBR_PROPERTIES_SPARSE_END };
+#define EMBR_PROPERTIES_END } fields_;
 
 
 #define EMBR_INTERNAL_PROPERTY_GETTER(type_, name_, alias_)   \
