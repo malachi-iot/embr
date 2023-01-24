@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../../fwd/observer.h"
+
 namespace embr {
 
 namespace service { inline namespace v1 {

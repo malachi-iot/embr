@@ -8,6 +8,7 @@
 #include "internal/notify_helper.h"
 #include "internal/argtype.h"
 #include "internal/subject.h"
+#include "fwd/observer.h"
 
 
 namespace embr {
@@ -153,21 +154,6 @@ internal::observer_proxy<TSubject> make_observer_proxy(TSubject& s)
 }
 
 #endif
-
-struct void_subject
-{
-    /// @brief noop notify
-    /// \tparam TEvent
-    template <class TEvent>
-    void notify(const TEvent&) const {}
-
-    /// @brief noop notify
-    /// \tparam TEvent
-    /// \tparam TContext
-    template <class TEvent, class TContext>
-    void notify(const TEvent&, TContext&) const {}
-};
-
 
 
 }
