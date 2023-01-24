@@ -207,10 +207,10 @@ struct PropertyChanging<TTraits, -1, typename estd::enable_if<
 template <typename TOwner, int id_>
 struct PropertyChanged<TOwner, id_, typename estd::enable_if<
     estd::is_base_of<typename TOwner::id::property_owner, typename TOwner::id>::value
->::type> : PropertyTraits3<TOwner, id_>
-    , internal::PropertyChanged< PropertyTraits3<TOwner, id_> >
+>::type> : PropertyTraits<TOwner, id_>
+    , internal::PropertyChanged< PropertyTraits<TOwner, id_> >
 {
-    typedef internal::PropertyChanged< PropertyTraits3<TOwner, id_> > base_type;
+    typedef internal::PropertyChanged< PropertyTraits<TOwner, id_> > base_type;
     using typename base_type::value_type;
 
     PropertyChanged(TOwner* owner, value_type v) : base_type{owner, v} {}
@@ -248,9 +248,9 @@ template <typename TOwner, int id_>
 struct PropertyChanging<TOwner, id_, typename estd::enable_if<
     //estd::is_base_of<owner_tag, TOwner>::value
     estd::is_base_of<typename TOwner::id::property_owner, typename TOwner::id>::value
->::type> : PropertyTraits3<TOwner, id_>
+>::type> : PropertyTraits<TOwner, id_>
 {
-    typedef PropertyTraits3<TOwner, id_> traits_type;
+    typedef PropertyTraits<TOwner, id_> traits_type;
     typedef typename traits_type::value_type value_type;
 
     TOwner* const owner;

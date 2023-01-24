@@ -92,7 +92,7 @@ protected:
             impl().state_.service_ = s;
             impl().state_.service_substate_ = ss;
 
-            base_type::template fire_changed3<st::id::state>(s, impl());
+            base_type::template fire_changed<st::id::state>(s, impl());
             //base_type::template fire_changed2<service::PROPERTY_STATE>(s, context);
         }
     }
@@ -119,8 +119,8 @@ protected:
     void fire_registration()
     {
         // DEBT: Make a special responder which handles stateless subject
-        typename impl_type::template context<TSubject, impl_type> r(impl(), base_type::subject());
-        base_type::notify(event::Registration{impl().name(), impl().instance()}, r);
+        impl_type& i = impl();
+        base_type::notify(event::Registration{i.name(), i.instance()});
     }
 
 public:

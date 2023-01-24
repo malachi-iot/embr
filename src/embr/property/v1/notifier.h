@@ -64,7 +64,7 @@ protected:
     subject_type& subject() { return *this; }
 
     template <typename TTrait, class TContext>
-    void fire_changed3(typename TTrait::value_type v, TContext& context)
+    void fire_changed(typename TTrait::value_type v, TContext& context)
     {
         typename TTrait::owner_type& owner = context;
         subject_type::notify(event::PropertyChanged<TTrait>(&owner, v), context);
@@ -116,14 +116,14 @@ protected:
         {
             fire_changing<traits_type>(current_v, v, context);
             traits_type::set(store, v);
-            fire_changed3<traits_type>(v, context);
+            fire_changed<traits_type>(v, context);
         }
     }
 
     template <int id, class TOwner, typename T, class TImpl>
     inline void setter(T v, TImpl& impl)
     {
-        setter<PropertyTraits3<TOwner, id> >(v, impl);
+        setter<PropertyTraits<TOwner, id> >(v, impl);
     }
 
 public:
@@ -142,12 +142,14 @@ class PropertyHost : public PropertyNotifier<TSubject>,
 {
 protected:
     typedef PropertyNotifier<TSubject> base_type;
+    using base_type::subject;
     //using subject_base = typename base_type::subject_type;
 
 public:
     typedef unwrap_t<TImpl> impl_type;
     //typedef TImpl impl_type;
     //impl_type impl_;
+    using context_type = typename impl_type::template context<TSubject, impl_type>;
 
     // If we don't do this, we get caught in an endless recursion loop doing type conversion
     // from reference_wrapper to impl_type
@@ -175,12 +177,19 @@ public:
 
 protected:
 
+    template <class TEvent>
+    void notify(TEvent&& e)
+    {
+        // NOTE: Don't worry, CLion/GDB reports somewhat misleading types here but we really do
+        // seem to have impl_type giving us real 'runtime'
+        context_type context{impl(), subject()};
+        base_type::notify(std::move(e), context);
+    }
+
     template <int id, typename T>
     void setter(T v)
     {
-        //impl_type& context = impl();
-        TSubject& subject = *this;
-        typename impl_type::template context<TSubject, impl_type> context{impl(), subject};
+        context_type context{impl(), subject()};
         base_type::template setter<id, impl_type>(v, context);
     }
 
@@ -195,9 +204,7 @@ protected:
     template <typename TTraits>
     void setter(typename TTraits::value_type v)
     {
-        typedef typename TTraits::owner_type owner_type;
-        TSubject& subject = *this;
-        typename impl_type::template context<TSubject, impl_type> context{impl(), subject};
+        context_type context{impl(), subject()};
         base_type::template setter<TTraits>(v, context);
     }
 

@@ -301,7 +301,7 @@ public:
             event::PropertyChanged<traits_type> p{nullptr, v};
             REQUIRE(traits_type::id() == 0);
             //base_type::template fire_changed3<base_type::impl_type::id::is_happy>(v, *this);
-            base_type::template fire_changed3<traits_type>(v, *this);
+            base_type::template fire_changed<traits_type>(v, *this);
         }
     }
 
@@ -420,8 +420,8 @@ public:
         void on_notify(event::PropertyChanged<DependentService4::id::value1> e)
         {
             auto context = this_type{};  // DEBT
-            base_type::template fire_changed3<id::battery_level>(e.value * 10, context);
-            base_type::template fire_changed3<id::battery_alert>(e.value > 0, context);
+            base_type::template fire_changed<id::battery_level>(e.value * 10, context);
+            base_type::template fire_changed<id::battery_alert>(e.value > 0, context);
         }
     };
 };
@@ -500,7 +500,7 @@ TEST_CASE("Services", "[services]")
 
     event::PropertyChanged<embr::Service::id::state> e3(nullptr, Service::Stopped);
 
-    typedef PropertyTraits3<::impl::DependentService2, ::impl::DependentService2::PEOPLE> traits1;
+    typedef PropertyTraits<::impl::DependentService2, ::impl::DependentService2::PEOPLE> traits1;
 
     REQUIRE(traits1::id() == ::impl::DependentService2::PEOPLE);
 

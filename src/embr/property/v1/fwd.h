@@ -18,7 +18,7 @@ struct property_owner
 
 // Through lookup mechanism, resolves TOwner + property ID back to property traits
 template <class TOwner, int id_>
-using PropertyTraits3 = typename TOwner::id::template lookup<id_>;
+using PropertyTraits = typename TOwner::id::template lookup<id_>;
 
 namespace event {
 
