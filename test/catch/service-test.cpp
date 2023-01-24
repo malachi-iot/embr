@@ -39,28 +39,6 @@ struct Filter1Base
 
 
 
-#define _GETTER_HELPER2(type_, name_)   \
-    type_ name_() const { return base_type::template getter<typename impl_type::id::name_>(); }
-
-#define _SETTER_HELPER_ALIAS(type_, name_, alias_)   \
-    void alias_(const type_& v)  \
-{ base_type::template setter<typename impl_type::id::name_>(v); }
-
-#define _SETTER_HELPER2(type_, name_)   _SETTER_HELPER_ALIAS(type_, name_, name_)
-
-#define GETTER_HELPER2(name_) \
-    _GETTER_HELPER2(typename impl_type::id::name_::value_type, name_)
-
-#define _PROPERTY_HELPER2(type_, name_, alias_) \
-    _GETTER_HELPER2(type_, name_)       \
-    _SETTER_HELPER_ALIAS(type_, name_, alias_)
-
-#define PROPERTY_HELPER2(name_) \
-        _PROPERTY_HELPER2(typename impl_type::id::name_::value_type, name_, name_)
-
-#define PROPERTY_HELPER_ALIAS(name_, alias_) \
-        _PROPERTY_HELPER2(typename impl_type::id::name_::value_type, name_, alias_)
-
 #define EMBR_PROPERTY_ID_EXP(name, id, desc)  \
     struct property_##name##_type : event::traits_base<this_type, decltype(name), id> \
     {                                     \
@@ -111,9 +89,9 @@ struct DependentService2 : embr::experimental::impl::Service
         template <bool dummy>
         struct lookup<IS_HAPPY, dummy> : is_happy {};
 
-        EMBR_PROPERTY_ID(is_smiling, IS_SMILING, "smiling");
-        EMBR_PROPERTY_ID(is_shiny, IS_SHINY, "shiny");
-        EMBR_PROPERTY_ID(people, PEOPLE, "people");
+        EMBR_PROPERTY_ID_EXT(is_smiling, IS_SMILING, "smiling");
+        EMBR_PROPERTY_ID_EXT(is_shiny, IS_SHINY, "shiny");
+        EMBR_PROPERTY_ID_EXT(people, PEOPLE, "people");
 
         /*
         bool everywhere_;
@@ -153,9 +131,6 @@ struct DependentService3 : embr::experimental::impl::Service
     };
 
     EMBR_PROPERTY_BEGIN
-
-    // NOTE: I think we could actually define the variables at the same
-    // time with these macros...
 
     EMBR_PROPERTY_ID_EXT(value1, VALUE1, "desc for value1");
     EMBR_PROPERTY_ID_EXT(value2, VALUE2, "desc for value2");
@@ -332,7 +307,7 @@ public:
         }
     }
 
-    PROPERTY_HELPER_ALIAS(is_smiling, smiling)
+    EMBR_PROPERTY_ALIAS(is_smiling, smiling)
 
     void people(int v)
     {
@@ -367,9 +342,9 @@ class ServiceSpec<::impl::DependentService3, TSubject> :
 public:
     ESTD_CPP_FORWARDING_CTOR(ServiceSpec)
 
-    PROPERTY_HELPER2(value1)
-    PROPERTY_HELPER2(value2)
-    PROPERTY_HELPER2(value3)
+    EMBR_PROPERTY(value1)
+    EMBR_PROPERTY(value2)
+    EMBR_PROPERTY(value3)
 };
 
 }}
@@ -418,11 +393,11 @@ public:
         void proxy();
 
     private:
-        PROPERTY_HELPER2(value1)
-        PROPERTY_HELPER2(value2)
+        EMBR_PROPERTY(value1)
+        EMBR_PROPERTY(value2)
 
     public:
-        PROPERTY_HELPER2(value3)
+        EMBR_PROPERTY(value3)
     };
 };
 

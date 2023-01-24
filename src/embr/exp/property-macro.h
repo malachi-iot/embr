@@ -26,7 +26,7 @@ struct alias : event::traits_base<this_type, decltype(this_type::name_), id_>   
 };  \
 EMBR_PROPERTY_ID_LOOKUP(alias, id_);
 
-#define EMBR_PROPERTY_ID(name, id, desc) EMBR_PROPERTY_ID_ALIAS(name, this_type::id, name, desc)
+#define EMBR_INTERNAL_PROPERTY_ID_EXT(name, id, desc) EMBR_PROPERTY_ID_ALIAS(name, this_type::id, name, desc)
 #define EMBR_PROPERTY_SPARSE_ID(name, type, id_, desc) \
 struct name : event::traits_base<this_type, type, this_type::id_>         \
 {                                                               \
@@ -54,7 +54,7 @@ EMBR_PROPERTY_ID_LOOKUP(name, id_)
 // https://stackoverflow.com/questions/11761703/overloading-macro-on-number-of-arguments
 #define GET_MACRO(_1,_2,_3,_4,NAME,...) NAME
 #define EMBR_PROPERTY_ID2(...) GET_MACRO(__VA_ARGS__, EMBR_PROPERTY_ID2_2, EMBR_PROPERTY_ID2_1)(__VA_ARGS__)
-#define EMBR_PROPERTY_ID_EXT(...) GET_MACRO(__VA_ARGS__, EMBR_PROPERTY_ID_ALIAS, EMBR_PROPERTY_ID)(__VA_ARGS__)
+#define EMBR_PROPERTY_ID_EXT(...) GET_MACRO(__VA_ARGS__, EMBR_PROPERTY_ID_ALIAS, EMBR_INTERNAL_PROPERTY_ID_EXT)(__VA_ARGS__)
 
 
 #define EMBR_PROPERTY_BEGIN \
@@ -64,3 +64,24 @@ struct id : event::lookup_tag  \
 
 #define EMBR_PROPERTY_END };
 #define EMBR_PROPERTY_END2 } fields_;
+
+
+#define EMBR_INTERNAL_PROPERTY_GETTER(type_, name_, alias_)   \
+    constexpr type_ alias_() const { return base_type::template getter<typename impl_type::id::name_>(); }
+
+#define EMBR_INTERNAL_PROPERTY_SETTER(type_, name_, alias_)   \
+    void alias_(const type_& v)  \
+{ base_type::template setter<typename impl_type::id::name_>(v); }
+
+#define EMBR_INTERNAL_PROPERTY_ALIAS(type_, name_, alias_) \
+    EMBR_INTERNAL_PROPERTY_GETTER(type_, name_, alias_)       \
+    EMBR_INTERNAL_PROPERTY_SETTER(type_, name_, alias_)
+
+#define EMBR_PROPERTY_ALIAS(name_, alias_) \
+        EMBR_INTERNAL_PROPERTY_ALIAS(typename impl_type::id::name_::value_type, name_, alias_)
+
+#define EMBR_PROPERTY(name_)    EMBR_PROPERTY_ALIAS(name_, name_)
+
+//#define EMBR_PROPERTY(...) GET_MACRO(__VA_ARGS__, EMBR_PROPERTY_ID2_2, EMBR_PROPERTY_ID2_1)(__VA_ARGS__)
+
+
