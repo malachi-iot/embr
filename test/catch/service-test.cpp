@@ -166,7 +166,8 @@ public:
         printf("Service registered: %s (%s)\n", e.name, e.instance);
         fflush(stdout);
         // FIX: reference_wrapper doesn't appear to auto unwrap as expected,
-        // have to nudge it along
+        // have to nudge it along.  Even with underlying conversion operator helping us,
+        // it doesn't auto convert in this case
         //embr::experimental::unwrap_t<TImpl>& impl = context;
         //TImpl& impl = context;
         register_helper(context.impl());

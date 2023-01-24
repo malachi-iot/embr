@@ -29,6 +29,7 @@ struct PropertyHost
 }
 
 // Guidance from https://stackoverflow.com/questions/59984423/stdreference-wrapper-unwrap-the-wrapper
+// DEBT: Consider putting this into estd, since it's such a companion to reference_wrapper
 namespace detail {
 
 template <typename type_t, class  orig_t>
@@ -148,20 +149,29 @@ public:
     //typedef TImpl impl_type;
     //impl_type impl_;
 
+    // If we don't do this, we get caught in an endless recursion loop doing type conversion
+    // from reference_wrapper to impl_type
+    // DEBT: Very brute force bringing in a temporary to do our dirty work.  Specializing on
+    // reference wrapper didn't work though.
+    static constexpr impl_type& unwrap_assist(TImpl* _this)
+    { return estd::reference_wrapper<impl_type>(*_this).get(); }
+
+    static constexpr const impl_type& unwrap_assist(const TImpl* _this)
+    {
+        return estd::reference_wrapper<const impl_type>(*_this).get();
+    }
+
     // DEBT: Temporarily making this public because operator() casting goes crazy, and
     // reference_wrapper doesn't seem to be working nice with deduction/specialization
-    impl_type& impl() { return *this; }
-    const impl_type& impl() const { return *this; }
+    impl_type& impl() { return unwrap_assist(this); }
+    const impl_type& impl() const { return unwrap_assist(this); }
 
-    // Doesn't seem to help above use case
-    /*
     inline operator impl_type& ()
     {
-        // Need to do this explicit trickery rather than return *this
-        // otherwise we get in a recursive loop
-        TImpl& i = *this;
-        return i;
-    }   */
+        return impl();
+    }
+
+    inline operator const impl_type& () const { return impl(); }
 
 protected:
 
