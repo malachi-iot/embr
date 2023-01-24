@@ -9,7 +9,7 @@ namespace embr {
 
 inline namespace service { inline namespace v1 {
 
-struct Service : embr::impl::PropertyHost,
+struct Service : embr::PropertyContainer,
         ServiceBase
 {
     typedef Service this_type;
@@ -45,7 +45,7 @@ struct Service : embr::impl::PropertyHost,
 
     EMBR_PROPERTY_END
 
-    template <class TSubject, class TImpl>
+    template <class TSubject, class TImpl = this_type>
     using runtime = embr::service::v1::host::Service<TImpl, TSubject>;
 
 protected:
@@ -53,7 +53,7 @@ protected:
     bool stop() { return true; }
 
 public:
-    Service::States state() const { return state_.service_; }
+    States state() const { return state_.service_; }
 };
 
 namespace host {
@@ -92,7 +92,7 @@ protected:
             impl().state_.service_ = s;
             impl().state_.service_substate_ = ss;
 
-            base_type::template fire_changed<st::id::state>(s, impl());
+            base_type::template fire_changed<st::id::state>(s);
             //base_type::template fire_changed2<service::PROPERTY_STATE>(s, context);
         }
     }

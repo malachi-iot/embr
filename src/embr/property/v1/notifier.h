@@ -8,11 +8,9 @@ namespace embr {
 
 inline namespace property { inline namespace v1 {
 
-namespace impl {
-
-struct PropertyHost
+struct PropertyContainer
 {
-    typedef PropertyHost this_type;
+    typedef PropertyContainer this_type;
 
     constexpr static const char* name() { return "Generic property host"; }
 
@@ -21,12 +19,11 @@ struct PropertyHost
     template <class TSubject, class TImpl>
     using runtime = embr::property::v1::PropertyHost<TImpl, TSubject>;
 
+    // Helper alias to wrap up host/runtime into a reference-only flavor
     template <class TSubject, class TImpl>
     using context = typename TImpl::template runtime<
         estd::reference_wrapper<TSubject>, estd::reference_wrapper<TImpl> >;
 };
-
-}
 
 // Guidance from https://stackoverflow.com/questions/59984423/stdreference-wrapper-unwrap-the-wrapper
 // DEBT: Consider putting this into estd, since it's such a companion to reference_wrapper
@@ -70,8 +67,8 @@ protected:
         subject_type::notify(event::PropertyChanged<TTrait>(&owner, v), context);
     }
 
-    template <int id_, class TOwner, class T, class TImpl>
-    void fire_changed4(T v, TImpl& context)
+    template <class TOwner, int id_, class T, class TImpl>
+    void fire_changed(T v, TImpl& context)
     {
         TOwner& owner = context;    // Give conversions a chance to run
 
@@ -177,6 +174,8 @@ public:
 
 protected:
 
+    // Helpers for those who really want to fire these events themselves
+
     template <class TEvent>
     void notify(TEvent&& e)
     {
@@ -185,6 +184,22 @@ protected:
         context_type context{impl(), subject()};
         base_type::notify(std::move(e), context);
     }
+
+    template <class TTraits>
+    inline void fire_changed(typename TTraits::value_type v)
+    {
+        context_type context{impl(), subject()};
+        base_type::template fire_changed<TTraits>(v, context);
+    }
+
+    template <class TOwner, int id, class T>
+    inline void fire_changed(T v)
+    {
+        context_type context{impl(), subject()};
+        base_type::template fire_changed<TOwner, id>(v, context);
+    }
+
+protected:
 
     template <int id, typename T>
     void setter(T v)

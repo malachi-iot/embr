@@ -258,9 +258,9 @@ public:
 
 
 template <class TSubject>
-class DependentService : public host::Service<embr::Service, TSubject>
+class DependentService : public Service::runtime<TSubject>
 {
-    typedef host::Service<embr::Service, TSubject> base_type;
+    typedef Service::runtime<TSubject> base_type;
 
 public:
     DependentService() = default;
@@ -277,7 +277,8 @@ public:
 };
 
 
-
+// NOTE: Although this flavor works, it lacking a 'runtime' means that context will never
+// pass back in the full wrapped DependentService2.
 template <class TSubject>
 class DependentService2 : public host::Service<::impl::DependentService2, TSubject>
 {
@@ -301,7 +302,7 @@ public:
             event::PropertyChanged<traits_type> p{nullptr, v};
             REQUIRE(traits_type::id() == 0);
             //base_type::template fire_changed3<base_type::impl_type::id::is_happy>(v, *this);
-            base_type::template fire_changed<traits_type>(v, *this);
+            base_type::template fire_changed<traits_type>(v);
         }
     }
 
@@ -312,8 +313,7 @@ public:
         if(impl().people != v)
         {
             impl().people = v;
-            event::PropertyChanged<impl_type> e(&impl(), v);
-            base_type::template fire_changed4<impl_type::PEOPLE, impl_type>(v, impl());
+            base_type::template fire_changed<impl_type, impl_type::PEOPLE>(v);
         }
     }
 
@@ -380,9 +380,9 @@ public:
     EMBR_PROPERTY_END2
 
     template <class TSubject, class TImpl = this_type>
-    struct runtime : host::Service<TImpl, TSubject>
+    struct runtime : Service::runtime<TSubject, TImpl>
     {
-        typedef host::Service<TImpl, TSubject> base_type;
+        typedef Service::runtime<TSubject, TImpl> base_type;
         using typename base_type::impl_type;
         using base_type::impl;
 
