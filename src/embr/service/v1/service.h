@@ -7,11 +7,10 @@
 
 namespace embr {
 
-namespace service { inline namespace v1 {
+inline namespace service { inline namespace v1 {
 
-namespace impl {
-
-struct Service : embr::impl::PropertyHost
+struct Service : embr::impl::PropertyHost,
+        ServiceBase
 {
     typedef Service this_type;
 
@@ -24,12 +23,12 @@ struct Service : embr::impl::PropertyHost
     {
         struct
         {
-            service::States service_: STATES_MAX_BITSIZE;
-            service::Substates service_substate_: 6;
+            States service_: STATES_MAX_BITSIZE;
+            Substates service_substate_: 6;
 
-            service::States child1: STATES_MAX_BITSIZE;
-            service::States child2: STATES_MAX_BITSIZE;
-            service::States child3: STATES_MAX_BITSIZE;
+            States child1: STATES_MAX_BITSIZE;
+            States child2: STATES_MAX_BITSIZE;
+            States child3: STATES_MAX_BITSIZE;
 
         } state_;
 
@@ -38,27 +37,26 @@ struct Service : embr::impl::PropertyHost
 
     EMBR_PROPERTY_BEGIN
 
-        EMBR_PROPERTY_ID_EXT(state_.service_, service::PROPERTY_STATE,
+        EMBR_PROPERTY_ID_EXT(state_.service_, PROPERTY_STATE,
                              state, "substate")
 
-        EMBR_PROPERTY_ID_EXT(state_.service_substate_, service::PROPERTY_SUBSTATE,
+        EMBR_PROPERTY_ID_EXT(state_.service_substate_, PROPERTY_SUBSTATE,
                              substate, "substate")
 
     EMBR_PROPERTY_END
 
     template <class TSubject, class TImpl>
-    using runtime = embr::service::v1::Service<TImpl, TSubject>;
+    using runtime = embr::service::v1::host::Service<TImpl, TSubject>;
 
 protected:
     bool start() { return true; }
     bool stop() { return true; }
 
 public:
-    service::States state() const { return state_.service_; }
+    Service::States state() const { return state_.service_; }
 };
 
-}
-
+namespace host {
 
 template <class TImpl, class TSubject>
 class Service : public PropertyHost<TImpl, TSubject>
@@ -68,32 +66,33 @@ class Service : public PropertyHost<TImpl, TSubject>
 
 protected:
     using typename base_type::impl_type;
+    using st = v1::Service;
 
 public:
     using base_type::impl;
 
 protected:
-    void state(service::States s)
+    void state(st::States s)
     {
-        base_type::template setter<impl::Service::id::state>(s);
+        base_type::template setter<st::id::state>(s);
     }
 
 
-    void state(service::Substates s)
+    void state(st::Substates s)
     {
-        base_type::template setter<impl::Service::id::substate>(s);
+        base_type::template setter<st::id::substate>(s);
     }
 
-    void state(service::States s, service::Substates ss)
+    void state(st::States s, st::Substates ss)
     {
         if (s != impl().state_.service_)
         {
-            base_type::template fire_changing<impl::Service::id::state>(impl().state_.service_, s, impl());
+            base_type::template fire_changing<st::id::state>(impl().state_.service_, s, impl());
 
             impl().state_.service_ = s;
             impl().state_.service_substate_ = ss;
 
-            base_type::template fire_changed3<impl::Service::id::state>(s, impl());
+            base_type::template fire_changed3<st::id::state>(s, impl());
             //base_type::template fire_changed2<service::PROPERTY_STATE>(s, context);
         }
     }
@@ -102,19 +101,19 @@ protected:
     template <class F>
     void start(F&& f)
     {
-        state(service::Starting);
+        state(st::Starting);
         if (f())
         {
-            state(service::Started, service::Running);
+            state(st::Started, st::Running);
         }
     }
 
     template <class F>
     void stop(F&& f)
     {
-        state(service::Stopping);
+        state(st::Stopping);
         f();
-        state(service::Stopped, service::Finished);
+        state(st::Stopped, st::Finished);
     }
 
     void fire_registration()
@@ -151,14 +150,15 @@ public:
 
     void start()
     {
-        state(service::Starting);
+        state(st::Starting);
         if (impl_type::start())
         {
-            state(service::Started, service::Running);
+            state(st::Started, st::Running);
         }
     }
 };
 
+}
 
 template <template <class> class TService, class TSubject>
 TService<TSubject> make_service(TSubject&& subject)

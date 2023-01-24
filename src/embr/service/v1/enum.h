@@ -2,7 +2,10 @@
 
 namespace embr {
 
-namespace service { inline namespace v1 {
+inline namespace service { inline namespace v1 {
+
+struct ServiceBase
+{
 
 enum Properties
 {
@@ -51,6 +54,8 @@ enum Substates
     ErrConfig,         ///< service configuration error, usually on startup or configuring
     ErrMemory,         ///< service ran out of memory, or detected memory corruption
     ErrUnspecified,    ///< internal error code was not recognized or provided
+};
+
 };
 
 

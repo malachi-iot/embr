@@ -48,9 +48,9 @@ struct Filter1Base
 namespace impl {
 
 
-struct DependentService2 : embr::service::impl::Service
+struct DependentService2 : embr::Service
 {
-    typedef embr::service::impl::Service base_type_;
+    typedef embr::Service base_type_;
     typedef DependentService2 this_type;
 
     bool is_shiny = false;
@@ -104,7 +104,7 @@ struct DependentService2 : embr::service::impl::Service
     } fields_;
 };
 
-struct DependentService3 : embr::service::impl::Service
+struct DependentService3 : embr::Service
 {
     typedef DependentService3 this_type;
 
@@ -135,7 +135,7 @@ struct DependentService3 : embr::service::impl::Service
 
 
 
-class DependerService : embr::service::Service<>
+class DependerService : embr::host::Service<>
 {
     typedef Service<> base_type;
 
@@ -160,7 +160,7 @@ public:
 
     // FIX: Oddly, this works better than Service::context here
     template <class TSubject, class TImpl>
-    void on_notify(event::Registration e, embr::service::impl::Service::runtime<TSubject, TImpl>& context)
+    void on_notify(event::Registration e, embr::Service::runtime<TSubject, TImpl>& context)
     //void on_notify(event::Registration e, ::impl::DependentService2& context)
     {
         printf("Service registered: %s (%s)\n", e.name, e.instance);
@@ -176,7 +176,7 @@ public:
     }
 
     //template <class TSubject>
-    void on_notify(event::PropertyChanged<service::States> e)//, DependentService<TSubject>&)
+    void on_notify(event::PropertyChanged<embr::Service::States> e)//, DependentService<TSubject>&)
     {
         if(e.owner == ds2)  // FIX: This isn't working, but given all the impl() and conversion going on, that's not surprising
             impl().state_.child1 = e.value;
@@ -188,10 +188,10 @@ public:
     // TODO: This "legacy" way is broken now, but for limited scenarios we would still like
     // this approach to function
     //void on_notify(event::PropertyChanged<service::Substates, service::PROPERTY_SUBSTATE> e,
-    void on_notify(event::PropertyChanged<embr::service::impl::Service, service::PROPERTY_SUBSTATE> e,
+    void on_notify(event::PropertyChanged<embr::Service, embr::Service::PROPERTY_SUBSTATE> e,
         ::impl::DependentService2& c)
     {
-        if(e.value == service::Starting)
+        if(e.value == Service::Starting)
         {
             ++counter;
         }
@@ -204,7 +204,7 @@ public:
         //FAIL("got here");
     } */
 
-    void on_notify(event::PropertyChanged<embr::service::impl::Service::id::state> s, ::impl::DependentService2& c)
+    void on_notify(event::PropertyChanged<Service::id::state> s, ::impl::DependentService2& c)
     {
         ++counter;
         ++counter2;
@@ -257,9 +257,9 @@ public:
 
 
 template <class TSubject>
-class DependentService : public service::Service<embr::service::impl::Service, TSubject>
+class DependentService : public host::Service<embr::Service, TSubject>
 {
-    typedef service::Service<embr::service::impl::Service, TSubject> base_type;
+    typedef host::Service<embr::Service, TSubject> base_type;
 
 public:
     DependentService() = default;
@@ -278,9 +278,9 @@ public:
 
 
 template <class TSubject>
-class DependentService2 : public service::Service<::impl::DependentService2, TSubject>
+class DependentService2 : public host::Service<::impl::DependentService2, TSubject>
 {
-    typedef service::Service<::impl::DependentService2, TSubject> base_type;
+    typedef host::Service<::impl::DependentService2, TSubject> base_type;
     using typename base_type::impl_type;
 
     impl_type& impl() { return base_type::impl(); }
@@ -328,13 +328,13 @@ public:
 
 
 
-namespace embr { namespace service {
+namespace embr { inline namespace service { inline namespace v1 {
 template <class TSubject>
 class ServiceSpec<::impl::DependentService3, TSubject> :
-        public Service<::impl::DependentService3, TSubject>
+        public host::Service<::impl::DependentService3, TSubject>
 {
     typedef ::impl::DependentService3 impl_type;
-    typedef Service<impl_type, TSubject> base_type;
+    typedef host::Service<impl_type, TSubject> base_type;
 
 public:
     ESTD_CPP_FORWARDING_CTOR(ServiceSpec)
@@ -344,9 +344,9 @@ public:
     EMBR_PROPERTY(value3)
 };
 
-}}
+}}}
 
-class DependentService4 : public embr::service::impl::Service
+class DependentService4 : public embr::Service
 {
     typedef DependentService4 this_type;
 
@@ -379,9 +379,9 @@ public:
     EMBR_PROPERTY_END2
 
     template <class TSubject, class TImpl = this_type>
-    struct runtime : embr::service::Service<TImpl, TSubject>
+    struct runtime : host::Service<TImpl, TSubject>
     {
-        typedef embr::service::Service<TImpl, TSubject> base_type;
+        typedef host::Service<TImpl, TSubject> base_type;
         using typename base_type::impl_type;
         using base_type::impl;
 
@@ -489,14 +489,15 @@ TEST_CASE("Services", "[services]")
     REQUIRE(dependent4.value3() == 12);
 
     event::PropertyChanged<
-            embr::service::impl::Service, service::PROPERTY_STATE>
-            e1(nullptr, service::Stopped);
+            embr::Service, Service::PROPERTY_STATE>
+            e1(nullptr, Service::Stopped);
 
+    // DEBT: Something looks suspicious here
     event::PropertyChanged<
-            ::impl::DependentService2, service::PROPERTY_STATE>
+            ::impl::DependentService2, Service::PROPERTY_STATE>
             e2(nullptr, true);
 
-    event::PropertyChanged<embr::service::impl::Service::id::state> e3(nullptr, service::Stopped);
+    event::PropertyChanged<embr::Service::id::state> e3(nullptr, Service::Stopped);
 
     typedef PropertyTraits3<::impl::DependentService2, ::impl::DependentService2::PEOPLE> traits1;
 
