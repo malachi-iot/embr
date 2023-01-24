@@ -19,7 +19,7 @@ struct Registration
 
 namespace impl {
 
-struct Service
+struct Service : PropertyHost
 {
     typedef Service this_type;
 
@@ -55,7 +55,7 @@ struct Service
 
     // Kinda-sorta creates an alias to original service.  Ultimately we combine
     // this and the original service into one code chunk, likely here
-    template <class TSubject, class TImpl = this_type>
+    template <class TSubject, class TImpl>
     struct responder : embr::experimental::Service<
         std::reference_wrapper<TImpl>, std::reference_wrapper<TSubject> >
     {
@@ -65,7 +65,8 @@ struct Service
         constexpr responder(TImpl& impl, TSubject& subject) : base_type(impl, subject)
         {}
 
-        operator TImpl& () { return base_type::impl(); }
+        // Not needed since all flavors of PropertyHost are already convertible to TImpl&
+        //operator TImpl& () { return base_type::impl(); }
     };
 
 protected:

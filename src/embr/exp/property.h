@@ -8,6 +8,17 @@
 
 namespace embr { namespace experimental {
 
+namespace impl {
+
+struct PropertyHost
+{
+    typedef PropertyHost this_type;
+
+    constexpr static const char* name() { return "Generic property host"; }
+};
+
+}
+
 
 template <class TSubject = embr::void_subject>
 class PropertyNotifier : public TSubject
