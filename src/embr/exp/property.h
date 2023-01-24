@@ -29,6 +29,31 @@ struct PropertyHost
 
 }
 
+// Guidance from https://stackoverflow.com/questions/59984423/stdreference-wrapper-unwrap-the-wrapper
+namespace detail {
+
+template <typename type_t, class  orig_t>
+struct unwrap_impl
+{
+    using type = orig_t;
+};
+
+template <typename type_t, class V>
+struct unwrap_impl<estd::reference_wrapper<type_t>,V>
+{
+    using type = type_t;
+};
+}
+
+template<class T>
+struct unwrap
+{
+    using type = typename detail::unwrap_impl<estd::decay_t<T>, T>::type;
+};
+
+template <typename type_t>
+using unwrap_t = typename unwrap<type_t>::type;
+
 
 template <class TSubject = embr::void_subject>
 class PropertyNotifier : public TSubject
@@ -120,7 +145,8 @@ protected:
     //using subject_base = typename base_type::subject_type;
 
 public:
-    typedef TImpl impl_type;
+    typedef unwrap_t<TImpl> impl_type;
+    //typedef TImpl impl_type;
     //impl_type impl_;
 
 protected:
@@ -132,7 +158,7 @@ protected:
     {
         //impl_type& context = impl();
         TSubject& subject = *this;
-        typename impl_type::template responder<TSubject, impl_type> context{impl(), subject};
+        typename impl_type::template context<TSubject, impl_type> context{impl(), subject};
         base_type::template setter<id, impl_type>(v, context);
     }
 
@@ -149,7 +175,7 @@ protected:
     {
         typedef typename TTraits::owner_type owner_type;
         TSubject& subject = *this;
-        typename impl_type::template responder<TSubject, impl_type> context{impl(), subject};
+        typename impl_type::template context<TSubject, impl_type> context{impl(), subject};
         base_type::template setter<TTraits>(v, context);
     }
 
@@ -167,6 +193,8 @@ public:
         TImpl(impl) {}
 
     PropertyHost(TSubject&& subject) : base_type(std::move(subject)) {}
+
+    //operator impl_type& () { return *this; }
 };
 
 

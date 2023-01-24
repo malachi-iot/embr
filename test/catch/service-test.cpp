@@ -103,14 +103,6 @@ struct DependentService2 : embr::experimental::impl::Service
         EMBR_PROPERTY_ID2(everywhere, bool, EVERYWHERE, "everywhere?");
         EMBR_PROPERTY_ID2(free_floating, float, "all by myself?");
     } fields_;
-
-    template <class TSubject, class TImpl = this_type>
-    struct responder : base_type_::responder<TSubject, TImpl>
-    {
-        typedef base_type_::responder<TSubject, TImpl> base_type;
-
-        ESTD_CPP_FORWARDING_CTOR(responder)
-    };
 };
 
 struct DependentService3 : embr::experimental::impl::Service
@@ -167,13 +159,18 @@ public:
         ds2 = &s;
     }
 
+    // FIX: Oddly, this works better than Service::context here
     template <class TSubject, class TImpl>
-    void on_notify(event::Registration e, embr::experimental::impl::Service::responder<TSubject, TImpl>& context)
+    void on_notify(event::Registration e, embr::experimental::impl::Service::runtime<TSubject, TImpl>& context)
     //void on_notify(event::Registration e, ::impl::DependentService2& context)
     {
         printf("Service registered: %s (%s)\n", e.name, e.instance);
         fflush(stdout);
-        TImpl& impl = context;
+        // FIX: reference_wrapper doesn't appear to auto unwrap as expected,
+        // have to nudge it along
+        embr::experimental::unwrap_t<TImpl>& impl = context;
+        //TImpl& impl = context;
+        //register_helper(context);
         register_helper(impl);
         //ds2 = &context;
     }

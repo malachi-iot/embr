@@ -53,24 +53,8 @@ struct Service : PropertyHost
 
     EMBR_PROPERTY_END
 
-    // Kinda-sorta creates an alias to original service.  Ultimately we combine
-    // this and the original service into one code chunk, likely here
     template <class TSubject, class TImpl>
-    struct responder : embr::experimental::Service<
-        std::reference_wrapper<TImpl>, std::reference_wrapper<TSubject> >
-    {
-        typedef embr::experimental::Service<
-            std::reference_wrapper<TImpl>, std::reference_wrapper<TSubject> > base_type;
-
-        constexpr responder(TImpl& impl, TSubject& subject) : base_type(impl, subject)
-        {}
-
-        // Not needed since all flavors of PropertyHost are already convertible to TImpl&
-        //operator TImpl& () { return base_type::impl(); }
-    };
-
-    template <class TSubject, class TImpl>
-    using runtime = embr::experimental::Service<TSubject, TImpl>;
+    using runtime = embr::experimental::Service<TImpl, TSubject>;
 
 protected:
     bool start() { return true; }
@@ -141,7 +125,7 @@ protected:
     void fire_registration()
     {
         // DEBT: Make a special responder which handles stateless subject
-        typename impl_type::template responder<TSubject, impl_type> r(impl(), base_type::subject());
+        typename impl_type::template context<TSubject, impl_type> r(impl(), base_type::subject());
         base_type::notify(event::Registration{impl().name(), impl().instance()}, r);
     }
 
