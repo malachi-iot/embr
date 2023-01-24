@@ -4,6 +4,8 @@
 #include "macros.h"
 #include "traits.h"
 
+#include "../../exp/rtti.h"
+
 namespace embr {
 
 inline namespace property { inline namespace v1 {

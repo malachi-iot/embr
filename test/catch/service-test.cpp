@@ -4,6 +4,9 @@
 
 using namespace embr;
 
+constexpr experimental::module_info module{"unit tests"};
+constexpr experimental::type_info t1{module, "type1", 1};
+
 template <class TSubject>
 class DependentService;
 
