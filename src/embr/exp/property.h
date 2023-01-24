@@ -4,7 +4,7 @@
 
 #include "property-fwd.h"
 #include "property-event.h"
-#include "property-macro.h"
+#include "../property/macros.h"
 
 
 namespace embr { namespace experimental {

@@ -3,6 +3,8 @@
 #include <embr/exp/service.h>
 #include <embr/exp/service.hpp>
 
+#include <embr/property/notifier.h>
+
 using namespace embr::experimental;
 
 template <class TSubject>
