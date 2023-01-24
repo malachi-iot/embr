@@ -69,6 +69,9 @@ struct Service : PropertyHost
         //operator TImpl& () { return base_type::impl(); }
     };
 
+    template <class TSubject, class TImpl>
+    using runtime = embr::experimental::Service<TSubject, TImpl>;
+
 protected:
     bool start() { return true; }
     bool stop() { return true; }

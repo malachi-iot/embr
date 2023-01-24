@@ -29,4 +29,7 @@ struct PropertyChanging;
 
 }
 
+template <class TImpl, class TSubject>
+class PropertyHost;
+
 }}

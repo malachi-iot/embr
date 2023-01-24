@@ -2,6 +2,7 @@
 
 #include "../observer.h"
 
+#include "property-fwd.h"
 #include "property-event.h"
 #include "property-macro.h"
 
@@ -15,6 +16,15 @@ struct PropertyHost
     typedef PropertyHost this_type;
 
     constexpr static const char* name() { return "Generic property host"; }
+
+    // DEBT: Was going to call this host, but macros refer to the impl portion as host
+    // so work out naming - in the meantime, we'll call this runtime
+    template <class TSubject, class TImpl>
+    using runtime = embr::experimental::PropertyHost<TImpl, TSubject>;
+
+    template <class TSubject, class TImpl>
+    using context = typename TImpl::template runtime<
+        estd::reference_wrapper<TSubject>, estd::reference_wrapper<TImpl> >;
 };
 
 }
