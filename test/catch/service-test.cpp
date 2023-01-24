@@ -1,12 +1,8 @@
 #include <catch2/catch.hpp>
 
-#include <embr/exp/service.h>
-#include <embr/exp/service.hpp>
-
-#include <embr/property/notifier.h>
+#include <embr/service.h>
 
 using namespace embr;
-using namespace embr::experimental;
 
 template <class TSubject>
 class DependentService;
@@ -52,9 +48,9 @@ struct Filter1Base
 namespace impl {
 
 
-struct DependentService2 : embr::experimental::impl::Service
+struct DependentService2 : embr::service::impl::Service
 {
-    typedef embr::experimental::impl::Service base_type_;
+    typedef embr::service::impl::Service base_type_;
     typedef DependentService2 this_type;
 
     bool is_shiny = false;
@@ -108,7 +104,7 @@ struct DependentService2 : embr::experimental::impl::Service
     } fields_;
 };
 
-struct DependentService3 : embr::experimental::impl::Service
+struct DependentService3 : embr::service::impl::Service
 {
     typedef DependentService3 this_type;
 
@@ -139,7 +135,7 @@ struct DependentService3 : embr::experimental::impl::Service
 
 
 
-class DependerService : Service<>
+class DependerService : embr::service::Service<>
 {
     typedef Service<> base_type;
 
@@ -164,7 +160,7 @@ public:
 
     // FIX: Oddly, this works better than Service::context here
     template <class TSubject, class TImpl>
-    void on_notify(event::Registration e, embr::experimental::impl::Service::runtime<TSubject, TImpl>& context)
+    void on_notify(event::Registration e, embr::service::impl::Service::runtime<TSubject, TImpl>& context)
     //void on_notify(event::Registration e, ::impl::DependentService2& context)
     {
         printf("Service registered: %s (%s)\n", e.name, e.instance);
@@ -192,7 +188,7 @@ public:
     // TODO: This "legacy" way is broken now, but for limited scenarios we would still like
     // this approach to function
     //void on_notify(event::PropertyChanged<service::Substates, service::PROPERTY_SUBSTATE> e,
-    void on_notify(event::PropertyChanged<embr::experimental::impl::Service, service::PROPERTY_SUBSTATE> e,
+    void on_notify(event::PropertyChanged<embr::service::impl::Service, service::PROPERTY_SUBSTATE> e,
         ::impl::DependentService2& c)
     {
         if(e.value == service::Starting)
@@ -208,7 +204,7 @@ public:
         //FAIL("got here");
     } */
 
-    void on_notify(event::PropertyChanged<embr::experimental::impl::Service::id::state> s, ::impl::DependentService2& c)
+    void on_notify(event::PropertyChanged<embr::service::impl::Service::id::state> s, ::impl::DependentService2& c)
     {
         ++counter;
         ++counter2;
@@ -261,9 +257,9 @@ public:
 
 
 template <class TSubject>
-class DependentService : public Service<embr::experimental::impl::Service, TSubject>
+class DependentService : public service::Service<embr::service::impl::Service, TSubject>
 {
-    typedef Service<embr::experimental::impl::Service, TSubject> base_type;
+    typedef service::Service<embr::service::impl::Service, TSubject> base_type;
 
 public:
     DependentService() = default;
@@ -282,9 +278,9 @@ public:
 
 
 template <class TSubject>
-class DependentService2 : public Service<::impl::DependentService2, TSubject>
+class DependentService2 : public service::Service<::impl::DependentService2, TSubject>
 {
-    typedef Service<::impl::DependentService2, TSubject> base_type;
+    typedef service::Service<::impl::DependentService2, TSubject> base_type;
     using typename base_type::impl_type;
 
     impl_type& impl() { return base_type::impl(); }
@@ -332,7 +328,7 @@ public:
 
 
 
-namespace embr { namespace experimental {
+namespace embr { namespace service {
 template <class TSubject>
 class ServiceSpec<::impl::DependentService3, TSubject> :
         public Service<::impl::DependentService3, TSubject>
@@ -350,7 +346,7 @@ public:
 
 }}
 
-class DependentService4 : public embr::experimental::impl::Service
+class DependentService4 : public embr::service::impl::Service
 {
     typedef DependentService4 this_type;
 
@@ -383,9 +379,9 @@ public:
     EMBR_PROPERTY_END2
 
     template <class TSubject, class TImpl = this_type>
-    struct runtime : embr::experimental::Service<TImpl, TSubject>
+    struct runtime : embr::service::Service<TImpl, TSubject>
     {
-        typedef embr::experimental::Service<TImpl, TSubject> base_type;
+        typedef embr::service::Service<TImpl, TSubject> base_type;
         using typename base_type::impl_type;
         using base_type::impl;
 
@@ -463,7 +459,7 @@ TEST_CASE("Services", "[services]")
     auto dependent4 = DependentService4::service<decltype(subject)>(s); */
     DependentService<subject_type> dependent;
     DependentService2<subject_type> dependent2(subject_type{}); // DEBT: layer0 subject presents a minor challenge
-    ServiceSpec<::impl::DependentService3, subject_type> dependent3;
+    service::ServiceSpec<::impl::DependentService3, subject_type> dependent3;
     DependentService4::runtime<subject2_type> dependent4;
 
 
@@ -493,14 +489,14 @@ TEST_CASE("Services", "[services]")
     REQUIRE(dependent4.value3() == 12);
 
     event::PropertyChanged<
-            embr::experimental::impl::Service, service::PROPERTY_STATE>
+            embr::service::impl::Service, service::PROPERTY_STATE>
             e1(nullptr, service::Stopped);
 
     event::PropertyChanged<
             ::impl::DependentService2, service::PROPERTY_STATE>
             e2(nullptr, true);
 
-    event::PropertyChanged<embr::experimental::impl::Service::id::state> e3(nullptr, service::Stopped);
+    event::PropertyChanged<embr::service::impl::Service::id::state> e3(nullptr, service::Stopped);
 
     typedef PropertyTraits3<::impl::DependentService2, ::impl::DependentService2::PEOPLE> traits1;
 

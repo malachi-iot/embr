@@ -1,16 +1,8 @@
 #pragma once
 
-namespace embr { namespace experimental {
+namespace embr {
 
-namespace impl {
-
-struct Service;
-
-}
-
-
-// Copy/pasted/adapted from chariot project
-namespace service {
+namespace service { inline namespace v1 {
 
 enum Properties
 {
@@ -61,13 +53,7 @@ enum Substates
     ErrUnspecified,    ///< internal error code was not recognized or provided
 };
 
-}
-
-template <class TImpl = impl::Service, class TSubject = embr::void_subject>
-class Service;
-
-template <class TImpl, class TSubject = embr::void_subject>
-class ServiceSpec;
-
 
 }}
+
+}

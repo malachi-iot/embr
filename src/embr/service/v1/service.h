@@ -1,10 +1,13 @@
 #pragma once
 
-#include "property.h"
-#include "service-fwd.h"
-#include "../service.h"
+#include "../../property/v1/notifier.h"
+#include "fwd.h"
+#include "enum.h"
+#include "event.h"
 
-namespace embr { namespace experimental {
+namespace embr {
+
+namespace service { inline namespace v1 {
 
 namespace impl {
 
@@ -24,9 +27,9 @@ struct Service : embr::impl::PropertyHost
             service::States service_: STATES_MAX_BITSIZE;
             service::Substates service_substate_: 6;
 
-            service::States child1 : STATES_MAX_BITSIZE;
-            service::States child2 : STATES_MAX_BITSIZE;
-            service::States child3 : STATES_MAX_BITSIZE;
+            service::States child1: STATES_MAX_BITSIZE;
+            service::States child2: STATES_MAX_BITSIZE;
+            service::States child3: STATES_MAX_BITSIZE;
 
         } state_;
 
@@ -36,14 +39,15 @@ struct Service : embr::impl::PropertyHost
     EMBR_PROPERTY_BEGIN
 
         EMBR_PROPERTY_ID_EXT(state_.service_, service::PROPERTY_STATE,
-                               state, "substate")
+                             state, "substate")
+
         EMBR_PROPERTY_ID_EXT(state_.service_substate_, service::PROPERTY_SUBSTATE,
-            substate, "substate")
+                             substate, "substate")
 
     EMBR_PROPERTY_END
 
     template <class TSubject, class TImpl>
-    using runtime = embr::experimental::Service<TImpl, TSubject>;
+    using runtime = embr::service::v1::Service<TImpl, TSubject>;
 
 protected:
     bool start() { return true; }
@@ -82,14 +86,14 @@ protected:
 
     void state(service::States s, service::Substates ss)
     {
-        if(s != impl().state_.service_)
+        if (s != impl().state_.service_)
         {
             base_type::template fire_changing<impl::Service::id::state>(impl().state_.service_, s, impl());
 
             impl().state_.service_ = s;
             impl().state_.service_substate_ = ss;
 
-            base_type::template fire_changed3<experimental::impl::Service::id::state>(s, impl());
+            base_type::template fire_changed3<impl::Service::id::state>(s, impl());
             //base_type::template fire_changed2<service::PROPERTY_STATE>(s, context);
         }
     }
@@ -99,7 +103,7 @@ protected:
     void start(F&& f)
     {
         state(service::Starting);
-        if(f())
+        if (f())
         {
             state(service::Started, service::Running);
         }
@@ -148,7 +152,7 @@ public:
     void start()
     {
         state(service::Starting);
-        if(impl_type::start())
+        if (impl_type::start())
         {
             state(service::Started, service::Running);
         }
@@ -171,3 +175,5 @@ ServiceSpec<TImpl, TSubject> make_service_spec(TSubject&& subject)
 
 
 }}
+
+}
