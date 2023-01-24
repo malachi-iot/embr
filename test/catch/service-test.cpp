@@ -380,13 +380,13 @@ public:
     EMBR_PROPERTY_END2
 
     template <class TSubject, class TImpl = this_type>
-    struct service : embr::experimental::Service<TImpl, TSubject>
+    struct runtime : embr::experimental::Service<TImpl, TSubject>
     {
         typedef embr::experimental::Service<TImpl, TSubject> base_type;
         using typename base_type::impl_type;
         using base_type::impl;
 
-        ESTD_CPP_FORWARDING_CTOR(service)
+        ESTD_CPP_FORWARDING_CTOR(runtime)
 
         void proxy();
 
@@ -401,7 +401,7 @@ public:
 
 // increments private value1 by 1
 template <class TSubject, class TImpl>
-void DependentService4::service<TSubject, TImpl>::proxy()
+void DependentService4::runtime<TSubject, TImpl>::proxy()
 {
     int v = impl().do_private_stuff();
 
@@ -461,7 +461,7 @@ TEST_CASE("Services", "[services]")
     DependentService<subject_type> dependent;
     DependentService2<subject_type> dependent2(subject_type{}); // DEBT: layer0 subject presents a minor challenge
     ServiceSpec<::impl::DependentService3, subject_type> dependent3;
-    DependentService4::service<subject2_type> dependent4;
+    DependentService4::runtime<subject2_type> dependent4;
 
 
     dependent.start();
