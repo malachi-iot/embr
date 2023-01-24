@@ -7,10 +7,10 @@ using typename base_type::value_type;                  \
 static constexpr const char* name() { return desc; }
 
 
-#define EMBR_PROPERTY_TRAITS_GETTER_SETTER(host_, name_) \
-    static constexpr value_type get(const host_& o)       \
+#define EMBR_PROPERTY_TRAITS_GETTER_SETTER(storage_type, name_) \
+    static constexpr value_type get(const storage_type& o)       \
     { return o.name_; }                                   \
-    static inline void set(host_& o, value_type v)   \
+    static inline void set(storage_type& o, value_type v)   \
     { o.name_ = v; }
 
 #define EMBR_PROPERTY_ID_LOOKUP(name, id_)  \
@@ -21,8 +21,8 @@ struct alias : embr::internal::traits_base<this_type, decltype(this_type::name_)
 {                                                          \
     EMBR_INTERNAL_PROPERTY_TRAITS_BODY(this_type, decltype(this_type::name_), id_, desc) \
     EMBR_PROPERTY_TRAITS_GETTER_SETTER(owner_type, name_)  \
-    static constexpr owner_type& host(owner_type& o) { return o; } \
-    static constexpr const owner_type& host(const owner_type& o) { return o; } \
+    static constexpr owner_type& store(owner_type& o) { return o; } \
+    static constexpr const owner_type& store(const owner_type& o) { return o; } \
 };  \
 EMBR_PROPERTY_ID_LOOKUP(alias, id_);
 
@@ -40,8 +40,8 @@ struct name : embr::internal::traits_base<this_type, type, id_> \
 {                                                  \
     EMBR_INTERNAL_PROPERTY_TRAITS_BODY(this_type, type, id_, desc); \
     EMBR_PROPERTY_TRAITS_GETTER_SETTER(struct id, name##_) \
-    static constexpr struct id& host(this_type& o) { return o.fields_; } \
-    static constexpr const struct id& host(const this_type& o) { return o.fields_; } \
+    static constexpr struct id& store(this_type& o) { return o.fields_; } \
+    static constexpr const struct id& store(const this_type& o) { return o.fields_; } \
 }
 
 #define EMBR_PROPERTY_ID2_2(name, type, id_, desc) \

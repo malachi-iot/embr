@@ -103,18 +103,18 @@ protected:
         typedef TTraits traits_type;
         constexpr int id = traits_type::id();
         typedef typename TTraits::owner_type owner_type;
-        auto& host = TTraits::host(context);
+        auto& store = TTraits::store(context);
         owner_type& impl = context;    // give conversion a chance
 //#ifdef DEBUG
         const char* name = traits_type::name();
         const char* owner_name = owner_type::name();
 //#endif
-        auto current_v = traits_type::get(host);
+        auto current_v = traits_type::get(store);
 
         if(current_v != v)
         {
             fire_changing<traits_type>(current_v, v, context);
-            traits_type::set(host, v);
+            traits_type::set(store, v);
             fire_changed3<traits_type>(v, context);
         }
     }
@@ -179,7 +179,7 @@ protected:
     {
         typedef TTraits traits_type;
         typedef typename TTraits::owner_type owner_type;
-        return traits_type::get(traits_type::host(impl()));
+        return traits_type::get(traits_type::store(impl()));
     }
 
     template <typename TTraits>
