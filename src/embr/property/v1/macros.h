@@ -2,12 +2,11 @@
 
 #define EMBR_INTERNAL_PROPERTY_TRAITS_BODY(owner, type, id, desc) \
 typedef embr::internal::traits_base<owner, type, id> base_type; \
-typedef owner owner_type;                              \
-using typename base_type::value_type;                  \
 static constexpr const char* name() { return desc; }
 
 
 #define EMBR_PROPERTY_TRAITS_GETTER_SETTER(storage_type, name_) \
+    using typename base_type::value_type;                  \
     static constexpr value_type get(const storage_type& o)       \
     { return o.name_; }                                   \
     static inline void set(storage_type& o, value_type v)   \
@@ -55,6 +54,7 @@ EMBR_PROPERTY_ID_LOOKUP(name, id_)
 #define GET_MACRO(_1,_2,_3,_4,NAME,...) NAME
 #define EMBR_PROPERTY_ID(...) GET_MACRO(__VA_ARGS__, EMBR_PROPERTY_ID2_2, EMBR_PROPERTY_ID2_1)(__VA_ARGS__)
 #define EMBR_PROPERTY_ID_EXT(...) GET_MACRO(__VA_ARGS__, EMBR_PROPERTY_ID_ALIAS, EMBR_INTERNAL_PROPERTY_ID_EXT)(__VA_ARGS__)
+//#define EMBR_PROPERTY_ID_SPARSE(...) GET_MACRO(__VA_ARGS__, EMBR_PROPERTY_SPARSE_ID, EMBR_PROPERTY_SPARSE_ID)(__VA_ARGS__)
 
 
 #define EMBR_PROPERTIES_BEGIN \

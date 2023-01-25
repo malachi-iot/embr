@@ -30,6 +30,7 @@ struct Service : embr::PropertyContainer,
             States child2 : bitsize::state::value;
             States child3 : bitsize::state::value;
 
+            // Application specific data in "free" leftover bits
             unsigned user : bitsize::user::value;
 
         } state_;
@@ -41,11 +42,13 @@ struct Service : embr::PropertyContainer,
     EMBR_PROPERTIES_SPARSE_BEGIN
 
         EMBR_PROPERTY_ID_EXT(state_.service_, PROPERTY_STATE,
-                             state, "substate")
+                             state, "state")
 
         EMBR_PROPERTY_ID_EXT(state_.service_substate_, PROPERTY_SUBSTATE,
                              substate, "substate")
 
+        EMBR_PROPERTY_ID_EXT(state_.user, USER,
+                             user, "app-specific data")
 
         template <class TConfig>
         struct config : embr::internal::traits_base<this_type, TConfig, -2>
@@ -71,6 +74,8 @@ protected:
         return state_result::started();
     }
 
+    // DEBT: Use embr::word here
+    unsigned user() const { return state_.user; }
 
 public:
     States state() const { return state_.service_; }
@@ -119,6 +124,13 @@ protected:
             base_type::template fire_changed<st::id::state>(s);
             //base_type::template fire_changed2<service::PROPERTY_STATE>(s, context);
         }
+    }
+
+
+    // Convenience method, probably won't get used much
+    inline void user(unsigned v)
+    {
+        base_type::template setter<embr::Service::id::user>(v);
     }
 
 
