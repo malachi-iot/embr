@@ -35,19 +35,26 @@ template <typename type_t, class  orig_t>
 struct unwrap_impl
 {
     using type = orig_t;
+    using is_wrapped = estd::false_type;
 };
 
 template <typename type_t, class V>
 struct unwrap_impl<estd::reference_wrapper<type_t>,V>
 {
     using type = type_t;
+    using is_wrapped = estd::true_type;
 };
 }
 
 template<class T>
 struct unwrap
 {
-    using type = typename detail::unwrap_impl<estd::decay_t<T>, T>::type;
+protected:
+    typedef typename detail::unwrap_impl<estd::decay_t<T>, T> impl;
+
+public:
+    using type = typename impl::type;
+    using is_wrapped = typename impl::is_wrapped;
 };
 
 template <typename type_t>
@@ -101,10 +108,10 @@ protected:
     void setter(typename TTraits::value_type v, TContext& context)
     {
         typedef TTraits traits_type;
-        constexpr int id = traits_type::id();
+        //constexpr int id = traits_type::id();
         typedef typename TTraits::owner_type owner_type;
         auto& store = TTraits::store(context);
-        owner_type& impl = context;    // give conversion a chance
+        //owner_type& impl = context;    // give conversion a chance
 //#ifdef DEBUG
         const char* name = traits_type::name();
         const char* owner_name = owner_type::name();
@@ -149,6 +156,7 @@ public:
     //typedef TImpl impl_type;
     //impl_type impl_;
     using context_type = typename impl_type::template context<TSubject, impl_type>;
+    using runtime_type = typename impl_type::template runtime<TSubject, impl_type>;
 
     // If we don't do this, we get caught in an endless recursion loop doing type conversion
     // from reference_wrapper to impl_type
@@ -173,6 +181,16 @@ public:
     }
 
     inline operator const impl_type& () const { return impl(); }
+
+    // DEBT: This is scary stuff - penalty for failure is high, i.e.
+    // memory corruption.  That's why mostly we use context
+    constexpr runtime_type* runtime()
+    {
+        // Meager protection against using the 'context' variety.  Still dangerous
+        static_assert(unwrap<TImpl>::is_wrapped::value == false);
+
+        return (runtime_type*) this;
+    }
 
 protected:
 
@@ -241,6 +259,10 @@ public:
     PropertyHost(TSubject&& subject) : base_type(std::move(subject)) {}
 
     //operator impl_type& () { return *this; }
+
+#if UNIT_TESTING
+    runtime_type* debug_runtime() { return runtime(); }
+#endif
 };
 
 }}

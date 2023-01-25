@@ -498,6 +498,9 @@ TEST_CASE("Services", "[services]")
 
     REQUIRE(dependent4.value3() == 12);
 
+    REQUIRE(&dependent2 == dependent2.debug_runtime());
+    REQUIRE(&dependent4 == dependent4.debug_runtime());
+
     event::PropertyChanged<
             embr::Service, Service::PROPERTY_STATE>
             e1(nullptr, Service::Stopped);

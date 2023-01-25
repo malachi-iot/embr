@@ -72,10 +72,15 @@ struct TimerService : embr::Service
         static bool on_alarm_cb(gptimer_handle_t timer, const gptimer_alarm_event_data_t *edata, void *user_ctx);
     };
 
+    //template <class TSubject, class TImpl>
+    //bool on_start(context<TSubject, TImpl>& context)
+    // DEBT: Fix up naming - this is a special phase of start, called
+    // after this above one, which can receive the runtime in question.
+    // Consider combining the two
     template <class TSubject, class TImpl>
-    bool on_start(context<TSubject, TImpl>& context)
+    bool on_start(runtime<TSubject, TImpl>& r)
     {
-        ESP_LOGI(TAG, "on_start");
+        ESP_LOGI(TAG, "on_start: runtime=%p", &r);
 
         //embr::esp_idf::Timer t = impl().t;
 
@@ -84,9 +89,7 @@ struct TimerService : embr::Service
             .on_alarm = runtime<TSubject, TImpl>::on_alarm_cb, // register user callback
         };
         
-        // FIX: Fatal flaw - we don't have access to true runtime
-        // In this particular scenario since it's all stateless it still works
-        t.register_event_callbacks(&cbs, this);
+        t.register_event_callbacks(&cbs, &r);
 
         t.enable();
         t.start();

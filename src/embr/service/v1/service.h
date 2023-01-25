@@ -54,6 +54,10 @@ protected:
     bool start() { return true; }
     bool stop() { return true; }
 
+    template <class TSubject, class TImpl>
+    bool on_start(runtime<TSubject, TImpl>&) { return true; }
+
+
 public:
     States state() const { return state_.service_; }
 };
@@ -70,7 +74,9 @@ protected:
     using typename base_type::impl_type;
     using st = v1::Service;
     using typename base_type::context_type;
+    using typename base_type::runtime_type;
     using base_type::subject;
+    using base_type::runtime;
 
 public:
     using base_type::impl;
@@ -165,9 +171,9 @@ public:
         state(st::Starting);
         if (impl_type::start(std::forward<TArgs>(args)...))
         {
-            context_type context(impl(), subject());
+            //context_type context(impl(), subject());
 
-            if(impl_type::template on_start<TSubject, TImpl>(context))
+            if(impl_type::template on_start<TSubject, TImpl>(*runtime()))
                 state(st::Started, st::Running);
         }
     }

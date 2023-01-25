@@ -49,7 +49,7 @@ extern "C" void app_main()
         }
     };
 
-    ESP_LOGI(TAG, "phase 1");
+    ESP_LOGI(TAG, "phase 1: timer_service=%p", &timer_service);
 
     timer_service.start(&config, &alarm_config);
 
