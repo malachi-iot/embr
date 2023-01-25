@@ -24,16 +24,25 @@ struct TimerService : embr::Service
 
     EMBR_PROPERTIES_SPARSE_END
 
-    bool start(
+    state_result start(
         const gptimer_config_t* config,
         const gptimer_alarm_config_t* alarm_config = nullptr)
     {
-        t.init(config);
+        esp_err_t err;
+
+        err = t.init(config);
+
+        if(err != ESP_OK)
+            return state_result{Error, ErrConfig};
+
         if(alarm_config)
         {
-            t.set_alarm_action(alarm_config);
+            err = t.set_alarm_action(alarm_config);
+
+            if(err != ESP_OK)
+                return state_result{Error, ErrConfig};
         }
-        return true;
+        return state_result{Started, Running};
     }
 
 

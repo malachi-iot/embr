@@ -176,6 +176,10 @@ public:
             if(impl_type::template on_start<TSubject, TImpl>(*runtime()))
                 state(st::Started, st::Running);
         }
+        else
+        {
+            state(st::Error, st::ErrUnspecified);
+        }
     }
 
     void restart()

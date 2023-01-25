@@ -357,10 +357,10 @@ protected:
     }
 
 
-    bool start(const char* value2)
+    state_result start(const char* value2)
     {
         this->value2 = value2;
-        return true;
+        return state_result{Started, Running};
     }
 
     /*
