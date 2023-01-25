@@ -357,7 +357,7 @@ protected:
     }
 
 
-    state_result start(const char* value2)
+    state_result on_start(const char* value2)
     {
         this->value2 = value2;
         return state_result::started();

@@ -11,6 +11,8 @@ struct TimerService : embr::Service
 
     static constexpr const char* TAG = "TimerService";
     
+    constexpr static const char* name() { return TAG; }
+
     embr::esp_idf::v5::Timer t;
 
     enum Dummy { DUMMY };
@@ -23,28 +25,6 @@ struct TimerService : embr::Service
         //EMBR_PROPERTY_ID(timer, uint32_t, "timer in ms");
 
     EMBR_PROPERTIES_SPARSE_END
-
-    state_result start(
-        const gptimer_config_t* config,
-        const gptimer_alarm_config_t* alarm_config = nullptr)
-    {
-        esp_err_t err;
-
-        err = t.init(config);
-
-        if(err != ESP_OK)
-            return state_result{Error, ErrConfig};
-
-        if(alarm_config)
-        {
-            err = t.set_alarm_action(alarm_config);
-
-            if(err != ESP_OK)
-                return state_result{Error, ErrConfig};
-        }
-        return state_result::started();
-    }
-
 
     bool stop()
     {
@@ -79,31 +59,11 @@ struct TimerService : embr::Service
         }
 
         static bool on_alarm_cb(gptimer_handle_t timer, const gptimer_alarm_event_data_t *edata, void *user_ctx);
+
+        state_result on_start(
+            const gptimer_config_t* config,
+            const gptimer_alarm_config_t* alarm_config = nullptr);
     };
-
-    //template <class TSubject, class TImpl>
-    //bool on_start(context<TSubject, TImpl>& context)
-    // DEBT: Fix up naming - this is a special phase of start, called
-    // after this above one, which can receive the runtime in question.
-    // Consider combining the two
-    template <class TSubject, class TImpl>
-    state_result on_start(runtime<TSubject, TImpl>& r)
-    {
-        ESP_LOGI(TAG, "on_start: runtime=%p", &r);
-
-        //embr::esp_idf::Timer t = impl().t;
-
-        gptimer_event_callbacks_t cbs =
-        {
-            .on_alarm = runtime<TSubject, TImpl>::on_alarm_cb, // register user callback
-        };
-        
-        t.register_event_callbacks(&cbs, &r);
-
-        t.enable();
-        t.start();
-        return state_result::started();
-    }
 };
 
 
@@ -113,4 +73,50 @@ bool TimerService::runtime<TSubject, TImpl>::on_alarm_cb(
 {
     ((runtime*)user_ctx)->thunk(edata);
     return false;
+}
+
+
+template <class TSubject, class TImpl>
+TimerService::state_result TimerService::runtime<TSubject, TImpl>::on_start(
+    const gptimer_config_t* config,
+    const gptimer_alarm_config_t* alarm_config)
+{
+    constexpr state_result error_result{Error, ErrConfig};
+
+    ESP_LOGI(TAG, "on_start: runtime=%p", this);
+
+    embr::esp_idf::Timer t = impl().t;
+
+    esp_err_t err;
+
+    base_type::configuring(config);
+
+    err = t.init(config);
+
+    if(err != ESP_OK) return error_result;
+
+    base_type::configured(config);
+
+    if(alarm_config)
+    {
+        base_type::configuring(alarm_config);
+
+        err = t.set_alarm_action(alarm_config);
+
+        if(err != ESP_OK) return error_result;
+
+        base_type::configured(alarm_config);
+    }
+
+    gptimer_event_callbacks_t cbs =
+    {
+        .on_alarm = runtime<TSubject, TImpl>::on_alarm_cb, // register user callback
+    };
+    
+    err = t.register_event_callbacks(&cbs, this);
+
+    err = t.enable();
+    err = t.start();
+
+    return err == ESP_OK ? state_result::started() : error_result;
 }

@@ -23,17 +23,20 @@ struct Service : embr::PropertyContainer,
     {
         struct
         {
-            States service_: STATES_MAX_BITSIZE;
-            Substates service_substate_: 6;
+            States service_: bitsize::state::value;
+            Substates service_substate_: bitsize::substate::value;
 
-            States child1: STATES_MAX_BITSIZE;
-            States child2: STATES_MAX_BITSIZE;
-            States child3: STATES_MAX_BITSIZE;
+            States child1 : bitsize::state::value;
+            States child2 : bitsize::state::value;
+            States child3 : bitsize::state::value;
+
+            unsigned user : bitsize::user::value;
 
         } state_;
 
         unsigned raw = 0;
     };
+
 
     EMBR_PROPERTIES_SPARSE_BEGIN
 
@@ -43,6 +46,13 @@ struct Service : embr::PropertyContainer,
         EMBR_PROPERTY_ID_EXT(state_.service_substate_, PROPERTY_SUBSTATE,
                              substate, "substate")
 
+
+        template <class TConfig>
+        struct config : embr::internal::traits_base<this_type, TConfig, -2>
+        {
+        };
+
+
     EMBR_PROPERTIES_SPARSE_END
 
     template <class TSubject, class TImpl = this_type>
@@ -51,11 +61,12 @@ struct Service : embr::PropertyContainer,
 protected:
     // DEBT: Probably should to a receive command signal switch here instead
     bool restart() { return true; }
-    static constexpr state_result start() { return state_result::started(); }
+    //static constexpr state_result start() { return state_result::started(); }
     bool stop() { return true; }
 
-    template <class TSubject, class TImpl>
-    static constexpr state_result on_start(runtime<TSubject, TImpl>&)
+    //template <class TSubject, class TImpl>
+    //static constexpr state_result on_start(runtime<TSubject, TImpl>&)
+    static constexpr state_result on_start()
     {
         return state_result::started();
     }
@@ -108,6 +119,24 @@ protected:
             base_type::template fire_changed<st::id::state>(s);
             //base_type::template fire_changed2<service::PROPERTY_STATE>(s, context);
         }
+    }
+
+
+    template <class TConfig>
+    void configuring(const TConfig* c)
+    {
+        typedef embr::Service::id::config<const TConfig*> traits_type;
+
+        base_type::template fire_changing<traits_type>(nullptr, c, *runtime());
+    }
+
+
+    template <class TConfig>
+    void configured(const TConfig* c)
+    {
+        typedef embr::Service::id::config<const TConfig*> traits_type;
+
+        base_type::template fire_changed<traits_type>(c);
     }
 
 
@@ -166,13 +195,15 @@ public:
     void start(TArgs&&...args)
     {
         state(st::Starting);
-        st::state_result r = impl_type::start(std::forward<TArgs>(args)...);
-        if (r.state == st::Started)
-        {
+        //st::state_result r = impl_type::start(std::forward<TArgs>(args)...);
+        //if (r.state == st::Started)
+        //{
             //context_type context(impl(), subject());
 
-            r = impl_type::template on_start<TSubject, TImpl>(*runtime());
-        }
+            st::state_result r = runtime()->on_start(std::forward<TArgs>(args)...);
+
+            //r = impl_type::template on_start<TSubject, TImpl>(*runtime());
+        //}
 
         state(r.state, r.substate);
     }

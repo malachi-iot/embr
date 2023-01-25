@@ -61,21 +61,27 @@ enum Substates
     //SUBSTATES_MAX
 };
 
-// NOTE: Not using *_MAX - 1 values because compiler warns us sometimes that
-// bit count isn't high enough, which is true since _MAX takes up one more slot.
 
-typedef estd::integral_constant<unsigned,
-    estd::internal::deduce_bit_count<Error>::value> state_bitsize;
+struct bitsize
+{
+    // NOTE: Not using *_MAX - 1 values because compiler warns us sometimes that
+    // bit count isn't high enough, which is true since _MAX takes up one more slot.
 
-typedef estd::integral_constant<unsigned,
-    estd::internal::deduce_bit_count<ErrUnspecified>::value> substate_bitsize;
+    typedef estd::integral_constant<unsigned,
+        estd::internal::deduce_bit_count<Error>::value> state;
+
+    typedef estd::integral_constant<unsigned,
+        estd::internal::deduce_bit_count<ErrUnspecified>::value> substate;
+
+    typedef estd::integral_constant<unsigned, 6> user;
+};
 
 struct state_result
 {
     // DEBT: Frustratingly can't use const here because we fall into that operator=
     // trap
-    States state : state_bitsize::value;
-    Substates substate : substate_bitsize::value;
+    States state : bitsize::state::value;
+    Substates substate : bitsize::substate::value;
 
     operator bool() const { return state == Started && substate == Running; }
 

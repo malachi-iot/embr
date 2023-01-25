@@ -109,13 +109,13 @@ protected:
     {
         typedef TTraits traits_type;
         //constexpr int id = traits_type::id();
-        typedef typename TTraits::owner_type owner_type;
         auto& store = TTraits::store(context);
         //owner_type& impl = context;    // give conversion a chance
-//#ifdef DEBUG
+#ifdef UNIT_TESTING
+        typedef typename TTraits::owner_type owner_type;
         const char* name = traits_type::name();
         const char* owner_name = owner_type::name();
-//#endif
+#endif
         auto current_v = traits_type::get(store);
 
         if(current_v != v)
