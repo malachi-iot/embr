@@ -214,7 +214,7 @@ protected:
     constexpr typename TTraits::value_type getter() const
     {
         typedef TTraits traits_type;
-        typedef typename TTraits::owner_type owner_type;
+        //typedef typename TTraits::owner_type owner_type;
         return traits_type::get(traits_type::store(impl()));
     }
 

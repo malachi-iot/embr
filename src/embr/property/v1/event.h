@@ -53,7 +53,7 @@ struct PropertyChanged<TOwner, void,
     const int id_;
 
 //public:
-    const int id() { return id_; }
+    int id() const { return id_; }
 };
 
 // DEBT: Fix naming and make this a specialization of PropertyChanged if we can

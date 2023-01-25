@@ -5,12 +5,11 @@
 #include "esp_task_wdt.h"
 #include "esp_wifi.h"
 
-#include <driver/gpio.h>
-
 #include <estd/chrono.h>
 #include <estd/optional.h>
 #include <estd/thread.h>
 
+#include <embr/service.h>
 
 extern "C" void app_main()
 {
