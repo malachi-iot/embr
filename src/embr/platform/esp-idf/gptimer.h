@@ -59,7 +59,7 @@ public:
         return gptimer_stop(h);
     }
 
-    esp_err_t set_alarm_action(gptimer_alarm_config_t* config)
+    esp_err_t set_alarm_action(const gptimer_alarm_config_t* config)
     {
         return gptimer_set_alarm_action(h, config);
     }
