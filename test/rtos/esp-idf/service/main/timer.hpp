@@ -14,6 +14,15 @@ struct TimerService : embr::Service
     constexpr static const char* name() { return TAG; }
 
     embr::esp_idf::v5::Timer t;
+    void* user_data = nullptr;
+
+    struct event
+    {
+        struct callback
+        {
+            const gptimer_alarm_event_data_t& edata;
+        };
+    };
 
     enum Dummy { DUMMY };
 
@@ -56,6 +65,7 @@ struct TimerService : embr::Service
             //uint64_t count;
             //impl().t.raw_count(&count);
             timer(edata->count_value / 1000);
+            base_type::notify(event::callback{*edata});
         }
 
         static bool on_alarm_cb(gptimer_handle_t timer, const gptimer_alarm_event_data_t *edata, void *user_ctx);
