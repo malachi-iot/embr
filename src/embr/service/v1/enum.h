@@ -72,10 +72,17 @@ typedef estd::integral_constant<unsigned,
 
 struct state_result
 {
-    const States state : state_bitsize::value;
-    const Substates substate : substate_bitsize::value;
+    // DEBT: Frustratingly can't use const here because we fall into that operator=
+    // trap
+    States state : state_bitsize::value;
+    Substates substate : substate_bitsize::value;
 
     operator bool() const { return state == Started && substate == Running; }
+
+    static constexpr state_result started()
+    {
+        return state_result{Started, Running};
+    }
 };
 
 };

@@ -42,7 +42,7 @@ struct TimerService : embr::Service
             if(err != ESP_OK)
                 return state_result{Error, ErrConfig};
         }
-        return state_result{Started, Running};
+        return state_result::started();
     }
 
 
@@ -87,7 +87,7 @@ struct TimerService : embr::Service
     // after this above one, which can receive the runtime in question.
     // Consider combining the two
     template <class TSubject, class TImpl>
-    bool on_start(runtime<TSubject, TImpl>& r)
+    state_result on_start(runtime<TSubject, TImpl>& r)
     {
         ESP_LOGI(TAG, "on_start: runtime=%p", &r);
 
@@ -102,7 +102,7 @@ struct TimerService : embr::Service
 
         t.enable();
         t.start();
-        return true;
+        return state_result::started();
     }
 };
 

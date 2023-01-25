@@ -51,11 +51,14 @@ struct Service : embr::PropertyContainer,
 protected:
     // DEBT: Probably should to a receive command signal switch here instead
     bool restart() { return true; }
-    bool start() { return true; }
+    static constexpr state_result start() { return state_result::started(); }
     bool stop() { return true; }
 
     template <class TSubject, class TImpl>
-    bool on_start(runtime<TSubject, TImpl>&) { return true; }
+    static constexpr state_result on_start(runtime<TSubject, TImpl>&)
+    {
+        return state_result::started();
+    }
 
 
 public:
@@ -134,12 +137,6 @@ protected:
         base_type::notify(event::Registration{i.name(), i.instance()});
     }
     
-    // DEBT: Poor naming and general interaction, confusing
-    bool on_start()
-    {
-        return true;
-    }
-
 public:
     ESTD_CPP_FORWARDING_CTOR(Service)
 
@@ -169,17 +166,15 @@ public:
     void start(TArgs&&...args)
     {
         state(st::Starting);
-        if (impl_type::start(std::forward<TArgs>(args)...))
+        st::state_result r = impl_type::start(std::forward<TArgs>(args)...);
+        if (r.state == st::Started)
         {
             //context_type context(impl(), subject());
 
-            if(impl_type::template on_start<TSubject, TImpl>(*runtime()))
-                state(st::Started, st::Running);
+            r = impl_type::template on_start<TSubject, TImpl>(*runtime());
         }
-        else
-        {
-            state(st::Error, st::ErrUnspecified);
-        }
+
+        state(r.state, r.substate);
     }
 
     void restart()

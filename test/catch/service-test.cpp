@@ -360,7 +360,7 @@ protected:
     state_result start(const char* value2)
     {
         this->value2 = value2;
-        return state_result{Started, Running};
+        return state_result::started();
     }
 
     /*
