@@ -11,6 +11,8 @@
 
 #include <embr/service.h>
 
+#include "timer.hpp"
+
 extern "C" void app_main()
 {
     const char* TAG = "app_main";
