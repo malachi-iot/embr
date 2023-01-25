@@ -9,6 +9,8 @@ struct TimerService : embr::Service
 {
     typedef TimerService this_type;
 
+    static constexpr const char* TAG = "TimerService";
+    
     embr::esp_idf::v5::Timer t;
 
     enum Dummy { DUMMY };
@@ -31,8 +33,6 @@ struct TimerService : embr::Service
         {
             t.set_alarm_action(alarm_config);
         }
-        t.enable();
-        t.start();
         return true;
     }
 
@@ -70,16 +70,28 @@ struct TimerService : embr::Service
         }
 
         static bool on_alarm_cb(gptimer_handle_t timer, const gptimer_alarm_event_data_t *edata, void *user_ctx);
-
-        void _start()
-        {
-            gptimer_event_callbacks_t cbs =
-            {
-                .on_alarm = on_alarm_cb, // register user callback
-            };
-            impl().t.register_event_callbacks(&cbs, this);
-        }
     };
+
+    template <class TSubject, class TImpl>
+    bool on_start(context<TSubject, TImpl>& context)
+    {
+        ESP_LOGI(TAG, "on_start");
+
+        //embr::esp_idf::Timer t = impl().t;
+
+        gptimer_event_callbacks_t cbs =
+        {
+            .on_alarm = runtime<TSubject, TImpl>::on_alarm_cb, // register user callback
+        };
+        
+        // FIX: Fatal flaw - we don't have access to true runtime
+        // In this particular scenario since it's all stateless it still works
+        t.register_event_callbacks(&cbs, this);
+
+        t.enable();
+        t.start();
+        return true;
+    }
 };
 
 

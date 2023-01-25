@@ -23,6 +23,14 @@ extern "C" void app_main()
 
     TimerService::runtime<subject_type> timer_service;
 
+#if CONFIG_WIFI_ENABLED
+#ifdef FEATURE_IDF_DEFAULT_EVENT_LOOP
+    wifi_init_sta();
+#else
+    wifi_init_sta(event_handler);
+#endif
+#endif
+
     gptimer_config_t config = 
     {
         .clk_src = GPTIMER_CLK_SRC_DEFAULT,
@@ -41,15 +49,19 @@ extern "C" void app_main()
         }
     };
 
-    timer_service._start();
+    ESP_LOGI(TAG, "phase 1");
+
     timer_service.start(&config, &alarm_config);
 
-#if CONFIG_WIFI_ENABLED
-#ifdef FEATURE_IDF_DEFAULT_EVENT_LOOP
-    wifi_init_sta();
-#else
-    wifi_init_sta(event_handler);
-#endif
-#endif
+    ESP_LOGI(TAG, "phase 2");
+
+    for(;;)
+    {
+        static int counter = 0;
+
+        estd::this_thread::sleep_for(estd::chrono::seconds(1));
+
+        ESP_LOGI(TAG, "counting: %d", ++counter);
+    }
 }
 

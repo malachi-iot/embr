@@ -69,6 +69,8 @@ class Service : public PropertyHost<TImpl, TSubject>
 protected:
     using typename base_type::impl_type;
     using st = v1::Service;
+    using typename base_type::context_type;
+    using base_type::subject;
 
 public:
     using base_type::impl;
@@ -125,6 +127,12 @@ protected:
         impl_type& i = impl();
         base_type::notify(event::Registration{i.name(), i.instance()});
     }
+    
+    // DEBT: Poor naming and general interaction, confusing
+    bool on_start()
+    {
+        return true;
+    }
 
 public:
     ESTD_CPP_FORWARDING_CTOR(Service)
@@ -157,7 +165,10 @@ public:
         state(st::Starting);
         if (impl_type::start(std::forward<TArgs>(args)...))
         {
-            state(st::Started, st::Running);
+            context_type context(impl(), subject());
+
+            if(impl_type::template on_start<TSubject, TImpl>(context))
+                state(st::Started, st::Running);
         }
     }
 
