@@ -11,11 +11,13 @@ struct TimerService : embr::Service
 
     embr::esp_idf::v5::Timer t;
 
+    enum Dummy { DUMMY };
+
     EMBR_PROPERTIES_SPARSE_BEGIN
 
         // DEBT: Revise API with 'auto -2' flavor
         // DEBT: Formalize -2
-        EMBR_PROPERTY_SPARSE_ID(timer, uint32_t, -2, "timer in ms")
+        EMBR_PROPERTY_SPARSE_ID(timer, uint32_t, DUMMY, "timer in ms")
         //EMBR_PROPERTY_ID(timer, uint32_t, "timer in ms");
 
     EMBR_PROPERTIES_SPARSE_END
@@ -30,6 +32,10 @@ struct TimerService : embr::Service
     struct runtime : embr::Service::runtime<TSubject, TImpl>
     {
         typedef embr::Service::runtime<TSubject, TImpl> base_type;
+        
+        // DEBT: EMBR_PROPERTY requires this, make this part automatic
+        // (likely in macro do base_type::impl_type)
+        using typename base_type::impl_type;
 
         using base_type::impl;
 
