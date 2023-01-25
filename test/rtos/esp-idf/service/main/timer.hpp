@@ -11,13 +11,14 @@ struct TimerService : embr::Service
 
     embr::esp_idf::v5::Timer t;
 
-    EMBR_PROPERTIES_BEGIN
+    EMBR_PROPERTIES_SPARSE_BEGIN
 
-        // NOTE: Not immediately obvious, perhaps revise API
-        //EMBR_PROPERTY_SPARSE_ID
-        EMBR_PROPERTY_ID(timer, uint32_t, "timer in ms");
+        // DEBT: Revise API with 'auto -2' flavor
+        // DEBT: Formalize -2
+        EMBR_PROPERTY_SPARSE_ID(timer, uint32_t, -2, "timer in ms")
+        //EMBR_PROPERTY_ID(timer, uint32_t, "timer in ms");
 
-    EMBR_PROPERTIES_END
+    EMBR_PROPERTIES_SPARSE_END
 
     bool start(const gptimer_config_t* config)
     {
@@ -33,6 +34,8 @@ struct TimerService : embr::Service
         using base_type::impl;
 
         ESTD_CPP_FORWARDING_CTOR(runtime)
+
+        EMBR_PROPERTY(timer)
 
         void thunk() {}
 
