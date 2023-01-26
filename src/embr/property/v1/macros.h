@@ -26,12 +26,19 @@ struct alias : embr::internal::property::traits_base<this_type, decltype(this_ty
 EMBR_PROPERTY_ID_LOOKUP(alias, id_);
 
 #define EMBR_INTERNAL_PROPERTY_ID_EXT(name, id, desc) EMBR_PROPERTY_ID_ALIAS(name, this_type::id, name, desc)
-#define EMBR_PROPERTY_SPARSE_ID(name, type, id_, desc) \
-struct name : embr::internal::property::traits_base<this_type, type, this_type::id_>         \
+#define EMBR_INTERNAL_PROPERTY_ID_SPARSE(name, type, id_, desc) \
+struct name : traits<type, this_type::id_>         \
 {                                                               \
     EMBR_INTERNAL_PROPERTY_TRAITS_BODY(this_type, type, this_type::id_, desc) \
 };  \
 EMBR_PROPERTY_ID_LOOKUP(name, this_type::id_);
+
+#define EMBR_INTERNAL_PROPERTY_ID_SPARSE2(name_, type, desc) \
+struct name_ : traits<type>         \
+{                                                               \
+    static constexpr const char* name() { return desc; } \
+};
+
 
 #define EMBR_PROPERTY_ID2_BASE(name, type, id_, desc) \
 type name##_;                                    \
@@ -54,13 +61,15 @@ EMBR_PROPERTY_ID_LOOKUP(name, id_)
 #define GET_MACRO(_1,_2,_3,_4,NAME,...) NAME
 #define EMBR_PROPERTY_ID(...) GET_MACRO(__VA_ARGS__, EMBR_PROPERTY_ID2_2, EMBR_PROPERTY_ID2_1)(__VA_ARGS__)
 #define EMBR_PROPERTY_ID_EXT(...) GET_MACRO(__VA_ARGS__, EMBR_PROPERTY_ID_ALIAS, EMBR_INTERNAL_PROPERTY_ID_EXT)(__VA_ARGS__)
-//#define EMBR_PROPERTY_ID_SPARSE(...) GET_MACRO(__VA_ARGS__, EMBR_PROPERTY_SPARSE_ID, EMBR_PROPERTY_SPARSE_ID)(__VA_ARGS__)
+#define EMBR_PROPERTY_ID_SPARSE(...) GET_MACRO(__VA_ARGS__, EMBR_INTERNAL_PROPERTY_ID_SPARSE, EMBR_INTERNAL_PROPERTY_ID_SPARSE2)(__VA_ARGS__)
 
 
 #define EMBR_PROPERTIES_BEGIN \
 struct id : embr::property::v1::tag::property_owner  \
 {\
-    template <int id_, bool = true> struct lookup;
+    template <int id_, bool = true> struct lookup;   \
+    template <class T, int id_ = -1>             \
+    using traits = embr::internal::property::v1::traits_base<this_type, T, id_>;
 
 #define EMBR_PROPERTIES_SPARSE_BEGIN EMBR_PROPERTIES_BEGIN
 

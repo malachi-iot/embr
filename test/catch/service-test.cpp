@@ -33,7 +33,7 @@ struct Filter1Base
         template <bool dummy>
         struct lookup<BATTERY_LEVEL, dummy> : battery_level {};
 
-        EMBR_PROPERTY_SPARSE_ID(battery_alert, int, BATTERY_ALERT, "alert");
+        EMBR_PROPERTY_ID_SPARSE(battery_alert, int, BATTERY_ALERT, "alert");
 
     EMBR_PROPERTIES_SPARSE_END
 };

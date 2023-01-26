@@ -24,14 +24,9 @@ struct TimerService : embr::Service
         };
     };
 
-    enum Dummy { DUMMY };
-
     EMBR_PROPERTIES_SPARSE_BEGIN
 
-        // DEBT: Revise API with 'auto -2' flavor
-        // DEBT: Formalize -2
-        EMBR_PROPERTY_SPARSE_ID(timer, uint32_t, DUMMY, "timer in ms")
-        //EMBR_PROPERTY_ID(timer, uint32_t, "timer in ms");
+        EMBR_PROPERTY_ID_SPARSE(timer, uint32_t, "timer in ms")
 
     EMBR_PROPERTIES_SPARSE_END
 
@@ -60,10 +55,8 @@ struct TimerService : embr::Service
             base_type::template fire_changed<id::timer>(v);
         }
 
-        void thunk(const gptimer_alarm_event_data_t* edata)
+        void on_alarm_cb(const gptimer_alarm_event_data_t* edata)
         {
-            //uint64_t count;
-            //impl().t.raw_count(&count);
             timer(edata->count_value / 1000);
             base_type::notify(event::callback{*edata});
         }

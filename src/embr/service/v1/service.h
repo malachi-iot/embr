@@ -52,10 +52,7 @@ struct Service : embr::PropertyContainer,
         EMBR_PROPERTY_ID_EXT(state_.user, USER, user, "app-specific data")
 
         template <class TConfig>
-        struct config : embr::internal::property::traits_base<this_type, TConfig, -2>
-        {
-        };
-
+        using config = traits<TConfig>;
 
     EMBR_PROPERTIES_SPARSE_END
 

@@ -139,6 +139,7 @@ struct PropertyChanged<TEnum, -1, typename estd::enable_if<
     {}
 };
 
+// "legacy" version, phasing this one out - too vague to use
 template <typename TEnum, int id_>
 struct PropertyChanged<TEnum, id_, typename estd::enable_if<
     //!estd::is_base_of<traits_tag, T>::value &&

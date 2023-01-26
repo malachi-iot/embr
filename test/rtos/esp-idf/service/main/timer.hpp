@@ -7,7 +7,7 @@ template <class TSubject, class TImpl>
 bool TimerService::runtime<TSubject, TImpl>::on_alarm_cb(
     gptimer_handle_t timer, const gptimer_alarm_event_data_t *edata, void *user_ctx)
 {
-    ((runtime*)user_ctx)->thunk(edata);
+    ((runtime*)user_ctx)->on_alarm_cb(edata);
     return false;
 }
 

@@ -10,6 +10,8 @@ struct property_traits {};
 
 struct property_owner {};
 
+struct has_id {};
+
 }
 
 namespace event {
