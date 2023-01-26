@@ -11,8 +11,8 @@ struct ServiceBase
 
 enum Properties
 {
-    PROPERTY_STATE = 0,
-    PROPERTY_SUBSTATE,
+    STATE = 0,
+    SUBSTATE,
     USER
 };
 

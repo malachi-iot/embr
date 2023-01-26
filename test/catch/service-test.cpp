@@ -28,7 +28,7 @@ struct Filter1Base
 
     EMBR_PROPERTIES_SPARSE_BEGIN
 
-        typedef embr::internal::traits_base<this_type, int, BATTERY_LEVEL> battery_level;
+        typedef embr::internal::property::traits_base<this_type, int, BATTERY_LEVEL> battery_level;
 
         template <bool dummy>
         struct lookup<BATTERY_LEVEL, dummy> : battery_level {};
@@ -41,7 +41,7 @@ struct Filter1Base
 
 
 #define EMBR_PROPERTY_ID_EXP(name, id, desc)  \
-    struct property_##name##_type : embr::internal::traits_base<this_type, decltype(name), id> \
+    struct property_##name##_type : embr::internal::property::traits_base<this_type, decltype(name), id> \
     {                                     \
         typedef this_type owner_type;                                  \
         static constexpr const char* name() { return desc; }               \
@@ -78,7 +78,7 @@ struct DependentService2 : embr::Service
         template <int id, bool = true>
         struct lookup;
 
-        struct is_happy : embr::internal::traits_base<this_type, bool, IS_HAPPY>
+        struct is_happy : embr::internal::property::traits_base<this_type, bool, IS_HAPPY>
         {
             static constexpr const char* name() { return "are we happy?"; }
 
@@ -191,7 +191,7 @@ public:
     // TODO: This "legacy" way is broken now, but for limited scenarios we would still like
     // this approach to function
     //void on_notify(event::PropertyChanged<service::Substates, service::PROPERTY_SUBSTATE> e,
-    void on_notify(event::PropertyChanged<embr::Service, embr::Service::PROPERTY_SUBSTATE> e,
+    void on_notify(event::PropertyChanged<embr::Service, embr::Service::SUBSTATE> e,
         ::impl::DependentService2& c)
     {
         if(e.value == Service::Starting)
@@ -506,12 +506,12 @@ TEST_CASE("Services", "[services]")
     REQUIRE(&dependent4 == dependent4.debug_runtime());
 
     event::PropertyChanged<
-            embr::Service, Service::PROPERTY_STATE>
+            embr::Service, Service::STATE>
             e1(nullptr, Service::Stopped);
 
     // DEBT: Something looks suspicious here
     event::PropertyChanged<
-            ::impl::DependentService2, Service::PROPERTY_STATE>
+            ::impl::DependentService2, Service::STATE>
             e2(nullptr, true);
 
     event::PropertyChanged<embr::Service::id::state> e3(nullptr, Service::Stopped);

@@ -47,17 +47,12 @@ struct Service : embr::PropertyContainer,
 
     EMBR_PROPERTIES_SPARSE_BEGIN
 
-        EMBR_PROPERTY_ID_EXT(state_.service_, PROPERTY_STATE,
-                             state, "state")
-
-        EMBR_PROPERTY_ID_EXT(state_.service_substate_, PROPERTY_SUBSTATE,
-                             substate, "substate")
-
-        EMBR_PROPERTY_ID_EXT(state_.user, USER,
-                             user, "app-specific data")
+        EMBR_PROPERTY_ID_EXT(state_.service_, STATE, state, "state")
+        EMBR_PROPERTY_ID_EXT(state_.service_substate_, SUBSTATE, substate, "substate")
+        EMBR_PROPERTY_ID_EXT(state_.user, USER, user, "app-specific data")
 
         template <class TConfig>
-        struct config : embr::internal::traits_base<this_type, TConfig, -2>
+        struct config : embr::internal::property::traits_base<this_type, TConfig, -2>
         {
         };
 

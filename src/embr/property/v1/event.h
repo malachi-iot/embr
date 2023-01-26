@@ -2,22 +2,11 @@
 
 #include "../../observer.h"
 
-#include "fwd.h"
+#include "traits.h"
 
 namespace embr {
 
 namespace internal {
-
-// TODO: Consider changing this to property_traits_base
-// and/or putting in a new 'properties' namespace
-template <class TOwner, class T, int id_>
-struct traits_base : property::v1::tag::property_traits
-{
-    typedef TOwner owner_type;
-    typedef T value_type;
-    static constexpr int id() { return id_; }
-    static constexpr const char* name() { return "N/A"; }
-};
 
 }
 
