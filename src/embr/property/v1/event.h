@@ -11,7 +11,7 @@ namespace internal {
 // TODO: Consider changing this to property_traits_base
 // and/or putting in a new 'properties' namespace
 template <class TOwner, class T, int id_>
-struct traits_base : tag::property_traits
+struct traits_base : property::v1::tag::property_traits
 {
     typedef TOwner owner_type;
     typedef T value_type;

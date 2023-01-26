@@ -472,7 +472,7 @@ TEST_CASE("Services", "[services]")
     //auto dependent4 = make_service<DependentService4::service>(std::move(subject));
     auto dependent4 = DependentService4::service<decltype(subject)>(s); */
     //DependentService<subject_type> dependent;
-    DependentService2<subject_type> dependent2(subject_type{}); // DEBT: layer0 subject presents a minor challenge
+    DependentService2<subject_type> dependent2;
     service::ServiceSpec<::impl::DependentService3, subject_type> dependent3;
     DependentService4::runtime<subject2_type> dependent4;
 

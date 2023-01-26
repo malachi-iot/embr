@@ -57,10 +57,16 @@ struct static_wrapper
     operator T&() { return *t; }
 };
 
+namespace tag {
+
+struct stateless_subject {};
+
+}
+
 
 // slightly abuses tuple type.  We pretend we have a tuple
 template <class ...TObservers>
-class stateless_base
+class stateless_base : tag::stateless_subject
 {
 protected:
     typedef estd::tuple<TObservers...> tuple_type;

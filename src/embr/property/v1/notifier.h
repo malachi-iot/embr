@@ -69,6 +69,8 @@ class PropertyNotifier : public TSubject
 protected:
     subject_type& subject() { return *this; }
 
+    using is_stateless_subject = estd::is_base_of<internal::tag::stateless_subject, subject_type>;
+
     template <typename TTrait, class TContext>
     void fire_changed(typename TTrait::value_type v, TContext& context)
     {
