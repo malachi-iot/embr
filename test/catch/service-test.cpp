@@ -425,7 +425,7 @@ class Filter1 : Filter1Base
 {
 public:
     template <class TSubject>
-    class service : public PropertyNotifier<TSubject>
+    class runtime : public PropertyNotifier<TSubject>
     {
         typedef PropertyNotifier<TSubject> base_type;
 
@@ -460,9 +460,7 @@ TEST_CASE("Services", "[services]")
     //auto subject = embr::layer1::make_subject(depender);
     auto& s = subject;
 
-    typedef Filter1::service<subject_type> filter1_type;
-
-    typedef embr::layer0::subject<_type_, filter1_type> subject2_type;
+    typedef Filter1::runtime<subject_type> filter1_type;
 
     // FIX: These should be using reference, not rvalue
     auto dependent = make_service<DependentService>(subject);
@@ -474,7 +472,7 @@ TEST_CASE("Services", "[services]")
     //DependentService<subject_type> dependent;
     DependentService2<subject_type> dependent2;
     service::ServiceSpec<::impl::DependentService3, subject_type> dependent3;
-    DependentService4::runtime<subject2_type> dependent4;
+    layer0::service_type<DependentService4, _type_, filter1_type> dependent4;
 
 
     dependent.start();

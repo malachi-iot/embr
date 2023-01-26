@@ -261,7 +261,19 @@ ServiceSpec<TImpl, TSubject> make_service_spec(TSubject&& subject)
     return ServiceSpec<TImpl, TSubject>(std::move(subject));
 }
 
+}}
+
+namespace layer0 {
+
+inline namespace service { inline namespace v1 {
+
+// DEBT: Not sure I like this because TImpl itself is not specifically layer0, just the
+// observers
+template <class TImpl, class ...TObservers>
+using service_type = typename TImpl::template runtime<layer0::subject<TObservers...>, TImpl>;
 
 }}
+
+}
 
 }
