@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.2)
 
-project(embr VERSION 0.1.3 LANGUAGES CXX)
+project(embr VERSION 0.2.0 LANGUAGES CXX)
 
 set(ROOT_DIR ..)
 set(EXT_DIR ${ROOT_DIR}/ext)
@@ -19,6 +19,8 @@ include(sources.cmake)
 # https://stackoverflow.com/questions/5957134/how-do-i-set-up-cmake-to-generate-header-only-projects
 add_library(${PROJECT_NAME} INTERFACE)
 add_library(malachi-iot::embr ALIAS ${PROJECT_NAME})
+
+configure_file(../tools/cmake/version.in.h ${CMAKE_CURRENT_SOURCE_DIR}/embr/version.h)
 
 # This line is largely superflous.  No linking happens for an INTERFACE library.
 # estd itself does demand some linking.  I speculate this line will come in handy
