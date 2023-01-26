@@ -10,6 +10,7 @@
 #include <estd/thread.h>
 
 #include "app.h"
+#include "filter.h"
 #include "timer.hpp"
 
 extern "C" void app_main()
@@ -18,10 +19,24 @@ extern "C" void app_main()
 
     static App app;
 
-    // DEBT: For this example a typical layer1 flavor would be better
-    typedef embr::layer0::subject<estd::integral_constant<App*, &app> > subject_type;
+    // wrap up our App in something ultra-compile time friendly
+    typedef estd::integral_constant<App*, &app> app_singleton;
 
+    // create our filter type which reports up to app_singleton
+    typedef TimerFilterService::runtime<
+        embr::layer0::subject<app_singleton> > filter_type;
+
+    // create a set of observers which the timer will notify
+    typedef embr::layer0::subject<app_singleton, filter_type>
+        subject_type;
+
+    // create timer_service with above specified observers
     TimerService::runtime<subject_type> timer_service;
+
+    // For this example a typical layer1 flavor may be better.  Jury is out
+    //auto subject = embr::layer1::make_subject(app, filter_type());
+
+    //auto timer_service = embr::make_service<TimerService>(std::move(subject));
 
 #if CONFIG_WIFI_ENABLED
 #ifdef FEATURE_IDF_DEFAULT_EVENT_LOOP

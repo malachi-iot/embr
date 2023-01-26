@@ -9,7 +9,7 @@ namespace embr {
 
 inline namespace service { inline namespace v1 {
 
-template <class TService>
+template <class TService, class enabled = void>
 struct ServiceTraits
 {
     static const char* name(const TService& s) { return s.name(); }
