@@ -9,6 +9,12 @@ namespace embr {
 
 inline namespace service { inline namespace v1 {
 
+template <class TService>
+struct ServiceTraits
+{
+    static const char* name(const TService& s) { return s.name(); }
+};
+
 struct Service : embr::PropertyContainer,
         ServiceBase
 {
@@ -130,14 +136,14 @@ protected:
     // Convenience method, probably won't get used much
     inline void user(unsigned v)
     {
-        base_type::template setter<embr::Service::id::user>(v);
+        base_type::template setter<st::id::user>(v);
     }
 
 
     template <class TConfig>
     void configuring(const TConfig* c)
     {
-        typedef embr::Service::id::config<const TConfig*> traits_type;
+        typedef st::id::config<const TConfig*> traits_type;
 
         base_type::template fire_changing<traits_type>(nullptr, c, *runtime());
     }
@@ -146,7 +152,7 @@ protected:
     template <class TConfig>
     void configured(const TConfig* c)
     {
-        typedef embr::Service::id::config<const TConfig*> traits_type;
+        typedef st::id::config<const TConfig*> traits_type;
 
         base_type::template fire_changed<traits_type>(c);
     }
@@ -174,8 +180,11 @@ protected:
     void fire_registration()
     {
         // DEBT: Make a special responder which handles stateless subject
+        typedef service::v1::ServiceTraits<impl_type> service_traits;
+
         impl_type& i = impl();
-        base_type::notify(event::Registration{i.name(), i.instance()});
+
+        base_type::notify(event::Registration{service_traits::name(i), i.instance()});
     }
     
 public:
@@ -233,9 +242,21 @@ public:
 }
 
 template <template <class> class TService, class TSubject>
-TService<TSubject> make_service(TSubject&& subject)
+TService<TSubject> make_service_old(TSubject&& subject)
 {
     return TService<TSubject>(std::move(subject));
+}
+
+template <class TService, class TSubject>
+typename TService::template runtime<TSubject, TService> make_service(TSubject&& subject)
+{
+    return typename TService::template runtime<TSubject, TService>(std::move(subject));
+}
+
+template <class TService, class TSubject>
+typename TService::template runtime<TSubject, TService> make_service(TSubject& subject)
+{
+    return typename TService::template runtime<TSubject, TService>(subject);
 }
 
 

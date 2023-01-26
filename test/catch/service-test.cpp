@@ -7,7 +7,6 @@ using namespace embr;
 constexpr experimental::module_info module{"unit tests"};
 constexpr experimental::type_info t1{module, "type1", 1};
 
-template <class TSubject>
 class DependentService;
 
 template <class TSubject>
@@ -260,15 +259,20 @@ public:
 };
 
 
-template <class TSubject>
-class DependentService : public Service::runtime<TSubject>
+
+class DependentService : public Service
 {
-    typedef Service::runtime<TSubject> base_type;
+    typedef DependentService this_type;
 
 public:
-    DependentService() = default;
-    DependentService(TSubject&& subject) : base_type(std::move(subject))
-    {}
+
+    template <class TSubject, class TImpl = this_type>
+    struct runtime : Service::runtime<TSubject, TImpl>
+    {
+        typedef Service::runtime<TSubject, TImpl> base_type;
+
+        ESTD_CPP_FORWARDING_CTOR(runtime)
+    };
 };
 
 
@@ -461,13 +465,13 @@ TEST_CASE("Services", "[services]")
     typedef embr::layer0::subject<_type_, filter1_type> subject2_type;
 
     // FIX: These should be using reference, not rvalue
+    auto dependent = make_service<DependentService>(subject);
     /*
-    auto dependent = make_service<DependentService>(std::move(subject));
     auto dependent2 = make_service<DependentService2>(std::move(subject));
     auto dependent3 = make_service_spec<::impl::DependentService3>(std::move(subject));
     //auto dependent4 = make_service<DependentService4::service>(std::move(subject));
     auto dependent4 = DependentService4::service<decltype(subject)>(s); */
-    DependentService<subject_type> dependent;
+    //DependentService<subject_type> dependent;
     DependentService2<subject_type> dependent2(subject_type{}); // DEBT: layer0 subject presents a minor challenge
     service::ServiceSpec<::impl::DependentService3, subject_type> dependent3;
     DependentService4::runtime<subject2_type> dependent4;
