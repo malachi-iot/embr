@@ -262,6 +262,19 @@ TEST_CASE("observer")
                 // for debian x64
                 // Stateful = 16, 3 others add up to 8 somehow
                 REQUIRE(sz == 24);
+
+                embr::layer1::subject<
+                    StatefulObserver
+                > s_smallest_stateful;
+
+                embr::layer1::subject<
+                    StatefulObserver,
+                    StatelessObserver
+                > s_next_smallest_stateful;
+
+                estd::tuple<StatefulObserver, StatelessObserver> t_next_smallest_stateful;
+
+                REQUIRE(sizeof(s_smallest_stateful) == sizeof(StatefulObserver));
             }
             SECTION("make_subject")
             {
