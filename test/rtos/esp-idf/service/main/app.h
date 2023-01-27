@@ -18,4 +18,13 @@ struct App
     {
         ESP_DRAM_LOGI(TAG, "value = %" PRIu32, e.value);
     }
+
+    template <class TRuntime>
+    void on_notify(embr::event::PropertyChanged<embr::Service::id::state> e,
+        TRuntime& runtime)
+    {
+        // DEBT: Usage of this runtime portion a little too magic
+        const auto& r = runtime.impl();
+        ESP_LOGI(TAG, "service [%s] state: %u", r.name(), e.value);
+    }
 };

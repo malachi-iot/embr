@@ -20,6 +20,9 @@ bool SystemService::runtime<TSubject, TImpl>::wake()
     {
         case ESP_SLEEP_WAKEUP_UNDEFINED:
             return false;
+
+        // All others are some kind of light or deep sleep wakeup
+        default: break;
     }
 
     base_type::notify(e);

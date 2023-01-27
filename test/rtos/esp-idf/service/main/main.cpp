@@ -20,6 +20,9 @@ extern "C" void app_main()
 
     static App app;
 
+    // DEBT: Bring in layer1 flavor of subject.  Hopefully with
+    // new sparse tuple it will be nearly as efficient as layer0
+
     // wrap up our App in something ultra-compile time friendly
     typedef estd::integral_constant<App*, &app> app_singleton;
 
@@ -36,9 +39,11 @@ extern "C" void app_main()
     // create timer_service with above specified observers
     static TimerService::runtime<subject_type> timer_service;
 
-    //typedef estd::integral_constant<decltype(timer_service)*, &timer_service> timer_singleton;
+    typedef estd::integral_constant<decltype(timer_service)*, &timer_service> timer_singleton;
+    typedef embr::layer0::subject<timer_singleton, app_singleton, filter_type>
+        subject2_type;
 
-    SystemService::runtime<subject_type> system_service;
+    SystemService::runtime<subject2_type> system_service;
 
     // For this example a typical layer1 flavor may be better.  Jury is out
     //auto subject = embr::layer1::make_subject(app, filter_type());
@@ -52,6 +57,8 @@ extern "C" void app_main()
     wifi_init_sta(event_handler);
 #endif
 #endif
+
+    system_service.start();
 
     gptimer_config_t config = 
     {
