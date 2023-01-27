@@ -38,13 +38,13 @@ public:
     // TODO: Move these gets out into a tuple base/wrapper
     // NOTE: Consider also making this into a tuple() call
     template <int index>
-    estd::tuple_element_t<index, tuple_type >& get()
+    typename estd::tuple_element<index, tuple_type >::valref_type get()
     {
         return estd::get<index>(observers);
     }
 
     template <int index>
-    const estd::tuple_element_t<index, tuple_type >& get() const
+    typename estd::tuple_element<index, tuple_type >::const_valref_type get() const
     {
         return estd::get<index>(observers);
     }
