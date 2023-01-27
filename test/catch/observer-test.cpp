@@ -260,8 +260,8 @@ TEST_CASE("observer")
                 int sz = sizeof(s);
 
                 // for debian x64
-                // Stateful = 16, 3 others add up to 8 somehow
-                REQUIRE(sz == 24);
+                // Stateful = 16
+                REQUIRE(sz == 16);
 
                 embr::layer1::subject<
                     StatefulObserver

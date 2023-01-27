@@ -17,7 +17,7 @@ namespace embr { namespace internal {
 // fallback one for when we just can't match the on_notify
 // Remember, trailing bool/int/long denotes priority with bool being best fit
 template <class TObserver, class TEvent>
-inline static auto notify_helper(TObserver observer, const TEvent& n, long) -> bool
+constexpr static auto notify_helper(TObserver observer, const TEvent& n, long) -> bool
 {
     // TODO: Perhaps put our "didn't fire" warning here - compile time would be best
     return true;
@@ -26,7 +26,7 @@ inline static auto notify_helper(TObserver observer, const TEvent& n, long) -> b
 
 // fallback for invocation with context where no on_notify is present
 template <class TObserver, class TEvent, class TContext>
-inline static auto notify_helper(TObserver observer, const TEvent& n, TContext&, long) -> bool
+constexpr static auto notify_helper(TObserver observer, const TEvent& n, TContext&, long) -> bool
 {
     // TODO: Perhaps put our "didn't fire" warning here - compile time would be best
     return true;
@@ -75,14 +75,14 @@ inline static auto notify_helper(TObserver& observer, const TEvent& n, TContext&
 // inline construction of an entity altogether
 // fallback one for when we just can't match the on_notify
 template <class TObserver, class TEvent>
-static auto notify_helper(const TEvent& n, long) -> bool
+constexpr static auto notify_helper(const TEvent& n, long) -> bool
 {
     return true;
 }
 
 // fallback for invocation with context where no on_notify is present
 template <class TObserver, class TEvent, class TContext>
-static auto notify_helper(const TEvent& n, TContext&, long) -> bool
+constexpr static auto notify_helper(const TEvent& n, TContext&, long) -> bool
 {
     return true;
 }

@@ -14,18 +14,26 @@ class tuple_base
 protected:
     typedef estd::tuple<TObservers...> tuple_type;
 
+    // In case of stateless types, we want tuple to help us select a value or a reference
+    template <int index>
+    using valref_type = typename estd::tuple_element<index, tuple_type>::valref_type;
+
     tuple_type observers;
 
     template <int index, class TEvent>
     void _notify_helper(const TEvent& e)
     {
-        notify_helper(get<index>(), e, true);
+        valref_type<index> observer = estd::get<index>(observers);
+
+        notify_helper(observer, e, true);
     }
 
     template <int index, class TEvent, class TContext>
     void _notify_helper(const TEvent& e, TContext& c)
     {
-        notify_helper(get<index>(), e, c, true);
+        valref_type<index> observer = estd::get<index>(observers);
+
+        notify_helper(observer, e, c, true);
     }
 
     tuple_base(TObservers&&...observers) :
