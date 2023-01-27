@@ -11,6 +11,7 @@
 
 #include "app.h"
 #include "filter.h"
+#include "system.hpp"
 #include "timer.hpp"
 
 extern "C" void app_main()
@@ -33,7 +34,11 @@ extern "C" void app_main()
         subject_type;
 
     // create timer_service with above specified observers
-    TimerService::runtime<subject_type> timer_service;
+    static TimerService::runtime<subject_type> timer_service;
+
+    //typedef estd::integral_constant<decltype(timer_service)*, &timer_service> timer_singleton;
+
+    SystemService::runtime<subject_type> system_service;
 
     // For this example a typical layer1 flavor may be better.  Jury is out
     //auto subject = embr::layer1::make_subject(app, filter_type());

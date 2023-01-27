@@ -65,6 +65,9 @@ protected:
     //static constexpr state_result start() { return state_result::started(); }
     bool stop() { return true; }
 
+    // pre-processing (such as wake, resume, etc.) preceding a 'starting' event
+    static inline void on_starting() {  }
+
     //template <class TSubject, class TImpl>
     //static constexpr state_result on_start(runtime<TSubject, TImpl>&)
     static constexpr state_result on_start()
@@ -207,6 +210,7 @@ public:
     template <class ...TArgs>
     void start(TArgs&&...args)
     {
+        runtime()->on_starting();
         state(st::Starting);
         //st::state_result r = impl_type::start(std::forward<TArgs>(args)...);
         //if (r.state == st::Started)

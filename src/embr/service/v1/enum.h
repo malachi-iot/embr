@@ -31,6 +31,12 @@ enum States
 
 #define STATES_MAX_BITSIZE 2
 
+// NOTE: Not used yet, anticipating scenarios where we want to reduce the bit size of Substates,
+// this could be helpful
+#define FEATURE_EMBR_SERVICE_RESTART 1
+#define FEATURE_EMBR_SERVICE_PAUSE 1
+#define FEATURE_EMBR_SERVICE_SLEEP 1
+
 enum Substates
 {
     // stopped states
@@ -42,6 +48,7 @@ enum Substates
     Starting,           ///< Reflects movement from Stopped::Unstarted to Started::Running - does NOT reflect restart
     Paused,
     Resuming,
+    Waking,             ///< This precedes a Starting state when coming out of a sleeping state
 
     // running states
     Running,
@@ -53,6 +60,7 @@ enum Substates
     Pausing,
     Stopping,
     Resetting,
+    Sleeping,           ///< In process of entering sleep mode
 
     // error states
     ErrConfig,         ///< service configuration error, usually on startup or configuring
