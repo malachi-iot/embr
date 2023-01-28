@@ -36,7 +36,7 @@ struct traits_base<TOwner, T, no_numeric_identifier::value> : embr::property::v1
 
 }
 
-namespace property { inline namespace v1 {
+inline namespace property { inline namespace v1 {
 
 // Through lookup mechanism, resolves TOwner + property ID back to property traits
 template <class TOwner, int id_>

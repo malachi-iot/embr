@@ -100,9 +100,9 @@ protected:
     struct provider<estd::integral_constant<T, t> >
     {
         // DEBT: estd doesn't have remove_pointer just yet
-        typedef typename std::remove_pointer<T>::type& type;
+        typedef const typename std::remove_pointer<T>::type& type;
 
-        const static type value()
+        static type value()
         {
             /*
             T _t = estd::integral_constant<T, t>();

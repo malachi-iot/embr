@@ -186,10 +186,11 @@ public:
 
     // DEBT: This is scary stuff - penalty for failure is high, i.e.
     // memory corruption.  That's why mostly we use context
-    constexpr runtime_type* runtime()
+    runtime_type* runtime()
     {
         // Meager protection against using the 'context' variety.  Still dangerous
-        static_assert(unwrap<TImpl>::is_wrapped::value == false);
+        static_assert(unwrap<TImpl>::is_wrapped::value == false,
+            "Must operate on direct impl, not a wrapped reference");
 
         return (runtime_type*) this;
     }

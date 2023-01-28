@@ -490,7 +490,7 @@ TEST_CASE("Services", "[services]")
     dependent4.proxy();
     dependent4.value3(12);
 
-    REQUIRE(depender.counter == 5);
+    REQUIRE(depender.counter == 5);     // FIX: This is broken now
     REQUIRE(depender.counter2 == 2);
     REQUIRE(depender.is_smiling);
     REQUIRE(depender.shiny_happy_people == true);
