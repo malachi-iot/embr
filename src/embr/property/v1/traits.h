@@ -24,7 +24,8 @@ struct traits_base :
 
 
 template <class TOwner, class T>
-struct traits_base<TOwner, T, no_numeric_identifier::value> : embr::property::v1::tag::property_traits
+struct traits_base<TOwner, T, no_numeric_identifier::value> :
+    embr::property::v1::tag::property_traits
 {
     typedef TOwner owner_type;
     typedef T value_type;

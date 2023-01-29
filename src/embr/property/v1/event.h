@@ -77,7 +77,7 @@ struct PropertyChanged<TEnum, -1, typename estd::enable_if<
             estd::is_base_of<tag::property_traits, TTraits>::value &&
             estd::is_same<typename TTraits::value_type, value_type>::value
             , bool>::type = true>
-    PropertyChanged(const PropertyChanged<TTraits>& copy_from) :
+    constexpr PropertyChanged(const PropertyChanged<TTraits>& copy_from) :
         base_type{copy_from.owner, copy_from.value},
         id_{copy_from.id()}
     {}
@@ -112,7 +112,7 @@ struct PropertyChanged<TTraits, -1, typename estd::enable_if<
     using typename base_type::value_type;
     using typename base_type::owner_type;
 
-    PropertyChanged(owner_type* owner, value_type value) : base_type{owner, value}
+    constexpr PropertyChanged(owner_type* owner, value_type value) : base_type{owner, value}
     {}
 };
 
@@ -130,7 +130,7 @@ struct PropertyChanging<TTraits, -1, typename estd::enable_if<
     const value_type old_value;
     const value_type new_value;
 
-    PropertyChanging(owner_type& owner, value_type old, value_type new_value) :
+    constexpr PropertyChanging(owner_type& owner, value_type old, value_type new_value) :
         owner(owner),
         old_value{old},
         new_value{new_value}

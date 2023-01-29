@@ -443,6 +443,30 @@ static DependerService d;
 
 TEST_CASE("Services", "[services]")
 {
+    SECTION("event conversion")
+    {
+        event::PropertyChanged<
+            embr::Service, Service::STATE>
+            e1(nullptr, Service::Stopped);
+
+        // DEBT: Something looks suspicious here
+        event::PropertyChanged<
+            ::impl::DependentService2, Service::STATE>
+            e2(nullptr, true);
+
+        event::PropertyChanged<embr::Service::id::state> e3(nullptr, Service::Stopped);
+        event::PropertyChanged<embr::Service::States> e4(e3);
+
+        REQUIRE(e4.id() == embr::Service::STATE);
+        REQUIRE(e4.value == e3.value);
+
+        typedef PropertyTraits<::impl::DependentService2, ::impl::DependentService2::PEOPLE> traits1;
+
+        REQUIRE(traits1::id() == ::impl::DependentService2::PEOPLE);
+
+        REQUIRE(e2.value == true);
+    }
+
     //DependerService depender;
     DependerService& depender = d;
 
@@ -503,20 +527,4 @@ TEST_CASE("Services", "[services]")
     REQUIRE(&dependent2 == dependent2.debug_runtime());
     REQUIRE(&dependent4 == dependent4.debug_runtime());
 
-    event::PropertyChanged<
-            embr::Service, Service::STATE>
-            e1(nullptr, Service::Stopped);
-
-    // DEBT: Something looks suspicious here
-    event::PropertyChanged<
-            ::impl::DependentService2, Service::STATE>
-            e2(nullptr, true);
-
-    event::PropertyChanged<embr::Service::id::state> e3(nullptr, Service::Stopped);
-
-    typedef PropertyTraits<::impl::DependentService2, ::impl::DependentService2::PEOPLE> traits1;
-
-    REQUIRE(traits1::id() == ::impl::DependentService2::PEOPLE);
-
-    REQUIRE(e2.value == true);
 }
