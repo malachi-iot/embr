@@ -3,70 +3,13 @@
 #include "../../observer.h"
 
 #include "traits.h"
+#include "internal/event.h"
 
 namespace embr {
-
-namespace internal {
-
-}
 
 inline namespace property { inline namespace v1 {
 
 namespace event {
-
-namespace internal {
-
-template <class TOwner, class TValue = void, class enabled = void>
-struct PropertyChanged;
-
-template <class TOwner, class TValue>
-struct PropertyChanged<TOwner, TValue, estd::enable_if_t<
-    !estd::is_base_of<tag::property_traits, TOwner>::value> >
-{
-    typedef TOwner owner_type;
-    typedef TValue value_type;
-
-    owner_type* const owner;
-    const value_type value;
-};
-
-template <class TOwner>
-struct PropertyChanged<TOwner, void,
-    estd::enable_if_t<
-        !estd::is_base_of<tag::property_traits, TOwner>::value> >
-{
-    typedef TOwner owner_type;
-
-    owner_type* const owner;
-//protected:
-    const int id_;
-
-//public:
-    int id() const { return id_; }
-};
-
-// DEBT: Fix naming and make this a specialization of PropertyChanged if we can
-// FIX: Not using anyway because initializer list doesn't flow through to base class smoothly
-template <class TTraits>
-struct PropertyChangedTraits :
-    PropertyChanged<typename TTraits::owner_type, typename TTraits::value_type>
-{};
-
-template <class TTraits>
-struct PropertyChanged<TTraits, void,
-    estd::enable_if_t<
-        estd::is_base_of<tag::property_traits, TTraits>::value> >
-{
-    typedef typename TTraits::owner_type owner_type;
-    typedef typename TTraits::value_type value_type;
-
-    owner_type* const owner;
-    const value_type value;
-};
-
-
-}
-
 
 // 100% runtime flavor - that being the case, we can't practically provide 'value' itself
 // Unless we do some tricky RTTI/forward cast magic which isn't ready for primetime AND
@@ -97,6 +40,7 @@ public:
     {}
 };
 
+// Pure enum variety
 template <typename TEnum>
 struct PropertyChanged<TEnum, -1, typename estd::enable_if<
     //!estd::is_base_of<traits_tag, T>::value &&
@@ -194,6 +138,7 @@ struct PropertyChanging<TTraits, -1, typename estd::enable_if<
 };
 
 
+// Owner variety with a specific property
 template <typename TOwner, int id_>
 struct PropertyChanged<TOwner, id_, typename estd::enable_if<
     estd::is_base_of<typename TOwner::id::property_owner, typename TOwner::id>::value
@@ -218,6 +163,7 @@ struct PropertyChanged<TOwner, id_, typename estd::enable_if<
 };
 
 
+// Owner variety with any property
 template <typename TOwner>
 struct PropertyChanged<TOwner, -1, typename estd::enable_if<
     estd::is_base_of<typename TOwner::id::property_owner, typename TOwner::id>::value
@@ -234,6 +180,7 @@ struct PropertyChanged<TOwner, -1, typename estd::enable_if<
 };
 
 
+// Owner variety with a specific property
 template <typename TOwner, int id_>
 struct PropertyChanging<TOwner, id_, typename estd::enable_if<
     //estd::is_base_of<owner_tag, TOwner>::value

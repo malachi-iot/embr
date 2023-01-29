@@ -75,7 +75,8 @@ protected:
     void fire_changed(typename TTrait::value_type v, TContext& context)
     {
         typename TTrait::owner_type& owner = context;
-        subject_type::notify(event::PropertyChanged<TTrait>(&owner, v), context);
+        event::PropertyChanged<TTrait> e(&owner, v);
+        subject_type::notify(e, context);
     }
 
     template <class TOwner, int id_, class T, class TImpl>
