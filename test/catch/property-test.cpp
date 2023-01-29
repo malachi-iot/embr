@@ -35,19 +35,7 @@ struct Source1 : PropertyContainer
 
     EMBR_PROPERTIES_END
 
-    Source1()
-    {
-        fields_.value1_ = 0;
-        fields_.value2_ = Synthetic1;
-    }
-
-    template <class TSubject, class TImpl = this_type>
-    class runtime : public PropertyContainer::runtime<TSubject, TImpl>
-    {
-        typedef PropertyContainer::runtime<TSubject, TImpl> base_type;
-
-        // DEBT: Deduce this via base_type
-        using typename base_type::impl_type;
+    EMBR_PROPERTY_RUNTIME_BEGIN(PropertyContainer)
 
     protected:
         EMBR_PROPERTY(value1)
@@ -60,8 +48,7 @@ struct Source1 : PropertyContainer
             value2(value2() == Synthetic1 ? Synthetic2 : Synthetic1);
         }
 
-        ESTD_CPP_FORWARDING_CTOR(runtime)
-    };
+    EMBR_PROPERTY_RUNTIME_END
 };
 
 static int_type filter1_value1_value = 0;

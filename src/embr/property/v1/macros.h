@@ -41,7 +41,7 @@ struct name_ : traits<type>         \
 
 
 #define EMBR_PROPERTY_ID2_BASE(name, type, id_, desc) \
-type name##_;                                    \
+type name##_ = type();  \
 struct name : embr::internal::property::traits_base<this_type, type, id_> \
 {                                                  \
     EMBR_INTERNAL_PROPERTY_TRAITS_BODY(this_type, type, id_, desc); \
@@ -76,7 +76,6 @@ struct id : embr::property::v1::tag::property_owner  \
 #define EMBR_PROPERTIES_SPARSE_END };
 #define EMBR_PROPERTIES_END } fields_;
 
-
 #define EMBR_INTERNAL_PROPERTY_GETTER(type_, name_, alias_)   \
     constexpr type_ alias_() const { return base_type::template getter<typename impl_type::id::name_>(); }
 
@@ -94,5 +93,19 @@ struct id : embr::property::v1::tag::property_owner  \
 #define EMBR_PROPERTY(name_)    EMBR_PROPERTY_ALIAS(name_, name_)
 
 //#define EMBR_PROPERTY(...) GET_MACRO(__VA_ARGS__, EMBR_PROPERTY_ID2_2, EMBR_PROPERTY_ID2_1)(__VA_ARGS__)
+
+
+// EXPERIMENTAL
+#define EMBR_PROPERTY_RUNTIME_BEGIN(base_) \
+typedef this_type impl_type;         \
+template <class TSubject, class TImpl = this_type>  \
+class runtime : public base_::runtime<TSubject, TImpl> \
+{                                          \
+    typedef runtime this_type;             \
+    typedef base_::runtime<TSubject, TImpl> base_type; \
+public:\
+    ESTD_CPP_FORWARDING_CTOR(runtime)
+
+#define EMBR_PROPERTY_RUNTIME_END   };
 
 
