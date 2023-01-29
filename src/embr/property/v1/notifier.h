@@ -166,7 +166,9 @@ public:
     // DEBT: Very brute force bringing in a temporary to do our dirty work.  Specializing on
     // reference wrapper didn't work though.
     static constexpr impl_type& unwrap_assist(TImpl* _this)
-    { return estd::reference_wrapper<impl_type>(*_this).get(); }
+    {
+        return estd::reference_wrapper<impl_type>(*_this).get();
+    }
 
     static constexpr const impl_type& unwrap_assist(const TImpl* _this)
     {
