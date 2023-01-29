@@ -22,6 +22,16 @@ struct event_3
     int output = 0;
 };
 
+// TODO: Since we sorta suspect event conversion of not playing nice with
+// notify_helper, prepping this guy
+struct converting_event
+{
+    int data;
+
+    constexpr converting_event(event_1 e) :
+        data(e.data) {}
+};
+
 struct id_event
 {
     int id;
