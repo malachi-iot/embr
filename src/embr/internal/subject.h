@@ -100,9 +100,9 @@ protected:
     struct provider<estd::integral_constant<T, t> >
     {
         // DEBT: estd doesn't have remove_pointer just yet
-        typedef const typename std::remove_pointer<T>::type& type;
+        typedef typename std::remove_pointer<T>::type& type;
 
-        static type value()
+        static constexpr type value()
         {
             /*
             T _t = estd::integral_constant<T, t>();
@@ -129,6 +129,9 @@ protected:
     void _notify_helper(const TEvent& e)
     {
         typename p<index>::type observer = p<index>::value();
+
+        static_assert(estd::is_const<typename p<index>::type>::value == false,
+            "const not yet supported for notify_helper");
 
         // SFINAE magic to call best matching on_notify function
         notify_helper(

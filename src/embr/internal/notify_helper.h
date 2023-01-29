@@ -32,6 +32,24 @@ constexpr static auto notify_helper(TObserver& observer, const TEvent& n, TConte
     return true;
 }
 
+template <class TObserver, class TEvent>
+constexpr static auto notify_helper(const TObserver&, const TEvent& n, long) -> bool
+{
+    static_assert(estd::is_const<const TObserver>::value == false,
+                  "const not yet supported for notify_helper");
+
+    return true;
+}
+
+template <class TObserver, class TEvent, class TContext>
+constexpr static auto notify_helper(const TObserver&, const TEvent& n, TContext&, long) -> bool
+{
+    static_assert(estd::is_const<const TObserver>::value == false,
+                  "const not yet supported for notify_helper");
+
+    return true;
+}
+
 // bool gives this one precedence, since we call with (n, true)
 template <class TObserver, class TEvent>
 inline static auto notify_helper(TObserver& observer, const TEvent& e, bool)
