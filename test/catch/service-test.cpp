@@ -2,6 +2,8 @@
 
 #include <embr/service.h>
 
+#include "property-test.h"
+
 using namespace embr;
 
 constexpr experimental::module_info module{"unit tests"};

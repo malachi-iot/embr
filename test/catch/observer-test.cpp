@@ -22,13 +22,18 @@ struct event_3
     int output = 0;
 };
 
+struct event_to_convert
+{
+    const int data;
+};
+
 // TODO: Since we sorta suspect event conversion of not playing nice with
 // notify_helper, prepping this guy
 struct converting_event
 {
-    int data;
+    const int data;
 
-    constexpr converting_event(event_1 e) :
+    constexpr converting_event(event_to_convert e) :
         data(e.data) {}
 };
 
@@ -96,10 +101,13 @@ class StatefulObserver : public FakeBase
 public:
     static constexpr int default_id() { return 0x77; }
 
-    int unique = unique_counter++;
-    int id;
-    int counter = 0;
-    int context_counter = 0;
+    typedef int32_t int_type;
+
+    int_type unique = unique_counter++;
+    int_type id;
+    int_type counter = 0;
+    int_type context_counter = 0;
+    int_type converting_counter = 0;
 
     StatefulObserver() : id(default_id()) {}
 
@@ -129,6 +137,12 @@ public:
     {
         REQUIRE(e.data == expected);
     }
+
+    void on_notify(converting_event e)
+    {
+        converting_counter += e.data;
+    }
+
 
     void on_notify(id_event e)
     {
@@ -178,7 +192,7 @@ TEST_CASE("observer")
     {
         // for debian x64 gcc
         REQUIRE(sizeof(int) == 4);
-        REQUIRE(sizeof(StatefulObserver) == 16);
+        REQUIRE(sizeof(StatefulObserver) == 20);
     }
     SECTION("void subject")
     {
@@ -265,13 +279,17 @@ TEST_CASE("observer")
 
             REQUIRE(ctx.output == StatefulObserver::default_id());
 
+            s.notify(event_to_convert{4});
+
+            REQUIRE(so.converting_counter == 4);
+
             SECTION("size evaluation")
             {
                 int sz = sizeof(s);
 
                 // for debian x64
-                // Stateful = 16
-                REQUIRE(sz == 16);
+                // Stateful = 20
+                REQUIRE(sz == 20);
 
                 embr::layer1::subject<
                     StatefulObserver

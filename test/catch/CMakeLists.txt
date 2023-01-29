@@ -24,6 +24,7 @@ set(SOURCE_FILES
     debounce-test.cpp
     observer-test.cpp
     experimental-test.cpp
+    property-test.cpp
     runtime-ratio-test.cpp
     scheduler-test.cpp
     service-test.cpp
