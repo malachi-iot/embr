@@ -23,7 +23,6 @@ enum States
     Stopped = 0,
     Started,
 
-    Dependency,
     Error,
 
     //STATES_MAX
@@ -49,6 +48,7 @@ enum Substates
     Paused,
     Resuming,
     Waking,             ///< This precedes a Starting state when coming out of a sleeping state
+    Dependency,         ///< Waiting on a dependency before we can run
 
     // running states
     Running,

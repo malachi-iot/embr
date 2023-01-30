@@ -134,6 +134,10 @@ protected:
             base_type::template fire_changed<st::id::state>(s);
             //base_type::template fire_changed2<service::PROPERTY_STATE>(s, context);
         }
+        else if(ss != impl().state_.service_substate_)
+        {
+            state(ss);
+        }
     }
 
 
