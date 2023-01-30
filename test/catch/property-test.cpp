@@ -51,6 +51,21 @@ struct Source1 : PropertyContainer
     EMBR_PROPERTY_RUNTIME_END
 };
 
+struct WithConstructor : PropertyContainer
+{
+    typedef WithConstructor this_type;
+
+    const int value;
+
+    WithConstructor(int v) : value(v) {}
+
+    EMBR_PROPERTY_RUNTIME_BEGIN(PropertyContainer)
+
+    runtime(int v) : base_type(v) {}
+
+    EMBR_PROPERTY_RUNTIME_END
+};
+
 static int_type filter1_value1_value = 0;
 static Source1::Value2Values filter1_value2_value;
 
@@ -91,6 +106,12 @@ TEST_CASE("properties")
 
             REQUIRE(filter1_value1_value == 1);
             REQUIRE(filter1_value2_value == Source1::Synthetic2);
+        }
+        SECTION("with constructor")
+        {
+            WithConstructor::runtime<void_subject> s(10);
+
+            REQUIRE(s.value == 10);
         }
     }
 }

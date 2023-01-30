@@ -250,7 +250,10 @@ protected:
     }
 
 public:
-    PropertyHost() = default;
+    template <class ...TArgs, class TImpl2 = TImpl,
+        estd::enable_if_t<unwrap<TImpl2>::is_wrapped::value == false, bool> = true >
+    PropertyHost(TArgs&&...args)  : impl_type(std::forward<TArgs>(args)...)
+    {}
 
     PropertyHost(TSubject& subject) :
         base_type(subject) {}
