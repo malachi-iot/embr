@@ -200,6 +200,8 @@ public:
         fire_registration();
     }
 
+    ServiceBase::States state() const { return impl().state_.service_; }
+
     /*
     ~Service()
     {
