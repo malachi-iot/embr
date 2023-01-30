@@ -148,6 +148,8 @@ protected:
     }
 
 
+    // DEBT: Mismatch of * vs & for configuring vs configured.  Doing so because
+    // we need configuring to be nullable, but & is convenient for the more-used configured
     template <class TConfig>
     void configuring(const TConfig* c)
     {
@@ -158,9 +160,9 @@ protected:
 
 
     template <class TConfig>
-    void configured(const TConfig* c)
+    void configured(const TConfig& c)
     {
-        typedef st::id::config<const TConfig*> traits_type;
+        typedef st::id::config<const TConfig&> traits_type;
 
         base_type::template fire_changed<traits_type>(c);
     }

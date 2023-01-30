@@ -394,6 +394,8 @@ void DependentService4::runtime<TSubject, TImpl>::proxy()
 {
     int v = impl().do_private_stuff();
 
+    base_type::configured(v);
+
     value1(v);
 }
 
