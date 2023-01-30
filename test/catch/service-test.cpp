@@ -415,6 +415,14 @@ public:
     };
 };
 
+
+struct SparseDependent : SparseService
+{
+    EMBR_PROPERTY_RUNTIME_BEGIN(SparseService)
+
+    EMBR_PROPERTY_RUNTIME_END
+};
+
 static DependerService d;
 
 TEST_CASE("Services", "[services]")
@@ -473,12 +481,14 @@ TEST_CASE("Services", "[services]")
     DependentService2<subject_type> dependent2;
     service::ServiceSpec<::impl::DependentService3, subject_type> dependent3;
     layer0::service_type<DependentService4, _type_, filter1_type> dependent4;
+    //SparseDependent::runtime<subject_type> sparse_dependent;
 
 
     dependent.start();
     dependent2.start();
     dependent3.start();
     dependent4.start("value2 initialized");
+    //sparse_dependent.start();
 
     dependent2.shiny(true);
     dependent2.happy(true);

@@ -15,6 +15,25 @@ struct ServiceTraits
     static const char* name(const TService& s) { return s.name(); }
 };
 
+struct SparseService : embr::PropertyContainer,
+    ServiceBase
+{
+    typedef SparseService this_type;
+
+    EMBR_PROPERTIES_SPARSE_BEGIN
+
+        EMBR_PROPERTY_ID_SPARSE(state, States, STATE, "state")
+        EMBR_PROPERTY_ID_SPARSE(substate, Substates, SUBSTATE, "substate")
+
+        template <class TConfig>
+        using config = traits<TConfig>;
+
+    EMBR_PROPERTIES_SPARSE_END
+
+    template <class TSubject, class TImpl = this_type>
+    using runtime = embr::service::v1::host::Service<TImpl, TSubject>;
+};
+
 struct Service : embr::PropertyContainer,
         ServiceBase
 {
@@ -64,16 +83,6 @@ protected:
     bool restart() { return true; }
     //static constexpr state_result start() { return state_result::started(); }
     bool stop() { return true; }
-
-    // pre-processing (such as wake, resume, etc.) preceding a 'starting' event
-    static inline void on_starting() {  }
-
-    //template <class TSubject, class TImpl>
-    //static constexpr state_result on_start(runtime<TSubject, TImpl>&)
-    static constexpr state_result on_start()
-    {
-        return state_result::started();
-    }
 
     // DEBT: Use embr::word here
     unsigned user() const { return state_.user; }

@@ -6,7 +6,7 @@ namespace embr {
 
 inline namespace service { inline namespace v1 {
 
-struct ServiceBase
+struct ServiceEnum
 {
 
 enum Properties
@@ -85,20 +85,34 @@ struct bitsize
     typedef estd::integral_constant<unsigned, 6> user;
 };
 
-struct state_result
-{
-    // DEBT: Frustratingly can't use const here because we fall into that operator=
-    // trap
-    States state : bitsize::state::value;
-    Substates substate : bitsize::substate::value;
-
-    operator bool() const { return state == Started && substate == Running; }
-
-    static constexpr state_result started()
-    {
-        return state_result{Started, Running};
-    }
 };
+
+struct ServiceBase : ServiceEnum
+{
+    struct state_result
+    {
+        // DEBT: Frustratingly can't use const here because we fall into that operator=
+        // trap
+        States state : bitsize::state::value;
+        Substates substate : bitsize::substate::value;
+
+        operator bool() const { return state == Started && substate == Running; }
+
+        static constexpr state_result started()
+        {
+            return state_result{Started, Running};
+        }
+    };
+
+    // pre-processing (such as wake, resume, etc.) preceding a 'starting' event
+    static inline void on_starting() {  }
+
+    //template <class TSubject, class TImpl>
+    //static constexpr state_result on_start(runtime<TSubject, TImpl>&)
+    static constexpr state_result on_start()
+    {
+        return state_result::started();
+    }
 
 };
 
