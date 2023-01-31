@@ -202,17 +202,19 @@ TEST_CASE("observer")
     }
     SECTION("next-gen tuple based observer")
     {
+        // Conveniently, catch re-runs this so that these are reinitialized per section
         counter = 0;
         expected = 3;
+        allow_counter = 0;
 
         SECTION("layer0")
         {
+            embr::layer0::subject<
+                StatelessObserver,
+                StatelessObserver> s;
+
             SECTION("raw")
             {
-                embr::layer0::subject<
-                        StatelessObserver,
-                        StatelessObserver> s;
-
                 int sz = sizeof(s);
 
                 s.notify(3);
@@ -244,6 +246,16 @@ TEST_CASE("observer")
                 // filtered out notify via allow counter, so no counter increase
                 REQUIRE(counter == 8);
                 REQUIRE(allow_counter == 6);
+            }
+            SECTION("append (experimental)")
+            {
+                typedef decltype(s)::experimental_append<StatelessObserver> subject_type;
+                subject_type s2;
+
+                REQUIRE(counter == 0);
+                s2.notify(3);
+                REQUIRE(counter == 3);
+                REQUIRE(allow_counter == 3);
             }
         }
         SECTION("layer1")

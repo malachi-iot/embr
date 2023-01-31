@@ -56,6 +56,10 @@ public:
     {
         return estd::get<index>(observers);
     }
+
+    // DEBT: Just here to satisfy compiler, NOT FUNCTIONAL
+    template <class T>
+    using experimental_append = T;
 };
 
 template <class T, T* t>
@@ -149,6 +153,10 @@ protected:
                     observer,
                     e, c, true);
     }
+
+public:
+    template <class T>
+    using experimental_append = stateless_base<T, TObservers...>;
 };
 
 template <class TBase, class ...TObservers>
@@ -207,6 +215,11 @@ public:
     {
         notify_c_helper<sizeof... (TObservers) - 1>(e, c);
     }
+
+    template <class T>
+    using experimental_append = subject<
+        typename base_type::template experimental_append<T>,
+        TObservers..., T>;
 };
 
 

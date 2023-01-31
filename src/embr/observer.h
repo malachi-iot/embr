@@ -17,7 +17,7 @@ namespace embr {
 
 namespace layer0 {
 
-#ifdef FEATURE_CPP_ALIASTEMPLATE
+#ifdef __cpp_alias_templates
 template <class ...TObservers>
 using subject = internal::subject<
     internal::stateless_base<TObservers...>,
@@ -80,7 +80,7 @@ struct delegate_observer<F, Arg1> make_delegate_observer(F&& f)
 
 namespace layer1 {
 
-#ifdef FEATURE_CPP_ALIASTEMPLATE
+#ifdef __cpp_alias_templates
 template <class ...TObservers>
 using subject = internal::subject<
     internal::tuple_base<TObservers...>,
