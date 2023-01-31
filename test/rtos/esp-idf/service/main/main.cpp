@@ -29,17 +29,15 @@ extern "C" void app_main()
 
     // wrap up our App in something ultra-compile time friendly
     typedef estd::integral_constant<App*, &app> app_singleton;
-    typedef embr::layer0::subject<app_singleton> filter_observer;
+    typedef embr::layer0::subject<Diagnostic, app_singleton> filter_observer;
 
     // create our filter type which reports up to app_singleton
-    //typedef TimerFilterService::runtime<
-        //embr::layer0::subject<app_singleton> > filter_type;
-    typedef embr::layer0::service_type<
-        TimerFilterService, app_singleton> filter_type;
+    typedef TimerFilterService::runtime<filter_observer> filter_type;
+    //typedef embr::layer0::service_type<
+        //TimerFilterService, app_singleton> filter_type;
 
     // create a set of observers which the timer will notify
-    typedef filter_observer::append<Diagnostic, filter_type>
-        timer_observer;
+    typedef filter_observer::append<filter_type> timer_observer;
 
     // create timer_service with above specified observers
     static TimerService::runtime<timer_observer> timer_service;
