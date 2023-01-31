@@ -1,8 +1,10 @@
 #pragma once
 
-#include <embr/service.h>
+#include "core.h"
 
-#include <embr/platform/esp-idf/log.h>
+namespace embr { namespace esp_idf {
+
+namespace service { inline namespace v1 {
 
 struct Diagnostic
 {
@@ -28,3 +30,7 @@ struct Diagnostic
         ESP_LOGD(TAG, "service [%s] sub state: %s", r.name(), to_string(e.value));
     }
 };
+
+}}
+
+}}

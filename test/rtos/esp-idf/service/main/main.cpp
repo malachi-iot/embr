@@ -9,8 +9,11 @@
 #include <estd/optional.h>
 #include <estd/thread.h>
 
+#include <embr/platform/esp-idf/service/diagnostic.h>
+
+using Diagnostic = embr::esp_idf::service::v1::Diagnostic;
+
 #include "app.h"
-#include "diagnostic.h"
 #include "filter.h"
 #include "system.hpp"
 #include "timer.hpp"
