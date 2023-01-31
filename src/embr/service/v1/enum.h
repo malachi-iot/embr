@@ -84,31 +84,8 @@ struct bitsize
     static constexpr unsigned user = (total - (substate + state * 4));
 };
 
-// DEBT: Put these out in a cpp file, not inline
-static const char* to_string(States v)
-{
-    switch(v)
-    {
-        case Stopped:       return "Stopped";
-        case Started:       return "Started";
-        case Error:         return "Error";
-        default:    return "Unknown";
-    }
-}
-
-static const char* to_string(Substates v)
-{
-    switch (v)
-    {
-        case Starting:      return "Starting";
-        case Stopping:      return "Stopping";
-        case Dependency:    return "Dependency";
-        case Unstarted:     return "Unstarted";
-        case Sleeping:      return "Sleeping";
-
-        default:    return "Unknown";
-    }
-}
+static const char* to_string(States v);
+static const char* to_string(Substates v);
 
 };
 

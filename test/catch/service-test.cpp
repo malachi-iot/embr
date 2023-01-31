@@ -446,6 +446,10 @@ TEST_CASE("Services", "[services]")
         REQUIRE(e4.id() == embr::Service::STATE);
         REQUIRE(e4.value == e3.value);
 
+        const char* desc = to_string(e3.value);
+
+        REQUIRE(desc != nullptr);
+
         typedef PropertyTraits<::impl::DependentService2, ::impl::DependentService2::PEOPLE> traits1;
 
         REQUIRE(traits1::id() == ::impl::DependentService2::PEOPLE);
