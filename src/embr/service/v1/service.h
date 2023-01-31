@@ -48,15 +48,15 @@ struct Service : embr::PropertyContainer,
     {
         struct
         {
-            States service_: bitsize::state::value;
-            Substates service_substate_: bitsize::substate::value;
+            States service_: bitsize::state;
+            Substates service_substate_: bitsize::substate;
 
-            States child1 : bitsize::state::value;
-            States child2 : bitsize::state::value;
-            States child3 : bitsize::state::value;
+            States child1 : bitsize::state;
+            States child2 : bitsize::state;
+            States child3 : bitsize::state;
 
             // Application specific data in "free" leftover bits
-            unsigned user : bitsize::user::value;
+            unsigned user : bitsize::user;
 
         } state_;
 

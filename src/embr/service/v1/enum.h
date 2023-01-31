@@ -1,5 +1,6 @@
 #pragma once
 
+#include <estd/internal/type_traits.h>
 #include <estd/internal/deduce_fixed_size.h>
 
 namespace embr {
@@ -25,10 +26,8 @@ enum States
 
     Error,
 
-    //STATES_MAX
+    STATES_MAX = Error
 };
-
-#define STATES_MAX_BITSIZE 2
 
 // NOTE: Not used yet, anticipating scenarios where we want to reduce the bit size of Substates,
 // this could be helpful
@@ -67,23 +66,22 @@ enum Substates
     ErrMemory,         ///< service ran out of memory, or detected memory corruption
     ErrUnspecified,    ///< internal error code was not recognized or provided
 
-    //SUBSTATES_MAX
+    SUBSTATES_MAX = ErrUnspecified
 };
 
 
 struct bitsize
 {
-    // NOTE: Not using *_MAX - 1 values because compiler warns us sometimes that
-    // bit count isn't high enough, which is true since _MAX takes up one more slot.
+    // DEBT: Bring this in from actual native int/padding size used for Service
+    static constexpr unsigned total = 32;
 
-    typedef estd::integral_constant<unsigned,
-        estd::internal::deduce_bit_count<Error>::value> state;
+    static constexpr unsigned state =
+            estd::internal::deduce_bit_count<STATES_MAX>::value;
 
-    typedef estd::integral_constant<unsigned,
-        estd::internal::deduce_bit_count<ErrUnspecified>::value> substate;
+    static constexpr unsigned substate =
+        estd::internal::deduce_bit_count<SUBSTATES_MAX>::value;
 
-    typedef estd::integral_constant<unsigned, 6> user;
-
+    static constexpr unsigned user = (total - (substate + state * 4));
 };
 
 // DEBT: Put these out in a cpp file, not inline
@@ -120,8 +118,8 @@ struct ServiceBase : ServiceEnum
     {
         // DEBT: Frustratingly can't use const here because we fall into that operator=
         // trap
-        States state : bitsize::state::value;
-        Substates substate : bitsize::substate::value;
+        States state : bitsize::state;
+        Substates substate : bitsize::substate;
 
         operator bool() const { return state == Started && substate == Running; }
 
