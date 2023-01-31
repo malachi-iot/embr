@@ -50,17 +50,12 @@ struct TimerService : embr::Service
 
         ESTD_CPP_FORWARDING_CTOR(runtime)
 
-        //EMBR_PROPERTY(timer)
         void timer(uint32_t v)
         {
             base_type::template fire_changed<id::timer>(v);
         }
 
-        void on_alarm_cb(const gptimer_alarm_event_data_t* edata)
-        {
-            timer(edata->count_value / 1000);
-            base_type::notify(event::callback{*edata});
-        }
+        void on_alarm_cb(const gptimer_alarm_event_data_t* edata);
 
         static bool on_alarm_cb(gptimer_handle_t timer, const gptimer_alarm_event_data_t *edata, void *user_ctx);
 

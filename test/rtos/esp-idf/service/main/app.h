@@ -2,7 +2,7 @@
 
 #include <embr/platform/esp-idf/log.h>
 
-#include "timer.hpp"
+#include "timer.h"
 
 struct App
 {
