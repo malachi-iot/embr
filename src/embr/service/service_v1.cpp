@@ -24,6 +24,10 @@ const char* ServiceEnum::to_string(Substates v)
         case Dependency:    return "Dependency";
         case Unstarted:     return "Unstarted";
         case Sleeping:      return "Sleeping";
+        case Configuring:   return "Configuring";
+        case Configured:    return "Configured";
+        case Waking:        return "Waking";
+        case Running:       return "Running";
 
         default:    return "Unknown";
     }

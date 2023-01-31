@@ -46,6 +46,7 @@ struct TimerService : embr::Service
         using typename base_type::impl_type;
 
         using base_type::impl;
+        using base_type::state;
 
         ESTD_CPP_FORWARDING_CTOR(runtime)
 

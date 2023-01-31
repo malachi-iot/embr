@@ -10,4 +10,4 @@ set(EXTRA_COMPONENT_DIRS "../components")
 include(${EMBR_ROOT_DIR}/tools/esp-idf/project.cmake)
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
-project(button)
+project(service)

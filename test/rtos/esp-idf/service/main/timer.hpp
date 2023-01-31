@@ -31,7 +31,7 @@ TimerService::state_result TimerService::runtime<TSubject, TImpl>::on_start(
 
     if(err != ESP_OK) return error_result;
 
-    base_type::configured(config);
+    base_type::configured(*config);
 
     if(alarm_config)
     {
@@ -44,6 +44,8 @@ TimerService::state_result TimerService::runtime<TSubject, TImpl>::on_start(
         base_type::configured(alarm_config);
     }
 
+    state(Configured);
+
     gptimer_event_callbacks_t cbs =
     {
         .on_alarm = runtime<TSubject, TImpl>::on_alarm_cb, // register user callback
@@ -53,6 +55,6 @@ TimerService::state_result TimerService::runtime<TSubject, TImpl>::on_start(
 
     err = t.enable();
     err = t.start();
-
+    
     return err == ESP_OK ? state_result::started() : error_result;
 }

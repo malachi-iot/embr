@@ -26,3 +26,4 @@ All these debug entries make the ISR go very slow, not unusual for it to exceed 
 
 1. https://docs.espressif.com/projects/esp-idf/en/v4.4.2/esp32/api-reference/system/perfmon.html
 2. https://docs.espressif.com/projects/esp-idf/en/v4.4.2/esp32/api-reference/peripherals/timer.html
+3. https://docs.espressif.com/projects/esp-idf/en/v5.0/esp32/api-reference/peripherals/gptimer.html

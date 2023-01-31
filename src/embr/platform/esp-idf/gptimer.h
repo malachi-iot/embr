@@ -64,6 +64,7 @@ public:
         return gptimer_set_alarm_action(h, config);
     }
 
+    // "User registered callbacks are expected to be runnable within ISR context" [3]
     esp_err_t register_event_callbacks(const gptimer_event_callbacks_t* cbs, void* user_data = nullptr)
     {
         return gptimer_register_event_callbacks(h, cbs, user_data);

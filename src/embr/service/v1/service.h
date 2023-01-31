@@ -89,6 +89,7 @@ protected:
 
 public:
     States state() const { return state_.service_; }
+    ServiceBase::Substates substate() const { return state_.service_substate_; }
 };
 
 namespace host {
@@ -155,6 +156,8 @@ protected:
     {
         typedef st::id::config<const TConfig*> traits_type;
 
+        state(Service::Configuring);
+
         base_type::template fire_changing<traits_type>(nullptr, c, *runtime());
     }
 
@@ -216,6 +219,7 @@ public:
     }
 
     ServiceBase::States state() const { return impl().state_.service_; }
+    ServiceBase::Substates substate() const { return impl().substate(); }
 
     /*
     ~Service()

@@ -10,6 +10,7 @@
 #include <estd/thread.h>
 
 #include "app.h"
+#include "diagnostic.h"
 #include "filter.h"
 #include "system.hpp"
 #include "timer.hpp"
@@ -33,14 +34,14 @@ extern "C" void app_main()
         TimerFilterService, app_singleton> filter_type;
 
     // create a set of observers which the timer will notify
-    typedef embr::layer0::subject<app_singleton, filter_type>
+    typedef embr::layer0::subject<Diagnostic, app_singleton, filter_type>
         subject_type;
 
     // create timer_service with above specified observers
     static TimerService::runtime<subject_type> timer_service;
 
     typedef estd::integral_constant<decltype(timer_service)*, &timer_service> timer_singleton;
-    typedef embr::layer0::subject<timer_singleton, app_singleton, filter_type>
+    typedef embr::layer0::subject<Diagnostic, timer_singleton, app_singleton, filter_type>
         subject2_type;
 
     SystemService::runtime<subject2_type> system_service;
