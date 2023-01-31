@@ -1,22 +1,6 @@
 set(INCLUDE_FILES
     embr/detail/debounce.h
     embr/detail/debounce.hpp
-)
-
-set(SOURCE_FILES
-    embr/dataport.h
-    embr/dataport.hpp
-    embr/datapump.h
-    embr/datapump.hpp
-    embr/events.h
-
-    embr/exp/netbuf-alloc.h
-
-    embr/netbuf.h
-    embr/netbuf-static.h
-    embr/netbuf-dynamic.h
-    embr/netbuf-reader.h
-    embr/netbuf-writer.h
 
     embr/observer.h
 
@@ -24,10 +8,16 @@ set(SOURCE_FILES
 
     embr/streambuf.h
     embr/transport-descriptor.h
-        embr/exp/datapump-v2.h embr/exp/pbuf.h embr/exp/retry-v2.h embr/exp/datapump-core-v2.h embr/exp/dataport-v2.h
+
+    embr/exp/netbuf-alloc.h
+    embr/exp/pbuf.h embr/exp/retry-v2.h embr/exp/dataport-v2.h
     )
 
-set(ESP_IDF_SOURCE_FILES
+set(SOURCE_FILES
+    embr/service/service_v1.cpp
+    )
+
+set(ESP_IDF_SOURCE_FILES ${SOURCE_FILES}
     embr/platform/esp-idf/debounce.cpp
     embr/platform/esp-idf/timer-scheduler.cpp
     )

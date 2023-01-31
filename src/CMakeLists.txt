@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.2)
+cmake_minimum_required(VERSION 3.13)
 
 project(embr VERSION 0.2.0 LANGUAGES CXX)
 
@@ -15,10 +15,11 @@ endif()
 # is effectively a NOOP and we keep it around just for reference.
 include(sources.cmake)
 
-#add_library(${PROJECT_NAME} ${SOURCE_FILES} ${INCLUDE_FILES})
 # https://stackoverflow.com/questions/5957134/how-do-i-set-up-cmake-to-generate-header-only-projects
 add_library(${PROJECT_NAME} INTERFACE)
 add_library(malachi-iot::embr ALIAS ${PROJECT_NAME})
+
+target_sources(${PROJECT_NAME} INTERFACE ${SOURCE_FILES} ${INCLUDE_FILES})
 
 configure_file(../tools/cmake/version.in.h ${CMAKE_CURRENT_SOURCE_DIR}/embr/version.h)
 
