@@ -3,6 +3,7 @@
 #include <estd/tuple.h>
 
 #include "notify_helper.h"
+#include "fwd.h"
 
 #if FEATURE_EMBR_OBSERVER
 
@@ -56,10 +57,6 @@ public:
     {
         return estd::get<index>(observers);
     }
-
-    // DEBT: Just here to satisfy compiler, NOT FUNCTIONAL
-    template <class T>
-    using experimental_append = T;
 };
 
 template <class T, T* t>
@@ -155,8 +152,10 @@ protected:
     }
 
 public:
-    template <class T>
-    using experimental_append = stateless_base<T, TObservers...>;
+    // DEBT: Don't love using the consuming 'subject' directly here, but putting this alias
+    // in 'subject' itself presents an issue for layer1 scenarios
+    template <class ...TObservers2>
+    using append = subject<stateless_base<TObservers..., TObservers2...>, TObservers..., TObservers2...>;
 };
 
 template <class TBase, class ...TObservers>
@@ -215,11 +214,6 @@ public:
     {
         notify_c_helper<sizeof... (TObservers) - 1>(e, c);
     }
-
-    template <class T>
-    using experimental_append = subject<
-        typename base_type::template experimental_append<T>,
-        TObservers..., T>;
 };
 
 

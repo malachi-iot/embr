@@ -249,7 +249,7 @@ TEST_CASE("observer")
             }
             SECTION("append (experimental)")
             {
-                typedef decltype(s)::experimental_append<StatelessObserver> subject_type;
+                typedef decltype(s)::append<StatelessObserver> subject_type;
                 subject_type s2;
 
                 REQUIRE(counter == 0);
