@@ -10,6 +10,34 @@ using namespace embr::property::v1;
 
 typedef int32_t int_type;
 
+// Experimenting with extern forwarding for possible use as exposing global services
+template <class ...TArgs>
+struct Forwaded1;
+
+template <class TSubject>
+struct Forwaded2;
+
+extern Forwaded1<> val1;
+extern Forwaded2<embr::layer0::subject<estd::integral_constant<decltype(val1)*, &val1> > > val2;
+
+template <class ...TArgs>
+struct Forwaded1
+{
+    estd::tuple<TArgs...> tuple;
+    int val = 0;
+
+    void on_notify(int v)
+    {
+        val = v;
+    }
+};
+
+template <class TSubject>
+struct Forwaded2 : TSubject
+{
+};
+
+
 struct Source1 : PropertyContainer
 {
     typedef Source1 this_type;
@@ -46,6 +74,7 @@ struct Source1 : PropertyContainer
         {
             value1(value1() + 1);
             value2(value2() == Synthetic1 ? Synthetic2 : Synthetic1);
+            val2.notify(7);
         }
 
     EMBR_PROPERTY_RUNTIME_END
@@ -68,6 +97,10 @@ struct WithConstructor : PropertyContainer
 
 static int_type filter1_value1_value = 0;
 static Source1::Value2Values filter1_value2_value;
+
+Forwaded1<> val1;
+Forwaded2<embr::layer0::subject<estd::integral_constant<decltype(val1)*, &val1> > > val2;
+
 
 class Filter1 : Filter1Base
 {
@@ -106,6 +139,8 @@ TEST_CASE("properties")
 
             REQUIRE(filter1_value1_value == 1);
             REQUIRE(filter1_value2_value == Source1::Synthetic2);
+
+            REQUIRE(val1.val == 7);
         }
         SECTION("with constructor")
         {
