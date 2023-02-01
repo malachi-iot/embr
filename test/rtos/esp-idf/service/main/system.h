@@ -10,11 +10,13 @@
 
 #define FEATURE_EMBR_ESP_SERVICE_SLEEP 1
 
-struct SystemService : embr::Service
-{
-    typedef SystemService this_type;
+namespace services {
 
-    static constexpr const char* TAG = "esp-idf::SystemService";
+struct PowerManager : embr::Service
+{
+    typedef PowerManager this_type;
+
+    static constexpr const char* TAG = "esp-idf::PowerManager";
     
     constexpr static const char* name() { return TAG; }
 
@@ -43,3 +45,5 @@ struct SystemService : embr::Service
         }
     };
 };
+
+}

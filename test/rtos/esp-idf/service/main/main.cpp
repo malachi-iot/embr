@@ -45,7 +45,7 @@ extern "C" void app_main()
     typedef estd::integral_constant<decltype(timer_service)*, &timer_service> timer_singleton;
     typedef timer_observer::append<timer_singleton> system_observer;
 
-    SystemService::runtime<system_observer> system_service;
+    services::PowerManager::runtime<system_observer> system_service;
 
     // For this example a typical layer1 flavor may be better.  Jury is out
     //auto subject = embr::layer1::make_subject(app, filter_type());
@@ -93,6 +93,12 @@ extern "C" void app_main()
         estd::this_thread::sleep_for(estd::chrono::seconds(1));
 
         ESP_LOGI(TAG, "counting: %d", ++counter);
+
+        if(counter == 10)
+        {
+            esp_sleep_enable_timer_wakeup(10 * 1000 * 1000);
+            system_service.sleep();
+        }
     }
 }
 
