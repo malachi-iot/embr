@@ -58,7 +58,7 @@ enum Substates
     Degraded,
     Pausing,
     Stopping,
-    Resetting,
+    Resetting,          // DEBT: Document diff between this and 'Restarting'
     Sleeping,           ///< In process of entering sleep mode
 
     // error states

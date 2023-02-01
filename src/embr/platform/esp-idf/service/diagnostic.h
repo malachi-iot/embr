@@ -16,7 +16,11 @@ struct Diagnostic
     {
         // DEBT: Usage of this runtime portion a little too magic
         const auto& r = runtime.impl();
-        ESP_LOGI(TAG, "service [%s] state: %s:%s", r.name(),
+        unsigned level = e.value == Service::Error ?
+            ESP_LOG_WARN :
+            ESP_LOG_INFO;
+
+        ESP_LOG_LEVEL(level, TAG, "service [%s] state: %s:%s", r.name(),
             to_string(e.value),
             to_string(r.substate()));
     }
