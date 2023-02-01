@@ -12,16 +12,22 @@ typedef int32_t int_type;
 
 // Experimenting with extern forwarding for possible use as exposing global services
 template <class ...TArgs>
-struct Forwaded1;
+struct Forwarded1;
 
 template <class TSubject>
-struct Forwaded2;
+struct Forwarded2;
 
-extern Forwaded1<> val1;
-extern Forwaded2<embr::layer0::subject<estd::integral_constant<decltype(val1)*, &val1> > > val2;
+struct Forwarded3;
+
+extern Forwarded1<> val1;
+extern Forwarded3 forwarded3;
+typedef embr::layer0::subject<estd::integral_constant<decltype(val1)*, &val1> > _forwarded_subject_type;
+typedef _forwarded_subject_type::append<estd::integral_constant<decltype(forwarded3)*, &forwarded3>> forwarded_subject_type;
+
+extern Forwarded2<forwarded_subject_type> val2;
 
 template <class ...TArgs>
-struct Forwaded1
+struct Forwarded1
 {
     estd::tuple<TArgs...> tuple;
     int val = 0;
@@ -33,7 +39,7 @@ struct Forwaded1
 };
 
 template <class TSubject>
-struct Forwaded2 : TSubject
+struct Forwarded2 : TSubject
 {
 };
 
@@ -98,8 +104,22 @@ struct WithConstructor : PropertyContainer
 static int_type filter1_value1_value = 0;
 static Source1::Value2Values filter1_value2_value;
 
-Forwaded1<> val1;
-Forwaded2<embr::layer0::subject<estd::integral_constant<decltype(val1)*, &val1> > > val2;
+struct Forwarded3
+{
+    int value = 0;
+
+    void on_notify(int v);
+};
+
+Forwarded1<> val1;
+Forwarded2<forwarded_subject_type> val2;
+Forwarded3 forwarded3;
+
+
+void Forwarded3::on_notify(int v)
+{
+    value -= v;
+}
 
 
 class Filter1 : Filter1Base
@@ -141,6 +161,7 @@ TEST_CASE("properties")
             REQUIRE(filter1_value2_value == Source1::Synthetic2);
 
             REQUIRE(val1.val == 7);
+            REQUIRE(forwarded3.value == -7);
         }
         SECTION("with constructor")
         {
