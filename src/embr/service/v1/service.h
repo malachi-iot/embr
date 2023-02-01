@@ -37,6 +37,7 @@ struct SparseService : embr::PropertyContainer,
 struct Service : embr::PropertyContainer,
         ServiceBase
 {
+    typedef embr::PropertyContainer base_type;
     typedef Service this_type;
 
     constexpr static const char* name() { return "Generic service"; }
@@ -79,7 +80,7 @@ struct Service : embr::PropertyContainer,
     using runtime = embr::service::v1::host::Service<TImpl, TSubject>;
 
 protected:
-    // DEBT: Probably should to a receive command signal switch here instead
+    // DEBT: Probably should receive command signal switch here instead
     bool restart() { return true; }
     //static constexpr state_result start() { return state_result::started(); }
     bool stop() { return true; }
@@ -167,6 +168,12 @@ protected:
         typedef st::id::config<const TConfig&> traits_type;
 
         base_type::template fire_changed<traits_type>(c);
+    }
+
+
+    void progress(unsigned percent, const char* comment = nullptr)
+    {
+        base_type::notify(event::Progress{percent, comment});
     }
 
 

@@ -13,6 +13,13 @@ struct Registration
     const char* instance;
 };
 
+struct Progress
+{
+    const unsigned percent;
+    const char* comment;
+};
+
+
 }
 
 }}
