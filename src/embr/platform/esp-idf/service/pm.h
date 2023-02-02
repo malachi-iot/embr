@@ -1,16 +1,14 @@
 #pragma once
 
-#include <embr/platform/esp-idf/gptimer.h>
-
-#include <embr/service.h>
+#include "core.h"
 
 #include <esp_sleep.h>
 
-#include "timer.h"
-
 #define FEATURE_EMBR_ESP_SERVICE_SLEEP 1
 
-namespace services {
+namespace embr::esp_idf {
+
+namespace service { inline namespace v1 {
 
 struct PowerManager : embr::Service
 {
@@ -45,5 +43,7 @@ struct PowerManager : embr::Service
         }
     };
 };
+
+}}
 
 }

@@ -10,12 +10,12 @@
 #include <estd/thread.h>
 
 #include <embr/platform/esp-idf/service/diagnostic.h>
+#include <embr/platform/esp-idf/service/pm.hpp>
 
 using Diagnostic = embr::esp_idf::service::v1::Diagnostic;
 
 #include "app.h"
 #include "filter.h"
-#include "system.hpp"
 #include "timer.hpp"
 
 extern "C" void app_main()
@@ -45,7 +45,7 @@ extern "C" void app_main()
     typedef estd::integral_constant<decltype(timer_service)*, &timer_service> timer_singleton;
     typedef timer_observer::append<timer_singleton> system_observer;
 
-    services::PowerManager::runtime<system_observer> system_service;
+    embr::esp_idf::service::PowerManager::runtime<system_observer> system_service;
 
     // For this example a typical layer1 flavor may be better.  Jury is out
     //auto subject = embr::layer1::make_subject(app, filter_type());

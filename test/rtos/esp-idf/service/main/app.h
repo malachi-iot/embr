@@ -1,9 +1,10 @@
 #include <embr/service.h>
 
 #include <embr/platform/esp-idf/log.h>
+#include <embr/platform/esp-idf/service/pm.h>
 
 #include "timer.h"
-#include "system.h"
+
 
 struct App
 {
@@ -11,6 +12,8 @@ struct App
 
     template <class T>
     using changed = embr::event::PropertyChanged<T>;
+
+    using PowerManager = embr::esp_idf::service::v1::PowerManager;
 
     void on_notify(changed<
         embr::Service::id::config<const gptimer_config_t&> > e)
@@ -24,8 +27,7 @@ struct App
         ESP_DRAM_LOGI(TAG, "value = %" PRIu32, e.value);
     }
 
-    void on_notify(changed<embr::Service::id::substate> e,
-        services::PowerManager&)
+    void on_notify(changed<embr::Service::id::substate> e, PowerManager&)
     {
         if(e.value == embr::Service::Waking)
             ESP_LOGI(TAG, "bringup");

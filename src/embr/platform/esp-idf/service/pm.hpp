@@ -1,8 +1,10 @@
 #pragma once
 
-#include "system.h"
+#include "pm.h"
 
-namespace services {
+namespace embr::esp_idf {
+
+namespace service { inline namespace v1 {
 
 template <class TSubject, class TImpl>
 void PowerManager::runtime<TSubject, TImpl>::sleep()
@@ -30,5 +32,7 @@ bool PowerManager::runtime<TSubject, TImpl>::wake()
     base_type::notify(e);
     return true;
 }
+
+}}
 
 }
