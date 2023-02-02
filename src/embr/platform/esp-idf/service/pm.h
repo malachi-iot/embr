@@ -1,5 +1,7 @@
 #pragma once
 
+#include <estd/chrono.h>
+
 #include "core.h"
 
 #include <esp_sleep.h>
@@ -10,6 +12,7 @@ namespace embr::esp_idf {
 
 namespace service { inline namespace v1 {
 
+// Pertains specifically to deep sleep management
 struct PowerManager : embr::Service
 {
     typedef PowerManager this_type;
@@ -24,6 +27,11 @@ struct PowerManager : embr::Service
         {
             const esp_sleep_source_t cause;
         };
+
+        struct sleep_for
+        {
+            const estd::chrono::microseconds duration;
+        };
     };
 
     template <class TSubject, class TImpl = this_type>
@@ -35,6 +43,7 @@ struct PowerManager : embr::Service
 
         bool wake();
         void sleep();
+        void sleep_for(estd::chrono::microseconds duration);
 
         void on_starting()
         {
