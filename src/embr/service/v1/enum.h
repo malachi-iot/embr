@@ -116,6 +116,7 @@ struct ServiceBase : ServiceEnum
         return state_result::started();
     }
 
+    constexpr static const char* instance() { return ""; }
 };
 
 inline const char* to_string(ServiceEnum::States v)

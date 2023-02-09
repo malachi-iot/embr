@@ -22,7 +22,6 @@ struct Service : embr::PropertyContainer,
     typedef Service this_type;
 
     constexpr static const char* name() { return "Generic service"; }
-    constexpr static const char* instance() { return ""; }
 
     // DEBT: Make this private/protected
 // protected:
@@ -83,15 +82,13 @@ struct SparseService : embr::PropertyContainer,
     using id = Service::id;
 
     template <class TSubject, class TImpl = this_type>
-    struct runtime : embr::property::v1::PropertyHost<TImpl, TSubject>
+    struct runtime : embr::service::v1::host::Service<TImpl, TSubject,
+        embr::service::v1::host::ServiceSparseBase<TImpl, TSubject> >
     {
-        typedef embr::property::v1::PropertyHost<TImpl, TSubject> base_type;
+        typedef embr::service::v1::host::Service<TImpl, TSubject,
+            embr::service::v1::host::ServiceSparseBase<TImpl, TSubject> > base_type;
 
-        void state(States v)
-        {
-            base_type::template fire_changing<id::state>(v);
-            base_type::template fire_changed<id::state>(v);
-        }
+        ESTD_CPP_FORWARDING_CTOR(runtime)
     };
 };
 
@@ -100,23 +97,20 @@ struct SparseService : embr::PropertyContainer,
 namespace host {
 
 template <class TImpl, class TSubject>
-class Service : public PropertyHost<TImpl, TSubject>
+class ServiceBase2 : public PropertyHost<TImpl, TSubject>
 {
     typedef PropertyHost<TImpl, TSubject> base_type;
-    //using subject_base = typename base_type::subject_type;
-
-protected:
-    using typename base_type::impl_type;
     using st = v1::Service;
-    using typename base_type::context_type;
-    using typename base_type::runtime_type;
-    using base_type::subject;
-    using base_type::runtime;
 
 public:
-    using base_type::impl;
+    // DEBT: I don't think we really need this public
+    using typename base_type::impl_type;
 
 protected:
+    using base_type::impl;
+
+    ESTD_CPP_FORWARDING_CTOR(ServiceBase2)
+
     void state(st::States s)
     {
         base_type::template setter<st::id::state>(s);
@@ -144,8 +138,63 @@ protected:
             state(ss);
         }
     }
+};
 
 
+// NOTE: No 'changing' events eminate since we don't specifically track previous state to know
+// whether it changed or not.  'changed' itself is trusted to be true as initiated by implementing
+// service
+// NOTE: Not ready yet
+template <class TImpl, class TSubject>
+class ServiceSparseBase : public PropertyHost<TImpl, TSubject>
+{
+    typedef PropertyHost<TImpl, TSubject> base_type;
+
+    using st = v1::Service;
+
+protected:
+    ESTD_CPP_FORWARDING_CTOR(ServiceSparseBase)
+
+    void state(st::States v)
+    {
+        // TODO: Can't quite do this because traits still hard wires to regular 'Service', which is generally
+        // desirable type safety
+        //base_type::template fire_changed<st::id::state>(v);
+    }
+
+    void state(st::Substates v)
+    {
+        //base_type::template fire_changed<st::id::substate>(v);
+    }
+
+    void state(st::States v, st::Substates ss)
+    {
+        // NOTE: This deviates from regular stateful service which only fires one or the other,
+        // not both
+        state(ss);
+        state(v);
+    }
+};
+
+template <class TImpl, class TSubject, class TBase>
+class Service : public TBase
+{
+    typedef TBase base_type;
+    //using subject_base = typename base_type::subject_type;
+
+protected:
+    using typename base_type::impl_type;
+    using st = v1::Service;
+    using typename base_type::context_type;
+    using typename base_type::runtime_type;
+    using base_type::subject;
+    using base_type::runtime;
+    using base_type::state;
+
+public:
+    using base_type::impl;
+
+protected:
     // Convenience method, probably won't get used much
     inline void user(unsigned v)
     {
