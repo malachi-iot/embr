@@ -15,25 +15,6 @@ struct ServiceTraits
     static const char* name(const TService& s) { return s.name(); }
 };
 
-struct SparseService : embr::PropertyContainer,
-    ServiceBase
-{
-    typedef SparseService this_type;
-
-    EMBR_PROPERTIES_SPARSE_BEGIN
-
-        EMBR_PROPERTY_ID_SPARSE(state, States, STATE, "state")
-        EMBR_PROPERTY_ID_SPARSE(substate, Substates, SUBSTATE, "substate")
-
-        template <class TConfig>
-        using config = traits<TConfig>;
-
-    EMBR_PROPERTIES_SPARSE_END
-
-    template <class TSubject, class TImpl = this_type>
-    using runtime = embr::service::v1::host::Service<TImpl, TSubject>;
-};
-
 struct Service : embr::PropertyContainer,
         ServiceBase
 {
@@ -92,6 +73,29 @@ public:
     States state() const { return state_.service_; }
     ServiceBase::Substates substate() const { return state_.service_substate_; }
 };
+
+
+struct SparseService : embr::PropertyContainer,
+    ServiceBase
+{
+    typedef SparseService this_type;
+
+    using id = Service::id;
+
+    template <class TSubject, class TImpl = this_type>
+    struct runtime : embr::property::v1::PropertyHost<TImpl, TSubject>
+    {
+        typedef embr::property::v1::PropertyHost<TImpl, TSubject> base_type;
+
+        void state(States v)
+        {
+            base_type::template fire_changing<id::state>(v);
+            base_type::template fire_changed<id::state>(v);
+        }
+    };
+};
+
+
 
 namespace host {
 
