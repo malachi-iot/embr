@@ -5,6 +5,8 @@
 #include "enum.h"
 #include "event.h"
 
+#include "internal/service.h"
+
 namespace embr {
 
 inline namespace service { inline namespace v1 {

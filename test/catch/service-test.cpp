@@ -421,9 +421,9 @@ public:
 
 struct SparseDependent : SparseService
 {
-    EMBR_PROPERTY_RUNTIME_BEGIN(SparseService)
+    EMBR_SERVICE_RUNTIME_BEGIN(SparseService)
 
-    EMBR_PROPERTY_RUNTIME_END
+    EMBR_SERVICE_RUNTIME_END
 };
 
 static DependerService d;
