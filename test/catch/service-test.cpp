@@ -137,6 +137,7 @@ public:
     }
 
     // FIX: Oddly, this works better than Service::context here
+    // FIX: We don't catch sparse service notification
     template <class TSubject, class TImpl>
     void on_notify(event::Registration e, embr::Service::runtime<TSubject, TImpl>& context)
     //void on_notify(event::Registration e, ::impl::DependentService2& context)
@@ -506,7 +507,7 @@ TEST_CASE("Services", "[services]")
     dependent4.proxy();
     dependent4.value3(12);
 
-    REQUIRE(depender.counter == 5);     // FIX: This is broken now
+    REQUIRE(depender.counter == 6);
     REQUIRE(depender.counter2 == 2);
     REQUIRE(depender.is_smiling);
     REQUIRE(depender.shiny_happy_people == true);

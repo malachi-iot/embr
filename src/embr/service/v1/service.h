@@ -159,12 +159,12 @@ protected:
     {
         // TODO: Can't quite do this because traits still hard wires to regular 'Service', which is generally
         // desirable type safety
-        //base_type::template fire_changed<st::id::state>(v);
+        base_type::template fire_changed_null_owner<st::id::state>(v);
     }
 
     void state(st::Substates v)
     {
-        //base_type::template fire_changed<st::id::substate>(v);
+        base_type::template fire_changed_null_owner<st::id::substate>(v);
     }
 
     void state(st::States v, st::Substates ss)

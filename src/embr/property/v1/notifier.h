@@ -225,6 +225,14 @@ protected:
         base_type::template fire_changed<TOwner, id>(v, context);
     }
 
+    template <typename TTrait>
+    void fire_changed_null_owner(typename TTrait::value_type v)
+    {
+        context_type context{impl(), subject()};
+        event::PropertyChanged<TTrait> e(nullptr, v);
+        subject().notify(e, context);
+    }
+
 protected:
 
     template <int id, typename T>
