@@ -34,6 +34,11 @@ struct ServiceBase : ServiceEnum
         return state_result::started();
     }
 
+    static constexpr state_result on_stop()
+    {
+        return state_result{Stopped, Finished};
+    }
+
     constexpr static const char* instance() { return ""; }
 };
 

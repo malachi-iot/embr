@@ -17,4 +17,49 @@ This is the core logic, data storage and property declaration area of one's serv
 
 ## Sparse Properties
 
+## Events / Notifications
+
+Events and notifications are an implementation of either properties or more direct usage of underlying subject/observer
+
+### State
+
+Services are expected to notify others of their state.  These are minimal and are:
+
+* Stopped
+* Running
+* Error
+
+### Substate
+
+Substates contain the detail as to the nature of aforementioned `State`.
+For example, `Stopped` could be `Unstarted` or `Finished`
+
+### Configuration
+
+These are events fired typically during service startup.  Listeners can
+see if the configuration matches their expectation and act accordingly.
+
+### Progress
+
+These are events fired as a percentage of progress for this particular service's
+initialization completion.
+
 ## Sparse Services
+
+Behave similarly to regular services, but do not track their own `State` and `Substate`
+Useful when wrapping up other system mechanisms which track it in their own way.
+
+One can still implement state() and substate() methods to translate
+
+## Convention
+
+### on_xxx
+
+These are impl-pattern support for corresponding service behaviors:
+
+* on_starting, on_start correspond to start
+* on_stop corresponds to stop
+
+This is where you implement your own handlers for starting/stopping
+Typically one implements these in `runtime` to take advantage of notifications,
+but if notifications are not used, it's encouraged to place them into impl.

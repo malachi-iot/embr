@@ -38,10 +38,10 @@ enum States
 enum Substates
 {
     // stopped states
-    Unstarted,
+    Unstarted,          ///< has never started
     Configuring,        ///< pre-start step announcing preliminiry configuration
     Configured,         ///< pre-start step finishing preliminiry configuration
-    Finished,
+    Finished,           ///< finished running, now in 'off' state
     Restarting,         ///< When restarting, only this is emitted - not Starting
     Starting,           ///< Reflects movement from Stopped::Unstarted to Started::Running - does NOT reflect restart
     Paused,
@@ -58,12 +58,13 @@ enum Substates
     Degraded,
     Pausing,
     Stopping,
-    Resetting,          // DEBT: Document diff between this and 'Restarting'
+    Resetting,          ///< When restarting, this is the transition out of running -> stopped state
     Sleeping,           ///< In process of entering sleep mode
 
     // error states
     ErrConfig,         ///< service configuration error, usually on startup or configuring
     ErrMemory,         ///< service ran out of memory, or detected memory corruption
+    ErrTimeout,
     ErrUnspecified,    ///< internal error code was not recognized or provided
 
     SUBSTATES_MAX = ErrUnspecified

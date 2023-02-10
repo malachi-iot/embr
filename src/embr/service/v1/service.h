@@ -195,14 +195,6 @@ protected:
         }
     } */
 
-    template <class F>
-    void stop(F&& f)
-    {
-        state(st::Stopping);
-        f();
-        state(st::Stopped, st::Finished);
-    }
-
     void fire_registration()
     {
         // DEBT: Make a special responder which handles stateless subject
@@ -266,6 +258,13 @@ public:
         {
             state(st::Started, st::Running);
         }
+    }
+
+    void stop()
+    {
+        state(st::Stopping);
+        st::state_result r = runtime()->on_stop();
+        state(r.state, r.substate);
     }
 };
 
