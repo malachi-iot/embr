@@ -16,11 +16,13 @@ struct SparseService : embr::PropertyContainer,
     using id = Service::id;
 
     template <class TSubject, class TImpl = this_type>
-    using runtime = embr::service::v1::host::Service<TImpl, TSubject,
-        embr::service::v1::host::ServiceSparseBase<TImpl, TSubject> >;
+    using runtime = embr::service::v1::runtime::Service<TImpl, TSubject,
+        embr::service::v1::runtime::internal::SparseServiceBase<TImpl, TSubject> >;
 };
 
 namespace host {
+
+namespace internal {
 
 // NOTE: No 'changing' events eminate since we don't specifically track previous state to know
 // whether it changed or not.  'changed' itself is trusted to be true as initiated by implementing
@@ -28,14 +30,14 @@ namespace host {
 // null owner here since no owner exists to host the state variables.
 // DEBT: Name and namespace for this need work
 template <class TImpl, class TSubject>
-class ServiceSparseBase : public PropertyHost<TImpl, TSubject>
+class SparseServiceBase : public PropertyHost<TImpl, TSubject>
 {
     typedef PropertyHost<TImpl, TSubject> base_type;
 
     using st = v1::Service;
 
 protected:
-    ESTD_CPP_FORWARDING_CTOR(ServiceSparseBase)
+    ESTD_CPP_FORWARDING_CTOR(SparseServiceBase)
 
     void state(st::States v)
     {
@@ -56,6 +58,8 @@ protected:
     }
 };
 
+
+}   // internal
 
 }
 

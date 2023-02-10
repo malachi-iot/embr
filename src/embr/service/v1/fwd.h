@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../fwd/observer.h"
+#include "../../property/v1/fwd.h"
 
 namespace embr {
 
@@ -12,17 +13,17 @@ namespace host {
 
 namespace internal {
 
+template <class TImpl, class TSubject>
+class ServiceBase;
+
+template <class TImpl, class TSubject>
+class SparseServiceBase;
+
 }
-
-template <class TImpl, class TSubject>
-class ServiceBase2;
-
-template <class TImpl, class TSubject>
-class ServiceSparseBase;
 
 template <class TImpl = v1::Service,
     class TSubject = embr::void_subject,
-    class TBase = ServiceBase2<TImpl, TSubject> >
+    class TBase = internal::ServiceBase<TImpl, TSubject> >
 class Service;
 
 }

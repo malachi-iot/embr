@@ -79,9 +79,12 @@ public:
 
 namespace host {
 
-// DEBT: Name and namespace for this are both wrong
+
+namespace internal {
+
+// DEBT: Placement not ideal, but needed since v1::Service must be a complete type
 template <class TImpl, class TSubject>
-class ServiceBase2 : public PropertyHost<TImpl, TSubject>
+class ServiceBase : public PropertyHost<TImpl, TSubject>
 {
     typedef PropertyHost<TImpl, TSubject> base_type;
     using st = v1::Service;
@@ -93,7 +96,7 @@ public:
 protected:
     using base_type::impl;
 
-    ESTD_CPP_FORWARDING_CTOR(ServiceBase2)
+    ESTD_CPP_FORWARDING_CTOR(ServiceBase)
 
     void state(st::States s)
     {
@@ -124,6 +127,8 @@ protected:
     }
 };
 
+
+}
 
 template <class TImpl, class TSubject, class TBase>
 class Service : public TBase
