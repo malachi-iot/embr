@@ -18,10 +18,10 @@ struct ServiceTraits
     static const char* name(const TService& s) { return s.name(); }
 };
 
-struct Service : embr::PropertyContainer,
+struct Service : embr::property::v1::PropertyContainer,
     ServiceBase
 {
-    typedef embr::PropertyContainer base_type;
+    typedef PropertyContainer base_type;
     typedef Service this_type;
 
     constexpr static const char* name() { return "Generic service"; }
@@ -60,7 +60,7 @@ struct Service : embr::PropertyContainer,
     EMBR_PROPERTIES_SPARSE_END
 
     template <class TSubject, class TImpl = this_type>
-    using runtime = embr::service::v1::host::Service<TImpl, TSubject>;
+    using runtime = embr::service::v1::runtime::Service<TImpl, TSubject>;
 
 protected:
     // DEBT: Probably should receive command signal switch here instead

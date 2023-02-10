@@ -113,7 +113,7 @@ struct DependentService3 : embr::Service
 
 
 
-class DependerService : embr::host::Service<>
+class DependerService : embr::runtime::Service<>
 {
     typedef Service<> base_type;
 
@@ -265,9 +265,9 @@ public:
 // NOTE: Although this flavor works, it lacking a 'runtime' means that context will never
 // pass back in the full wrapped DependentService2.
 template <class TSubject>
-class DependentService2 : public host::Service<::impl::DependentService2, TSubject>
+class DependentService2 : public runtime::Service<::impl::DependentService2, TSubject>
 {
-    typedef host::Service<::impl::DependentService2, TSubject> base_type;
+    typedef runtime::Service<::impl::DependentService2, TSubject> base_type;
     using typename base_type::impl_type;
 
     impl_type& impl() { return base_type::impl(); }

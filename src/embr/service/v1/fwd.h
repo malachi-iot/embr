@@ -10,6 +10,10 @@ struct Service;
 
 namespace host {
 
+namespace internal {
+
+}
+
 template <class TImpl, class TSubject>
 class ServiceBase2;
 
@@ -25,6 +29,9 @@ class Service;
 
 template <class TImpl, class TSubject = embr::void_subject>
 class ServiceSpec;
+
+// DEBT: Experimenting, I think I like 'runtime' better than 'host'
+namespace runtime = host;
 
 
 }}
