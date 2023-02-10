@@ -137,7 +137,6 @@ public:
     }
 
     // FIX: Oddly, this works better than Service::context here
-    // FIX: We don't catch sparse service notification
     template <class TSubject, class TImpl>
     void on_notify(event::Registration e, embr::Service::runtime<TSubject, TImpl>& context)
     //void on_notify(event::Registration e, ::impl::DependentService2& context)
@@ -153,6 +152,16 @@ public:
         //register_helper(context);
         //register_helper(impl);
         //ds2 = &context;
+    }
+
+
+    // DEBT: Sparse service notification needs his slightly different context.  I'd like to unify them
+    // somehow
+    template <class TSubject, class TImpl>
+    void on_notify(event::Registration e, embr::SparseService::runtime<TSubject, TImpl>&)
+    {
+        printf("Sparse service registered: %s (%s)\n", e.name, e.instance);
+        fflush(stdout);
     }
 
     //template <class TSubject>
@@ -421,7 +430,23 @@ public:
 
 struct SparseDependent : SparseService
 {
+    EMBR_PROPERTIES_SPARSE_BEGIN
+
+    EMBR_PROPERTIES_SPARSE_END
+
     EMBR_SERVICE_RUNTIME_BEGIN(SparseService)
+
+    void pause()
+    {
+        state(Pausing);
+        state(Stopped, Paused);
+    }
+
+    void resume()
+    {
+        state(Resuming);
+        state(Started, Running);
+    }
 
     EMBR_SERVICE_RUNTIME_END
 };
@@ -516,6 +541,12 @@ TEST_CASE("Services", "[services]")
     REQUIRE(depender.battery_alert > 0);
 
     REQUIRE(dependent4.value3() == 12);
+
+    sparse_dependent.pause();
+    sparse_dependent.resume();
+
+    // Two more state changes happened from sparse_dependent
+    REQUIRE(depender.counter == 8);
 
     REQUIRE(&dependent2 == dependent2.debug_runtime());
     REQUIRE(&dependent4 == dependent4.debug_runtime());

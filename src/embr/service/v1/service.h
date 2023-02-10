@@ -81,23 +81,20 @@ struct SparseService : embr::PropertyContainer,
 {
     typedef SparseService this_type;
 
+    static constexpr const char* name() { return "Generic sparse service"; }
+
     using id = Service::id;
 
     template <class TSubject, class TImpl = this_type>
-    struct runtime : embr::service::v1::host::Service<TImpl, TSubject,
-        embr::service::v1::host::ServiceSparseBase<TImpl, TSubject> >
-    {
-        typedef embr::service::v1::host::Service<TImpl, TSubject,
-            embr::service::v1::host::ServiceSparseBase<TImpl, TSubject> > base_type;
-
-        ESTD_CPP_FORWARDING_CTOR(runtime)
-    };
+    using runtime = embr::service::v1::host::Service<TImpl, TSubject,
+        embr::service::v1::host::ServiceSparseBase<TImpl, TSubject> >;
 };
 
 
 
 namespace host {
 
+// DEBT: Name and namespace for this are both wrong
 template <class TImpl, class TSubject>
 class ServiceBase2 : public PropertyHost<TImpl, TSubject>
 {
@@ -145,8 +142,9 @@ protected:
 
 // NOTE: No 'changing' events eminate since we don't specifically track previous state to know
 // whether it changed or not.  'changed' itself is trusted to be true as initiated by implementing
-// service
-// NOTE: Not ready yet
+// service.  Furthermore, 'changed' event naturally mates to stateful service, so we must pass in a
+// null owner here since no owner exists to host the state variables.
+// DEBT: Name and namespace for this need work
 template <class TImpl, class TSubject>
 class ServiceSparseBase : public PropertyHost<TImpl, TSubject>
 {
@@ -159,8 +157,6 @@ protected:
 
     void state(st::States v)
     {
-        // TODO: Can't quite do this because traits still hard wires to regular 'Service', which is generally
-        // desirable type safety
         base_type::template fire_changed_null_owner<st::id::state>(v);
     }
 
