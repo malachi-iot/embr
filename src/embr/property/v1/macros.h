@@ -95,7 +95,6 @@ struct id : embr::property::v1::tag::property_owner  \
 //#define EMBR_PROPERTY(...) GET_MACRO(__VA_ARGS__, EMBR_PROPERTY_ID2_2, EMBR_PROPERTY_ID2_1)(__VA_ARGS__)
 
 
-// EXPERIMENTAL
 #define EMBR_PROPERTY_RUNTIME_BEGIN(base_) \
 typedef this_type impl_type;         \
 template <class TSubject, class TImpl = this_type>  \
@@ -103,7 +102,7 @@ class runtime : public base_::runtime<TSubject, TImpl> \
 {                                          \
     typedef runtime this_type;             \
     typedef base_::runtime<TSubject, TImpl> base_type; \
-                                           \
+    using typename base_type::impl_type;    \
     \
 public:\
     ESTD_CPP_FORWARDING_CTOR(runtime)
