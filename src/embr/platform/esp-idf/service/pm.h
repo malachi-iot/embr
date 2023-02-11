@@ -28,7 +28,9 @@ struct PowerManager : embr::Service
             const esp_sleep_source_t cause;
         };
 
-        struct sleep_for
+        struct sleep {};
+
+        struct sleep_for : sleep
         {
             const estd::chrono::microseconds duration;
         };
