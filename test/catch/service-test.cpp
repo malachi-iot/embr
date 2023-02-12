@@ -256,24 +256,57 @@ public:
     struct runtime : Service::runtime<TSubject, TImpl>
     {
         typedef Service::runtime<TSubject, TImpl> base_type;
+        using typename base_type::impl_type;
 
         ESTD_CPP_FORWARDING_CTOR(runtime)
 
         // EXPERIMENTAL
         // NOTE: Collides with underlying 'instance' delineator
+        // NOTE: Don't like that reference-wrapped flavor may double this up and float
+        // around
         static runtime instance;
+        // NOTE: Somehow referenced-wrapped flavor not only gets instantiated,
+        // but referring via integral constant sends it into some odd constexpr loop
         //using instance_type = estd::integral_constant<runtime*, &instance>;
+    };
+
+
+    // Some extra fun and games due to our context reference/wrapper tricks
+    template <class TSubject>
+    struct static_factory
+    {
+        typedef embr::unwrap_t<TSubject> subject_type;
+        typedef runtime<subject_type> runtime_type;
+
+        static runtime_type instance;
     };
 
     // EXPERIMENTAL
     template <class TSubject>
-    using instance_type = typename runtime<TSubject>::instance_type;
+    using instance_type_ = typename runtime<TSubject>::instance_type;
+    template <class TSubject>
+    using instance_type = estd::integral_constant<
+        runtime<TSubject>*,
+        &static_factory<TSubject>::instance >;
+        //&runtime<TSubject>::get_instance() >;
+    template <class TSubject>
+    using instance_type3 = typename runtime<unwrap_t<TSubject> >::instance_type;
+
+    // May work, but is a c++14 extension
+    //template <class TSubject>
+    //static runtime<TSubject, this_type> instance_;
 };
 
 
 template <class TSubject, class TImpl>
 DependentService::runtime<TSubject, TImpl>
     DependentService::runtime<TSubject, TImpl>::instance;
+
+template <class TSubject>
+typename DependentService::static_factory<TSubject>::runtime_type
+    DependentService::static_factory<TSubject>::instance;
+
+
 
 // NOTE: Although this flavor works, it lacking a 'runtime' means that context will never
 // pass back in the full wrapped DependentService2.
@@ -530,7 +563,9 @@ TEST_CASE("Services", "[services]")
 
 
     dependent.start();
-    dependent.instance.start();
+    // Partially works, but has troubles going into integral constant
+    //dependent.instance.start();
+    DependentService::instance_type<subject_type>::value->start();
     dependent2.start();
     dependent3.start();
     dependent4.start("value2 initialized");

@@ -223,8 +223,8 @@ public:
         fire_registration();
     }
 
-    ServiceBase::States state() const { return impl().state_.service_; }
-    ServiceBase::Substates substate() const { return impl().substate(); }
+    st::States state() const { return impl().state_.service_; }
+    st::Substates substate() const { return impl().substate(); }
 
     /*
     ~Service()
