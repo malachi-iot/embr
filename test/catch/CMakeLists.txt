@@ -7,15 +7,10 @@ set(CMAKE_CXX_STANDARD 11)
 
 add_definitions(-DUNIT_TESTING)
 
-set(ROOT_DIR ../..)
-set(EXT_DIR ${ROOT_DIR}/ext)
-set(ESTD_DIR ${EXT_DIR}/estdlib/src)
-set(EMBR_DIR ${ROOT_DIR}/src)
-
-include_directories(${CATCH_DIR})
+include(../../tools/cmake/setvars.cmake)
 
 add_subdirectory(${EXT_DIR}/estdlib/ext/Catch2 catch)
-add_subdirectory(${EMBR_DIR} embr)
+add_subdirectory(${ROOT_DIR}/src embr)
 
 set(SOURCE_FILES
     main.cpp

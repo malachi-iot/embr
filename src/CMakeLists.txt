@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.13)
 
 project(embr VERSION 0.2.0 LANGUAGES CXX)
 
-set(ROOT_DIR ..)
-set(EXT_DIR ${ROOT_DIR}/ext)
+include(../tools/cmake/setvars.cmake)
+
 set(ESTDLIB_DIR ${EXT_DIR}/estdlib/src)
 
 if(NOT TARGET estd)
