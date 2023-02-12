@@ -552,6 +552,7 @@ TEST_CASE("Services", "[services]")
     typedef Filter1::runtime<subject_type> filter1_type;
 
     // FIX: These should be using reference, not rvalue
+    // NOTE: Nifty, dependent service can depend on itself...
     auto dependent = make_service<DependentService>(subject);
     /*
     auto dependent2 = make_service<DependentService2>(std::move(subject));

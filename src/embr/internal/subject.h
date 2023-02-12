@@ -59,6 +59,8 @@ public:
     }
 };
 
+// EXPERIMENTAL
+// Kind of our own integral constant.  Not so useful as it is
 template <class T, T* t>
 struct static_wrapper
 {
@@ -85,7 +87,12 @@ protected:
     template <class T>
     struct provider
     {
-        static T value() { return T(); }
+        constexpr static T value()
+        {
+            static_assert(estd::is_empty<T>::value, "T must be stateless");
+            return T();
+        }
+
         typedef T type;
     };
 
@@ -93,7 +100,7 @@ protected:
     template <class T, T* t>
     struct provider<static_wrapper<T, t> >
     {
-        static T& value() { return *t; }
+        constexpr static T& value() { return *t; }
         typedef T& type;
     };
 
