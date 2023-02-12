@@ -258,9 +258,22 @@ public:
         typedef Service::runtime<TSubject, TImpl> base_type;
 
         ESTD_CPP_FORWARDING_CTOR(runtime)
+
+        // EXPERIMENTAL
+        // NOTE: Collides with underlying 'instance' delineator
+        static runtime instance;
+        //using instance_type = estd::integral_constant<runtime*, &instance>;
     };
+
+    // EXPERIMENTAL
+    template <class TSubject>
+    using instance_type = typename runtime<TSubject>::instance_type;
 };
 
+
+template <class TSubject, class TImpl>
+DependentService::runtime<TSubject, TImpl>
+    DependentService::runtime<TSubject, TImpl>::instance;
 
 // NOTE: Although this flavor works, it lacking a 'runtime' means that context will never
 // pass back in the full wrapped DependentService2.
@@ -517,6 +530,7 @@ TEST_CASE("Services", "[services]")
 
 
     dependent.start();
+    dependent.instance.start();
     dependent2.start();
     dependent3.start();
     dependent4.start("value2 initialized");
@@ -532,7 +546,7 @@ TEST_CASE("Services", "[services]")
     dependent4.proxy();
     dependent4.value3(12);
 
-    REQUIRE(depender.counter == 6);
+    REQUIRE(depender.counter == 7);
     REQUIRE(depender.counter2 == 2);
     REQUIRE(depender.is_smiling);
     REQUIRE(depender.shiny_happy_people == true);
@@ -546,7 +560,7 @@ TEST_CASE("Services", "[services]")
     sparse_dependent.resume();
 
     // Two more state changes happened from sparse_dependent
-    REQUIRE(depender.counter == 8);
+    REQUIRE(depender.counter == 9);
 
     REQUIRE(&dependent2 == dependent2.debug_runtime());
     REQUIRE(&dependent4 == dependent4.debug_runtime());
