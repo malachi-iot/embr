@@ -258,36 +258,39 @@ public:
         typedef Service::runtime<TSubject, TImpl> base_type;
         using typename base_type::impl_type;
 
+        // Some extra fun and games due to our context reference/wrapper tricks
+        struct static_factory
+        {
+            typedef embr::unwrap_t<TSubject> subject_type;
+            typedef runtime<subject_type, impl_type> runtime_type;
+
+            // DEBT: This mechanism so far requires a layer0 subject
+            static runtime_type instance;
+        };
+
         ESTD_CPP_FORWARDING_CTOR(runtime)
 
         // EXPERIMENTAL
         // NOTE: Collides with underlying 'instance' delineator
         // NOTE: Don't like that reference-wrapped flavor may double this up and float
         // around
-        static runtime instance;
+        //static runtime instance;
         // NOTE: Somehow referenced-wrapped flavor not only gets instantiated,
         // but referring via integral constant sends it into some odd constexpr loop
         //using instance_type = estd::integral_constant<runtime*, &instance>;
+        using static_type = estd::integral_constant<
+            typename static_factory::runtime_type*,
+            &static_factory::instance>;
     };
 
 
-    // Some extra fun and games due to our context reference/wrapper tricks
+    // EXPERIMENTAL - layer0 dependent
     template <class TSubject>
-    struct static_factory
-    {
-        typedef embr::unwrap_t<TSubject> subject_type;
-        typedef runtime<subject_type> runtime_type;
-
-        static runtime_type instance;
-    };
-
-    // EXPERIMENTAL
+    using static_type = typename runtime<TSubject>::static_type;
     template <class TSubject>
-    using instance_type_ = typename runtime<TSubject>::instance_type;
-    template <class TSubject>
-    using instance_type = estd::integral_constant<
+    using instance_type2 = estd::integral_constant<
         runtime<TSubject>*,
-        &static_factory<TSubject>::instance >;
+        &runtime<TSubject>::static_factory::instance >;
         //&runtime<TSubject>::get_instance() >;
     template <class TSubject>
     using instance_type3 = typename runtime<unwrap_t<TSubject> >::instance_type;
@@ -298,13 +301,13 @@ public:
 };
 
 
-template <class TSubject, class TImpl>
-DependentService::runtime<TSubject, TImpl>
-    DependentService::runtime<TSubject, TImpl>::instance;
+//template <class TSubject, class TImpl>
+//DependentService::runtime<TSubject, TImpl>
+    //DependentService::runtime<TSubject, TImpl>::instance;
 
-template <class TSubject>
-typename DependentService::static_factory<TSubject>::runtime_type
-    DependentService::static_factory<TSubject>::instance;
+template <class TSubject, class TImpl>
+typename DependentService::runtime<TSubject, TImpl>::static_factory::runtime_type
+    DependentService::runtime<TSubject, TImpl>::static_factory::instance;
 
 
 
@@ -565,7 +568,7 @@ TEST_CASE("Services", "[services]")
     dependent.start();
     // Partially works, but has troubles going into integral constant
     //dependent.instance.start();
-    DependentService::instance_type<subject_type>::value->start();
+    DependentService::static_type<subject_type>::value->start();
     dependent2.start();
     dependent3.start();
     dependent4.start("value2 initialized");
