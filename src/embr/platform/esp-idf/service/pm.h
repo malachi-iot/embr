@@ -33,6 +33,10 @@ struct PowerManager : embr::Service
         struct sleep_for : sleep
         {
             const estd::chrono::microseconds duration;
+
+            constexpr sleep_for(estd::chrono::microseconds duration) :
+                duration{duration}
+            {}
         };
     };
 
