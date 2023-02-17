@@ -103,6 +103,7 @@ class runtime : public base_::runtime<TSubject, TImpl> \
     typedef runtime this_type;             \
     typedef base_::runtime<TSubject, TImpl> base_type; \
     using typename base_type::impl_type;    \
+    using base_type::notify;                \
     \
 public:\
     ESTD_CPP_FORWARDING_CTOR(runtime)
