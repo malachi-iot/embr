@@ -301,12 +301,15 @@ public:
         using static_type = estd::integral_constant<
             typename static_factory::runtime_type*,
             &static_factory::instance>;
+
+        // Results in incomplete type error
+        //using static_type2 = typename static_factory2<TSubject, this_type>::static_type;
     };
 
 
     // EXPERIMENTAL - layer0 dependent
     template <class TSubject>
-    using static_type = typename runtime<TSubject>::static_type;
+    using static_type_old = typename runtime<TSubject>::static_type;
     template <class TSubject>
     using instance_type2 = estd::integral_constant<
         runtime<TSubject>*,
@@ -318,6 +321,10 @@ public:
     // May work, but is a c++14 extension
     //template <class TSubject>
     //static runtime<TSubject, this_type> instance_;
+
+    // layer0 dependent - putting inside runtime results in incomplete type
+    template <class TSubject>
+    using static_type = typename static_factory2<TSubject, this_type>::static_type;
 };
 
 
@@ -595,7 +602,8 @@ TEST_CASE("Services", "[services]")
     sparse_dependent.start();
     // This seems to work a little better, no complaints so far about incomplete types
     //static_factory2<subject_type, DependentService>::instance.start();
-    static_factory2<subject_type, DependentService>::static_type::value->start();
+    //static_factory2<subject_type, DependentService>::static_type::value->start();
+    DependentService::static_type<subject_type>::value->start();
 
     dependent2.shiny(true);
     dependent2.happy(true);
