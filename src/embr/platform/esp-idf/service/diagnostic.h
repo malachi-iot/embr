@@ -20,7 +20,9 @@ struct Diagnostic
             ESP_LOG_WARN :
             ESP_LOG_INFO;
 
-        ESP_LOG_LEVEL(level, TAG, "service [%s] state: %s:%s", r.name(),
+        ESP_LOG_LEVEL(level, TAG, "service [%s:%s] state: %s:%s",
+            r.name(),
+            r.instance(),
             to_string(e.value),
             to_string(r.substate()));
     }
@@ -31,7 +33,11 @@ struct Diagnostic
     {
         // DEBT: Usage of this runtime portion a little too magic
         const auto& r = runtime.impl();
-        ESP_LOGD(TAG, "service [%s] sub state: %s", r.name(), to_string(e.value));
+
+        ESP_LOGD(TAG, "service [%s:%s] sub state: %s",
+            r.name(),
+            r.instance(),
+            to_string(e.value));
     }
 };
 
