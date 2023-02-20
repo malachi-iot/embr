@@ -282,10 +282,10 @@ typename TService::template runtime<TSubject, TService> make_service(TSubject&& 
     return typename TService::template runtime<TSubject, TService>(std::move(subject));
 }
 
-template <class TService, class TSubject>
-typename TService::template runtime<TSubject, TService> make_service(TSubject& subject)
+template <class TService, class TSubject, class ...TArgs>
+typename TService::template runtime<TSubject, TService> make_service(TSubject& subject, TArgs&&...args)
 {
-    return typename TService::template runtime<TSubject, TService>(subject);
+    return typename TService::template runtime<TSubject, TService>(subject, std::move(args)...);
 }
 
 

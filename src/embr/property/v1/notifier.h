@@ -26,7 +26,25 @@ struct PropertyContainer
     template <class TSubject, class TImpl>
     using context = typename TImpl::template runtime<
         estd::reference_wrapper<TSubject>, estd::reference_wrapper<TImpl> >;
+
+    // NOTE: This is the best candidate so far for static_factory behavior.  Needs more integration
+    // work, but doesn't have incomplete type issues
+    template <class TSubject, class TService>
+    struct static_factory
+    {
+        typedef embr::unwrap_t<TSubject> subject_type;
+        typedef typename TService::template runtime<subject_type> runtime_type;
+
+        static runtime_type instance;
+
+        using static_type = estd::integral_constant<runtime_type*, &instance>;
+    };
 };
+
+template <class TSubject, class TService>
+typename embr::PropertyContainer::static_factory<TSubject, TService>::runtime_type
+        embr::PropertyContainer::static_factory<TSubject, TService>::instance;
+
 
 template <class TSubject = embr::void_subject>
 class PropertyNotifier : public TSubject
@@ -129,8 +147,8 @@ public:
     using runtime_type = typename impl_type::template runtime<TSubject, impl_type>;
 
     // EXPERIMENTAL
-    // Attempting to reproduce results from "DependentService"
-    struct static_factory_new
+    // likely gonna get incomplete type here
+    struct static_factory_exp
     {
         typedef embr::unwrap_t<TSubject> subject_type;
         // DEBT: Confusing, this runtime_type differs from parent scope

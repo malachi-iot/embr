@@ -244,33 +244,15 @@ public:
     }
 };
 
-// NOTE: This is the best candidate so far for static_factory behavior.  Needs more integration
-// work, but doesn't have incomplete type issues
-template <class TSubject, class TService>
-struct static_factory2
-{
-    typedef embr::unwrap_t<TSubject> subject_type;
-    typedef typename TService::template runtime<subject_type> runtime_type;
-
-    static runtime_type instance;
-
-    using static_type = estd::integral_constant<runtime_type*, &instance>;
-};
-
-
-template <class TSubject, class TService>
-typename static_factory2<TSubject, TService>::runtime_type
-    static_factory2<TSubject, TService>::instance;
-
-
-
-
 
 class DependentService : public Service
 {
     typedef DependentService this_type;
 
 public:
+    const char* instance_ = "";
+    static constexpr const char* name() { return "DependentService"; }
+    const char* instance() { return instance_; }
 
     template <class TSubject, class TImpl = this_type>
     struct runtime : Service::runtime<TSubject, TImpl>
@@ -279,6 +261,7 @@ public:
         using typename base_type::impl_type;
 
         // Some extra fun and games due to our context reference/wrapper tricks
+        // FIX: This gets into incomplete type sometimes, not 100% sure why it seems inconsistent
         struct static_factory
         {
             typedef embr::unwrap_t<TSubject> subject_type;
@@ -289,6 +272,8 @@ public:
         };
 
         ESTD_CPP_FORWARDING_CTOR(runtime)
+
+        constexpr runtime(const char* instance_name) : base_type::instance_{instance_name} {}
 
         // EXPERIMENTAL
         // NOTE: Collides with underlying 'instance' delineator
@@ -324,7 +309,7 @@ public:
 
     // layer0 dependent - putting inside runtime results in incomplete type
     template <class TSubject>
-    using static_type = typename static_factory2<TSubject, this_type>::static_type;
+    using static_type = typename static_factory<TSubject, this_type>::static_type;
 };
 
 
