@@ -21,6 +21,7 @@ class SparseServiceBase;
 
 }
 
+// We utilize TBase to foster switching between regular and sparse service
 template <class TImpl = v1::Service,
     class TSubject = embr::void_subject,
     class TBase = internal::ServiceBase<TImpl, TSubject> >

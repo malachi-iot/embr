@@ -128,6 +128,17 @@ public:
     using context_type = typename impl_type::template context<TSubject, impl_type>;
     using runtime_type = typename impl_type::template runtime<TSubject, impl_type>;
 
+    // EXPERIMENTAL
+    // Attempting to reproduce results from "DependentService"
+    struct static_factory_new
+    {
+        typedef embr::unwrap_t<TSubject> subject_type;
+        // DEBT: Confusing, this runtime_type differs from parent scope
+        typedef typename impl_type::template runtime<subject_type, impl_type> runtime_type;
+
+        static runtime_type instance;
+    };
+
     // If we don't do this, we get caught in an endless recursion loop doing type conversion
     // from reference_wrapper to impl_type
     // DEBT: Very brute force bringing in a temporary to do our dirty work.  Specializing on

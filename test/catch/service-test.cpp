@@ -244,6 +244,26 @@ public:
     }
 };
 
+// NOTE: This is the best candidate so far for static_factory behavior.  Needs more integration
+// work, but doesn't have incomplete type issues
+template <class TSubject, class TService>
+struct static_factory2
+{
+    typedef embr::unwrap_t<TSubject> subject_type;
+    typedef typename TService::template runtime<subject_type> runtime_type;
+
+    static runtime_type instance;
+
+    using static_type = estd::integral_constant<runtime_type*, &instance>;
+};
+
+
+template <class TSubject, class TService>
+typename static_factory2<TSubject, TService>::runtime_type
+    static_factory2<TSubject, TService>::instance;
+
+
+
 
 
 class DependentService : public Service
@@ -305,11 +325,10 @@ public:
 //DependentService::runtime<TSubject, TImpl>
     //DependentService::runtime<TSubject, TImpl>::instance;
 
-template <class TSubject, class TImpl>
-typename DependentService::runtime<TSubject, TImpl>::static_factory::runtime_type
-    DependentService::runtime<TSubject, TImpl>::static_factory::instance;
-
-
+// FIX: This worked at some point, but now reports incomplete type
+//template <class TSubject, class TImpl>
+//typename DependentService::runtime<TSubject, TImpl>::static_factory::runtime_type
+    //DependentService::runtime<TSubject, TImpl>::static_factory::instance;
 
 // NOTE: Although this flavor works, it lacking a 'runtime' means that context will never
 // pass back in the full wrapped DependentService2.
@@ -569,11 +588,14 @@ TEST_CASE("Services", "[services]")
     dependent.start();
     // Partially works, but has troubles going into integral constant
     //dependent.instance.start();
-    DependentService::static_type<subject_type>::value->start();
+    //DependentService::static_type<subject_type>::value->start();
     dependent2.start();
     dependent3.start();
     dependent4.start("value2 initialized");
     sparse_dependent.start();
+    // This seems to work a little better, no complaints so far about incomplete types
+    //static_factory2<subject_type, DependentService>::instance.start();
+    static_factory2<subject_type, DependentService>::static_type::value->start();
 
     dependent2.shiny(true);
     dependent2.happy(true);
