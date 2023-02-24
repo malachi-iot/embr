@@ -6,7 +6,9 @@
 It has the following characteristics:
 
 * Responsible for managing `TSubject` notification state, if any.
-* Inhereits Impl as a base class, except in edge case scenarios where it's a Impl reference wrapper
+* Inherits Impl as a base class, except in edge case scenarios:
+    * Where it's a Impl reference wrapper
+    * Where no Impl state is needed  (like a filter or sparse service)
 * MUST be stateless except for aforementioned `impl` and `TSubject`
 
 ## Impl
@@ -20,6 +22,11 @@ This is the core logic, data storage and property declaration area of one's serv
 ## Events / Notifications
 
 Events and notifications are an implementation of either properties or more direct usage of underlying subject/observer
+
+Properties have two particular events associated with them:
+
+* `PropertyChanging` (aliased out to `changing` from within runtimes)
+* `PropertyChanged` (aliases out to `changed`` from within runtimes)
 
 ### State
 

@@ -4,7 +4,9 @@
 
 // Filter is a stateless observer which we expect to morph incoming property changes into its own
 // flavor
-struct Filter1Base
+// Base class of container is optional, just for convenient access to its
+// aliaeses
+struct Filter1Base : embr::property::v1::PropertyContainer
 {
     typedef Filter1Base this_type;
 

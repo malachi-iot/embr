@@ -478,7 +478,7 @@ public:
         typedef PropertyNotifier<TSubject> base_type;
 
     public:
-        void on_notify(event::PropertyChanged<DependentService4::id::value1> e)
+        void on_notify(changed<DependentService4::id::value1> e)
         {
             auto context = this_type{};  // DEBT
             base_type::template fire_changed<id::battery_level>(e.value * 10, context);
