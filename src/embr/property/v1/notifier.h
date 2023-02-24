@@ -11,23 +11,34 @@ namespace embr {
 
 inline namespace property { inline namespace v1 {
 
+// Safer but more limited way to sling subject/runtime around when enabled
+// If we could completely eliminate runtime_type downcast concerns, we could
+// subsequently eliminate this feature
+#ifndef FEATURE_EMBR_PROPERTY_CONTEXT
+#define FEATURE_EMBR_PROPERTY_CONTEXT 0
+#endif
+
 struct PropertyContainer
 {
 private:
     typedef PropertyContainer this_type;
 
 public:
-    constexpr static const char* name() { return "Generic property host"; }
+    constexpr static const char* name() { return "Generic property container"; }
 
     // DEBT: Was going to call this host, but macros refer to the impl portion as host
-    // so work out naming - in the meantime, we'll call this runtime
+    // so work out naming - in the meantime, we'll call this runtime.  Calling it
+    // runtime has a minor downside, it can be confusing to call it runtime when
+    // compile-time evaluations take place, such as with verify_runtime_integrity
     template <class TSubject, class TImpl>
     using runtime = embr::property::v1::PropertyHost<TImpl, TSubject>;
 
+#if FEATURE_EMBR_PROPERTY_CONTEXT
     // Helper alias to wrap up host/runtime into a reference-only flavor
     template <class TSubject, class TImpl>
     using context = typename TImpl::template runtime<
         estd::reference_wrapper<TSubject>, estd::reference_wrapper<TImpl> >;
+#endif
 
     // NOTE: This is the best candidate so far for static_factory behavior.  Needs more integration
     // work, but doesn't have incomplete type issues
@@ -152,7 +163,9 @@ public:
     typedef unwrap_t<TImpl> impl_type;
     //typedef TImpl impl_type;
     //impl_type impl_;
+#if FEATURE_EMBR_PROPERTY_CONTEXT
     using context_type = typename impl_type::template context<TSubject, impl_type>;
+#endif
     using runtime_type = typename impl_type::template runtime<TSubject, impl_type>;
 
     // EXPERIMENTAL
@@ -229,30 +242,46 @@ protected:
     template <class TEvent>
     void notify(TEvent&& e)
     {
+#if FEATURE_EMBR_PROPERTY_CONTEXT
         // NOTE: Don't worry, CLion/GDB reports somewhat misleading types here but we really do
         // seem to have impl_type giving us real 'runtime'
         context_type context{impl(), subject()};
+#else
+        runtime_type& context = *runtime();
+#endif
         base_type::notify(std::move(e), context);
     }
 
     template <class TTraits>
     inline void fire_changed(typename TTraits::value_type v)
     {
+#if FEATURE_EMBR_PROPERTY_CONTEXT
         context_type context{impl(), subject()};
+#else
+        runtime_type& context = *runtime();
+#endif
         base_type::template fire_changed<TTraits>(v, context);
     }
 
     template <class TOwner, int id, class T>
     inline void fire_changed(T v)
     {
+#if FEATURE_EMBR_PROPERTY_CONTEXT
         context_type context{impl(), subject()};
+#else
+        runtime_type& context = *runtime();
+#endif
         base_type::template fire_changed<TOwner, id>(v, context);
     }
 
     template <typename TTrait>
     void fire_changed_null_owner(typename TTrait::value_type v)
     {
+#if FEATURE_EMBR_PROPERTY_CONTEXT
         context_type context{impl(), subject()};
+#else
+        runtime_type& context = *runtime();
+#endif
         event::PropertyChanged<TTrait> e(nullptr, v);
         subject().notify(e, context);
     }
@@ -262,7 +291,11 @@ protected:
     template <int id, typename T>
     void setter(T v)
     {
+#if FEATURE_EMBR_PROPERTY_CONTEXT
         context_type context{impl(), subject()};
+#else
+        runtime_type& context = *runtime();
+#endif
         base_type::template setter<id, impl_type>(v, context);
     }
 
@@ -277,7 +310,11 @@ protected:
     template <typename TTraits>
     void setter(typename TTraits::value_type v)
     {
+#if FEATURE_EMBR_PROPERTY_CONTEXT
         context_type context{impl(), subject()};
+#else
+        runtime_type& context = *runtime();
+#endif
         base_type::template setter<TTraits>(v, context);
     }
 

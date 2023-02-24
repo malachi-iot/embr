@@ -421,7 +421,12 @@ protected:
     } */
 
 public:
+    const char* instance_ = "";
     static const char* name() { return "DependentService4"; }
+    const char* instance() const { return instance_; }
+
+    DependentService4(const char* instance_) : instance_{instance_} {}
+    DependentService4() = default;
 
     enum Properties
     {
@@ -432,7 +437,7 @@ public:
     EMBR_PROPERTIES_BEGIN
 
         EMBR_PROPERTY_ID_EXT(value1, VALUE1, "value1 desc")
-        EMBR_PROPERTY_ID_EXT(value2, VALUE2, "value1 desc")
+        EMBR_PROPERTY_ID_EXT(value2, VALUE2, "value2 desc")
         EMBR_PROPERTY_ID(value3, float, "free floater")
         EMBR_PROPERTY_ID(value4, float, "free floater #2")
 
@@ -462,6 +467,8 @@ public:
 template <class TSubject, class TImpl>
 void DependentService4::runtime<TSubject, TImpl>::proxy()
 {
+    base_type::verify_runtime_integrity(this);
+
     int v = impl().do_private_stuff();
 
     base_type::configured(v);
@@ -511,18 +518,32 @@ struct SparseDependent : SparseService
     EMBR_SERVICE_RUNTIME_END
 };
 
+#if !FEATURE_EMBR_PROPERTY_CONTEXT
 struct AggregatedService : service::v1::Service
 {
     typedef AggregatedService this_type;
+
+    static constexpr const char* name() { return "AggregatedService"; }
 
     EMBR_SERVICE_RUNTIME_BEGIN(Service)
 
         using ds4_type = DependentService4::runtime<TSubject>;
 
-        //ds4_type ds4;
+        ds4_type ds4;
+
+        // DEBT: This halfway works, but circumvents the registration event
+        //runtime() : ds4("from aggregated") {}
+
+        // Works great
+        state_result on_start()
+        {
+            ds4.start("From aggregated");
+            return state_result::started();
+        }
 
     EMBR_SERVICE_RUNTIME_END
 };
+#endif
 
 
 static DependerService d;
@@ -576,6 +597,9 @@ TEST_CASE("Services", "[services]")
 
     typedef Filter1::runtime<subject_type> filter1_type;
 
+    // loosely a tally of how many service primary state changes happened
+    int expected_services = 7;
+
     // FIX: These should be using reference, not rvalue
     // NOTE: Nifty, dependent service can depend on itself...
     auto dependent = make_service<DependentService>(subject);
@@ -589,8 +613,12 @@ TEST_CASE("Services", "[services]")
     service::ServiceSpec<::impl::DependentService3, subject_type> dependent3;
     layer0::service_type<DependentService4, _type_, filter1_type> dependent4;
     SparseDependent::runtime<subject_type> sparse_dependent;
+#if !FEATURE_EMBR_PROPERTY_CONTEXT
     AggregatedService::runtime<subject_type> aggregated_service;
+    expected_services += 2;
+#endif
 
+    aggregated_service.start();
 
     dependent.start();
     // Partially works, but has troubles going into integral constant
@@ -615,7 +643,7 @@ TEST_CASE("Services", "[services]")
     dependent4.proxy();
     dependent4.value3(12);
 
-    REQUIRE(depender.counter == 7);
+    REQUIRE(depender.counter == expected_services);
     REQUIRE(depender.counter2 == 2);
     REQUIRE(depender.is_smiling);
     REQUIRE(depender.shiny_happy_people == true);
@@ -629,7 +657,8 @@ TEST_CASE("Services", "[services]")
     sparse_dependent.resume();
 
     // Two more state changes happened from sparse_dependent
-    REQUIRE(depender.counter == 9);
+    expected_services += 2;
+    REQUIRE(depender.counter == expected_services);
 
     REQUIRE(&dependent2 == dependent2.debug_runtime());
     REQUIRE(&dependent4 == dependent4.debug_runtime());

@@ -142,7 +142,9 @@ class Service : public TBase
 protected:
     using typename base_type::impl_type;
     using st = v1::Service;
+#if FEATURE_EMBR_PROPERTY_CONTEXT
     using typename base_type::context_type;
+#endif
     using typename base_type::runtime_type;
     using base_type::subject;
     using base_type::runtime;
@@ -210,6 +212,9 @@ protected:
     }
     
 public:
+    // DEBT: Rework so that we can pass in forwarded parameters down to base service but
+    // still fire off registration
+
     ESTD_CPP_FORWARDING_CTOR(Service)
 
     Service()
