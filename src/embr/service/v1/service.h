@@ -232,8 +232,13 @@ public:
         fire_registration();
     }
 
+#if FEATURE_EMBR_PROPERTY_CONTEXT
+    // FIX: Even with feature flag on, we may not have visibility into impl() here
     st::States state() const { return impl().state_.service_; }
     st::Substates substate() const { return impl().substate(); }
+#else
+    st::States state() const { return base_type::state_.service_; }
+#endif
 
     /*
     ~Service()
