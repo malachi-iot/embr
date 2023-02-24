@@ -110,3 +110,7 @@ public:\
 
 #define EMBR_PROPERTY_RUNTIME_END   };
 
+// Not used yet, there's a descrepency on whether we need typename in there
+#define EMBR_PROPERTY_DEFINE_STATIC_TYPE    \
+    template <class TSubject>               \
+    using static_type = typename static_factory<TSubject, this_type>::static_type;

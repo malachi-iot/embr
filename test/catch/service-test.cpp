@@ -193,7 +193,7 @@ public:
         //FAIL("got here");
     } */
 
-    void on_notify(event::PropertyChanged<Service::id::state> s, ::impl::DependentService2& c)
+    void on_notify(changed<Service::id::state> s, ::impl::DependentService2& c)
     {
         ++counter;
         ++counter2;
@@ -201,13 +201,13 @@ public:
         fflush(stdout);
     }
 
-    void on_notify(event::PropertyChanged<::impl::DependentService2::id::is_happy> e)
+    void on_notify(changed<::impl::DependentService2::id::is_happy> e)
     {
         ++counter2;
         REQUIRE(e.value == true);
     }
 
-    void on_notify(event::PropertyChanged<::impl::DependentService2::id::is_smiling> e)
+    void on_notify(changed<::impl::DependentService2::id::is_smiling> e)
     {
         is_smiling = e.value;
     }

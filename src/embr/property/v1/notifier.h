@@ -13,8 +13,10 @@ inline namespace property { inline namespace v1 {
 
 struct PropertyContainer
 {
+private:
     typedef PropertyContainer this_type;
 
+public:
     constexpr static const char* name() { return "Generic property host"; }
 
     // DEBT: Was going to call this host, but macros refer to the impl portion as host
@@ -39,6 +41,13 @@ struct PropertyContainer
 
         using static_type = estd::integral_constant<runtime_type*, &instance>;
     };
+
+protected:
+    template <class T>
+    using changing = event::PropertyChanging<T>;
+
+    template <class T>
+    using changed = event::PropertyChanged<T>;
 };
 
 template <class TSubject, class TService>
