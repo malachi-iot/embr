@@ -21,13 +21,15 @@ struct ServiceTraits
 struct Service : embr::property::v1::PropertyContainer,
     ServiceBase
 {
+private:
     typedef PropertyContainer base_type;
     typedef Service this_type;
 
+public:
     constexpr static const char* name() { return "Generic service"; }
 
     // DEBT: Make this private/protected
-// protected:
+protected:
     union
     {
         struct
@@ -47,7 +49,7 @@ struct Service : embr::property::v1::PropertyContainer,
         unsigned raw = 0;
     };
 
-
+public:
     EMBR_PROPERTIES_SPARSE_BEGIN
 
         EMBR_PROPERTY_ID_EXT(state_.service_, STATE, state, "state")
@@ -111,16 +113,17 @@ protected:
 
     void state(st::States s, st::Substates ss)
     {
-        if (s != impl().state_.service_)
+        if (s != base_type::state_.service_)
         {
-            base_type::template fire_changing<st::id::state>(impl().state_.service_, s, impl());
+            base_type::template fire_changing<st::id::state>(
+                        base_type::state_.service_, s, impl());
 
-            impl().state_.service_ = s;
-            impl().state_.service_substate_ = ss;
+            base_type::state_.service_ = s;
+            base_type::state_.service_substate_ = ss;
 
             base_type::template fire_changed<st::id::state>(s);
         }
-        else if(ss != impl().state_.service_substate_)
+        else if(ss != base_type::state_.service_substate_)
         {
             state(ss);
         }

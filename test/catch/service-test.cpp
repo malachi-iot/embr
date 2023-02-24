@@ -168,7 +168,7 @@ public:
     void on_notify(event::PropertyChanged<embr::Service::States> e)//, DependentService<TSubject>&)
     {
         if(e.owner == ds2)  // FIX: This isn't working, but given all the impl() and conversion going on, that's not surprising
-            impl().state_.child1 = e.value;
+            base_type::state_.child1 = e.value;
 
         ++counter;
         //FAIL("got here");
