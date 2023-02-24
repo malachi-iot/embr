@@ -511,6 +511,20 @@ struct SparseDependent : SparseService
     EMBR_SERVICE_RUNTIME_END
 };
 
+struct AggregatedService : service::v1::Service
+{
+    typedef AggregatedService this_type;
+
+    EMBR_SERVICE_RUNTIME_BEGIN(Service)
+
+        using ds4_type = DependentService4::runtime<TSubject>;
+
+        //ds4_type ds4;
+
+    EMBR_SERVICE_RUNTIME_END
+};
+
+
 static DependerService d;
 
 TEST_CASE("Services", "[services]")
@@ -575,6 +589,7 @@ TEST_CASE("Services", "[services]")
     service::ServiceSpec<::impl::DependentService3, subject_type> dependent3;
     layer0::service_type<DependentService4, _type_, filter1_type> dependent4;
     SparseDependent::runtime<subject_type> sparse_dependent;
+    AggregatedService::runtime<subject_type> aggregated_service;
 
 
     dependent.start();
