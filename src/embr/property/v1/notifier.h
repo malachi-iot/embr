@@ -203,6 +203,25 @@ public:
         return (runtime_type*) this;
     }
 
+    // EXPERIMENTAL
+    // This ensures that at least the 'tbis' in question is the base type of
+    // runtime_type.  That goes a very long way, because both state their
+    // TSubject and TImpl, which constitutes all the state allowed to a runtime.
+    // Caveat is that generally 'T' is the root Service::runtime<> - meaning
+    // it's conceivable a "bad runtime" with the right impl & subject could come
+    // through here.  In other words -
+    // Happy Path: Service::runtime<> -> Test1::runtime<TSubject, Test1>
+    // Sad path: Service::runtime<> -> Test2::runtime<TSubject, Test1>
+    // However, as long as runtimes don't maintain state - the deviation in behaviors
+    // may not be of consequence, since the correct impl/subject is in play
+    template <class T>
+    static constexpr bool verify_runtime_integrity(const T*)
+    {
+        static_assert(estd::is_base_of<T, runtime_type>::value,
+                "runtime_type does not match 'this' type");
+        return true;
+    }
+
 protected:
 
     // Helpers for those who really want to fire these events themselves

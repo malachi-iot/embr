@@ -205,6 +205,7 @@ protected:
 
         impl_type& i = impl();
 
+        base_type::verify_runtime_integrity(this);
         base_type::notify(event::Registration{service_traits::name(i), i.instance()});
     }
     
