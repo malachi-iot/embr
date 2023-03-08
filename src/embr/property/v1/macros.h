@@ -95,6 +95,7 @@ struct id : embr::property::v1::tag::property_owner  \
 //#define EMBR_PROPERTY(...) GET_MACRO(__VA_ARGS__, EMBR_PROPERTY_ID2_2, EMBR_PROPERTY_ID2_1)(__VA_ARGS__)
 
 
+// DEBT: This base_ parameter is confusing, and is it necessary?
 #define EMBR_PROPERTY_RUNTIME_BEGIN(base_) \
 typedef this_type impl_type;         \
 template <class TSubject, class TImpl = this_type>  \
@@ -109,6 +110,14 @@ public:\
     ESTD_CPP_FORWARDING_CTOR(runtime)
 
 #define EMBR_PROPERTY_RUNTIME_END   };
+
+// FIX: Not quite ready yet
+#define EMBR_PROPERTY_INTERNAL_FIRE_CHANGE_ALIAS   \
+    template <class TTraits, class T> inline void fire_changed(const T& v)  \
+    { base_type::template fire_changed<TTraits>(v); }                       \
+    template <class TTraits, class T> inline void fire_changing(const T& v_old, const T& v)  \
+    { base_type::template fire_changing<TTraits>(v_old, v); }
+
 
 // Not used yet, there's a descrepency on whether we need typename in there
 #define EMBR_PROPERTY_DEFINE_STATIC_TYPE    \

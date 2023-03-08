@@ -116,7 +116,7 @@ protected:
         if (s != base_type::state_.service_)
         {
             base_type::template fire_changing<st::id::state>(
-                        base_type::state_.service_, s, impl());
+                        base_type::state_.service_, s);
 
             base_type::state_.service_ = s;
             base_type::state_.service_substate_ = ss;
@@ -170,7 +170,7 @@ protected:
 
         state(Service::Configuring);
 
-        base_type::template fire_changing<traits_type>(nullptr, c, *runtime());
+        base_type::template fire_changing<traits_type>(nullptr, c);
     }
 
 

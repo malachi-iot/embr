@@ -26,14 +26,23 @@ class DependentService4;
 namespace impl {
 
 
-struct DependentService2 : embr::Service
+struct DependentService2 : embr::service::v1::Service
 {
-    typedef embr::Service base_type_;
+    typedef embr::service::v1::Service base_type_;
     typedef DependentService2 this_type;
 
-    bool is_shiny = false;
-    bool is_happy = false;
-    bool is_smiling = false;
+    union
+    {
+        struct
+        {
+            bool is_shiny : 1;
+            bool is_happy : 1;
+            bool is_smiling : 1;
+        };
+
+        unsigned raw = 0;
+    };
+
     int people = 0;
 
     enum Properties
@@ -332,6 +341,22 @@ class DependentService2 : public runtime::Service<::impl::DependentService2, TSu
 
     impl_type& impl() { return base_type::impl(); }
 
+    // EXPERIMENTAL, based on
+    // https://stackoverflow.com/questions/26184190/alias-a-templated-function
+    // Has issues:
+    // 1. Some kind of non-static glitch that I don't understand
+    // 2. Requires c++14
+    //template <class TTraits>
+    //static constexpr void(*fire_changed)(typename TTraits::value_type) =
+            //&base_type::template fire_changed<TTraits>(typename TTraits::value_type{});
+    //template <class TTraits, class T>
+    //inline void fire_changed(const T& v)
+    //{
+    //    base_type::template fire_changed<TTraits>(v);
+    //}
+
+    EMBR_PROPERTY_INTERNAL_FIRE_CHANGE_ALIAS
+
 public:
     DependentService2() = default;
     DependentService2(TSubject&& subject) : base_type(std::move(subject))
@@ -339,15 +364,18 @@ public:
 
     void happy(bool v)
     {
-        if(base_type::impl().is_happy != v)
+        if(impl().is_happy != v)
         {
-            base_type::impl().is_happy = v;
+            typedef typename impl_type::id::is_happy traits_type;
+
+            fire_changing<traits_type>(impl().is_happy, v);
+
+            impl().is_happy = v;
             //typedef ::impl::DependentService2::id::is_happy traits_type;
-            typedef typename base_type::impl_type::id::is_happy traits_type;
-            event::PropertyChanged<traits_type> p{nullptr, v};
+            //event::PropertyChanged<traits_type> p{nullptr, v};
             REQUIRE(traits_type::id() == 0);
             //base_type::template fire_changed3<base_type::impl_type::id::is_happy>(v, *this);
-            base_type::template fire_changed<traits_type>(v);
+            fire_changed<traits_type>(v);
         }
     }
 
@@ -469,9 +497,13 @@ void DependentService4::runtime<TSubject, TImpl>::proxy()
 {
     base_type::verify_runtime_integrity(this);
 
+    int fake_config = 0;
+
+    base_type::configuring(&fake_config);
+
     int v = impl().do_private_stuff();
 
-    base_type::configured(v);
+    base_type::configured(fake_config);
 
     value1(v);
 }

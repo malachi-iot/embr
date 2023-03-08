@@ -150,6 +150,7 @@ public:
     {}
 };
 
+// DEBT: Once naming conventions settle down, split this out of notifier.h
 template <class TImpl, class TSubject>
 class PropertyHost : public PropertyNotifier<TSubject>,
                      public TImpl
@@ -250,6 +251,19 @@ protected:
         runtime_type& context = *runtime();
 #endif
         base_type::notify(std::move(e), context);
+    }
+
+    template <class TTraits>
+    inline void fire_changing(typename TTraits::value_type v_old,
+        typename TTraits::value_type v)
+    {
+#if FEATURE_EMBR_PROPERTY_CONTEXT
+        context_type context{impl(), subject()};
+#else
+        runtime_type& context = *runtime();
+#endif
+
+        base_type::template fire_changing<TTraits>(v_old, v, context);
     }
 
     template <class TTraits>

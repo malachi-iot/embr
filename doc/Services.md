@@ -70,3 +70,10 @@ These are impl-pattern support for corresponding service behaviors:
 This is where you implement your own handlers for starting/stopping
 Typically one implements these in `runtime` to take advantage of notifications,
 but if notifications are not used, it's encouraged to place them into impl.
+
+## Macros
+
+### EMBR_SERVICE_RUNTIME_BEGIN / EMBR_SERVICE_RUNTIME_END
+
+These denote the 'runtime' portion of a service.  _BEGIN takes a parameter, 
+the TBD
