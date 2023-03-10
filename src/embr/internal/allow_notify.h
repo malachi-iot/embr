@@ -19,19 +19,6 @@ constexpr auto allow_notify_helper(TObserver& observer, const TEvent& n, TContex
 }
 
 template <class TObserver, class TEvent>
-inline static auto allow_notify_helper(const TEvent& n, long) -> bool
-{
-    return true;
-}
-
-template <class TObserver, class TEvent, class TContext>
-inline static auto allow_notify_helper(const TEvent& n, TContext&, long) -> bool
-{
-    return true;
-}
-
-
-template <class TObserver, class TEvent>
 inline static auto allow_notify_helper(TObserver& observer, const TEvent& n, bool)
     -> decltype(std::declval<TObserver>().allow_notify(n), bool{})
 {
@@ -52,27 +39,6 @@ inline static auto allow_notify_helper(TObserver& observer, const TEvent& n, TCo
     return observer.allow_notify(n, context);
 }
 
-
-template <class TObserver, class TEvent>
-inline static auto allow_notify_helper(const TEvent& n, bool)
--> decltype(TObserver::allow_notify(n), bool{})
-{
-    return TObserver::allow_notify(n);
-}
-
-template <class TObserver, class TEvent, class TContext>
-inline static auto allow_notify_helper(const TEvent& n, TContext&, int)
--> decltype(TObserver::allow_notify(n), bool{})
-{
-    return TObserver::allow_notify(n);
-}
-
-template <class TObserver, class TEvent, class TContext>
-inline static auto allow_notify_helper(const TEvent& n, TContext& context, bool)
--> decltype(TObserver::allow_notify(n, context), bool{})
-{
-    return TObserver::allow_notify(n, context);
-}
 
 }}
 

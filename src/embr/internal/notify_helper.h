@@ -92,61 +92,6 @@ inline static auto notify_helper(TObserver& observer, const TEvent& n, TContext&
     return true;
 }
 
-// stateless ones.  Probably we could use above ones but this way we can avoid
-// inline construction of an entity altogether
-// fallback one for when we just can't match the on_notify
-template <class TObserver, class TEvent>
-constexpr static auto notify_helper(const TEvent& n, long) -> bool
-{
-    return true;
-}
-
-// fallback for invocation with context where no on_notify is present
-template <class TObserver, class TEvent, class TContext>
-constexpr static auto notify_helper(const TEvent& n, TContext&, long) -> bool
-{
-    return true;
-}
-
-// bool gives this one precedence, since we call with (n, true)
-template <class TObserver, class TEvent>
-inline static auto notify_helper(const TEvent& n, bool)
-    -> decltype(TObserver::on_notify(n), void(), bool{})
-{
-    if(!experimental::allow_notify_helper<TObserver>(n, true))
-        return false;
-
-    TObserver::on_notify(n);
-
-    return true;
-}
-
-
-// bool gives this one precedence, since we call with (n, true)
-template <class TObserver, class TEvent, class TContext>
-inline static auto notify_helper(const TEvent& n, TContext& context, bool)
-    -> decltype(TObserver::on_notify(n), bool{})
-{
-    if(!experimental::allow_notify_helper<TObserver>(n, context, true))
-        return false;
-
-    TObserver::on_notify(n);
-
-    return true;
-}
-
-// bool gives this one precedence, since we call with (n, true)
-template <class TObserver, class TEvent, class TContext>
-inline static auto notify_helper(const TEvent& n, TContext& context, bool)
-    -> decltype(TObserver::on_notify(n, context), bool{})
-{
-    if(!experimental::allow_notify_helper<TObserver>(n, context, true))
-        return false;
-
-    TObserver::on_notify(n, context);
-
-    return true;
-}
 #else
 template <class TObserver, class TEvent>
 inline static void notify_helper(TObserver& observer, const TEvent& n, bool)

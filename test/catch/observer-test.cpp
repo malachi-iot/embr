@@ -78,7 +78,7 @@ public:
         return true;
     }
 
-    static bool allow_notify(event_1 val, const int& context)
+    bool allow_notify(event_1 val, const int& context)
     {
         ++allow_counter;
         return context != 8;
