@@ -4,7 +4,7 @@
 
 #if FEATURE_EMBR_OBSERVER
 
-namespace embr { namespace experimental {
+namespace embr { namespace internal {
 
 template <class TObserver, class TEvent>
 constexpr auto allow_notify_helper(TObserver& observer, const TEvent& n, long) -> bool
@@ -19,21 +19,21 @@ constexpr auto allow_notify_helper(TObserver& observer, const TEvent& n, TContex
 }
 
 template <class TObserver, class TEvent>
-inline static auto allow_notify_helper(TObserver& observer, const TEvent& n, bool)
+inline auto allow_notify_helper(TObserver& observer, const TEvent& n, bool)
     -> decltype(std::declval<TObserver>().allow_notify(n), bool{})
 {
     return observer.allow_notify(n);
 }
 
 template <class TObserver, class TEvent, class TContext>
-inline static auto allow_notify_helper(TObserver& observer, const TEvent& n, TContext&, int)
+inline auto allow_notify_helper(TObserver& observer, const TEvent& n, TContext&, int)
     -> decltype(std::declval<TObserver>().allow_notify(n), bool{})
 {
     return observer.allow_notify(n);
 }
 
 template <class TObserver, class TEvent, class TContext>
-inline static auto allow_notify_helper(TObserver& observer, const TEvent& n, TContext& context, bool)
+inline auto allow_notify_helper(TObserver& observer, const TEvent& n, TContext& context, bool)
     -> decltype(std::declval<TObserver>().allow_notify(n, context), bool{})
 {
     return observer.allow_notify(n, context);
