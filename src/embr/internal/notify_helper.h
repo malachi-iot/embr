@@ -7,6 +7,9 @@
 
 #if FEATURE_EMBR_OBSERVER
 
+// DEBT: At this point, I think we always have a TObserver - so consider refactoring out
+// the static-only flavors of all these helpers
+
 namespace embr { namespace internal {
 
 // FEATURE_EMBR_EXPLICIT_OBSERVER is helpful for enforcing < c++11 compliance or for
@@ -55,7 +58,7 @@ template <class TObserver, class TEvent>
 inline static auto notify_helper(TObserver& observer, const TEvent& e, bool)
     -> decltype(std::declval<TObserver>().on_notify(e), bool{})
 {
-    if(!experimental::allow_notify_helper<TObserver>(e, true))
+    if(!experimental::allow_notify_helper(observer, e, true))
         return false;
 
     observer.on_notify(e);
@@ -68,7 +71,7 @@ template <class TObserver, class TEvent, class TContext>
 inline static auto notify_helper(TObserver& observer, const TEvent& n, TContext& context, int)
     -> decltype(std::declval<TObserver>().on_notify(n), bool{})
 {
-    if(!experimental::allow_notify_helper<TObserver>(n, context, true))
+    if(!experimental::allow_notify_helper(observer, n, context, true))
         return false;
 
     observer.on_notify(n);
@@ -81,7 +84,7 @@ template <class TObserver, class TEvent, class TContext>
 inline static auto notify_helper(TObserver& observer, const TEvent& n, TContext& context, bool)
     -> decltype(std::declval<TObserver>().on_notify(n, context), bool{})
 {
-    if(!experimental::allow_notify_helper<TObserver>(n, context, true))
+    if(!experimental::allow_notify_helper(observer, n, context, true))
         return false;
 
     observer.on_notify(n, context);
