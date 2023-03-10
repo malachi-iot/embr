@@ -53,7 +53,7 @@ constexpr static auto notify_helper(const TObserver&, const TEvent& n, TContext&
 // bool gives this one precedence, since we call with (n, true)
 template <class TObserver, class TEvent>
 inline static auto notify_helper(TObserver& observer, const TEvent& e, bool)
-    -> decltype(std::declval<TObserver>().on_notify(e), void(), bool{})
+    -> decltype(std::declval<TObserver>().on_notify(e), bool{})
 {
     if(!experimental::allow_notify_helper<TObserver>(e, true))
         return false;
@@ -66,7 +66,7 @@ inline static auto notify_helper(TObserver& observer, const TEvent& e, bool)
 // pseudo-fallback to invoke non-context on_notify, even when context is present
 template <class TObserver, class TEvent, class TContext>
 inline static auto notify_helper(TObserver& observer, const TEvent& n, TContext& context, int)
-    -> decltype(std::declval<TObserver>().on_notify(n), void(), bool{})
+    -> decltype(std::declval<TObserver>().on_notify(n), bool{})
 {
     if(!experimental::allow_notify_helper<TObserver>(n, context, true))
         return false;
@@ -79,7 +79,7 @@ inline static auto notify_helper(TObserver& observer, const TEvent& n, TContext&
 // bool gives this one precedence, since we call with (n, true)
 template <class TObserver, class TEvent, class TContext>
 inline static auto notify_helper(TObserver& observer, const TEvent& n, TContext& context, bool)
-    -> decltype(std::declval<TObserver>().on_notify(n, context), void(), bool{})
+    -> decltype(std::declval<TObserver>().on_notify(n, context), bool{})
 {
     if(!experimental::allow_notify_helper<TObserver>(n, context, true))
         return false;
@@ -122,7 +122,7 @@ inline static auto notify_helper(const TEvent& n, bool)
 // bool gives this one precedence, since we call with (n, true)
 template <class TObserver, class TEvent, class TContext>
 inline static auto notify_helper(const TEvent& n, TContext& context, bool)
-    -> decltype(TObserver::on_notify(n), void(), bool{})
+    -> decltype(TObserver::on_notify(n), bool{})
 {
     if(!experimental::allow_notify_helper<TObserver>(n, context, true))
         return false;
@@ -135,7 +135,7 @@ inline static auto notify_helper(const TEvent& n, TContext& context, bool)
 // bool gives this one precedence, since we call with (n, true)
 template <class TObserver, class TEvent, class TContext>
 inline static auto notify_helper(const TEvent& n, TContext& context, bool)
-    -> decltype(TObserver::on_notify(n, context), void(), bool{})
+    -> decltype(TObserver::on_notify(n, context), bool{})
 {
     if(!experimental::allow_notify_helper<TObserver>(n, context, true))
         return false;
