@@ -7,7 +7,8 @@
 #include "lwip/tcpip.h"
 
 #include <embr/platform/lwip/endpoint.h>
-#include <embr/platform/lwip/pbuf.h>
+#include <embr/platform/lwip/v1/pbuf.h>
+#include <embr/platform/lwip/v2/pbuf.h>
 #include <embr/platform/lwip/udp.h>
 
 // If LwIP loopback capability is present, then consider enabling our loopback tests

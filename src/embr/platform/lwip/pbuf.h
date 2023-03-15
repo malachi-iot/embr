@@ -1,11 +1,3 @@
-/**
- * @file
- * 
- * Where netbuf-mk2 pbuf provider lives
- * 
- * Adapted from bronze-star PbufNetbufWrapper
- */
-
 #pragma once
 
 #include "udp.h"
@@ -228,8 +220,5 @@ typedef embr::lwip::Pbuf Pbuf;
 
 }}
 
-
-// DEBT: Temporarily putting this here as we prep/refactor
-#include "v2/pbuf.h"
 
 #include "../guard-out.h"
