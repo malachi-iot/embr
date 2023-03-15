@@ -2,6 +2,7 @@
 
 #include "udp.h"
 #include "version.h"
+#include "internal/pbuf.h"
 
 #include "../guard-in.h"
 
@@ -25,33 +26,16 @@ inline namespace v1 {
 
 // If using this directly, know this is just a thin wrapper around
 // pbuf itself.  No auto-reference magic
-struct PbufBase
+struct PbufBase : lwip::internal::Pbuf
 {
-    typedef struct pbuf value_type;
-    typedef value_type* pointer;
-    typedef const value_type* const_pointer;
+    typedef lwip::internal::Pbuf base_type;
 
-protected:
-    pointer p;
-
-public:
-#ifdef FEATURE_CPP_DECLTYPE
-    typedef decltype(p->len) size_type;
-#else
-    typedef uint16_t size_type;
-#endif
-
-    PbufBase(pointer p) : p(p) {}
+    PbufBase(pointer p) : base_type(p) {}
     PbufBase() = delete;
     PbufBase(size_type size, pbuf_layer layer = PBUF_TRANSPORT) : 
-        p(pbuf_alloc(layer, size, PBUF_RAM))
+        base_type(pbuf_alloc(layer, size, PBUF_RAM))
     {
     }
-
-    // DEBT: Likely we need to consolidate these, given the bitwise
-    // nature of constness
-    const_pointer pbuf() const { return p; }
-    pointer pbuf() { return p; }
 
     void* payload() const { return p->payload; }
 
