@@ -38,7 +38,7 @@ void notify_from_event1_with_context(TSubject& s)
 template <class TSubject>
 void notify_from_event1_with_ipbuf(TSubject& s)
 {
-    embr::lwip::Pbuf pbuf(32);
+    embr::lwip::v1::Pbuf pbuf(32);
     s.notify(event1(), pbuf);
     // Stack usage:
     // Adding this one line jumps us over 64 threshold to 96 bytes

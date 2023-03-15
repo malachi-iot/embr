@@ -18,7 +18,7 @@
 
 using namespace embr;
 
-using embr::lwip::PbufBase;
+using embr::lwip::v1::PbufBase;
 typedef struct pbuf* pbuf_pointer;
 
 void udp_echo_recv(void *arg, 

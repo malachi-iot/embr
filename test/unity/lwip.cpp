@@ -41,8 +41,8 @@ static void listener(void* arg, struct udp_pcb* _pcb, struct pbuf* p, const ip_a
 
     embr::lwip::udp::Pcb pcb1(_pcb);
 
-    embr::lwip::Pbuf incoming_buf(p);
-    embr::lwip::Pbuf buf(4);
+    embr::lwip::v1::Pbuf incoming_buf(p);
+    embr::lwip::v1::Pbuf buf(4);
 
     buf.put_at(0, incoming_buf.get_at(0) + 10);
     buf.put_at(1, incoming_buf.get_at(1) + 10);
@@ -64,7 +64,7 @@ static void reply_listener(void* arg, struct udp_pcb* _pcb, struct pbuf* p, cons
     
     ESP_LOGI(TAG, "entry");
 
-    embr::lwip::Pbuf incoming_buf(p);
+    embr::lwip::v1::Pbuf incoming_buf(p);
 
     output[0] = incoming_buf.get_at(0);
     output[1] = incoming_buf.get_at(1);
@@ -83,7 +83,7 @@ static void test_basic_loopback()
     embr::experimental::Unique<embr::lwip::udp::Pcb>
         pcb1, pcb2;
 
-    embr::lwip::Pbuf buf(4);
+    embr::lwip::v1::Pbuf buf(4);
 
     // DEBT: span broken, default ctor has an issue
     //estd::span<uint8_t, 4> output;
