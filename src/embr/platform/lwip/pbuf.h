@@ -217,9 +217,19 @@ struct Pbuf : PbufBase
 
 #ifdef FEATURE_CPP_INLINE_NAMESPACE
 }   // v1
+#else
+namespace v1 {
+
+typedef embr::lwip::PbufBase PbufBase;
+typedef embr::lwip::Pbuf Pbuf;
+
+}
 #endif
 
 }}
 
+
+// DEBT: Temporarily putting this here as we prep/refactor
+#include "v2/pbuf.h"
 
 #include "../guard-out.h"

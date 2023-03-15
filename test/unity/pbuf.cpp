@@ -78,7 +78,7 @@ TEST_CASE("lwip pbuf out stream: shrink", "[lwip-pbuf]")
 
     sb.shrink();
 
-    embr::lwip::Pbuf& pbuf = sb.pbuf();
+    embr::lwip::v1::Pbuf& pbuf = sb.pbuf();
 
     TEST_ASSERT_EQUAL_INT(read_back, pbuf.total_length());
 }
@@ -142,23 +142,23 @@ TEST_CASE("lwip pbuf stream: istream", "[lwip-pbuf]")
 TEST_CASE("lwip streambuf: helpers", "[lwip-helpers]")
 {
     CONSTEXPR unsigned pbuf_size = 32;
-    embr::lwip::Pbuf pbuf(pbuf_size);
-    embr::lwip::PbufBase pbuf2(pbuf_size);
+    embr::lwip::v1::Pbuf pbuf(pbuf_size);
+    embr::lwip::v1::PbufBase pbuf2(pbuf_size);
 
     pbuf.concat(pbuf2);
 
-    embr::lwip::Pbuf::size_type size = embr::lwip::delta_length(pbuf, pbuf2);
+    embr::lwip::v1::Pbuf::size_type size = embr::lwip::delta_length(pbuf, pbuf2);
 
     TEST_ASSERT_EQUAL(pbuf_size, size);
 
-    pbuf.concat(pbuf2 = embr::lwip::PbufBase(pbuf_size));
+    pbuf.concat(pbuf2 = embr::lwip::v1::PbufBase(pbuf_size));
 
     size = embr::lwip::delta_length(pbuf, pbuf2);
 
     TEST_ASSERT_EQUAL(pbuf_size * 2, size);
     TEST_ASSERT_EQUAL(pbuf_size * 3, pbuf.total_length());
 
-    embr::lwip::PbufBase pbuf3 = pbuf.skip(pbuf_size * 2, &size);
+    embr::lwip::v1::PbufBase pbuf3 = pbuf.skip(pbuf_size * 2, &size);
 
     TEST_ASSERT(pbuf2 == pbuf3);
     TEST_ASSERT_EQUAL(size, 0);
@@ -167,7 +167,7 @@ TEST_CASE("lwip streambuf: helpers", "[lwip-helpers]")
 static void streambuf_output_1()
 {
     CONSTEXPR unsigned pbuf_size = 32;
-    embr::lwip::Pbuf pbuf(pbuf_size);
+    embr::lwip::v1::Pbuf pbuf(pbuf_size);
     embr::lwip::basic_opbuf_streambuf<char> out(std::move(pbuf));
 
     out.sputn(s1, s1_size);
@@ -198,7 +198,7 @@ static void streambuf_output_1()
 static void streambuf_output_2()
 {
     CONSTEXPR unsigned pbuf_size = 128;
-    embr::lwip::Pbuf pbuf(pbuf_size);
+    embr::lwip::v1::Pbuf pbuf(pbuf_size);
     embr::lwip::opbuf_streambuf out(pbuf);
 
     out.sputn(s1, s1_size);
@@ -236,7 +236,7 @@ static void streambuf_output_grow()
     
     out.shrink();
 
-    embr::lwip::PbufBase pbuf(out.pbuf());
+    embr::lwip::v1::PbufBase pbuf(out.pbuf());
 
     auto payload = static_cast<const char*>(pbuf.payload());
 
@@ -266,7 +266,7 @@ TEST_CASE("lwip streambuf: input", "[lwip-streambuf]")
 {
     // remember, pbufs are assumed to have the entire content populated.  This
     // test we only actually populate s1_size amount
-    embr::lwip::Pbuf pbuf(128);
+    embr::lwip::v1::Pbuf pbuf(128);
     
     char* payload = (char*)pbuf.payload();
     strcpy(payload, s1);
@@ -290,7 +290,7 @@ TEST_CASE("lwip streambuf: input", "[lwip-streambuf]")
 
 TEST_CASE("lwip istream", "[lwip-ios]")
 {
-    embr::lwip::Pbuf pbuf(128);
+    embr::lwip::v1::Pbuf pbuf(128);
 
     char* payload = (char*)pbuf.payload();
     char buf[128];
@@ -306,7 +306,7 @@ TEST_CASE("lwip istream", "[lwip-ios]")
 
 TEST_CASE("lwip ostream", "[lwip-ios]")
 {
-    embr::lwip::Pbuf pbuf(128);
+    embr::lwip::v1::Pbuf pbuf(128);
 
     char* payload = (char*)pbuf.payload();
 
