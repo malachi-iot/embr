@@ -1,7 +1,8 @@
 #pragma once
 
 #include <estd/streambuf.h>
-#include "../pbuf.h"
+#include "../v1/pbuf.h"
+#include "../v2/pbuf.h"
 
 namespace embr { namespace lwip {
 
@@ -57,7 +58,7 @@ class pbuf_current_base
     typedef internal::Pbuf::size_type size_type;
 
 protected:
-    v1::PbufBase pbuf_current;
+    internal::Pbuf pbuf_current;
 
 #ifdef FEATURE_ESTD_IOSTREAM_STRICT_CONST
     char_type* current_data() { return static_cast<char_type*>(netbuf.data()); }
@@ -70,7 +71,7 @@ protected:
 
     bool move_next()
     {
-        pbuf_pointer next = pbuf_current.pbuf()->next;
+        pbuf_pointer next = pbuf_current.next();
 
         if(next == NULLPTR) return false;
 
@@ -79,7 +80,7 @@ protected:
     }
 
 public:
-    pbuf_current_base(const PbufBase& pbuf) :
+    pbuf_current_base(const internal::Pbuf& pbuf) :
         pbuf_current(pbuf)
     {
 

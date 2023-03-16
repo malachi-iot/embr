@@ -1,8 +1,7 @@
 #pragma once
 
 #include "streambuf/ipbuf.h"
-#include "streambuf/opbuf.h"
-//#include "legacy/streambuf.h"
+#include "streambuf/opbuf.hpp"
 
 namespace embr { namespace lwip {
 

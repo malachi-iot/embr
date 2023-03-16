@@ -15,10 +15,17 @@ protected:
     pointer p;
 
     ESTD_CPP_DEFAULT_CTOR(Pbuf)
+
+public:
     Pbuf(pointer p) : p(p) {}
     Pbuf(const Pbuf& copy_from) : p(copy_from.p) {}
 
-public:
+    ESTD_CPP_CONSTEXPR_RET Pbuf& operator =(const Pbuf& copy_from)
+    {
+        p = copy_from;
+        return *this;
+    }
+
 #ifdef FEATURE_CPP_DECLTYPE
     typedef decltype(p->len) size_type;
 #else
@@ -97,7 +104,7 @@ public:
     }
 #endif
 
-    operator pointer() const { return p; }
+    ESTD_CPP_CONSTEXPR_RET operator pointer() const { return p; }
 
     bool ESTD_CPP_CONSTEXPR_RET is_null() const { return p == nullptr; }
 };
