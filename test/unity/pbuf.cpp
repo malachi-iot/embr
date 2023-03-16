@@ -148,13 +148,13 @@ TEST_CASE("lwip streambuf: helpers", "[lwip-helpers]")
 
     pbuf.concat(pbuf2);
 
-    embr::lwip::v1::Pbuf::size_type size = embr::lwip::delta_length(pbuf, pbuf2);
+    embr::lwip::v1::Pbuf::size_type size = delta_length(pbuf, pbuf2);
 
     TEST_ASSERT_EQUAL(pbuf_size, size);
 
     pbuf.concat(pbuf2 = embr::lwip::v1::PbufBase(pbuf_size));
 
-    size = embr::lwip::delta_length(pbuf, pbuf2);
+    size = delta_length(pbuf, pbuf2);
 
     TEST_ASSERT_EQUAL(pbuf_size * 2, size);
     TEST_ASSERT_EQUAL(pbuf_size * 3, pbuf.total_length());
@@ -213,7 +213,7 @@ static void streambuf_output_2()
 
     TEST_ASSERT_EQUAL(pbuf_size, pbuf.total_length());
     TEST_ASSERT_EQUAL(pbuf_size, pbuf.length());
-    TEST_ASSERT_EQUAL(pbuf_size, delta_length(pbuf, pbuf.pbuf()->next));
+    TEST_ASSERT_EQUAL(pbuf_size, delta_length(pbuf, pbuf.next()));
 }
 
 // Testing overflow and experimental 'grow_by'
@@ -329,6 +329,8 @@ TEST_CASE("pbuf v2 (core)", "[lwip-pbuf-v2]")
 TEST_CASE("pbuf v2 (scoped)", "[lwip-pbuf-v2-scoped]")
 {
     embr::internal::scoped_guard<embr::lwip::v2::Pbuf> pbuf(128);
+
+    TEST_ASSERT_EQUAL(128, pbuf->total_length());
 }
 
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../udp.h"
+#include "../version.h"
 
 namespace embr { namespace lwip { namespace internal {
 
@@ -101,4 +102,23 @@ public:
     bool ESTD_CPP_CONSTEXPR_RET is_null() const { return p == nullptr; }
 };
 
-}}}
+
+// returns size between the start of two pbufs
+inline Pbuf::size_type delta_length(const Pbuf& from, const Pbuf& to)
+{
+    Pbuf::const_pointer p = from;
+    Pbuf::size_type len = 0;
+
+    while(p != to)
+    {
+        len += p->len;
+
+        p = p->next;
+    }
+
+    return len;
+}
+
+}
+
+}}

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "udp.h"
-#include "version.h"
 #include "internal/pbuf.h"
 
 #include "../guard-in.h"
@@ -46,21 +45,6 @@ struct PbufBase : lwip::internal::Pbuf
     pointer pbuf() { return p; }
 };
 
-// returns size between the start of two pbufs
-inline PbufBase::size_type delta_length(PbufBase from, PbufBase to)
-{
-    PbufBase::const_pointer p = from.pbuf();
-    PbufBase::size_type len = 0;
-
-    while(p != to.pbuf())
-    {
-        len += p->len;
-
-        p = p->next;
-    }
-
-    return len;
-}
 
 
 /*
