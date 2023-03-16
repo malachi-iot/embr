@@ -20,7 +20,8 @@ enum scoped_guard_fail_action
 // std c++11 fairly well so cascade this out to estd
 // See: https://en.cppreference.com/w/cpp/thread/scoped_lock for similar naming
 // All that said, something like 'unique_value' would match the expected behavior
-// better, so maybe consider that (ala unique_ptr).
+// better, so maybe consider that (ala unique_ptr) - except that "unique" tends
+// to mean non-copyable, whereas we want copyable
 
 // Part of the naming difficulty
 // is we are defining RIAA behavior first, and memory sharing/allocation 2nd.

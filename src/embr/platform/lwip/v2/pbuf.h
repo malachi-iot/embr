@@ -112,6 +112,12 @@ struct scoped_guard<lwip::v2::Pbuf, fail_action> :
         base_type::value().free();
 #endif
     }
+
+    // EXPERIMENTAL
+    void dismiss()
+    {
+        base_type::value_ = nullptr;
+    }
 };
 
 
