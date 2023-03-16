@@ -20,8 +20,22 @@ enum scoped_guard_fail_action
 // std c++11 fairly well so cascade this out to estd
 // See: https://en.cppreference.com/w/cpp/thread/scoped_lock for similar naming
 // All that said, something like 'unique_value' would match the expected behavior
-// better, so maybe consider that (ala unique_ptr)
+// better, so maybe consider that (ala unique_ptr).
+
+// Part of the naming difficulty
+// is we are defining RIAA behavior first, and memory sharing/allocation 2nd.
+// Therefore, our use cases include both things like esp-idf nvs handle AND
+// LwIP pbuf - the latter having rather sophisticated memory management.
+// For this reason, we may settle on a more ambiguous name, like merely "scoped"
+
 // DEBT: If this all works really well, consider moving to estd
+
+// NOTE: "Scope Guard" tends to mean do special things on scope exit only,
+// not so much on scope entry.  However, it appears it's not a formal term: 
+// https://stackoverflow.com/questions/31365013/what-is-scopeguard-in-c
+// https://github.com/Neargye/scope_guard
+// https://en.wikibooks.org/wiki/More_C%2B%2B_Idioms/Scope_Guard
+// https://ricab.github.io/scope_guard/
 
 // NOTE: Using scoped_guard implies an assert/exception style behavior - expect
 // the system to halt if ctor/dtor is not fully successful
