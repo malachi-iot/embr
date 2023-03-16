@@ -44,7 +44,7 @@ struct TransportUdp : TransportBase
 
     // Following some unprove guidance to overcome udp_send side-effects
     template <bool use_ptr>
-    void send_experimental(const PbufBase& pbuf, const lwip::internal::Endpoint<use_ptr>& endpoint)
+    void send_experimental(const v1::PbufBase& pbuf, const lwip::internal::Endpoint<use_ptr>& endpoint)
     {
         pbuf_pointer underlying = pbuf;
         struct pbuf saved = *underlying;
@@ -56,7 +56,7 @@ struct TransportUdp : TransportBase
 
 
     template <bool use_ptr>
-    void send(const PbufBase& pbuf, const lwip::internal::Endpoint<use_ptr>& endpoint)
+    void send(const v1::PbufBase& pbuf, const lwip::internal::Endpoint<use_ptr>& endpoint)
     {
         pcb.send(pbuf,
             endpoint.address(),

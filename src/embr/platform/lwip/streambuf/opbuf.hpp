@@ -23,11 +23,15 @@ typename TCharTraits::int_type opbuf_streambuf<TCharTraits, grow_by>::overflow(i
             // Lightly tested
             // DEBT: Not 100% convinced this 'grow_by' template value is the way
             // to go, but it vastly beats hardcoding
-            v1::PbufBase appended(grow_by);
+            v2::Pbuf appended;
+            
+            appended.alloc(grow_by);
 
             // TODO: Might want to check appended.valid() to be sure, though
             // pretty sure concat of a null pbuf will yield similar results in the end
 
+            // concat takes over ref, so we specifically do not free
+            // 'appended'
             this->pbuf_current.concat(appended);
 
             // Now move to this next pbuf and also test

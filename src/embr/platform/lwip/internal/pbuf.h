@@ -17,8 +17,8 @@ protected:
     ESTD_CPP_DEFAULT_CTOR(Pbuf)
 
 public:
-    Pbuf(pointer p) : p(p) {}
-    Pbuf(const Pbuf& copy_from) : p(copy_from.p) {}
+    ESTD_CPP_CONSTEXPR_RET Pbuf(pointer p) : p(p) {}
+    ESTD_CPP_CONSTEXPR_RET Pbuf(const Pbuf& copy_from) : p(copy_from.p) {}
 
     ESTD_CPP_CONSTEXPR_RET Pbuf& operator =(const Pbuf& copy_from)
     {

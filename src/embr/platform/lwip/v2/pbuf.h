@@ -19,6 +19,11 @@ struct Pbuf : embr::lwip::internal::Pbuf
 
     ESTD_CPP_FORWARDING_CTOR(Pbuf)
 
+    pointer alloc(uint16_t length, pbuf_type type = PBUF_RAM)
+    {
+        return p = pbuf_alloc(PBUF_TRANSPORT, length, type);
+    }
+
     pointer alloc(pbuf_layer layer, uint16_t length, pbuf_type type = PBUF_RAM)
     {
         return p = pbuf_alloc(layer, length, type);

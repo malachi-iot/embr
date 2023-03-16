@@ -237,7 +237,7 @@ static void streambuf_output_grow()
     
     out.shrink();
 
-    embr::lwip::v1::PbufBase pbuf(out.pbuf());
+    embr::lwip::internal::Pbuf pbuf(out.pbuf());
 
     auto payload = static_cast<const char*>(pbuf.payload());
 
