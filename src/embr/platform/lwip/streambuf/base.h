@@ -19,10 +19,10 @@ class pbuf_streambuf_base
     typedef typename traits_type::char_type char_type;
 
 public:
-    typedef Pbuf::size_type size_type;
+    typedef internal::Pbuf::size_type size_type;
 
 protected:
-    Pbuf pbuf;
+    v1::Pbuf pbuf;
 
 #ifdef FEATURE_ESTD_IOSTREAM_STRICT_CONST
     char_type* data() { return static_cast<char_type*>(netbuf.data()); }
@@ -53,11 +53,11 @@ class pbuf_current_base
     typedef typename traits_type::char_type char_type;
     typedef typename traits_type::int_type int_type;
 
-    typedef PbufBase::pointer pbuf_pointer;
-    typedef PbufBase::size_type size_type;
+    typedef internal::Pbuf::pointer pbuf_pointer;
+    typedef internal::Pbuf::size_type size_type;
 
 protected:
-    PbufBase pbuf_current;
+    v1::PbufBase pbuf_current;
 
 #ifdef FEATURE_ESTD_IOSTREAM_STRICT_CONST
     char_type* current_data() { return static_cast<char_type*>(netbuf.data()); }

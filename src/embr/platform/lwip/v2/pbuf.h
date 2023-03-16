@@ -6,7 +6,8 @@
 
 namespace embr { namespace lwip {
 
-#ifdef FEATURE_CPP_INLINE_NAMESPACE
+// Only activate this inline once we've fully migrated from v1 pbuf
+#if defined(FEATURE_CPP_INLINE_NAMESPACE) && FEATURE_EMBR_LWIP_PBUF_VERSION == 2
 inline
 #endif
 
