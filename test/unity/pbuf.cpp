@@ -1,4 +1,5 @@
 #include <embr/platform/lwip/iostream.h>
+#include <embr/platform/lwip/v2/pbuf.h>
 #include <embr/streambuf.h>
 
 #include <estd/string.h>
@@ -317,6 +318,19 @@ TEST_CASE("lwip ostream", "[lwip-ios]")
     TEST_ASSERT_EQUAL(s1_size + 1, out.tellp());
     TEST_ASSERT_EQUAL(s1[0], *payload);
 }
+
+
+TEST_CASE("pbuf v2 (core)", "[lwip-pbuf-v2]")
+{
+    embr::lwip::v2::Pbuf pbuf;
+}
+
+
+TEST_CASE("pbuf v2 (scoped)", "[lwip-pbuf-v2-scoped]")
+{
+    embr::internal::scoped_guard<embr::lwip::v2::Pbuf> pbuf(128);
+}
+
 
 #pragma GCC diagnostic pop
 

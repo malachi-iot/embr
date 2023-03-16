@@ -39,42 +39,47 @@ namespace internal {
 template <>
 struct scoped_guard_traits<lwip::v2::Pbuf>
 {
-    typedef int status_type;
+    // As per https://www.nongnu.org/lwip/2_0_x/group__infrastructure__errors.html
+    typedef err_enum_t status_type;
 };
 
 
 
-template <>
-struct scoped_guard<lwip::v2::Pbuf> :
-    scoped_guard_base<lwip::v2::Pbuf, false, SCOPED_GUARD_WARN>
+template <scoped_guard_fail_action fail_action>
+struct scoped_guard<lwip::v2::Pbuf, fail_action> :
+    scoped_guard_base<lwip::v2::Pbuf, false, fail_action>
 {
-    typedef scoped_guard_base<lwip::v2::Pbuf, false, SCOPED_GUARD_WARN> base_type;
+    typedef scoped_guard_base<lwip::v2::Pbuf, false, fail_action> base_type;
 
-    scoped_guard(const scoped_guard& copy_from)
+    ESTD_CPP_CONSTEXPR_RET bool empty() const { return base_type::value().is_null(); }
+    ESTD_CPP_CONSTEXPR_RET bool good() const { return empty() == false; }
+
+    ESTD_CPP_CONSTEXPR_RET scoped_guard(const scoped_guard& copy_from)
     {
         base_type::value_ = copy_from.value_;
         base_type::value().ref();
     }
 
-    scoped_guard(scoped_guard&& move_from)
+#if __cpp_rvalue_references
+    constexpr scoped_guard(scoped_guard&& move_from)
     {
         base_type::value_ = move_from.value_;
         move_from.value_ = nullptr;
     }
+#endif
 
     scoped_guard(lwip::internal::Pbuf::size_type size, pbuf_layer layer = PBUF_TRANSPORT)
     {
-        value().alloc(layer, size);
+        base_type::value().alloc(layer, size);
+        if(empty()) base_type::status(ERR_MEM);
     }
 
     ~scoped_guard()
     {
-        if(value().is_null()) return;
+        if(empty()) return;
 
-        value().free();
+        base_type::value().free();
     }
-
-    ESTD_CPP_CONSTEXPR_RET bool good() const { return !value().is_null(); }
 };
 
 
