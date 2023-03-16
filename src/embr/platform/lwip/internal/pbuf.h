@@ -43,6 +43,11 @@ public:
         pbuf_free(p);
     }
 
+    void ref()
+    {
+        pbuf_ref(p);
+    }
+
     size_type copy_partial(void* s, size_type len, size_type offset) const
     {
         return pbuf_copy_partial(p, s, len, offset);
@@ -81,8 +86,6 @@ public:
         pbuf_put_at(p, offset, data);
     }
 
-    bool valid() const { return p != NULLPTR; }
-
     Pbuf next() const { return p->next; }
 
 #if LWIP_VERSION >= EMBR_LWIP_VERSION(2, 1, 0, 0)
@@ -94,6 +97,8 @@ public:
 #endif
 
     operator pointer() const { return p; }
+
+    bool ESTD_CPP_CONSTEXPR_RET is_null() const { return p == nullptr; }
 };
 
 }}}

@@ -38,6 +38,7 @@ struct PbufBase : lwip::internal::Pbuf
     {
     }
 
+    bool valid() const { return p != NULLPTR; }
 
     // DEBT: Likely we need to consolidate these, given the bitwise
     // nature of constness
