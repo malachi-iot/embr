@@ -15,3 +15,10 @@
 #ifndef FEATURE_EMBR_LWIP_PBUF_VERSION
 #define FEATURE_EMBR_LWIP_PBUF_VERSION 1
 #endif
+
+
+// When enabled, v2 guard_scope pbuf utilizes less powerful internal::Pbuf
+// to gently prohibit access to alloc/free
+#ifndef FEATURE_EMBR_LWIP_PBUF_TIGHT_SCOPE
+#define FEATURE_EMBR_LWIP_PBUF_TIGHT_SCOPE 0
+#endif

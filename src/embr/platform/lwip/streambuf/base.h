@@ -80,7 +80,7 @@ protected:
     }
 
 public:
-    pbuf_current_base(const internal::Pbuf& pbuf) :
+    ESTD_CPP_CONSTEXPR_RET pbuf_current_base(const internal::Pbuf& pbuf) :
         pbuf_current(pbuf)
     {
 

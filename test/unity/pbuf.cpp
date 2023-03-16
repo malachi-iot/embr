@@ -329,8 +329,21 @@ TEST_CASE("pbuf v2 (core)", "[lwip-pbuf-v2]")
 TEST_CASE("pbuf v2 (scoped)", "[lwip-pbuf-v2-scoped]")
 {
     embr::internal::scoped_guard<embr::lwip::v2::Pbuf> pbuf(128);
+    embr::internal::scoped_guard<embr::lwip::v2::Pbuf> pbuf2(pbuf);
 
-    TEST_ASSERT_EQUAL(128, pbuf->total_length());
+    {
+        embr::internal::scoped_guard<embr::lwip::v2::Pbuf> pbuf_mover(std::move(pbuf));
+    
+        TEST_ASSERT_TRUE(pbuf.empty());
+
+        struct pbuf* raw = *pbuf2.get();
+
+        TEST_ASSERT_EQUAL(2, raw->ref);
+        TEST_ASSERT_EQUAL(2, pbuf_mover->ref_count());
+    }
+
+    TEST_ASSERT_EQUAL(128, pbuf2->total_length());
+    TEST_ASSERT_EQUAL(1, pbuf2->ref_count());
 }
 
 

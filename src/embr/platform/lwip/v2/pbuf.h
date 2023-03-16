@@ -34,6 +34,8 @@ struct Pbuf : embr::lwip::internal::Pbuf
     {
         return p = pbuf_alloced_custom(layer, length, type, pc, payload_mem, payload_mem_len);
     }
+
+    void free() { pbuf_free(p); }
 };
 
 }
@@ -50,33 +52,53 @@ struct scoped_guard_traits<lwip::v2::Pbuf>
 };
 
 
+template <>
+struct scoped_guard_traits<lwip::internal::Pbuf>
+{
+    typedef err_enum_t status_type;
+};
 
+
+// DEBT: Experimenting with using internal Pbuf here because it doesn't
+// directly expose alloc/free
 template <scoped_guard_fail_action fail_action>
 struct scoped_guard<lwip::v2::Pbuf, fail_action> :
+#if FEATURE_EMBR_LWIP_PBUF_TIGHT_SCOPE
+    scoped_guard_base<lwip::internal::Pbuf, false, fail_action>
+#else
     scoped_guard_base<lwip::v2::Pbuf, false, fail_action>
+#endif
 {
+#if FEATURE_EMBR_LWIP_PBUF_TIGHT_SCOPE
+    typedef scoped_guard_base<lwip::internal::Pbuf, false, fail_action> base_type;
+#else
     typedef scoped_guard_base<lwip::v2::Pbuf, false, fail_action> base_type;
+#endif
 
     ESTD_CPP_CONSTEXPR_RET bool empty() const { return base_type::value().is_null(); }
     ESTD_CPP_CONSTEXPR_RET bool good() const { return empty() == false; }
 
-    ESTD_CPP_CONSTEXPR_RET scoped_guard(const scoped_guard& copy_from)
+    ESTD_CPP_CONSTEXPR_RET scoped_guard(const scoped_guard& copy_from) :
+        base_type(copy_from.value())
     {
-        base_type::value_ = copy_from.value_;
         base_type::value().ref();
     }
 
 #if __cpp_rvalue_references
-    constexpr scoped_guard(scoped_guard&& move_from)
+    constexpr scoped_guard(scoped_guard&& move_from) :
+        base_type(move_from.value())
     {
-        base_type::value_ = move_from.value_;
         move_from.value_ = nullptr;
     }
 #endif
 
     scoped_guard(lwip::internal::Pbuf::size_type size, pbuf_layer layer = PBUF_TRANSPORT)
     {
+#if FEATURE_EMBR_LWIP_PBUF_TIGHT_SCOPE
+        base_type::value_ = pbuf_alloc(layer, size, PBUF_RAM);
+#else
         base_type::value().alloc(layer, size);
+#endif
         if(empty()) base_type::status(ERR_MEM);
     }
 
@@ -84,7 +106,11 @@ struct scoped_guard<lwip::v2::Pbuf, fail_action> :
     {
         if(empty()) return;
 
+#if FEATURE_EMBR_LWIP_PBUF_TIGHT_SCOPE
+        pbuf_free(base_type::value_);
+#else
         base_type::value().free();
+#endif
     }
 };
 

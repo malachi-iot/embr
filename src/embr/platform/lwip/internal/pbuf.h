@@ -46,15 +46,15 @@ public:
         pbuf_realloc(p, to_size);
     }
 
-    void free()
-    {
-        pbuf_free(p);
-    }
-
+    // DEBT: Not sure I want to call this 'ref' because it complicates
+    // making a p->ref accessor
     void ref()
     {
         pbuf_ref(p);
     }
+
+    // DEBT: Not sure I like this naming
+    ESTD_CPP_CONSTEXPR_RET unsigned ref_count() const { return p->ref; }
 
     size_type copy_partial(void* s, size_type len, size_type offset) const
     {
@@ -94,11 +94,11 @@ public:
         pbuf_put_at(p, offset, data);
     }
 
-    Pbuf next() const { return p->next; }
+    ESTD_CPP_CONSTEXPR_RET Pbuf next() const { return p->next; }
 
 #if LWIP_VERSION >= EMBR_LWIP_VERSION(2, 1, 0, 0)
 #else
-    pbuf_type type() const
+    ESTD_CPP_CONSTEXPR_RET pbuf_type type() const
     {
         return p->type;
     }

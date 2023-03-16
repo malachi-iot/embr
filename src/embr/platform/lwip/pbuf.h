@@ -43,6 +43,8 @@ struct PbufBase : lwip::internal::Pbuf
     // nature of constness
     const_pointer pbuf() const { return p; }
     pointer pbuf() { return p; }
+
+    void free() { pbuf_free(p); }
 };
 
 

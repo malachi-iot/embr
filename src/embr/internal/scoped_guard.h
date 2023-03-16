@@ -92,6 +92,16 @@ protected:
         }
     }
 
+    ESTD_CPP_DEFAULT_CTOR(scoped_guard_base)
+
+//#if __cpp_variadic_templates
+//#else
+    template <class T1>
+    ESTD_CPP_CONSTEXPR_RET scoped_guard_base(T1 p1) :
+        value_(p1)
+    {}
+//#endif
+
 public:
     //operator reference() { return value_; }
     //operator const_reference() const { return value_; }
