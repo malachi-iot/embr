@@ -18,10 +18,10 @@ namespace embr { namespace lwip {
 
 #ifdef FEATURE_CPP_INLINE_NAMESPACE
 // The somewhat automatic behavior of these Pbuf wrappers can be
-// confusing, and the naming as well.  Planning to revise this
-// in v2
-inline namespace v1 {
+// confusing, and the naming as well.  v2 is clearer
+inline
 #endif
+namespace v1 {
 
 // If using this directly, know this is just a thin wrapper around
 // pbuf itself.  No auto-reference magic
@@ -112,16 +112,14 @@ struct Pbuf : PbufBase
     }
 };
 
-#ifdef FEATURE_CPP_INLINE_NAMESPACE
 }   // v1
-#else
-namespace v1 {
 
-typedef embr::lwip::PbufBase PbufBase;
-typedef embr::lwip::Pbuf Pbuf;
 
-}
+#if !defined(FEATURE_CPP_INLINE_NAMESPACE)
+typedef embr::lwip::v1::PbufBase PbufBase;
+typedef embr::lwip::v1::Pbuf Pbuf;
 #endif
+
 
 }}
 

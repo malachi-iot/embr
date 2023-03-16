@@ -10,3 +10,8 @@
 #define FEATURE_EMBR_NETBUF_STREAMBUF 0
 #endif
 
+// Which version of LWiP pbuf helpers we are providing by default (embr specific)
+// NOTE: Not yet used
+#ifndef FEATURE_EMBR_LWIP_PBUF_VERSION
+#define FEATURE_EMBR_LWIP_PBUF_VERSION 1
+#endif
