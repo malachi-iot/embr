@@ -14,7 +14,10 @@ struct Pbuf
 protected:
     pointer p;
 
-    ESTD_CPP_DEFAULT_CTOR(Pbuf)
+    // rpi pico gcc complains that this constexpr constructor
+    // doesn't initialize p
+    //ESTD_CPP_DEFAULT_CTOR(Pbuf)
+    Pbuf() {}
 
 public:
     ESTD_CPP_CONSTEXPR_RET Pbuf(pointer p) : p(p) {}

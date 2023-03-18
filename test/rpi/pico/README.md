@@ -36,10 +36,10 @@ LwIP + USB specific setup
 
 ## Results
 
-|   Date  | Project      | Board                | Chip           | pico-sdk | Result  | Notes
-| ------- | ------------ | -------------------- | -------------- | -------- | ------- | -----
-| 26DEC22 | unity        | Raspberry Pi Pico W  | RP2040         | v1.4.0   | Fail    | Almost works, but one of the LwIP test fails
-| 27DEC22 | udp-echo     | Raspberry Pi Pico W  | RP2040         | v1.4.0   | Pass    | Works in background+polled modes
+|   Date  | Project      | Board                | Chip   | pico-sdk | FreeRTOS | Result  | Notes
+| ------- | ------------ | -------------------- | ------ | -------- | -------- | ------- | -----
+| 26DEC22 | unity        | Raspberry Pi Pico W  | RP2040 | v1.4.0   |          | Fail    | Almost works, but one of the LwIP test fails
+| 27DEC22 | udp-echo     | Raspberry Pi Pico W  | RP2040 | v1.4.0   |          | Pass    | Works in background+polled modes
 
 # References
 

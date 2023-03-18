@@ -29,11 +29,13 @@ struct Pbuf : embr::lwip::internal::Pbuf
         return p = pbuf_alloc(layer, length, type);
     }
 
+#if LWIP_SUPPORT_CUSTOM_PBUF
     pointer alloc(pbuf_layer layer, uint16_t length, pbuf_type type, struct pbuf_custom* pc,
         void* payload_mem, uint16_t payload_mem_len)
     {
         return p = pbuf_alloced_custom(layer, length, type, pc, payload_mem, payload_mem_len);
     }
+#endif
 
     void free() { pbuf_free(p); }
 };
