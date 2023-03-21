@@ -19,6 +19,9 @@ namespace test { namespace v1 {
 
 int init()
 {
+    // DEBT: Our delay-on-start is insufficient, we still don't see this line
+    clog << "embr::support starting" << estd::endl;
+
     stdio_init_all();
 
     if (cyw43_arch_init())

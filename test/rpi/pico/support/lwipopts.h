@@ -7,6 +7,14 @@
 // Common settings used in most of the pico_w examples
 // (see https://www.nongnu.org/lwip/2_1_x/group__lwip__opts.html for details)
 
+// DEBT: Set this explicitly because our lwip loopback tests aren't working well.  I read
+// that if you have a regular adapter enabled, then loopback interfaces automatically work.
+// that doesn't seem to be the case though.  Therefore forcefully enabling here.  Still made
+// no difference.  Keeping because in the future we might be able to do loopback tests on
+// a non-w rpi pico
+#define LWIP_NETIF_LOOPBACK         1
+#define LWIP_LOOPBACK_MAX_PBUFS     4
+
 // allow override in some examples
 #ifndef NO_SYS
 #define NO_SYS                      1

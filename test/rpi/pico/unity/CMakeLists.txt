@@ -1,12 +1,15 @@
 # All references see README.md
 cmake_minimum_required(VERSION 3.13)
 
-set(FEATURE_EMBR_TEST_RPI_PICO_W_POLL 0)
+set(FEATURE_EMBR_TEST_RPI_PICO_W_POLL 1)
 
 # initialize the SDK directly
 include($ENV{PICO_SDK_PATH}/pico_sdk_init.cmake)
 
 project(embr-unity LANGUAGES C CXX)
+
+# DEBT: Put this into ESTD proper, or find equivelant in rpi SDK
+add_compile_definitions(ESTD_MCU_RP2040=1)
 
 include(../setup.cmake)
 #include(wifi.cmake)
@@ -24,8 +27,8 @@ if(PICO_BOARD STREQUAL pico_w)
 add_compile_definitions(EMBR_PICOW_BOARD=${PICO_BOARD})
 endif()
 
-add_subdirectory(${ROOT_DIR}/test/unity unit-tests)
 add_subdirectory(../support support)
+add_subdirectory(${ROOT_DIR}/test/unity unit-tests)
 
 # DEBT: This sneaks in our esp_log.h shim - viable, but confusing
 target_include_directories(unity-tests-lib PRIVATE ../udp-echo)
@@ -45,7 +48,7 @@ target_link_libraries(${PROJECT_NAME}
     support embr estd)
 
 # This line grants "lwipopts.h" visibiliy to unity-tests-lib
-target_link_libraries(unity-tests-lib support)
+target_link_libraries(unity-tests-lib embr::support)
 
 if(PICO_BOARD STREQUAL pico_w)
     target_link_libraries(${PROJECT_NAME} ${PICO_CYW43_ARCH_LIB})

@@ -18,6 +18,15 @@
 #endif
 #endif
 
+#if ESTD_MCU_RP2040
+#include <pico/time.h>
+#include <test/support.h>
+#if FEATURE_EMBR_LWIP_LOOPBACK_TESTS == 0
+#warn Loopback not enabled
+#endif
+#endif
+
+
 static ip_addr_t
     loopback_addr,
     loopback2;        // a different instance, for deeper equality testing
@@ -79,8 +88,11 @@ static void reply_listener(void* arg, struct udp_pcb* _pcb, struct pbuf* p, cons
 #define UNLOCK_TCPIP_CORE()
 #endif
 
+
 static void test_basic_loopback()
 {
+    static const char* TAG = "test_basic_loopback";
+
     embr::experimental::Unique<embr::lwip::udp::Pcb>
         pcb1, pcb2;
 
@@ -88,7 +100,7 @@ static void test_basic_loopback()
 
     // DEBT: span broken, default ctor has an issue
     //estd::span<uint8_t, 4> output;
-    uint8_t output[4];
+    uint8_t output[4] { 255, 254, 253, 252 };
 
     buf.put_at(0, 1);
     buf.put_at(1, 2);
@@ -96,11 +108,36 @@ static void test_basic_loopback()
     pcb1.bind(&loopback_addr, listener_port);
     pcb1.recv(listener);
     pcb2.bind(&loopback_addr, reply_listener_port);
-    pcb2.recv(reply_listener, &output);
+    pcb2.recv(reply_listener, output);
 
     // Works the same whether or not TCPIP code lock feature is enabled
     LOCK_TCPIP_CORE();
+
+    // DEBT: Put some kind of log level into the "fake logger" for rpi and friends
+    //ESP_LOGV(TAG, "sending");
+
+    // TODO: Consider using netif_output directly
     pcb1.send(buf, &loopback_addr, listener_port);
+
+#ifdef ESTD_MCU_RP2040
+    // FIX: Makes no difference, likely because its lwip poll goes against default
+    // interface and not loopback interface.  Furthermore, technically we probably
+    // aren't touching cyw43 hardware during LwIP loopback operations
+    //test::v1::cyw43_poll();
+
+    // This already happens by virtue of cyw43_arch_init and hangs if we do it
+    // here
+    //netif_init();
+    
+    auto lo_netif = netif_find("lo0");
+
+    TEST_ASSERT_NOT_NULL(lo_netif);
+    netif_poll(lo_netif);
+
+    //sleep_ms(500);
+    //test::v1::cyw43_poll();
+    netif_poll(lo_netif);
+#endif
     UNLOCK_TCPIP_CORE();
 
     TEST_ASSERT_EQUAL(11, output[0]);

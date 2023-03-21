@@ -30,16 +30,20 @@ void sleep()
     clog << "Background: " << (counter += 5) << estd::endl;
 }
 
-void lwip_poll()
+void lwip_poll(struct netif* netif)
 {
     static const ip4_addr_t* addr = nullptr;
 
+    // TODO: Consider this netif_poll when PICO_CYW43_ARCH_POLL is set,
+    // if cyw43_arch_poll isn't doing that for us already
+    // netif_poll(netif)
+
     // Guidance from [3]
-    if(addr == nullptr && netif_is_link_up(netif_default))
+    if(addr == nullptr && netif_is_link_up(netif))
     {
-        if(!ip4_addr_isany_val(*netif_ip4_addr(netif_default)))
+        if(!ip4_addr_isany_val(*netif_ip4_addr(netif)))
         {
-            addr = netif_ip4_addr(netif_default);
+            addr = netif_ip4_addr(netif);
 
             char temp[32];
             ip4addr_ntoa_r(addr, temp, sizeof(temp));
@@ -47,6 +51,11 @@ void lwip_poll()
             clog << "Got IP: " << temp << endl;
         }
     }
+}
+
+void lwip_poll()
+{
+    lwip_poll(netif_default);
 }
 
 
