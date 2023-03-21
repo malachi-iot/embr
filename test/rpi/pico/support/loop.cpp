@@ -1,5 +1,8 @@
 #include <estd/chrono.h>
+#include <estd/string.h>
 #include <estd/ostream.h>
+
+#include <embr/platform/lwip/netif.h>
 
 #include <stdio.h>
 #include <pico/stdlib.h>
@@ -30,7 +33,24 @@ void sleep()
     clog << "Background: " << (counter += 5) << estd::endl;
 }
 
-#error
+/* TODO: Be more fine grained than just 'TString' and build it out here
+template <class TString>
+void _ip4addr_to_string(TString& s)
+{
+
+}
+*/
+
+// UNTESTED
+estd::layer1::basic_string<char, 32> to_string(const ip4_addr_t* addr)
+{
+    estd::layer1::basic_string<char, 32> s;
+
+    ip4addr_ntoa_r(addr, s.data(), s.max_size());
+
+    return s;
+}
+
 
 void lwip_poll(embr::lwip::Netif netif)
 {
@@ -43,9 +63,9 @@ void lwip_poll(embr::lwip::Netif netif)
     // Guidance from [3]
     if(addr == nullptr && netif.is_link_up())
     {
-        if(!ip4_addr_isany_val(*netif_ip4_addr(netif)))
+        if(!ip4_addr_isany_val(*netif.ip4_addr()))
         {
-            addr = netif_ip4_addr(netif);
+            addr = netif.ip4_addr();
 
             char temp[32];
             ip4addr_ntoa_r(addr, temp, sizeof(temp));
