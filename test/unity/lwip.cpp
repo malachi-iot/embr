@@ -9,6 +9,7 @@
 #include <embr/platform/lwip/endpoint.h>
 #include <embr/platform/lwip/v1/pbuf.h>
 #include <embr/platform/lwip/v2/pbuf.h>
+#include <embr/platform/lwip/netif.h>
 #include <embr/platform/lwip/udp.h>
 
 // If LwIP loopback capability is present, then consider enabling our loopback tests
@@ -129,14 +130,16 @@ static void test_basic_loopback()
     // here
     //netif_init();
     
-    auto lo_netif = netif_find("lo0");
+    embr::lwip::Netif lo_netif(netif_find("lo0"));
 
-    TEST_ASSERT_NOT_NULL(lo_netif);
-    netif_poll(lo_netif);
+    //TEST_ASSERT_NOT_NULL(lo_netif);
+    TEST_ASSERT_FALSE(lo_netif.is_null());
+
+    lo_netif.poll();
 
     //sleep_ms(500);
     //test::v1::cyw43_poll();
-    netif_poll(lo_netif);
+    lo_netif.poll();
 #endif
     UNLOCK_TCPIP_CORE();
 
