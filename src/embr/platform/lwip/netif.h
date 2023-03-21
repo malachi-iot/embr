@@ -27,6 +27,16 @@ public:
         return netif_loop_output(n, p);
     }
 
+    bool is_link_up() const
+    {
+        return netif_is_link_up(n);
+    }
+
+    const ip4_addr_t* ip4_addr() const
+    {
+        return netif_ip4_addr(n);
+    }
+
     operator pointer() const { return n; }
 };
 

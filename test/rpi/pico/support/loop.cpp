@@ -30,7 +30,9 @@ void sleep()
     clog << "Background: " << (counter += 5) << estd::endl;
 }
 
-void lwip_poll(struct netif* netif)
+#error
+
+void lwip_poll(embr::lwip::Netif netif)
 {
     static const ip4_addr_t* addr = nullptr;
 
@@ -39,7 +41,7 @@ void lwip_poll(struct netif* netif)
     // netif_poll(netif)
 
     // Guidance from [3]
-    if(addr == nullptr && netif_is_link_up(netif))
+    if(addr == nullptr && netif.is_link_up())
     {
         if(!ip4_addr_isany_val(*netif_ip4_addr(netif)))
         {
