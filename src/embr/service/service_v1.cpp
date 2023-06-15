@@ -19,23 +19,29 @@ const char* ServiceEnum::to_string(Substates v)
 {
     switch (v)
     {
-        case Starting:      return "Starting";
-        case Stopping:      return "Stopping";
-        case Dependency:    return "Dependency";
-        case Unstarted:     return "Unstarted";
-        case Sleeping:      return "Sleeping";
+        case Configured:    return "Configured";
+        case Configuring:   return "Configuring";
         case Connecting:    return "Connecting";
         case Degraded:      return "Degraded";
-        case Resetting:     return "Resetting";
-        case Configuring:   return "Configuring";
-        case Configured:    return "Configured";
-        case Waking:        return "Waking";
-        case Running:       return "Running";
+        case Dependency:    return "Dependency";
+        case Disconnecting: return "Disconnecting";
+        case Finished:      return "Finished";
         case Online:        return "Online";
         case Offline:       return "Offline";
+        case Pausing:       return "Pausing";
+        case Paused:        return "Paused";
+        case Resuming:      return "Resuming";
+        case Resetting:     return "Resetting";
+        case Running:       return "Running";
+        case Sleeping:      return "Sleeping";
+        case Starting:      return "Starting";
+        case Stopping:      return "Stopping";
+        case Unstarted:     return "Unstarted";
+        case Waking:        return "Waking";
 
         case ErrConfig:     return "Config Error";
         case ErrMemory:     return "Memory Error";
+        case ErrTimeout:    return "Timeout Error";
         case ErrUnspecified:    return "Unspecified Error";
 
         default:    return "Unknown";
