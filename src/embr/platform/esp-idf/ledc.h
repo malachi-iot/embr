@@ -65,6 +65,11 @@ public:
             target_duty, max_fade_time_ms, fade_mode);
     }
 
+    esp_err_t set_freq(uint32_t freq_hz)
+    {
+        return ledc_set_freq(config_.speed_mode, config_.timer_sel, freq_hz);
+    }
+
     esp_err_t config() const
     {
         return ledc_channel_config(&config_);
