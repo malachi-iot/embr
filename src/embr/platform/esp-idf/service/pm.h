@@ -28,6 +28,9 @@ struct PowerManager : embr::Service
             const esp_sleep_source_t cause;
         };
 
+        // DEBT: Something feels off about notifying 'cold_boot' by way of ESP_SLEEP_WAKEUP_UNDEFINED
+        struct cold_boot {};
+
         struct sleep {};
 
         struct sleep_for : sleep

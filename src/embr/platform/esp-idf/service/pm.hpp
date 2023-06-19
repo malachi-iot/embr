@@ -33,6 +33,7 @@ bool PowerManager::runtime<TSubject, TImpl>::wake()
     switch (e.cause)
     {
         case ESP_SLEEP_WAKEUP_UNDEFINED:
+            base_type::notify(event::cold_boot{});
             return false;
 
         // All others are some kind of light or deep sleep wakeup
