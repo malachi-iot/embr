@@ -1,5 +1,7 @@
 #pragma once
 
+#include "features.h"
+
 #include "../byte.hpp"
 #include "../bits-temp.hpp"
 
@@ -37,14 +39,17 @@ template <>
 struct set_assist<little_endian, byte>
 {
     template <class TForwardIt>
-    constexpr bool static set(unsigned, TForwardIt, byte&)
+#if FEATURE_ESTD_STRICT_BITS_SET
+    static void set(unsigned, TForwardIt, byte&)
     {
-        // Consider aborting because we're not supposed to ever actually call this
-//#if FEATURE_ESTD_STRICT_BITS_SET
-        //abort();
-//#endif
+        abort();
+    }
+#else
+    constexpr static bool set(unsigned, TForwardIt, byte&)
+    {
         return {};
     }
+#endif
 };
 
 
