@@ -17,6 +17,10 @@ struct set_assist<little_endian, TInt>
         constexpr size_t byte_width = sizeof(byte_type) * byte_size();
         unsigned sz = i;
 
+        // runtime logic paths in theory can take us here, so doing specialization
+        // below
+        //static_assert(sizeof(TInt) > 1, "should never get called for byte size int");
+
         // for(; i > byte_width; i -= byte_width)
         while (sz--)
         {
@@ -25,6 +29,24 @@ struct set_assist<little_endian, TInt>
         }
     }
 };
+
+// This shouldn't ever get called, but technically it is callable and
+// compiler (rightly) complains with warning about byte_width being bigger
+// than int during shift
+template <>
+struct set_assist<little_endian, byte>
+{
+    template <class TForwardIt>
+    constexpr bool static set(unsigned, TForwardIt, byte&)
+    {
+        // Consider aborting because we're not supposed to ever actually call this
+//#if FEATURE_ESTD_STRICT_BITS_SET
+        //abort();
+//#endif
+        return {};
+    }
+};
+
 
 // NOTE: Keep this in an internal namespace somewhere
 struct le_setter_base : setter_tag
