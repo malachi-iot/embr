@@ -16,7 +16,7 @@ protected:
     typedef estd::tuple<TObservers...> tuple_type;
 
     // In case of stateless types, we want tuple to help us select a value or a reference
-    template <int index>
+    template <std::size_t index>
     using valref_type = typename estd::tuple_element<index, tuple_type>::valref_type;
 
     tuple_type observers;
@@ -37,17 +37,17 @@ protected:
         notify_helper(observer, e, c, true);
     }
 
-    tuple_base(TObservers&&...observers) :
+    constexpr explicit tuple_base(TObservers&&...observers) :
         observers(std::forward<TObservers>(observers)...)
     {}
 
-    tuple_base() {}
+    tuple_base() = default;
 
 public:
     // TODO: Move these gets out into a tuple base/wrapper
     // NOTE: Consider also making this into a tuple() call
-    template <int index>
-    typename estd::tuple_element<index, tuple_type >::valref_type get()
+    template <std::size_t index>
+    valref_type<index> get()
     {
         return estd::get<index>(observers);
     }
