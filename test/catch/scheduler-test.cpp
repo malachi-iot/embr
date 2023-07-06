@@ -389,10 +389,9 @@ TEST_CASE("scheduler test", "[scheduler]")
             SECTION("self contained")
             {
                 FunctorProvider provider;
-                FunctorProvider::function_type adder(&provider.adder_model);
                 FunctorProvider::function_type subtractor(&provider.subtractor_model);
 
-                scheduler.schedule(1, adder);
+                scheduler.schedule(1, &provider.adder_model);
                 scheduler.schedule(2, subtractor);
                 scheduler.schedule(5, subtractor);
 

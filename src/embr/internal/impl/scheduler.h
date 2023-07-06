@@ -360,15 +360,24 @@ struct Function : ReferenceBase<TTimePoint>
 
     struct control_structure
     {
+        // DEBT: Add constness, which likely will necessitate explicit move assignment/constructors
+
         time_point wake;
 
         function_type func;
 
-        control_structure(time_point wake, function_type func) :
+        constexpr control_structure(time_point wake, typename function_type::model_base* model) :
+            wake(wake),
+            func(model) {}
+
+        constexpr control_structure(time_point wake, const function_type& func) :
             wake(wake),
             func(func) {}
 
         // Don't give anybody false hope that we're gonna housekeep function_type
+        // NOTE: function itself now deletes its move constructor, so this is superfluous.
+        // Keeping anyway because something feels slightly off about removing && - I think
+        // because "bug boy" func can basically be null
         control_structure(time_point wake, function_type&& func) = delete;
 
         // DEBT: See Item2Traits
