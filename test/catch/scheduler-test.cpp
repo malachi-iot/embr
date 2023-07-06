@@ -100,6 +100,46 @@ struct SchedulerObserver
     }
 };
 
+
+struct FunctorProvider
+{
+    using this_type = FunctorProvider;
+    using function_type = FunctorTraits::function_type;
+
+    int value = 0;
+
+    struct adder
+    {
+        this_type* const this_;
+
+        template <class TTimePoint>
+        void operator()(TTimePoint* wake, TTimePoint current_time) const
+        {
+            this_->value += 2;
+        }
+
+    };
+
+    struct subtractor
+    {
+        this_type* const this_;
+
+        template <class TTimePoint>
+        void operator()(TTimePoint* wake, TTimePoint current_time) const
+        {
+            this_->value -= 1;
+        }
+    };
+
+    function_type::model<adder> adder_model;
+    function_type::model<subtractor> subtractor_model;
+
+    FunctorProvider() :
+        adder_model{adder{this}},
+        subtractor_model(subtractor{this})
+    {}
+};
+
 TEST_CASE("scheduler test", "[scheduler]")
 {
     std::bitset<32> arrived;
@@ -345,6 +385,29 @@ TEST_CASE("scheduler test", "[scheduler]")
                 REQUIRE(!arrived[14]);
                 REQUIRE(arrived[15]);
                 REQUIRE(!arrived[16]);
+            }
+            SECTION("self contained")
+            {
+                FunctorProvider provider;
+                FunctorProvider::function_type adder(&provider.adder_model);
+                FunctorProvider::function_type subtractor(&provider.subtractor_model);
+
+                scheduler.schedule(1, adder);
+                scheduler.schedule(2, subtractor);
+                scheduler.schedule(5, subtractor);
+
+                scheduler.process(0);
+                REQUIRE(provider.value == 0);
+                scheduler.process(1);
+                REQUIRE(provider.value == 2);
+                scheduler.process(2);
+                REQUIRE(provider.value == 1);
+                scheduler.process(3);
+                REQUIRE(provider.value == 1);
+                scheduler.process(6);
+                REQUIRE(provider.value == 0);
+
+                REQUIRE(scheduler.empty());
             }
         }
         SECTION("stateful")
