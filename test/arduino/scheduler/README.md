@@ -2,14 +2,21 @@
 
 ## Results
 
-|   Date  | Vendor    | Platform   | Result | Notes |
-| ------- | --------- | ---------- | ------ | ----- |
-| 21APR22 | Espressif | ESP32S     | Pass   | |
-| 21APR22 | Microchip | AVR 32u4   | Fail   | C++ stdlib dependencies required |
-| 21APR22 | Microchip | m0         | Pass   | |
+|   Date  | Vendor    | Platform      | Result    | Notes |
+| ------- | --------- | ----------    | ------    | ----- |
+| 21APR22 | Espressif | ESP32S        | Pass      |
+| 07JUL23 | Microchip | AVR 32u4      | Compiles  |
+| 07JUL23 | Microchip | AVR attiny85  | Compiles  |
+| 21APR22 | Microchip | m0            | Pass      |
 
-## Notes
+## Footprints
 
-### m0
+Recorded on date matching above results table
 
-Uses ~3500 bytes RAM and 16388 flash
+| Vendor    | Platform      | RAM    | Flash |
+| --------- | ----------    | ------ | ----- |
+| Espressif | ESP32S        |        |
+| Microchip | AVR 32u4      | 215b   | 5174b
+| Microchip | AVR attiny85  | 143b   | 2208b
+| Microchip | m0            | 3.5kb  | 16388b
+

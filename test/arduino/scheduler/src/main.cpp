@@ -7,15 +7,24 @@
 #include <estd/queue.h>
 #include <estd/thread.h>
 
+// DEBT: Not sure how I'm feeling about it.  I removed steady clock alias a little
+// while ago from estd in this context.  Do I miss it?
+namespace estd { namespace chrono {
+
+using steady_clock = arduino_clock;
+
+}}
+
 #include <embr/observer.h>
 #include <embr/platform/arduino/scheduler.h>
+#include <embr/scheduler.hpp>
 
 using FunctorTraits = embr::experimental::ArduinoSchedulerTraits;
 using time_point = FunctorTraits::time_point;
 
 CONSTEXPR int LED_PIN = LED_BUILTIN;
 
-embr::internal::layer1::Scheduler<FunctorTraits, 5> scheduler;
+embr::internal::layer1::Scheduler<5, FunctorTraits> scheduler;
 
 #ifndef ENABLE_SERIAL
 #define ENABLE_SERIAL 1
