@@ -108,7 +108,7 @@ protected:
     struct provider<estd::integral_constant<T, t> >
     {
         // DEBT: estd doesn't have remove_pointer just yet
-        typedef typename std::remove_pointer<T>::type& type;
+        typedef typename estd::remove_pointer<T>::type& type;
 
         static constexpr type value()
         {
@@ -124,7 +124,7 @@ protected:
     template <class T, T t>
     struct provider<std::integral_constant<T, t> >
     {
-        typedef typename std::remove_pointer<T>::type& type;
+        typedef typename estd::remove_pointer<T>::type& type;
 
         static type value() { return *t; }
     };

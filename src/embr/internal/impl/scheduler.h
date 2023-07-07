@@ -1,5 +1,7 @@
 #pragma once
 
+#include <estd/internal/macro/push.h>
+
 namespace embr { namespace internal {
 
 // DEBT: These need to live in 'internal/scheduler.h'
@@ -275,7 +277,7 @@ template <class T, class TTimePoint>
 struct Reference<T, TTimePoint, typename estd::enable_if<estd::is_pointer<T>::value>::type> : ReferenceBase<TTimePoint>
 {
     typedef ReferenceBase<TTimePoint> base_type;
-    typedef typename std::remove_pointer<T>::type item_type;
+    typedef typename estd::remove_pointer<T>::type item_type;
     typedef T value_type;
 
     typedef typename base_type::time_point time_point;
@@ -408,3 +410,5 @@ struct Function : ReferenceBase<TTimePoint>
 }}
 
 }}
+
+#include <estd/internal/macro/pop.h>

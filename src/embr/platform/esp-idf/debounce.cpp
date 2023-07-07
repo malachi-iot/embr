@@ -1,5 +1,7 @@
 //#include <estd/map.h>
 
+#ifdef ESP_PLATFORM
+
 // DEBT: Don't want to do this dynamic alloc version, though not SO bad because it's the
 // "alloc once" category
 #include <map>
@@ -346,3 +348,5 @@ void held_callback(TimerHandle_t xTimer)
 
 
 }}
+
+#endif

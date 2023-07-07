@@ -1,3 +1,5 @@
+#ifdef ESP_PLATFORM
+
 #include "esp_log.h"
 
 #include "timer-scheduler.hpp"
@@ -32,3 +34,4 @@ void timer_scheduler_init(Timer& timer, uint32_t divider, timer_isr_t isr_handle
 
 }}
 
+#endif

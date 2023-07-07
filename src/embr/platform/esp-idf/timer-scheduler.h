@@ -153,7 +153,7 @@ public:
 
 
 template <class T, int divider_ = -1,
-    typename TTimePoint = typename std::remove_pointer<T>::type::time_point,
+    typename TTimePoint = typename estd::remove_pointer<T>::type::time_point,
     class TReference = embr::internal::scheduler::impl::Reference<T, TTimePoint> >
 struct Timer;
 
