@@ -21,6 +21,7 @@ using steady_clock = arduino_clock;
 
 using FunctorTraits = embr::experimental::ArduinoSchedulerTraits;
 using time_point = FunctorTraits::time_point;
+using function_type = FunctorTraits::function_type;
 
 CONSTEXPR int LED_PIN = LED_BUILTIN;
 
@@ -30,6 +31,11 @@ embr::internal::layer1::Scheduler<5, FunctorTraits> scheduler;
 #define ENABLE_SERIAL 1
 #endif
 
+// On attiny85 saves 2 bytes
+#ifndef ENABLE_DIRECT_MODEL
+#define ENABLE_DIRECT_MODEL 0
+#endif
+
 void setup()
 {
 #if ENABLE_SERIAL
@@ -37,7 +43,11 @@ void setup()
 #endif
 
     static bool on = false;
+#if ENABLE_DIRECT_MODEL
+    static auto m = function_type::make_model([](time_point* wake, time_point current)
+#else
     static auto f = FunctorTraits::make_function([](time_point* wake, time_point current)
+#endif
     {
         digitalWrite(LED_PIN, on ? LOW : HIGH);
         on = !on;
@@ -53,7 +63,11 @@ void setup()
     });
 #endif
 
+#if ENABLE_DIRECT_MODEL
+    scheduler.schedule_now(&m);
+#else
     scheduler.schedule_now(f);
+#endif
 #if ENABLE_SERIAL
     scheduler.schedule_now(f2);
 #endif   

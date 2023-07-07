@@ -165,7 +165,18 @@ struct TimePointTraits;
 template <typename TTimePoint = void, class TTimePointTraits = TimePointTraits<TTimePoint> >
 struct ReferenceBase;
 
+// DEBT: Phase this out in favor of below tag::Reference
 struct ReferenceBaseTag {};
+
+namespace tag {
+
+struct Function {};
+
+struct Traditional {};
+
+struct Reference {};
+
+}
 
 
 
@@ -213,7 +224,8 @@ struct TimePointTraits<estd::chrono::time_point<TClock, TDuration> >
 
 
 template <typename TTimePoint, class TTimePointTraits>
-struct ReferenceBase : ReferenceBaseBase, ReferenceBaseTag
+struct ReferenceBase : ReferenceBaseBase, ReferenceBaseTag,
+    tag::Reference
 {
     typedef TTimePointTraits time_point_traits;
     typedef typename time_point_traits::time_point time_point;
@@ -239,8 +251,13 @@ struct ReferenceBase : ReferenceBaseBase, ReferenceBaseTag
     };
 };
 
+// DEBT: move to fwd area
 template <class T, class TTimePoint = decltype(T().event_due()), class Enabled = void>
 struct Reference;
+
+// TODO: Create control structure concept 
+#if __cpp_concepts
+#endif
 
 /// Reference base implementation for scheduler impl
 /// \tparam T consider this the system + app data structure
@@ -257,7 +274,7 @@ struct Reference<T, TTimePoint, typename estd::enable_if<!estd::is_pointer<T>::v
     /// Retrieve specialized wake up time from T
     /// \param value
     /// \return
-    static time_point get_time_point(const T& value)
+    static ESTD_CPP_CONSTEXPR_RET time_point get_time_point(const T& value)
     {
         return value.event_due();
     }
@@ -286,7 +303,7 @@ struct Reference<T, TTimePoint, typename estd::enable_if<estd::is_pointer<T>::va
     /// Retrieve specialized wake up time from T
     /// \param value
     /// \return
-    static time_point get_time_point(const T value)
+    static ESTD_CPP_CONSTEXPR_RET time_point get_time_point(const T value)
     {
         return value->event_due();
     }
@@ -302,7 +319,8 @@ struct Reference<T, TTimePoint, typename estd::enable_if<estd::is_pointer<T>::va
 };
 
 
-struct TraditionalBase : ReferenceBase<unsigned long>
+struct TraditionalBase : ReferenceBase<unsigned long>,
+    tag::Traditional
 {
     typedef ReferenceBase<unsigned long> base_type;
     typedef typename base_type::time_point time_point;
@@ -318,6 +336,7 @@ struct TraditionalBase : ReferenceBase<unsigned long>
     };
 };
 
+// DEBT: Move to fwd area
 template <bool is_inline>
 struct Traditional;
 
@@ -349,7 +368,8 @@ struct Traditional<false> : TraditionalBase
 
 
 template <typename TTimePoint>
-struct Function : ReferenceBase<TTimePoint>
+struct Function : ReferenceBase<TTimePoint>,
+    tag::Function
 {
     typedef TTimePoint time_point;
     typedef estd::detail::function<void(time_point*, time_point)> function_type;
@@ -385,7 +405,7 @@ struct Function : ReferenceBase<TTimePoint>
         // DEBT: See Item2Traits
         control_structure() = default;
 
-        bool match(const function_type& f)
+        bool match(const function_type& f) const
         {
             // DEBT: do operator overload for estd::detail::function itself,
             // although exposing a const model isn't totally terrible
@@ -395,7 +415,7 @@ struct Function : ReferenceBase<TTimePoint>
 
     typedef control_structure value_type;
 
-    static time_point get_time_point(const value_type& v) { return v.wake; }
+    constexpr static time_point get_time_point(const value_type& v) { return v.wake; }
 
     static bool process(value_type& v, time_point current_time)
     {
