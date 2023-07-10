@@ -14,7 +14,7 @@ struct descriptor
 };
 ```
 
-Document v0.2
+Document v0.3
 
 ## Introduction
 
@@ -29,12 +29,16 @@ a compile time indicator of the `bitpos` and `length` involved
 
 | Term                      | Description                                                           |
 |---------------------------|-----------------------------------------------------------------------|
+| bit material              | Specific bit range composing the target value of encode or decode     |
+| excluded bits             | Bits within bytes housing bit material which are *not* material       |
 | lsb_to_msb                | Indicates that bit material begins at lsb and ends at msb (inclusive) |
 | msb_to_lsb                | Indicates that bit material begins at msb and ends at lsb (inclusive) |
 | bitpos                    | Indicates where within a byte bit material begins.  e.g. bitpos 2 in `lsb_to_msb` could describe 0b111111xx |
 | `x` in bit representation | means bits excluded based on `bitpos`                                 |
 | `.` in bit representation | means bits excluded based on `length`                                 |
-| outside bits              | bits excluded in based on either `bitpos` or `length`                  |
+| inside bits               | Material bits in a particular byte.  Associated to `bitpos` or `length`  |
+| outside bits              | Excluded bits in a particular byte.  Associated to `bitpos` or `length`  |
+
 
 For this document, bits to the left are considered more significant.  i.e.
 

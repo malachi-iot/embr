@@ -1,4 +1,12 @@
+/**
+ * References:
+ *
+ * 1. Reserved
+ * 2. bits/README.md v0.3
+ */
 #define FEATURE_EMBR_WORD_STRICTNESS 0
+
+#include <estd/algorithm.h>
 
 #include <embr/bits/word.hpp>
 #if __cplusplus >= 201103L
@@ -59,6 +67,32 @@ void test_getter_1()
 
     TEST_ASSERT_EQUAL(0x3412, v);
 }
+
+void test_setter_1a()
+{
+    byte bytes[8] = {};
+
+    // Mates to [2] 2.1.3.1.
+    constexpr uint16_t v = 0x5A;        // 1011010
+
+    setter<little_endian, lsb_to_msb>::set<4, 7>(bytes, v);
+
+    TEST_ASSERT_EQUAL(0xA0, bytes[0]);  // 1010xxxx
+    TEST_ASSERT_EQUAL(0x05, bytes[1]);  // .....101
+
+    estd::fill_n(bytes, sizeof(bytes), 0xFF);
+
+    setter<little_endian, lsb_to_msb>::set<4, 7>(bytes, v);
+
+    TEST_ASSERT_EQUAL(0xAF, bytes[0]);  // 10101111
+    TEST_ASSERT_EQUAL(0xFD, bytes[1]);  // 11111101
+}
+
+void test_setter_1b()
+{
+    // Mates to [2] 2.1.3.1.
+    //constexpr uint16_t v = 0x5A;        // 1011010
+}
 #endif
 
 }
@@ -73,5 +107,7 @@ void test_bits()
     RUN_TEST(bits::test_word_2);
 #if __cplusplus >= 201103L
     RUN_TEST(bits::test_getter_1);
+    RUN_TEST(bits::test_setter_1a);
+    RUN_TEST(bits::test_setter_1b);
 #endif
 }
