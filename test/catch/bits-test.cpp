@@ -158,8 +158,48 @@ TEST_CASE("bits2")
         }
         SECTION("little endian")
         {
-            // [2] 2.1.3
-            SECTION("decoder, lsb_to_msb")
+            SECTION("encoder, lsb_to_msb")
+            // [2] 2.1.3.1
+            {
+                bits::encoder<bits::little_endian, bits::lsb_to_msb> e{raw};
+
+                estd::fill_n(raw, sizeof(raw), 0xFF);
+
+                SECTION("16-bit, bitpos=0, length=12")
+                {
+                    constexpr uint16_t v = 0x123;
+
+                    e.set(0, bits::descriptor{0, 12}, v);
+
+                    REQUIRE(raw[0] == 0x23);        // First 8 bits, since we're LE
+                    REQUIRE((raw[1] & 0xF) == 0x1); // Last 4 bits, filtering out partial 0xFF
+
+                    REQUIRE(raw[1] == 0xF1);        // Checking that partial 0xFF is present
+                    REQUIRE(raw[2] == 0xFF);        // Checking that unrelated byte is untouched
+                }
+                SECTION("16-bit, bitpos=6, length=10")
+                {
+                    // This particular test matches J1939-71 PGN64982 10-bit requirement
+                    // "The eight most significant bits are transmitted in the second byte,
+                    //  with the most significant bit at bit 8. The two least significant bits are transmitted in the first byte in bit positions 7 and 8,
+                    //  with the most significant of the two bits at bit 8."
+
+                    constexpr uint16_t v = 0x123;       // 01 0010 0011
+                    constexpr uint16_t msb_8 = 0x48;    // 01 0010 00 -> 0100 1000
+                    constexpr uint16_t lsb_2 = 3;       // 0011 -> 11
+
+                    e.set(0, bits::descriptor{6, 10}, v);
+
+                    // Works A-OK
+                    REQUIRE((raw[0] >> 6) == lsb_2);
+                    REQUIRE(raw[1] == msb_8);
+
+                    // FIX: Here is our bug
+                    REQUIRE(raw[2] == 0xFF);
+                }
+            }
+            // [2] 2.1.3.2
+            SECTION("decoder, lsb_to_msb, rd=msb_to_lsb")
             {
                 bits::decoder<bits::little_endian, bits::lsb_to_msb, bits::msb_to_lsb> d{le_example1};
 
@@ -194,8 +234,8 @@ TEST_CASE("bits2")
                     REQUIRE(v == 0x12345678);
                 }
             }
-            // [2] 2.1.3
-            SECTION("encoder, lsb_to_msb")
+            // [2] 2.1.3.2
+            SECTION("encoder, lsb_to_msb, rd=msb_to_lsb")
             {
                 bits::encoder<bits::little_endian, bits::lsb_to_msb, bits::msb_to_lsb> e{raw};
 
