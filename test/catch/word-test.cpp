@@ -29,6 +29,10 @@ TEST_CASE("word type test", "[word]")
     {
         embr::word<1> v{true};
         typedef estd::numeric_limits<decltype(v)> limits;
+
+        REQUIRE(estd::is_same<typename limits::type, uint8_t>::value);
+        REQUIRE(limits::max() == 1);
+        REQUIRE(v.value() == 1);
     }
     SECTION("16 bit")
     {

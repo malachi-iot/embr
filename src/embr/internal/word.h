@@ -96,9 +96,9 @@ protected:
 #if FEATURE_EMBR_WORD_STRICTNESS
     static constexpr bool do_init_masking() { return any<strict, word_strictness::init_masking>(); }
 
-    constexpr word_base(const type& value) : value_
+    explicit constexpr word_base(const type& value) : value_
         {do_init_masking() ? mask(value) : value} {}
-    constexpr word_base(type&& value) : value_
+    explicit constexpr word_base(type&& value) : value_
         {do_init_masking() ? mask(value) : value} {}
 #else
     ESTD_CPP_CONSTEXPR_RET word_base(const type& value) : value_(value) {}

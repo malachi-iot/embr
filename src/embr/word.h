@@ -90,7 +90,7 @@ public:
     EMBR_CPP_DEFAULT_CTOR(word)
     ESTD_CPP_CONSTEXPR_RET word(const type& value) : base_type(value) {}
 #ifdef __cpp_rvalue_reference
-    constexpr word(type&& value) : base_type(std::move(value)) {}
+    constexpr word(type&& value) : base_type(std::forward<type>(value)) {}
 #endif
 
     // DEBT: This can be optimized by skipping any masking altogether when the source
@@ -129,7 +129,7 @@ public:
         , class Enabled = typename estd::enable_if<(bits_rhs <= bits)>::type
 #endif
         >
-    inline word& operator +=(word<bits_rhs> r)
+    word& operator +=(const word<bits_rhs, is_signed, strict>& r)
     {
         base_type::value_ += r.cvalue();
         return *this;
@@ -147,12 +147,12 @@ public:
     }
 
 
-    template <size_t bits_rhs
+    template <size_t bits_rhs, word_strictness strict2
 #ifdef FEATURE_CPP_DEFAULT_TARGS
         , class Enabled = typename estd::enable_if<(bits_rhs <= bits)>::type
 #endif
         >
-    inline word& operator &=(word<bits_rhs> r)
+    inline word& operator &=(word<bits_rhs, is_signed, strict2> r)
     {
         base_type::value_ &= r.cvalue();
         return *this;
@@ -167,17 +167,28 @@ public:
     }
 
 
-    template <size_t bits_rhs
+    template <size_t bits_rhs, word_strictness strict2
 #ifdef FEATURE_CPP_DEFAULT_TARGS
         , class Enabled = typename estd::enable_if<(bits_rhs <= bits)>::type
 #endif
         >
-    inline word& operator |=(word<bits_rhs> r)
+    word& operator |=(const word<bits_rhs, is_signed, strict2>& r)
     {
         base_type::value_ |= r.cvalue();
         return *this;
     }
 
+
+    template <size_t bits_rhs, word_strictness strict2
+#ifdef FEATURE_CPP_DEFAULT_TARGS
+        , class Enabled = typename estd::enable_if<(bits_rhs <= bits)>::type
+#endif
+    >
+    word& operator ^=(const word<bits_rhs, is_signed, strict2>& r)
+    {
+        base_type::value_ ^= r.cvalue();
+        return *this;
+    }
 
     template <size_t bits_rhs
 #ifdef FEATURE_CPP_DEFAULT_TARGS
@@ -209,6 +220,7 @@ public:
         return word((type) (base_type::value_ & r.value()));
     }
 
+    // DEBT: May be an issue, should only flip active bits
     ESTD_CPP_CONSTEXPR_RET word operator ~() const { return word(~base_type::value_); }
 };
 

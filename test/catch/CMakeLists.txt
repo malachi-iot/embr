@@ -16,6 +16,7 @@ set(SOURCE_FILES
     main.cpp
     basics-test.cpp
     bits-test.cpp
+    bitset-test.cpp
     debounce-test.cpp
     observer-test.cpp
     experimental-test.cpp
