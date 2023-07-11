@@ -1,6 +1,15 @@
 #include <estd/string.h>
+#include <estd/type_traits.h>
 
 #include "../word.h"
+
+#if __cpp_exceptions
+// DEBT: Since for optional and variant we already made our own versions, it's time
+// we corralled them and "out_of_range" here
+//#include <estd/stdexcept.h>
+
+#include <stdexcept>
+#endif
 
 // DEBT: This ultimately is going to live in estd.  Placing here for now because
 // low-level 'word' that bitset depends on also needs to move to estd, but hasn't yet
@@ -9,7 +18,7 @@ namespace estd {
 
 // DEBT: We'll need to specialize for environments whose N exceeds maximum
 // integer size
-template <std::size_t N>
+template <size_t N>
 class bitset
 {
     // Unsigned with no strictness enforcement since we are implicitly
@@ -19,8 +28,13 @@ class bitset
     word_type data_;
     using limits = numeric_limits<word_type>;
 
-    static constexpr bool assert_in_range(std::size_t pos)
+    static bool assert_in_range(size_t pos)
     {
+#if __cpp_exceptions
+        if(pos >= N) throw std::out_of_range("pos >= N");
+#else
+        if(pos >= N) abort();
+#endif
         return {};
     }
 
@@ -33,10 +47,14 @@ public:
         data_(val)
     {}
 
-    ESTD_CPP_CONSTEXPR_RET bool operator[](std::size_t pos) const
+    ESTD_CPP_CONSTEXPR_RET bool operator[](size_t pos) const
     {
-        //assert_in_range(pos);
         return data_.cvalue() >> pos & 1;
+    }
+
+    ESTD_CPP_CONSTEXPR_RET bool test(size_t pos) const
+    {
+        return (assert_in_range(pos), operator[](pos));
     }
 
     bitset& set(std::size_t pos)
@@ -46,17 +64,30 @@ public:
         return *this;
     }
 
-    bitset& reset(std::size_t pos)
+    bitset& reset(size_t pos)
     {
         assert_in_range(pos);
         data_ &= ~word_type(1 << pos);
         return *this;
     }
 
-    bitset& set(std::size_t pos, bool value)
+    bitset& set(size_t pos, bool value)
     {
         assert_in_range(pos);
         return value ? set(pos) : reset(pos);
+    }
+
+    template <size_t pos, enable_if_t<pos < N, bool> = true>
+    bitset& set()
+    {
+        data_ |= word_type(1 << pos);
+        return *this;
+    }
+
+    template <size_t pos, enable_if_t<pos < N, bool> = true>
+    constexpr bool test() const
+    {
+        return (data_.cvalue() >> pos) & 1;
     }
 
     bitset& flip(std::size_t pos)
