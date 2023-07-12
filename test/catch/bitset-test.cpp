@@ -1,11 +1,14 @@
 #include <catch2/catch.hpp>
 
+#include <estd/sstream.h>
 #include <embr/internal/bitset.h>
 
 using namespace estd;
+using ostringstream = experimental::ostringstream<128>;
 
 TEST_CASE("bitset test", "[bitset]")
 {
+    ostringstream out;
     bitset<17> b;
     bitset<5> b2{2};
 
@@ -58,6 +61,30 @@ TEST_CASE("bitset test", "[bitset]")
         SECTION("std style")
         {
             REQUIRE(b2.to_string() == "10010");
+        }
+    }
+    SECTION("insertion operator")
+    {
+        b2.set(3);
+
+        out << b2;
+
+        REQUIRE(out.rdbuf()->str() == "01010");
+    }
+    SECTION("to_ulong")
+    {
+        unsigned long v = b2.to_ulong();
+
+        REQUIRE(v == 0x02);
+
+        try
+        {
+            b.to_unsigned<uint16_t>();
+            FAIL("Expected exception");
+        }
+        catch(const std::overflow_error&)
+        {
+
         }
     }
     SECTION("non standard")

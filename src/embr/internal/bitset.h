@@ -1,3 +1,4 @@
+#include <estd/iosfwd.h>
 #include <estd/string.h>
 #include <estd/type_traits.h>
 
@@ -37,6 +38,33 @@ class bitset
 #endif
         return {};
     }
+
+    // DEBT: This could be optimized a ton of different ways
+    // enable_if, concept or even constexpr if
+    template <typename TInt>
+    static bool assert_bit_width()
+    {
+        if(numeric_limits<TInt>::bits < N)
+        {
+#if __cpp_exceptions
+            // DEBT: do estd overflow error
+            throw std::overflow_error("bitset bit count exceeds integer bit count");
+#else
+            abort();
+#endif
+        }
+
+        return {};
+    }
+
+#if UNIT_TESTING
+public:
+    template <class TInt>
+    ESTD_CPP_CONSTEXPR_RET TInt to_unsigned() const
+    {
+        return (assert_bit_width<TInt>(), data_.value());
+    }
+#endif
 
 public:
     ESTD_CPP_CONSTEXPR_RET bitset() : data_(0) {}
@@ -125,8 +153,9 @@ public:
         return N;
     }
 
-    template <class TImpl>
-    void to_string(estd::internal::dynamic_array<TImpl>& a, char zero = '0', char one = '1')
+    template <class TImpl, class TChar = typename TImpl::value_type>
+    void to_string(estd::internal::dynamic_array<TImpl>& a,
+        TChar zero = TChar('0'), TChar one = TChar('1'))
     {
         // DEBT: Better way to do this would be to preallocate N from a,
         // then index backwards via 'remaining'
@@ -159,6 +188,53 @@ public:
         to_string(s, zero, one);
         return s;
     }
+
+    ESTD_CPP_CONSTEXPR_RET bool operator==(const bitset& rhs) const NOEXCEPT
+    {
+        return data_ == rhs.data_;
+    }
+
+    bitset& operator|=(const bitset& other) NOEXCEPT
+    {
+        data_ |= other.data_;
+        return *this;
+    }
+
+    ESTD_CPP_CONSTEXPR_RET unsigned long to_ulong() const
+    {
+        return to_unsigned<unsigned long>();
+    }
+
+    ESTD_CPP_CONSTEXPR_RET unsigned long long to_ullong() const
+    {
+        return to_unsigned<unsigned long long>();
+    }
+
+    template <class TStreambuf, class TBase, size_t N2>
+    friend detail::basic_ostream<TStreambuf, TBase>& operator <<(
+        detail::basic_ostream<TStreambuf, TBase>&,
+        const bitset<N2>&);
+
 };
+
+template <class TStreambuf, class TBase, size_t N>
+detail::basic_ostream<TStreambuf, TBase>& operator <<(
+    detail::basic_ostream<TStreambuf, TBase>& out,
+    const bitset<N>& x)
+{
+    typedef typename bitset<N>::word_type::type type;
+    unsigned remaining = N;
+    // DEBT: Consider optimizing by making mask a constexpr and shifting v
+    // upward
+    const type v = x.data_.value();
+    type mask = 1 << (N - 1);
+
+    while(remaining--)
+    {
+        out.put((mask & v) ? '1' : '0');
+        mask >>= 1;
+    }
+    return out;
+}
 
 }

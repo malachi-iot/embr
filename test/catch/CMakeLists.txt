@@ -5,7 +5,7 @@ project(embr-unit-test VERSION 1.0.0)
 # necessary for Catch2
 set(CMAKE_CXX_STANDARD 11)
 
-add_definitions(-DUNIT_TESTING)
+add_definitions(-DUNIT_TESTING=1)
 
 include(../../tools/cmake/setvars.cmake)
 
