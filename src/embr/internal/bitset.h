@@ -17,6 +17,38 @@
 
 namespace estd {
 
+#if __GNUC__
+// NOTE: Keep an eye on
+// https://stackoverflow.com/questions/52161596/why-is-builtin-popcount-slower-than-my-own-bit-counting-function
+template <class T>
+constexpr unsigned popcount(T x) noexcept;
+
+constexpr unsigned popcount(unsigned char x) noexcept
+{
+    return __builtin_popcount(x);
+}
+
+constexpr unsigned popcount(unsigned short x) noexcept
+{
+    return __builtin_popcount(x);
+}
+
+constexpr unsigned popcount(unsigned x) noexcept
+{
+    return __builtin_popcount(x);
+}
+
+constexpr unsigned popcount(unsigned long x) noexcept
+{
+    return __builtin_popcountl(x);
+}
+
+constexpr unsigned popcount(unsigned long long x) noexcept
+{
+    return __builtin_popcountll(x);
+}
+#endif
+
 // DEBT: We'll need to specialize for environments whose N exceeds maximum
 // integer size
 template <size_t N>
@@ -153,6 +185,13 @@ public:
         return N;
     }
 
+#if __GNUC__
+    constexpr size_t count() const
+    {
+        return popcount(data_.cvalue());
+    }
+#endif
+
     template <class TImpl, class TChar = typename TImpl::value_type>
     void to_string(estd::internal::dynamic_array<TImpl>& a,
         TChar zero = TChar('0'), TChar one = TChar('1'))
@@ -224,15 +263,13 @@ detail::basic_ostream<TStreambuf, TBase>& operator <<(
 {
     typedef typename bitset<N>::word_type::type type;
     unsigned remaining = N;
-    // DEBT: Consider optimizing by making mask a constexpr and shifting v
-    // upward
-    const type v = x.data_.value();
-    type mask = 1 << (N - 1);
+    type v = x.data_.value();
+    constexpr type mask = 1 << (N - 1);
 
     while(remaining--)
     {
         out.put((mask & v) ? '1' : '0');
-        mask >>= 1;
+        v <<= 1;
     }
     return out;
 }

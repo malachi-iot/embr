@@ -87,6 +87,11 @@ TEST_CASE("bitset test", "[bitset]")
 
         }
     }
+    SECTION("count")
+    {
+        REQUIRE(b.count() == 0);
+        REQUIRE(b2.count() == 1);
+    }
     SECTION("non standard")
     {
         b.set<1>();
