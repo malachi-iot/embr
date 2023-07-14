@@ -146,11 +146,12 @@ namespace internal {
 template <bool greater_than, bool equal_to>
 struct compare<endianness::big_endian, greater_than, equal_to>
 {
-// It is presumed these are the same length, otherwise one is automatically greater than the other
-    template <typename TForwardIterator1, typename TForwardIterator2>
-    static bool eval(TForwardIterator1 lhs_start, TForwardIterator2 lhs_end, TForwardIterator2 rhs_start)
+    // It is presumed these are the same length, otherwise one is automatically greater than the other
+    // DEBT: Once below eval is cleaned up, we can go back to 2 iterator types instead of 3 here
+    template <typename TForwardIterator1, typename TForwardIterator2, typename TForwardIterator3>
+    static bool eval(TForwardIterator1 lhs_start, TForwardIterator2 lhs_end, TForwardIterator3 rhs_start)
     {
-        TForwardIterator2 rhs = rhs_start;
+        TForwardIterator3 rhs = rhs_start;
 
         for(; lhs_start != lhs_end; ++lhs_start, ++rhs)
         {
@@ -174,6 +175,9 @@ struct compare<endianness::big_endian, greater_than, equal_to>
     {
         // DEBT: put in check for differing sizes
 
+        // DEBT: Debugger says this isn't const, and yanking iterator out of TBase
+        // I can't quite get that to be const properly either.  In either case,
+        // get const_iterator equivalents out of lhs and rhs somehow
         auto lhs_begin = lhs.begin();
         // DEBT: one of the underlying arrays doesn't seem to provide a const end()
         const unsigned char* lhs_end = lhs.end();

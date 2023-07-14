@@ -183,11 +183,7 @@ struct compare<endianness::little_endian, greater_than, equal_to>
     {
         // DEBT: put in check for differing sizes
 
-        auto lhs_begin = lhs.begin();
-        // DEBT: one of the underlying arrays doesn't seem to provide a const end()
-        const unsigned char* lhs_end = lhs.end();
-
-        return compare_le<greater_than, equal_to>(lhs_begin, lhs_end, rhs.end());
+        return compare_le<greater_than, equal_to>(lhs.begin(), lhs.end(), rhs.end());
     }
 };
 

@@ -45,12 +45,12 @@ template <endianness e, size_t N,
     length_direction direction = default_direction,
     resume_direction rd = direction
     >
-using material = embr::bits::internal::material<e, direction, rd, estd::legacy::layer2::array<uint8_t, N> >;
+using material = embr::bits::internal::material<e, direction, rd, estd::span<uint8_t, N> >;
 
 
 template <endianness e, size_t N, length_direction direction = default_direction, resume_direction rd = direction>
 using decoder = embr::bits::decoder<e, direction, rd,
-    internal::provider<e, estd::legacy::layer2::array<uint8_t, N> > >;
+    internal::provider<e, estd::span<uint8_t, N> > >;
 
 }
 
