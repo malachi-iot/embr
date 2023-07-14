@@ -19,7 +19,7 @@ protected:
 public:
     ESTD_CPP_FORWARDING_CTOR(encoder)
 
-    // UNTESTED
+    // FIX: underlying setter for layer1::material cannot find 'set' method
     template <unsigned bitpos, unsigned length, class TInt>
     inline void set(index_type index, TInt v)
     {

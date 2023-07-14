@@ -24,26 +24,26 @@ inline void set(TIt raw, TInt v)
 
 }
 
-template <endianness e, class TBase>
-inline bool operator <(
+template <endianness e, class TBase, class TBase2>
+ESTD_CPP_CONSTEXPR_RET bool operator <(
     const embr::bits::internal::provider<e, TBase>& lhs,
-    const embr::bits::internal::provider<e, TBase>& rhs)
+    const embr::bits::internal::provider<e, TBase2>& rhs)
 {
     return embr::bits::internal::compare<e, false, false>::eval(lhs, rhs);
 }
 
-template <endianness e, class TBase>
-inline bool operator >(
+template <endianness e, class TBase, class TBase2>
+ESTD_CPP_CONSTEXPR_RET bool operator >(
     const embr::bits::internal::provider<e, TBase>& lhs,
-    const embr::bits::internal::provider<e, TBase>& rhs)
+    const embr::bits::internal::provider<e, TBase2>& rhs)
 {
     return embr::bits::internal::compare<e, true, false>::eval(lhs, rhs);
 }
 
-template <endianness e, class TBase>
+template <endianness e, class TBase, class TBase2>
 inline bool operator ==(
     const embr::bits::internal::provider<e, TBase>& lhs,
-    const embr::bits::internal::provider<e, TBase>& rhs)
+    const embr::bits::internal::provider<e, TBase2>& rhs)
 {
     if(lhs.size() != rhs.size()) return false;
 

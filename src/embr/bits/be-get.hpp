@@ -167,10 +167,10 @@ struct compare<endianness::big_endian, greater_than, equal_to>
     }
 
     // DEBT: This probably would sit better outside the class
-    template <typename TBase>
+    template <class TBase, class TBase2>
     inline static bool eval(
         const embr::bits::internal::provider<endianness::big_endian, TBase>& lhs,
-        const embr::bits::internal::provider<endianness::big_endian, TBase>& rhs)
+        const embr::bits::internal::provider<endianness::big_endian, TBase2>& rhs)
     {
         // DEBT: put in check for differing sizes
 

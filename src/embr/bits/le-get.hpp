@@ -176,10 +176,10 @@ bool compare_le(TReverseIterator1 lhs_start, TReverseIterator1 lhs_end, TReverse
 template <bool greater_than, bool equal_to>
 struct compare<endianness::little_endian, greater_than, equal_to>
 {
-    template <typename TBase>
+    template <class TBase, class TBase2>
     inline static bool eval(
         const embr::bits::internal::provider<endianness::little_endian, TBase>& lhs,
-        const embr::bits::internal::provider<endianness::little_endian, TBase>& rhs)
+        const embr::bits::internal::provider<endianness::little_endian, TBase2>& rhs)
     {
         // DEBT: put in check for differing sizes
 

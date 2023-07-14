@@ -23,6 +23,13 @@ void clear(estd::array<uint8_t, N>& a)
     estd::fill(a.begin(), a.end(), 0);
 }
 
+template <estd::size_t N>
+void clear(estd::span<uint8_t, N>& s)
+{
+    estd::fill(s.begin(), s.end(), 0);
+}
+
+
 template <bits::endianness e>
 struct macro_tester_1 : bits::layer1::material<e, 8>
 {
@@ -354,6 +361,48 @@ TEST_CASE("bits2")
                 REQUIRE(!(item < item));
                 REQUIRE(!(item > item));
                 REQUIRE((item == item)); */
+            }
+            SECTION("compare to layer2")
+            {
+                bits::layer1::material<bits::big_endian, 4, bits::lsb_to_msb> e;
+
+                clear(e);
+
+                // DEBT: Doesn't work
+                //e.set<0, 10>(0, 5);
+
+                e.set(0, bits::descriptor{4, 3}, 3);
+
+                uint8_t data2[4] {};
+                bits::layer2::material<bits::big_endian, 4, bits::lsb_to_msb> e2(data2);
+
+                e2.set(0, bits::descriptor{4, 3}, 3);
+
+                SECTION("==")
+                {
+                    REQUIRE(e == e2);
+                }
+                SECTION(">")
+                {
+                    REQUIRE(!(e > e2));
+
+                    e.set(0, bits::descriptor{0, 2}, 3);
+
+                    REQUIRE(e > e2);
+                }
+                SECTION("<")
+                {
+                    e.set(0, bits::descriptor{0, 2}, 3);
+
+                    REQUIRE(e2 < e);
+
+                    clear(e);
+
+                    REQUIRE(e < e2);
+                }
+
+                // DUMMY just so we can get to this line in debugger
+                const uint8_t* data = e.data();
             }
         }
     }
