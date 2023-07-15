@@ -310,6 +310,7 @@ TEST_CASE("scheduler test", "[scheduler]")
         SECTION("estd::function style")
         {
             embr::internal::layer1::Scheduler<5, FunctorTraits> scheduler;
+            using function_type = decltype(scheduler)::function_type;
 
             SECTION("trivial scheduling")
             {
@@ -407,6 +408,25 @@ TEST_CASE("scheduler test", "[scheduler]")
                 REQUIRE(provider.value == 0);
 
                 REQUIRE(scheduler.empty());
+            }
+            SECTION("unschedule")
+            {
+                FunctorProvider provider;
+
+                function_type adder(&provider.adder_model);
+
+                scheduler.schedule(1, &provider.adder_model);
+                scheduler.schedule(2, &provider.subtractor_model);
+
+                // NOTE: Although this works, I think it's an accident.
+                // Current state of priority_queue.erase seems to not be
+                // ready yet
+                auto item = scheduler.match(adder);
+                scheduler.unschedule(*item);
+
+                scheduler.process(2);
+
+                REQUIRE(provider.value == -1);
             }
         }
         SECTION("stateful")

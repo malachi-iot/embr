@@ -1,5 +1,9 @@
 #pragma once
 
+#include <estd/chrono.h>
+#include <estd/utility.h>
+#include <estd/internal/fwd/variant.h>
+
 #include <estd/internal/macro/push.h>
 
 namespace embr { namespace internal {

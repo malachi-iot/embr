@@ -492,7 +492,7 @@ public:
     void unschedule(reference v)
     {
         context_type<> context = create_context();
-        mutex_guard(this, context);
+        mutex_guard m(context);
 
         event_queue.erase(v);
     }
