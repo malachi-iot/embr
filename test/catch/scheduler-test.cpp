@@ -566,4 +566,13 @@ TEST_CASE("scheduler test", "[scheduler]")
 
         REQUIRE(i->event_due() == 1);
     }
+    SECTION("natural layer1 scheduler (with functor + steady_clock)")
+    {
+        embr::internal::layer1::Scheduler<10> scheduler;
+
+        // FIX: It appears TimePointTraits for chrono specialization lacks
+        // 'now()' alias which it probably should have
+
+        //scheduler.process();
+    }
 }
