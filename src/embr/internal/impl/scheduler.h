@@ -1,8 +1,10 @@
 #pragma once
 
-#include <estd/chrono.h>
 #include <estd/utility.h>
 #include <estd/internal/fwd/variant.h>
+
+#include "fwd.h"
+#include "time_point.h"
 
 #include <estd/internal/macro/push.h>
 
@@ -162,83 +164,24 @@ protected:
     };
 };
 
-// Deduces int_type and duration from more complicated TTimePoints
-template <typename TTimePoint>
-struct TimePointTraits;
-
-template <typename TTimePoint = void, class TTimePointTraits = TimePointTraits<TTimePoint> >
-struct ReferenceBase;
-
-// DEBT: Phase this out in favor of below tag::Reference
-struct ReferenceBaseTag {};
-
-namespace tag {
-
-struct Function {};
-
-struct Traditional {};
-
-struct Reference {};
-
-}
-
-
-
-template <typename TInt>
-struct TimePointTraits
-{
-    typedef TInt time_point;    ///< Core time_point on which scheduling is based
-    typedef TInt int_type;      ///< Underlying int type - useful for complex time_points like chrono's
-    typedef TInt duration;      ///< Type to do additions, subtractions, etc. on time_point - mimic/aliases chrono
-
-    // EXPERIMENTAL
-    static constexpr bool is_chrono() { return false; }
-
-    static constexpr int_type duration_zero() { return 0; }
-    static constexpr int_type time_point_max() { return estd::numeric_limits<int_type>::max(); }
-};
-
-
-template <typename Rep, typename Period>
-struct TimePointTraits<estd::chrono::duration<Rep, Period> >
-{
-    typedef estd::chrono::duration<Rep, Period> duration;
-    typedef duration time_point;
-    typedef Rep int_type;
-
-    static constexpr bool is_chrono() { return true; }
-
-    static constexpr duration duration_zero() { return duration::zero(); }
-    static constexpr time_point time_point_max() { return time_point::max(); }
-};
-
-
-template <typename TClock, typename TDuration>
-struct TimePointTraits<estd::chrono::time_point<TClock, TDuration> >
-{
-    typedef TDuration duration;
-    typedef estd::chrono::time_point<TClock, TDuration> time_point;
-    typedef typename TDuration::rep int_type;
-
-    static constexpr bool is_chrono() { return true; }
-
-    static constexpr duration duration_zero() { return duration::zero(); }
-    static constexpr time_point time_point_max() { return time_point::max(); }
-};
-
-
 template <typename TTimePoint, class TTimePointTraits>
 struct ReferenceBase : ReferenceBaseBase, ReferenceBaseTag,
-    tag::Reference
+    tag::Reference,
+    // From time point traits, we expect:
+    // - time_point
+    // - duration
+    // - int_type
+    // - is_chrono() EXPERIMENTAL
+    // Optionally, we expect
+    // - now()
+    TTimePointTraits
 {
-    typedef TTimePointTraits time_point_traits;
-    typedef typename time_point_traits::time_point time_point;
-    typedef typename time_point_traits::duration duration;
+    typedef typename TTimePointTraits::duration duration;
 
     // Reference implementation only.  Yours may be quite different
     struct value_type
     {
-        typedef typename time_point_traits::time_point time_point;
+        typedef typename TTimePointTraits::time_point time_point;
 
         time_point event_due_;
 
@@ -255,18 +198,11 @@ struct ReferenceBase : ReferenceBaseBase, ReferenceBaseTag,
     };
 };
 
-// DEBT: move to fwd area
-template <class T, class TTimePoint = decltype(T().event_due()), class Enabled = void>
-struct Reference;
-
-// TODO: Create control structure concept 
-#if __cpp_concepts
-#endif
-
 /// Reference base implementation for scheduler impl
 /// \tparam T consider this the system + app data structure
 template <class T, class TTimePoint>
-struct Reference<T, TTimePoint, typename estd::enable_if<!estd::is_pointer<T>::value>::type> : ReferenceBase<TTimePoint>
+struct Reference<T, TTimePoint, typename estd::enable_if<!estd::is_pointer<T>::value>::type> :
+    ReferenceBase<TTimePoint>
 {
     typedef ReferenceBase<TTimePoint> base_type;
     typedef T value_type;
@@ -295,7 +231,8 @@ struct Reference<T, TTimePoint, typename estd::enable_if<!estd::is_pointer<T>::v
 
 
 template <class T, class TTimePoint>
-struct Reference<T, TTimePoint, typename estd::enable_if<estd::is_pointer<T>::value>::type> : ReferenceBase<TTimePoint>
+struct Reference<T, TTimePoint, typename estd::enable_if<estd::is_pointer<T>::value>::type> :
+    ReferenceBase<TTimePoint>
 {
     typedef ReferenceBase<TTimePoint> base_type;
     typedef typename estd::remove_pointer<T>::type item_type;

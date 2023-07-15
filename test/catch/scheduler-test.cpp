@@ -570,9 +570,6 @@ TEST_CASE("scheduler test", "[scheduler]")
     {
         embr::internal::layer1::Scheduler<10> scheduler;
 
-        // FIX: It appears TimePointTraits for chrono specialization lacks
-        // 'now()' alias which it probably should have
-
-        //scheduler.process();
+        scheduler.process();
     }
 }
