@@ -91,12 +91,12 @@ class bitset
 
 #if UNIT_TESTING
 public:
+#endif
     template <class TInt>
     ESTD_CPP_CONSTEXPR_RET TInt to_unsigned() const
     {
         return (assert_bit_width<TInt>(), data_.value());
     }
-#endif
 
 public:
     ESTD_CPP_CONSTEXPR_RET bitset() : data_(0) {}
