@@ -31,7 +31,7 @@ inline TInt get_native(TByte* raw, TInt v) { return *((TInt*)raw); }
 template <typename T, size_t bitness>
 ESTD_CPP_CONSTEXPR_RET T mask(const descriptor_base<bitness>& d)
 {
-    return (1 << d.length) - 1;
+    return (static_cast<T>(1) << d.length) - 1;
 }
 
 template <typename T, size_t bitness>
