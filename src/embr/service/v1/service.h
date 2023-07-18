@@ -32,6 +32,8 @@ public:
 protected:
     union
     {
+        // DEBT: Make a 16-bit version of this that only has child1 & child2,
+        // right now it's assumed 32-bit
         struct
         {
             States service_: bitsize::state;
@@ -42,11 +44,11 @@ protected:
             States child3 : bitsize::state;
 
             // Application specific data in "free" leftover bits
-            unsigned user : bitsize::user;
+            uint32_t user : bitsize::user;
 
         } state_;
 
-        unsigned raw = 0;
+        uint32_t raw = 0;
     };
 
 public:

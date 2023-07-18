@@ -2,7 +2,9 @@
 
 #include <estd/internal/platform.h>
 
-#ifdef FEATURE_CPP_VARIADIC
+#include <estd/type_traits.h>
+
+#ifdef __cpp_variadic_templates
 namespace embr {
 
 namespace internal {

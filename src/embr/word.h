@@ -131,6 +131,15 @@ public:
         return * (new (this) word(value));
     }
 
+    word& operator++()
+    {
+        // EXPERIMENTAL TODO: - not complete, roll over "early" if set
+        if(h::template any<word_strictness::overflow2>()) {}
+
+        ++base_type::value_;
+        return *this;
+    }
+
     template <size_t bits_rhs
 #ifdef FEATURE_CPP_DEFAULT_TARGS
         , bits_fit<bits_rhs> = true

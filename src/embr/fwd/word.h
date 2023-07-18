@@ -21,6 +21,7 @@ enum class word_strictness
     overflow        = 0x08,     ///< runtime indicator of overflow from shift operations - EXPERIMENTAL, not implemented
     initialized     = 0x10,     ///< when true, disables default constructor thus requiring initialization - not implemented
     storage_masking = 0x20,     ///< runtime enforcement to apply masks while retrieving underlying word (useful for unions)
+    overflow2       = 0x40,     ///< when true, observes word-limit::max() as rollover point - EXPERIMENTAL, not implemented
                                 
     masking = init_masking | storage_masking,
     narrowing_and_arithmetic = narrowing | arithmetic,
