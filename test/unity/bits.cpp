@@ -58,6 +58,19 @@ static void test_word_2()
     TEST_ASSERT_EQUAL(0x3, w.val2().value());
 }
 
+static void test_word_3()
+{
+    internal::word<29> can_id(0x98fdcc77);
+
+    constexpr bits::descriptor d1(8, 18);
+    unsigned v;
+
+    // j1939 extended pdu range
+    v = can_id.get(d1);
+
+    TEST_ASSERT_EQUAL(0xFDCC, v);
+}
+
 #if __cplusplus >= 201103L
 void test_getter_1()
 {
@@ -105,6 +118,8 @@ void test_bits()
 {
     RUN_TEST(bits::test_word_1);
     RUN_TEST(bits::test_word_2);
+    RUN_TEST(bits::test_word_3);
+
 #if __cplusplus >= 201103L
     RUN_TEST(bits::test_getter_1);
     RUN_TEST(bits::test_setter_1a);
