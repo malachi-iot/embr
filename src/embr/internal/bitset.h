@@ -172,12 +172,12 @@ public:
 
     constexpr bool any() const
     {
-        return data_ != 0;
+        return data_ != 0U;
     }
 
     constexpr bool none() const
     {
-        return data_ == 0;
+        return data_ == 0U;
     }
 
     constexpr size_t size() const
