@@ -43,6 +43,7 @@ struct numeric_limits<embr::word<bits, false, strict> >
 
 // Helper macro just for this header
 #pragma push_macro("EMBR_WORD_ARITHMETIC")
+// FIX: This needs the enable_if_t<bool, bool> = true treatment
 #if FEATURE_EMBR_WORD_STRICTNESS
 #define EMBR_WORD_ARITHMETIC ,typename Enabled = estd::enable_if_t<any<s, word_strictness::arithmetic>()>
 #else
@@ -52,12 +53,12 @@ struct numeric_limits<embr::word<bits, false, strict> >
 #if __cplusplus >= 201103L
 // Converts word back to requested integer with a compile time guard against
 // narrowing conversion
-template <class TInt, size_t bits, bool is_signed, embr::word_strictness strict, typename Enabled =
+template <class TInt, size_t bits, bool is_signed, embr::word_strictness strict,
 typename enable_if<
 #if FEATURE_EMBR_WORD_STRICTNESS
     (!embr::any<strict, embr::word_strictness::narrowing>()) ||
 #endif
-    (estd::numeric_limits<TInt>::max() >= estd::numeric_limits<embr::word<bits> >::max())>::type >
+    (estd::numeric_limits<TInt>::max() >= estd::numeric_limits<embr::word<bits> >::max()), bool>::type = true>
 #else
 // For c++03 is is just a noop for forward compatibility.
 // DEBT: If need be, a c++03 version could be made using the UINT_MAX style defines
@@ -83,13 +84,20 @@ class word : public internal::word_base<bits, is_signed, strict, T>
     typedef internal::enum_mask<word_strictness, strict> h;
 #endif
 
+#if __cpp_alias_templates
+    /// enable if specified bits are less than our equal to bits
+    /// this word can handle
+    template <size_t b>
+    using bits_fit = estd::enable_if_t<(b <= bits), bool>;
+#endif
+
 public:
     typedef typename base_type::type type;
 
 public:
     EMBR_CPP_DEFAULT_CTOR(word)
     ESTD_CPP_CONSTEXPR_RET word(const type& value) : base_type(value) {}
-#ifdef __cpp_rvalue_reference
+#ifdef __cpp_rvalue_references
     constexpr word(type&& value) : base_type(std::forward<type>(value)) {}
 #endif
 
@@ -97,8 +105,7 @@ public:
     // word has masking employed - we are guaranteed in that case to receive a pristine
     // bit limited word which we know already fits into our own
 #ifdef FEATURE_CPP_DEFAULT_TARGS
-    template <size_t incoming_bits, class Enabled =
-        typename estd::enable_if<(incoming_bits <= bits)>::type>
+    template <size_t incoming_bits, bits_fit<incoming_bits> = true>
     constexpr
 #else
     template <size_t incoming_bits>
@@ -126,7 +133,7 @@ public:
 
     template <size_t bits_rhs
 #ifdef FEATURE_CPP_DEFAULT_TARGS
-        , class Enabled = typename estd::enable_if<(bits_rhs <= bits)>::type
+        , bits_fit<bits_rhs> = true
 #endif
         >
     word& operator +=(const word<bits_rhs, is_signed, strict>& r)
@@ -137,10 +144,11 @@ public:
 
     template <size_t bits_rhs
 #ifdef FEATURE_CPP_DEFAULT_TARGS
-        , class Enabled = typename estd::enable_if<(bits_rhs <= bits)>::type
+        //, estd::enable_if_t<(bits_rhs <= bits), bool> = true
+        , bits_fit<bits_rhs> = true
 #endif
         >
-    inline word& operator -=(word<bits_rhs> r)
+    word& operator -=(word<bits_rhs> r)
     {
         base_type::value_ -= r.cvalue();
         return *this;
@@ -149,7 +157,7 @@ public:
 
     template <size_t bits_rhs, word_strictness strict2
 #ifdef FEATURE_CPP_DEFAULT_TARGS
-        , class Enabled = typename estd::enable_if<(bits_rhs <= bits)>::type
+        , bits_fit<bits_rhs> = true
 #endif
         >
     inline word& operator &=(word<bits_rhs, is_signed, strict2> r)
@@ -169,7 +177,7 @@ public:
 
     template <size_t bits_rhs, word_strictness strict2
 #ifdef FEATURE_CPP_DEFAULT_TARGS
-        , class Enabled = typename estd::enable_if<(bits_rhs <= bits)>::type
+        , bits_fit<bits_rhs> = true
 #endif
         >
     word& operator |=(const word<bits_rhs, is_signed, strict2>& r)
@@ -181,7 +189,7 @@ public:
 
     template <size_t bits_rhs, word_strictness strict2
 #ifdef FEATURE_CPP_DEFAULT_TARGS
-        , class Enabled = typename estd::enable_if<(bits_rhs <= bits)>::type
+        , bits_fit<bits_rhs> = true
 #endif
     >
     word& operator ^=(const word<bits_rhs, is_signed, strict2>& r)
@@ -192,7 +200,7 @@ public:
 
     template <size_t bits_rhs
 #ifdef FEATURE_CPP_DEFAULT_TARGS
-        , class Enabled = typename estd::enable_if<(bits_rhs <= bits)>::type
+        , bits_fit<bits_rhs> = true
 #endif
         >
     ESTD_CPP_CONSTEXPR_RET word operator +(word<bits_rhs> r) const
@@ -202,7 +210,7 @@ public:
 
     template <size_t bits_rhs
 #ifdef FEATURE_CPP_DEFAULT_TARGS
-        , class Enabled = typename estd::enable_if<(bits_rhs <= bits)>::type
+        , bits_fit<bits_rhs> = true
 #endif
     >
     ESTD_CPP_CONSTEXPR_RET word operator *(word<bits_rhs> r) const
@@ -212,7 +220,7 @@ public:
 
     template <size_t bits_rhs
 #ifdef FEATURE_CPP_DEFAULT_TARGS
-        , class Enabled = typename estd::enable_if<(bits_rhs <= bits)>::type
+        , bits_fit<bits_rhs> = true
 #endif
         >
     ESTD_CPP_CONSTEXPR_RET word operator &(word<bits_rhs> r) const
@@ -238,8 +246,8 @@ ESTD_CPP_CONSTEXPR_RET word<bits> operator &(word<bits> l, typename word<bits>::
 
 template <size_t bits, bool is_signed, word_strictness s
 #if FEATURE_EMBR_WORD_STRICTNESS
-    ,typename Enabled = estd::enable_if_t<
-        any<s, word_strictness::arithmetic>()>
+    , estd::enable_if_t<
+        any<s, word_strictness::arithmetic>(), bool> = true
 #endif
     >
 inline word<bits, is_signed, s>& operator +=
@@ -251,8 +259,8 @@ inline word<bits, is_signed, s>& operator +=
 
 template <size_t bits, bool is_signed, word_strictness s
 #if FEATURE_EMBR_WORD_STRICTNESS
-    ,typename Enabled = estd::enable_if_t<
-        any<s, word_strictness::arithmetic>()>
+    , estd::enable_if_t<
+        any<s, word_strictness::arithmetic>(), bool> = true
 #endif
     >
 ESTD_CPP_CONSTEXPR_RET word<bits, is_signed, s> operator +(
