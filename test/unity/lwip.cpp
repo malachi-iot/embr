@@ -1,6 +1,7 @@
 #include "unit-test.h"
 
-#if defined(ESP_PLATFORM) || defined(EMBR_PICOW_BOARD)
+// DEBT: Re-enable this on Arduino when lwip is present
+#if !defined(ARDUINO) && defined(ESP_PLATFORM) || defined(EMBR_PICOW_BOARD)
 
 #include "esp_log.h"
 

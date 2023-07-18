@@ -55,3 +55,6 @@ test/**/packages/
 # Visual Studio Code specific
 #  settings in theory is nice, but it just gets polluted with stupid cpp auto-built refs
 .vscode/settings.json
+
+# PlatformIO metadata/build files
+.pio/

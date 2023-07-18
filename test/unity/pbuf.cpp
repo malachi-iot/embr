@@ -1,3 +1,8 @@
+#include "unit-test.h"
+
+// DEBT: Re-enable this on Arduino when lwip is present
+#if !defined(ARDUINO) && defined(ESP_PLATFORM) || defined(EMBR_PICOW_BOARD)
+
 #include <embr/platform/lwip/iostream.h>
 #include <embr/streambuf.h>
 
@@ -6,8 +11,6 @@
 #include <estd/istream.h>
 
 //#include <estd/iostream.h>    // FIX: This fails rather badly, look into why
-
-#include "unit-test.h"
 
 #include "esp_log.h"
 
@@ -320,3 +323,4 @@ TEST_CASE("lwip ostream", "[lwip-ios]")
 
 #pragma GCC diagnostic pop
 
+#endif
