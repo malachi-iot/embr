@@ -2,12 +2,7 @@
 
 #include <estd/internal/platform.h>
 
-// DEBT: Move this out to a feature.h area
-#ifdef FEATURE_CPP_ENUM_CLASS
-#ifndef FEATURE_EMBR_WORD_STRICTNESS
-#define FEATURE_EMBR_WORD_STRICTNESS 1
-#endif
-#endif
+#include "../internal/features.h"
 
 #include "narrow_cast.h"
 #include "type_from_bits.h"
@@ -46,14 +41,5 @@ template <size_t bits, bool is_signed = false, word_strictness strict =
 #endif
     typename TInt = typename type_from_bits<bits, is_signed>::type>
 class word;
-
-// NOTE: This macro is useful so that c++11 can have a trivial constructor, but still
-// be c++03 compatible
-// DEBT: Consider putting this into ESTD
-#if __cpp_constexpr
-#define EMBR_CPP_DEFAULT_CTOR(name) constexpr name() = default;
-#else
-#define EMBR_CPP_DEFAULT_CTOR(name) inline name() {};
-#endif
 
 }

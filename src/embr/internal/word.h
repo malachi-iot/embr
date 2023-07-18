@@ -91,7 +91,7 @@ protected:
 
     type value_;
 
-    EMBR_CPP_DEFAULT_CTOR(word_base)
+    ESTD_CPP_DEFAULT_CTOR(word_base)
 
 #if FEATURE_EMBR_WORD_STRICTNESS
     static constexpr bool do_init_masking() { return any<strict, word_strictness::init_masking>(); }

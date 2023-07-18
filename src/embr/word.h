@@ -95,7 +95,7 @@ public:
     typedef typename base_type::type type;
 
 public:
-    EMBR_CPP_DEFAULT_CTOR(word)
+    ESTD_CPP_DEFAULT_CTOR(word)
     ESTD_CPP_CONSTEXPR_RET word(const type& value) : base_type(value) {}
 #ifdef __cpp_rvalue_references
     constexpr word(type&& value) : base_type(std::forward<type>(value)) {}
