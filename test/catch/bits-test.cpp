@@ -479,6 +479,19 @@ TEST_CASE("bits2")
                 REQUIRE(i.value() == v1);
             }
         }
+        SECTION("29-bit")
+        {
+            // TODO: Mirror in unity tests, since
+            // we only seem to see problem on 16-bit AVR
+            bits::internal::word<29> w{0x98fdcc77};
+            constexpr bits::descriptor d1{8, 18};
+            unsigned v;
+
+            v = w.get(d1);
+
+            // AVR erroneously gets "18fdcc" here
+            REQUIRE(v == 0xFDCC);
+        }
     }
     SECTION("experimental")
     {
