@@ -133,8 +133,10 @@ public:
 
     word& operator++()
     {
+#if FEATURE_EMBR_WORD_STRICTNESS
         // EXPERIMENTAL TODO: - not complete, roll over "early" if set
         if(h::template any<word_strictness::overflow2>()) {}
+#endif
 
         ++base_type::value_;
         return *this;
