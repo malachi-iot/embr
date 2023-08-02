@@ -12,7 +12,7 @@ struct App
     template <class T>
     using changed = embr::event::PropertyChanged<T>;
 
-    using GPIO = embr::esp_idf::service::v1::GPIO;
+    using GPIO = embr::esp_idf::service::v1::GPIO<false>;
 
     void on_notify(GPIO::event::gpio);
 };

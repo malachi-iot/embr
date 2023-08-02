@@ -16,8 +16,9 @@ namespace service { inline namespace v1 {
 // triggered pin - and do we even reach here for multiple pins?  
 // I think driver mode doesn't always return which pin actually activated it,
 // because the ISR itself does activate but with a '0' gpio_intr_status
+template <bool sparse>
 template <class TSubject, class TImpl>
-void GPIO::runtime<TSubject, TImpl>::gpio_isr_handler()
+void GPIO<sparse>::runtime<TSubject, TImpl>::gpio_isr_handler()
 {
     // Since we're using driver mode, no interrupt clear required
 
@@ -65,15 +66,17 @@ void GPIO::runtime<TSubject, TImpl>::gpio_isr_handler()
 }
 
 
+template <bool sparse>
 template <class TSubject, class TImpl>
-void GPIO::runtime<TSubject, TImpl>::gpio_isr_handler(void* arg)
+void GPIO<sparse>::runtime<TSubject, TImpl>::gpio_isr_handler(void* arg)
 {
     ((runtime*) arg)->gpio_isr_handler();
 }
 
 
+template <bool sparse>
 template <class TSubject, class TImpl>
-embr::Service::state_result GPIO::runtime<TSubject, TImpl>::on_start(
+embr::Service::state_result GPIO<sparse>::runtime<TSubject, TImpl>::on_start(
     const gpio_config_t* c, int intr_alloc_flags) //, embr::esp_idf::gpio pin)
 {
     esp_err_t ret;
@@ -99,7 +102,7 @@ embr::Service::state_result GPIO::runtime<TSubject, TImpl>::on_start(
     ESP_ERROR_CHECK_WITHOUT_ABORT(ret =
         gpio_isr_handler_add(pin, gpio_isr_handler, this));
 #else
-    gpio_isr_handle_t* h = &(base_type::gpio_isr_handle);
+    gpio_isr_handle_t* h = base_type::gpio_isr_handle();
     ESP_ERROR_CHECK_WITHOUT_ABORT(ret =
             gpio_isr_register(gpio_isr_handler, this, intr_alloc_flags, h));
 #endif
@@ -110,7 +113,7 @@ embr::Service::state_result GPIO::runtime<TSubject, TImpl>::on_start(
         return state_result::started();
     }
 
-    return state_result{Error, ErrConfig};
+    return state_result{ServiceEnum::Error, ServiceEnum::ErrConfig};
 }
 
 }}

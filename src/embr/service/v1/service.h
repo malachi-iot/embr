@@ -75,9 +75,12 @@ protected:
     // DEBT: Use embr::word here
     unsigned user() const { return state_.user; }
 
+    void state(States v)    { state_.service_ = v; }
+    void state(Substates v) { state_.service_substate_ = v; }
+
 public:
-    States state() const { return state_.service_; }
-    ServiceBase::Substates substate() const { return state_.service_substate_; }
+    constexpr States state() const { return state_.service_; }
+    constexpr ServiceBase::Substates substate() const { return state_.service_substate_; }
 };
 
 
@@ -115,17 +118,17 @@ protected:
 
     void state(st::States s, st::Substates ss)
     {
-        if (s != base_type::state_.service_)
+        if (s != base_type::state())
         {
             base_type::template fire_changing<st::id::state>(
-                        base_type::state_.service_, s);
+                        base_type::state(), s);
 
-            base_type::state_.service_ = s;
-            base_type::state_.service_substate_ = ss;
+            base_type::state(s);
+            base_type::state(ss);
 
             base_type::template fire_changed<st::id::state>(s);
         }
-        else if(ss != base_type::state_.service_substate_)
+        else if(ss != base_type::substate())
         {
             state(ss);
         }

@@ -18,6 +18,15 @@ struct SparseService : embr::PropertyContainer,
     template <class TSubject, class TImpl = this_type>
     using runtime = embr::service::v1::runtime::Service<TImpl, TSubject,
         embr::service::v1::runtime::internal::SparseServiceBase<TImpl, TSubject> >;
+
+    // dummy, we never record state at all
+    template <class S>
+    void state(S)   {}
+
+    // sparse services are always default to the Started, Running state
+
+    static constexpr States state()         { return Started; }
+    static constexpr Substates substate()   { return Running; }
 };
 
 namespace host {

@@ -13,18 +13,16 @@ namespace service { inline namespace v1 {
 #warn GPIO service driver mode not fully functional
 #endif
 
-// This is specifically for listening for incoming GPIO on an isr
-struct GPIO : embr::Service
+namespace internal {
+
+template <bool sparse>
+struct GPIO;
+
+
+struct GPIOBase :
+    embr::service::v1::ServiceBase//,         // for state_result
+    //embr::property::v1::PropertyContainer   // for static_factory
 {
-    typedef GPIO this_type;
-
-    static constexpr const char* TAG = "sd::gpio";
-    static constexpr const char* name() { return TAG; }
-
-    void init() {}
-
-    gpio_isr_handle_t gpio_isr_handle;
-
     // These events are fired in ISR context
     struct event
     {
@@ -40,6 +38,40 @@ struct GPIO : embr::Service
         // which gpio in particular has changed, fired in rapid succession
         using gpio = embr::esp_idf::gpio;
     };
+};
+
+
+template <>
+struct GPIO<true> : embr::SparseService
+{
+    constexpr gpio_isr_handle_t* gpio_isr_handle() { return nullptr; }
+};
+
+template <>
+struct GPIO<false> : embr::Service
+{
+    gpio_isr_handle_t gpio_isr_handle_;
+
+    constexpr gpio_isr_handle_t* gpio_isr_handle() { return &gpio_isr_handle_; }
+};
+
+}
+
+// This is specifically for listening for incoming GPIO on an isr
+template <bool sparse>
+struct GPIO : internal::GPIO<sparse> //, internal::GPIOBase
+{
+    typedef internal::GPIO<sparse> base_type;
+    typedef GPIO<sparse> this_type;
+
+    //using typename base_type::state_result;
+    using state_result = embr::Service::state_result;
+    using event = internal::GPIOBase::event;
+
+    static constexpr const char* TAG = "GPIO";
+    static constexpr const char* name() { return TAG; }
+
+    void init() {}
 
     //EMBR_PROPERTY_RUNTIME_BEGIN(embr::Service)
 
@@ -70,7 +102,8 @@ struct GPIO : embr::Service
     };
 
     template <class TSubject>
-    using static_type = static_factory<TSubject, this_type>::static_type;
+    //using static_type = static_factory<TSubject, this_type>::static_type;
+    using static_type = PropertyContainer::static_factory<TSubject, this_type>::static_type;
 };
 
 

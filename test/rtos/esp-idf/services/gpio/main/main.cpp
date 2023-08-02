@@ -29,7 +29,7 @@ App app;
 
 typedef estd::integral_constant<App*, &app> app_singleton;
 typedef embr::layer0::subject<Diagnostic, app_singleton> filter_observer;
-typedef embr::esp_idf::service::v1::GPIO::runtime<filter_observer> gpio_type;
+typedef App::GPIO::runtime<filter_observer> gpio_type;
 
 gpio_type gpio;
 
@@ -59,13 +59,22 @@ static void init_gpio_input()
 }
 
 
+struct Exp :
+    embr::esp_idf::service::internal::GPIO<false>,
+    private embr::esp_idf::service::internal::GPIOBase {};
+
+
 extern "C" void app_main()
 {
     const char* TAG = "app_main";
 
     init_gpio_input();
 
-    ESP_LOGI(TAG, "startup: GPIO service size=%u", sizeof(app_domain::gpio));
+    ESP_LOGI(TAG, "startup: GPIO service size=%u %u/%u/%u",
+        sizeof(app_domain::gpio),
+        sizeof(embr::esp_idf::service::internal::GPIO<false>),
+        sizeof(embr::esp_idf::service::internal::GPIOBase),
+        sizeof(Exp));
 
     for(;;)
     {
