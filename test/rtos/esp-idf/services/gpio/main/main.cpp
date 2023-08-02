@@ -19,8 +19,9 @@ using Diagnostic = embr::esp_idf::service::v1::Diagnostic;
 
 void App::on_notify(GPIO::event::gpio pin)
 {
-    auto v = (unsigned)pin;
-    ESP_DRAM_LOGI(TAG, "App::on_notify: gpio pin=%u", v);
+    ESP_DRAM_LOGD(TAG, "App::on_notify: gpio pin=%u", (unsigned)pin);
+
+    q.send_from_isr(pin);
 }
 
 namespace app_domain {
@@ -29,9 +30,8 @@ App app;
 
 typedef estd::integral_constant<App*, &app> app_singleton;
 typedef embr::layer0::subject<Diagnostic, app_singleton> filter_observer;
-typedef App::GPIO::runtime<filter_observer> gpio_type;
 
-gpio_type gpio;
+App::GPIO::runtime<filter_observer> gpio;
 
 }
 
@@ -47,9 +47,6 @@ static void init_gpio_input()
     io_conf.intr_type = GPIO_INTR_ANYEDGE;
     io_conf.pin_bit_mask = GPIO_INPUT_PIN_SEL;
     io_conf.mode = GPIO_MODE_INPUT;
-
-    // DEBT: Disabling this temporarily because we're looking at GPIO0 which necessarily has its
-    // own pull resistor on it (can't remember if up or down)
     io_conf.pull_up_en = GPIO_PULLUP_ENABLE;
     io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
 
@@ -59,10 +56,6 @@ static void init_gpio_input()
 }
 
 
-struct Exp :
-    embr::esp_idf::service::internal::GPIO<false>,
-    private embr::esp_idf::service::internal::GPIOBase {};
-
 
 extern "C" void app_main()
 {
@@ -70,17 +63,18 @@ extern "C" void app_main()
 
     init_gpio_input();
 
-    ESP_LOGI(TAG, "startup: GPIO service size=%u %u/%u/%u",
+    ESP_LOGI(TAG, "startup: GPIO service size=%u %u/%u",
         sizeof(app_domain::gpio),
         sizeof(embr::esp_idf::service::internal::GPIO<false>),
-        sizeof(embr::esp_idf::service::internal::GPIOBase),
-        sizeof(Exp));
+        sizeof(embr::esp_idf::service::internal::GPIOBase));
 
     for(;;)
     {
         static int counter = 0;
+        gpio_num_t pin;
 
-        estd::this_thread::sleep_for(estd::chrono::seconds(1));
+        while(app_domain::app.q.receive(&pin, estd::chrono::seconds(1)))
+            ESP_LOGI(TAG, "pin: %u", (unsigned)pin);
 
         ESP_LOGI(TAG, "counting: %d", ++counter);
     }
