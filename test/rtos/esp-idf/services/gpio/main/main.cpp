@@ -21,7 +21,9 @@ void App::on_notify(GPIO::event::gpio pin)
 {
     ESP_DRAM_LOGD(TAG, "App::on_notify: gpio pin=%u", (unsigned)pin);
 
-    q.send_from_isr(pin);
+    gpio v{pin, (unsigned)gpio_get_level(pin)};
+
+    q.send_from_isr(v);
 }
 
 namespace app_domain {
@@ -71,10 +73,10 @@ extern "C" void app_main()
     for(;;)
     {
         static int counter = 0;
-        gpio_num_t pin;
+        App::gpio pin;
 
         while(app_domain::app.q.receive(&pin, estd::chrono::seconds(1)))
-            ESP_LOGI(TAG, "pin: %u", (unsigned)pin);
+            ESP_LOGI(TAG, "pin: %u:%u", (unsigned)pin.pin, pin.level);
 
         ESP_LOGI(TAG, "counting: %d", ++counter);
     }

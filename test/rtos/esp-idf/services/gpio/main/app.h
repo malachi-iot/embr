@@ -12,9 +12,15 @@ struct App
 {
     static constexpr const char* TAG = "App";
 
+    struct gpio
+    {
+        gpio_num_t pin : 7;
+        unsigned level : 1;
+    };
+
     // DEBT: Doesn't work I think we need to use uninitialized_array for layer1
     //estd::freertos::layer1::queue<embr::esp_idf::gpio, 5> q;
-    estd::freertos::layer1::queue<gpio_num_t, 5> q;
+    estd::freertos::layer1::queue<gpio, 5> q;
 
     template <class T>
     using changed = embr::event::PropertyChanged<T>;
