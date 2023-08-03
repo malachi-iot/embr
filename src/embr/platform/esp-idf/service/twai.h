@@ -1,5 +1,7 @@
 #pragma once
 
+#include <estd/chrono.h>
+
 #include <embr/service.h>
 
 #include <esp_log.h>
@@ -24,6 +26,8 @@ public:
 
     struct event
     {
+        // DEBT: Consider making alert a propery, as it kind of
+        // meshes equally with that as an event
         struct alert
         {
             const uint32_t alerts;
@@ -54,19 +58,22 @@ public:
             const twai_timing_config_t* t_config,
             const twai_filter_config_t* f_config);
 
+        // NOTE: Not ready yet
         state_result on_start(
             const twai_timing_config_t* t_config);
 
         void check_status();
+        esp_err_t poll(TickType_t ticks_to_wait);
+
+        // NOTE: Not ready yet
+        template <class Period, class Rep>
+        esp_err_t poll(const estd::chrono::duration<Period, Rep>& timeout);
 
         void start_task();
 
     private:
         static void worker__(void*);
         void worker_();
-
-    // DEBT: Temporarily making this public as we work out the kinks
-    public:
         void broadcast(uint32_t alerts);
 
     EMBR_SERVICE_RUNTIME_END

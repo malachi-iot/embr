@@ -22,6 +22,10 @@ auto TWAI::runtime<TSubject, TImpl>::on_start(
     configuring(t_config);
     configuring(f_config);
 
+    ESP_LOGD(TAG, "on_start: rx=%u tx=%u",
+        g_config->rx_io,
+        g_config->tx_io);
+
     esp_err_t r = twai_driver_install(g_config, t_config, f_config);
 
     configured(g_config);
@@ -48,14 +52,20 @@ auto TWAI::runtime<TSubject, TImpl>::on_start(
                 TWAI_ALERT_ERR_ACTIVE |
                 TWAI_ALERT_ABOVE_ERR_WARN | 
                 // Have to disable this one, because logger goes crazy and WDT lights off
-                //TWAI_ALERT_BUS_ERROR |
+                TWAI_ALERT_BUS_ERROR |
                 TWAI_ALERT_ERR_PASS | 
                 TWAI_ALERT_BUS_OFF |
                 TWAI_ALERT_BUS_RECOVERED |
-                TWAI_ALERT_AND_LOG
-                , NULL);
 
-            if(r != ESP_OK) return { Error, ErrConfig };
+                // DEBT: May want to enable this sometimes, consider making this 
+                // a configuration point for service.  That said, one can call
+                // twai_reconfigure_alerts any time to add this in at that point
+                //TWAI_ALERT_AND_LOG |
+
+                TWAI_ALERT_RX_DATA |
+                TWAI_ALERT_RX_QUEUE_FULL |
+                TWAI_ALERT_TX_FAILED
+                , NULL);
 
             // DEBT: Check status and also flag this to be disabled if user
             // wishes to do the alert stuff themselves (or not at all)
@@ -102,6 +112,7 @@ void TWAI::runtime<TSubject, TImpl>::check_status()
 }
 
 
+// TODO: Add this to overall embr/esp idf service Kconfig
 #if CONFIG_MIOT_ENABLE_TWAI
 template <class TSubject, class TImpl>
 auto TWAI::runtime<TSubject, TImpl>::on_start(
@@ -230,6 +241,33 @@ inline auto TWAI::on_stop() -> state_result
 
     return { Stopped, Finished };
 }
+
+// DEBT: Consolidate this with check_status(), though alerts might be
+// a kind of superset of it
+template <class TSubject, class TImpl>
+esp_err_t TWAI::runtime<TSubject, TImpl>::poll(TickType_t ticks_to_wait)
+{
+    uint32_t alerts;
+
+    esp_err_t ret = twai_read_alerts(&alerts, ticks_to_wait);
+
+    switch(ret)
+    {
+        case ESP_OK:
+            broadcast(alerts);
+            break;
+
+        case ESP_ERR_TIMEOUT:
+            break;
+
+        default:
+            state(Error, ErrConfig);
+            break;
+    }
+
+    return ret;
+}
+
 
 
 }}
