@@ -55,9 +55,11 @@ auto TWAI::runtime<TSubject, TImpl>::on_start(
                 TWAI_ALERT_AND_LOG
                 , NULL);
 
+            if(r != ESP_OK) return { Error, ErrConfig };
+
             // DEBT: Check status and also flag this to be disabled if user
             // wishes to do the alert stuff themselves (or not at all)
-            start_task();
+            //start_task();
                 
             return create_start_result(r);
         }
@@ -128,6 +130,8 @@ auto TWAI::runtime<TSubject, TImpl>::on_start(
 template <class TSubject, class TImpl>
 void TWAI::runtime<TSubject, TImpl>::broadcast(uint32_t alerts)
 {
+    ESP_LOGV(TAG, "broadcast: alerts=%" PRIx32, alerts);
+
     notify(event::alert{alerts});
 
     if(alerts & TWAI_ALERT_RX_DATA)
@@ -168,6 +172,8 @@ void TWAI::runtime<TSubject, TImpl>::broadcast(uint32_t alerts)
 template <class TSubject, class TImpl>
 inline void TWAI::runtime<TSubject, TImpl>::worker_()
 {
+    ESP_LOGD(TAG, "worker: entry");
+
     for(;;)
     {
         uint32_t alerts;
@@ -181,6 +187,7 @@ inline void TWAI::runtime<TSubject, TImpl>::worker_()
                 break;
 
             case ESP_ERR_TIMEOUT:
+                //ESP_LOGV(TAG, "worker: timeout");
                 break;
 
             default:

@@ -24,7 +24,13 @@ public:
 
     struct event
     {
-        struct alert { const uint32_t alerts; };
+        struct alert
+        {
+            const uint32_t alerts;
+
+            operator uint32_t() const { return alerts; }
+        };
+
         struct rx {};
 
         enum errors
@@ -59,6 +65,8 @@ public:
         static void worker__(void*);
         void worker_();
 
+    // DEBT: Temporarily making this public as we work out the kinks
+    public:
         void broadcast(uint32_t alerts);
 
     EMBR_SERVICE_RUNTIME_END
