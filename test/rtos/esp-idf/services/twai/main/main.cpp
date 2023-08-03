@@ -21,16 +21,13 @@ void App::on_notify(TWAI::event::alert alert)
     ESP_LOGI(TAG, "on_notify: TWAI alert=%" PRIx32, alert.alerts);
 }
 
-void App::on_notify(TWAI::event::rx)
+void App::on_notify(TWAI::event::rx rx)
 {
-    twai_message_t message;
-
-    while(twai_receive(&message, 0) == ESP_OK)
-    {
-        ESP_LOGI(TAG, "on_notify: TWAI rx: id=%" PRIx32 " dlc=%u",
-            message.identifier, message.data_length_code);
-        ESP_LOG_BUFFER_HEX(TAG, message.data, message.data_length_code);
-    }
+    twai_message_t& message = *rx.message;
+    
+    ESP_LOGI(TAG, "on_notify: TWAI rx: id=%" PRIx32 " dlc=%u",
+        message.identifier, message.data_length_code);
+    ESP_LOG_BUFFER_HEX(TAG, message.data, message.data_length_code);
 }
 
 
@@ -59,6 +56,7 @@ static void init_twai()
     static const twai_timing_config_t t_config = TWAI_TIMING_CONFIG_125KBITS();
 
     app_domain::twai.start(&g_config, &t_config, &f_config);
+    app_domain::twai.autorx(true);
 }
 
 

@@ -20,6 +20,8 @@ class TWAI : public embr::service::v1::Service
 protected:
     TaskHandle_t worker = nullptr;
 
+    static constexpr const unsigned OPTION_AUTORX = 0x01;
+
 public:
     static constexpr const char* TAG = "TWAI";
     static constexpr const char* name() { return TAG; }
@@ -35,7 +37,15 @@ public:
             operator uint32_t() const { return alerts; }
         };
 
-        struct rx {};
+        struct rx
+        {
+            // populated if autorx() = true
+            // undefined if autorx() = false
+            twai_message_t* message;
+        };
+
+        // tx succeeded
+        struct tx {};
 
         enum errors
         {
@@ -70,6 +80,16 @@ public:
         esp_err_t poll(const estd::chrono::duration<Period, Rep>& timeout);
 
         void start_task();
+
+        void autorx(bool v)
+        {
+            base_type::state_.user = v;
+        }
+
+        bool autorx() const
+        {
+            return base_type::state_.user;
+        }
 
     private:
         static void worker__(void*);
