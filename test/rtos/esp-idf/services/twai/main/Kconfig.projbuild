@@ -1,0 +1,9 @@
+menu "Embr Services Test: TWAI"
+
+    config CAN_RX
+        int
+
+    config CAN_TX
+        int
+
+endmenu
