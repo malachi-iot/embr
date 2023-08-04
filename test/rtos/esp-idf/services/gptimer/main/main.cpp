@@ -40,7 +40,7 @@ extern "C" void app_main()
     typedef filter_observer::append<filter_type> timer_observer;
 
     // create timer_service with above specified observers
-    static TimerService::runtime<timer_observer> timer_service;
+    static App::Timer::runtime<timer_observer> timer_service;
 
     typedef estd::integral_constant<decltype(timer_service)*, &timer_service> timer_singleton;
     typedef timer_observer::append<timer_singleton> system_observer;

@@ -13,7 +13,7 @@ struct App
     using changed = embr::event::PropertyChanged<T>;
 
     using PowerManager = embr::esp_idf::service::v1::PowerManager;
-    using TimerService = embr::esp_idf::service::v1::GPTimer;
+    using Timer = embr::esp_idf::service::v1::GPTimer;
 
     void on_notify(changed<
         embr::Service::id::config<const gptimer_config_t&> > e)
@@ -22,7 +22,7 @@ struct App
             e.value.resolution_hz);
     }
 
-    void on_notify(changed<TimerService::id::timer> e)
+    void on_notify(changed<Timer::id::timer> e)
     {
         ESP_DRAM_LOGI(TAG, "value = %" PRIu32, e.value);
     }

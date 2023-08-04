@@ -2,12 +2,13 @@
 
 #include <embr/platform/esp-idf/service/gptimer.h>
 
-struct TimerFilterService : embr::Service
+struct TimerFilterService : embr::SparseService
 {
     typedef TimerFilterService this_type;
 
+    using TimerService = embr::esp_idf::service::v1::GPTimer;
+
     static constexpr const char* TAG = "TimerFilterService";
-    
     constexpr static const char* name() { return TAG; }
 
     template <class TSubject, class TImpl = this_type>

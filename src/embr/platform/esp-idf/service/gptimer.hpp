@@ -27,7 +27,7 @@ bool GPTimer::runtime<TSubject, TImpl>::on_alarm_cb(
 
 
 template <class TSubject, class TImpl>
-GPTimer::state_result TimerService::runtime<TSubject, TImpl>::on_start(
+GPTimer::state_result GPTimer::runtime<TSubject, TImpl>::on_start(
     const gptimer_config_t* config,
     const gptimer_alarm_config_t* alarm_config)
 {
