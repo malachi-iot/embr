@@ -1,9 +1,8 @@
 #include <embr/service.h>
 
 #include <embr/platform/esp-idf/log.h>
+#include <embr/platform/esp-idf/service/gptimer.h>
 #include <embr/platform/esp-idf/service/pm.h>
-
-#include "timer.h"
 
 
 struct App
@@ -14,6 +13,7 @@ struct App
     using changed = embr::event::PropertyChanged<T>;
 
     using PowerManager = embr::esp_idf::service::v1::PowerManager;
+    using TimerService = embr::esp_idf::service::v1::GPTimer;
 
     void on_notify(changed<
         embr::Service::id::config<const gptimer_config_t&> > e)

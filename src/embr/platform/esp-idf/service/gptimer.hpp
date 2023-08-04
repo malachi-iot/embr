@@ -1,10 +1,14 @@
 #pragma once
 
-#include "timer.h"
+#include "gptimer.h"
+
+namespace embr::esp_idf {
+
+namespace service { inline namespace v1 {
 
 
 template <class TSubject, class TImpl>
-void TimerService::runtime<TSubject, TImpl>::on_alarm_cb(
+void GPTimer::runtime<TSubject, TImpl>::on_alarm_cb(
     const gptimer_alarm_event_data_t* edata)
 {
     // FIX: count_value / 1000 always = 0
@@ -14,7 +18,7 @@ void TimerService::runtime<TSubject, TImpl>::on_alarm_cb(
 
 
 template <class TSubject, class TImpl>
-bool TimerService::runtime<TSubject, TImpl>::on_alarm_cb(
+bool GPTimer::runtime<TSubject, TImpl>::on_alarm_cb(
     gptimer_handle_t timer, const gptimer_alarm_event_data_t *edata, void *user_ctx)
 {
     ((runtime*)user_ctx)->on_alarm_cb(edata);
@@ -23,7 +27,7 @@ bool TimerService::runtime<TSubject, TImpl>::on_alarm_cb(
 
 
 template <class TSubject, class TImpl>
-TimerService::state_result TimerService::runtime<TSubject, TImpl>::on_start(
+GPTimer::state_result TimerService::runtime<TSubject, TImpl>::on_start(
     const gptimer_config_t* config,
     const gptimer_alarm_config_t* alarm_config)
 {
@@ -67,4 +71,8 @@ TimerService::state_result TimerService::runtime<TSubject, TImpl>::on_start(
     err = t.start();
     
     return err == ESP_OK ? state_result::started() : error_result;
+}
+
+}}
+
 }

@@ -1,10 +1,6 @@
 #pragma once
 
-#include <embr/platform/esp-idf/gptimer.h>
-
-#include <embr/service.h>
-
-#include "timer.h"
+#include <embr/platform/esp-idf/service/gptimer.h>
 
 struct TimerFilterService : embr::Service
 {

@@ -4,13 +4,15 @@
 
 #include <embr/service.h>
 
+namespace embr::esp_idf {
 
-struct TimerService : embr::Service
+namespace service { inline namespace v1 {
+
+struct GPTimer : embr::Service
 {
-    typedef TimerService this_type;
+    typedef GPTimer this_type;
 
-    static constexpr const char* TAG = "TimerService";
-    
+    static constexpr const char* TAG = "Timer";
     constexpr static const char* name() { return TAG; }
 
     embr::esp_idf::v5::Timer t;
@@ -26,6 +28,9 @@ struct TimerService : embr::Service
 
     EMBR_PROPERTIES_SPARSE_BEGIN
 
+        // DEBT: Change this to a estd::chrono::duration of some variety
+        // and consider hanging the whole service off that to determine
+        // timer res
         EMBR_PROPERTY_ID_SPARSE(timer, uint32_t, "timer in ms")
 
     EMBR_PROPERTIES_SPARSE_END
@@ -64,3 +69,7 @@ struct TimerService : embr::Service
             const gptimer_alarm_config_t* alarm_config = nullptr);
     };
 };
+
+}}
+
+}

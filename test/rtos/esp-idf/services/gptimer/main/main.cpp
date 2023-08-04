@@ -10,13 +10,13 @@
 #include <estd/thread.h>
 
 #include <embr/platform/esp-idf/service/diagnostic.h>
+#include <embr/platform/esp-idf/service/gptimer.hpp>
 #include <embr/platform/esp-idf/service/pm.hpp>
 
 using Diagnostic = embr::esp_idf::service::v1::Diagnostic;
 
 #include "app.h"
 #include "filter.h"
-#include "timer.hpp"
 
 extern "C" void app_main()
 {

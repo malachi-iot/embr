@@ -11,8 +11,6 @@ I think the CMakeLists.txt in this same folder is not used
 
 ### scheduler
 
-### service
-
 ### services
 
 ### unity
