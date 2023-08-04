@@ -8,12 +8,10 @@ namespace service { inline namespace v1 {
 
 
 template <class TSubject, class TImpl>
-void GPTimer::runtime<TSubject, TImpl>::on_alarm_cb(
-    const gptimer_alarm_event_data_t* edata)
+inline void GPTimer::runtime<TSubject, TImpl>::on_alarm_cb(
+    gptimer_handle_t timer, const gptimer_alarm_event_data_t* edata)
 {
-    // FIX: count_value / 1000 always = 0
-    timer(edata->count_value / 1000);
-    base_type::notify(event::callback{*edata});
+    base_type::notify(event::callback{timer, *edata});
 }
 
 
@@ -21,7 +19,7 @@ template <class TSubject, class TImpl>
 bool GPTimer::runtime<TSubject, TImpl>::on_alarm_cb(
     gptimer_handle_t timer, const gptimer_alarm_event_data_t *edata, void *user_ctx)
 {
-    ((runtime*)user_ctx)->on_alarm_cb(edata);
+    ((runtime*)user_ctx)->on_alarm_cb(timer, edata);
     return false;
 }
 

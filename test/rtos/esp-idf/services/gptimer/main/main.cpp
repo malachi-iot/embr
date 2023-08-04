@@ -16,7 +16,25 @@
 using Diagnostic = embr::esp_idf::service::v1::Diagnostic;
 
 #include "app.h"
-#include "filter.h"
+
+void App::on_notify(Timer::event::callback e)
+{
+    ESP_DRAM_LOGI(TAG, "count=%" PRIu64 ", alarm=%" PRIu64,
+        e.edata.count_value,
+        e.edata.alarm_value);
+}
+
+
+// FIX: Not reaching here - probably a glitch in notify mechanism which can't
+// resolve the 'Period' part of this
+template <class Period>
+void App::on_notify(const TimerFilterService<Period>::event::callback& e)
+{
+    estd::chrono::milliseconds ms = e.alarm_count();
+
+    ESP_DRAM_LOGI(TAG, "ms=%l", ms.count());
+}
+
 
 extern "C" void app_main()
 {
@@ -32,7 +50,7 @@ extern "C" void app_main()
     typedef embr::layer0::subject<Diagnostic, app_singleton> filter_observer;
 
     // create our filter type which reports up to app_singleton
-    typedef TimerFilterService::runtime<filter_observer> filter_type;
+    typedef TimerFilterService<estd::micro>::runtime<filter_observer> filter_type;
     //typedef embr::layer0::service_type<
         //TimerFilterService, app_singleton> filter_type;
 
@@ -67,7 +85,10 @@ extern "C" void app_main()
         .clk_src = GPTIMER_CLK_SRC_DEFAULT,
         .direction = GPTIMER_COUNT_UP,
         .resolution_hz = 1 * 1000 * 1000, // 1MHz, 1 tick = 1us
-        .flags = 0
+        .flags
+        {
+            .intr_shared = true
+        }
     };
 
     gptimer_alarm_config_t alarm_config =

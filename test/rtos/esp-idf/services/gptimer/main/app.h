@@ -4,6 +4,7 @@
 #include <embr/platform/esp-idf/service/gptimer.h>
 #include <embr/platform/esp-idf/service/pm.h>
 
+#include "filter.h"
 
 struct App
 {
@@ -22,10 +23,10 @@ struct App
             e.value.resolution_hz);
     }
 
-    void on_notify(changed<Timer::id::timer> e)
-    {
-        ESP_DRAM_LOGI(TAG, "value = %" PRIu32, e.value);
-    }
+    void on_notify(Timer::event::callback);
+
+    template <class Period>
+    void on_notify(const TimerFilterService<Period>::event::callback&);
 
     void on_notify(changed<embr::Service::id::substate> e, PowerManager&)
     {

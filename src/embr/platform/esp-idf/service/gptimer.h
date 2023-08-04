@@ -22,10 +22,12 @@ struct GPTimer : embr::Service
     {
         struct callback
         {
+            const gptimer_handle_t timer;
             const gptimer_alarm_event_data_t& edata;
         };
     };
 
+    // DEBT: Not used now - keeping around for use in a filter later
     EMBR_PROPERTIES_SPARSE_BEGIN
 
         // DEBT: Change this to a estd::chrono::duration of some variety
@@ -60,7 +62,7 @@ struct GPTimer : embr::Service
             base_type::template fire_changed<id::timer>(v);
         }
 
-        void on_alarm_cb(const gptimer_alarm_event_data_t* edata);
+        void on_alarm_cb(gptimer_handle_t timer, const gptimer_alarm_event_data_t* edata);
 
         static bool on_alarm_cb(gptimer_handle_t timer, const gptimer_alarm_event_data_t *edata, void *user_ctx);
 
