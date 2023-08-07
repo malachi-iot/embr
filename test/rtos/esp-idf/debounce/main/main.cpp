@@ -19,27 +19,73 @@ using Diagnostic = embr::esp_idf::service::v1::Diagnostic;
 
 #include "app.h"
 
-embr::internal::DebouncerTracker<uint16_t> d;
+template <unsigned pin_, bool inverted>
+struct Debouncer : embr::internal::DebouncerTracker<uint16_t, inverted>
+{
+    using base_type = embr::internal::DebouncerTracker<uint16_t, inverted>;
+
+    static constexpr const unsigned pin = pin_;
+
+    bool eval()
+    {
+        constexpr embr::esp_idf::gpio in((gpio_num_t)pin);
+
+        return base_type::eval(in.level());
+    }
+};
+
+
+#define GPIO_INPUT_IO_0     CONFIG_DIAGNOSTIC_GPIO1
+#define GPIO_INPUT_PIN_SEL  (1ULL<<GPIO_INPUT_IO_0)
+
+
+estd::tuple<
+    Debouncer<GPIO_INPUT_IO_0, true>,
+    Debouncer<4, true> > debouncers;    // DEBT: arbitrary selection of pin 4
+
+embr::internal::DebouncerTracker<uint16_t, true> d;
 
 using pins = estd::index_sequence<0>;
 
-//#define GPIO_INPUT_IO_0     CONFIG_DIAGNOSTIC_GPIO1
-#define GPIO_INPUT_IO_0     0
-#define GPIO_INPUT_PIN_SEL  (1ULL<<GPIO_INPUT_IO_0)
+struct debounce_visitor
+{
+    static constexpr const char* TAG = "debounce_visitor";
+
+    template <unsigned pin, class Unsigned, bool inverted>
+    void operator()(
+        estd::in_place_index_t<pin>,
+        embr::internal::DebouncerTracker<Unsigned, inverted>& dt) const
+    {
+        constexpr embr::esp_idf::gpio in((gpio_num_t)pin);
+
+        if(d.eval(in.level()))
+        {
+            ESP_DRAM_LOGI(TAG, "on_notify: %s",
+                d.state() == 1 ? "ON" : "OFF");
+        }
+    }
+
+    template <unsigned index, unsigned pin, bool inverted>
+    bool operator()(
+        estd::variadic::instance<index, Debouncer<pin, inverted> > d)
+    {
+        // DEBT: Add a -> operator to 'd' for this operation
+
+        if(d.value.eval())
+        {
+            ESP_DRAM_LOGI(TAG, "on_notify: %s",
+                d.value.state() == 1 ? "ON" : "OFF");
+        }
+
+        return false;
+    }
+};
+
 
 inline void App::on_notify(Timer::event::callback e)
 {
-    constexpr embr::esp_idf::gpio in((gpio_num_t)0);
-
-    if(d.eval(in.level()))
-    {
-        ESP_DRAM_LOGI(TAG, "on_notify: changed");
-
-        if(d.state() == 1)
-        {
-            ESP_DRAM_LOGI(TAG, "on_notify: ON");
-        }
-    }
+    debouncers.visit(debounce_visitor{});
+    //debounce_visitor{}(estd::in_place_index_t<0>{}, d);
 }
 
 
