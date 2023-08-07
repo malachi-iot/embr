@@ -31,7 +31,7 @@ GPTimer::state_result GPTimer::runtime<TSubject, TImpl>::on_start(
 {
     constexpr state_result error_result{Error, ErrConfig};
 
-    ESP_LOGI(TAG, "on_start: runtime=%p", this);
+    ESP_LOGD(TAG, "on_start: runtime=%p", this);
 
     embr::esp_idf::Timer t = impl().t;
 
