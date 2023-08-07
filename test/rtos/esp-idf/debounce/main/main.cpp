@@ -78,6 +78,7 @@ struct debounce_visitor
     }
 
 
+    // DEBT: estd::freertos::detail::queue might be better
     template <unsigned index, unsigned pin, bool inverted>
     bool operator()(
         estd::variadic::instance<index, Debouncer<pin, inverted> > d,
