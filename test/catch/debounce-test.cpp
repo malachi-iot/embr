@@ -132,5 +132,16 @@ TEST_CASE("Debounce and friends state machine tests", "[debounce]")
             b.update(0);
             REQUIRE(b.eval_on() == false);
         }
+        SECTION("tracker")
+        {
+            embr::internal::DebouncerTracker<uint8_t> t;
+
+            REQUIRE(t.eval(1) == false);
+            REQUIRE(t.eval(1) == false);
+            REQUIRE(t.state() == 0);
+            bool v = t.eval(1);
+            REQUIRE(v == true);
+            REQUIRE(t.state() == 1);
+        }
     }
 }

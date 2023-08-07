@@ -79,6 +79,8 @@ public:
         return history == 0;
     }
 
+    /// @brief Update state - did we notice an ON condition?
+    /// @return
     bool eval_on()
     {
         if(masked() == traits_type::mask_on)
@@ -89,6 +91,8 @@ public:
         return false;
     }
 
+    /// @brief Update state - did we notice an OFF condition?
+    /// @return
     bool eval_off()
     {
         if(masked() == traits_type::mask_off)
@@ -110,6 +114,84 @@ unsigned eval(DebounceButtonHistory<Unsigned>& dbh)
     if(dbh.eval_off()) return 2;
     return 0;
 }
+
+// DEBT: Since this is a low level creature, add a substate T too
+template <class T, unsigned state_bits, unsigned user_bits = 0, class User = T>
+struct StateHelper
+{
+    typedef estd::numeric_limits<T> limits;
+
+    // It is expected state_bits fit in one byte, but not so with
+    // user bits, so we arrange user bits first so that we don't
+    // hop a byte when allocating state_
+    User user_ : user_bits;
+    T state_ : state_bits;
+
+    ESTD_CPP_CONSTEXPR_RET EXPLICIT
+    StateHelper(T state = T()) : state_(state) {}
+};
+
+
+template <class T, unsigned state_bits>
+struct StateHelper<T, state_bits, 0, T>
+{
+    T state_;
+
+    ESTD_CPP_CONSTEXPR_RET EXPLICIT
+    StateHelper(T state = T()) : state_(state) {}
+};
+
+
+template <class T, unsigned state_bits, unsigned user_bits, class T2>
+inline bool state(StateHelper<T, state_bits, user_bits>& sh, T2 v)
+{
+    if(sh.state_ == v) return false;
+
+    sh.state_ = v;
+    return true;
+}
+
+
+
+template <class Unsigned, bool inverted = false, unsigned user_storage = 0>
+class DebouncerTracker
+{
+    DebounceButtonHistory<Unsigned> history;
+
+    StateHelper<uint8_t, 2, user_storage> storage;
+
+public:
+    ESTD_CPP_CONSTEXPR_RET DebouncerTracker() : storage(0)
+    {}
+
+    uint16_t state() const { return storage.state_; }
+
+    /// @brief Evaluate periodic incoming level and indicate whether
+    /// an on/off state change occurred
+    /// @return did we change from ON to OFF or vice versa
+    bool eval(unsigned level)
+    {
+        if(inverted)   level = !level;
+
+        history.update(level);
+
+        if(history.eval_on())
+        {
+            // on state noticed, if we noticed that before, indicate
+            // no change
+            return internal::state(storage, 1);
+        }
+        else if(history.eval_off())
+        {
+            // off state noticed, if we noticed that before, indicate
+            // no change
+            return internal::state(storage, 2);
+        }
+        else
+            // eval_xx is in an intermediate state = no noticed change
+            return false;
+    }
+};
 
 
 
