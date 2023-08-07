@@ -54,10 +54,6 @@ estd::tuple<
     Debouncer<GPIO_INPUT_IO_0, true>,
     Debouncer<4, true> > debouncers;    // DEBT: arbitrary selection of pin 4
 
-embr::internal::DebouncerTracker<uint16_t, true> d;
-
-using pins = estd::index_sequence<0>;
-
 struct debounce_visitor
 {
     static constexpr const char* TAG = "debounce_visitor";
@@ -66,12 +62,10 @@ struct debounce_visitor
     bool operator()(
         estd::variadic::instance<index, Debouncer<pin, inverted> > d)
     {
-        // DEBT: Add a -> operator to 'd' for this operation
-
-        if(d.value.eval())
+        if(d->eval())
         {
             ESP_DRAM_LOGI(TAG, "on_notify: %s",
-                d.value.state() == 1 ? "ON" : "OFF");
+                to_string(d->state()));
         }
 
         return false;
@@ -82,13 +76,11 @@ struct debounce_visitor
     template <unsigned index, unsigned pin, bool inverted>
     bool operator()(
         estd::variadic::instance<index, Debouncer<pin, inverted> > d,
-        estd::freertos::internal::queue<Item>& q)
+        estd::freertos::detail::queue<Item>& q)
     {
-        // DEBT: Add a -> operator to 'd' for this operation
-
-        if(d.value.eval())
+        if(d->eval())
         {
-            auto v = (DebounceEnum) d.value.state();
+            const auto v = (DebounceEnum) d->state();
             ESP_DRAM_LOGV(TAG, "on_notify: %u", v);
             q.send_from_isr(Item{v, pin});
         }
@@ -161,7 +153,9 @@ extern "C" void app_main()
         }
     };
 
-    ESP_LOGI(TAG, "phase 1: timer_service=%p", &timer_service);
+    ESP_LOGI(TAG, "phase 1: timer_service=%p, sizeof(debouncers)=%u",
+        &timer_service,
+        sizeof(debouncers));
 
     timer_service.start(&config, &alarm_config);
 
