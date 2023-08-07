@@ -99,16 +99,38 @@ TEST_CASE("Debounce and friends state machine tests", "[debounce]")
     }
     SECTION("ultimate")
     {
-        embr::internal::DebounceButtonHistory<uint32_t> b;
+        SECTION("8-bit")
+        {
+            embr::internal::DebounceButtonHistory<uint8_t> b;
 
-        b.update(1);
-        REQUIRE(b.eval_on() == false);
+            b.update(1);
+            REQUIRE(eval(b) == 0);
 
-        b.update(1);
-        b.update(1);
-        b.update(1);
-        b.update(1);
-        b.update(1);
-        REQUIRE(b.eval_on() == true);
+            b.update(1);
+            REQUIRE(eval(b) == 0);
+            b.update(1);
+            REQUIRE(eval(b) == 1);
+
+            b.update(0);
+            REQUIRE(eval(b) == 0);
+        }
+        SECTION("32-bit")
+        {
+            embr::internal::DebounceButtonHistory<uint32_t> b;
+
+            b.update(1);
+            REQUIRE(b.eval_on() == false);
+
+            b.update(1);
+            b.update(1);
+            b.update(1);
+            b.update(1);
+            REQUIRE(b.eval_on() == false);
+            b.update(1);
+            REQUIRE(b.eval_on() == true);
+
+            b.update(0);
+            REQUIRE(b.eval_on() == false);
+        }
     }
 }
