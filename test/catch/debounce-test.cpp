@@ -3,6 +3,8 @@
 #include <embr/detail/debounce.hpp>
 #include <embr/detail/button.hpp>
 
+#include <embr/internal/debounce/ultimate.h>
+
 #include <embr/exp/filter.h>
 
 using namespace embr::detail;
@@ -94,5 +96,19 @@ TEST_CASE("Debounce and friends state machine tests", "[debounce]")
 
         REQUIRE(r == true);
         REQUIRE(b.state() == embr::detail::Button::LongPressed);
+    }
+    SECTION("ultimate")
+    {
+        embr::internal::DebounceButtonHistory<uint32_t> b;
+
+        b.update(1);
+        REQUIRE(b.eval_on() == false);
+
+        b.update(1);
+        b.update(1);
+        b.update(1);
+        b.update(1);
+        b.update(1);
+        REQUIRE(b.eval_on() == true);
     }
 }
