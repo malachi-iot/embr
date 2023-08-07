@@ -35,6 +35,17 @@ struct Debouncer : embr::internal::DebouncerTracker<uint16_t, inverted>
 };
 
 
+const char* to_string(DebounceEnum v)
+{
+    switch(v)
+    {
+        case BUTTON_PRESSED:    return "pressed";
+        case BUTTON_RELEASED:   return "released";
+        default:                return "undefined";
+    }
+}
+
+
 #define GPIO_INPUT_IO_0     CONFIG_DIAGNOSTIC_GPIO1
 #define GPIO_INPUT_PIN_SEL  (1ULL<<GPIO_INPUT_IO_0)
 
@@ -51,20 +62,6 @@ struct debounce_visitor
 {
     static constexpr const char* TAG = "debounce_visitor";
 
-    template <unsigned pin, class Unsigned, bool inverted>
-    void operator()(
-        estd::in_place_index_t<pin>,
-        embr::internal::DebouncerTracker<Unsigned, inverted>& dt) const
-    {
-        constexpr embr::esp_idf::gpio in((gpio_num_t)pin);
-
-        if(d.eval(in.level()))
-        {
-            ESP_DRAM_LOGI(TAG, "on_notify: %s",
-                d.state() == 1 ? "ON" : "OFF");
-        }
-    }
-
     template <unsigned index, unsigned pin, bool inverted>
     bool operator()(
         estd::variadic::instance<index, Debouncer<pin, inverted> > d)
@@ -79,13 +76,31 @@ struct debounce_visitor
 
         return false;
     }
+
+
+    template <unsigned index, unsigned pin, bool inverted>
+    bool operator()(
+        estd::variadic::instance<index, Debouncer<pin, inverted> > d,
+        estd::freertos::internal::queue<Item>& q)
+    {
+        // DEBT: Add a -> operator to 'd' for this operation
+
+        if(d.value.eval())
+        {
+            auto v = (DebounceEnum) d.value.state();
+            ESP_DRAM_LOGV(TAG, "on_notify: %u", v);
+            q.send_from_isr(Item{v, pin});
+        }
+
+        return false;
+    }
 };
 
 
-inline void App::on_notify(Timer::event::callback e)
+inline void App::on_notify(Timer::event::callback)
 {
-    debouncers.visit(debounce_visitor{});
-    //debounce_visitor{}(estd::in_place_index_t<0>{}, d);
+    debouncers.visit(debounce_visitor{}, q);
+    //debouncers.visit(debounce_visitor{});
 }
 
 
@@ -151,15 +166,18 @@ extern "C" void app_main()
 
     init_gpio_input();
 
-    ESP_LOGI(TAG, "phase 2");
-
     for(;;)
     {
         static int counter = 0;
 
-        estd::this_thread::sleep_for(estd::chrono::seconds(1));
-
         ESP_LOGI(TAG, "counting: %d", ++counter);
+
+        Item item;
+
+        if(app.q.receive(&item, estd::chrono::seconds(1)))
+        {
+            ESP_LOGI(TAG, "pin: %u, event: %s", item.pin, to_string(item.state));
+        }
     }
 }
 
