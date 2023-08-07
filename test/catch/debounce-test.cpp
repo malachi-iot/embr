@@ -114,9 +114,9 @@ TEST_CASE("Debounce and friends state machine tests", "[debounce]")
             b.update(0);
             REQUIRE(eval(b) == 0);
         }
-        SECTION("32-bit")
+        SECTION("16-bit")
         {
-            embr::internal::DebounceButtonHistory<uint32_t> b;
+            embr::internal::DebounceButtonHistory<uint16_t> b;
 
             b.update(1);
             REQUIRE(b.eval_on() == false);
