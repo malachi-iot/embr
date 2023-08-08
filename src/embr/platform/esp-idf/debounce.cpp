@@ -1,8 +1,6 @@
-//#include <estd/map.h>
-
 #include "features/debounce.h"
 
-#if defined(ESP_PLATFORM) && EMBR_ESP_LEGACY_DEBOUNCE
+#if defined(ESP_PLATFORM) && FEATURE_EMBR_ESP_TIMER_SCHEDULER
 
 // DEBT: Don't want to do this dynamic alloc version, though not SO bad because it's the
 // "alloc once" category

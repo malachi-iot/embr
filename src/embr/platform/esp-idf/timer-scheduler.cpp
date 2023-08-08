@@ -1,4 +1,6 @@
-#ifdef ESP_PLATFORM
+#include "features/debounce.h"
+
+#if defined(ESP_PLATFORM) && FEATURE_EMBR_ESP_TIMER_SCHEDULER
 
 #include "esp_log.h"
 
