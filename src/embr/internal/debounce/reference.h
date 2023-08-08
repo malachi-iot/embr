@@ -2,11 +2,15 @@
 
 namespace embr { namespace debounce { inline namespace v1 {
 
+inline namespace reference {
+
 enum class States
 {
     Undefined = 0,
-    Pressed,
-    Released
+    On,
+    Pressed = On,
+    Off,
+    Released = Off
 };
 
 
@@ -19,8 +23,10 @@ struct Event
     unsigned pin : 8;
 };
 
+}
+
 }}
 
-const char* to_string(embr::debounce::v1::States);
+const char* to_string(embr::debounce::v1::reference::States);
 
 }

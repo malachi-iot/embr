@@ -3,6 +3,8 @@
 #include <estd/limits.h>
 #include <estd/type_traits.h>
 
+#include "../../fwd/observer.h"
+
 #include "reference.h"
 
 #include <estd/internal/macro/push.h>
@@ -26,8 +28,8 @@
 namespace embr { namespace internal {
 
 // DEBT: Since this is a low level creature, add a substate T too
-template <class T, unsigned state_bits, unsigned user_bits = 0, class User = T>
-struct StateHelper
+template <class T, unsigned state_bits, unsigned user_bits = 0, class User = T, class Subject = void_subject>
+struct StateHelper : Subject
 {
     typedef estd::numeric_limits<T> limits;
 
@@ -42,8 +44,8 @@ struct StateHelper
 };
 
 
-template <class T, unsigned state_bits>
-struct StateHelper<T, state_bits, 0, T>
+template <class T, unsigned state_bits, class User, class Subject>
+struct StateHelper<T, state_bits, 0, User, Subject> : Subject
 {
     T state_;
 
@@ -51,9 +53,14 @@ struct StateHelper<T, state_bits, 0, T>
     StateHelper(T state = T()) : state_(state) {}
 };
 
-template <class T, unsigned state_bits, unsigned user_bits, class T2>
-inline bool state(StateHelper<T, state_bits, user_bits>& sh, T2 v)
+template <class T, unsigned state_bits, unsigned user_bits,
+    class User,
+    class Subject, class T2>
+inline bool state(StateHelper<T, state_bits, user_bits, User, Subject>& sh, T2 v)
 {
+    // TODO: Experiment with using the property system here
+    //sh.notify(int{});
+
     if(sh.state_ == v) return false;
 
     sh.state_ = v;
@@ -152,27 +159,27 @@ public:
 template <class Unsigned, class Traits>
 States eval(History<Unsigned, Traits>& dbh)
 {
-    if(dbh.eval_on()) return States::Pressed;
-    if(dbh.eval_off()) return States::Released;
+    if(dbh.eval_on()) return States::On;
+    if(dbh.eval_off()) return States::Off;
     return States::Undefined;
 }
 
 
 
 template <class Unsigned, bool inverted = false, unsigned user_storage = 0>
-class DebouncerTracker
+class Tracker
 {
     History<Unsigned> history;
 
-    internal::StateHelper<uint8_t, 2, user_storage> storage;
+    internal::StateHelper<States, 2, user_storage, unsigned> storage;
 
 public:
-    ESTD_CPP_CONSTEXPR_RET DebouncerTracker() : storage(0)
+    ESTD_CPP_CONSTEXPR_RET Tracker() : storage(States::Undefined)
     {}
 
     States state() const
     {
-        return (States)storage.state_;
+        return storage.state_;
     }
 
     /// @brief Evaluate periodic incoming level and indicate whether
@@ -188,13 +195,13 @@ public:
         {
             // on state noticed, if we noticed that before, indicate
             // no change
-            return internal::state(storage, 1);
+            return internal::state(storage, States::On);
         }
         else if(history.eval_off())
         {
             // off state noticed, if we noticed that before, indicate
             // no change
-            return internal::state(storage, 2);
+            return internal::state(storage, States::Off);
         }
         else
             // eval_xx is in an intermediate state = no noticed change

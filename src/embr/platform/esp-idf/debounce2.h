@@ -11,9 +11,9 @@ inline namespace v1 { inline namespace ultimate {
 //using namespace embr::debounce::v1::ultimate;
 
 template <unsigned pin_, bool inverted>
-struct Debouncer : embr::debounce::v1::ultimate::DebouncerTracker<uint16_t, inverted>
+struct Debouncer : embr::debounce::v1::ultimate::Tracker<uint16_t, inverted>
 {
-    using base_type = embr::debounce::v1::ultimate::DebouncerTracker<uint16_t, inverted>;
+    using base_type = embr::debounce::v1::ultimate::Tracker<uint16_t, inverted>;
 
     static constexpr const unsigned pin = pin_;
 

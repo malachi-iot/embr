@@ -16,6 +16,88 @@ namespace embr { namespace experimental {
 typedef filter_wrapper<estd::chrono::milliseconds> fake_lpf_ms;
 
 
+struct FancyPress
+{
+    // in ms
+    typedef unsigned time_point;
+
+    static time_point click_interval()
+    {
+        return 500;
+    }
+
+    time_point state_changed_timestamp_ = 0;
+
+    enum States
+    {
+        UNDEFINED,
+        SINGLE_PRESSED,
+        SINGLE_RELEASED,
+        SINGLE_CLICKED,
+        DOUBLE_PRESSED,
+        DOUBLE_CLICKED, // press and release twice
+        TRIPLE_PRESSED,
+        LONG_PRESSED,
+        LONG_RELEASED
+    };
+
+    States state_ = UNDEFINED;
+
+    void state(States s, time_point current)
+    {
+        state_ = s;
+        state_changed_timestamp_ = current;
+    }
+
+    void eval_pressed(time_point current)
+    {
+        switch(state_)
+        {
+            case UNDEFINED:
+                state(SINGLE_PRESSED, current);
+                break;
+
+            case SINGLE_PRESSED:
+            case DOUBLE_PRESSED:
+            case TRIPLE_PRESSED:
+                // Undefined behavior to get another press even while
+                // already evaluating a pressed event - that might change
+                // if/when we enable the periodic emit of pressed messages
+                break;
+
+            default: break;
+        }
+    }
+
+    void eval_released(time_point current)
+    {
+        switch(state_)
+        {
+            case UNDEFINED:
+                break;
+
+            default: break;
+        }
+    }
+
+    void eval(embr::debounce::v1::States s, time_point current)
+    {
+        switch(s)
+        {
+            case embr::debounce::v1::States::On:
+                eval_pressed(current);
+                break;
+
+            case embr::debounce::v1::States::Off:
+                eval_released(current);
+                break;
+
+            default: break;
+        }
+    }
+};
+
+
 }}
 
 TEST_CASE("Debounce and friends state machine tests", "[debounce]")
@@ -110,7 +192,7 @@ TEST_CASE("Debounce and friends state machine tests", "[debounce]")
             b.update(1);
             REQUIRE(eval(b) == States::Undefined);
             b.update(1);
-            REQUIRE(eval(b) == States::Pressed);
+            REQUIRE(eval(b) == States::On);
 
             b.update(0);
             REQUIRE(eval(b) == States::Undefined);
@@ -135,14 +217,14 @@ TEST_CASE("Debounce and friends state machine tests", "[debounce]")
         }
         SECTION("tracker")
         {
-            embr::debounce::ultimate::DebouncerTracker<uint8_t> t;
+            embr::debounce::ultimate::Tracker<uint8_t> t;
 
             REQUIRE(t.eval(1) == false);
             REQUIRE(t.eval(1) == false);
             REQUIRE(t.state() == States::Undefined);
             bool v = t.eval(1);
             REQUIRE(v == true);
-            REQUIRE(t.state() == States::Pressed);
+            REQUIRE(t.state() == States::On);
         }
     }
 }
