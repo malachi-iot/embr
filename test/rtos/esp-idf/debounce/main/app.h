@@ -13,7 +13,7 @@ struct App
 {
     static constexpr const char* TAG = "App";
 
-    estd::freertos::layer1::queue<Item, 5> q;
+    estd::freertos::layer1::queue<embr::debounce::v1::Event, 5> q;
 
     using Timer = embr::esp_idf::service::v1::GPTimer;
 

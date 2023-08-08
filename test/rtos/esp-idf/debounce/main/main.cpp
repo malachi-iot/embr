@@ -19,12 +19,12 @@ using Diagnostic = embr::esp_idf::service::v1::Diagnostic;
 
 #include "app.h"
 
-const char* to_string(DebounceEnum v)
+const char* to_string(embr::debounce::States v)
 {
     switch(v)
     {
-        case BUTTON_PRESSED:    return "pressed";
-        case BUTTON_RELEASED:   return "released";
+        case embr::debounce::States::Pressed:    return "pressed";
+        case embr::debounce::States::Released:   return "released";
         default:                return "undefined";
     }
 }
@@ -35,8 +35,8 @@ const char* to_string(DebounceEnum v)
 
 
 estd::tuple<
-    Debouncer<GPIO_INPUT_IO_0, true>,
-    Debouncer<4, true> > debouncers;    // DEBT: arbitrary selection of pin 4
+    embr::esp_idf::debounce::v1::Debouncer<GPIO_INPUT_IO_0, true>,
+    embr::esp_idf::debounce::v1::Debouncer<4, true> > debouncers;    // DEBT: arbitrary selection of pin 4
 
 
 
@@ -44,7 +44,7 @@ inline void App::on_notify(Timer::event::callback)
 {
     xtensa_perfmon_start();
 
-    debouncers.visit(debounce_visitor{}, q);
+    debouncers.visit(embr::esp_idf::debounce::v1::debounce_visitor{}, q);
     //debouncers.visit(debounce_visitor{});
 
     xtensa_perfmon_stop();
@@ -104,9 +104,9 @@ extern "C" void app_main()
         }
     };
 
-    ESP_LOGI(TAG, "phase 1: timer_service=%p, sizeof(Item)=%u, sizeof(app.q)=%u, sizeof(debouncers)=%u",
+    ESP_LOGI(TAG, "phase 1: timer_service=%p, sizeof(Event)=%u, sizeof(app.q)=%u, sizeof(debouncers)=%u",
         &timer_service,
-        sizeof(Item),
+        sizeof(embr::debounce::v1::Event),
         sizeof(app.q),
         sizeof(debouncers));
 
@@ -132,10 +132,13 @@ extern "C" void app_main()
     {
         static int counter = 0;
 
-        Item item;
+        embr::debounce::v1::Event item;
 
         if(app.q.receive(&item, estd::chrono::milliseconds(10)))
-            ESP_LOGI(TAG, "pin: %u, event: %s", item.pin, to_string(item.state));
+            ESP_LOGI(TAG, "pin: %u, event: %s (%u)",
+                item.pin,
+                to_string(item.state),
+                (unsigned)item.state);
 
         if(clock::now() - last_now > timeout)
         {

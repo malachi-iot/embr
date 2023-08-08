@@ -3,6 +3,8 @@
 #include <estd/limits.h>
 #include <estd/type_traits.h>
 
+#include "reference.h"
+
 #include <estd/internal/macro/push.h>
 
 /**
