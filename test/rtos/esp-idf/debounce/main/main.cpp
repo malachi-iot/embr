@@ -15,27 +15,9 @@
 #include <embr/platform/esp-idf/service/diagnostic.h>
 #include <embr/platform/esp-idf/service/gptimer.hpp>
 
-#include <embr/internal/debounce/ultimate.h>
-
 using Diagnostic = embr::esp_idf::service::v1::Diagnostic;
 
 #include "app.h"
-
-template <unsigned pin_, bool inverted>
-struct Debouncer : embr::internal::DebouncerTracker<uint16_t, inverted>
-{
-    using base_type = embr::internal::DebouncerTracker<uint16_t, inverted>;
-
-    static constexpr const unsigned pin = pin_;
-
-    bool eval()
-    {
-        constexpr embr::esp_idf::gpio in((gpio_num_t)pin);
-
-        return base_type::eval(in.level());
-    }
-};
-
 
 const char* to_string(DebounceEnum v)
 {
@@ -56,40 +38,6 @@ estd::tuple<
     Debouncer<GPIO_INPUT_IO_0, true>,
     Debouncer<4, true> > debouncers;    // DEBT: arbitrary selection of pin 4
 
-struct debounce_visitor
-{
-    static constexpr const char* TAG = "debounce_visitor";
-
-    template <unsigned index, unsigned pin, bool inverted>
-    bool operator()(
-        estd::variadic::instance<index, Debouncer<pin, inverted> > d)
-    {
-        if(d->eval())
-        {
-            ESP_DRAM_LOGI(TAG, "on_notify: %s",
-                to_string(d->state()));
-        }
-
-        return false;
-    }
-
-
-    // DEBT: estd::freertos::detail::queue might be better
-    template <unsigned index, unsigned pin, bool inverted>
-    bool operator()(
-        estd::variadic::instance<index, Debouncer<pin, inverted> > d,
-        estd::freertos::detail::queue<Item>& q)
-    {
-        if(d->eval())
-        {
-            const auto v = (DebounceEnum) d->state();
-            ESP_DRAM_LOGV(TAG, "on_notify: %u", v);
-            q.send_from_isr(Item{v, pin});
-        }
-
-        return false;
-    }
-};
 
 
 inline void App::on_notify(Timer::event::callback)
@@ -128,9 +76,6 @@ extern "C" void app_main()
 
     static App app;
 
-    // DEBT: Bring in layer1 flavor of subject.  Hopefully with
-    // new sparse tuple it will be nearly as efficient as layer0
-
     // wrap up our App in something ultra-compile time friendly
     typedef estd::integral_constant<App*, &app> app_singleton;
     typedef embr::layer0::subject<Diagnostic, app_singleton> app_observer;
@@ -159,8 +104,10 @@ extern "C" void app_main()
         }
     };
 
-    ESP_LOGI(TAG, "phase 1: timer_service=%p, sizeof(debouncers)=%u",
+    ESP_LOGI(TAG, "phase 1: timer_service=%p, sizeof(Item)=%u, sizeof(app.q)=%u, sizeof(debouncers)=%u",
         &timer_service,
+        sizeof(Item),
+        sizeof(app.q),
         sizeof(debouncers));
 
     timer_service.start(&config, &alarm_config);
