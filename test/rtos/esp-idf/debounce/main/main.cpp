@@ -4,6 +4,8 @@
 #include "esp_err.h"
 #include "esp_system.h"
 
+#include <perfmon.h>
+
 #include <estd/chrono.h>
 #include <estd/thread.h>
 #include <estd/internal/variadic.h>
@@ -92,8 +94,12 @@ struct debounce_visitor
 
 inline void App::on_notify(Timer::event::callback)
 {
+    xtensa_perfmon_start();
+
     debouncers.visit(debounce_visitor{}, q);
     //debouncers.visit(debounce_visitor{});
+
+    xtensa_perfmon_stop();
 }
 
 
@@ -161,17 +167,39 @@ extern "C" void app_main()
 
     init_gpio_input();
 
+    // perfmon stuff lifted from components/perfmon/test/test_perfmon_ansi.c
+    // NOTE: At this time I really don't know how to use this feature
+    // See https://www2.lauterbach.com/pdf/debugger_xtensa.pdf
+    // That doc says to look up "xtensa_debug_guide.pdf" but I can't find that one
+
+    xtensa_perfmon_stop();
+    xtensa_perfmon_init(0, 0, 0xffff, 0, 6);
+    xtensa_perfmon_reset(0);
+
+    using clock = estd::chrono::freertos_clock;
+
+    clock::time_point last_now = clock::now();
+    constexpr estd::chrono::seconds timeout(1);
+
     for(;;)
     {
         static int counter = 0;
 
-        ESP_LOGI(TAG, "counting: %d", ++counter);
-
         Item item;
 
-        if(app.q.receive(&item, estd::chrono::seconds(1)))
-        {
+        if(app.q.receive(&item, estd::chrono::milliseconds(10)))
             ESP_LOGI(TAG, "pin: %u, event: %s", item.pin, to_string(item.state));
+
+        if(clock::now() - last_now > timeout)
+        {
+            last_now += timeout;
+            ESP_LOGI(TAG, "counting: %d", ++counter);
+
+            if(counter % 10 == 0)
+            {
+                xtensa_perfmon_dump();
+                xtensa_perfmon_reset(0);
+            }
         }
     }
 }
