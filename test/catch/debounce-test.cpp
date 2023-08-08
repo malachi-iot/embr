@@ -102,7 +102,7 @@ TEST_CASE("Debounce and friends state machine tests", "[debounce]")
         using States = embr::debounce::v1::States;
         SECTION("8-bit")
         {
-            embr::internal::DebounceButtonHistory<uint8_t> b;
+            embr::debounce::ultimate::History<uint8_t> b;
 
             b.update(1);
             REQUIRE(eval(b) == States::Undefined);
@@ -117,7 +117,7 @@ TEST_CASE("Debounce and friends state machine tests", "[debounce]")
         }
         SECTION("16-bit")
         {
-            embr::internal::DebounceButtonHistory<uint16_t> b;
+            embr::debounce::ultimate::History<uint16_t> b;
 
             b.update(1);
             REQUIRE(b.eval_on() == false);
@@ -135,7 +135,7 @@ TEST_CASE("Debounce and friends state machine tests", "[debounce]")
         }
         SECTION("tracker")
         {
-            embr::internal::DebouncerTracker<uint8_t> t;
+            embr::debounce::ultimate::DebouncerTracker<uint8_t> t;
 
             REQUIRE(t.eval(1) == false);
             REQUIRE(t.eval(1) == false);

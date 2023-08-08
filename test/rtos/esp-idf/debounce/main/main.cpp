@@ -19,7 +19,7 @@ using Diagnostic = embr::esp_idf::service::v1::Diagnostic;
 
 #include "app.h"
 
-namespace debounce = embr::esp_idf::debounce::v1;
+namespace debounce = embr::esp_idf::debounce::v1::ultimate;
 
 
 #define GPIO_INPUT_IO_0     CONFIG_DIAGNOSTIC_GPIO1

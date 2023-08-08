@@ -23,15 +23,56 @@
  */
 
 
-
 namespace embr { namespace internal {
 
+// DEBT: Since this is a low level creature, add a substate T too
+template <class T, unsigned state_bits, unsigned user_bits = 0, class User = T>
+struct StateHelper
+{
+    typedef estd::numeric_limits<T> limits;
+
+    // It is expected state_bits fit in one byte, but not so with
+    // user bits, so we arrange user bits first so that we don't
+    // hop a byte when allocating state_
+    User user_ : user_bits;
+    T state_ : state_bits;
+
+    ESTD_CPP_CONSTEXPR_RET EXPLICIT
+    StateHelper(T state = T()) : state_(state) {}
+};
+
+
+template <class T, unsigned state_bits>
+struct StateHelper<T, state_bits, 0, T>
+{
+    T state_;
+
+    ESTD_CPP_CONSTEXPR_RET EXPLICIT
+    StateHelper(T state = T()) : state_(state) {}
+};
+
+template <class T, unsigned state_bits, unsigned user_bits, class T2>
+inline bool state(StateHelper<T, state_bits, user_bits>& sh, T2 v)
+{
+    if(sh.state_ == v) return false;
+
+    sh.state_ = v;
+    return true;
+}
+
+
+}}
+
+namespace embr { namespace debounce {
+
+inline namespace v1 { inline namespace ultimate {
+
 template <class>
-struct UltimateDebouncerTraits;
+struct HistoryTraits;
 
 
 template <>
-struct UltimateDebouncerTraits<uint8_t>
+struct HistoryTraits<uint8_t>
 {
     static CONSTEXPR uint8_t mask_on = 0x07;        // 0b00000111
     static CONSTEXPR uint8_t mask_off = 0xC0;       // 0b11000000
@@ -39,7 +80,7 @@ struct UltimateDebouncerTraits<uint8_t>
 };
 
 template <>
-struct UltimateDebouncerTraits<uint16_t>
+struct HistoryTraits<uint16_t>
 {
     static CONSTEXPR uint16_t mask_on = 0x003F;     // 0b0000000000111111;
     static CONSTEXPR uint16_t mask_off = 0xF000;    // 0b1111000000000000;
@@ -47,8 +88,8 @@ struct UltimateDebouncerTraits<uint16_t>
 };
 
 
-template <class Unsigned, class Traits = UltimateDebouncerTraits<Unsigned> >
-class DebounceButtonHistory
+template <class Unsigned, class Traits = HistoryTraits<Unsigned> >
+class History
 {
     typedef estd::numeric_limits<Unsigned> limits;
     typedef Traits traits_type;
@@ -63,7 +104,7 @@ protected:
 
 public:
     ESTD_CPP_CONSTEXPR_RET EXPLICIT
-    DebounceButtonHistory() : history(0) {}
+    History() : history(0) {}
 
     void update(unsigned level)
     {
@@ -108,48 +149,12 @@ public:
 
 
 
-template <class Unsigned>
-debounce::v1::States eval(DebounceButtonHistory<Unsigned>& dbh)
+template <class Unsigned, class Traits>
+States eval(History<Unsigned, Traits>& dbh)
 {
-    if(dbh.eval_on()) return debounce::v1::States::Pressed;
-    if(dbh.eval_off()) return debounce::v1::States::Released;
-    return debounce::v1::States::Undefined;
-}
-
-// DEBT: Since this is a low level creature, add a substate T too
-template <class T, unsigned state_bits, unsigned user_bits = 0, class User = T>
-struct StateHelper
-{
-    typedef estd::numeric_limits<T> limits;
-
-    // It is expected state_bits fit in one byte, but not so with
-    // user bits, so we arrange user bits first so that we don't
-    // hop a byte when allocating state_
-    User user_ : user_bits;
-    T state_ : state_bits;
-
-    ESTD_CPP_CONSTEXPR_RET EXPLICIT
-    StateHelper(T state = T()) : state_(state) {}
-};
-
-
-template <class T, unsigned state_bits>
-struct StateHelper<T, state_bits, 0, T>
-{
-    T state_;
-
-    ESTD_CPP_CONSTEXPR_RET EXPLICIT
-    StateHelper(T state = T()) : state_(state) {}
-};
-
-
-template <class T, unsigned state_bits, unsigned user_bits, class T2>
-inline bool state(StateHelper<T, state_bits, user_bits>& sh, T2 v)
-{
-    if(sh.state_ == v) return false;
-
-    sh.state_ = v;
-    return true;
+    if(dbh.eval_on()) return States::Pressed;
+    if(dbh.eval_off()) return States::Released;
+    return States::Undefined;
 }
 
 
@@ -157,17 +162,17 @@ inline bool state(StateHelper<T, state_bits, user_bits>& sh, T2 v)
 template <class Unsigned, bool inverted = false, unsigned user_storage = 0>
 class DebouncerTracker
 {
-    DebounceButtonHistory<Unsigned> history;
+    History<Unsigned> history;
 
-    StateHelper<uint8_t, 2, user_storage> storage;
+    internal::StateHelper<uint8_t, 2, user_storage> storage;
 
 public:
     ESTD_CPP_CONSTEXPR_RET DebouncerTracker() : storage(0)
     {}
 
-    debounce::v1::States state() const
+    States state() const
     {
-        return (debounce::v1::States)storage.state_;
+        return (States)storage.state_;
     }
 
     /// @brief Evaluate periodic incoming level and indicate whether
@@ -197,7 +202,7 @@ public:
     }
 };
 
-
+}}
 
 }}
 

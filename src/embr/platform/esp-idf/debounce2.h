@@ -4,21 +4,22 @@
 
 #include "../../internal/debounce/ultimate.h"
 
-namespace embr { namespace esp_idf {
+namespace embr { namespace esp_idf { namespace debounce {
 
-namespace debounce { inline namespace v1 {
+inline namespace v1 { inline namespace ultimate {
 
+//using namespace embr::debounce::v1::ultimate;
 
 template <unsigned pin_, bool inverted>
-struct Debouncer : embr::internal::DebouncerTracker<uint16_t, inverted>
+struct Debouncer : embr::debounce::v1::ultimate::DebouncerTracker<uint16_t, inverted>
 {
-    using base_type = embr::internal::DebouncerTracker<uint16_t, inverted>;
+    using base_type = embr::debounce::v1::ultimate::DebouncerTracker<uint16_t, inverted>;
 
     static constexpr const unsigned pin = pin_;
 
     bool eval()
     {
-        constexpr embr::esp_idf::gpio in((gpio_num_t)pin);
+        constexpr gpio in((gpio_num_t)pin);
 
         return base_type::eval(in.level());
     }
@@ -47,4 +48,4 @@ struct Visitor
 
 }}
 
-}}
+}}}
