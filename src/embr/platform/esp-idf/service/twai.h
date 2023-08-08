@@ -37,10 +37,12 @@ public:
             operator uint32_t() const { return alerts; }
         };
 
-        struct rx
+        struct rx {};
+
+        // DEBT: rx vs autorx unrefined and might lead to confusion.  Review
+        // used if autorx() = true
+        struct autorx
         {
-            // populated if autorx() = true
-            // undefined if autorx() = false
             twai_message_t* message;
         };
 

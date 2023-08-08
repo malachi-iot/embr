@@ -152,7 +152,7 @@ void TWAI::runtime<TSubject, TImpl>::broadcast(uint32_t alerts)
             twai_message_t message;
 
             while(twai_receive(&message, 0) == ESP_OK)
-                notify(event::rx{&message});
+                notify(event::autorx{&message});
         }
         else
         {

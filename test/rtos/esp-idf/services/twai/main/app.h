@@ -15,5 +15,5 @@ struct App
     using TWAI = embr::esp_idf::service::v1::TWAI;
 
     void on_notify(TWAI::event::alert);
-    void on_notify(TWAI::event::rx);
+    void on_notify(TWAI::event::autorx);
 };

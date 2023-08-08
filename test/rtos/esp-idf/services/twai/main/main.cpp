@@ -21,7 +21,7 @@ void App::on_notify(TWAI::event::alert alert)
     ESP_LOGI(TAG, "on_notify: TWAI alert=%" PRIx32, alert.alerts);
 }
 
-void App::on_notify(TWAI::event::rx rx)
+void App::on_notify(TWAI::event::autorx rx)
 {
     twai_message_t& message = *rx.message;
     
