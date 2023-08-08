@@ -19,5 +19,8 @@ struct Event
     unsigned pin : 8;
 };
 
+}}
 
-}}}
+const char* to_string(embr::debounce::v1::States);
+
+}

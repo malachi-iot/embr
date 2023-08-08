@@ -26,54 +26,18 @@ struct Debouncer : embr::internal::DebouncerTracker<uint16_t, inverted>
 
 
 
-struct debounce_visitor
+struct Visitor
 {
-    static constexpr const char* TAG = "debounce_visitor";
+    static constexpr const char* TAG = "debounce::Visitor";
 
-    using Item = embr::debounce::v1::Event;
-
-    // INACTIVE, UNTESTED
-    // has dummy int to temporarily keep it from conflicting
     template <unsigned index, unsigned pin, bool inverted, class F>
     bool operator()(
-        estd::variadic::instance<index, Debouncer<pin, inverted> > d,
-        F&& f, int)
+        estd::variadic::instance<index, Debouncer<pin, inverted> > d, F&& f)
     {
         if(d->eval())
         {
-            const auto v = (embr::debounce::v1::States) d->state();
-            f(Item{v, pin});
-        }
-
-        return false;
-    }
-
-
-    template <unsigned index, unsigned pin, bool inverted>
-    bool operator()(
-        estd::variadic::instance<index, Debouncer<pin, inverted> > d)
-    {
-        if(d->eval())
-        {
-            ESP_DRAM_LOGI(TAG, "on_notify: %s",
-                to_string(d->state()));
-        }
-
-        return false;
-    }
-
-
-    // DEBT: estd::freertos::detail::queue might be better
-    template <unsigned index, unsigned pin, bool inverted>
-    bool operator()(
-        estd::variadic::instance<index, Debouncer<pin, inverted> > d,
-        estd::freertos::detail::queue<Item>& q)
-    {
-        if(d->eval())
-        {
-            const auto v = (embr::debounce::v1::States) d->state();
-            ESP_DRAM_LOGV(TAG, "on_notify: %u", v);
-            q.send_from_isr(Item{v, pin});
+            ESP_DRAM_LOGV(TAG, "notifying: %s", to_string(d->state()));
+            f(embr::debounce::v1::Event{d->state(), pin});
         }
 
         return false;

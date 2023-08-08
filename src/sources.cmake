@@ -17,6 +17,7 @@ set(INCLUDE_FILES
 
 if(NOT CMAKE_CXX_STANDARD EQUAL 98)
     set(SOURCE_FILES
+        embr/internal/general.cpp
         embr/service/service_v1.cpp
         )
 endif()

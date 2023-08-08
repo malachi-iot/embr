@@ -108,13 +108,12 @@ public:
 
 
 
-// DEBT: Return an enum - 1 = on, 2 = off, 0 = still evaluating
 template <class Unsigned>
-unsigned eval(DebounceButtonHistory<Unsigned>& dbh)
+debounce::v1::States eval(DebounceButtonHistory<Unsigned>& dbh)
 {
-    if(dbh.eval_on()) return 1;
-    if(dbh.eval_off()) return 2;
-    return 0;
+    if(dbh.eval_on()) return debounce::v1::States::Pressed;
+    if(dbh.eval_off()) return debounce::v1::States::Released;
+    return debounce::v1::States::Undefined;
 }
 
 // DEBT: Since this is a low level creature, add a substate T too
@@ -166,7 +165,10 @@ public:
     ESTD_CPP_CONSTEXPR_RET DebouncerTracker() : storage(0)
     {}
 
-    uint16_t state() const { return storage.state_; }
+    debounce::v1::States state() const
+    {
+        return (debounce::v1::States)storage.state_;
+    }
 
     /// @brief Evaluate periodic incoming level and indicate whether
     /// an on/off state change occurred

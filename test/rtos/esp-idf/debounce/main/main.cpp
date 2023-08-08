@@ -19,15 +19,7 @@ using Diagnostic = embr::esp_idf::service::v1::Diagnostic;
 
 #include "app.h"
 
-const char* to_string(embr::debounce::States v)
-{
-    switch(v)
-    {
-        case embr::debounce::States::Pressed:    return "pressed";
-        case embr::debounce::States::Released:   return "released";
-        default:                return "undefined";
-    }
-}
+namespace debounce = embr::esp_idf::debounce::v1;
 
 
 #define GPIO_INPUT_IO_0     CONFIG_DIAGNOSTIC_GPIO1
@@ -35,8 +27,8 @@ const char* to_string(embr::debounce::States v)
 
 
 estd::tuple<
-    embr::esp_idf::debounce::v1::Debouncer<GPIO_INPUT_IO_0, true>,
-    embr::esp_idf::debounce::v1::Debouncer<4, true> > debouncers;    // DEBT: arbitrary selection of pin 4
+    debounce::Debouncer<GPIO_INPUT_IO_0, true>,
+    debounce::Debouncer<4, true> > debouncers;    // DEBT: arbitrary selection of pin 4
 
 
 
@@ -44,8 +36,12 @@ inline void App::on_notify(Timer::event::callback)
 {
     xtensa_perfmon_start();
 
-    debouncers.visit(embr::esp_idf::debounce::v1::debounce_visitor{}, q);
-    //debouncers.visit(debounce_visitor{});
+    debouncers.visit(
+        debounce::Visitor{},
+        [this](Event e)
+        {
+            q.send_from_isr(e);
+        });
 
     xtensa_perfmon_stop();
 }
@@ -132,12 +128,12 @@ extern "C" void app_main()
     {
         static int counter = 0;
 
-        embr::debounce::v1::Event item;
+        App::Event item;
 
         if(app.q.receive(&item, estd::chrono::milliseconds(10)))
             ESP_LOGI(TAG, "pin: %u, event: %s (%u)",
                 item.pin,
-                to_string(item.state),
+                embr::to_string(item.state),
                 (unsigned)item.state);
 
         if(clock::now() - last_now > timeout)
