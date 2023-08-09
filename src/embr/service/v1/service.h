@@ -121,11 +121,14 @@ protected:
         if (s != base_type::state())
         {
             base_type::template fire_changing<st::id::state>(
-                        base_type::state(), s);
+                base_type::state(), s);
+            base_type::template fire_changing<st::id::substate>(
+                base_type::substate(), ss);
 
             base_type::state(s);
             base_type::state(ss);
 
+            base_type::template fire_changed<st::id::substate>(ss);
             base_type::template fire_changed<st::id::state>(s);
         }
         else if(ss != base_type::substate())

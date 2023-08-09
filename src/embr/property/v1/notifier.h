@@ -143,10 +143,12 @@ protected:
 public:
     PropertyNotifier() = default;
 
-    PropertyNotifier(const TSubject& subject) : subject_type(subject)
+    constexpr explicit PropertyNotifier(const TSubject& subject) :
+        subject_type(subject)
     {}
 
-    PropertyNotifier(TSubject&& subject) : subject_type(std::move(subject))
+    constexpr explicit PropertyNotifier(TSubject&& subject) :
+        subject_type(std::forward<TSubject>(subject))
     {}
 };
 
@@ -335,20 +337,22 @@ protected:
 public:
     template <class ...TArgs, class TImpl2 = TImpl,
         estd::enable_if_t<unwrap<TImpl2>::is_wrapped::value == false, bool> = true >
-    PropertyHost(TArgs&&...args)  : impl_type(std::forward<TArgs>(args)...)
+    constexpr explicit PropertyHost(TArgs&&...args) :
+        impl_type(std::forward<TArgs>(args)...)
     {}
 
-    PropertyHost(TSubject& subject) :
+    constexpr explicit PropertyHost(TSubject& subject) :
         base_type(subject) {}
 
-    PropertyHost(const TSubject& subject) :
+    constexpr explicit PropertyHost(const TSubject& subject) :
         base_type(subject) {}
 
     PropertyHost(const TImpl& impl, const TSubject& subject) :
         base_type(subject),
         TImpl(impl) {}
 
-    PropertyHost(TSubject&& subject) : base_type(std::move(subject)) {}
+    constexpr explicit PropertyHost(TSubject&& subject) :
+        base_type(std::forward<TSubject>(subject)) {}
 
     //operator impl_type& () { return *this; }
 
