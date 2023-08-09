@@ -23,7 +23,7 @@ void App::on_notify(TWAI::event::alert alert)
 
 void App::on_notify(TWAI::event::autorx rx)
 {
-    twai_message_t& message = *rx.message;
+    const twai_message_t& message = rx.message;
     
     ESP_LOGI(TAG, "on_notify: TWAI rx: id=%" PRIx32 " dlc=%u",
         message.identifier, message.data_length_code);
@@ -47,15 +47,14 @@ embr::esp_idf::service::v1::TWAI::runtime<filter_observer> twai;
 
 static void init_twai()
 {
-    static twai_general_config_t g_config = TWAI_GENERAL_CONFIG_DEFAULT(
+    constexpr twai_general_config_t g_config = TWAI_GENERAL_CONFIG_DEFAULT(
         (gpio_num_t)CONFIG_GPIO_TWAI_TX,
         (gpio_num_t)CONFIG_GPIO_TWAI_RX,
         TWAI_MODE_NORMAL);
 
-    static const twai_filter_config_t f_config = TWAI_FILTER_CONFIG_ACCEPT_ALL();
-    static const twai_timing_config_t t_config = TWAI_TIMING_CONFIG_125KBITS();
+    constexpr twai_timing_config_t t_config = TWAI_TIMING_CONFIG_125KBITS();
 
-    app_domain::twai.start(&g_config, &t_config, &f_config);
+    app_domain::twai.start(&g_config, &t_config);
     app_domain::twai.autorx(true);
 }
 

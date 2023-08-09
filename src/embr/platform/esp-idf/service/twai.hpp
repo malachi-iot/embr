@@ -79,6 +79,16 @@ auto TWAI::runtime<TSubject, TImpl>::on_start(
     }
 }
 
+template <class TSubject, class TImpl>
+auto TWAI::runtime<TSubject, TImpl>::on_start(
+    const twai_general_config_t* g_config,
+    const twai_timing_config_t* t_config) -> state_result
+{
+    constexpr twai_filter_config_t f_config = TWAI_FILTER_CONFIG_ACCEPT_ALL();
+
+    return on_start(g_config, t_config, &f_config);
+}
+
 
 template <class TSubject, class TImpl>
 void TWAI::runtime<TSubject, TImpl>::check_status()
@@ -152,7 +162,7 @@ void TWAI::runtime<TSubject, TImpl>::broadcast(uint32_t alerts)
             twai_message_t message;
 
             while(twai_receive(&message, 0) == ESP_OK)
-                notify(event::autorx{&message});
+                notify(event::autorx{message});
         }
         else
         {

@@ -35,6 +35,16 @@ public:
             const uint32_t alerts;
 
             operator uint32_t() const { return alerts; }
+
+            constexpr bool rx_data() const
+            {
+                return alerts & TWAI_ALERT_RX_DATA;
+            }
+
+            constexpr bool tx_failed() const
+            {
+                return alerts & TWAI_ALERT_TX_FAILED;
+            }
         };
 
         struct rx {};
@@ -43,7 +53,7 @@ public:
         // used if autorx() = true
         struct autorx
         {
-            twai_message_t* message;
+            const twai_message_t& message;
         };
 
         // tx succeeded
@@ -69,6 +79,10 @@ public:
             const twai_general_config_t* g_config,
             const twai_timing_config_t* t_config,
             const twai_filter_config_t* f_config);
+
+        state_result on_start(
+            const twai_general_config_t* g_config,
+            const twai_timing_config_t* t_config);
 
         // NOTE: Not ready yet
         state_result on_start(
