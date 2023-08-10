@@ -54,6 +54,9 @@ estd::tuple<
 #if CONFIG_GPIO_BUTTON2
     ,Tracker<CONFIG_GPIO_BUTTON2>
 #endif
+#if CONFIG_GPIO_BUTTON3
+    ,Tracker<CONFIG_GPIO_BUTTON3>
+#endif
     >
     trackers;
 
