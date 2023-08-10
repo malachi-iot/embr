@@ -1,0 +1,2 @@
+# This is so that we can override include/conf.h (or hopefully default/conf.h)
+**/src/conf.h

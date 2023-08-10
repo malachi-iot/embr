@@ -1,10 +1,17 @@
 #pragma once
 
+#include <estd/port/toolchain.h>    // Makes sure we get __GNUC_PREREQ
+
 namespace embr { namespace debounce { inline namespace v1 {
 
 inline namespace reference {
 
+#if __GNUC_PREREQ(9, 3)
 enum class States
+#else
+// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=51242
+enum class States : char
+#endif
 {
     Undefined = 0,
     On,
