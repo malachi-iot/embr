@@ -1,65 +1,35 @@
+#include <estd/chrono.h>
 #include <estd/ostream.h>
 #include <estd/tuple.h>
 
-#include <embr/internal/debounce/ultimate.h>
+#include <embr/platform/arduino/debounce.h>
 
 #include "conf.h"
 
+using namespace estd::chrono_literals;
+
 static estd::arduino_ostream cout(Serial);
 
-namespace debounce = embr::debounce::v1::ultimate;
+using namespace embr::arduino::debounce::v1::ultimate;
 
-template <unsigned pin>
-struct Tracker : debounce::Tracker<uint16_t>
+void show(embr::debounce::Event e)
 {
-    using base_type = debounce::Tracker<uint16_t>;
-
-    bool eval()
-    {
-        return base_type::eval(digitalRead(pin));
-    }
-};
-
-
-struct TrackerVisitor
-{
-    static void eval(unsigned pin, embr::debounce::States s)
-    {
-        switch(s)
-        {
-            case embr::debounce::States::On:
-                cout << F("On: ") << pin;
-                break;
-
-            case embr::debounce::States::Off:
-                cout << F("Off: ") << pin;
-                break;
-
-            default: break;
-
-            cout << estd::endl;
-        }
-    }
-
-    template <unsigned I, unsigned pin>
-    bool operator()(estd::variadic::instance<I, Tracker<pin>> i) const
-    {
-        if(i->eval())   eval(pin, i->state());
-        return false;
-    }
-};
+    cout << F("pin: ") << e.pin << ':' << embr::to_string(e.state) << estd::endl;
+}
 
 estd::tuple<
-    Tracker<CONFIG_GPIO_BUTTON1>
+    Debouncer<CONFIG_GPIO_BUTTON1>
 #if CONFIG_GPIO_BUTTON2
-    ,Tracker<CONFIG_GPIO_BUTTON2>
+    ,Debouncer<CONFIG_GPIO_BUTTON2>
 #endif
 #if CONFIG_GPIO_BUTTON3
-    ,Tracker<CONFIG_GPIO_BUTTON3>
+    ,Debouncer<CONFIG_GPIO_BUTTON3>
 #endif
     >
     trackers;
 
+using clock = estd::chrono::arduino_clock;
+clock::time_point next_debounce, next_counter;
 
 void setup()
 {
@@ -69,10 +39,32 @@ void setup()
 
     cout << F("debounce test: ") << estd::tuple_size<decltype(trackers)>::value;
     cout << estd::endl;
-}
 
+    pinMode(CONFIG_GPIO_BUTTON1, INPUT);
+#if CONFIG_GPIO_BUTTON2
+    pinMode(CONFIG_GPIO_BUTTON2, INPUT);
+#endif
+#if CONFIG_GPIO_BUTTON3
+    pinMode(CONFIG_GPIO_BUTTON3, INPUT);
+#endif
+
+    next_counter = next_debounce = clock::now();
+}
 
 void loop()
 {
-    trackers.visit(TrackerVisitor{});
+    static int counter = 0;
+    const clock::time_point now = clock::now();
+
+    if(now < next_debounce) return;
+
+    next_debounce += 10ms;
+
+    trackers.visit(Visitor{}, show);
+
+    if(now < next_counter) return;
+
+    next_counter += 1s;
+
+    cout << F("counter: ") << ++counter << estd::endl;
 }

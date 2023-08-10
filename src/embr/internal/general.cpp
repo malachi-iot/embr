@@ -2,14 +2,13 @@
 
 namespace embr {
 
-// DEBT: Need to put in embr proper - but placing into debounce.cpp makes esp mad,
-// creates a compatibility conflict with old gptimer
+// DEBT: Use flash constant strings
 const char* to_string(debounce::v1::States s)
 {
     switch(s)
     {
-        case embr::debounce::States::Pressed:    return "pressed";
-        case embr::debounce::States::Released:   return "released";
+        case debounce::States::On:    return "on";
+        case debounce::States::Off:   return "off";
         default:                return "undefined";
     }
 }
