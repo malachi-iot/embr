@@ -319,6 +319,18 @@ TEST_CASE("lwip ostream", "[lwip-ios]")
 
     TEST_ASSERT_EQUAL(s1_size + 1, out.tellp());
     TEST_ASSERT_EQUAL(s1[0], *payload);
+
+    using ostream_type = estd::detail::basic_ostream<embr::lwip::opbuf_streambuf&>;
+
+    embr::lwip::opbuf_streambuf sbuf(128);
+
+    unsigned val = 7;
+
+    ostream_type out2(sbuf);
+
+    out2 << val;
+
+    TEST_ASSERT_EQUAL('7', *(char*)sbuf.pbuf().payload());
 }
 
 #pragma GCC diagnostic pop
