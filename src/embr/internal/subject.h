@@ -59,14 +59,6 @@ public:
     }
 };
 
-// EXPERIMENTAL
-// Kind of our own integral constant.  Not so useful as it is
-template <class T, T* t>
-struct static_wrapper
-{
-    T& value() { return *t; }
-    operator T&() { return *t; }
-};
 
 namespace tag {
 
@@ -85,36 +77,22 @@ protected:
     // allocate a purely temporary observer, as this has
     // been explicitly set up as stateless
     template <class T>
-    struct provider
+    struct provider : estd::type_identity<T>
     {
         constexpr static T value()
         {
             static_assert(estd::is_empty<T>::value, "T must be stateless");
             return T();
         }
-
-        typedef T type;
     };
 
-    // Grab a global static wrapped up as a type, oftentimes a singleton
     template <class T, T* t>
-    struct provider<static_wrapper<T, t> >
+    struct provider<estd::integral_constant<T*, t> >
     {
-        constexpr static T& value() { return *t; }
         typedef T& type;
-    };
-
-    template <class T, T t>
-    struct provider<estd::integral_constant<T, t> >
-    {
-        // DEBT: estd doesn't have remove_pointer just yet
-        typedef typename estd::remove_pointer<T>::type& type;
 
         static constexpr type value()
         {
-            /*
-            T _t = estd::integral_constant<T, t>();
-            return *_t; */
             return *t;
         }
     };
@@ -204,11 +182,11 @@ class subject : public TBase
         base_type::template _notify_helper<index>(e, c);
     }
 public:
-    constexpr subject(TObservers&&...observers) :
-            base_type(std::forward<TObservers>(observers)...)
+    explicit constexpr subject(TObservers&&...observers) :
+        base_type(std::forward<TObservers>(observers)...)
     {}
 
-    subject() {}
+    ESTD_CPP_DEFAULT_CTOR(subject)
 
     template <class TEvent>
     void notify(const TEvent& e)

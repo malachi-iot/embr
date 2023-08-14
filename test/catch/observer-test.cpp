@@ -108,6 +108,7 @@ public:
     int_type counter = 0;
     int_type context_counter = 0;
     int_type converting_counter = 0;
+    int_type last_int = -1;
 
     StatefulObserver() : id(default_id()) {}
 
@@ -116,6 +117,7 @@ public:
     void on_notify(int val)
     {
         REQUIRE(val == expected);
+        last_int = val;
     }
 
     void on_notify(event_3 e, event_3& context)
@@ -185,6 +187,9 @@ struct OtherStatefulObserver
     }
 };
 
+StatefulObserver so1;
+using so1_type = estd::integral_constant<StatefulObserver*, &so1>;
+
 
 TEST_CASE("observer")
 {
@@ -192,7 +197,7 @@ TEST_CASE("observer")
     {
         // for debian x64 gcc
         REQUIRE(sizeof(int) == 4);
-        REQUIRE(sizeof(StatefulObserver) == 20);
+        REQUIRE(sizeof(StatefulObserver) == sizeof(int) * 6);
     }
     SECTION("void subject")
     {
@@ -257,6 +262,14 @@ TEST_CASE("observer")
                 REQUIRE(counter == 3);
                 REQUIRE(allow_counter == 3);
             }
+            SECTION("integral_constant")
+            {
+                using s2_type = decltype(s)::append<so1_type>;
+
+                s2_type{}.notify(3);
+
+                REQUIRE(so1.last_int == 3);
+            }
         }
         SECTION("layer1")
         {
@@ -301,7 +314,7 @@ TEST_CASE("observer")
 
                 // for debian x64
                 // Stateful = 20
-                REQUIRE(sz == 20);
+                REQUIRE(sz == sizeof(StatefulObserver));
 
                 embr::layer1::subject<
                     StatefulObserver
