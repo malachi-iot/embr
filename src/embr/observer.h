@@ -20,8 +20,7 @@ namespace layer0 {
 #ifdef __cpp_alias_templates
 template <class ...TObservers>
 using subject = internal::subject<
-    internal::stateless_base<TObservers...>,
-    TObservers...>;
+    internal::stateless_base<TObservers...> >;
 
 #endif
 
@@ -59,7 +58,7 @@ struct delegate_observer
 {
     F f;
 
-    delegate_observer(F&& f) : f(std::move(f)) {}
+    constexpr explicit delegate_observer(F&& f) : f(std::move(f)) {}
 
     // FIX: Needs harder event type here otherwise we get cross-wiring on argument types
     // when calling f
@@ -80,18 +79,9 @@ struct delegate_observer<F, Arg1> make_delegate_observer(F&& f)
 
 namespace layer1 {
 
-#ifdef __cpp_alias_templates
 template <class ...TObservers>
 using subject = internal::subject<
-    internal::tuple_base<TObservers...>,
-    TObservers...>;
-#else
-template <class ...TObservers>
-class subject : internal::subject<internal::tuple_base<TObservers...> >
-{
-public:
-};
-#endif
+    internal::tuple_base<TObservers...> >;
 
 template <class ...TObservers>
 subject<TObservers&&...> make_subject(TObservers&&...observers)
@@ -126,7 +116,7 @@ public:
         subject.notify(n, c);
     }
 
-    observer_proxy(TSubject& s) : subject(s) {}
+    constexpr explicit observer_proxy(TSubject& s) : subject(s) {}
 
     // Proxy by nature operates on a TSubject reference, not a value - so no
     // move semantic version

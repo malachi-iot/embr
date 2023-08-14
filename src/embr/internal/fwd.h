@@ -2,7 +2,7 @@
 
 namespace embr { namespace internal {
 
-template <class TBase, class ...TObservers>
+template <class TBase>
 class subject;
 
 }}

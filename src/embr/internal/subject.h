@@ -9,6 +9,23 @@
 
 namespace embr { namespace internal {
 
+// Designed to hang off visit_tuple_functor results
+// DEBT: Not used yet
+class subject_visitor
+{
+    template <size_t I, class T, class Event, class Context>
+    bool operator()(estd::variadic::instance<I, T> i, Event& e) const
+    {
+        return notify_helper(i.value, e, true);
+    }
+
+    template <size_t I, class T, class Event, class Context>
+    bool operator()(estd::variadic::instance<I, T> i, Event& e, Context& c) const
+    {
+        return notify_helper(i.value, e, c, true);
+    }
+};
+
 template <class ...TObservers>
 class tuple_base
 {
@@ -19,6 +36,7 @@ protected:
     template <std::size_t index>
     using valref_type = typename estd::tuple_element<index, tuple_type>::valref_type;
 
+    // DEBT: use an evaporator here so that full sparse/stateless take 0 bytes instead of 1
     tuple_type observers;
 
     template <int index, class TEvent>
@@ -140,14 +158,20 @@ public:
     // DEBT: Don't love using the consuming 'subject' directly here, but putting this alias
     // in 'subject' itself presents an issue for layer1 scenarios
     template <class ...TObservers2>
-    using append = subject<stateless_base<TObservers..., TObservers2...>, TObservers..., TObservers2...>;
+    using append = subject<stateless_base<TObservers..., TObservers2...>>;
 };
 
-template <class TBase, class ...TObservers>
+template <class TBase>
 class subject : public TBase
 {
     typedef TBase base_type;
     typedef typename base_type::tuple_type tuple_type;
+
+    static constexpr size_t size()
+    {
+        return estd::tuple_size<tuple_type>::value;
+    }
+
 
     // using slightly clumsy index >= 0 so that Qt tabbing doesn't get confused
     template <int index, class TEvent,
@@ -182,22 +206,19 @@ class subject : public TBase
         base_type::template _notify_helper<index>(e, c);
     }
 public:
-    explicit constexpr subject(TObservers&&...observers) :
-        base_type(std::forward<TObservers>(observers)...)
-    {}
-
+    ESTD_CPP_FORWARDING_CTOR(subject)
     ESTD_CPP_DEFAULT_CTOR(subject)
 
     template <class TEvent>
     void notify(const TEvent& e)
     {
-        notify_helper<sizeof... (TObservers) - 1>(e);
+        notify_helper<size() - 1>(e);
     }
 
     template <class TEvent, class TContext>
     void notify(const TEvent& e, TContext& c)
     {
-        notify_c_helper<sizeof... (TObservers) - 1>(e, c);
+        notify_c_helper<size() - 1>(e, c);
     }
 };
 
