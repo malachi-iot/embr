@@ -1,4 +1,6 @@
 set(SOURCES
         bits.cpp
         lwip.cpp
-        word.cpp)
+        observer.cpp
+        word.cpp
+        )
