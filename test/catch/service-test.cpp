@@ -629,6 +629,12 @@ TEST_CASE("Services", "[services]")
 
     typedef Filter1::runtime<subject_type> filter1_type;
 
+    int sz;
+
+    sz = sizeof(filter1_type);
+
+    REQUIRE(sz == 1);
+
     // loosely a tally of how many service primary state changes happened
     int expected_services = 7;
 

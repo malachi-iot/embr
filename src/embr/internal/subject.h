@@ -127,19 +127,19 @@ protected:
     using valref_type = typename estd::tuple_element<index, tuple_type>::valref_type;
 
     template <int index, class TEvent>
-    void _notify_helper(const TEvent& e)
+    bool _notify_helper(const TEvent& e)
     {
         valref_type<index> observer = estd::get<index>(observers());
 
-        notify_helper(observer, e, true);
+        return notify_helper(observer, e, true);
     }
 
     template <int index, class TEvent, class TContext>
-    void _notify_helper(const TEvent& e, TContext& c)
+    bool _notify_helper(const TEvent& e, TContext& c)
     {
         valref_type<index> observer = estd::get<index>(observers());
 
-        notify_helper(observer, e, c, true);
+        return notify_helper(observer, e, c, true);
     }
 
     constexpr explicit tuple_base(TObservers&&...observers) :
@@ -162,34 +162,30 @@ protected:
     using p = providers<true>::provider<type_at_index<index> >;
 
     template <int index, class TEvent>
-    void _notify_helper(const TEvent& e)
+    static constexpr bool _notify_helper(const TEvent& e)
     {
         using type = type_at_index<index>;
-        using observer_type = typename p<index>::type;
-        observer_type observer = p<index>::value(type{});
+        //using observer_type = typename p<index>::type;
 
         static_assert(estd::is_empty<type>::value, "layer0 demands empty type");
-        static_assert(estd::is_const<observer_type>::value == false,
-            "const not yet supported for notify_helper");
 
         // SFINAE magic to call best matching on_notify function
-        notify_helper(
-                    observer,
+        return notify_helper(
+                    p<index>::value(type{}),
                     e, true);
     }
 
     template <int index, class TEvent, class TContext>
-    void _notify_helper(const TEvent& e, TContext& c)
+    static constexpr bool _notify_helper(const TEvent& e, TContext& c)
     {
         using type = type_at_index<index>;
-        using observer_type = typename p<index>::type;
-        observer_type observer = p<index>::value(type{});
+        //using observer_type = typename p<index>::type;
 
         static_assert(estd::is_empty<type>::value, "layer0 demands empty type");
 
         // SFINAE magic to call best matching on_notify function
-        notify_helper(
-                    observer,
+        return notify_helper(
+                    p<index>::value(type{}),
                     e, c, true);
     }
 
@@ -214,15 +210,13 @@ class subject : public TBase
         template <size_t I, class T, class Event>
         bool operator()(estd::variadic::type<I, T>, Event& e) const
         {
-            this_.template _notify_helper<I>(e);
-            return false;
+            return (this_.template _notify_helper<I>(e), false);
         }
 
         template <size_t I, class T, class Event, class Context>
         bool operator()(estd::variadic::type<I, T>, Event& e, Context& c) const
         {
-            this_.template _notify_helper<I>(e, c);
-            return false;
+            return (this_.template _notify_helper<I>(e, c), false);
         }
     };
 

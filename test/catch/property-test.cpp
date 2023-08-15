@@ -155,6 +155,10 @@ TEST_CASE("properties")
 
             source_type source;
 
+            const int sz = sizeof(subject_type);
+
+            REQUIRE(sz == 1);
+
             source.emit();
 
             REQUIRE(filter1_value1_value == 1);
