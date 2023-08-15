@@ -9,6 +9,13 @@
 
 namespace embr { namespace internal {
 
+namespace tag {
+
+struct stateless_subject {};
+
+}
+
+
 // Designed to hang off visit_tuple_functor results
 // DEBT: Not used yet
 class subject_visitor
@@ -31,6 +38,7 @@ class tuple_base
 {
 protected:
     typedef estd::tuple<TObservers...> tuple_type;
+    using types = estd::variadic::types<TObservers...>;
 
     // In case of stateless types, we want tuple to help us select a value or a reference
     template <std::size_t index>
@@ -78,19 +86,14 @@ public:
 };
 
 
-namespace tag {
-
-struct stateless_subject {};
-
-}
-
-
-// slightly abuses tuple type.  We pretend we have a tuple
 template <class ...TObservers>
 class stateless_base : tag::stateless_subject
 {
 protected:
-    typedef estd::tuple<TObservers...> tuple_type;
+    using types = estd::variadic::types<TObservers...>;
+
+    // TODO: 'provider' works well enough we might be able to consolidate
+    // layer0/layer1 behavior into provider itself
 
     // allocate a purely temporary observer, as this has
     // been explicitly set up as stateless
@@ -127,7 +130,7 @@ protected:
 #endif
 
     template <int index>
-    using p = provider<estd::tuple_element_t<index, tuple_type> >;
+    using p = provider<typename types::template get<index> >;
 
     template <int index, class TEvent>
     void _notify_helper(const TEvent& e)
@@ -165,46 +168,27 @@ template <class TBase>
 class subject : public TBase
 {
     typedef TBase base_type;
-    typedef typename base_type::tuple_type tuple_type;
+    typedef typename base_type::types types;
 
-    static constexpr size_t size()
+    struct functor
     {
-        return estd::tuple_size<tuple_type>::value;
-    }
+        subject& this_;
 
+        template <size_t I, class T, class Event>
+        bool operator()(estd::variadic::type<I, T>, Event& e) const
+        {
+            this_.template _notify_helper<I>(e);
+            return false;
+        }
 
-    // using slightly clumsy index >= 0 so that Qt tabbing doesn't get confused
-    template <int index, class TEvent,
-              class TEnabled = typename estd::enable_if <!(index >= 0), bool>::type >
-    void notify_helper(const TEvent&) const
-    {
+        template <size_t I, class T, class Event, class Context>
+        bool operator()(estd::variadic::type<I, T>, Event& e, Context& c) const
+        {
+            this_.template _notify_helper<I>(e, c);
+            return false;
+        }
+    };
 
-    }
-
-    template <int index, class TEvent, class TContext,
-              class TEnabled = typename estd::enable_if <!(index >= 0), bool>::type >
-    void notify_c_helper(const TEvent&, TContext&) const
-    {
-
-    }
-
-    template <int index, class TEvent,
-              class TEnabled = typename estd::enable_if<(index >= 0), void>::type >
-    void notify_helper(const TEvent& e, bool = true)
-    {
-        notify_helper<index - 1>(e);
-
-        base_type::template _notify_helper<index>(e);
-    }
-
-    template <int index, class TEvent, class TContext,
-              class TEnabled = typename estd::enable_if<(index >= 0), void>::type >
-    void notify_c_helper(const TEvent& e, TContext& c, bool = true)
-    {
-        notify_c_helper<index - 1>(e, c);
-
-        base_type::template _notify_helper<index>(e, c);
-    }
 public:
     ESTD_CPP_FORWARDING_CTOR(subject)
     ESTD_CPP_DEFAULT_CTOR(subject)
@@ -212,13 +196,13 @@ public:
     template <class TEvent>
     void notify(const TEvent& e)
     {
-        notify_helper<size() - 1>(e);
+        types::visitor::visit(functor{*this}, e);
     }
 
     template <class TEvent, class TContext>
     void notify(const TEvent& e, TContext& c)
     {
-        notify_c_helper<size() - 1>(e, c);
+        types::visitor::visit(functor{*this}, e, c);
     }
 };
 
