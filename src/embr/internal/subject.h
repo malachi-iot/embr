@@ -9,6 +9,16 @@
 
 namespace embr { namespace internal {
 
+template <class ...TObservers>
+class tuple_base;
+
+
+namespace tag {
+
+struct stateless_subject {};
+
+}
+
 // TODO: 'provider' works well enough we might be able to consolidate
 // layer0/layer1 behavior into provider itself, while tuple_base's
 // sparse_tuple makes it a candidate for stateless_base to derive from
@@ -80,13 +90,6 @@ struct providers
 #endif
 };
 
-
-
-namespace tag {
-
-struct stateless_subject {};
-
-}
 
 
 // Designed to hang off visit_tuple_functor results
