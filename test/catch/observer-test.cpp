@@ -164,7 +164,7 @@ TEST_CASE("observer")
 
             typedef decltype(s) subject_type;
 
-            const StatefulObserver& so = estd::get<1>(s);
+            const StatefulObserver& so = estd::get<1>(s.observers());
 
             REQUIRE(so.id == StatefulObserver::default_id());
 

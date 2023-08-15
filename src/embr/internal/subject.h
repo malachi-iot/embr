@@ -37,10 +37,15 @@ template <class ...TObservers>
 class tuple_base : public estd::tuple<TObservers...>
 {
 protected:
-    typedef estd::tuple<TObservers...> tuple_type;
     using types = estd::variadic::types<TObservers...>;
-    tuple_type& observers() { return *this; }
 
+public:
+    using tuple_type = estd::tuple<TObservers...>;
+
+    tuple_type& observers() { return *this; }
+    const tuple_type& observers() const { return *this; }
+
+protected:
     // In case of stateless types, we want tuple to help us select a value or a reference
     template <std::size_t index>
     using valref_type = typename estd::tuple_element<index, tuple_type>::valref_type;
