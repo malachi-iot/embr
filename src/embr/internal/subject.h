@@ -34,23 +34,21 @@ class subject_visitor
 };
 
 template <class ...TObservers>
-class tuple_base
+class tuple_base : public estd::tuple<TObservers...>
 {
 protected:
     typedef estd::tuple<TObservers...> tuple_type;
     using types = estd::variadic::types<TObservers...>;
+    tuple_type& observers() { return *this; }
 
     // In case of stateless types, we want tuple to help us select a value or a reference
     template <std::size_t index>
     using valref_type = typename estd::tuple_element<index, tuple_type>::valref_type;
 
-    // DEBT: use an evaporator here so that full sparse/stateless take 0 bytes instead of 1
-    tuple_type observers;
-
     template <int index, class TEvent>
     void _notify_helper(const TEvent& e)
     {
-        valref_type<index> observer = estd::get<index>(observers);
+        valref_type<index> observer = estd::get<index>(observers());
 
         notify_helper(observer, e, true);
     }
@@ -58,31 +56,16 @@ protected:
     template <int index, class TEvent, class TContext>
     void _notify_helper(const TEvent& e, TContext& c)
     {
-        valref_type<index> observer = estd::get<index>(observers);
+        valref_type<index> observer = estd::get<index>(observers());
 
         notify_helper(observer, e, c, true);
     }
 
     constexpr explicit tuple_base(TObservers&&...observers) :
-        observers(std::forward<TObservers>(observers)...)
+        tuple_type(std::forward<TObservers>(observers)...)
     {}
 
     tuple_base() = default;
-
-public:
-    // TODO: Move these gets out into a tuple base/wrapper
-    // NOTE: Consider also making this into a tuple() call
-    template <std::size_t index>
-    valref_type<index> get()
-    {
-        return estd::get<index>(observers);
-    }
-
-    template <int index>
-    typename estd::tuple_element<index, tuple_type >::const_valref_type get() const
-    {
-        return estd::get<index>(observers);
-    }
 };
 
 
@@ -93,7 +76,8 @@ protected:
     using types = estd::variadic::types<TObservers...>;
 
     // TODO: 'provider' works well enough we might be able to consolidate
-    // layer0/layer1 behavior into provider itself
+    // layer0/layer1 behavior into provider itself, while tuple_base's
+    // sparse_tuple makes it a candidate for stateless_base to derive from
 
     // allocate a purely temporary observer, as this has
     // been explicitly set up as stateless
@@ -129,15 +113,20 @@ protected:
     };
 #endif
 
+    template <size_t index>
+    using type_at_index = typename types::template get<index>;
+
     template <int index>
-    using p = provider<typename types::template get<index> >;
+    using p = provider<type_at_index<index> >;
 
     template <int index, class TEvent>
     void _notify_helper(const TEvent& e)
     {
-        typename p<index>::type observer = p<index>::value();
+        using observer_type = typename p<index>::type;
+        observer_type observer = p<index>::value();
 
-        static_assert(estd::is_const<typename p<index>::type>::value == false,
+        static_assert(estd::is_empty<type_at_index<index>>::value, "layer0 demands empty type");
+        static_assert(estd::is_const<observer_type>::value == false,
             "const not yet supported for notify_helper");
 
         // SFINAE magic to call best matching on_notify function
@@ -149,7 +138,10 @@ protected:
     template <int index, class TEvent, class TContext>
     void _notify_helper(const TEvent& e, TContext& c)
     {
-        typename p<index>::type observer = p<index>::value();
+        using observer_type = typename p<index>::type;
+        observer_type observer = p<index>::value();
+
+        static_assert(estd::is_empty<type_at_index<index>>::value, "layer0 demands empty type");
 
         // SFINAE magic to call best matching on_notify function
         notify_helper(

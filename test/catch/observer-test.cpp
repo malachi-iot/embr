@@ -40,7 +40,7 @@ public:
         return true;
     }
 
-    bool allow_notify(event_1 val, const int& context)
+    bool allow_notify(event_1 val, const int& context) const
     {
         ++allow_counter;
         return context != 8;
@@ -164,7 +164,7 @@ TEST_CASE("observer")
 
             typedef decltype(s) subject_type;
 
-            const StatefulObserver& so = s.get<1>();
+            const StatefulObserver& so = estd::get<1>(s);
 
             REQUIRE(so.id == StatefulObserver::default_id());
 
