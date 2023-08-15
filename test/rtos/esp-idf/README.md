@@ -30,7 +30,7 @@ These tests are all for variants of Espressif ESP32
 | 19DEC22 | observer     | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v4.4.3   | Pass     |
 | 15AUG23 | observer     | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v5.0.3   | Pass     |
 | 15DEC22 | scheduler    | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v4.4.3   | Pass     |
-| 30DEC22 | scheduler    | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v5.0.0   | Fail     | Minor SDK incompatibilities inhibit compilation
+| 15AUG23 | scheduler    | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v5.0.3   | Pass     |
 | 14JAN23 | scheduler    | WEMOS D1             | ESP32          | v5.0     | Pass     |
 | 14JAN23 | scheduler    | WEMOS D1             | ESP32          | v5.1-dev | Fail     | Runs, wake is broken - smells like a race condition
 | 03AUG23 | services|gpio | ESP-WROVER-KIT v4.1 | ESP32-WROVER-E | v5.0.3   | Pass     |

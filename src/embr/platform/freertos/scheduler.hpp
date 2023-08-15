@@ -136,7 +136,9 @@ inline BaseType_t bruteforce_daemon_init(
     return result;
 }
 
-
+// NOTE: Scheduler isn't a typical service scenario, the TObservers here
+// are purely to augment low-level scheduler behavior and is considered internal
+// use only
 template <unsigned N, class ...TObservers>
 class Scheduler : public internal::layer1::Scheduler<
     N,
@@ -152,7 +154,7 @@ class Scheduler : public internal::layer1::Scheduler<
 
     embr::freertos::experimental::NotifierObserver& notifier_observer()
     {
-        return base_type::subject_provider::value().template get<0>();
+        return estd::get<0>(base_type::subject_provider::value());
     }
 
 public:
