@@ -9,6 +9,79 @@
 
 namespace embr { namespace internal {
 
+// TODO: 'provider' works well enough we might be able to consolidate
+// layer0/layer1 behavior into provider itself, while tuple_base's
+// sparse_tuple makes it a candidate for stateless_base to derive from
+template <bool stateless>
+struct providers
+{
+    template <class T>
+    using is_empty = estd::enable_if_t<estd::is_empty<T>::value>;
+
+    template <class T>
+    struct is_integral_constant : estd::false_type {};
+
+    template <class T, T* t>
+    struct is_integral_constant<estd::integral_constant<T*, t> > : estd::true_type {};
+
+    template <class T, class = void>
+    struct provider;
+
+    template <class T>
+    struct provider<T,
+        estd::enable_if_t<
+            !estd::is_empty<T>::value &&
+            !is_integral_constant<T>::value>> :
+        estd::type_identity<T>
+    {
+        constexpr static T& value(T& v)
+        {
+            static_assert(!stateless, "T must be stateless");
+            return v;
+        }
+    };
+
+    // allocate a purely temporary observer, as this has
+    // been explicitly set up as stateless
+    template <class T>
+    struct provider<T,
+        estd::enable_if_t<
+            estd::is_empty<T>::value &&
+            !is_integral_constant<T>::value>> :
+        estd::type_identity<T>
+    {
+        constexpr static T value(T&&)
+        {
+            return T();
+        }
+    };
+
+    template <class T>
+    struct provider<T,
+        estd::enable_if_t<is_integral_constant<T>::value>>
+    {
+        typedef typename estd::remove_pointer_t<typename T::value_type>& type;
+
+        static constexpr type value(T&&)
+        {
+            return *T::value;
+        }
+    };
+
+#ifdef FEATURE_STD_TYPE_TRAITSX
+    // UNTESTED
+    template <class T, T* t>
+    struct provider<std::integral_constant<T*, t>, is_empty<T>>
+    {
+        typedef T& type;
+
+        static constexpr type value() { return *t; }
+    };
+#endif
+};
+
+
+
 namespace tag {
 
 struct stateless_subject {};
@@ -73,47 +146,6 @@ protected:
     tuple_base() = default;
 };
 
-// TODO: 'provider' works well enough we might be able to consolidate
-// layer0/layer1 behavior into provider itself, while tuple_base's
-// sparse_tuple makes it a candidate for stateless_base to derive from
-struct stateless_providers
-{
-    // allocate a purely temporary observer, as this has
-    // been explicitly set up as stateless
-    template <class T>
-    struct provider : estd::type_identity<T>
-    {
-        constexpr static T value()
-        {
-            static_assert(estd::is_empty<T>::value, "T must be stateless");
-            return T();
-        }
-    };
-
-    template <class T, T* t>
-    struct provider<estd::integral_constant<T*, t> >
-    {
-        typedef T& type;
-
-        static constexpr type value()
-        {
-            return *t;
-        }
-    };
-
-#ifdef FEATURE_STD_TYPE_TRAITS
-    // UNTESTED
-    template <class T, T* t>
-    struct provider<std::integral_constant<T*, t> >
-    {
-        typedef T& type;
-
-        static constexpr type value() { return *t; }
-    };
-#endif
-};
-
-
 template <class ...TObservers>
 class stateless_base : tag::stateless_subject
 {
@@ -124,15 +156,16 @@ protected:
     using type_at_index = typename types::template get<index>;
 
     template <int index>
-    using p = stateless_providers::provider<type_at_index<index> >;
+    using p = providers<true>::provider<type_at_index<index> >;
 
     template <int index, class TEvent>
     void _notify_helper(const TEvent& e)
     {
+        using type = type_at_index<index>;
         using observer_type = typename p<index>::type;
-        observer_type observer = p<index>::value();
+        observer_type observer = p<index>::value(type{});
 
-        static_assert(estd::is_empty<type_at_index<index>>::value, "layer0 demands empty type");
+        static_assert(estd::is_empty<type>::value, "layer0 demands empty type");
         static_assert(estd::is_const<observer_type>::value == false,
             "const not yet supported for notify_helper");
 
@@ -145,10 +178,11 @@ protected:
     template <int index, class TEvent, class TContext>
     void _notify_helper(const TEvent& e, TContext& c)
     {
+        using type = type_at_index<index>;
         using observer_type = typename p<index>::type;
-        observer_type observer = p<index>::value();
+        observer_type observer = p<index>::value(type{});
 
-        static_assert(estd::is_empty<type_at_index<index>>::value, "layer0 demands empty type");
+        static_assert(estd::is_empty<type>::value, "layer0 demands empty type");
 
         // SFINAE magic to call best matching on_notify function
         notify_helper(
@@ -162,6 +196,7 @@ public:
     template <class ...TObservers2>
     using append = subject<stateless_base<TObservers..., TObservers2...>>;
 };
+
 
 template <class TBase>
 class subject : public TBase
