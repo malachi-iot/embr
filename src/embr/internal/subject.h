@@ -22,7 +22,8 @@ struct stateless_subject {};
 // TODO: 'provider' works well enough we might be able to consolidate
 // layer0/layer1 behavior into provider itself, while tuple_base's
 // sparse_tuple makes it a candidate for stateless_base to derive from
-template <bool stateless>
+// NOTE: 'Types' is experimental here so far
+template <bool stateless, class Types>
 struct providers
 {
     template <class T>
@@ -159,7 +160,7 @@ protected:
     using type_at_index = typename types::template get<index>;
 
     template <int index>
-    using p = providers<true>::provider<type_at_index<index> >;
+    using p = typename providers<true, types>::template provider<type_at_index<index> >;
 
     template <int index, class TEvent>
     static constexpr bool _notify_helper(const TEvent& e)
@@ -205,16 +206,14 @@ class subject : public TBase
 
     struct functor
     {
-        subject& this_;
-
         template <size_t I, class T, class Event>
-        bool operator()(estd::variadic::type<I, T>, Event& e) const
+        constexpr bool operator()(estd::variadic::type<I, T>, subject& this_, Event& e) const
         {
             return (this_.template _notify_helper<I>(e), false);
         }
 
         template <size_t I, class T, class Event, class Context>
-        bool operator()(estd::variadic::type<I, T>, Event& e, Context& c) const
+        constexpr bool operator()(estd::variadic::type<I, T>, subject& this_, Event& e, Context& c) const
         {
             return (this_.template _notify_helper<I>(e, c), false);
         }
@@ -227,13 +226,13 @@ public:
     template <class TEvent>
     void notify(const TEvent& e)
     {
-        visitor::visit(functor{*this}, e);
+        visitor::visit(functor{}, *this, e);
     }
 
     template <class TEvent, class TContext>
     void notify(const TEvent& e, TContext& c)
     {
-        visitor::visit(functor{*this}, e, c);
+        visitor::visit(functor{}, *this, e, c);
     }
 };
 
