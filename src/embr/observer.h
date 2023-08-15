@@ -72,7 +72,7 @@ struct delegate_observer
 template <typename F, typename Arg1 = typename internal::ArgType<decltype(internal::ArgHelper(&F::operator())) >::arg1 >
 struct delegate_observer<F, Arg1> make_delegate_observer(F&& f)
 {
-    return delegate_observer<F, Arg1>(std::move(f));
+    return delegate_observer<F, Arg1>(std::forward<F>(f));
 }
 
 }

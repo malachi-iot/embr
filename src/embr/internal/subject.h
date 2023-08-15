@@ -68,17 +68,11 @@ protected:
     tuple_base() = default;
 };
 
-
-template <class ...TObservers>
-class stateless_base : tag::stateless_subject
+// TODO: 'provider' works well enough we might be able to consolidate
+// layer0/layer1 behavior into provider itself, while tuple_base's
+// sparse_tuple makes it a candidate for stateless_base to derive from
+struct stateless_providers
 {
-protected:
-    using types = estd::variadic::types<TObservers...>;
-
-    // TODO: 'provider' works well enough we might be able to consolidate
-    // layer0/layer1 behavior into provider itself, while tuple_base's
-    // sparse_tuple makes it a candidate for stateless_base to derive from
-
     // allocate a purely temporary observer, as this has
     // been explicitly set up as stateless
     template <class T>
@@ -104,20 +98,28 @@ protected:
 
 #ifdef FEATURE_STD_TYPE_TRAITS
     // UNTESTED
-    template <class T, T t>
-    struct provider<std::integral_constant<T, t> >
+    template <class T, T* t>
+    struct provider<std::integral_constant<T*, t> >
     {
-        typedef typename estd::remove_pointer<T>::type& type;
+        typedef T& type;
 
-        static type value() { return *t; }
+        static constexpr type value() { return *t; }
     };
 #endif
+};
+
+
+template <class ...TObservers>
+class stateless_base : tag::stateless_subject
+{
+protected:
+    using types = estd::variadic::types<TObservers...>;
 
     template <size_t index>
     using type_at_index = typename types::template get<index>;
 
     template <int index>
-    using p = provider<type_at_index<index> >;
+    using p = stateless_providers::provider<type_at_index<index> >;
 
     template <int index, class TEvent>
     void _notify_helper(const TEvent& e)
@@ -160,7 +162,7 @@ template <class TBase>
 class subject : public TBase
 {
     typedef TBase base_type;
-    typedef typename base_type::types types;
+    using visitor = typename base_type::types::visitor;
 
     struct functor
     {
@@ -188,13 +190,13 @@ public:
     template <class TEvent>
     void notify(const TEvent& e)
     {
-        types::visitor::visit(functor{*this}, e);
+        visitor::visit(functor{*this}, e);
     }
 
     template <class TEvent, class TContext>
     void notify(const TEvent& e, TContext& c)
     {
-        types::visitor::visit(functor{*this}, e, c);
+        visitor::visit(functor{*this}, e, c);
     }
 };
 
