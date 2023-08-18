@@ -100,7 +100,7 @@ esp_err_t WiFi::runtime<TSubject, TImpl>::config(wifi_mode_t mode,
         err, TAG, "registration failed");
 
     // DEBT: Move IP event rebroadcaster elsewhere
-    base_type::template handler_register<IP_EVENT>();
+    //base_type::template handler_register<IP_EVENT>(); // NOTE: Seems to work, just not ready to fully test it yet
     ESP_GOTO_ON_ERROR(base_type::handler_register(IP_EVENT, ESP_EVENT_ANY_ID),
         err, TAG, "registration failed");
 

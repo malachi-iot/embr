@@ -28,11 +28,6 @@ template <class TSubject, class TImpl>
 void Event::runtime<TSubject, TImpl>::event_handler(
     ip_event_t id, void* event_data)
 {
-    // TODO: This compiles OK, just keeping disabled until we
-    // can really test it
-    //esp_idf::event::v1::internal::handler<IP_EVENT>{}.
-    //    exec(base_type::subject(), id, event_data);
-
     notify(event::e<ip_event_t>{id, event_data});
 
     switch(id)

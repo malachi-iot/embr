@@ -12,61 +12,6 @@
 
 namespace embr::esp_idf {
 
-namespace event { inline namespace v1 {
-
-namespace internal {
-
-template <>
-struct handler<IP_EVENT>
-{
-    // DEBT: Consider passing the whole service instead of just subject -
-    // doing that would mandate some fancy friend footwork
-    template <class Subject>
-    static void exec(Subject& subject, ip_event_t event_id, void* event_data)
-    {
-        // DEBT: notify this way isn't carrying forward the service as part
-        // of the context
-
-        event::v1::runtime<ip_event_t> e{event_id, event_data};
-        subject.notify(e);
-    }
-
-    template <ip_event_t id>
-    using ip = embr::esp_idf::event::ip<id>;
-
-    template <class Service>
-    static void exec2(Service* s, uint32_t event_id, void* event_data)
-    {
-        const event::v1::runtime<ip_event_t> e{(ip_event_t)event_id, event_data};
-        s->notify(e);
-
-        switch(e.id)
-        {
-            case IP_EVENT_STA_GOT_IP:
-                s->notify(ip<IP_EVENT_STA_GOT_IP>(event_data));
-                break;
-
-            case IP_EVENT_STA_LOST_IP:
-                s->notify(ip<IP_EVENT_STA_LOST_IP>(event_data));
-                break;
-
-            case IP_EVENT_ETH_GOT_IP:
-                s->notify(ip<IP_EVENT_ETH_GOT_IP>(event_data));
-                break;
-
-            case IP_EVENT_ETH_LOST_IP:
-                s->notify(ip<IP_EVENT_ETH_LOST_IP>(event_data));
-                break;
-
-            default: break;
-        }
-    }
-};
-
-}
-
-}}
-
 namespace service { inline namespace v1 {
 
 // TODO: Make an esp event handler base class service
