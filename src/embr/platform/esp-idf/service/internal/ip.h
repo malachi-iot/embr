@@ -33,7 +33,7 @@ struct handler<IP_EVENT>
     using ip = embr::esp_idf::event::ip<id>;
 
     template <class Service>
-    static void exec2(Service* s, uint32_t event_id, void* event_data)
+    static void exec(Service* s, uint32_t event_id, void* event_data)
     {
         const event::v1::runtime<ip_event_t> e{(ip_event_t)event_id, event_data};
         s->notify(e);

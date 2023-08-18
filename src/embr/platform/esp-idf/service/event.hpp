@@ -76,17 +76,16 @@ esp_err_t Event::runtime<TSubject, TImpl>::handler_register(
     return ESP_ERR_NOT_FOUND;
 }
 
-template <class TSubject, class TImpl>
-template <const esp_event_base_t& event_base_>
-void Event::runtime<TSubject, TImpl>::event_handler(
+template <class Runtime, const esp_event_base_t& event_base_>
+void Event::event_handler(
     void* arg, esp_event_base_t event_base,
     int32_t event_id, void* event_data)
 {
-    auto r = (runtime*)arg;
+    auto r = (Runtime*)arg;
 
     // DEBT: Consider asserting event_base == event_base_
 
-    esp_idf::event::v1::internal::handler<event_base_>::exec2(r, event_id, event_data);
+    esp_idf::event::v1::internal::handler<event_base_>::exec(r, event_id, event_data);
 }
 
 
@@ -96,7 +95,7 @@ esp_err_t Event::runtime<TSubject, TImpl>::handler_register(
     int32_t event_id)
 {
     return esp_event_handler_register(event_base, event_id,
-        event_handler<event_base>, this);
+        Event::event_handler<runtime, event_base>, this);
 }
 
 

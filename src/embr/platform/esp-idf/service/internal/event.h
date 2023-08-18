@@ -16,6 +16,8 @@ struct runtime
 
 namespace internal {
 
+// NOTE: Consider changing this to 'bridge' since that's what it really does,
+// bridges esp-idf events to embr events
 template <const esp_event_base_t&>
 struct handler;
 
