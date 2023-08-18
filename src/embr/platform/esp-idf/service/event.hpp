@@ -24,64 +24,14 @@ inline esp_netif_t* Event::create_default_sta()
 }
 
 
-template <class TSubject, class TImpl>
-void Event::runtime<TSubject, TImpl>::event_handler(
-    ip_event_t id, void* event_data)
-{
-    notify(event::e<ip_event_t>{id, event_data});
-
-    switch(id)
-    {
-        case IP_EVENT_STA_GOT_IP:
-            notify(event::ip<IP_EVENT_STA_GOT_IP>(event_data));
-            break;
-
-        case IP_EVENT_STA_LOST_IP:
-            notify(event::ip<IP_EVENT_STA_LOST_IP>(event_data));
-            break;
-
-        case IP_EVENT_ETH_GOT_IP:
-            notify(event::ip<IP_EVENT_ETH_GOT_IP>(event_data));
-            break;
-
-        case IP_EVENT_ETH_LOST_IP:
-            notify(event::ip<IP_EVENT_ETH_LOST_IP>(event_data));
-            break;
-
-        default: break;
-    }
-}
-
-
-template <class TSubject, class TImpl>
-void Event::runtime<TSubject, TImpl>::ip_event_handler(
-    void* arg, esp_event_base_t event_base,
-    int32_t event_id, void* event_data)
-{
-    ((runtime*)arg)->event_handler((ip_event_t)event_id, event_data);
-}
-
-
-
-
-// DEBT: Consider compile time specialization for optimization, compile time
-// indication of support, and extensibility
-template <class TSubject, class TImpl>
-esp_err_t Event::runtime<TSubject, TImpl>::handler_register(
-    esp_event_base_t event_base, int32_t event_id)
-{
-    if(event_base == IP_EVENT)
-        return esp_event_handler_register(IP_EVENT, event_id, ip_event_handler, this);
-
-    return ESP_ERR_NOT_FOUND;
-}
-
 template <class Runtime, const esp_event_base_t& event_base_>
 void Event::event_handler(
     void* arg, esp_event_base_t event_base,
     int32_t event_id, void* event_data)
 {
     auto r = (Runtime*)arg;
+
+    ESP_LOGV(TAG, "event_handler: %s:%" PRIi32, event_base, event_id);
 
     // DEBT: Consider asserting event_base == event_base_
 

@@ -35,11 +35,6 @@ struct Event : embr::service::v1::Service
 
     EMBR_SERVICE_RUNTIME_BEGIN(embr::service::v1::Service)
     
-        void event_handler(ip_event_t event_id, void* event_data);
-
-        static void ip_event_handler(void* arg, esp_event_base_t event_base,
-            int32_t event_id, void* event_data);
-
         esp_err_t handler_register(esp_event_base_t, int32_t = ESP_EVENT_ANY_ID);
         
         template <const esp_event_base_t& event_base>
