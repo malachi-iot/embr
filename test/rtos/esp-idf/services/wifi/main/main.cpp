@@ -16,7 +16,7 @@ using Diagnostic = embr::esp_idf::service::v1::Diagnostic;
 
 #include "app.h"
 
-// NOTE: These two events already are logged by way of esp-idf's system, but we do it
+// NOTE: These events already are logged by way of esp-idf's system, but we do it
 // again just to demonstrate app ability to hook events
 
 void App::on_notify(WiFi::event::wifi<WIFI_EVENT_STA_CONNECTED>)
@@ -29,6 +29,14 @@ void App::on_notify(WiFi::event::ip<IP_EVENT_STA_GOT_IP>)
 {
     ESP_LOGI(TAG, "on_notify: got ip");
 }
+
+#if __cpp_nontype_template_parameter_auto
+void App::on_notify(embr::esp_idf::event::v2::base<WIFI_EVENT_STA_START>)
+{
+    ESP_LOGI(TAG, "on_notify: WiFi started");
+}
+#endif
+
 
 
 namespace app_domain {

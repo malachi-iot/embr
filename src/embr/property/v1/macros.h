@@ -95,6 +95,9 @@ struct id : embr::property::v1::tag::property_owner  \
 //#define EMBR_PROPERTY(...) GET_MACRO(__VA_ARGS__, EMBR_PROPERTY_ID2_2, EMBR_PROPERTY_ID2_1)(__VA_ARGS__)
 
 
+// --- keeping this around just incase
+//    using typename base_type::impl_type; // this used to live in EMBR_PROPERTY_RUNTIME_BEGIN
+
 // DEBT: This base_ parameter is confusing, and is it necessary?
 #define EMBR_PROPERTY_RUNTIME_BEGIN(base_) \
 typedef this_type impl_type;         \
@@ -103,7 +106,7 @@ class runtime : public base_::runtime<TSubject, TImpl> \
 {                                          \
     typedef runtime this_type;             \
     typedef base_::runtime<TSubject, TImpl> base_type; \
-    using typename base_type::impl_type;    \
+protected:                                  \
     using base_type::notify;                \
     \
 public:\

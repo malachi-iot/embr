@@ -9,6 +9,10 @@
 // https://github.com/espressif/esp-idf/blob/v5.0/components/esp_wifi/include/esp_wifi_types.h
 
 namespace embr { namespace esp_idf { namespace event {
+    
+inline namespace v1 {
+
+namespace internal {
 
 template <>
 struct mapping<wifi_event_t, WIFI_EVENT_SCAN_DONE>
@@ -44,10 +48,14 @@ struct mapping<wifi_event_t, WIFI_EVENT_STA_BSS_RSSI_LOW>
     typedef wifi_event_bss_rssi_low_t type;
 };
 
+}
+
 
 template <wifi_event_t id>
 using wifi = base<wifi_event_t, id>;
 
 
+
+}
 
 }}}

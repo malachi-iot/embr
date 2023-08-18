@@ -2,9 +2,7 @@
 
 namespace embr { namespace esp_idf { namespace event {
 
-// monostate means no type at all - vs void would be void*
-template <typename TEventId, TEventId id_>
-struct mapping { typedef estd::monostate type; };
+inline namespace v1 {
 
 template <typename TEventId>
 struct runtime
@@ -18,6 +16,13 @@ struct runtime
 
 namespace internal {
 
+
+// monostate means no type at all - vs void would be void*
+template <typename TEventId, TEventId id_>
+struct mapping { typedef estd::monostate type; };
+
+template <typename TEventId, TEventId id_>
+using mapping_t = typename mapping<TEventId, id_>::type;
 
 template <class T>
 struct data_base
@@ -45,9 +50,9 @@ struct data_base<estd::monostate>
 
 
 template <typename TEventId, TEventId id_>
-struct base : internal::data_base<typename mapping<TEventId, id_>::type>
+struct base : internal::data_base<internal::mapping_t<TEventId, id_>>
 {
-    typedef internal::data_base<typename mapping<TEventId, id_>::type> base_type;
+    typedef internal::data_base<internal::mapping_t<TEventId, id_>> base_type;
 
     using typename base_type::pointer;
     
@@ -68,5 +73,15 @@ struct base : internal::data_base<typename mapping<TEventId, id_>::type>
     } */
 };
 
+}
+
+inline namespace v2 {
+
+#if __cpp_nontype_template_parameter_auto
+template <auto event_id_>
+using base = event::v1::base<decltype(event_id_), event_id_>;
+#endif
+
+}
 
 }}}

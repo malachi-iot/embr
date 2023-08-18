@@ -28,12 +28,19 @@ struct EventService : embr::service::v1::Service
         template <typename TEventId>
         using e = embr::esp_idf::event::runtime<TEventId>;
 
-        template <wifi_event_t id>
-        using wifi = embr::esp_idf::event::wifi<id>;
-
         template <ip_event_t id>
         using ip = embr::esp_idf::event::ip<id>;
     };
+
+
+    EMBR_SERVICE_RUNTIME_BEGIN(embr::service::v1::Service)
+    
+        void event_handler(ip_event_t event_id, void* event_data);
+
+        static void ip_event_handler(void* arg, esp_event_base_t event_base,
+            int32_t event_id, void* event_data);
+
+    EMBR_SERVICE_RUNTIME_END
 
     // DEBT: Just a placeholder really, copy/pasted from esp_helper
     // Starts default event loop AND netif in sta mode
@@ -52,15 +59,19 @@ struct WiFi : EventService
     // Whether to do WiFi connects (and eventually retries, etc)
     // within this service, or to merely rebroadcast the events
     // running config/start will set this to true
+    // DEBT: Use 'user' area of Service for this
     bool housekeeping_ = false;
+    constexpr bool housekeeping() const { return housekeeping_; } 
 
-    EMBR_SERVICE_RUNTIME_BEGIN(Service)
+    struct event : EventService::event
+    {
+        template <wifi_event_t id>
+        using wifi = embr::esp_idf::event::wifi<id>;
+    };
 
-        void ip_event_handler(ip_event_t event_id, void* event_data);
+    EMBR_SERVICE_RUNTIME_BEGIN(EventService)
 
         static void wifi_event_handler(void* arg, esp_event_base_t event_base,
-                            int32_t event_id, void* event_data);
-        static void ip_event_handler(void* arg, esp_event_base_t event_base,
                             int32_t event_id, void* event_data);
 
         void event_handler(int32_t event_id, void* event_data);

@@ -25,7 +25,7 @@ inline esp_netif_t* EventService::create_default_sta()
 
 
 template <class TSubject, class TImpl>
-void WiFi::runtime<TSubject, TImpl>::ip_event_handler(
+void EventService::runtime<TSubject, TImpl>::event_handler(
     ip_event_t id, void* event_data)
 {
     notify(event::e<ip_event_t>{id, event_data});
@@ -78,7 +78,7 @@ inline void WiFi::runtime<TSubject, TImpl>::event_handler(
         {
             notify(event::wifi<WIFI_EVENT_STA_START>(event_data));
 
-            if(base_type::housekeeping_)
+            if(base_type::housekeeping())
                 esp_wifi_connect();
 
             break;
@@ -146,7 +146,7 @@ esp_err_t WiFi::runtime<TSubject, TImpl>::config(wifi_mode_t mode,
 
     // DEBT: Move IP event rebroadcaster elsewhere
     ESP_GOTO_ON_ERROR(esp_event_handler_register(IP_EVENT, ESP_EVENT_ANY_ID,
-        ip_event_handler, this),
+        base_type::ip_event_handler, this),
         err, TAG, "registration failed");
 
     // DEBT: Pretty sure const_cast is safe here, but not 100% sure - verify
@@ -216,11 +216,11 @@ auto WiFi::runtime<TSubject, TImpl>::on_start(wifi_mode_t mode,
 
 
 template <class TSubject, class TImpl>
-void WiFi::runtime<TSubject, TImpl>::ip_event_handler(
+void EventService::runtime<TSubject, TImpl>::ip_event_handler(
     void* arg, esp_event_base_t event_base,
     int32_t event_id, void* event_data)
 {
-    ((runtime*)arg)->ip_event_handler((ip_event_t)event_id, event_data);
+    ((runtime*)arg)->event_handler((ip_event_t)event_id, event_data);
 }
 
 
@@ -241,7 +241,7 @@ void WiFi::runtime<TSubject, TImpl>::register_handler()
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID,
         wifi_event_handler, this));
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, ESP_EVENT_ANY_ID,
-        ip_event_handler, this));
+        base_type::ip_event_handler, this));
 }
 
 
