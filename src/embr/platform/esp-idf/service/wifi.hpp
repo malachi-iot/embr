@@ -60,7 +60,7 @@ inline void WiFi::runtime<TSubject, TImpl>::event_handler(
 {
     wifi_event_t id = (wifi_event_t)event_id;
 
-    ESP_LOGD(TAG, "event_handler: id=%u", id);
+    ESP_LOGV(TAG, "event_handler: id=%u", id);
 
     // Doing this explicitly rather than auto conversion back from stronger types
     // to minimize doubling up on switch statement
@@ -149,12 +149,37 @@ esp_err_t WiFi::runtime<TSubject, TImpl>::config(wifi_mode_t mode,
         ip_event_handler, this),
         err, TAG, "registration failed");
 
-    // DEBT: Presumes STA mode
     // DEBT: Pretty sure const_cast is safe here, but not 100% sure - verify
     // and comment
-    ESP_GOTO_ON_ERROR(esp_wifi_set_config(WIFI_IF_STA,
-        const_cast<wifi_config_t*>(config)),
-        err, TAG, "configuration failed");
+    // DEBT: mode itself could probably be compile time
+    switch(mode)
+    {
+        case WIFI_MODE_STA:
+            ESP_GOTO_ON_ERROR(esp_wifi_set_config(WIFI_IF_STA,
+                const_cast<wifi_config_t*>(config)),
+                err, TAG, "configuration failed");
+            break;
+
+        case WIFI_MODE_AP:
+            ESP_GOTO_ON_ERROR(esp_wifi_set_config(WIFI_IF_AP,
+                const_cast<wifi_config_t*>(config)),
+                err, TAG, "configuration failed");
+            break;
+
+#ifdef CONFIG_ESP_WIFI_NAN_ENABLE
+        case WIFI_MODE_NAN:
+            ESP_GOTO_ON_ERROR(esp_wifi_set_config(WIFI_IF_NAN,
+                const_cast<wifi_config_t*>(config)),
+                err, TAG, "configuration failed");
+            break;
+#endif
+
+        // DEBT: Support AP+STA mode
+        // DEBT: On error, give a little more info as to why
+        default:
+            ret = ESP_ERR_NOT_SUPPORTED;
+            goto err;
+    }
 
     base_type::configured(init_config);
     base_type::state(Configured);
@@ -179,11 +204,11 @@ template <class TSubject, class TImpl>
 auto WiFi::runtime<TSubject, TImpl>::on_start(wifi_mode_t mode,
     const wifi_config_t* c) -> state_result
 {
-    wifi_init_config_t init_config = WIFI_INIT_CONFIG_DEFAULT();
+    const wifi_init_config_t init_config = WIFI_INIT_CONFIG_DEFAULT();
 
     if(config(mode, &init_config, c) != ESP_OK)
         // DEBT: Use state as already set by config
-        return state_result{Error, ErrConfig};
+        return state_result{Error, base_type::substate()};
 
     return on_start();
 }
