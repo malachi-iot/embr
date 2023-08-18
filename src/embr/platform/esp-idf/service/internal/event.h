@@ -12,7 +12,7 @@ struct runtime
     const TEventId id;
     const void* const data;
 
-    runtime(TEventId id, void* data) : id{id}, data{data} {}
+    constexpr runtime(TEventId id, void* data) : id{id}, data{data} {}
 };
 
 

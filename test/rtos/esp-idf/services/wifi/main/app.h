@@ -12,5 +12,8 @@ struct App
 {
     static constexpr const char* TAG = "App";
 
-    using TWAI = embr::esp_idf::service::v1::WiFi;
+    using WiFi = embr::esp_idf::service::v1::WiFi;
+
+    void on_notify(WiFi::wifi_event<WIFI_EVENT_STA_CONNECTED>);
+    void on_notify(WiFi::ip_event<IP_EVENT_STA_GOT_IP>);
 };

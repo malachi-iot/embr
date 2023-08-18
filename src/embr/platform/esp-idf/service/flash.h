@@ -27,10 +27,6 @@ struct Flash : embr::SparseService
     state_result on_start();
 
     EMBR_SERVICE_RUNTIME_END
-
-    // DEBT: Make this a macro somewhere
-    template <class TSubject>
-    using static_type = static_factory<TSubject, this_type>::static_type;
 };
 
 }}

@@ -33,7 +33,8 @@ struct EventService : embr::service::v1::Service
     using ip_event = embr::esp_idf::event::ip<id>;
 
     // DEBT: Just a placeholder really, copy/pasted from esp_helper
-    esp_netif_t* create_default();
+    // Starts default event loop AND netif in sta mode
+    esp_netif_t* create_default_sta();
 };
 
 
