@@ -39,6 +39,7 @@ protected:
             States service_: bitsize::state;
             Substates service_substate_: bitsize::substate;
 
+            // Due to raw = 0, these all default to 'Stopped'
             States child1 : bitsize::state;
             States child2 : bitsize::state;
             States child3 : bitsize::state;

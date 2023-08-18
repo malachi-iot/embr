@@ -34,6 +34,7 @@ const char* ServiceEnum::to_string(Substates v)
         case Resetting:     return "Resetting";
         case Running:       return "Running";
         case Sleeping:      return "Sleeping";
+        case Sparse:        return "Sparse";
         case Starting:      return "Starting";
         case Stopping:      return "Stopping";
         case Unstarted:     return "Unstarted";

@@ -15,7 +15,7 @@ namespace embr::esp_idf {
 namespace service { inline namespace v1 {
 
 // TODO: Make an esp event handler base class service
-struct WiFi : EventLoop
+struct WiFi : embr::service::v1::Service
 {
     typedef WiFi this_type;
 
@@ -27,18 +27,18 @@ struct WiFi : EventLoop
     // running config/start will set this to true
     // DEBT: Use 'user' area of Service for this
     bool housekeeping_ = false;
-    constexpr bool housekeeping() const { return housekeeping_; } 
+    constexpr bool housekeeping() const { return housekeeping_; }
 
     struct event
     {
         template <ip_event_t id>
         using ip = embr::esp_idf::event::ip<id>;
-        
+
         template <wifi_event_t id>
         using wifi = embr::esp_idf::event::wifi<id>;
     };
 
-    EMBR_SERVICE_RUNTIME_BEGIN(EventLoop)
+    EMBR_SERVICE_RUNTIME_BEGIN(embr::service::v1::Service)
 
         static void wifi_event_handler(void* arg, esp_event_base_t event_base,
                             int32_t event_id, void* event_data);
@@ -56,8 +56,21 @@ struct WiFi : EventLoop
 
         state_result on_start();
         state_result on_start(wifi_mode_t mode, const wifi_config_t*);
+
+        template <class Subject2, class Impl2>
+        void on_notify(
+            embr::property::v1::event::PropertyChanged<embr::Service::id::state>,
+            EventLoop::runtime<Subject2, Impl2>&);
     
     EMBR_SERVICE_RUNTIME_END
+
+    // DEBT: Just a placeholder really, copy/pasted from esp_helper
+    // Starts default event loop AND netif in sta mode
+    esp_netif_t* create_default_sta();
+
+    // DEBT: Copy/pasting this everywhere sucks
+    template <class TSubject>
+    using static_type = static_factory<TSubject, this_type>::static_type;
 };
 
 }}

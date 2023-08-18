@@ -37,6 +37,8 @@ struct data_base
     pointer const data;
 
     constexpr data_base(pointer data) : data{data} {}
+
+    pointer operator->() const { return data; }
 };
 
 template <>

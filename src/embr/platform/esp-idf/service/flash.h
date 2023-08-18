@@ -8,11 +8,6 @@ namespace service { inline namespace v1 {
 
 struct Flash : embr::SparseService
 {
-    // DEBT: Diagnostic observer assumes presence of substate(), so
-    // doing this temporarily just to satisfy it.  Might consider a
-    // special substate to reflect sparse/stateless service.
-    constexpr static Substates substate() { return Finished; }
-
     // TODO: Make embr::Service this_type private so that we don't
     // accidentally pick it up
     typedef Flash this_type;

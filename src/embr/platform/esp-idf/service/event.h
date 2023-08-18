@@ -13,11 +13,11 @@ namespace embr::esp_idf {
 namespace service { inline namespace v1 {
 
 // Specifically describes 'default' event loop
-struct EventLoop : embr::service::v1::Service
+struct EventLoop : embr::service::v1::SparseService
 {
     typedef EventLoop this_type;
 
-    static constexpr const char* TAG = "Event";
+    static constexpr const char* TAG = "EventLoop";
     static constexpr const char* name() { return TAG; }
 
     struct event
@@ -30,7 +30,7 @@ struct EventLoop : embr::service::v1::Service
     static void event_handler(void* arg, esp_event_base_t event_base,
         int32_t event_id, void* event_data);
 
-    EMBR_SERVICE_RUNTIME_BEGIN(embr::service::v1::Service)
+    EMBR_SERVICE_RUNTIME_BEGIN(embr::service::v1::SparseService)
     
         state_result on_start();
     
@@ -44,10 +44,6 @@ struct EventLoop : embr::service::v1::Service
         esp_err_t handler_register(int32_t, esp_event_handler_instance_t*);
 
     EMBR_SERVICE_RUNTIME_END
-
-    // DEBT: Just a placeholder really, copy/pasted from esp_helper
-    // Starts default event loop AND netif in sta mode
-    esp_netif_t* create_default_sta();
 };
 
 
