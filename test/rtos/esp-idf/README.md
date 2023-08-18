@@ -1,8 +1,14 @@
 # Overview
 
-Requires `esp-idf` v4.x
+Requires `esp-idf` v4.4.4 or higher
 
 I think the CMakeLists.txt in this same folder is not used
+
+## c++ findings
+
+Noteworthy is that esp-idf < 5.0 = c++11, >= 5.0 = c++20
+Also, despite this, syntax #8 from https://en.cppreference.com/w/cpp/language/namespace works in < 5.0
+
 ## test code
 
 ### button

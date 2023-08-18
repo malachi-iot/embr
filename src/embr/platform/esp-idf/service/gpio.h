@@ -52,7 +52,10 @@ struct GPIO<false> : embr::Service
 {
     gpio_isr_handle_t gpio_isr_handle_;
 
-    constexpr gpio_isr_handle_t* gpio_isr_handle() { return &gpio_isr_handle_; }
+#if __cpp_constexpr >= 201304L
+    constexpr
+#endif
+    gpio_isr_handle_t* gpio_isr_handle() { return &gpio_isr_handle_; }
 };
 
 }
@@ -103,7 +106,7 @@ struct GPIO : internal::GPIO<sparse> //, internal::GPIOBase
 
     template <class TSubject>
     //using static_type = static_factory<TSubject, this_type>::static_type;
-    using static_type = PropertyContainer::static_factory<TSubject, this_type>::static_type;
+    using static_type = typename PropertyContainer::static_factory<TSubject, this_type>::static_type;
 };
 
 
