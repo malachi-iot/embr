@@ -16,6 +16,8 @@ struct runtime
 
 namespace internal {
 
+template <const esp_event_base_t&>
+struct handler;
 
 // monostate means no type at all - vs void would be void*
 template <typename TEventId, TEventId id_>

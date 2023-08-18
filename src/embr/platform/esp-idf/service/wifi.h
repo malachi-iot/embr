@@ -14,6 +14,30 @@
 
 namespace embr::esp_idf {
 
+namespace event { inline namespace v1 {
+
+namespace internal {
+
+template <>
+struct handler<IP_EVENT>
+{
+    // DEBT: Consider passing the whole service instead of just subject -
+    // doing that would mandate some fancy friend footwork
+    template <class Subject>
+    static void exec(Subject& subject, ip_event_t event_id, void* event_data)
+    {
+        // DEBT: notify this way isn't carrying forward the service as part
+        // of the context
+
+        event::v1::runtime<ip_event_t> e{event_id, event_data};
+        subject.notify(e);
+    }
+};
+
+}
+
+}}
+
 namespace service { inline namespace v1 {
 
 struct EventService : embr::service::v1::Service
@@ -39,6 +63,8 @@ struct EventService : embr::service::v1::Service
 
         static void ip_event_handler(void* arg, esp_event_base_t event_base,
             int32_t event_id, void* event_data);
+
+        esp_err_t handler_register(esp_event_base_t, int32_t = ESP_EVENT_ANY_ID);
 
     EMBR_SERVICE_RUNTIME_END
 

@@ -28,6 +28,11 @@ template <class TSubject, class TImpl>
 void EventService::runtime<TSubject, TImpl>::event_handler(
     ip_event_t id, void* event_data)
 {
+    // TODO: This compiles OK, just keeping disabled until we
+    // can really test it
+    //esp_idf::event::v1::internal::handler<IP_EVENT>{}.
+    //    exec(base_type::subject(), id, event_data);
+
     notify(event::e<ip_event_t>{id, event_data});
 
     switch(id)
@@ -51,6 +56,31 @@ void EventService::runtime<TSubject, TImpl>::event_handler(
         default: break;
     }
 }
+
+
+template <class TSubject, class TImpl>
+void EventService::runtime<TSubject, TImpl>::ip_event_handler(
+    void* arg, esp_event_base_t event_base,
+    int32_t event_id, void* event_data)
+{
+    ((runtime*)arg)->event_handler((ip_event_t)event_id, event_data);
+}
+
+
+
+
+// DEBT: Consider compile time specialization for optimization, compile time
+// indication of support, and extensibility
+template <class TSubject, class TImpl>
+esp_err_t EventService::runtime<TSubject, TImpl>::handler_register(
+    esp_event_base_t event_base, int32_t event_id)
+{
+    if(event_base == IP_EVENT)
+        return esp_event_handler_register(IP_EVENT, event_id, ip_event_handler, this);
+
+    return ESP_ERR_NOT_FOUND;
+}
+
 
 
 
@@ -145,8 +175,7 @@ esp_err_t WiFi::runtime<TSubject, TImpl>::config(wifi_mode_t mode,
         err, TAG, "registration failed");
 
     // DEBT: Move IP event rebroadcaster elsewhere
-    ESP_GOTO_ON_ERROR(esp_event_handler_register(IP_EVENT, ESP_EVENT_ANY_ID,
-        base_type::ip_event_handler, this),
+    ESP_GOTO_ON_ERROR(base_type::handler_register(IP_EVENT, ESP_EVENT_ANY_ID),
         err, TAG, "registration failed");
 
     // DEBT: Pretty sure const_cast is safe here, but not 100% sure - verify
@@ -213,15 +242,6 @@ auto WiFi::runtime<TSubject, TImpl>::on_start(wifi_mode_t mode,
     return on_start();
 }
 
-
-
-template <class TSubject, class TImpl>
-void EventService::runtime<TSubject, TImpl>::ip_event_handler(
-    void* arg, esp_event_base_t event_base,
-    int32_t event_id, void* event_data)
-{
-    ((runtime*)arg)->event_handler((ip_event_t)event_id, event_data);
-}
 
 
 template <class TSubject, class TImpl>
