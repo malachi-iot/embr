@@ -14,6 +14,6 @@ struct App
 
     using WiFi = embr::esp_idf::service::v1::WiFi;
 
-    void on_notify(WiFi::wifi_event<WIFI_EVENT_STA_CONNECTED>);
-    void on_notify(WiFi::ip_event<IP_EVENT_STA_GOT_IP>);
+    void on_notify(WiFi::event::wifi<WIFI_EVENT_STA_CONNECTED>);
+    void on_notify(WiFi::event::ip<IP_EVENT_STA_GOT_IP>);
 };

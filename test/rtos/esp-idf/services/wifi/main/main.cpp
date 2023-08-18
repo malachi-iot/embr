@@ -19,13 +19,13 @@ using Diagnostic = embr::esp_idf::service::v1::Diagnostic;
 // NOTE: These two events already are logged by way of esp-idf's system, but we do it
 // again just to demonstrate app ability to hook events
 
-void App::on_notify(WiFi::wifi_event<WIFI_EVENT_STA_CONNECTED>)
+void App::on_notify(WiFi::event::wifi<WIFI_EVENT_STA_CONNECTED>)
 {
     ESP_LOGI(TAG, "on_notify: WiFi connected to AP");
 }
 
 
-void App::on_notify(WiFi::ip_event<IP_EVENT_STA_GOT_IP>)
+void App::on_notify(WiFi::event::ip<IP_EVENT_STA_GOT_IP>)
 {
     ESP_LOGI(TAG, "on_notify: got ip");
 }

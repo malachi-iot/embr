@@ -28,24 +28,24 @@ template <class TSubject, class TImpl>
 void WiFi::runtime<TSubject, TImpl>::ip_event_handler(
     ip_event_t id, void* event_data)
 {
-    notify(event<ip_event_t>{id, event_data});
+    notify(event::e<ip_event_t>{id, event_data});
 
     switch(id)
     {
         case IP_EVENT_STA_GOT_IP:
-            notify(ip_event<IP_EVENT_STA_GOT_IP>(event_data));
+            notify(event::ip<IP_EVENT_STA_GOT_IP>(event_data));
             break;
 
         case IP_EVENT_STA_LOST_IP:
-            notify(ip_event<IP_EVENT_STA_LOST_IP>(event_data));
+            notify(event::ip<IP_EVENT_STA_LOST_IP>(event_data));
             break;
 
         case IP_EVENT_ETH_GOT_IP:
-            notify(ip_event<IP_EVENT_ETH_GOT_IP>(event_data));
+            notify(event::ip<IP_EVENT_ETH_GOT_IP>(event_data));
             break;
 
         case IP_EVENT_ETH_LOST_IP:
-            notify(ip_event<IP_EVENT_ETH_LOST_IP>(event_data));
+            notify(event::ip<IP_EVENT_ETH_LOST_IP>(event_data));
             break;
 
         default: break;
@@ -64,19 +64,19 @@ inline void WiFi::runtime<TSubject, TImpl>::event_handler(
 
     // Doing this explicitly rather than auto conversion back from stronger types
     // to minimize doubling up on switch statement
-    notify(event<wifi_event_t>{id, event_data});
+    notify(event::e<wifi_event_t>{id, event_data});
 
     switch(id)
     {
         case WIFI_EVENT_SCAN_DONE:
         {
-            notify(wifi_event<WIFI_EVENT_SCAN_DONE>(event_data));
+            notify(event::wifi<WIFI_EVENT_SCAN_DONE>(event_data));
             break;
         }
 
         case WIFI_EVENT_STA_START:
         {
-            notify(wifi_event<WIFI_EVENT_STA_START>(event_data));
+            notify(event::wifi<WIFI_EVENT_STA_START>(event_data));
 
             if(base_type::housekeeping_)
                 esp_wifi_connect();
@@ -86,21 +86,21 @@ inline void WiFi::runtime<TSubject, TImpl>::event_handler(
 
         case WIFI_EVENT_STA_STOP:
         {
-            notify(wifi_event<WIFI_EVENT_STA_STOP>(event_data));
+            notify(event::wifi<WIFI_EVENT_STA_STOP>(event_data));
             break;
         }
 
         case WIFI_EVENT_STA_CONNECTED:
         {
             state(Online);
-            notify(wifi_event<WIFI_EVENT_STA_CONNECTED>(event_data));
+            notify(event::wifi<WIFI_EVENT_STA_CONNECTED>(event_data));
             break;
         }
 
         case WIFI_EVENT_STA_DISCONNECTED:
         {
             state(Offline);
-            notify(wifi_event<WIFI_EVENT_STA_DISCONNECTED>(event_data));
+            notify(event::wifi<WIFI_EVENT_STA_DISCONNECTED>(event_data));
             break;
         }
 
@@ -109,13 +109,13 @@ inline void WiFi::runtime<TSubject, TImpl>::event_handler(
             // NOTE: It seems there isn't a RSSI_NORMAL event, which
             // means once we enter degraded state, we're staying there
             state(Degraded);
-            notify(wifi_event<WIFI_EVENT_STA_BSS_RSSI_LOW>(event_data));
+            notify(event::wifi<WIFI_EVENT_STA_BSS_RSSI_LOW>(event_data));
             break;
         }
 
         case WIFI_EVENT_WIFI_READY:
         {
-            notify(wifi_event<WIFI_EVENT_WIFI_READY>(event_data));
+            notify(event::wifi<WIFI_EVENT_WIFI_READY>(event_data));
             break;
         }
 

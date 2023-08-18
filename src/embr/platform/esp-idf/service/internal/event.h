@@ -6,7 +6,7 @@ namespace embr { namespace esp_idf { namespace event {
 template <typename TEventId, TEventId id_>
 struct mapping { typedef estd::monostate type; };
 
-template <typename TEventId = int>
+template <typename TEventId>
 struct runtime
 {
     const TEventId id;

@@ -23,14 +23,17 @@ struct EventService : embr::service::v1::Service
     static constexpr const char* TAG = "EventService";
     static constexpr const char* name() { return TAG; }
 
-    template <typename TEventId>
-    using event = embr::esp_idf::event::runtime<TEventId>;
+    struct event
+    {
+        template <typename TEventId>
+        using e = embr::esp_idf::event::runtime<TEventId>;
 
-    template <wifi_event_t id>
-    using wifi_event = embr::esp_idf::event::wifi<id>;
+        template <wifi_event_t id>
+        using wifi = embr::esp_idf::event::wifi<id>;
 
-    template <ip_event_t id>
-    using ip_event = embr::esp_idf::event::ip<id>;
+        template <ip_event_t id>
+        using ip = embr::esp_idf::event::ip<id>;
+    };
 
     // DEBT: Just a placeholder really, copy/pasted from esp_helper
     // Starts default event loop AND netif in sta mode
