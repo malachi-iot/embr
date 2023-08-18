@@ -58,15 +58,10 @@ struct WiFi : embr::service::v1::Service
         state_result on_start(wifi_mode_t mode, const wifi_config_t*);
 
         template <class Subject2, class Impl2>
-        void on_notify(
-            embr::property::v1::event::PropertyChanged<embr::Service::id::state>,
-            EventLoop::runtime<Subject2, Impl2>&);
+        void on_notify(changed<id::state>, EventLoop::runtime<Subject2, Impl2>&);
+        void on_notify(changed<id::state>, const Flash&);
     
     EMBR_SERVICE_RUNTIME_END
-
-    // DEBT: Just a placeholder really, copy/pasted from esp_helper
-    // Starts default event loop AND netif in sta mode
-    esp_netif_t* create_default_sta();
 
     // DEBT: Copy/pasting this everywhere sucks
     template <class TSubject>

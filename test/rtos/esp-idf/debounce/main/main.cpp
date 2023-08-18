@@ -19,10 +19,10 @@
 #include <embr/platform/esp-idf/service/event.hpp>
 #include <embr/platform/esp-idf/service/gptimer.hpp>
 
-using Diagnostic = embr::esp_idf::service::v1::Diagnostic;
-
 #include "app.h"
+#include "event.h"
 
+namespace service = embr::esp_idf::service::v1;
 namespace debounce = embr::esp_idf::debounce::v1::ultimate;
 
 
@@ -110,11 +110,11 @@ extern "C" void app_main()
 
     // wrap up our App in something ultra-compile time friendly
     typedef estd::integral_constant<App*, &app> app_singleton;
-    typedef embr::layer0::subject<Diagnostic, app_singleton> app_observer;
+    using tier1 = embr::layer0::subject<service::Diagnostic, app_singleton>;
 
     // create timer_service with above specified observers
-    static App::Timer::runtime<app_observer> timer_service;
-    static embr::esp_idf::service::v1::EventLoop::runtime<app_observer> event_loop;
+    service::GPTimer::runtime<tier1> timer;
+    service::EventLoop::runtime<tier1> event_loop;
 
     event_loop.start();
 
@@ -146,12 +146,12 @@ extern "C" void app_main()
     };
 
     ESP_LOGI(TAG, "phase 1: timer_service=%p, sizeof(Event)=%u, sizeof(app.q)=%u, sizeof(debouncers)=%u",
-        &timer_service,
+        &timer,
         sizeof(embr::debounce::v1::Event),
         sizeof(app.q),
         sizeof(debouncers));
 
-    timer_service.start(&config, &alarm_config);
+    timer.start(&config, &alarm_config);
 
     init_gpio_input();
 

@@ -10,21 +10,6 @@ namespace embr::esp_idf {
 namespace service { inline namespace v1 {
 
 
-inline esp_netif_t* WiFi::create_default_sta()
-{
-    // NOTE: Examples always put esp_netif_init ahead of event loop, but in my mind
-    // these are separate concerns with esp_netif_init relying on event loop, but not vice versa.
-    // Therefore, I place esp_event_loop_create_default() first
-    // "This function should be called exactly once from application code, when the application starts up."
-    // https://docs.espressif.com/projects/esp-idf/en/v5.1/esp32/api-reference/network/esp_netif.html
-    ESP_ERROR_CHECK(esp_netif_init());
-    esp_netif_t* wifi_netif = esp_netif_create_default_wifi_sta();
-    return wifi_netif;
-}
-
-
-
-
 template <class TSubject, class TImpl>
 inline void WiFi::runtime<TSubject, TImpl>::event_handler(
     int32_t event_id, void* event_data)
@@ -94,15 +79,25 @@ inline void WiFi::runtime<TSubject, TImpl>::event_handler(
     }
 }
 
+
+template <class TSubject, class TImpl>
+void WiFi::runtime<TSubject, TImpl>::on_notify(changed<id::state> p, const Flash&)
+{
+    // DEBT: Check here also since flash seems to be a WiFi dependency
+    base_type::state_.child2 = p.value;
+}
+
+
 template <class TSubject, class TImpl>
 template <class Subject2, class Impl2>
 void WiFi::runtime<TSubject, TImpl>::on_notify(
-    embr::property::v1::event::PropertyChanged<embr::Service::id::state> p,
+    changed<id::state> p,
     EventLoop::runtime<Subject2, Impl2>& event_loop)
 {
     ESP_LOGV(TAG, "on_notify: EventLoop");
 
     esp_err_t ret;
+    esp_netif_t* wifi_netif;
 
     base_type::state_.child1 = p.value;
 
@@ -123,6 +118,13 @@ void WiFi::runtime<TSubject, TImpl>::on_notify(
     ESP_GOTO_ON_ERROR(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID,
         wifi_event_handler, this),
         err, TAG, "registration failed");
+
+    // DEBT: Hard wired to STA - use 'user' variable to store pre-startup
+    // mode config.  Will have to do fancy footwork since usually this event_loop
+    // notify happens BEFORE that mode config is set
+    wifi_netif = esp_netif_create_default_wifi_sta();
+
+    configured(wifi_netif);
 
     if(base_type::substate() == Dependency)
     {

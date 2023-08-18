@@ -12,7 +12,8 @@
 #include <embr/platform/esp-idf/service/wifi.hpp>
 
 
-using Diagnostic = embr::esp_idf::service::v1::Diagnostic;
+namespace service = embr::esp_idf::service::v1;
+using Diagnostic = service::Diagnostic;
 
 #include "app.h"
 
@@ -47,14 +48,11 @@ namespace app_domain {
 App app;
 
 typedef estd::integral_constant<App*, &app> app_singleton;
-typedef embr::layer0::subject<Diagnostic, app_singleton> filter_observer;
+using tier2 = embr::layer0::subject<Diagnostic, app_singleton>;
 
-using wifi_type = embr::esp_idf::service::v1::WiFi::static_type<filter_observer>;
+using wifi_type = service::WiFi::static_type<tier2>;
 
-using layer1 = filter_observer::append<wifi_type>;
-
-using flash_type = embr::esp_idf::service::v1::Flash::runtime<layer1>;
-using event_loop = embr::esp_idf::service::v1::EventLoop::runtime<layer1>;
+using tier1 = tier2::append<wifi_type>;
 
 }
 
@@ -66,12 +64,11 @@ extern "C" void app_main()
 {
     const char* TAG = "app_main";
 
-    app_domain::flash_type{}.start();
-    app_domain::event_loop{}.start();
+    service::Flash::runtime<app_domain::tier1>{}.start();
+    service::EventLoop::runtime<app_domain::tier1>{}.start();
 
-    // DEBT: Putting this guy down here because we don't have an
-    // event loop initialization service just yet
-    app_domain::wifi_type::value->create_default_sta();
+    // DEBT: Awkwardness here.  Do we make a standalone netif service?
+    ESP_ERROR_CHECK(esp_netif_init());
 
     wifi_config_t wifi_config = {};
 
