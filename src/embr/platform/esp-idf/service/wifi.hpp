@@ -116,7 +116,7 @@ esp_err_t WiFi::runtime<TSubject, TImpl>::config(wifi_mode_t mode,
     const wifi_init_config_t* init_config,
     const wifi_config_t* config)
 {
-    esp_err_t ret;
+    esp_err_t ret = 0;
 
     base_type::housekeeping_ = true;
 
@@ -150,6 +150,7 @@ esp_err_t WiFi::runtime<TSubject, TImpl>::config(wifi_mode_t mode,
     return ESP_OK;
 
 err:
+    ESP_LOGW(TAG, "config failed: err=0x%04X", ret);
     state_result r = create_start_result(ret);
     base_type::state(r.state, r.substate);
     return ret;
