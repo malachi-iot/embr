@@ -81,6 +81,28 @@ esp_err_t EventService::runtime<TSubject, TImpl>::handler_register(
     return ESP_ERR_NOT_FOUND;
 }
 
+template <class TSubject, class TImpl>
+template <const esp_event_base_t& event_base_>
+void EventService::runtime<TSubject, TImpl>::event_handler(
+    void* arg, esp_event_base_t event_base,
+    int32_t event_id, void* event_data)
+{
+    auto r = (runtime*)arg;
+
+    // DEBT: Consider asserting event_base == event_base_
+
+    esp_idf::event::v1::internal::handler<event_base_>::exec2(r, event_id, event_data);
+}
+
+
+template <class TSubject, class TImpl>
+template <const esp_event_base_t& event_base>
+esp_err_t EventService::runtime<TSubject, TImpl>::handler_register(
+    int32_t event_id)
+{
+    return esp_event_handler_register(event_base, event_id,
+        event_handler<event_base>, this);
+}
 
 
 
@@ -175,6 +197,7 @@ esp_err_t WiFi::runtime<TSubject, TImpl>::config(wifi_mode_t mode,
         err, TAG, "registration failed");
 
     // DEBT: Move IP event rebroadcaster elsewhere
+    base_type::template handler_register<IP_EVENT>();
     ESP_GOTO_ON_ERROR(base_type::handler_register(IP_EVENT, ESP_EVENT_ANY_ID),
         err, TAG, "registration failed");
 

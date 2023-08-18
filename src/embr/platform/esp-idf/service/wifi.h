@@ -4,9 +4,7 @@
 
 #include <embr/service.h>
 
-#include "internal/ip.h"
-#include "result.h"
-#include "internal/wifi.h"
+#include "event.h"
 
 // As per:
 // https://docs.espressif.com/projects/esp-idf/en/v5.0/esp32/api-guides/wifi.html
@@ -31,6 +29,37 @@ struct handler<IP_EVENT>
 
         event::v1::runtime<ip_event_t> e{event_id, event_data};
         subject.notify(e);
+    }
+
+    template <ip_event_t id>
+    using ip = embr::esp_idf::event::ip<id>;
+
+    template <class Service>
+    static void exec2(Service* s, uint32_t event_id, void* event_data)
+    {
+        const event::v1::runtime<ip_event_t> e{(ip_event_t)event_id, event_data};
+        s->notify(e);
+
+        switch(e.id)
+        {
+            case IP_EVENT_STA_GOT_IP:
+                s->notify(ip<IP_EVENT_STA_GOT_IP>(event_data));
+                break;
+
+            case IP_EVENT_STA_LOST_IP:
+                s->notify(ip<IP_EVENT_STA_LOST_IP>(event_data));
+                break;
+
+            case IP_EVENT_ETH_GOT_IP:
+                s->notify(ip<IP_EVENT_ETH_GOT_IP>(event_data));
+                break;
+
+            case IP_EVENT_ETH_LOST_IP:
+                s->notify(ip<IP_EVENT_ETH_LOST_IP>(event_data));
+                break;
+
+            default: break;
+        }
     }
 };
 
@@ -65,6 +94,16 @@ struct EventService : embr::service::v1::Service
             int32_t event_id, void* event_data);
 
         esp_err_t handler_register(esp_event_base_t, int32_t = ESP_EVENT_ANY_ID);
+        
+        template <const esp_event_base_t& event_base>
+        friend struct esp_idf::event::v1::internal::handler;
+
+        template <const esp_event_base_t&>
+        static void event_handler(void* arg, esp_event_base_t event_base,
+            int32_t event_id, void* event_data);
+
+        template <const esp_event_base_t&>
+        esp_err_t handler_register(int32_t = ESP_EVENT_ANY_ID);
 
     EMBR_SERVICE_RUNTIME_END
 
