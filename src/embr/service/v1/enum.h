@@ -60,6 +60,7 @@ enum Substates
     Stopping,
     Resetting,          ///< When restarting, this is the transition out of running -> stopped state
     Sleeping,           ///< In process of entering sleep mode
+    Sparse,             ///< Sparse services default to this special running state - 90% overlap with "indeterminate"
 
     // error states
     ErrConfig,         ///< service configuration error, usually on startup or configuring

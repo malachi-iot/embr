@@ -8,7 +8,15 @@ namespace embr::esp_idf {
 
 namespace service { inline namespace v1 {
 
-inline esp_netif_t* Event::create_default_sta()
+
+template <class TSubject, class TImpl>
+inline auto EventLoop::runtime<TSubject, TImpl>::on_start() -> state_result
+{
+    return create_start_result(esp_event_loop_create_default());
+}
+
+
+inline esp_netif_t* EventLoop::create_default_sta()
 {
     ESP_LOGD(TAG, "create default event loop");
     ESP_ERROR_CHECK(esp_event_loop_create_default());
@@ -25,7 +33,7 @@ inline esp_netif_t* Event::create_default_sta()
 
 
 template <class Runtime, const esp_event_base_t& event_base_>
-void Event::event_handler(
+void EventLoop::event_handler(
     void* arg, esp_event_base_t event_base,
     int32_t event_id, void* event_data)
 {
@@ -41,11 +49,11 @@ void Event::event_handler(
 
 template <class TSubject, class TImpl>
 template <const esp_event_base_t& event_base>
-esp_err_t Event::runtime<TSubject, TImpl>::handler_register(
+esp_err_t EventLoop::runtime<TSubject, TImpl>::handler_register(
     int32_t event_id)
 {
     return esp_event_handler_register(event_base, event_id,
-        Event::event_handler<runtime, event_base>, this);
+        EventLoop::event_handler<runtime, event_base>, this);
 }
 
 

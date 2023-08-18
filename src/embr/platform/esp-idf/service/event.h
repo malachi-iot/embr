@@ -13,9 +13,9 @@ namespace embr::esp_idf {
 namespace service { inline namespace v1 {
 
 // Specifically describes 'default' event loop
-struct Event : embr::service::v1::Service
+struct EventLoop : embr::service::v1::Service
 {
-    typedef Event this_type;
+    typedef EventLoop this_type;
 
     static constexpr const char* TAG = "Event";
     static constexpr const char* name() { return TAG; }
@@ -24,9 +24,6 @@ struct Event : embr::service::v1::Service
     {
         template <typename TEventId>
         using e = embr::esp_idf::event::runtime<TEventId>;
-
-        template <ip_event_t id>
-        using ip = embr::esp_idf::event::ip<id>;
     };
 
     template <class Runtime, const esp_event_base_t&>
@@ -35,13 +32,16 @@ struct Event : embr::service::v1::Service
 
     EMBR_SERVICE_RUNTIME_BEGIN(embr::service::v1::Service)
     
-        esp_err_t handler_register(esp_event_base_t, int32_t = ESP_EVENT_ANY_ID);
-        
+        state_result on_start();
+    
         template <const esp_event_base_t& event_base>
         friend struct esp_idf::event::v1::internal::handler;
 
         template <const esp_event_base_t&>
         esp_err_t handler_register(int32_t = ESP_EVENT_ANY_ID);
+
+        template <const esp_event_base_t&>
+        esp_err_t handler_register(int32_t, esp_event_handler_instance_t*);
 
     EMBR_SERVICE_RUNTIME_END
 
@@ -69,6 +69,9 @@ struct UserEvent : embr::service::v1::Service
 
         template <const esp_event_base_t&>
         esp_err_t handler_register(int32_t = ESP_EVENT_ANY_ID);
+
+        template <const esp_event_base_t&>
+        esp_err_t handler_register(int32_t, esp_event_handler_instance_t*);
 
     EMBR_SERVICE_RUNTIME_END
 };

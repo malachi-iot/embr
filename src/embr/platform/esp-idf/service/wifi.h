@@ -15,7 +15,7 @@ namespace embr::esp_idf {
 namespace service { inline namespace v1 {
 
 // TODO: Make an esp event handler base class service
-struct WiFi : Event
+struct WiFi : EventLoop
 {
     typedef WiFi this_type;
 
@@ -29,13 +29,16 @@ struct WiFi : Event
     bool housekeeping_ = false;
     constexpr bool housekeeping() const { return housekeeping_; } 
 
-    struct event : Event::event
+    struct event
     {
+        template <ip_event_t id>
+        using ip = embr::esp_idf::event::ip<id>;
+        
         template <wifi_event_t id>
         using wifi = embr::esp_idf::event::wifi<id>;
     };
 
-    EMBR_SERVICE_RUNTIME_BEGIN(Event)
+    EMBR_SERVICE_RUNTIME_BEGIN(EventLoop)
 
         static void wifi_event_handler(void* arg, esp_event_base_t event_base,
                             int32_t event_id, void* event_data);

@@ -19,7 +19,7 @@ inline void WiFi::runtime<TSubject, TImpl>::event_handler(
 
     // Doing this explicitly rather than auto conversion back from stronger types
     // to minimize doubling up on switch statement
-    notify(event::e<wifi_event_t>{id, event_data});
+    notify(esp_idf::event::v1::runtime<wifi_event_t>{id, event_data});
 
     switch(id)
     {

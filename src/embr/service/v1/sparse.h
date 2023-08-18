@@ -21,12 +21,12 @@ struct SparseService : embr::PropertyContainer,
 
     // dummy, we never record state at all
     template <class S>
-    void state(S)   {}
+    static void state(S)   {}
 
     // sparse services are always default to the Started, Running state
 
     static constexpr States state()         { return Started; }
-    static constexpr Substates substate()   { return Running; }
+    static constexpr Substates substate()   { return Sparse; }      // NOLINT
 };
 
 namespace host {

@@ -1,6 +1,7 @@
 #include <esp-helper.h>
 
-#include "esp_log.h"
+#include <esp_event.h>
+#include <esp_log.h>
 #include "esp_err.h"
 #include "esp_system.h"
 
@@ -15,6 +16,7 @@
 #include <embr/platform/esp-idf/gpio.h>
 
 #include <embr/platform/esp-idf/service/diagnostic.h>
+#include <embr/platform/esp-idf/service/event.hpp>
 #include <embr/platform/esp-idf/service/gptimer.hpp>
 
 using Diagnostic = embr::esp_idf::service::v1::Diagnostic;
@@ -27,12 +29,22 @@ namespace debounce = embr::esp_idf::debounce::v1::ultimate;
 #define GPIO_INPUT_IO_0     CONFIG_DIAGNOSTIC_GPIO1
 #define GPIO_INPUT_PIN_SEL  (1ULL<<GPIO_INPUT_IO_0)
 
+ESP_EVENT_DEFINE_BASE(DEBOUNCE_EVENT);
+
 
 estd::tuple<
     debounce::Debouncer<GPIO_INPUT_IO_0, true>,
     debounce::Debouncer<4, true> > debouncers;    // DEBT: arbitrary selection of pin 4
 
 
+
+void log(const char* TAG, const App::Event& item)
+{
+    ESP_LOGI(TAG, "pin: %u, event: %s (%u)",
+        item.pin,
+        embr::to_string(item.state),
+        (unsigned)item.state);
+}
 
 inline void App::on_notify(Timer::event::callback)
 {
@@ -45,11 +57,20 @@ inline void App::on_notify(Timer::event::callback)
         [this](Event e)
         {
             q.send_from_isr(e);
+#ifdef CONFIG_ESP_EVENT_POST_FROM_ISR
+            esp_event_isr_post(DEBOUNCE_EVENT, 0, &e, sizeof(e), nullptr);
+#endif
         });
 
 #ifdef CONFIG_DIAGNOSTIC_PERFMON
     xtensa_perfmon_stop();
 #endif
+}
+
+
+inline void App::on_notify(Event e)
+{
+    log(TAG, e);
 }
 
 
@@ -71,6 +92,15 @@ static void init_gpio_input()
 }
 
 
+#ifdef CONFIG_ESP_EVENT_POST_FROM_ISR
+void debounce_event_handler(void*, esp_event_base_t, int32_t, void* event_data)
+{
+    static constexpr const char* TAG = "debounce_event_handler";
+
+    log(TAG, * (App::Event*) event_data);
+}
+#endif
+
 
 extern "C" void app_main()
 {
@@ -84,6 +114,15 @@ extern "C" void app_main()
 
     // create timer_service with above specified observers
     static App::Timer::runtime<app_observer> timer_service;
+    static embr::esp_idf::service::v1::EventLoop::runtime<app_observer> event_loop;
+
+    event_loop.start();
+
+    ESP_ERROR_CHECK(esp_event_handler_register(DEBOUNCE_EVENT,
+        ESP_EVENT_ANY_ID,
+        debounce_event_handler,
+        nullptr));
+    event_loop.handler_register<DEBOUNCE_EVENT>();
 
     gptimer_config_t config = 
     {
@@ -139,10 +178,7 @@ extern "C" void app_main()
         App::Event item;
 
         if(app.q.receive(&item, estd::chrono::milliseconds(10)))
-            ESP_LOGI(TAG, "pin: %u, event: %s (%u)",
-                item.pin,
-                embr::to_string(item.state),
-                (unsigned)item.state);
+            log(TAG, item);
 
         if(clock::now() - last_now > timeout)
         {
