@@ -5,4 +5,9 @@ menu "Debounce Test"
         default 2 if IDF_TARGET_ESP32C3
         default 0 if IDF_TARGET_ESP32
 
+    config DIAGNOSTIC_PERFMON
+        bool "Performance profiling"
+        default y if IDF_TARGET_ESP32
+        default n if IDF_TARGET_ESP32C3
+
 endmenu

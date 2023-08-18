@@ -33,6 +33,7 @@ These tests are all for variants of Espressif ESP32
 | 03JAN23 | button       | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v5.0.0   | Pass     |
 | 04JAN23 | button       | ESP32-C3-DevKitM-1   | ESP32C3        | v5.0.0   | Pass     |
 | 15AUG23 | debounce     | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v5.0.3   | Pass     |
+| 18AUG23 | debounce     | ESP32C3 Xiao         | ESP32C3        | v5.1     | Pass     | Tested against GPIO9 boot button
 | 19DEC22 | observer     | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v4.4.3   | Pass     |
 | 15AUG23 | observer     | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v5.0.3   | Pass     |
 | 15DEC22 | scheduler    | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v4.4.3   | Pass     |

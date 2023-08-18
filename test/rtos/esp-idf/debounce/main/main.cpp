@@ -4,7 +4,9 @@
 #include "esp_err.h"
 #include "esp_system.h"
 
+#ifdef CONFIG_DIAGNOSTIC_PERFMON
 #include <perfmon.h>
+#endif
 
 #include <estd/chrono.h>
 #include <estd/thread.h>
@@ -34,7 +36,9 @@ estd::tuple<
 
 inline void App::on_notify(Timer::event::callback)
 {
+#ifdef CONFIG_DIAGNOSTIC_PERFMON
     xtensa_perfmon_start();
+#endif
 
     debouncers.visit(
         debounce::Visitor{},
@@ -43,7 +47,9 @@ inline void App::on_notify(Timer::event::callback)
             q.send_from_isr(e);
         });
 
+#ifdef CONFIG_DIAGNOSTIC_PERFMON
     xtensa_perfmon_stop();
+#endif
 }
 
 
@@ -110,6 +116,7 @@ extern "C" void app_main()
 
     init_gpio_input();
 
+#ifdef CONFIG_DIAGNOSTIC_PERFMON
     // perfmon stuff lifted from components/perfmon/test/test_perfmon_ansi.c
     // NOTE: At this time I really don't know how to use this feature
     // See https://www2.lauterbach.com/pdf/debugger_xtensa.pdf
@@ -118,6 +125,7 @@ extern "C" void app_main()
     xtensa_perfmon_stop();
     xtensa_perfmon_init(0, 0, 0xffff, 0, 6);
     xtensa_perfmon_reset(0);
+#endif
 
     using clock = estd::chrono::freertos_clock;
 
@@ -141,11 +149,13 @@ extern "C" void app_main()
             last_now += timeout;
             ESP_LOGI(TAG, "counting: %d", ++counter);
 
+#ifdef CONFIG_DIAGNOSTIC_PERFMON
             if(counter % 10 == 0)
             {
                 xtensa_perfmon_dump();
                 xtensa_perfmon_reset(0);
             }
+#endif
         }
     }
 }
