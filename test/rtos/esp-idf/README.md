@@ -50,6 +50,7 @@ These tests are all for variants of Espressif ESP32
 | 30DEC22 | unity        | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v4.4.3   | Pass     |
 | 15AUG23 | unity        | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v5.0.3   | Pass | Was hitting LWIP_TCPIP_CORE_LOCKING glitch[^1], not now
 | 10JAN23 | unity        | ESP32-C3-DevKitM-1   | ESP32C3        | v5.0.0   | Pass     | 
+| 19AUG23 | unity        | ESP32-C3-DevKitM-1   | ESP32C3        | v5.1     | Pass     | 
 | 10JUL23 | unity        | WEMOS D1             | ESP32          | v5.0.2   | Pass     |
 
 # References

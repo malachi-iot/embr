@@ -85,10 +85,15 @@ struct RetryManager
         }
     };
 
-    typedef std::allocator_traits<std::allocator<QueuedItem> > allocator_traits;
+    typedef std::allocator<QueuedItem> allocator_type; 
 
-    static std::allocator<QueuedItem> stub;
-    static std::allocator<QueuedItem>& allocator() { return stub; }
+    typedef std::allocator_traits<allocator_type> allocator_traits;
+
+    static allocator_type& allocator()
+    {
+        allocator_type stub;
+        return stub;
+    }
 
     typedef estd::intrusive_forward_list<QueuedItem> list_type;
     typedef typename list_type::iterator list_iterator;
