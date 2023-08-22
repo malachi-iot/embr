@@ -20,6 +20,14 @@ inline auto Protocomm::on_stop() -> state_result
     return { Stopped, Finished };
 }
 
+esp_err_t Protocomm::set_security(
+    const char* ep_name,
+    const protocomm_security_t* sec,
+    const void* sec_params)
+{
+    return protocomm_set_security(pc, ep_name, sec, sec_params);
+}
+
 template <class TSubject, class TImpl>
 esp_err_t Protocomm::runtime<TSubject, TImpl>::add_endpoint(const char* ep_name, protocomm_req_handler_t h, void* priv_data)
 {
@@ -43,6 +51,16 @@ esp_err_t Protocomm::runtime<TSubject, TImpl>::add_endpoint(const char* ep_name)
 
 
 template <class TSubject, class TImpl>
+template <const char* ep_name>
+esp_err_t Protocomm::runtime<TSubject, TImpl>::add_endpoint()
+{
+    //protocomm_req_handler_t h = endpoint<Tag>;
+    //return add_endpoint(ep_name, h, this);
+    return ESP_OK;
+}
+
+
+template <class TSubject, class TImpl>
 template <class Tag>
 esp_err_t Protocomm::runtime<TSubject, TImpl>::endpoint(
     uint32_t session_id,
@@ -55,6 +73,22 @@ esp_err_t Protocomm::runtime<TSubject, TImpl>::endpoint(
     // DEBT: Not sure why negative inlen is a thing -- maybe to indicate no payload?
     //event::request r{session_id, event::request::in_type{inbuf, (size_t)inlen}, outbuf, outlen};
     event::tag<Tag> e{session_id, inbuf, inlen, outbuf, outlen};
+    ((runtime*) priv_data)->notify(e);
+    return e.ret;
+}
+
+
+template <class TSubject, class TImpl>
+template <const char* ep_name>
+esp_err_t Protocomm::runtime<TSubject, TImpl>::endpoint(
+    uint32_t session_id,
+    const uint8_t* inbuf,
+    ssize_t inlen,
+    uint8_t** outbuf,
+    ssize_t* outlen,
+    void* priv_data)
+{
+    event::request_named<ep_name> e{session_id, inbuf, inlen, outbuf, outlen};
     ((runtime*) priv_data)->notify(e);
     return e.ret;
 }

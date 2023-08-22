@@ -13,5 +13,8 @@ struct App
 {
     static constexpr const char* TAG = "App";
 
+    static constexpr const char ep3[] = "test3";
+
     void do_notify(embr::esp_idf::service::v1::Protocomm::event::tag<int>);
+    void do_notify(embr::esp_idf::service::v1::Protocomm::event::request_named<ep3>);
 };

@@ -3,6 +3,10 @@
 #include "esp_task_wdt.h"
 #include "esp_wifi.h"
 
+#include <protocomm_security0.h>
+#include <protocomm_security1.h>
+
+
 #include <estd/chrono.h>
 #include <estd/optional.h>
 #include <estd/thread.h>
@@ -18,7 +22,17 @@ using Diagnostic = service::Diagnostic;
 
 #include "app.h"
 
+
+static constexpr const char ep1[] = "test2";
+static constexpr const char* const ep2 = "test2";
+
 void App::do_notify(service::Protocomm::event::tag<int> e)
+{
+
+}
+
+
+void App::do_notify(service::Protocomm::event::request_named<ep3> e)
 {
 
 }
@@ -49,7 +63,18 @@ extern "C" void app_main()
     service::Protocomm::runtime<app_domain::tier1> protocomm;
 
     protocomm.start();
+    
+    /* Create security1 params object from pop_string. It must be valid throughout the scope of protocomm endpoint. This need not be static, i.e., could be dynamically allocated and freed at the time of endpoint removal. */
+    const char* pop_string = "password";
+    const static protocomm_security1_params_t sec1_params = {
+        .data = (const uint8_t *) strdup(pop_string),
+        .len = (uint16_t)strlen(pop_string)
+    };
+
+    protocomm.set_security("security_endpoint", &protocomm_security1, &sec1_params);
+
     protocomm.add_endpoint<int>("test");
+    protocomm.add_endpoint<App::ep3>();
 
     for(;;)
     {
