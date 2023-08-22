@@ -18,6 +18,11 @@ using Diagnostic = service::Diagnostic;
 
 #include "app.h"
 
+void App::do_notify(service::Protocomm::event::tag<int> e)
+{
+
+}
+
 
 namespace app_domain {
 
@@ -40,6 +45,11 @@ extern "C" void app_main()
 
     service::Flash::runtime<app_domain::tier1>{}.start();
     service::EventLoop::runtime<app_domain::tier1>{}.start();
+
+    service::Protocomm::runtime<app_domain::tier1> protocomm;
+
+    protocomm.start();
+    protocomm.add_endpoint<int>("test");
 
     for(;;)
     {

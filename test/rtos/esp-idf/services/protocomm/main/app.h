@@ -12,4 +12,6 @@
 struct App
 {
     static constexpr const char* TAG = "App";
+
+    void do_notify(embr::esp_idf::service::v1::Protocomm::event::tag<int>);
 };
