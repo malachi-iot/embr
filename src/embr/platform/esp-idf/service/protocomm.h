@@ -2,6 +2,8 @@
 
 #include <estd/span.h>
 
+#include <embr/service.h>
+
 #include <protocomm.h>
 #include <protocomm_ble.h>
 

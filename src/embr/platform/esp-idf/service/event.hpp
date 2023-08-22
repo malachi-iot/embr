@@ -30,6 +30,14 @@ void EventLoop::event_handler(
     esp_idf::event::v1::internal::handler<event_base_>::exec(r, event_id, event_data);
 }
 
+template <const esp_event_base_t& event_base, class Runtime>
+esp_err_t EventLoop::handler_register(int32_t event_id, Runtime* runtime)
+{
+    return esp_event_handler_register(event_base, event_id,
+        EventLoop::event_handler<Runtime, event_base>, runtime);
+}
+
+
 
 template <class TSubject, class TImpl>
 template <const esp_event_base_t& event_base>
