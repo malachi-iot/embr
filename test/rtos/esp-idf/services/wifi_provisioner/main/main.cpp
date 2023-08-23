@@ -124,7 +124,7 @@ extern "C" void app_main()
     const char* service_name = "test_provisioning";
 
     provisioner.config(config);
-    //provisioner_console.config(wifi_prov_scheme_console);
+    provisioner_console.config(wifi_prov_scheme_console);
 
     prep_ble();
 
