@@ -615,96 +615,99 @@ TEST_CASE("Services", "[services]")
 
         REQUIRE(e2.value == true);
     }
+    SECTION("interplay")
+    {
+        // DEBT: Has some side effects
 
-    //DependerService depender;
-    DependerService& depender = d;
+        //DependerService depender;
+        DependerService& depender = d;
 
-    typedef estd::integral_constant<DependerService*, &d> _type_;
-    //typedef embr::internal::static_wrapper<DependerService, &d> _type_;
+        typedef estd::integral_constant<DependerService*, &d> _type_;
+        //typedef embr::internal::static_wrapper<DependerService, &d> _type_;
 
-    _type_ v;
-    //DependerService& _d = (_type_());
-    //DependerService* __d = &_d;
-    DependerService* __d = _type_::value;
-    DependerService* ___d = &d;
+        _type_ v;
+        //DependerService& _d = (_type_());
+        //DependerService* __d = &_d;
+        DependerService* __d = _type_::value;
+        DependerService* ___d = &d;
 
-    typedef embr::layer0::subject<_type_> subject_type;
-    auto subject = subject_type();
-    //auto subject = embr::layer1::make_subject(depender);
-    auto& s = subject;
+        typedef embr::layer0::subject<_type_> subject_type;
+        auto subject = subject_type();
+        //auto subject = embr::layer1::make_subject(depender);
+        auto& s = subject;
 
-    typedef Filter1::runtime<subject_type> filter1_type;
+        typedef Filter1::runtime<subject_type> filter1_type;
 
-    int sz;
+        int sz;
 
-    sz = sizeof(filter1_type);
+        sz = sizeof(filter1_type);
 
-    REQUIRE(sz == 1);
+        REQUIRE(sz == 1);
 
-    // loosely a tally of how many service primary state changes happened
-    int expected_services = 7;
+        // loosely a tally of how many service primary state changes happened
+        int expected_services = 7;
 
-    // FIX: These should be using reference, not rvalue
-    // NOTE: Nifty, dependent service can depend on itself...
-    auto dependent = make_service<DependentService>(subject);
-    /*
-    auto dependent2 = make_service<DependentService2>(std::move(subject));
-    auto dependent3 = make_service_spec<::impl::DependentService3>(std::move(subject));
-    //auto dependent4 = make_service<DependentService4::service>(std::move(subject));
-    auto dependent4 = DependentService4::service<decltype(subject)>(s); */
-    //DependentService<subject_type> dependent;
-    DependentService2<subject_type> dependent2;
-    service::ServiceSpec<::impl::DependentService3, subject_type> dependent3;
-    layer0::service_type<DependentService4, _type_, filter1_type> dependent4;
-    SparseDependent::runtime<subject_type> sparse_dependent;
+        // FIX: These should be using reference, not rvalue
+        // NOTE: Nifty, dependent service can depend on itself...
+        auto dependent = make_service<DependentService>(subject);
+        /*
+        auto dependent2 = make_service<DependentService2>(std::move(subject));
+        auto dependent3 = make_service_spec<::impl::DependentService3>(std::move(subject));
+        //auto dependent4 = make_service<DependentService4::service>(std::move(subject));
+        auto dependent4 = DependentService4::service<decltype(subject)>(s); */
+        //DependentService<subject_type> dependent;
+        DependentService2<subject_type> dependent2;
+        service::ServiceSpec<::impl::DependentService3, subject_type> dependent3;
+        layer0::service_type<DependentService4, _type_, filter1_type> dependent4;
+        SparseDependent::runtime<subject_type> sparse_dependent;
 #if !FEATURE_EMBR_PROPERTY_CONTEXT
-    AggregatedService::runtime<subject_type> aggregated_service;
-    expected_services += 2;
+        AggregatedService::runtime<subject_type> aggregated_service;
+        expected_services += 2;
 #endif
 
-    aggregated_service.start();
+        aggregated_service.start();
 
-    dependent.start();
-    // Partially works, but has troubles going into integral constant
-    //dependent.instance.start();
-    //DependentService::static_type<subject_type>::value->start();
-    dependent2.start();
-    dependent3.start();
-    dependent4.start("value2 initialized");
-    sparse_dependent.start();
-    // This seems to work a little better, no complaints so far about incomplete types
-    //static_factory2<subject_type, DependentService>::instance.start();
-    //static_factory2<subject_type, DependentService>::static_type::value->start();
-    DependentService::static_type<subject_type>::value->start();
+        dependent.start();
+        // Partially works, but has troubles going into integral constant
+        //dependent.instance.start();
+        //DependentService::static_type<subject_type>::value->start();
+        dependent2.start();
+        dependent3.start();
+        dependent4.start("value2 initialized");
+        sparse_dependent.start();
+        // This seems to work a little better, no complaints so far about incomplete types
+        //static_factory2<subject_type, DependentService>::instance.start();
+        //static_factory2<subject_type, DependentService>::static_type::value->start();
+        DependentService::static_type<subject_type>::value->start();
 
-    dependent2.shiny(true);
-    dependent2.happy(true);
-    dependent2.smiling(true);
-    dependent2.people(10);
+        dependent2.shiny(true);
+        dependent2.happy(true);
+        dependent2.smiling(true);
+        dependent2.people(10);
 
-    dependent3.value1(7);
+        dependent3.value1(7);
 
-    dependent4.proxy();
-    dependent4.value3(12);
+        dependent4.proxy();
+        dependent4.value3(12);
 
-    REQUIRE(depender.counter == expected_services);
-    REQUIRE(depender.counter2 == 2);
-    REQUIRE(depender.is_smiling);
-    REQUIRE(depender.shiny_happy_people == true);
-    REQUIRE(depender.ds2 != nullptr);
-    REQUIRE(depender.battery_level == 10);
-    REQUIRE(depender.battery_alert > 0);
+        REQUIRE(depender.counter == expected_services);
+        REQUIRE(depender.counter2 == 2);
+        REQUIRE(depender.is_smiling);
+        REQUIRE(depender.shiny_happy_people == true);
+        REQUIRE(depender.ds2 != nullptr);
+        REQUIRE(depender.battery_level == 10);
+        REQUIRE(depender.battery_alert > 0);
 
-    REQUIRE(dependent4.value3() == 12);
+        REQUIRE(dependent4.value3() == 12);
 
-    sparse_dependent.pause();
-    sparse_dependent.resume();
+        sparse_dependent.pause();
+        sparse_dependent.resume();
 
-    // Two more state changes happened from sparse_dependent
-    expected_services += 2;
-    REQUIRE(depender.counter == expected_services);
+        // Two more state changes happened from sparse_dependent
+        expected_services += 2;
+        REQUIRE(depender.counter == expected_services);
 
-    REQUIRE(&dependent2 == dependent2.debug_runtime());
-    REQUIRE(&dependent4 == dependent4.debug_runtime());
-
+        REQUIRE(&dependent2 == dependent2.debug_runtime());
+        REQUIRE(&dependent4 == dependent4.debug_runtime());
+    }
 }

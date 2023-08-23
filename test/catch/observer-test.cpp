@@ -310,6 +310,18 @@ TEST_CASE("observer")
                 REQUIRE(o2.counter == 1);
                 REQUIRE(o3.counter == 1);
             }
+            SECTION("append (experimental)")
+            {
+                using t1_type = estd::tuple<int, float>;
+                using t2_type = estd::tuple<estd::monostate, const char*>;
+                using cat_helper_type = embr::experimental::tuple_cat_helper<t1_type, t2_type>;
+
+                t1_type t1;
+                t2_type t2;
+
+                // FIX: Not ready yet, apply seems to need some work
+                //cat_helper_type::tester(t1, t2);
+            }
         }
     }
     SECTION("experimental")

@@ -75,6 +75,7 @@ struct delegate_observer<F, Arg1> make_delegate_observer(F&& f)
     return delegate_observer<F, Arg1>(std::forward<F>(f));
 }
 
+
 }
 
 namespace layer1 {
@@ -140,6 +141,50 @@ internal::observer_proxy<TSubject> make_observer_proxy(TSubject& s)
     return internal::observer_proxy<TSubject>(s);
 }
 
+
+}
+
+namespace experimental {
+
+template <class ...Tuples>
+struct tuple_cat_helper;
+
+template <class ...Types>
+struct tuple_retrieve_helper;
+
+template <class T, class ...Types>
+struct tuple_retrieve_helper<T, Types...> {};
+
+template <class ...Types, class ...Types2>
+struct tuple_cat_helper<estd::tuple<Types...>, estd::tuple<Types2...> >
+{
+    using type = estd::tuple<Types..., Types2...>;
+
+    static type tester(estd::tuple<Types...>& t1, estd::tuple<Types2...>& t2)
+    {
+        return estd::apply([&](Types&&... args1)
+        {
+            return estd::apply([&](Types2&&...args2)
+            {
+                return type(
+                    std::forward<Types>(args1)...,
+                    std::forward<Types2>(args2)...);
+            }, t2);
+        }, t1);
+    }
+};
+
+
+//template <class ...Tuples>
+//estd::tuple<
+
+template <class Observer, class ...Observers>
+auto append(layer0::subject<Observers...>, Observer& o) -> layer1::subject<Observers..., Observer>
+{
+    using type = layer1::subject<Observers..., Observer>;
+
+    return type{};
+}
 
 }
 
