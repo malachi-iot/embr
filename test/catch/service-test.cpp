@@ -582,6 +582,12 @@ static DependerService d;
 
 TEST_CASE("Services", "[services]")
 {
+    SECTION("state size")
+    {
+        embr::service::v1::Service s;
+
+        REQUIRE(sizeof(s) == 4);
+    }
     SECTION("event conversion")
     {
         event::PropertyChanged<

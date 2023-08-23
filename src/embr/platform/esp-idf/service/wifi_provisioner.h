@@ -21,11 +21,16 @@ struct WiFiProvisioner : embr::service::v1::Service
         return { Stopped, Finished };
     }
 
+    constexpr unsigned retry_max() const { return state_.user2.v2; }
+
     EMBR_SERVICE_RUNTIME_BEGIN(embr::service::v1::Service)
 
     // DEBT: This is just awkward
     template <const esp_event_base_t& event_base>
     friend struct esp_idf::event::v1::internal::handler;
+
+    static void event_handler(void* arg, esp_event_base_t event_base,
+        int32_t event_id, void* event_data);
 
     esp_err_t config(wifi_prov_mgr_config_t);
     esp_err_t config(wifi_prov_scheme_t,

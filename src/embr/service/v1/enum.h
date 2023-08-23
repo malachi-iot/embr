@@ -83,7 +83,8 @@ struct bitsize
     static constexpr unsigned substate =
         estd::internal::deduce_bit_count<SUBSTATES_MAX>::value;
 
-    static constexpr unsigned user = (total - (substate + state * 4));
+    static constexpr unsigned user = 16;
+    //static constexpr unsigned user = (total - (substate + state * 4));
 };
 
 static const char* to_string(States v);

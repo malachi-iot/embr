@@ -32,7 +32,6 @@ void App::on_notify(embr::esp_idf::event::v1::wifi_prov<WIFI_PROV_CRED_FAIL> e)
     // doesn't seem to be) indicating that WiFi itself got into a funky state.
     ESP_LOGW(TAG, "on_notify: failed with reason %d", *e.data);
 
-    wifi_prov_mgr_reset_sm_state_on_failure();
 }
 
 

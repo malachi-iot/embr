@@ -28,12 +28,14 @@ private:
 public:
     constexpr static const char* name() { return "Generic service"; }
 
-    // DEBT: Make this private/protected
+#if !UNIT_TESTING
 protected:
+#endif
     union
     {
         // DEBT: Make a 16-bit version of this that only has child1 & child2,
-        // right now it's assumed 32-bit
+        // right now it's assumed 32-bit.  When doing so, do all this through specialization
+        // and phase out the bitsize:: trick
         struct
         {
             States service_: bitsize::state;
@@ -44,8 +46,27 @@ protected:
             States child2 : bitsize::state;
             States child3 : bitsize::state;
 
-            // Application specific data in "free" leftover bits
-            uint32_t user : bitsize::user;
+            union
+            {
+                // Application specific data in "free" leftover bits
+                uint16_t user : bitsize::user;
+
+                struct
+                {
+                    uint16_t v1 : bitsize::user / 2;
+                    uint16_t v2 :  bitsize::user / 2;
+
+                }   user2;
+
+                struct
+                {
+                    uint16_t v1 : bitsize::user / 3;
+                    uint16_t v2 :  bitsize::user / 3;
+                    uint16_t v3 :  bitsize::user / 3;
+
+                }   user3;
+
+            };
 
         } state_;
 

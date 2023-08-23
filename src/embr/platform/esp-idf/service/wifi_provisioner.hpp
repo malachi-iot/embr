@@ -5,14 +5,66 @@
 
 namespace embr { namespace esp_idf { namespace service { inline namespace v1 {
 
+
+template <class Subject, class Impl>
+void WiFiProvisioner::runtime<Subject, Impl>::event_handler(void* arg, esp_event_base_t event_base,
+    int32_t event_id, void* event_data)
+{
+    auto r = (runtime*)arg;
+
+    // DEBT: Would prefer to do a kind of layer1::subject::append here rather than
+    // an explicit additional switch statement
+
+    switch(event_id)
+    {
+        case WIFI_PROV_CRED_FAIL:
+        {
+            const unsigned retries = r->state_.user2.v1;
+
+            auto reason = *(wifi_prov_sta_fail_reason_t*)event_data;
+            ESP_LOGD(TAG, "Credentials failed: retrying %u/%u",
+                retries, r->retry_max());
+
+            if(retries < r->retry_max())
+            {
+                wifi_prov_mgr_reset_sm_state_on_failure();
+                r->state_.user2.v1++;
+            }
+            else
+                ESP_LOGW(TAG, "Retries exceeded - must restart to try again");
+
+            break;
+        }
+
+        case WIFI_PROV_CRED_SUCCESS:
+        {
+            r->state_.user2.v1 = 0;
+            break;
+        }
+
+        default: break;
+    }
+
+    esp_idf::event::v1::internal::handler<WIFI_PROV_EVENT>::exec(
+        r, event_id, event_data);
+}
+
+
+
 template <class Subject, class Impl>
 esp_err_t WiFiProvisioner::runtime<Subject, Impl>::config(wifi_prov_mgr_config_t config)
 {
     configuring(&config);
     
-    const esp_err_t ret = wifi_prov_mgr_init(config);
+    esp_err_t ret = wifi_prov_mgr_init(config);
 
-    EventLoop::handler_register<WIFI_PROV_EVENT>(ESP_EVENT_ANY_ID, this);
+    // DEBT: This works pretty well actually, but it's not yet able to
+    // comfortably deal with the retry feature
+    //EventLoop::handler_register<WIFI_PROV_EVENT>(ESP_EVENT_ANY_ID, this);
+    ret = esp_event_handler_register(WIFI_PROV_EVENT, ESP_EVENT_ANY_ID, event_handler, this);
+
+    base_type::state_.user2.v1 = 0;
+    base_type::state_.user2.v2 = 3;
 
     configured(&config);
 
