@@ -31,6 +31,8 @@ void App::on_notify(embr::esp_idf::event::v1::wifi_prov<WIFI_PROV_CRED_FAIL> e)
     // indicating that at least at that moment BLE was active (though advertising
     // doesn't seem to be) indicating that WiFi itself got into a funky state.
     ESP_LOGW(TAG, "on_notify: failed with reason %d", *e.data);
+
+    wifi_prov_mgr_reset_sm_state_on_failure();
 }
 
 
@@ -88,7 +90,9 @@ extern "C" void app_main()
     service::EventLoop::runtime<app_domain::tier1>{}.start();
 
     service::WiFiProvisioner::runtime<app_domain::tier2> provisioner;
-    service::WiFiProvisioner::runtime<app_domain::tier2> provisioner_console;
+
+    // wifi provisioner can only do one scheme at a time, bummer
+    //service::WiFiProvisioner::runtime<app_domain::tier2> provisioner_console;
 
     service::EventLoop::handler_register<PROTOCOMM_TRANSPORT_BLE_EVENT>(
         ESP_EVENT_ANY_ID, &provisioner);
@@ -99,14 +103,6 @@ extern "C" void app_main()
 
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-
-    wifi_prov_mgr_config_t config = {
-        .scheme = wifi_prov_scheme_ble,
-        .scheme_event_handler = WIFI_PROV_SCHEME_BLE_EVENT_HANDLER_FREE_BTDM,
-
-        // NOTE: Deprecated
-        .app_event_handler = WIFI_PROV_EVENT_HANDLER_NONE
-    };
 
     wifi_prov_security_t security = WIFI_PROV_SECURITY_1;
 
@@ -123,8 +119,11 @@ extern "C" void app_main()
 
     const char* service_name = "test_provisioning";
 
-    provisioner.config(config);
-    provisioner_console.config(wifi_prov_scheme_console);
+    provisioner.config(
+        wifi_prov_scheme_ble,
+        WIFI_PROV_SCHEME_BLE_EVENT_HANDLER_FREE_BTDM);
+
+    //provisioner_console.config(wifi_prov_scheme_console);
 
     prep_ble();
 
