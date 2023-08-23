@@ -25,6 +25,10 @@ void App::on_notify(embr::esp_idf::event::v1::wifi_prov<WIFI_PROV_CRED_FAIL> e)
 {
     // NOTE: Be advised, provisioner doesn't seem to report scan findings back
     // after we get a failed attempt here - looks like BLE itself shuts off maybe
+    // Noticing in logs that wifi scan seems to operate, but wifi provisioner in
+    // particular doesn't pick it up.  Furthermore, it gets past the POP phase
+    // indicating that at least at that moment BLE was active (though advertising
+    // doesn't seem to be) indicating that WiFi itself got into a funky state.
     ESP_LOGW(TAG, "on_notify: failed with reason %d", *e.data);
 }
 
@@ -83,6 +87,9 @@ extern "C" void app_main()
     service::EventLoop::runtime<app_domain::tier1>{}.start();
 
     service::WiFiProvisioner::runtime<app_domain::tier2> provisioner;
+
+    service::EventLoop::handler_register<PROTOCOMM_TRANSPORT_BLE_EVENT>(
+        ESP_EVENT_ANY_ID, &provisioner);
 
 #ifndef CONFIG_BT_ENABLED
 #error This example requires BLE

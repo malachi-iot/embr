@@ -1,6 +1,7 @@
 #include "wifi_provisioner.h"
 
 #include "event.hpp"
+#include "internal/ble.h"
 
 namespace embr { namespace esp_idf { namespace service { inline namespace v1 {
 
