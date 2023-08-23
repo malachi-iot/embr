@@ -28,7 +28,13 @@ struct WiFiProvisioner : embr::service::v1::Service
     friend struct esp_idf::event::v1::internal::handler;
 
     esp_err_t config(wifi_prov_mgr_config_t);
-    state_result on_start(wifi_prov_security_t, const void *wifi_prov_sec_params, const char *service_name, const char *service_key);
+    esp_err_t config(wifi_prov_scheme_t,
+        wifi_prov_event_handler_t = WIFI_PROV_EVENT_HANDLER_NONE);
+
+    state_result on_start(wifi_prov_security_t,
+        const void* wifi_prov_sec_params,
+        const char* service_name,
+        const char* service_key = nullptr);
     void pause();
 
     EMBR_SERVICE_RUNTIME_END

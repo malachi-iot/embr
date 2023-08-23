@@ -4,6 +4,7 @@
 #include "esp_wifi.h"
 
 #include <wifi_provisioning/scheme_ble.h>
+#include <wifi_provisioning/scheme_console.h>
 
 #include <estd/chrono.h>
 #include <estd/optional.h>
@@ -87,6 +88,7 @@ extern "C" void app_main()
     service::EventLoop::runtime<app_domain::tier1>{}.start();
 
     service::WiFiProvisioner::runtime<app_domain::tier2> provisioner;
+    service::WiFiProvisioner::runtime<app_domain::tier2> provisioner_console;
 
     service::EventLoop::handler_register<PROTOCOMM_TRANSPORT_BLE_EVENT>(
         ESP_EVENT_ANY_ID, &provisioner);
@@ -122,10 +124,14 @@ extern "C" void app_main()
     const char* service_name = "test_provisioning";
 
     provisioner.config(config);
+    //provisioner_console.config(wifi_prov_scheme_console);
 
     prep_ble();
 
-    provisioner.start(security, (const void *) sec_params, service_name, nullptr);
+    provisioner.start(security, (const void *) sec_params, service_name);
+
+    // NOTE: I think console doesn't need or want this particular phase
+    //provisioner_console.start(WIFI_PROV_SECURITY_0, nullptr, nullptr);
 
     for(;;)
     {

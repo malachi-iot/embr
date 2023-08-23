@@ -10,13 +10,29 @@ esp_err_t WiFiProvisioner::runtime<Subject, Impl>::config(wifi_prov_mgr_config_t
 {
     configuring(&config);
     
-    esp_err_t ret = wifi_prov_mgr_init(config);
+    const esp_err_t ret = wifi_prov_mgr_init(config);
 
     EventLoop::handler_register<WIFI_PROV_EVENT>(ESP_EVENT_ANY_ID, this);
 
     configured(&config);
 
     return ret;
+}
+
+template <class Subject, class Impl>
+esp_err_t WiFiProvisioner::runtime<Subject, Impl>::config(
+    wifi_prov_scheme_t scheme,
+    wifi_prov_event_handler_t handler)
+{
+    const wifi_prov_mgr_config_t c = {
+        .scheme = scheme,
+        .scheme_event_handler = handler,
+
+        // NOTE: Deprecated
+        .app_event_handler = WIFI_PROV_EVENT_HANDLER_NONE
+    };
+
+    return config(c);
 }
 
 
