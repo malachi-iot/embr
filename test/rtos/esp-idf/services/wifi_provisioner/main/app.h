@@ -14,4 +14,7 @@ struct App
     static constexpr const char* TAG = "App";
 
     static constexpr const char ep3[] = "test3";
+
+    void on_notify(embr::esp_idf::event::v1::wifi_prov<WIFI_PROV_CRED_FAIL>);
+    void on_notify(embr::esp_idf::event::v1::wifi_prov<WIFI_PROV_CRED_RECV>);
 };

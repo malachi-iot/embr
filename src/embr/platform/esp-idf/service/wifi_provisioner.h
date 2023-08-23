@@ -12,6 +12,9 @@ struct WiFiProvisioner : embr::service::v1::Service
 {
     typedef WiFiProvisioner this_type;
 
+    static constexpr const char* TAG = "WiFi Provisioner";
+    static constexpr const char* name() { return TAG; }
+
     state_result on_stop()
     {
         wifi_prov_mgr_deinit();
@@ -23,7 +26,9 @@ struct WiFiProvisioner : embr::service::v1::Service
     // DEBT: This is just awkward
     friend class esp_idf::event::v1::internal::handler<WIFI_PROV_EVENT>;
 
-    state_result on_start(wifi_prov_mgr_config_t);
+    esp_err_t config(wifi_prov_mgr_config_t);
+    state_result on_start(wifi_prov_security_t, const void *wifi_prov_sec_params, const char *service_name, const char *service_key);
+    void pause();
 
     EMBR_SERVICE_RUNTIME_END
 };
