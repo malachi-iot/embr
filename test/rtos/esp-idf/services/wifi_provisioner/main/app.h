@@ -17,4 +17,5 @@ struct App
 
     void on_notify(embr::esp_idf::event::v1::wifi_prov<WIFI_PROV_CRED_FAIL>);
     void on_notify(embr::esp_idf::event::v1::wifi_prov<WIFI_PROV_CRED_RECV>);
+    void on_notify(embr::esp_idf::event::v1::ip<IP_EVENT_STA_GOT_IP>);
 };

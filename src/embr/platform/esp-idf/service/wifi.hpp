@@ -144,6 +144,33 @@ err:
     state(r.state, r.substate);
 }
 
+template <class TSubject, class TImpl>
+esp_err_t WiFi::runtime<TSubject, TImpl>::config()
+{
+    esp_err_t ret;
+
+    // minimal bringup expects someone else will be tending to AP connect
+    base_type::housekeeping_ = false;
+
+    const wifi_init_config_t init_config = WIFI_INIT_CONFIG_DEFAULT();
+
+    base_type::configuring(&init_config);
+
+    ESP_GOTO_ON_ERROR(esp_wifi_init(&init_config), 
+        err, TAG, "initialization failed");
+
+    configured(&init_config);
+    state(Configured);
+    
+    return ESP_OK;
+
+err:
+    ESP_LOGW(TAG, "config failed: err=0x%04X", ret);
+    state_result r = create_start_result(ret);
+    state(r.state, r.substate);
+    return ret;
+}
+
 
 template <class TSubject, class TImpl>
 esp_err_t WiFi::runtime<TSubject, TImpl>::config(wifi_mode_t mode,

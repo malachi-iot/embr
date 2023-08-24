@@ -13,6 +13,7 @@
 #include <embr/platform/esp-idf/service/diagnostic.h>
 #include <embr/platform/esp-idf/service/flash.hpp>
 #include <embr/platform/esp-idf/service/event.hpp>
+#include <embr/platform/esp-idf/service/wifi.hpp>
 #include <embr/platform/esp-idf/service/wifi_provisioner.hpp>
 
 
@@ -24,20 +25,23 @@ using Diagnostic = service::Diagnostic;
 
 void App::on_notify(embr::esp_idf::event::v1::wifi_prov<WIFI_PROV_CRED_FAIL> e)
 {
-    // NOTE: Be advised, provisioner doesn't seem to report scan findings back
-    // after we get a failed attempt here - looks like BLE itself shuts off maybe
-    // Noticing in logs that wifi scan seems to operate, but wifi provisioner in
-    // particular doesn't pick it up.  Furthermore, it gets past the POP phase
-    // indicating that at least at that moment BLE was active (though advertising
-    // doesn't seem to be) indicating that WiFi itself got into a funky state.
+    // NOTE: Be advised, provisioner doesn't automatically give you another
+    // chance if you fail here.  I speculate this is to mitigate attacks,
+    // giving the programmer explicit control over how often to let people
+    // attempt provisioning.
     ESP_LOGW(TAG, "on_notify: failed with reason %d", *e.data);
-
 }
 
 
 void App::on_notify(embr::esp_idf::event::v1::wifi_prov<WIFI_PROV_CRED_RECV> e)
 {
     ESP_LOGI(TAG, "on_notify: got credentials");
+}
+
+
+void App::on_notify(embr::esp_idf::event::v1::ip<IP_EVENT_STA_GOT_IP> e)
+{
+    ESP_LOGI(TAG, "on_notify: ip address=" IPSTR, IP2STR(&e->ip_info.ip));
 }
 
 
@@ -48,9 +52,16 @@ App app;
 typedef estd::integral_constant<App*, &app> app_singleton;
 using tier2 = embr::layer0::subject<Diagnostic, app_singleton>;
 
-using tier1 = tier2;
+using wifi_type = service::WiFi::static_type<tier2>;
+
+using tier1 = tier2::append<wifi_type>;
 
 }
+
+
+#ifndef CONFIG_BT_ENABLED
+#error This example requires BLE
+#endif
 
 
 using namespace estd::chrono_literals;
@@ -90,25 +101,18 @@ extern "C" void app_main()
 
     service::WiFiProvisioner::runtime<app_domain::tier2> provisioner;
 
+    // DEBT: Awkwardness here.  Do we make a standalone netif service?
+    ESP_ERROR_CHECK(esp_netif_init());
+
+    // Minimal config just to get wifi radios online.  We let provisioner
+    // do its magic from there
+    app_domain::wifi_type::value->config();
+
     // wifi provisioner can only do one scheme at a time, bummer
     //service::WiFiProvisioner::runtime<app_domain::tier2> provisioner_console;
 
     service::EventLoop::handler_register<PROTOCOMM_TRANSPORT_BLE_EVENT>(
         ESP_EVENT_ANY_ID, &provisioner);
-
-#ifndef CONFIG_BT_ENABLED
-#error This example requires BLE
-#endif
-
-    // DEBT: Awkwardness here.  Do we make a standalone netif service?
-    ESP_ERROR_CHECK(esp_netif_init());
-
-    esp_netif_create_default_wifi_sta();
-
-    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-
-    wifi_prov_security_t security = WIFI_PROV_SECURITY_1;
 
     /* Do we want a proof-of-possession (ignored if Security 0 is selected):
     *      - this should be a string with length > 0
@@ -127,14 +131,9 @@ extern "C" void app_main()
         wifi_prov_scheme_ble,
         WIFI_PROV_SCHEME_BLE_EVENT_HANDLER_FREE_BTDM);
 
-    //provisioner_console.config(wifi_prov_scheme_console);
-
     prep_ble();
 
-    provisioner.start(security, (const void *) sec_params, service_name);
-
-    // NOTE: I think console doesn't need or want this particular phase
-    //provisioner_console.start(WIFI_PROV_SECURITY_0, nullptr, nullptr);
+    provisioner.start(WIFI_PROV_SECURITY_1, (const void *) sec_params, service_name);
 
     for(;;)
     {
