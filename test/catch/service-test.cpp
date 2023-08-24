@@ -1,6 +1,7 @@
 #include <catch2/catch.hpp>
 
 #include <embr/service.h>
+#include <embr/exp/autostart.h>
 
 #include "property-test.h"
 
@@ -576,6 +577,32 @@ struct AggregatedService : service::v1::Service
     EMBR_SERVICE_RUNTIME_END
 };
 #endif
+
+
+struct DependentService5
+{
+    using depends_on = estd::variadic::types<>;
+};
+
+
+struct DependentService6
+{
+    using depends_on = estd::variadic::types<
+        DependentService5>;
+};
+
+
+struct DependentService7
+{
+    using depends_on = estd::variadic::types<
+        DependentService5,
+        DependentService6>;
+};
+
+
+estd::tuple<DependentService5,
+    DependentService6,
+    DependentService7> auto_depend;
 
 
 static DependerService d;
