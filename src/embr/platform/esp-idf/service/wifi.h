@@ -2,9 +2,12 @@
 
 #include <esp_wifi.h>
 
+#include <estd/internal/variadic.h>
+
 #include <embr/service.h>
 
 #include "event.h"
+#include "flash.h"
 
 // As per:
 // https://docs.espressif.com/projects/esp-idf/en/v5.0/esp32/api-guides/wifi.html
@@ -35,6 +38,11 @@ struct NetIf : embr::service::v1::SparseService
 struct WiFi : embr::service::v1::Service
 {
     typedef WiFi this_type;
+
+    using depends_on = estd::variadic::types<
+        Flash,
+        EventLoop,
+        NetIf>;
 
     static constexpr const char* TAG = "WiFi";
     static constexpr const char* name() { return TAG; }
