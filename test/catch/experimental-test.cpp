@@ -19,10 +19,6 @@
 
 using namespace embr::experimental;
 
-template <class TTransport, class TRetryPolicyImpl, class TTimer>
-std::allocator<typename RetryManager<TTransport, TRetryPolicyImpl, TTimer>::QueuedItem>
-        RetryManager<TTransport, TRetryPolicyImpl, TTimer>::stub;
-
 template <class TAllocator>
 class test_string : public estd::basic_string<
         char,

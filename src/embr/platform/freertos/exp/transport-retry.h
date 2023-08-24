@@ -14,6 +14,7 @@
 
 #include <estd/internal/platform.h>
 #include <estd/forward_list.h>
+#include <estd/internal/type_traits/is_empty.h>
 #include <estd/algorithm.h>
 
 #ifdef ESP_PLATFORM
@@ -91,7 +92,9 @@ struct RetryManager
 
     static allocator_type& allocator()
     {
-        allocator_type stub;
+        // DEBT: Sloppy
+        static allocator_type stub;
+        static_assert(estd::is_empty<allocator_type>::value, "");
         return stub;
     }
 
