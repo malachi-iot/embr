@@ -594,6 +594,9 @@ struct DependentService6
 
 struct DependentService7
 {
+    // DEBT: Necessary for our sparse tuple to not get *too* sparse
+    int v;
+
     using depends_on = estd::variadic::types<
         DependentService5,
         DependentService6>;
@@ -736,5 +739,25 @@ TEST_CASE("Services", "[services]")
 
         REQUIRE(&dependent2 == dependent2.debug_runtime());
         REQUIRE(&dependent4 == dependent4.debug_runtime());
+    }
+    SECTION("experimental: autostart")
+    {
+        // DEBT: estd::get<I> should be able to retrieve empty types to a reference,
+        // which creates a whole ripple in the underlying "sparse tuple" feature
+        DependentService7& top = estd::get<2>(auto_depend);
+        std::bitset<3> visited;
+        int counter = 0;
+        auto_depend.visit(
+            experimental::service_starter_functor<DependentService7>{top, counter},
+            auto_depend,
+            visited);
+            //[&]{ counter++; });
+
+        std::tuple<estd::monostate> t2;
+
+        //INFO("counter: " << counter);
+
+        auto& v = std::get<0>(t2);
+
     }
 }
