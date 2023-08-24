@@ -31,7 +31,7 @@ struct EventLoop : embr::service::v1::SparseService
         int32_t event_id, void* event_data);
 
     template <const esp_event_base_t&, class Runtime>
-    static esp_err_t handler_register(int32_t, Runtime* runtime);
+    static esp_err_t handler_register(Runtime* runtime, int32_t = ESP_EVENT_ANY_ID);
 
     EMBR_SERVICE_RUNTIME_BEGIN(embr::service::v1::SparseService)
     

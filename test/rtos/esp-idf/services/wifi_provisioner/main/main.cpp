@@ -111,8 +111,10 @@ extern "C" void app_main()
     // wifi provisioner can only do one scheme at a time, bummer
     //service::WiFiProvisioner::runtime<app_domain::tier2> provisioner_console;
 
+    // Optional, this effectively bounces BLE events through provisioner upward
+    // through tier2
     service::EventLoop::handler_register<PROTOCOMM_TRANSPORT_BLE_EVENT>(
-        ESP_EVENT_ANY_ID, &provisioner);
+        &provisioner);
 
     /* Do we want a proof-of-possession (ignored if Security 0 is selected):
     *      - this should be a string with length > 0

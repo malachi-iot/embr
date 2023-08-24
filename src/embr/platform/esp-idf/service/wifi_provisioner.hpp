@@ -63,8 +63,8 @@ esp_err_t WiFiProvisioner::runtime<Subject, Impl>::config(wifi_prov_mgr_config_t
     //EventLoop::handler_register<WIFI_PROV_EVENT>(ESP_EVENT_ANY_ID, this);
     ret = esp_event_handler_register(WIFI_PROV_EVENT, ESP_EVENT_ANY_ID, event_handler, this);
 
-    base_type::state_.user2.v1 = 0;
-    base_type::state_.user2.v2 = 3;
+    base_type::state_.user2.v1 = 0;     // current retry count
+    base_type::state_.user2.v2 = 3;     // max retries
 
     configured(&config);
 

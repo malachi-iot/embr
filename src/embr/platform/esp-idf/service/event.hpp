@@ -31,7 +31,7 @@ void EventLoop::event_handler(
 }
 
 template <const esp_event_base_t& event_base, class Runtime>
-esp_err_t EventLoop::handler_register(int32_t event_id, Runtime* runtime)
+esp_err_t EventLoop::handler_register(Runtime* runtime, int32_t event_id)
 {
     return esp_event_handler_register(event_base, event_id,
         EventLoop::event_handler<Runtime, event_base>, runtime);
@@ -44,6 +44,8 @@ template <const esp_event_base_t& event_base>
 esp_err_t EventLoop::runtime<TSubject, TImpl>::handler_register(
     int32_t event_id)
 {
+    // DEBT: Fire event that we're actually registering here
+    
     return esp_event_handler_register(event_base, event_id,
         EventLoop::event_handler<runtime, event_base>, this);
 }

@@ -81,10 +81,63 @@ inline void WiFi::runtime<TSubject, TImpl>::event_handler(
 
 
 template <class TSubject, class TImpl>
-void WiFi::runtime<TSubject, TImpl>::on_notify(changed<id::state> p, const Flash&)
+inline void WiFi::runtime<TSubject, TImpl>::on_notify(changed<id::state> p, const Flash&)
 {
     // DEBT: Check here also since flash seems to be a WiFi dependency
     base_type::state_.child2 = p.value;
+}
+
+template <class TSubject, class TImpl>
+inline void WiFi::runtime<TSubject, TImpl>::on_notify(changed<id::state> p, const NetIf&)
+{
+    // DEBT: Check here also since netif is very much a WiFi dependency
+    base_type::state_.child3 = p.value;
+}
+
+
+template <class Subject, class Impl>
+template <class Subject2, class Impl2>
+bool WiFi::runtime<Subject, Impl>::config_event_loop(
+    EventLoop::runtime<Subject2, Impl2>& event_loop)
+{
+    esp_err_t ret;
+
+    // DEBT: Move IP event rebroadcaster registration elsewhere
+    ESP_GOTO_ON_ERROR(event_loop.template handler_register<IP_EVENT>(),
+        err, TAG, "registration failed");
+
+    // DEBT: Cleanup terms, incoming event_loop is default loop, we like
+    // to use its handler_register only to fire off embr events that we're doing so
+    // (in theory, we're not firing those events yet)
+    ESP_GOTO_ON_ERROR(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID,
+        wifi_event_handler, this),
+        err, TAG, "registration failed");
+
+    return true;
+
+err:
+    // DEBT: Unregister above if we get here
+
+    state_result r = create_start_result(ret);
+    state(r.state, r.substate);
+    return false;
+}
+
+
+// DEBT: Pay attention to errors here
+template <class TSubject, class TImpl>
+bool WiFi::runtime<TSubject, TImpl>::config_netif()
+{
+    esp_netif_t* wifi_netif;
+
+    // DEBT: Hard wired to STA - use 'user' variable to store pre-startup
+    // mode config.  Will have to do fancy footwork since usually this event_loop
+    // notify happens BEFORE that mode config is set
+    wifi_netif = esp_netif_create_default_wifi_sta();
+
+    configured(wifi_netif);
+
+    return wifi_netif != nullptr;
 }
 
 
@@ -95,9 +148,6 @@ void WiFi::runtime<TSubject, TImpl>::on_notify(
     EventLoop::runtime<Subject2, Impl2>& event_loop)
 {
     ESP_LOGV(TAG, "on_notify: EventLoop");
-
-    esp_err_t ret;
-    esp_netif_t* wifi_netif;
 
     base_type::state_.child1 = p.value;
 
@@ -111,20 +161,8 @@ void WiFi::runtime<TSubject, TImpl>::on_notify(
 
     // DEBT: Check event_loop status - but for now, we know any status here is success
 
-    // DEBT: Move IP event rebroadcaster registration elsewhere
-    ESP_GOTO_ON_ERROR(event_loop.template handler_register<IP_EVENT>(),
-        err, TAG, "registration failed");
-
-    ESP_GOTO_ON_ERROR(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID,
-        wifi_event_handler, this),
-        err, TAG, "registration failed");
-
-    // DEBT: Hard wired to STA - use 'user' variable to store pre-startup
-    // mode config.  Will have to do fancy footwork since usually this event_loop
-    // notify happens BEFORE that mode config is set
-    wifi_netif = esp_netif_create_default_wifi_sta();
-
-    configured(wifi_netif);
+    config_event_loop(event_loop);
+    config_netif();
 
     if(base_type::substate() == Dependency)
     {
@@ -134,14 +172,6 @@ void WiFi::runtime<TSubject, TImpl>::on_notify(
         auto r = create_start_result(esp_wifi_start());
         state(r.state, r.substate);
     }
-
-    return;
-
-err:
-    // DEBT: Unregister above if we get here
-
-    state_result r = create_start_result(ret);
-    state(r.state, r.substate);
 }
 
 template <class TSubject, class TImpl>

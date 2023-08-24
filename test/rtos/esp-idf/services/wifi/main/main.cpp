@@ -86,9 +86,7 @@ extern "C" void app_main()
 
     service::Flash::runtime<app_domain::tier1>{}.start();
     service::EventLoop::runtime<app_domain::tier1>{}.start();
-
-    // DEBT: Awkwardness here.  Do we make a standalone netif service?
-    ESP_ERROR_CHECK(esp_netif_init());
+    service::NetIf::runtime<app_domain::tier1>{}.start();
 
     wifi_config_t wifi_config = {};
 

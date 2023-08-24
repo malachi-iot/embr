@@ -14,6 +14,23 @@ namespace embr::esp_idf {
 
 namespace service { inline namespace v1 {
 
+struct NetIf : embr::service::v1::SparseService
+{
+    using this_type = NetIf;
+    
+    static constexpr const char* TAG = "NetIf";
+    static constexpr const char* name() { return TAG; }
+
+    state_result on_start() const
+    {
+        return create_start_result(esp_netif_init());
+    }
+
+    EMBR_SERVICE_RUNTIME_BEGIN(SparseService)
+
+    EMBR_SERVICE_RUNTIME_END
+};
+
 // TODO: Make an esp event handler base class service
 struct WiFi : embr::service::v1::Service
 {
@@ -61,9 +78,15 @@ struct WiFi : embr::service::v1::Service
         state_result on_start();
         state_result on_start(wifi_mode_t mode, const wifi_config_t*);
 
+        // Called when lower level depended-on services start up
+        template <class Subject2, class Impl2>
+        bool config_event_loop(EventLoop::runtime<Subject2, Impl2>&);
+        bool config_netif();
+
         template <class Subject2, class Impl2>
         void on_notify(changed<id::state>, EventLoop::runtime<Subject2, Impl2>&);
         void on_notify(changed<id::state>, const Flash&);
+        void on_notify(changed<id::state>, const NetIf&);
     
     EMBR_SERVICE_RUNTIME_END
 
