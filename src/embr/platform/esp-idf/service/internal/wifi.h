@@ -1,6 +1,6 @@
 #pragma once
 
-#include <wifi_provisioning/manager.h>
+#include <esp_wifi.h>
 
 #include "event.h"
 

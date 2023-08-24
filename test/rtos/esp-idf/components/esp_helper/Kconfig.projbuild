@@ -8,4 +8,33 @@ menu "Embr Helper config"
             string "WiFi Password"
     endmenu
 
+    # Not an esp-idf convention per se, I am putting my own commonly used settings here
+    choice
+        prompt "Select Development Board"
+
+        config BOARD_ESP32_UNSPECIFIED
+            bool "Unspecified Target"
+
+        config BOARD_ESP32_WEMOS_MINI32
+            bool "Wemos Mini32 D1 (ESP32)"
+            depends on IDF_TARGET_ESP32
+
+        config BOARD_ESP32C3_SEEED_XIAO
+            bool "Seeed Studio Xiao ESP32C3"
+            depends on IDF_TARGET_ESP32C3
+
+        config BOARD_ESP32C3_DEVKITM_1
+            bool "Espressif ESP32C3 DevKitM-1"
+            depends on IDF_TARGET_ESP32C3
+
+        config BOARD_ESP32_ESP_WROVER_KIT_41
+            bool "Espressif ESP32 Wrover Kit 4.1"
+            depends on IDF_TARGET_ESP32
+
+        config BOARD_ESP32S3_UM_FEATHERS3
+            bool "Unexpected Maker FeatherS3"
+            depends on IDF_TARGET_ESP32S3
+
+    endchoice
+
 endmenu

@@ -7,9 +7,13 @@
 #include <estd/optional.h>
 #include <estd/thread.h>
 
+#include <embr/platform/esp-idf/board.h>
+
 #include <embr/platform/esp-idf/service/diagnostic.h>
 #include <embr/platform/esp-idf/service/flash.hpp>
 #include <embr/platform/esp-idf/service/wifi.hpp>
+
+#include <embr/platform/esp-idf/gpio.h>
 
 
 namespace service = embr::esp_idf::service::v1;
@@ -60,9 +64,25 @@ using tier1 = tier2::append<wifi_type>;
 using namespace estd::chrono_literals;
 
 
+#ifdef CONFIG_BOARD_ESP32_WEMOS_MINI32
+#define LED_ENABLED 1
+constexpr embr::esp_idf::gpio status_led(
+    (gpio_num_t)embr::esp_idf::board_traits::gpio::status_led);
+
+void init_gpio()
+{
+    status_led.set_direction(GPIO_MODE_OUTPUT);
+}
+#endif
+
+
 extern "C" void app_main()
 {
     const char* TAG = "app_main";
+
+#if LED_ENABLED
+    init_gpio();
+#endif
 
     service::Flash::runtime<app_domain::tier1>{}.start();
     service::EventLoop::runtime<app_domain::tier1>{}.start();
@@ -82,9 +102,13 @@ extern "C" void app_main()
     {
         static int counter = 0;
 
-        ESP_LOGI(TAG, "counting: %d", ++counter);
+        if(++counter % 5 == 0)  ESP_LOGI(TAG, "counting: %d", counter);
 
-        estd::this_thread::sleep_for(5s);
+#if LED_ENABLED
+        status_led.level(counter % 2 == 0);
+#endif
+
+        estd::this_thread::sleep_for(1s);
     }
 }
 
