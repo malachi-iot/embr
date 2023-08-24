@@ -100,6 +100,11 @@ extern "C" void app_main()
 #error This example requires BLE
 #endif
 
+    // DEBT: Awkwardness here.  Do we make a standalone netif service?
+    ESP_ERROR_CHECK(esp_netif_init());
+
+    esp_netif_create_default_wifi_sta();
+
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 
@@ -116,7 +121,7 @@ extern "C" void app_main()
     */
     wifi_prov_security1_params_t *sec_params = pop;
 
-    const char* service_name = "test_provisioning";
+    const char* service_name = "PROV_service";
 
     provisioner.config(
         wifi_prov_scheme_ble,
