@@ -77,8 +77,16 @@ struct service_starter_functor
     int& counter;
 
     template <size_t I, class T, size_t S, class ...Types>
-    bool operator()(estd::variadic::type<I, T> t) const
+    bool operator()(estd::variadic::v1::visitor_index<I, T> t, estd::tuple<Types...>& tuple, std::bitset<S>& b) const
     {
+        // DEBT: Looks like maybe I didn't implement this yet? Or maybe I did because 'T' is the
+        // impl not the runtime
+        //estd::get<T>(tuple);
+        using types = estd::variadic::types<Types...>;
+
+        // Need to do a more exotic select which transforms Types to its impl and then chooses T
+        //using type = typename estd::internal::select_type<T, Types...>::first;
+
         return false;
     }
 
@@ -88,11 +96,8 @@ struct service_starter_functor
         using depends_on = typename T::depends_on;
         using impl_type = typename T::service_core_exp_type;
 
-        // DEBT: Looks like maybe I didn't implement this yet?
-        //estd::get<T>(tuple);
-
-        // DEBT: Needs that 'empty visitor'
-        //depends_on::visitor::visit(*this);
+        depends_on::visitor::visit(*this, tuple, b);
+        //depends_on::visitor::visit(service_starter_functor{service});
 
         ++counter;
 
