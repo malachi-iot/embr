@@ -76,9 +76,26 @@ struct is_same_impl_selector
 };
 
 
-template <class T, class ...TArgs>
-using select_impl = estd::variadic::selector<is_same_impl_selector<T>, TArgs...>;
+// Grabs anything out of list whose impl matches up to specified runtime
+template <class T, class ...Args>
+using select_impl = estd::variadic::selector<is_same_impl_selector<T>, Args...>;
 
+
+template <class Runtime, class Tuple>
+void do_autostart(Runtime& runtime, Tuple& tuple)
+{
+    // revisiting the old is-a vs has-a impl() for services situation
+    // Black magic - we're assuming service runtime has a ref_subject<void> and since that
+    // occupies identical memory space as any other ref_subject, we recast it to
+    // ref_subject containing all the observers we're interested in
+    runtime.assign_tuple(tuple);
+
+    // Black magic reassign current "listening" observers.  Things to note:
+    // 1. really only needs to be assigned once, but figuring that out is a little tricky
+    // 2. NOT thread safe (in theory) but in reality since we're (almost?) always reassigning
+    //    to the same value, it is
+    runtime.start();
+}
 
 
 // Designed to be used on tuple::visit of all services
@@ -91,29 +108,19 @@ struct service_starter_functor
     template <size_t I, class T, size_t S, class ...Types>
     bool operator()(estd::variadic::v1::visitor_index<I, T> t, estd::tuple<Types...>& tuple, std::bitset<S>& b) const
     {
-        // DEBT: Looks like maybe I didn't implement this yet? Or maybe I did because 'T' is the
-        // impl not the runtime
-        //estd::get<T>(tuple);
-        using types = estd::variadic::types<Types...>;
-
-        // Need to do a more exotic select which transforms Types to its impl and then chooses T
-        //using type = typename estd::internal::select_type<T, Types...>::first;
         using single = typename select_impl<T, Types...>::single;
         using impl_type = typename single::type::service_core_exp_type;
         constexpr size_t index = single::index;
-
-        using subject_type = ref_subject<Types...>;
-
-        using runtime = typename T::template runtime<subject_type, impl_type>;
 
         if(b.test(index)) return false;
 
         b.set(index);
 
-        auto& service2 = (runtime&)estd::get<index>(tuple);
+        using subject_type = ref_subject<Types...>;
 
-        service2.assign_tuple(tuple);
-        service2.start();
+        using runtime = typename T::template runtime<subject_type, impl_type>;
+
+        do_autostart((runtime&)estd::get<index>(tuple), tuple);
 
         return false;
     }
@@ -140,18 +147,7 @@ struct service_starter_functor
 
         using runtime = typename T::template runtime<subject_type, impl_type>;
 
-        // revisiting the old is-a vs has-a impl() for services situation
-        // Black magic - we're assuming service runtime has a ref_subject<void> and since that
-        // occupies identical memory space as any other ref_subject, we recast it to
-        // ref_subject containing all the observers we're interested in
-        auto& service2 = (runtime&)vi.value;
-
-        // Black magic reassign current "listening" observers.  Things to note:
-        // 1. really only needs to be assigned once, but figuring that out is a little tricky
-        // 2. NOT thread safe (in theory) but in reality since we're (almost?) always reassigning
-        //    to the same value, it is
-        service2.assign_tuple(tuple);
-        service2.start();
+        do_autostart((runtime&)vi.value, tuple);
 
         return false;
     }
