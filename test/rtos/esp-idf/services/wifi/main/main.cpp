@@ -10,6 +10,7 @@
 #include <estd/thread.h>
 
 #include <embr/platform/esp-idf/board.h>
+#include <embr/platform/esp-idf/component/led_strip.h>
 
 #include <embr/platform/esp-idf/service/diagnostic.h>
 #include <embr/platform/esp-idf/service/flash.hpp>
@@ -38,6 +39,8 @@ void App::on_notify(WiFi::event::ip<IP_EVENT_STA_GOT_IP> e)
 
     ESP_LOGI(TAG, "on_notify: got ip: %s",
         esp_ip4addr_ntoa(&e->ip_info.ip, buf, sizeof(buf)));
+
+    got_ip = true;
 }
 
 #if __cpp_nontype_template_parameter_auto
@@ -78,7 +81,8 @@ void init_gpio()
 }
 #elif defined(CONFIG_BOARD_ESP32C3_DEVKITM_1)
 
-led_strip_handle_t led_strip;
+embr::esp_idf::led_strip led_strip;
+using color = embr::esp_idf::led_strip::color;
 
 void init_gpio()
 {
@@ -118,10 +122,11 @@ extern "C" void app_main()
 #if FEATURE_EMBR_BOARD_STATUS_LED
         status_led.level(counter % 2 == 0);
 #elif defined(CONFIG_BOARD_ESP32C3_DEVKITM_1)
-        led_strip_set_pixel(led_strip, 0, 
-            (counter % 2 == 0) ? 5 : 0,
-            0, 1);
-        led_strip_refresh(led_strip);
+        led_strip.set_pixel(0, 
+            (counter % 2 == 0) ? 5 : 0,         // RED = showing we're alive
+            0,                                  // GREEN = we don't like green
+            app_domain::app.got_ip ? 1 : 0);    // BLUE = showing we've got an IP
+        led_strip.refresh();
 #endif
 
         estd::this_thread::sleep_for(1s);
