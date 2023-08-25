@@ -8,6 +8,8 @@ struct gpio_input {};
 
 struct gpio_output {};
 
+struct analog_input {};
+
 struct rmt_output : gpio_output {};
 
 struct button : gpio_input {};
@@ -38,15 +40,21 @@ struct ws2812 :
 
 struct led : gpio_output {};
 
+struct battery_voltage : analog_input {};
+
 struct spi_device {};
 
 struct GC9107 : spi_device {};
 
-template <unsigned pin_, class Trait>
-struct gpio
+struct ALS_PT19 : analog_input {};
+
+template <unsigned pin_, class Trait, class ...Traits>
+struct mux
 {
     static constexpr gpio_num_t pin = (gpio_num_t)pin_;
     using trait = Trait;
+
+    using traits = estd::variadic::types<Trait, Traits...>;
 };
 
 }}}}

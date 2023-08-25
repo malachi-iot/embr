@@ -64,26 +64,28 @@ struct board_traits
 
     using io = estd::variadic::types<
 #if defined(CONFIG_BOARD_ESP32_WEMOS_MINI32)
-        R::gpio<0, R::button>,
-        R::gpio<2, R::led>
+        R::mux<0, R::button>,
+        R::mux<2, R::led>
 #elif defined(CONFIG_BOARD_ESP32_ESP_WROVER_KIT_41)
-        R::gpio<0, R::button>,
-        R::gpio<0, R::led>,
-        R::gpio<2, R::led>,
-        R::gpio<4, R::led>
+        R::mux<0, R::button>,
+        R::mux<0, R::led>,
+        R::mux<2, R::led>,
+        R::mux<4, R::led>
 #elif defined(CONFIG_BOARD_ESP32C3_DEVKITM_1)
-        R::gpio<8, R::ws2812>,
-        R::gpio<9, R::button>
+        R::mux<8, R::ws2812>,
+        R::mux<9, R::button>
 #elif defined(CONFIG_BOARD_ESP32S3_UM_FEATHERS3)
-        R::gpio<40, R::ws2812>,
-        R::gpio<13, R::led>,
-        R::gpio<0, R::button>
+        R::mux<40, R::ws2812>,
+        R::mux<13, R::led>,
+        R::mux<4, R::ALS_PT19>,
+        R::mux<2, R::battery_voltage>,
+        R::mux<0, R::button>
 #elif defined(CONFIG_BOARD_ESP32S3_LILYGO_T_QT_PRO)
-        R::gpio<0, R::button>,
-        R::gpio<2, R::spi_mosi<0>>,
-        R::gpio<3, R::spi_clk<0>>,
-        R::gpio<5, R::spi_cs<0>>,
-        R::gpio<47, R::button>
+        R::mux<0, R::button>,
+        R::mux<2, R::spi_mosi<0>>,
+        R::mux<3, R::spi_clk<0>>,
+        R::mux<5, R::spi_cs<0>>,
+        R::mux<47, R::button>
 #endif
         >;
 
