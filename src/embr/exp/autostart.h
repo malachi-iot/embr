@@ -77,10 +77,22 @@ struct service_starter_functor
     int& counter;
 
     template <size_t I, class T, size_t S, class ...Types>
+    bool operator()(estd::variadic::type<I, T> t) const
+    {
+        return false;
+    }
+
+    template <size_t I, class T, size_t S, class ...Types>
     bool operator()(estd::variadic::instance<I, T> vi, estd::tuple<Types...>& tuple, std::bitset<S>& b)
     {
         using depends_on = typename T::depends_on;
         using impl_type = typename T::service_core_exp_type;
+
+        // DEBT: Looks like maybe I didn't implement this yet?
+        //estd::get<T>(tuple);
+
+        // DEBT: Needs that 'empty visitor'
+        //depends_on::visitor::visit(*this);
 
         ++counter;
 
