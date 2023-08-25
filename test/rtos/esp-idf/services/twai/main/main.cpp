@@ -8,6 +8,7 @@
 #include <estd/thread.h>
 
 #include <embr/platform/esp-idf/board.h>
+#include <embr/platform/esp-idf/gpio.h>
 
 #include <embr/platform/esp-idf/service/diagnostic.h>
 #include <embr/platform/esp-idf/service/twai.hpp>
@@ -60,11 +61,12 @@ static void init_twai()
     app_domain::twai.autorx(true);
 }
 
+using board_traits = embr::esp_idf::board_traits;
 
-#ifdef CONFIG_BOARD_ESP32_WEMOS_MINI32
-#define LED_ENABLED 1
+
+#if FEATURE_EMBR_BOARD_STATUS_LED
 constexpr embr::esp_idf::gpio status_led(
-    (gpio_num_t)embr::esp_idf::board_traits::gpio::status_led);
+    (gpio_num_t)board_traits::gpio::status_led);
 
 void init_gpio()
 {
@@ -74,11 +76,17 @@ void init_gpio()
 void init_gpio() {}
 #endif
 
+#if defined(CONFIG_BOARD_ESP32_UNSPECIFIED)
+#warning "Board not specified, but probably you'd prefer it to be"
+#endif
+
 
 
 extern "C" void app_main()
 {
     const char* TAG = "app_main";
+
+    ESP_LOGI(TAG, "Board: %s %s", board_traits::vendor, board_traits::name);
 
     init_twai();
     init_gpio();
@@ -91,7 +99,7 @@ extern "C" void app_main()
 
         ESP_LOGI(TAG, "counting: %d", ++counter);
 
-#if LED_ENABLED
+#if FEATURE_EMBR_BOARD_STATUS_LED
         status_led.level(counter % 2 == 0);
 #endif
     }
