@@ -27,7 +27,7 @@ struct led_strip
 
     esp_err_t clear()
     {
-        return led_string_clear(handle_);
+        return led_strip_clear(handle_);
     }
 
     led_strip& operator=(led_strip_handle_t handle)

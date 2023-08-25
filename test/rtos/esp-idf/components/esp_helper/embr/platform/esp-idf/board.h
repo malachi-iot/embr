@@ -4,6 +4,8 @@
 
 #include <estd/internal/variadic.h>
 
+#include "peripherals.h"
+
 // NOTE: Don't go *too* crazy with this, because if we do we might be better
 // served porting this to modm
 
@@ -16,7 +18,6 @@ namespace embr { namespace esp_idf {
     defined(CONFIG_BOARD_ESP32_ESP_WROVER_KIT_41)
 #define FEATURE_EMBR_BOARD_STATUS_LED EMBR_BOARD_LED_TYPE_SIMPLE
 #endif
-
 
 struct board_traits
 {
@@ -54,6 +55,21 @@ struct board_traits
 #else
 #endif
     };
+
+    using io = estd::variadic::types<
+#if defined(CONFIG_BOARD_ESP32_WEMOS_MINI32)
+        R::gpio<0, R::button>,
+        R::gpio<2, R::led>
+#elif defined(CONFIG_BOARD_ESP32_ESP_WROVER_KIT_41)
+        R::gpio<0, R::button>,
+        R::gpio<0, R::led>,
+        R::gpio<2, R::led>,
+        R::gpio<4, R::led>
+#elif defined(CONFIG_BOARD_ESP32C3_DEVKITM_1)
+        R::gpio<8, R::ws2812>,
+        R::gpio<9, R::button>
+#endif
+        >;
 };
 
 }}
