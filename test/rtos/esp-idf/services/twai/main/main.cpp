@@ -7,6 +7,8 @@
 #include <estd/optional.h>
 #include <estd/thread.h>
 
+#include <embr/platform/esp-idf/board.h>
+
 #include <embr/platform/esp-idf/service/diagnostic.h>
 #include <embr/platform/esp-idf/service/twai.hpp>
 
@@ -59,12 +61,27 @@ static void init_twai()
 }
 
 
+#ifdef CONFIG_BOARD_ESP32_WEMOS_MINI32
+#define LED_ENABLED 1
+constexpr embr::esp_idf::gpio status_led(
+    (gpio_num_t)embr::esp_idf::board_traits::gpio::status_led);
+
+void init_gpio()
+{
+    status_led.set_direction(GPIO_MODE_OUTPUT);
+}
+#else
+void init_gpio() {}
+#endif
+
+
 
 extern "C" void app_main()
 {
     const char* TAG = "app_main";
 
     init_twai();
+    init_gpio();
 
     for(;;)
     {
@@ -73,6 +90,10 @@ extern "C" void app_main()
         app_domain::twai.poll(pdMS_TO_TICKS(5000));
 
         ESP_LOGI(TAG, "counting: %d", ++counter);
+
+#if LED_ENABLED
+        status_led.level(counter % 2 == 0);
+#endif
     }
 }
 
