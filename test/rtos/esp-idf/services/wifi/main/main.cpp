@@ -119,8 +119,8 @@ extern "C" void app_main()
         status_led.level(counter % 2 == 0);
 #elif defined(CONFIG_BOARD_ESP32C3_DEVKITM_1)
         led_strip_set_pixel(led_strip, 0, 
-            (counter % 2 == 0) ? 20 : 0,
-            0, 0);
+            (counter % 2 == 0) ? 5 : 0,
+            0, 1);
         led_strip_refresh(led_strip);
 #endif
 
