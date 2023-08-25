@@ -74,6 +74,23 @@ struct board_traits
 #elif defined(CONFIG_BOARD_ESP32C3_DEVKITM_1)
         R::gpio<8, R::ws2812>,
         R::gpio<9, R::button>
+#elif defined(CONFIG_BOARD_ESP32S3_UM_FEATHERS3)
+        R::gpio<40, R::ws2812>,
+        R::gpio<13, R::led>,
+        R::gpio<0, R::button>
+#elif defined(CONFIG_BOARD_ESP32S3_LILYGO_T_QT_PRO)
+        R::gpio<0, R::button>,
+        R::gpio<2, R::spi_mosi<0>>,
+        R::gpio<3, R::spi_clk<0>>,
+        R::gpio<5, R::spi_cs<0>>,
+        R::gpio<47, R::button>
+#endif
+        >;
+
+    using peripherals = estd::variadic::types<
+#if defined(CONFIG_BOARD_ESP32S3_LILYGO_T_QT_PRO)
+        R::GC9107
+#elif defined(CONFIG_BOARD_ESP32_ESP_WROVER_KIT_41)
 #endif
         >;
 };

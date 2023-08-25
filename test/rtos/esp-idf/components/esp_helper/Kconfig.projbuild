@@ -35,6 +35,10 @@ menu "Embr Helper config"
             bool "Unexpected Maker FeatherS3"
             depends on IDF_TARGET_ESP32S3
 
+        config BOARD_ESP32S3_LILYGO_T_QT_PRO
+            bool "LILYGO T-QT Pro"
+            depends on IDF_TARGET_ESP32S3
+
     endchoice
 
 endmenu
