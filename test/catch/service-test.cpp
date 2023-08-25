@@ -636,13 +636,14 @@ struct DependentService7 : AutoDependerBase
     EMBR_SERVICE_RUNTIME_END
 };
 
-// DEBT: Need to force feed monostate here because a fully empty tuple doesn't quite get a
-// proper variadic::visitor
-using ref_void_subject = experimental::ref_subject<estd::monostate>;
+using ref_void_subject = experimental::ref_subject<>;
 
 
-estd::tuple<DependentService5::runtime<ref_void_subject>,
+// Services can appear out of order, depends_on will ensure referred to services run first
+// NOTE: Needing to force feed ref_subject so that pointer space is allocated
+estd::tuple<
     DependentService6::runtime<ref_void_subject>,
+    DependentService5::runtime<ref_void_subject>,
     DependentService7::runtime<ref_void_subject>>
     auto_depend;
 

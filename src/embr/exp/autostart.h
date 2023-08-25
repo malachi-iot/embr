@@ -68,6 +68,18 @@ template <class ...Observers>
 using ref_subject = internal::subject<
     tupleref_base<Observers...> >;
 
+template <class T>
+struct is_same_impl_selector
+{
+    template <class T_j, size_t J>
+    using evaluator = estd::is_same<typename T_j::service_core_exp_type, T>;
+};
+
+
+template <class T, class ...TArgs>
+using select_impl = estd::variadic::selector<is_same_impl_selector<T>, TArgs...>;
+
+
 
 // Designed to be used on tuple::visit of all services
 template <class Service>
@@ -86,6 +98,22 @@ struct service_starter_functor
 
         // Need to do a more exotic select which transforms Types to its impl and then chooses T
         //using type = typename estd::internal::select_type<T, Types...>::first;
+        using single = typename select_impl<T, Types...>::single;
+        using impl_type = typename single::type::service_core_exp_type;
+        constexpr size_t index = single::index;
+
+        using subject_type = ref_subject<Types...>;
+
+        using runtime = typename T::template runtime<subject_type, impl_type>;
+
+        if(b.test(index)) return false;
+
+        b.set(index);
+
+        auto& service2 = (runtime&)estd::get<index>(tuple);
+
+        service2.assign_tuple(tuple);
+        service2.start();
 
         return false;
     }
