@@ -4,6 +4,9 @@
 
 #include <estd/internal/variadic.h>
 
+// NOTE: Not yet used, but feels appropriate to bring it in
+#include <embr/platform/esp-idf/traits.h>
+
 #include "peripherals.h"
 
 // NOTE: Don't go *too* crazy with this, because if we do we might be better

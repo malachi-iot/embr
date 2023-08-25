@@ -14,6 +14,7 @@ enum class chip_id
     ESP32C3,
     ESP32H2,
     ESP32C2,
+    ESP32C6,
 
 #if CONFIG_IDF_TARGET_ESP32
     Current = ESP32
@@ -27,6 +28,8 @@ enum class chip_id
     Current = ESP32H2
 #elif CONFIG_IDF_TARGET_ESP32C2
     Current = ESP32C2
+#elif CONFIG_IDF_TARGET_ESP32C6
+    Current = ESP32C6
 #else
 #warning Unidentified chipd id, falling back to generic ESP32
     Current = ESP32
@@ -49,6 +52,12 @@ template <>
 struct chip_traits<chip_id::ESP32C3>
 {
     static const char* name() { return "ESP32C3"; }
+};
+
+template <>
+struct chip_traits<chip_id::ESP32S3>
+{
+    static const char* name() { return "ESP32S3"; }
 };
 
 
