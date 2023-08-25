@@ -1,7 +1,7 @@
 menu "Embr Services Test: TWAI"
 
     config GPIO_TWAI_TX
-        int "TWAI tx pin"
+        int "TWAI TX pin"
         default 5
 
     config GPIO_TWAI_RX

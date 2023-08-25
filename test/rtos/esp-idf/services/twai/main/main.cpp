@@ -45,7 +45,11 @@ embr::esp_idf::service::v1::TWAI::runtime<filter_observer> twai;
 
 }
 
-
+#if defined(CONFIG_BOARD_ESP32S3_UM_FEATHERS3)
+#if CONFIG_GPIO_TWAI_RX == 4
+#error "FeatherS3 can't operate TWAI RX on default pin 4"
+#endif
+#endif
 
 
 static void init_twai()

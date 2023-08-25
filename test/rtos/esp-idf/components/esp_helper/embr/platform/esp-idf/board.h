@@ -18,7 +18,8 @@ namespace embr { namespace esp_idf {
 #define EMBR_BOARD_LED_TYPE_SIMPLE      1
 
 #if defined(CONFIG_BOARD_ESP32_WEMOS_MINI32) || \
-    defined(CONFIG_BOARD_ESP32_ESP_WROVER_KIT_41)
+    defined(CONFIG_BOARD_ESP32_ESP_WROVER_KIT_41) || \
+    defined(CONFIG_BOARD_ESP32S3_UM_FEATHERS3)
 #define FEATURE_EMBR_BOARD_STATUS_LED EMBR_BOARD_LED_TYPE_SIMPLE
 #endif
 
@@ -33,6 +34,9 @@ struct board_traits
 #elif defined(CONFIG_BOARD_ESP32C3_DEVKITM_1)
     static constexpr const char* vendor = "Espressif";
     static constexpr const char* name = "DevKitM-1";
+#elif defined(CONFIG_BOARD_ESP32S3_UM_FEATHERS3)
+    static constexpr const char* vendor = "Unexpected Maker";
+    static constexpr const char* name = "Feather S3";
 #else
     static constexpr const char* vendor = "Unspecified";
     static constexpr const char* name = "Generic";

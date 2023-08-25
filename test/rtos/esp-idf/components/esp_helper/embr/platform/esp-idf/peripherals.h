@@ -10,6 +10,9 @@ struct gpio_input {};
 
 struct gpio_output {};
 
+// Indicates mux/peripheral can cooexist with others on the same pin(s)
+struct unreserved {};
+
 struct analog_input {};
 
 struct rmt_output : gpio_output {};
@@ -40,7 +43,9 @@ struct ws2812 :
     rgb_led,
     rmt_output {};
 
-struct led : gpio_output {};
+struct led :
+    unreserved,
+    gpio_output {};
 
 struct battery_voltage : analog_input {};
 

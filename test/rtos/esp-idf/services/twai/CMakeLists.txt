@@ -6,4 +6,6 @@ add_compile_definitions("FEATURE_EMBR_ESP_TIMER_SCHEDULER=0")
 
 include(../../setvars.cmake)
 
+set(COMPONENTS main)
+
 project(twai-service)
