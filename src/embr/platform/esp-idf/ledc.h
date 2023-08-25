@@ -85,6 +85,11 @@ public:
     {
         return ledc_stop(config_.speed_mode, config_.channel, idle_level);
     }
+
+    esp_err_t cb_register(ledc_cbs_t* cbs, void* user_arg)
+    {
+        return ledc_cb_register(config_.speed_mode, config_.channel, cbs, user_arg);
+    }
 };
 
 

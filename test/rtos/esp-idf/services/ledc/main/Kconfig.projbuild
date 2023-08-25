@@ -1,0 +1,6 @@
+menu "Embr Services Test: LED Control"
+
+    config LEDC_OUTPUT_IO
+        int "IO #1 to test LEDC/PWM on"
+
+endmenu

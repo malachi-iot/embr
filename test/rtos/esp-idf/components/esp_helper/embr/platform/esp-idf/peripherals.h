@@ -1,5 +1,7 @@
 #pragma once
 
+#include <driver/gpio.h>
+
 // EXPERIMENTAL
 
 namespace embr { namespace esp_idf { inline namespace exp { namespace R {
