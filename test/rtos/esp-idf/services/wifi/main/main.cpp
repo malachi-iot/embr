@@ -79,7 +79,8 @@ void init_gpio()
 {
     status_led.set_direction(GPIO_MODE_OUTPUT);
 }
-#elif defined(CONFIG_BOARD_ESP32C3_DEVKITM_1)
+#elif defined(CONFIG_BOARD_ESP32C3_DEVKITM_1) || defined(CONFIG_BOARD_ESP32S3_UM_FEATHERS3)
+#define FEATURE_BOARD_RGB_LED 1
 
 embr::esp_idf::led_strip led_strip;
 using color = embr::esp_idf::led_strip::color;
@@ -121,7 +122,7 @@ extern "C" void app_main()
 
 #if FEATURE_EMBR_BOARD_STATUS_LED
         status_led.level(counter % 2 == 0);
-#elif defined(CONFIG_BOARD_ESP32C3_DEVKITM_1)
+#elif FEATURE_BOARD_RGB_LED
         led_strip.set_pixel(0, 
             (counter % 2 == 0) ? 5 : 0,         // RED = showing we're alive
             0,                                  // GREEN = we don't like green
