@@ -578,34 +578,73 @@ struct AggregatedService : service::v1::Service
 };
 #endif
 
-
-struct DependentService5
+struct AutoDependerBase : embr::service::v1::Service
 {
+    using this_type = AutoDependerBase;
+
+    int start_counter = 0;
+    int state_change_counter = 0;
+
+    void on_starting() { ++start_counter; }
+
     using depends_on = estd::variadic::types<>;
+
+    void on_notify(changed<id::state> e)
+    {
+        ++state_change_counter;
+    }
+
+    EMBR_SERVICE_RUNTIME_BEGIN(Service)
+
+    EMBR_SERVICE_RUNTIME_END
 };
 
 
-struct DependentService6
+struct DependentService5 : AutoDependerBase
 {
+    using this_type = DependentService5;
+
+    EMBR_SERVICE_RUNTIME_BEGIN(Service)
+
+    EMBR_SERVICE_RUNTIME_END
+};
+
+
+struct DependentService6 : AutoDependerBase
+{
+    using this_type = DependentService6;
+
     using depends_on = estd::variadic::types<
         DependentService5>;
+
+    EMBR_SERVICE_RUNTIME_BEGIN(AutoDependerBase)
+
+    EMBR_SERVICE_RUNTIME_END
 };
 
 
-struct DependentService7
+struct DependentService7 : AutoDependerBase
 {
-    // DEBT: Necessary for our sparse tuple to not get *too* sparse
-    int v;
+    using this_type = DependentService7;
 
     using depends_on = estd::variadic::types<
         DependentService5,
         DependentService6>;
+
+    EMBR_SERVICE_RUNTIME_BEGIN(AutoDependerBase)
+
+    EMBR_SERVICE_RUNTIME_END
 };
 
+// DEBT: Need to force feed monostate here because a fully empty tuple doesn't quite get a
+// proper variadic::visitor
+using ref_void_subject = experimental::ref_subject<estd::monostate>;
 
-estd::tuple<DependentService5,
-    DependentService6,
-    DependentService7> auto_depend;
+
+estd::tuple<DependentService5::runtime<ref_void_subject>,
+    DependentService6::runtime<ref_void_subject>,
+    DependentService7::runtime<ref_void_subject>>
+    auto_depend;
 
 
 static DependerService d;
@@ -754,6 +793,15 @@ TEST_CASE("Services", "[services]")
             //[&]{ counter++; });
 
         std::tuple<estd::monostate> t2;
+
+        REQUIRE(estd::get<0>(auto_depend).start_counter == 1);
+        REQUIRE(estd::get<1>(auto_depend).start_counter == 1);
+        REQUIRE(estd::get<2>(auto_depend).start_counter == 1);
+
+        // Each service gets notifications from each other, and itself!
+        REQUIRE(estd::get<0>(auto_depend).state_change_counter == 3);
+        REQUIRE(estd::get<1>(auto_depend).state_change_counter == 3);
+        REQUIRE(estd::get<2>(auto_depend).state_change_counter == 3);
 
         //INFO("counter: " << counter);
 

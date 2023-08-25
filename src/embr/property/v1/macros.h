@@ -98,9 +98,12 @@ struct id : embr::property::v1::tag::property_owner  \
 // --- keeping this around just incase
 //    using typename base_type::impl_type; // this used to live in EMBR_PROPERTY_RUNTIME_BEGIN
 
-// DEBT: This base_ parameter is confusing, and is it necessary?
+// base_ parameter is needed to designate parent container of runtime.  Oftentimes this is
+// embr::service::v1::Service
+// service_core_exp_type is for experiments with autostart
 #define EMBR_PROPERTY_RUNTIME_BEGIN(base_) \
-typedef this_type impl_type;         \
+typedef this_type impl_type;               \
+typedef this_type service_core_exp_type;   \
 template <class TSubject, class TImpl = this_type>  \
 class runtime : public base_::runtime<TSubject, TImpl> \
 {                                          \

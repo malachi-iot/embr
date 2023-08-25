@@ -23,11 +23,11 @@ public:
     using tuple_type = estd::tuple<Observers...>;
 
 protected:
-    tuple_type& tuple;
+    tuple_type* tuple;
 
 public:
-    tuple_type& observers() { return tuple; }
-    const tuple_type& observers() const { return tuple; }
+    tuple_type& observers() { return *tuple; }
+    const tuple_type& observers() const { return *tuple; }
 
 protected:
     // In case of stateless types, we want tuple to help us select a value or a reference
@@ -51,9 +51,23 @@ protected:
     }
 
 public:
-    constexpr explicit tupleref_base(tuple_type& tuple) : tuple{tuple}
+    template <class ...Observers2>
+    void assign_tuple(estd::tuple<Observers2...>& other)
+    {
+        // NOTE: A bit of black magic here, document better once concept is proven
+        tuple = (tuple_type*) &other;
+    }
+
+    tupleref_base() = default;
+
+    constexpr explicit tupleref_base(tuple_type& tuple) : tuple{&tuple}
     {}
 };
+
+template <class ...Observers>
+using ref_subject = internal::subject<
+    tupleref_base<Observers...> >;
+
 
 // Designed to be used on tuple::visit of all services
 template <class Service>
@@ -66,10 +80,11 @@ struct service_starter_functor
     bool operator()(estd::variadic::instance<I, T> vi, estd::tuple<Types...>& tuple, std::bitset<S>& b)
     {
         using depends_on = typename T::depends_on;
+        using impl_type = typename T::service_core_exp_type;
 
         ++counter;
 
-        tupleref_base<Types...> subject(tuple);
+        using subject_type = ref_subject<Types...>;
 
         if(b.test(I)) return false;
 
@@ -78,10 +93,20 @@ struct service_starter_functor
         // Recursively scan 'tuple' for depends_on
         tuple.visit(service_starter_functor<T>{vi.value, counter}, tuple, b);
 
-        // revisiting the old is-a vs has-a impl() for services situation
-        //T& service = vi.value;
+        using runtime = typename T::template runtime<subject_type, impl_type>;
 
-        //service.start();
+        // revisiting the old is-a vs has-a impl() for services situation
+        // Black magic - we're assuming service runtime has a ref_subject<void> and since that
+        // occupies identical memory space as any other ref_subject, we recast it to
+        // ref_subject containing all the observers we're interested in
+        auto& service2 = (runtime&)vi.value;
+
+        // Black magic reassign current "listening" observers.  Things to note:
+        // 1. really only needs to be assigned once, but figuring that out is a little tricky
+        // 2. NOT thread safe (in theory) but in reality since we're (almost?) always reassigning
+        //    to the same value, it is
+        service2.assign_tuple(tuple);
+        service2.start();
 
         return false;
     }
