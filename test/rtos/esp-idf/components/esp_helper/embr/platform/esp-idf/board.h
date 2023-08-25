@@ -52,6 +52,9 @@ struct board_traits
         static constexpr unsigned rgb_b_led = 4;
         static constexpr unsigned status_led = rgb_r_led;
 #elif defined(CONFIG_BOARD_ESP32S3_UM_FEATHERS3)
+        static constexpr unsigned boot_button = 0;
+        static constexpr unsigned user_button = 0;
+        static constexpr unsigned status_led = 13;
 #elif defined(CONFIG_BOARD_ESP32C3_DEVKITM_1)
         static constexpr unsigned boot_button = 9;
         static constexpr unsigned user_button = 9;
