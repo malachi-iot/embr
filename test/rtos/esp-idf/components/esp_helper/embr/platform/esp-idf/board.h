@@ -26,6 +26,9 @@ struct board_traits
 #elif defined(CONFIG_BOARD_ESP32_ESP_WROVER_KIT_41)
     static constexpr const char* vendor = "Espressif";
     static constexpr const char* name = "WROVER Kit 4.1";
+#elif defined(CONFIG_BOARD_ESP32C3_DEVKITM_1)
+    static constexpr const char* vendor = "Espressif";
+    static constexpr const char* name = "DevKitM-1";
 #else
     static constexpr const char* vendor = "Unspecified";
     static constexpr const char* name = "Generic";
@@ -46,6 +49,8 @@ struct board_traits
         static constexpr unsigned status_led = rgb_r_led;
 #elif defined(CONFIG_BOARD_ESP32S3_UM_FEATHERS3)
 #elif defined(CONFIG_BOARD_ESP32C3_DEVKITM_1)
+        static constexpr unsigned boot_button = 9;
+        static constexpr unsigned user_button = 9;
 #else
 #endif
     };

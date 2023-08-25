@@ -3,6 +3,8 @@
 #include "esp_task_wdt.h"
 #include "esp_wifi.h"
 
+#include <led_strip.h>
+
 #include <estd/chrono.h>
 #include <estd/optional.h>
 #include <estd/thread.h>
@@ -63,16 +65,27 @@ using tier1 = tier2::append<wifi_type>;
 
 using namespace estd::chrono_literals;
 
+using board_traits = embr::esp_idf::board_traits;
 
-#ifdef CONFIG_BOARD_ESP32_WEMOS_MINI32
-#define LED_ENABLED 1
-constexpr embr::esp_idf::gpio status_led(
-    (gpio_num_t)embr::esp_idf::board_traits::gpio::status_led);
+led_strip_handle_t configure_led(void);
+
+#if FEATURE_EMBR_BOARD_STATUS_LED
+constexpr embr::esp_idf::gpio status_led((gpio_num_t)board_traits::gpio::status_led);
 
 void init_gpio()
 {
     status_led.set_direction(GPIO_MODE_OUTPUT);
 }
+#elif defined(CONFIG_BOARD_ESP32C3_DEVKITM_1)
+
+led_strip_handle_t led_strip;
+
+void init_gpio()
+{
+    led_strip = configure_led();
+}
+#else
+void init_gpio() {}
 #endif
 
 
@@ -80,9 +93,9 @@ extern "C" void app_main()
 {
     const char* TAG = "app_main";
 
-#if LED_ENABLED
+    ESP_LOGI(TAG, "Board=%s %s", board_traits::vendor, board_traits::name);
+
     init_gpio();
-#endif
 
     service::Flash::runtime<app_domain::tier1>{}.start();
     service::EventLoop::runtime<app_domain::tier1>{}.start();
@@ -102,8 +115,13 @@ extern "C" void app_main()
 
         if(++counter % 5 == 0)  ESP_LOGI(TAG, "counting: %d", counter);
 
-#if LED_ENABLED
+#if FEATURE_EMBR_BOARD_STATUS_LED
         status_led.level(counter % 2 == 0);
+#elif defined(CONFIG_BOARD_ESP32C3_DEVKITM_1)
+        led_strip_set_pixel(led_strip, 0, 
+            (counter % 2 == 0) ? 20 : 0,
+            0, 0);
+        led_strip_refresh(led_strip);
 #endif
 
         estd::this_thread::sleep_for(1s);

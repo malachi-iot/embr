@@ -1,4 +1,4 @@
-idf_component_register(SRCS "main.cpp"
+idf_component_register(SRCS "main.cpp" "ws2812.cpp"
                     INCLUDE_DIRS "."
-                    REQUIRES embr esp_helper driver esp_timer
+                    REQUIRES embr esp_helper driver led_strip
                     )
