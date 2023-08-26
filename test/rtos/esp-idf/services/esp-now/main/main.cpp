@@ -59,6 +59,14 @@ void App::on_notify(EspNow::event::receive e)
     memcpy(temp, e.data.data(), sz);
 
     app_domain::worker << [temp] {};
+
+    // Very similar to function bind except this one works with runtime
+    // sized storage
+    app_domain::worker.queue.enqueue_with_storage([]
+        (const uint8_t* buf, unsigned sz2)
+        {
+
+        }, portMAX_DELAY, e.data.data(), sz);
 }
 
 
@@ -99,6 +107,10 @@ extern "C" void app_main()
     app_domain::worker.start();
 
     app_domain::worker << [] { ESP_LOGI(TAG, "From worker!"); };
+    app_domain::worker.queue.enqueue_with_storage([](const uint8_t* data, unsigned sz)
+    {
+        ESP_LOGI(TAG, "From worker2! %s", (const char*)data);
+    }, portMAX_DELAY, (const uint8_t*) "Hello", 6);
 
     for(;;)
     {

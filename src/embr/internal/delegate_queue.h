@@ -3,6 +3,8 @@
 // Since we might implement our own version of this ring buffer someday, putting
 // delegate queue out in non-platform specific area, for the time being
 
+#include <algorithm>    // For std::copy_n
+
 #include <estd/functional.h>
 #include <estd/port/freertos/ring_buffer.h>
 
@@ -58,6 +60,35 @@ struct delegate_queue : TImpl
         {}
     };
 
+    // EXPERIMENTAL
+    // Probably will work well, but it may be more efficient to have item "types"
+    // which know how to dequeue in special ways
+    template <typename F>
+    struct item_with_storage : item_base
+    {
+        struct F2
+        {
+            F f;
+            const uint8_t* data;
+            const unsigned sz;
+
+            void operator()()
+            {
+                f(data, sz);
+            }
+        };
+
+        estd::experimental::inline_function<F2, void(void)> delegate;
+
+        template <class ...TArgs>
+        item_with_storage(F&& f, unsigned sz, TArgs&&...args) :
+            item_base(std::forward<TArgs>(args)...),
+            delegate(F2{std::move(f), data, sz})
+        {}
+
+        uint8_t data[];
+    };
+
     // Think of this as a brute force union
     struct item_assist : item_base
     {
@@ -87,6 +118,40 @@ struct delegate_queue : TImpl
         ESP_LOGV(TAG, "enqueue: sz=%u", sizeof(item_type));
 
         item_type* i = new (pvItem) item_type(std::move(f), std::forward<TArgs>(args)...);
+
+        impl_type::on_enqueue(i);
+
+        return buffer.send_complete(pvItem);
+    }
+
+
+    // EXPERIMENTAL
+    template <class F>
+    inline BaseType_t enqueue_with_storage(F&& f, TickType_t ticksToWait,
+        const uint8_t* data, unsigned sz)
+    {
+        /*
+        using f_type = f2_type<F>;
+        using item_type = item_with_storage<f_type>; */
+        using item_type = item_with_storage<F>;
+
+        // DEBT: offsetof gets mad because item_type isn't a "standard type",
+        // so doing this old school cheezy offset
+        item_type* dummy = nullptr;
+        unsigned o1 = (unsigned)&dummy->data;
+        //unsigned o1 = offsetof(item_type, data);
+        unsigned o2 = o1 + sz;  
+
+        void* pvItem;
+
+        if(buffer.send_acquire(&pvItem, o2, ticksToWait) == pdFALSE)
+            return pdFALSE;
+
+        item_type* i = new (pvItem) item_type(std::move(f), sz);
+
+        // TODO: Put it in constructor
+        //memcpy(i->data, data, sz);
+        std::copy_n(data, sz, i->data);
 
         impl_type::on_enqueue(i);
 
