@@ -203,6 +203,23 @@ err:
 
 
 template <class TSubject, class TImpl>
+esp_err_t WiFi::runtime<TSubject, TImpl>::config(wifi_mode_t mode)
+{
+    esp_err_t ret = config();
+
+    if(ret != ESP_OK) return ret;
+
+    ret = esp_wifi_set_mode(mode);
+
+    if(ret == ESP_OK) return ret;
+
+    state_result r = create_start_result(ret);
+    state(r.state, r.substate);
+    return ret;
+}
+
+
+template <class TSubject, class TImpl>
 esp_err_t WiFi::runtime<TSubject, TImpl>::config(wifi_mode_t mode,
     const wifi_init_config_t* init_config,
     const wifi_config_t* config)

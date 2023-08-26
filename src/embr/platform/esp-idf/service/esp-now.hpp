@@ -16,7 +16,7 @@ namespace service { inline namespace v1 {
 template <class TSubject, class TImpl>
 auto EspNow::runtime<TSubject, TImpl>::on_start() -> state_result
 {
-    esp_err_t ret = ESP_FAIL;
+    esp_err_t ret = ESP_OK;
     
     const uint8_t dummy_pmk[16] {};
     
