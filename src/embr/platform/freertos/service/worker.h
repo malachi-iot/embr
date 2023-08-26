@@ -55,7 +55,7 @@ struct Service : embr::Service
 {
     typedef Service this_type;
 
-    static constexpr const char* TAG = "worker::Service";
+    static constexpr const char* TAG = "Worker";
     static constexpr const char* name() { return TAG; }
 
     queue_type queue;
@@ -77,18 +77,22 @@ extern Service& queue;
 
 }
 
+}}
+
 template <typename F>
-inline worker::queue_type& operator <<(worker::queue_type& wq, F&& f)
+inline embr::freertos::worker::queue_type& operator <<(
+    embr::freertos::worker::queue_type& wq, F&& f)
 {
     wq.enqueue(std::move(f), portMAX_DELAY);
-    worker::pend_service();
+    embr::freertos::worker::pend_service();
     return wq;
 } 
 
 
 #if FEATURE_TMR_WORKER == 0
 template <typename F>
-inline worker::queue_type& operator <<(worker::Service& service, F&& f)
+inline embr::freertos::worker::queue_type& operator <<(
+    embr::freertos::worker::Service& service, F&& f)
 {
     service.queue.enqueue(std::move(f), portMAX_DELAY);
     //worker::pend_service();
@@ -96,4 +100,3 @@ inline worker::queue_type& operator <<(worker::Service& service, F&& f)
 }
 #endif
 
-}}

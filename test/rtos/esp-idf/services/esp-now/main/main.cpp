@@ -42,12 +42,6 @@ embr::freertos::worker::Service::runtime<tier1> worker(512);
 
 }
 
-namespace embr::freertos::worker {
-
-Service& queue = app_domain::worker;
-
-}
-
 
 using namespace estd::chrono_literals;
 
@@ -58,7 +52,7 @@ using namespace estd::chrono_literals;
 
 extern "C" void app_main()
 {
-    const char* TAG = "app_main";
+    constexpr const char* TAG = "app_main";
 
     service::Flash::runtime<app_domain::tier1>{}.start();
     service::EventLoop::runtime<app_domain::tier1>{}.start();
@@ -77,6 +71,8 @@ extern "C" void app_main()
     app_domain::esp_now_type::value->start();
 
     app_domain::worker.start();
+
+    app_domain::worker << [] { ESP_LOGI(TAG, "From worker!"); };
 
     for(;;)
     {
