@@ -8,6 +8,8 @@
 #include <estd/optional.h>
 #include <estd/thread.h>
 
+#include <embr/platform/freertos/service/worker.hpp>
+
 #include <embr/platform/esp-idf/service/diagnostic.h>
 #include <embr/platform/esp-idf/service/event.hpp>
 #include <embr/platform/esp-idf/service/esp-now.hpp>
@@ -35,6 +37,14 @@ using esp_now_type = service::EspNow::static_type<tier2>;
 using wifi_type = service::WiFi::static_type<tier2>;
 
 using tier1 = tier2::append<esp_now_type, wifi_type>;
+
+embr::freertos::worker::Service::runtime<tier1> worker(512);
+
+}
+
+namespace embr::freertos::worker {
+
+Service& queue = app_domain::worker;
 
 }
 
@@ -65,6 +75,8 @@ extern "C" void app_main()
     ESP_ERROR_CHECK(esp_wifi_set_protocol(ESPNOW_WIFI_IF, WIFI_PROTOCOL_11B|WIFI_PROTOCOL_11G|WIFI_PROTOCOL_11N|WIFI_PROTOCOL_LR) );
 
     app_domain::esp_now_type::value->start();
+
+    app_domain::worker.start();
 
     for(;;)
     {
