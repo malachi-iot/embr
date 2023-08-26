@@ -38,9 +38,35 @@ using wifi_type = service::WiFi::static_type<tier2>;
 
 using tier1 = tier2::append<esp_now_type, wifi_type>;
 
-embr::freertos::worker::Service::runtime<tier1> worker(512);
+// NOTE: Normally 512 is plenty of space for worker thread queue, but
+// we're double-dutying it to also hold on to incoming 250 byte datagrams.
+// An abuse (see on_notify below for receive)
+embr::freertos::worker::Service::runtime<tier1> worker(4096);
 
 }
+
+
+void App::on_notify(EspNow::event::receive e)
+{
+    // DEBT: Bigtime debt, we double-copy the max-250 buffer -
+    // one time into temp, then a 2nd time when putting it into
+    // worker.  Would be preferable to use ring buffer directly,
+    // or to extend worker to take a size parameter for "extra" data
+    // per enqueue
+    uint8_t temp[250];
+    unsigned sz = e.data.size();
+
+    memcpy(temp, e.data.data(), sz);
+
+    app_domain::worker << [temp] {};
+}
+
+
+void App::on_notify(EspNow::event::send e)
+{
+    app_domain::worker << [] {};
+}
+
 
 
 using namespace estd::chrono_literals;

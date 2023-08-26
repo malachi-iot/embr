@@ -136,7 +136,7 @@ struct delegate_queue : TImpl
         typedef item_assist item_type;
 
         // DEBT: there's no isr xRingbufferSendAcquire variant that I could find, sure
-        // wish there was
+        // wish there was (see https://github.com/espressif/esp-idf/issues/10527)
         item_type i(f, std::forward<TArgs>(args)...);
 
         impl_type::on_enqueue(&i);

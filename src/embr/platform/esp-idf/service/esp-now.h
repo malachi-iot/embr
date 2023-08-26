@@ -21,6 +21,8 @@ struct EspNow : embr::SparseService
     template <class TSubject>
     using static_type = static_factory<TSubject, this_type>::static_type;
 
+    // These events are not ISR-bound, but they do happen within the WiFi
+    // stack and need to be light on their feet like an ISR
     struct event
     {
         struct receive
