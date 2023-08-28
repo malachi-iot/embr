@@ -147,6 +147,15 @@ extern "C" void app_main()
 
             ESP_LOGI(TAG, "rx: ");
             ESP_LOG_BUFFER_HEX(TAG, rx->data, sz);
+
+            app_domain::app.ring.return_item(rx);
+        }
+        
+        esp_err_t ret = esp_now_send(broadcast_mac, (const uint8_t*)"hello", 5);
+
+        if(ret != ESP_OK)
+        {
+            ESP_LOGW(TAG, "Couldn't send");
         }
     }
 }
