@@ -131,10 +131,13 @@ extern "C" void app_main()
     estd::copy_n(broadcast_mac, ESP_NOW_ETH_ALEN, broadcast_peer.peer_addr);
     ESP_ERROR_CHECK(esp_now_add_peer(&broadcast_peer));
 
-    estd::experimental::ostringstream<64> str;
+    ESP_LOGI(TAG, "startup: sizeof App=%u, App::EspNow::recv_info=%u",
+        sizeof(App), sizeof(App::EspNow::recv_info));
 
     for(;;)
     {
+        estd::experimental::ostringstream<64> str;
+
         static int counter = 0;
 
         ESP_LOGI(TAG, "counting: %d", ++counter);
@@ -148,14 +151,7 @@ extern "C" void app_main()
             sz -= sizeof(App::EspNow::recv_info);
             const uint8_t* source = rx->source;
 
-            ESP_LOGI(TAG, "rx: src mac=%02x:%02x:%02x:%02x:%02x:%02x",
-                source[0],
-                source[1],
-                source[2],
-                source[3],
-                source[4],
-                source[5]
-                );
+            ESP_LOGI(TAG, "rx: src mac=" MACSTR, MAC2STR(source));
             ESP_LOG_BUFFER_HEXDUMP(TAG, rx->data, sz, ESP_LOG_INFO);
 
             app_domain::app.ring.return_item(rx);
@@ -163,7 +159,9 @@ extern "C" void app_main()
             estd::this_thread::sleep_for(3s);
         }
 
-        str.clear();
+        // FIX: Bug in estd string clear isn't actually clearing it out
+        // See https://github.com/malachi-iot/estdlib/issues/8
+        //str.clear();
         str << "Hello: " << counter;
 
         // DEBT: Doesn't have a data() method yet and also have to explicitly

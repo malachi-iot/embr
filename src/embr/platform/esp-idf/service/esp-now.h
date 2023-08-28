@@ -1,5 +1,6 @@
 #pragma once
 
+#include <estd/algorithm.h>
 #include <estd/span.h>
 
 #include <esp_now.h>
@@ -21,10 +22,30 @@ struct EspNow : embr::SparseService
     template <class TSubject>
     using static_type = static_factory<TSubject, this_type>::static_type;
 
+    // layer1 mac
+    // DEBT: Put this out into some kind of embr::layer1 namespace
+    struct mac
+    {
+        uint8_t address[6];
+
+        // DEBT: Finagle ourselves a constexpr here somehow
+        mac(const uint8_t* copy_from)
+        {
+            estd::copy_n(copy_from, 6, address);
+        }
+
+        mac(const mac&) = default;
+
+        operator const uint8_t*() const { return address; }
+    };
+
     struct recv_info
     {
-        const uint8_t* source;
-        const uint8_t* dest;
+        // It seems the source and dest are temporary/local variables too
+        //const uint8_t* source;
+        //const uint8_t* dest;
+
+        mac source, dest;
 
         wifi_pkt_rx_ctrl_t rx_ctrl;
 
