@@ -7,6 +7,7 @@
 #include <estd/chrono.h>
 #include <estd/optional.h>
 #include <estd/thread.h>
+#include <estd/sstream.h>
 
 #include <embr/platform/freertos/service/worker.hpp>
 
@@ -130,6 +131,8 @@ extern "C" void app_main()
     estd::copy_n(broadcast_mac, ESP_NOW_ETH_ALEN, broadcast_peer.peer_addr);
     ESP_ERROR_CHECK(esp_now_add_peer(&broadcast_peer));
 
+    estd::experimental::ostringstream<64> str;
+
     for(;;)
     {
         static int counter = 0;
@@ -137,21 +140,39 @@ extern "C" void app_main()
         ESP_LOGI(TAG, "counting: %d", ++counter);
 
         size_t sz;
-        //estd::this_thread::sleep_for(5s);
         auto rx = (App::EspNow::recv_info*)app_domain::app.ring.receive(
             &sz, pdMS_TO_TICKS(2000));
 
         if(rx != nullptr)
         {
             sz -= sizeof(App::EspNow::recv_info);
+            const uint8_t* source = rx->source;
 
-            ESP_LOGI(TAG, "rx: ");
-            ESP_LOG_BUFFER_HEX(TAG, rx->data, sz);
+            ESP_LOGI(TAG, "rx: src mac=%02x:%02x:%02x:%02x:%02x:%02x",
+                source[0],
+                source[1],
+                source[2],
+                source[3],
+                source[4],
+                source[5]
+                );
+            ESP_LOG_BUFFER_HEXDUMP(TAG, rx->data, sz, ESP_LOG_INFO);
 
             app_domain::app.ring.return_item(rx);
+
+            estd::this_thread::sleep_for(3s);
         }
+
+        str.clear();
+        str << "Hello: " << counter;
+
+        // DEBT: Doesn't have a data() method yet and also have to explicitly
+        // include basic_string_view
+        //const auto& s = str.rdbuf()->view();
+        const auto& s = str.rdbuf()->str();
         
-        esp_err_t ret = esp_now_send(broadcast_mac, (const uint8_t*)"hello", 5);
+        //esp_err_t ret = esp_now_send(broadcast_mac, (const uint8_t*)"hello", 5);
+        esp_err_t ret = esp_now_send(broadcast_mac, (const uint8_t*)s.data(), s.length());
 
         if(ret != ESP_OK)
         {
