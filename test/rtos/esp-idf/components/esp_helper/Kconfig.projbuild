@@ -41,24 +41,51 @@ menu "Embr Helper config"
 
     endchoice
 
-    # DEBT: Probably we want this in Embr component proper, not helper
-    # As per https://stackoverflow.com/questions/31325785/is-it-possible-to-convert-a-choice-to-an-int-in-kconfig
-    choice
-        prompt "TWAI speed"
-        default TWAI_TIMING_125K
-        config TWAI_TIMING_25K
-            bool "25Kbit"
-        config TWAI_TIMING_125K
-            bool "125Kbit"
-        config TWAI_TIMING_250K
-            bool "250Kbit"
-        config TWAI_TIMING_1M
-            bool "1Mbit"
-    endchoice
+    #menu "Peripherals"
 
-    config TWAI_SPEED
-        int
-        default 125 if TWAI_TIMING_125K
-        default 1000 if TWAI_TIMING_1M
+        # DEBT: Probably we want this in Embr component proper, not helper
+        # As per https://stackoverflow.com/questions/31325785/is-it-possible-to-convert-a-choice-to-an-int-in-kconfig
+        
+        choice
+            prompt "TWAI"
+            default TWAI_TIMING_DISABLED
+            help
+                Used to assist in configuring embr::esp_idf::service::TWAI.
+                Note that explicit start() call is still required
+
+            config TWAI_TIMING_DISABLED
+                bool "Disabled"
+            config TWAI_TIMING_25K
+                bool "25Kbit"
+            config TWAI_TIMING_125K
+                bool "125Kbit"
+            config TWAI_TIMING_250K
+                bool "250Kbit"
+            config TWAI_TIMING_500K
+                bool "500Kbit"
+            config TWAI_TIMING_1M
+                bool "1Mbit"
+        endchoice
+
+        config TWAI_SPEED
+            int
+            default 0 if TWAI_TIMING_DISABLED
+            default 25 if TWAI_TIMING_25K
+            default 125 if TWAI_TIMING_125K
+            default 250 if TWAI_TIMING_250K
+            default 500 if TWAI_TIMING_500K
+            default 1000 if TWAI_TIMING_1M
+
+        config GPIO_TWAI_TX
+            int "TWAI TX pin"
+            default 5
+            depends on !TWAI_TIMING_DISABLED
+
+        config GPIO_TWAI_RX
+            int "TWAI RX pin"
+            default 4
+            depends on !TWAI_TIMING_DISABLED
+
+    #endmenu
 
 endmenu

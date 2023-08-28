@@ -88,6 +88,8 @@ public:
         state_result on_start(
             const twai_timing_config_t* t_config);
 
+        state_result on_start();
+
         void check_status();
         esp_err_t poll(TickType_t ticks_to_wait);
 

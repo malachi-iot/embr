@@ -148,6 +148,42 @@ auto TWAI::runtime<TSubject, TImpl>::on_start(
 #endif
 
 
+#if CONFIG_TWAI_SPEED
+template <class TSubject, class TImpl>
+auto TWAI::runtime<TSubject, TImpl>::on_start() -> state_result
+{
+    // DEBT: May want to put these static consts outside of class, there's
+    // a chance compiler won't optimize away multiple flavors of them
+    static twai_general_config_t g_config = TWAI_GENERAL_CONFIG_DEFAULT(
+        (gpio_num_t)CONFIG_GPIO_TWAI_TX,
+        (gpio_num_t)CONFIG_GPIO_TWAI_RX,
+        TWAI_MODE_NORMAL);
+    static constexpr twai_filter_config_t f_config = TWAI_FILTER_CONFIG_ACCEPT_ALL();
+    static constexpr twai_timing_config_t t_config =
+#if CONFIG_TWAI_SPEED == 125
+        TWAI_TIMING_CONFIG_125KBITS();
+#elif CONFIG_TWAI_SPEED == 250
+        TWAI_TIMING_CONFIG_250KBITS()
+#elif CONFIG_TWAI_SPEED == 500
+        TWAI_TIMING_CONFIG_500KBITS()
+#elif CONFIG_TWAI_SPEED == 1000
+        TWAI_TIMING_CONFIG_1MBITS()
+#else
+#error Unsupported TWAI speed
+#endif
+
+    // DEBT: Without this twai_driver_install flips out due to lack of interrupt 
+    // availability (https://github.com/espressif/esp-idf/issues/7955)
+    // clearing to 0 works, but I think results in esp-idf "hunting" for a new
+    // interrrupt which may lead to unpredictability if OTHER interrupt-dependent
+    // code is activated
+    g_config.intr_flags = 0;
+
+    return on_start(&g_config, &t_config, &f_config);
+}
+#endif
+
+
 template <class TSubject, class TImpl>
 void TWAI::runtime<TSubject, TImpl>::broadcast(uint32_t alerts)
 {

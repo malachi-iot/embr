@@ -51,19 +51,10 @@ embr::esp_idf::service::v1::TWAI::runtime<filter_observer> twai;
 #endif
 #endif
 
+#if CONFIG_TWAI_SPEED == 0
+#error Please configure TWAI in Embr Helper area
+#endif
 
-static void init_twai()
-{
-    constexpr twai_general_config_t g_config = TWAI_GENERAL_CONFIG_DEFAULT(
-        (gpio_num_t)CONFIG_GPIO_TWAI_TX,
-        (gpio_num_t)CONFIG_GPIO_TWAI_RX,
-        TWAI_MODE_NORMAL);
-
-    constexpr twai_timing_config_t t_config = TWAI_TIMING_CONFIG_125KBITS();
-
-    app_domain::twai.start(&g_config, &t_config);
-    app_domain::twai.autorx(true);
-}
 
 using board_traits = embr::esp_idf::board_traits;
 
@@ -92,7 +83,9 @@ extern "C" void app_main()
 
     ESP_LOGI(TAG, "Board: %s %s", board_traits::vendor, board_traits::name);
 
-    init_twai();
+    app_domain::twai.start();
+    app_domain::twai.autorx(true);
+
     init_gpio();
 
     for(;;)
