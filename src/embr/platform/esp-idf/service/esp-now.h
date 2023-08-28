@@ -99,8 +99,13 @@ struct EspNow : embr::SparseService
 
     struct send_info
     {
-        mac dest;
+        const mac dest;
         const esp_now_send_status_t status;
+
+        send_info(const event::send& copy_from) :
+            dest(copy_from.mac.data()),
+            status(copy_from.status)
+        {}
     };
 
     EMBR_SERVICE_RUNTIME_BEGIN(SparseService)

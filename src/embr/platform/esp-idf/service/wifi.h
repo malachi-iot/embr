@@ -72,9 +72,10 @@ struct WiFi : embr::service::v1::Service
 
         void register_handler();
 
-        // minimal init bringup, mainly for use with provisioning
+        // minimal init bringup, mainly for use with provisioning & esp-now
         esp_err_t config();
         esp_err_t config(wifi_mode_t mode);
+        esp_err_t config(wifi_mode_t mode, wifi_storage_t);
 
         esp_err_t config(wifi_mode_t mode, const wifi_init_config_t*, const wifi_config_t*);
         esp_err_t config(wifi_mode_t mode, const wifi_config_t* c)

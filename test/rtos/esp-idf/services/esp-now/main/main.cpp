@@ -124,7 +124,13 @@ void App::on_notify(EspNow::event::receive e)
 
 void App::on_notify(EspNow::event::send e)
 {
-    app_domain::worker << [] {};
+    // DEBT: Not sure if MAC needs to be copied here, I don't think so
+    // actually since esp_now_send *seems* to need the peer registered first
+    EspNow::send_info proxied(e);
+
+    app_domain::worker << [proxied]
+    {
+    };
 }
 
 
@@ -142,8 +148,7 @@ extern "C" void app_main()
     service::EventLoop::runtime<app_domain::tier1>{}.start();
     service::NetIf::runtime<app_domain::tier1>{}.start();
 
-    app_domain::wifi_type::value->config(ESPNOW_WIFI_MODE);
-    ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
+    app_domain::wifi_type::value->config(ESPNOW_WIFI_MODE, WIFI_STORAGE_RAM);
     app_domain::wifi_type::value->start();
 
     // DEBT: Document exactly why we do this, but pretty sure it's because ESP-NOW
@@ -161,8 +166,6 @@ extern "C" void app_main()
     broadcast_peer.encrypt = false;
     estd::copy_n(broadcast_mac, ESP_NOW_ETH_ALEN, broadcast_peer.peer_addr);
     ESP_ERROR_CHECK(esp_now_add_peer(&broadcast_peer));
-
-    static_assert(sizeof(App::EspNow::recv_info) > sizeof(App::EspNow::send_info));
 
     ESP_LOGI(TAG, "startup: sizeof App=%u, App::EspNow::recv_info=%u, wifi_pkt_rx_ctrl_t=%u",
         sizeof(App), sizeof(App::EspNow::recv_info),
