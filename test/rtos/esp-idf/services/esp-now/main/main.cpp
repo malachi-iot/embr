@@ -23,6 +23,7 @@
 
 namespace service = embr::esp_idf::service::v1;
 using Diagnostic = service::Diagnostic;
+using namespace estd::chrono_literals;
 
 #include "app.h"
 
@@ -44,7 +45,7 @@ embr::freertos::worker::Service::runtime<tier1> worker(512);
 }
 
 static esp_now_peer_info_t broadcast_peer {};
-static uint8_t broadcast_mac[ESP_NOW_ETH_ALEN] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
+static constexpr uint8_t broadcast_mac[ESP_NOW_ETH_ALEN] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 
 
 // Intermediate/experimental flavors - not in use
@@ -85,25 +86,11 @@ void init_alternate()
 
 
 // TODO: Put this into ring_buffer wrapper itself
-template <class T, class ...Args>
-BaseType_t emplace_add_size(estd::freertos::wrapper::ring_buffer& rb,
-    TickType_t xTicksToWait,
-    size_t sz, Args&&...args)
-{
-    T* t;
-
-    if(rb.send_acquire((void**)&t, sizeof(T) + sz, xTicksToWait) == pdFALSE)
-        return pdFALSE;
-
-    new (t) T(std::forward<Args>(args)...);
-
-    return rb.send_complete(t);
-}
-
 void App::on_notify(EspNow::event::receive e)
 {
-    BaseType_t r = emplace_add_size<EspNow::recv_info>(
-        ring, pdMS_TO_TICKS(50), e.data.size(), e);
+    // 50ms arbitrarily chosen
+    BaseType_t r = ring.emplace_add_size<EspNow::recv_info>(
+        pdMS_TO_TICKS(50), e.data.size(), e);
 
     if(r == pdFALSE)
     {
@@ -141,8 +128,6 @@ void App::on_notify(EspNow::event::send e)
 }
 
 
-
-using namespace estd::chrono_literals;
 
 #define ESPNOW_WIFI_MODE WIFI_MODE_STA
 #define ESPNOW_IF        ESP_IF_WIFI_STA
@@ -201,7 +186,6 @@ extern "C" void app_main()
         //const auto& s = str.rdbuf()->view();
         const auto& s = str.rdbuf()->str();
         
-        //esp_err_t ret = esp_now_send(broadcast_mac, (const uint8_t*)"hello", 5);
         esp_err_t ret = esp_now_send(broadcast_mac, (const uint8_t*)s.data(), s.length());
 
         if(ret != ESP_OK)
