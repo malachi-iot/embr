@@ -41,4 +41,24 @@ menu "Embr Helper config"
 
     endchoice
 
+    # DEBT: Probably we want this in Embr component proper, not helper
+    # As per https://stackoverflow.com/questions/31325785/is-it-possible-to-convert-a-choice-to-an-int-in-kconfig
+    choice
+        prompt "TWAI speed"
+        default TWAI_TIMING_125K
+        config TWAI_TIMING_25K
+            bool "25Kbit"
+        config TWAI_TIMING_125K
+            bool "125Kbit"
+        config TWAI_TIMING_250K
+            bool "250Kbit"
+        config TWAI_TIMING_1M
+            bool "1Mbit"
+    endchoice
+
+    config TWAI_SPEED
+        int
+        default 125 if TWAI_TIMING_125K
+        default 1000 if TWAI_TIMING_1M
+
 endmenu
