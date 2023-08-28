@@ -49,7 +49,9 @@ embr::freertos::worker::Service::runtime<tier1> worker(4096);
 static esp_now_peer_info_t broadcast_peer {};
 static uint8_t broadcast_mac[ESP_NOW_ETH_ALEN] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 
-void App::on_notify(EspNow::event::receive e)
+
+// Intermediate/experimental flavors - not in use
+void on_notify_alternate(service::EspNow::event::receive e)
 {
     // DEBT: Bigtime debt, we double-copy the max-250 buffer -
     // one time into temp, then a 2nd time when putting it into
@@ -70,7 +72,25 @@ void App::on_notify(EspNow::event::receive e)
         {
 
         }, portMAX_DELAY, e.data.data(), sz);
+}
 
+
+template <class T, class ...Args>
+void emplace_add_size(estd::freertos::wrapper::ring_buffer& rb, size_t sz, Args&&...args)
+{
+    T* t;
+
+    rb.send_acquire((void**)&t, sizeof(T) + sz, portMAX_DELAY);
+
+    new (t) T(std::forward<Args>(args)...);
+
+    rb.send_complete(t);
+}
+
+void App::on_notify(EspNow::event::receive e)
+{
+    /*
+    const unsigned sz = e.data.size();
     EspNow::recv_info* ri;
 
     ring.send_acquire((void**)&ri, sizeof(EspNow::recv_info) + sz, portMAX_DELAY);
@@ -79,7 +99,16 @@ void App::on_notify(EspNow::event::receive e)
 
     estd::copy_n(e.data.data(), sz, ri->data);
 
-    ring.send_complete(ri);
+    ring.send_complete(ri); */
+
+    emplace_add_size<EspNow::recv_info>(ring, e.data.size(),
+        e);
+    /*
+        e.info.src_addr,
+        e.info.des_addr,
+        *e.info.rx_ctrl,
+        e.data.data(),
+        e.data.size()); */
 }
 
 
@@ -131,8 +160,11 @@ extern "C" void app_main()
     estd::copy_n(broadcast_mac, ESP_NOW_ETH_ALEN, broadcast_peer.peer_addr);
     ESP_ERROR_CHECK(esp_now_add_peer(&broadcast_peer));
 
-    ESP_LOGI(TAG, "startup: sizeof App=%u, App::EspNow::recv_info=%u",
-        sizeof(App), sizeof(App::EspNow::recv_info));
+    static_assert(sizeof(App::EspNow::recv_info) > sizeof(App::EspNow::send_info));
+
+    ESP_LOGI(TAG, "startup: sizeof App=%u, App::EspNow::recv_info=%u, wifi_pkt_rx_ctrl_t=%u",
+        sizeof(App), sizeof(App::EspNow::recv_info),
+        sizeof(wifi_pkt_rx_ctrl_t));
 
     for(;;)
     {
@@ -174,6 +206,7 @@ extern "C" void app_main()
 
         if(ret != ESP_OK)
         {
+            ESP_ERROR_CHECK_WITHOUT_ABORT(ret);
             ESP_LOGW(TAG, "Couldn't send");
         }
     }

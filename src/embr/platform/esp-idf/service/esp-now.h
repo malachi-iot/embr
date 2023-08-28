@@ -39,19 +39,6 @@ struct EspNow : embr::SparseService
         operator const uint8_t*() const { return address; }
     };
 
-    struct recv_info
-    {
-        // It seems the source and dest are temporary/local variables too
-        //const uint8_t* source;
-        //const uint8_t* dest;
-
-        mac source, dest;
-
-        wifi_pkt_rx_ctrl_t rx_ctrl;
-
-        uint8_t data[];
-    };
-
     // These events are not ISR-bound, but they do happen within the WiFi
     // stack and need to be light on their feet like an ISR
     struct event
@@ -67,6 +54,53 @@ struct EspNow : embr::SparseService
             const estd::span<const uint8_t, 6> mac;
             const esp_now_send_status_t status;
         };
+    };
+
+    struct recv_info
+    {
+        // It seems the source and dest are temporary/local variables too
+        //const uint8_t* source;
+        //const uint8_t* dest;
+
+        mac source, dest;
+
+        wifi_pkt_rx_ctrl_t rx_ctrl;
+
+        recv_info(
+            const mac& source, const mac& dest,
+            const wifi_pkt_rx_ctrl_t& rx_ctrl) :
+            source{source},
+            dest{dest},
+            rx_ctrl{rx_ctrl}
+        {}
+
+        recv_info(
+            const mac& source, const mac& dest,
+            const wifi_pkt_rx_ctrl_t& rx_ctrl,
+            const uint8_t* copy_from_data, size_t sz) :
+            source{source},
+            dest{dest},
+            rx_ctrl{rx_ctrl}
+        {
+            estd::copy_n(copy_from_data, sz, data);
+        }
+
+        recv_info(const event::receive& copy_from) :
+            source(copy_from.info.src_addr),
+            dest(copy_from.info.des_addr),
+            rx_ctrl(*copy_from.info.rx_ctrl)
+        {
+            estd::copy_n(copy_from.data.data(), copy_from.data.size(), data);
+        }
+
+        uint8_t data[];
+    };
+
+
+    struct send_info
+    {
+        mac dest;
+        const esp_now_send_status_t status;
     };
 
     EMBR_SERVICE_RUNTIME_BEGIN(SparseService)
