@@ -22,9 +22,11 @@ auto TWAI::runtime<TSubject, TImpl>::on_start(
     configuring(t_config);
     configuring(f_config);
 
+#if !CONFIG_TWAI_SPEED
     ESP_LOGD(TAG, "on_start: rx=%u tx=%u",
         g_config->rx_io,
         g_config->tx_io);
+#endif
 
     esp_err_t r = twai_driver_install(g_config, t_config, f_config);
 
@@ -148,7 +150,7 @@ auto TWAI::runtime<TSubject, TImpl>::on_start(
 #endif
 
 
-#if CONFIG_TWAI_SPEED
+#if CONFIG_TWAI_TIMING
 template <class TSubject, class TImpl>
 auto TWAI::runtime<TSubject, TImpl>::on_start() -> state_result
 {
@@ -157,20 +159,35 @@ auto TWAI::runtime<TSubject, TImpl>::on_start() -> state_result
     static twai_general_config_t g_config = TWAI_GENERAL_CONFIG_DEFAULT(
         (gpio_num_t)CONFIG_GPIO_TWAI_TX,
         (gpio_num_t)CONFIG_GPIO_TWAI_RX,
+#if defined(CONFIG_TWAI_MODE_NORMAL)
         TWAI_MODE_NORMAL);
+#elif defined(CONFIG_TWAI_MODE_LISTEN_ONLY)
+        TWAI_MODE_LISTEN_ONLY);
+#else
+        0);
+#error Unknown mode config
+#endif
+
     static constexpr twai_filter_config_t f_config = TWAI_FILTER_CONFIG_ACCEPT_ALL();
     static constexpr twai_timing_config_t t_config =
-#if CONFIG_TWAI_SPEED == 125
+#if CONFIG_TWAI_TIMING == 25
+        TWAI_TIMING_CONFIG_25KBITS();
+#elif CONFIG_TWAI_TIMING == 125
         TWAI_TIMING_CONFIG_125KBITS();
-#elif CONFIG_TWAI_SPEED == 250
+#elif CONFIG_TWAI_TIMING == 250
         TWAI_TIMING_CONFIG_250KBITS()
-#elif CONFIG_TWAI_SPEED == 500
+#elif CONFIG_TWAI_TIMING == 500
         TWAI_TIMING_CONFIG_500KBITS()
-#elif CONFIG_TWAI_SPEED == 1000
+#elif CONFIG_TWAI_TIMING == 1000
         TWAI_TIMING_CONFIG_1MBITS()
 #else
-#error Unsupported TWAI speed
+#error Unsupported TWAI timing
 #endif
+
+    ESP_LOGD(TAG, "TWAI rx=%u, tx=%u, speed=%uKbit",
+        CONFIG_GPIO_TWAI_TX,
+        CONFIG_GPIO_TWAI_RX,
+        CONFIG_TWAI_TIMING);
 
     // DEBT: Without this twai_driver_install flips out due to lack of interrupt 
     // availability (https://github.com/espressif/esp-idf/issues/7955)

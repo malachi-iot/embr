@@ -48,12 +48,12 @@ menu "Embr Helper config"
         
         choice
             prompt "TWAI"
-            default TWAI_TIMING_DISABLED
+            default TWAI_DISABLED
             help
                 Used to assist in configuring embr::esp_idf::service::TWAI.
                 Note that explicit start() call is still required
 
-            config TWAI_TIMING_DISABLED
+            config TWAI_DISABLED
                 bool "Disabled"
             config TWAI_TIMING_25K
                 bool "25Kbit"
@@ -67,9 +67,9 @@ menu "Embr Helper config"
                 bool "1Mbit"
         endchoice
 
-        config TWAI_SPEED
+        config TWAI_TIMING
             int
-            default 0 if TWAI_TIMING_DISABLED
+            default 0 if TWAI_DISABLED
             default 25 if TWAI_TIMING_25K
             default 125 if TWAI_TIMING_125K
             default 250 if TWAI_TIMING_250K
@@ -79,12 +79,23 @@ menu "Embr Helper config"
         config GPIO_TWAI_TX
             int "TWAI TX pin"
             default 5
-            depends on !TWAI_TIMING_DISABLED
+            depends on !TWAI_DISABLED
 
         config GPIO_TWAI_RX
             int "TWAI RX pin"
             default 4
-            depends on !TWAI_TIMING_DISABLED
+            depends on !TWAI_DISABLED
+
+        choice
+            prompt "TWAI mode"
+            depends on !TWAI_DISABLED
+
+            default TWAI_MODE_NORMAL
+            config TWAI_MODE_NORMAL
+                bool "Normal"
+            config TWAI_LISTEN_ONLY
+                bool "Listen Only"
+        endchoice
 
     #endmenu
 

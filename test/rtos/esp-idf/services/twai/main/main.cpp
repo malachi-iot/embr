@@ -51,7 +51,7 @@ embr::esp_idf::service::v1::TWAI::runtime<filter_observer> twai;
 #endif
 #endif
 
-#if CONFIG_TWAI_SPEED == 0
+#if !CONFIG_TWAI_TIMING
 #error Please configure TWAI in Embr Helper area
 #endif
 
