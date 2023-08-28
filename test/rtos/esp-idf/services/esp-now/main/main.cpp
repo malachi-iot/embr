@@ -39,10 +39,7 @@ using wifi_type = service::WiFi::static_type<tier2>;
 
 using tier1 = tier2::append<esp_now_type, wifi_type>;
 
-// NOTE: Normally 512 is plenty of space for worker thread queue, but
-// we're double-dutying it to also hold on to incoming 250 byte datagrams.
-// An abuse (see on_notify below for receive)
-embr::freertos::worker::Service::runtime<tier1> worker(4096);
+embr::freertos::worker::Service::runtime<tier1> worker(512);
 
 }
 
@@ -73,42 +70,68 @@ void on_notify_alternate(service::EspNow::event::receive e)
 
         }, portMAX_DELAY, e.data.data(), sz);
 }
+void init_alternate()
+{
+    static constexpr const char* TAG = "init_alternate";
+
+    app_domain::worker << [] { ESP_LOGI(TAG, "From worker!"); };
+    // Actually works, but I went for second ringbuffer with the idea that it could
+    // operate in split mode
+    app_domain::worker.queue.enqueue_with_storage([](const uint8_t* data, unsigned sz)
+    {
+        ESP_LOGI(TAG, "From worker2! %s", (const char*)data);
+    }, portMAX_DELAY, (const uint8_t*) "Hello", 6);
+}
 
 
+// TODO: Put this into ring_buffer wrapper itself
 template <class T, class ...Args>
-void emplace_add_size(estd::freertos::wrapper::ring_buffer& rb, size_t sz, Args&&...args)
+BaseType_t emplace_add_size(estd::freertos::wrapper::ring_buffer& rb,
+    TickType_t xTicksToWait,
+    size_t sz, Args&&...args)
 {
     T* t;
 
-    rb.send_acquire((void**)&t, sizeof(T) + sz, portMAX_DELAY);
+    if(rb.send_acquire((void**)&t, sizeof(T) + sz, xTicksToWait) == pdFALSE)
+        return pdFALSE;
 
     new (t) T(std::forward<Args>(args)...);
 
-    rb.send_complete(t);
+    return rb.send_complete(t);
 }
 
 void App::on_notify(EspNow::event::receive e)
 {
-    /*
-    const unsigned sz = e.data.size();
-    EspNow::recv_info* ri;
+    BaseType_t r = emplace_add_size<EspNow::recv_info>(
+        ring, pdMS_TO_TICKS(50), e.data.size(), e);
 
-    ring.send_acquire((void**)&ri, sizeof(EspNow::recv_info) + sz, portMAX_DELAY);
+    if(r == pdFALSE)
+    {
+        ESP_LOGW(TAG, "Error double-buffering into ring buffer");
+        return;
+    }
 
-    new (ri) EspNow::recv_info{e.info.src_addr, e.info.des_addr, *e.info.rx_ctrl};
+    // NOTE: Just doing logging, probably quick enough to do without worker
+    // but this is a good reference for real world hand-off
+    app_domain::worker << [this]
+    {
+        size_t sz;
+        auto rx = (EspNow::recv_info*)ring.receive(&sz, 0);
 
-    estd::copy_n(e.data.data(), sz, ri->data);
+        if(rx != nullptr)
+        {
+            sz -= sizeof(EspNow::recv_info);
+            const uint8_t* source = rx->source;
 
-    ring.send_complete(ri); */
+            ESP_LOGI(TAG, "rx: src mac=" MACSTR ", rssi=%d, noise_floor=%d",
+                MAC2STR(source), rx->rx_ctrl.rssi, rx->rx_ctrl.noise_floor);
+            ESP_LOG_BUFFER_HEXDUMP(TAG, rx->data, sz, ESP_LOG_INFO);
 
-    emplace_add_size<EspNow::recv_info>(ring, e.data.size(),
-        e);
-    /*
-        e.info.src_addr,
-        e.info.des_addr,
-        *e.info.rx_ctrl,
-        e.data.data(),
-        e.data.size()); */
+            ring.return_item(rx);
+        }
+        else
+            ESP_LOGW(TAG, "data always expected here");
+    };
 }
 
 
@@ -148,12 +171,6 @@ extern "C" void app_main()
 
     app_domain::worker.start();
 
-    app_domain::worker << [] { ESP_LOGI(TAG, "From worker!"); };
-    app_domain::worker.queue.enqueue_with_storage([](const uint8_t* data, unsigned sz)
-    {
-        ESP_LOGI(TAG, "From worker2! %s", (const char*)data);
-    }, portMAX_DELAY, (const uint8_t*) "Hello", 6);
-
     broadcast_peer.channel = ESPNOW_CHANNEL;
     broadcast_peer.ifidx = ESPNOW_WIFI_IF;
     broadcast_peer.encrypt = false;
@@ -174,23 +191,6 @@ extern "C" void app_main()
 
         ESP_LOGI(TAG, "counting: %d", ++counter);
 
-        size_t sz;
-        auto rx = (App::EspNow::recv_info*)app_domain::app.ring.receive(
-            &sz, pdMS_TO_TICKS(2000));
-
-        if(rx != nullptr)
-        {
-            sz -= sizeof(App::EspNow::recv_info);
-            const uint8_t* source = rx->source;
-
-            ESP_LOGI(TAG, "rx: src mac=" MACSTR, MAC2STR(source));
-            ESP_LOG_BUFFER_HEXDUMP(TAG, rx->data, sz, ESP_LOG_INFO);
-
-            app_domain::app.ring.return_item(rx);
-
-            estd::this_thread::sleep_for(3s);
-        }
-
         // FIX: Bug in estd string clear isn't actually clearing it out
         // See https://github.com/malachi-iot/estdlib/issues/8
         //str.clear();
@@ -209,6 +209,8 @@ extern "C" void app_main()
             ESP_ERROR_CHECK_WITHOUT_ABORT(ret);
             ESP_LOGW(TAG, "Couldn't send");
         }
+
+        estd::this_thread::sleep_for(3s);
     }
 }
 
