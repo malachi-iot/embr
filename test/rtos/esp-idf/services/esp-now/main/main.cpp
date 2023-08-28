@@ -45,6 +45,8 @@ embr::freertos::worker::Service::runtime<tier1> worker(4096);
 
 }
 
+static esp_now_peer_info_t broadcast_peer {};
+static uint8_t broadcast_mac[ESP_NOW_ETH_ALEN] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 
 void App::on_notify(EspNow::event::receive e)
 {
@@ -67,6 +69,16 @@ void App::on_notify(EspNow::event::receive e)
         {
 
         }, portMAX_DELAY, e.data.data(), sz);
+
+    EspNow::recv_info* ri;
+
+    ring.send_acquire((void**)&ri, sizeof(EspNow::recv_info) + sz, portMAX_DELAY);
+
+    new (ri) EspNow::recv_info{e.info.src_addr, e.info.des_addr, *e.info.rx_ctrl};
+
+    estd::copy_n(e.data.data(), sz, ri->data);
+
+    ring.send_complete(ri);
 }
 
 
@@ -82,7 +94,7 @@ using namespace estd::chrono_literals;
 #define ESPNOW_WIFI_MODE WIFI_MODE_STA
 #define ESPNOW_IF        ESP_IF_WIFI_STA
 #define ESPNOW_WIFI_IF   WIFI_IF_STA
-
+#define ESPNOW_CHANNEL   1
 
 extern "C" void app_main()
 {
@@ -98,7 +110,7 @@ extern "C" void app_main()
 
     // DEBT: Document exactly why we do this, but pretty sure it's because ESP-NOW
     // doesn't attempt to hop challens and WiFi does
-    ESP_ERROR_CHECK(esp_wifi_set_channel(1, WIFI_SECOND_CHAN_NONE));
+    ESP_ERROR_CHECK(esp_wifi_set_channel(ESPNOW_CHANNEL, WIFI_SECOND_CHAN_NONE));
     // Sets long range mode at reduced speed
     ESP_ERROR_CHECK(esp_wifi_set_protocol(ESPNOW_WIFI_IF, WIFI_PROTOCOL_11B|WIFI_PROTOCOL_11G|WIFI_PROTOCOL_11N|WIFI_PROTOCOL_LR) );
 
@@ -112,13 +124,30 @@ extern "C" void app_main()
         ESP_LOGI(TAG, "From worker2! %s", (const char*)data);
     }, portMAX_DELAY, (const uint8_t*) "Hello", 6);
 
+    broadcast_peer.channel = ESPNOW_CHANNEL;
+    broadcast_peer.ifidx = ESPNOW_WIFI_IF;
+    broadcast_peer.encrypt = false;
+    estd::copy_n(broadcast_mac, ESP_NOW_ETH_ALEN, broadcast_peer.peer_addr);
+    ESP_ERROR_CHECK(esp_now_add_peer(&broadcast_peer));
+
     for(;;)
     {
         static int counter = 0;
 
         ESP_LOGI(TAG, "counting: %d", ++counter);
 
-        estd::this_thread::sleep_for(5s);
+        size_t sz;
+        //estd::this_thread::sleep_for(5s);
+        auto rx = (App::EspNow::recv_info*)app_domain::app.ring.receive(
+            &sz, pdMS_TO_TICKS(2000));
+
+        if(rx != nullptr)
+        {
+            sz -= sizeof(App::EspNow::recv_info);
+
+            ESP_LOGI(TAG, "rx: ");
+            ESP_LOG_BUFFER_HEX(TAG, rx->data, sz);
+        }
     }
 }
 
