@@ -22,7 +22,7 @@ auto TWAI::runtime<TSubject, TImpl>::on_start(
     configuring(t_config);
     configuring(f_config);
 
-#if !CONFIG_TWAI_SPEED
+#if !CONFIG_TWAI_TIMING
     ESP_LOGD(TAG, "on_start: rx=%u tx=%u",
         g_config->rx_io,
         g_config->tx_io);
@@ -122,32 +122,6 @@ void TWAI::runtime<TSubject, TImpl>::check_status()
             break;
     }
 }
-
-
-// TODO: Add this to overall embr/esp idf service Kconfig
-#if CONFIG_MIOT_ENABLE_TWAI
-template <class TSubject, class TImpl>
-auto TWAI::runtime<TSubject, TImpl>::on_start(
-    const twai_timing_config_t* t_config) -> state_result
-{
-    // DEBT: May want to put these static consts outside of class, there's
-    // a chance compiler won't optimize away multiple flavors of them
-    static twai_general_config_t g_config = TWAI_GENERAL_CONFIG_DEFAULT(
-        (gpio_num_t)CONFIG_MIOT_TWAI_TX_PIN,
-        (gpio_num_t)CONFIG_MIOT_TWAI_RX_PIN,
-        TWAI_MODE_NORMAL);
-    static const twai_filter_config_t f_config = TWAI_FILTER_CONFIG_ACCEPT_ALL();
-
-    // DEBT: Without this twai_driver_install flips out due to lack of interrupt 
-    // availability (https://github.com/espressif/esp-idf/issues/7955)
-    // clearing to 0 works, but I think results in esp-idf "hunting" for a new
-    // interrrupt which may lead to unpredictability if OTHER interrupt-dependent
-    // code is activated
-    g_config.intr_flags = 0;
-
-    return on_start(&g_config, t_config, &f_config);
-}
-#endif
 
 
 #if CONFIG_TWAI_TIMING

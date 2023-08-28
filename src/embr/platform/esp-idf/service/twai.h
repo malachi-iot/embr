@@ -84,10 +84,6 @@ public:
             const twai_general_config_t* g_config,
             const twai_timing_config_t* t_config);
 
-        // NOTE: Not ready yet
-        state_result on_start(
-            const twai_timing_config_t* t_config);
-
         state_result on_start();
 
         void check_status();

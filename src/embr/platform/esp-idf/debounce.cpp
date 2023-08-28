@@ -350,3 +350,17 @@ void held_callback(TimerHandle_t xTimer)
 }}
 
 #endif
+
+// ------- debounce2 area ---------
+
+#if defined(ESP_PLATFORM)
+
+#include <esp_event.h>
+#include "debounce2.h"
+
+namespace embr {
+
+ESP_EVENT_DEFINE_BASE(DEBOUNCE_EVENT);
+
+}
+#endif

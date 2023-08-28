@@ -13,6 +13,7 @@
 #include <estd/thread.h>
 #include <estd/internal/variadic.h>
 
+#include <embr/platform/esp-idf/board.h>
 #include <embr/platform/esp-idf/gpio.h>
 
 #include <embr/platform/esp-idf/service/diagnostic.h>
@@ -20,7 +21,6 @@
 #include <embr/platform/esp-idf/service/gptimer.hpp>
 
 #include "app.h"
-#include "event.h"
 
 namespace service = embr::esp_idf::service::v1;
 namespace debounce = embr::esp_idf::debounce::v1::ultimate;
@@ -28,9 +28,6 @@ namespace debounce = embr::esp_idf::debounce::v1::ultimate;
 
 #define GPIO_INPUT_IO_0     CONFIG_DIAGNOSTIC_GPIO1
 #define GPIO_INPUT_PIN_SEL  (1ULL<<GPIO_INPUT_IO_0)
-
-ESP_EVENT_DEFINE_BASE(DEBOUNCE_EVENT);
-
 
 estd::tuple<
     debounce::Debouncer<GPIO_INPUT_IO_0, true>,
@@ -58,7 +55,7 @@ inline void App::on_notify(Timer::event::callback)
         {
             q.send_from_isr(e);
 #ifdef CONFIG_ESP_EVENT_POST_FROM_ISR
-            esp_event_isr_post(DEBOUNCE_EVENT, 0, &e, sizeof(e), nullptr);
+            esp_event_isr_post(embr::DEBOUNCE_EVENT, 0, &e, sizeof(e), nullptr);
 #endif
         });
 
@@ -118,11 +115,14 @@ extern "C" void app_main()
 
     event_loop.start();
 
-    ESP_ERROR_CHECK(esp_event_handler_register(DEBOUNCE_EVENT,
+    // Demonstrating here 2 similar but different event loop approaches:
+    // 1. More "traditional" way with explicit callback
+    // 2. EMBR observer way
+    ESP_ERROR_CHECK(esp_event_handler_register(embr::DEBOUNCE_EVENT,
         ESP_EVENT_ANY_ID,
         debounce_event_handler,
         nullptr));
-    event_loop.handler_register<DEBOUNCE_EVENT>();
+    event_loop.handler_register<embr::DEBOUNCE_EVENT>();
 
     gptimer_config_t config = 
     {
@@ -177,6 +177,7 @@ extern "C" void app_main()
 
         App::Event item;
 
+        // Demonstrating here a 3rd way, via traditional ISR->task queue
         if(app.q.receive(&item, estd::chrono::milliseconds(10)))
             log(TAG, item);
 
