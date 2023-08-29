@@ -23,8 +23,10 @@ void LEDControl::runtime<Subject, Impl>::config(const ledc_channel_config_t& c)
 
 
 // Be advised this is called in ISR context!
-// FIX: We still get warning this isn't in IRAM.  I forgot the nuance to this,
-// there's some trickery with templated methods
+// WARNING: Due to:
+// https://github.com/espressif/esp-idf/issues/4542
+// You will have to expressly call above 'config' itself within an IRAM function, so that this
+// generated code is also IRAM 
 template <class Subject, class Impl>
 IRAM_ATTR bool LEDControl::runtime<Subject, Impl>::callback(
     const ledc_cb_param_t* param,
@@ -32,7 +34,7 @@ IRAM_ATTR bool LEDControl::runtime<Subject, Impl>::callback(
 {
     bool woken = false;
     auto this_ = (runtime*) user_arg;
-    //this_->notify(event::callback{*param, &woken});
+    this_->notify(event::callback{*param, &woken});
     return woken;
 }
 

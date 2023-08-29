@@ -1,0 +1,8 @@
+# IRAM workarounds for:
+# https://github.com/espressif/esp-idf/issues/4542
+# https://stackoverflow.com/questions/36279162/section-attribute-of-a-function-template-is-silently-ignored-in-gcc
+
+[mapping:main]
+archive: libmain.a
+entries:
+    services-iram (noflash)     # places code/read-only data under IRAM/DRAM

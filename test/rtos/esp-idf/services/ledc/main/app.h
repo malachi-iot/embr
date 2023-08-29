@@ -1,3 +1,5 @@
+#pragma once
+
 #include <estd/port/freertos/queue.h>
 
 #include <embr/platform/esp-idf/log.h>
