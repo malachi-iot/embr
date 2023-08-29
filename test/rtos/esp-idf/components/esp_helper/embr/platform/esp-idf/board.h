@@ -34,6 +34,9 @@ struct board_traits
 #elif defined(CONFIG_BOARD_ESP32C3_DEVKITM_1)
     static constexpr const char* vendor = "Espressif";
     static constexpr const char* name = "DevKitM-1";
+#elif defined(CONFIG_BOARD_ESP32C3_SEEED_XIAO)
+    static constexpr const char* vendor = "Seeed Studio";
+    static constexpr const char* name = "XIAO ESP32C3";
 #elif defined(CONFIG_BOARD_ESP32S3_UM_FEATHERS3)
     static constexpr const char* vendor = "Unexpected Maker";
     static constexpr const char* name = "Feather S3";
@@ -41,6 +44,8 @@ struct board_traits
     static constexpr const char* vendor = "Unspecified";
     static constexpr const char* name = "Generic";
 #endif
+
+    // NOTE: Attempt to use io mux below instead
     struct gpio
     {
 #ifdef CONFIG_BOARD_ESP32_WEMOS_MINI32
@@ -77,6 +82,8 @@ struct board_traits
         R::mux<4, R::led>
 #elif defined(CONFIG_BOARD_ESP32C3_DEVKITM_1)
         R::mux<8, R::ws2812>,
+        R::mux<9, R::button>
+#elif defined(CONFIG_BOARD_ESP32C3_SEEED_XIAO)
         R::mux<9, R::button>
 #elif defined(CONFIG_BOARD_ESP32S3_UM_FEATHERS3)
         R::mux<40, R::ws2812>,

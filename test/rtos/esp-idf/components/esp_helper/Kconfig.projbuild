@@ -83,6 +83,7 @@ menu "Embr Helper config"
 
         config GPIO_TWAI_RX
             int "TWAI RX pin"
+            default 3 if BOARD_ESP32S3_UM_FEATHERS3
             default 4
             depends on !TWAI_DISABLED
 
