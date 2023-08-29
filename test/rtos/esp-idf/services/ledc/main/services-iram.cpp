@@ -13,6 +13,10 @@ void App::on_notify(service::LEDControl::event::callback e)
 
 void ledc_init_iram(app_domain::ledc_type& ledc)
 {
+    static constexpr const char* TAG = "ledc_init_iram";
+
+    ESP_LOGI(TAG, "Initializing GPIO: %u", LEDC_OUTPUT_IO);
+
     // Prepare and then apply the LEDC PWM channel configuration
     static constexpr ledc_channel_config_t ledc_channel = {
         .gpio_num       = LEDC_OUTPUT_IO,
