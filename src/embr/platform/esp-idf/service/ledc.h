@@ -36,6 +36,7 @@ struct LEDControl : embr::service::v1::Service
 
     EMBR_SERVICE_RUNTIME_BEGIN(Service)
 
+    void config(const ledc_timer_config_t&, unsigned intr_alloc = 0);
     void config(const ledc_channel_config_t&);
 
     IRAM_ATTR static bool callback(const ledc_cb_param_t*, void*);

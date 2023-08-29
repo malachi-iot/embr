@@ -1,6 +1,15 @@
 #include <embr/platform/esp-idf/service/ledc.hpp>
 
+#include "app.h"
 #include "services.h"
+
+
+void App::on_notify(service::LEDControl::event::callback e)
+{
+    
+}
+
+
 
 void ledc_init_iram(app_domain::ledc_type& ledc)
 {

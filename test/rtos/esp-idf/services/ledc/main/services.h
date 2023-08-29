@@ -4,8 +4,6 @@
 
 #include <embr/platform/esp-idf/service/diagnostic.h>
 
-namespace service = embr::esp_idf::service::v1;
-
 namespace app_domain {
 
 using Diagnostic = service::Diagnostic;

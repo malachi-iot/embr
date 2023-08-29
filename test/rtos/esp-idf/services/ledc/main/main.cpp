@@ -52,9 +52,14 @@ extern "C" void app_main()
 
     ledc.start();
 
+    embr::esp_idf::ledc& led0 = ledc.ledc_[0];
+
     for(;;)
     {
         static int counter = 0;
+        const int duty = counter % 2 == 0 ? LEDC_DUTY : 0;
+
+        ESP_ERROR_CHECK(led0.set_fade_time_and_start(duty, 3000));
 
         ESP_LOGI(TAG, "counting: %d", ++counter);
 
