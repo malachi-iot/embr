@@ -24,7 +24,7 @@ namespace app_domain { App app; }
 
 using namespace estd::chrono_literals;
 
-#define CONFIG_BLINK_FALLBACK 1
+//#define CONFIG_BLINK_FALLBACK 1
 
 void ledc_init()
 {
@@ -71,8 +71,8 @@ extern "C" void app_main()
 #else
         const int duty = counter % 2 == 0 ? LEDC_DUTY : 0;
 
-        //ESP_ERROR_CHECK(led0.set_fade_time_and_start(duty, 2000));
-        ESP_ERROR_CHECK(led0.set_duty_and_update(duty));
+        ESP_ERROR_CHECK(led0.set_fade_time_and_start(duty, 2000));
+        //ESP_ERROR_CHECK(led0.set_duty_and_update(duty));
 #endif
 
         ESP_LOGI(TAG, "counting: %d", ++counter);

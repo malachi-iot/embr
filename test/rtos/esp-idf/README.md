@@ -44,6 +44,7 @@ These tests are all for variants of Espressif ESP32
 | 15AUG23 | services/gptimer | ESP-WROVER-KIT v4.1 | ESP32-WROVER-E | v5.0.3   | Compiles     |
 | 25AUG23 | services/gptimer | FeatherS3        | ESP32S3        | v5.0.3   | Partial  | Runs, but 2nd time it goes to sleep it never wakes up
 | 28AUG23 | services/gptimer | ESP32C3 Xiao     | ESP32C3        | v5.1.1   | Pass     |
+| 28AUG23 | services/ledc | ESP32-C3-DevKitM-1  | ESP32C3        | v5.1.1   | Pass     | 
 | 03AUG23 | services/twai | ESP-WROVER-KIT v4.1 | ESP32-WROVER-E | v5.0.3   | Pass     |
 | 28AUG23 | services/twai | ESP32C3 Xiao        | ESP32C3        | v5.1.1   | Partial  | Runs, but haven't tested with CAN wired up
 | 17AUG23 | services/wifi | ESP32C3 Xiao        | ESP32C3        | v5.1     | Pass     |
