@@ -171,24 +171,23 @@ extern "C" void app_main()
         sizeof(App), sizeof(App::EspNow::recv_info),
         sizeof(wifi_pkt_rx_ctrl_t));
 
+    estd::layer1::ostringstream<64> str;
+    // DEBT: Doesn't have a data() method yet and also have to explicitly
+    // include basic_string_view
+    //const auto& s = str.rdbuf()->view();
+    const auto& s = str.rdbuf()->str();
+    
     for(;;)
     {
-        estd::experimental::ostringstream<64> str;
-
         static int counter = 0;
 
         ESP_LOGI(TAG, "counting: %d", ++counter);
 
-        // FIX: Bug in estd string clear isn't actually clearing it out
-        // See https://github.com/malachi-iot/estdlib/issues/8
-        //str.clear();
+        str.rdbuf()->clear();
         str << "Hello: " << counter;
 
-        // DEBT: Doesn't have a data() method yet and also have to explicitly
-        // include basic_string_view
-        //const auto& s = str.rdbuf()->view();
-        const auto& s = str.rdbuf()->str();
-        
+        // DEBT: Observed one time where initial message was sent twice.  Unsure
+        // why that is, debt until we discover why
         esp_err_t ret = esp_now_send(broadcast_mac, (const uint8_t*)s.data(), s.length());
 
         if(ret != ESP_OK)
