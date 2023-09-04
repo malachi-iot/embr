@@ -3,6 +3,8 @@
 #include <embr/platform/esp-idf/gpio.h>
 #include <embr/service.h>
 
+#include <soc/gpio_reg.h>
+
 namespace embr::esp_idf {
 
 namespace service { inline namespace v1 {
@@ -30,9 +32,9 @@ struct GPIOBase :
         struct gpios
         {
             const uint32_t reg;
-//#ifdef GPIO_STATUS1_REG
+#ifdef GPIO_STATUS1_REG
             const uint32_t reg_h;
-//#endif
+#endif
         };
         
         // which gpio in particular has changed, fired in rapid succession

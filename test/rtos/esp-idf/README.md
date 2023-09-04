@@ -41,6 +41,7 @@ These tests are all for variants of Espressif ESP32
 | 14JAN23 | scheduler    | WEMOS D1             | ESP32          | v5.0     | Pass     |
 | 14JAN23 | scheduler    | WEMOS D1             | ESP32          | v5.1-dev | Fail     | Runs, wake is broken - smells like a race condition
 | 03AUG23 | services/gpio | ESP-WROVER-KIT v4.1 | ESP32-WROVER-E | v5.0.3   | Pass     |
+| 03SEP23 | services/gpio | ESP32C3 Xiao        | ESP32C3        | v5.1.1   | Pass     |
 | 15AUG23 | services/gptimer | ESP-WROVER-KIT v4.1 | ESP32-WROVER-E | v5.0.3   | Compiles     |
 | 25AUG23 | services/gptimer | FeatherS3        | ESP32S3        | v5.0.3   | Partial  | Runs, but 2nd time it goes to sleep it never wakes up
 | 28AUG23 | services/gptimer | ESP32C3 Xiao     | ESP32C3        | v5.1.1   | Pass     |

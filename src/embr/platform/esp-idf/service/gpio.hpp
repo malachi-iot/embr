@@ -2,8 +2,6 @@
 
 #include <embr/platform/esp-idf/log.h>
 
-#include <soc/gpio_reg.h>
-
 //#define ESP_INTR_FLAG_DEFAULT 0
 
 //void init_gpio_ll();
