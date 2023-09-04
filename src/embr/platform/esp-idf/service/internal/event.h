@@ -1,5 +1,7 @@
 #pragma once
 
+#include <esp_event_base.h>
+
 namespace embr { namespace esp_idf { namespace event {
 
 inline namespace v1 {
