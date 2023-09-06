@@ -18,6 +18,7 @@
 
 using Diagnostic = embr::esp_idf::service::v1::Diagnostic;
 using board_traits = embr::esp_idf::board_traits;
+namespace exp = embr::experimental::v1;
 
 #include "app.h"
 
@@ -40,6 +41,56 @@ App::TWAI::runtime<filter_observer> twai;
 }
 
 
+//template <class Transport, class Traits = exp::transport_traits<Transport>, bool = false>
+//void test(Transport&);
+
+template <class Transport, class Traits = exp::transport_traits<Transport>,
+    estd::enable_if_t<Traits::nonexist == exp::SUPPORT_REQUIRED, bool> = true>
+void test(Transport&)
+{
+    static constexpr const char* TAG = "test: n/a";
+
+    ESP_LOGI(TAG, "GOT HERE 0");
+}
+
+template <class Transport, class Traits = exp::transport_traits<Transport>,
+    estd::enable_if_t<Traits::polled == exp::SUPPORT_REQUIRED, bool> = true>
+void test(Transport&)
+{
+    static constexpr const char* TAG = "test: polled";
+
+    ESP_LOGI(TAG, "GOT HERE 1");
+}
+
+template <class Transport, class Traits = exp::transport_traits<Transport>,
+    estd::enable_if_t<
+        Traits::timeout == exp::SUPPORT_REQUIRED ||
+        Traits::timeout == exp::SUPPORT_OPTIONAL, bool> = true>
+void test(Transport& t)
+{
+    using mode = typename Traits::mode<exp::TRANSPORT_TRAIT_TIMEOUT>;
+    using frame = typename Traits::frame_type;
+
+    frame f;
+
+    static constexpr const char* TAG = "test: timeout";
+
+    ESP_LOGI(TAG, "GOT HERE 2");
+
+    auto r = mode{}.send(f, estd::chrono::seconds(1));
+
+    switch(r)
+    {
+        case Traits::template error_type<exp::TRANSPORT_RET_OK>::value:
+            break;
+        
+        default:
+            break;
+    }
+}
+
+exp::TwaiTransport transport;
+
 
 extern "C" void app_main()
 {
@@ -48,6 +99,8 @@ extern "C" void app_main()
     ESP_LOGI(TAG, "Board: %s %s", board_traits::vendor, board_traits::name);
 
     app_domain::twai.start();
+
+    test(transport);
 
     for(;;)
     {

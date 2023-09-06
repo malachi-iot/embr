@@ -67,4 +67,23 @@ struct transport_traits : transport_traits_defaults {};
 template <Transports t, TransportTraits tr, class Variant = void, class enabled = void>
 struct transport;
 
+template <class Transport, TransportTraits>
+struct mode;
+
+
+// Nifty, but probably not gonna work:
+// Even though we can compile time map our errors to their errors,
+// transport A mapping of error 1 may have slightly different meaning
+// than transport B mapping of error 1
+enum ReturnStatus
+{
+    TRANSPORT_RET_OK,
+    TRANSPORT_RET_TIMEOUT,
+};
+
+
+template <class Transport, ReturnStatus>
+struct error;
+
+
 }}}
