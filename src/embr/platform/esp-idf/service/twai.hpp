@@ -172,6 +172,13 @@ auto TWAI::runtime<TSubject, TImpl>::on_start() -> state_result
 
     return on_start(&g_config, &t_config, &f_config);
 }
+#else
+template <class TSubject, class TImpl>
+auto TWAI::runtime<TSubject, TImpl>::on_start() -> state_result
+{
+    static_assert(sizeof(TSubject) < 0, "CONFIG_TWAI_TIMING must be configured");
+    return {};
+}
 #endif
 
 
