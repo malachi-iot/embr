@@ -33,6 +33,7 @@ enum TransportTraits
     TRANSPORT_TRAIT_BLOCKING    = 0x0010,
     TRANSPORT_TRAIT_POLLED      = 0x0020,
     TRANSPORT_TRAIT_TIMEOUT     = 0x0040,
+    TRANSPORT_TRAIT_TRANSACTED  = 0x0080,
     TRANSPORT_TRAIT_PBUF        = 0x0100,
     TRANSPORT_TRAIT_FRAME       = 0x0200,
     TRANSPORT_TRAIT_ADDR_IN_FRAME = 0x0400,
@@ -58,6 +59,11 @@ struct transport_traits_defaults
     static constexpr Support addr_in_frame = NOT_SUPPORTED;
     static constexpr Support bus_reserve = NOT_SUPPORTED;
     static constexpr Support thread_safe = NOT_SUPPORTED;
+    static constexpr Support per_byte = NOT_SUPPORTED;
+    static constexpr Support session = NOT_SUPPORTED;
+
+    // Undecided
+    static constexpr Support static_transaction = NOT_SUPPORTED;
 };
 
 

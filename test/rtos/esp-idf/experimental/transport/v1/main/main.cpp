@@ -15,6 +15,8 @@
 #include <embr/platform/esp-idf/service/twai.hpp>
 
 #include <embr/exp/platform/esp-idf/transport/twai.h>
+#include <embr/exp/platform/esp-idf/transport/i2c.h>
+#include <embr/exp/platform/lwip/transport/udp_pcb.h>
 
 using Diagnostic = embr::esp_idf::service::v1::Diagnostic;
 using board_traits = embr::esp_idf::board_traits;
@@ -77,7 +79,7 @@ void test(Transport& t)
 
     ESP_LOGI(TAG, "GOT HERE 2");
 
-    auto r = mode{}.send(&f, estd::chrono::seconds(1));
+    auto r = mode{}.write(&f, estd::chrono::seconds(1));
 
     switch(r)
     {
