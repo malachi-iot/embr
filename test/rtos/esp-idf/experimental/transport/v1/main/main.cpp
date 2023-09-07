@@ -77,7 +77,7 @@ void test(Transport& t)
 
     ESP_LOGI(TAG, "GOT HERE 2");
 
-    auto r = mode{}.send(f, estd::chrono::seconds(1));
+    auto r = mode{}.send(&f, estd::chrono::seconds(1));
 
     switch(r)
     {

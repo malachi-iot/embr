@@ -59,15 +59,23 @@ struct transport_traits<TwaiTransport> : transport_traits_defaults
 template <>
 struct mode<TwaiTransport, TRANSPORT_TRAIT_BLOCKING>
 {
-    
+    esp_err_t send(const twai_message_t* message)
+    {
+        return twai_transmit(message, portMAX_DELAY);
+    }
+
+    esp_err_t receive(twai_message_t* message)
+    {
+        return twai_receive(message, portMAX_DELAY);
+    }
 };
 
 template <>
 struct mode<TwaiTransport, TRANSPORT_TRAIT_TIMEOUT>
 {
-    esp_err_t send(const twai_message_t& message, estd::chrono::freertos_clock::duration d)
+    esp_err_t send(const twai_message_t* message, estd::chrono::freertos_clock::duration d)
     {
-        return ESP_OK;
+        return twai_transmit(message, d.count());
     }
 };
 
@@ -75,7 +83,15 @@ struct mode<TwaiTransport, TRANSPORT_TRAIT_TIMEOUT>
 template <>
 struct mode<TwaiTransport, TRANSPORT_TRAIT_POLLED>
 {
-    
+    esp_err_t send(const twai_message_t* message)
+    {
+        return twai_transmit(message, 0);
+    }
+
+    esp_err_t receive(twai_message_t* message)
+    {
+        return twai_receive(message, 0);
+    }
 };
 
 template <>

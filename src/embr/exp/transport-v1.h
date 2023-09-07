@@ -57,6 +57,7 @@ struct transport_traits_defaults
     static constexpr Support frame = NOT_SUPPORTED;
     static constexpr Support addr_in_frame = NOT_SUPPORTED;
     static constexpr Support bus_reserve = NOT_SUPPORTED;
+    static constexpr Support thread_safe = NOT_SUPPORTED;
 };
 
 
