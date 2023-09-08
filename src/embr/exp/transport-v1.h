@@ -30,6 +30,7 @@ enum Support
 enum TransportTraits
 {
     TRANSPORT_TRAIT_CONTIGUOUS  = 0x0001,
+    TRANSPORT_TRAIT_ASYNC       = 0x0008,
     TRANSPORT_TRAIT_BLOCKING    = 0x0010,
     TRANSPORT_TRAIT_POLLED      = 0x0020,
     TRANSPORT_TRAIT_TIMEOUT     = 0x0040,
@@ -61,9 +62,12 @@ struct transport_traits_defaults
     static constexpr Support thread_safe = NOT_SUPPORTED;
     static constexpr Support per_byte = NOT_SUPPORTED;
     static constexpr Support session = NOT_SUPPORTED;
+    static constexpr Support addressed = NOT_SUPPORTED;
 
     // Undecided
     static constexpr Support static_transaction = NOT_SUPPORTED;
+    static constexpr Support callback_global = SUPPORT_OPTIONAL;
+    static constexpr Support callback_instance = SUPPORT_SHOULD;
 };
 
 

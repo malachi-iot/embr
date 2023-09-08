@@ -31,6 +31,7 @@ struct transport_traits<TwaiTransport> : transport_traits_defaults
 
     static constexpr Support frame = SUPPORT_REQUIRED;
     static constexpr Support addr_in_frame = SUPPORT_REQUIRED;
+    static constexpr Support addressed = SUPPORT_REQUIRED;
 
     struct can
     {

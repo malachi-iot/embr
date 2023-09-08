@@ -14,6 +14,7 @@
 #include <embr/platform/esp-idf/service/diagnostic.h>
 #include <embr/platform/esp-idf/service/twai.hpp>
 
+#include <embr/exp/platform/esp-idf/transport/esp-now.h>
 #include <embr/exp/platform/esp-idf/transport/twai.h>
 #include <embr/exp/platform/esp-idf/transport/i2c.h>
 #include <embr/exp/platform/lwip/transport/udp_pcb.h>
