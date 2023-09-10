@@ -11,6 +11,12 @@ inline namespace v1 { inline namespace esp_idf {
 struct SpiMasterTransport
 {
     spi_device_handle_t handle;
+
+    struct Command
+    {
+        uint16_t cmd;
+        uint32_t addr;
+    };
 };
 
 }
@@ -23,12 +29,13 @@ struct transport_traits<esp_idf::SpiMasterTransport> : transport_traits_defaults
 
     static constexpr Support transport_command = SUPPORT_MAY;
     static constexpr Support transport_subaddr = SUPPORT_MAY;
+    static constexpr Support instance_transact_callback = SUPPORT_MAY;
 
     struct transaction
     {
-        static void begin(transaction_type)
+        static transaction_type begin()
         {
-
+            return {};
         }
 
         static void end(transaction_type)
@@ -64,9 +71,29 @@ struct mode<esp_idf::SpiMasterTransport, TRANSPORT_TRAIT_TRANSACTED> :
 {
     using traits = transport_traits<esp_idf::SpiMasterTransport>;
 
-    esp_err_t read(spi_transaction_t* trans_desc)
+    esp_err_t read(spi_transaction_t* trans_desc, void* data, std::size_t len, void* instance = nullptr)
     {
+        trans_desc->rxlength = len;
+        trans_desc->rx_buffer = data;
+        trans_desc->user = instance;
+
         return spi_device_queue_trans(handle, trans_desc, portMAX_DELAY);
+    }
+
+    esp_err_t write(spi_transaction_t* trans_desc, void* data, std::size_t len, void* instance = nullptr)
+    {
+        trans_desc->length = len;
+        trans_desc->tx_buffer = data;
+        trans_desc->user = instance;
+
+        return spi_device_queue_trans(handle, trans_desc, portMAX_DELAY);
+    }
+
+
+    esp_err_t read(spi_transaction_t* trans_desc, Command command, void* data, std::size_t len, void* instance = nullptr)
+    {
+        trans_desc->cmd = command.cmd;
+        return read(trans_desc, data, len, instance);
     }
 };
 
