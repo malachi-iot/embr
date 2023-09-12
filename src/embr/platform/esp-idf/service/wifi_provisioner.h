@@ -40,7 +40,13 @@ struct WiFiProvisioner : embr::service::v1::Service
         const void* wifi_prov_sec_params,
         const char* service_name,
         const char* service_key = nullptr);
+
     void pause();
+
+    // TODO:
+    // - on_stop (unregister)
+    // - "unconfig" (wifi_prov_mgr_deinit)
+    // - config helper for BLE specifically
 
     EMBR_SERVICE_RUNTIME_END
 };

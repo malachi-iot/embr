@@ -42,6 +42,9 @@ void WiFiProvisioner::runtime<Subject, Impl>::event_handler(void* arg, esp_event
             break;
         }
 
+        // TODO: Consider catching WIFI_PROV_END and changing the service state
+        // and perhaps deinitializing too
+
         default: break;
     }
 
@@ -105,6 +108,7 @@ auto WiFiProvisioner::runtime<Subject, Impl>::on_start(
         return { Error, ErrConfig };
     }   */
 
+    // NOTE: In the past, this call could take up to 1000ms
     esp_err_t ret = wifi_prov_mgr_start_provisioning(
         security, wifi_prov_sec_params, service_name, service_key);
 
@@ -121,7 +125,9 @@ void WiFiProvisioner::runtime<Subject, Impl>::pause()
     if(substate() != Running) return;
 
     // DEBT: Don't love 'pause' state here, but we aren't doing a deinit, so
-    // it's not a full service stop
+    // it's not a full service stop.  Worse still, there's no convenient 'resume'
+    // so 'pause' is just a bad name.  Need a solution to the
+    // init/start/stop/deinit -> config/start/stop/? challenge
 
     state(Pausing);
     wifi_prov_mgr_stop_provisioning();
