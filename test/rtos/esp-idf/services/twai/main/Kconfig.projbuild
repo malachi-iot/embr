@@ -1,3 +1,8 @@
 menu "Embr Services Test: TWAI"
 
+    config TWAI_TEST_TASK
+        bool "Use TWAI service worker FreeRTOS task"
+        default n
+
+
 endmenu

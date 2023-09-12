@@ -85,6 +85,9 @@ extern "C" void app_main()
 
     app_domain::twai.start();
     app_domain::twai.autorx(true);
+#ifdef CONFIG_TWAI_TEST_TASK
+    app_domain::twai.start_task();
+#endif
 
     init_gpio();
 
@@ -92,7 +95,11 @@ extern "C" void app_main()
     {
         static int counter = 0;
 
+#ifdef CONFIG_TWAI_TEST_TASK
+        estd::this_thread::sleep_for(estd::chrono::seconds(2));
+#else
         app_domain::twai.poll(pdMS_TO_TICKS(5000));
+#endif
 
         ESP_LOGI(TAG, "counting: %d", ++counter);
 
