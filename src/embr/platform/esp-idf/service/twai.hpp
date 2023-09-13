@@ -146,19 +146,23 @@ auto TWAI::runtime<TSubject, TImpl>::on_start() -> state_result
     static constexpr twai_timing_config_t t_config =
 #if CONFIG_TWAI_TIMING == 25
         TWAI_TIMING_CONFIG_25KBITS();
+#elif CONFIG_TWAI_TIMING == 100
+        TWAI_TIMING_CONFIG_100KBITS();
 #elif CONFIG_TWAI_TIMING == 125
         TWAI_TIMING_CONFIG_125KBITS();
 #elif CONFIG_TWAI_TIMING == 250
         TWAI_TIMING_CONFIG_250KBITS()
 #elif CONFIG_TWAI_TIMING == 500
         TWAI_TIMING_CONFIG_500KBITS()
+#elif CONFIG_TWAI_TIMING == 800
+        TWAI_TIMING_CONFIG_800KBITS()
 #elif CONFIG_TWAI_TIMING == 1000
         TWAI_TIMING_CONFIG_1MBITS()
 #else
 #error Unsupported TWAI timing
 #endif
 
-    ESP_LOGD(TAG, "TWAI rx=%u, tx=%u, speed=%uKbit",
+    ESP_LOGD(TAG, "on_start rx=%u, tx=%u, speed=%uKbit",
         CONFIG_GPIO_TWAI_TX,
         CONFIG_GPIO_TWAI_RX,
         CONFIG_TWAI_TIMING);
@@ -242,16 +246,21 @@ void TWAI::runtime<TSubject, TImpl>::broadcast(uint32_t alerts)
 }
 
 
+#if !CONFIG_TWAI_WORKER_POLL_MS
+#define CONFIG_TWAI_WORKER_POLL_MS 500
+#endif
+
 template <class TSubject, class TImpl>
 inline void TWAI::runtime<TSubject, TImpl>::worker_()
 {
-    ESP_LOGD(TAG, "worker: entry");
+    ESP_LOGD(TAG, "worker: entry - polling period: %u",
+        CONFIG_TWAI_WORKER_POLL_MS);
 
-    for(;;)
+    while(signal_task_shutdown() == false)
     {
         uint32_t alerts;
 
-        esp_err_t r = twai_read_alerts(&alerts, pdMS_TO_TICKS(500));
+        esp_err_t r = twai_read_alerts(&alerts, pdMS_TO_TICKS(CONFIG_TWAI_WORKER_POLL_MS));
 
         switch(r)
         {
@@ -277,9 +286,10 @@ void TWAI::runtime<TSubject, TImpl>::worker__(void* pvParameters)
     ((this_type*)pvParameters)->worker_();
 }
 
+// DEBT: Add task priority, stack size and perhaps affinity
 
 template <class TSubject, class TImpl>
-void TWAI::runtime<TSubject, TImpl>::start_task()
+inline BaseType_t TWAI::runtime<TSubject, TImpl>::start_task()
 {
     TaskHandle_t* handle = &this->worker;
 
@@ -289,6 +299,8 @@ void TWAI::runtime<TSubject, TImpl>::start_task()
         this,
         1,
         handle);
+
+    return r;
 }
 
 

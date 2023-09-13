@@ -93,19 +93,29 @@ public:
         template <class Period, class Rep>
         esp_err_t poll(const estd::chrono::duration<Period, Rep>& timeout);
 
-        void start_task();
+        BaseType_t start_task();
 
         void autorx(bool v)
         {
-            base_type::state_.user = v;
+            base_type::state_.user3.v1 = v;
         }
 
         bool autorx() const
         {
-            return base_type::state_.user;
+            return base_type::state_.user3.v1;
+        }
+
+        bool signal_task_shutdown() const
+        {
+            return base_type::state_.user3.v2;
         }
 
     private:
+        constexpr bool signal_task_shutdown(bool v)
+        {
+            return base_type::state_.user3.v2 = v;
+        }
+
         static void worker__(void*);
         void worker_();
         void broadcast(uint32_t alerts);
