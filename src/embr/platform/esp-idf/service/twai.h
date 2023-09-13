@@ -12,13 +12,28 @@ namespace embr::esp_idf {
 
 namespace service { inline namespace v1 {
 
+// TWAI service provides a start_task in all cases, but will only
+// track the task if this flag is set (defaults to true)
+#if !FEATURE_EMBR_SERVICE_TWAI_TASK
+#define FEATURE_EMBR_SERVICE_TWAI_TASK 1
+#endif
+
+// TWAI service normally kills task via vTaskDelete
+// set this flag to instead only shut down task based on
+// signal flag
+#if !FEATURE_EMBR_SERVICE_TWAI_TASK_SOFT_SHUTDOWN
+#define FEATURE_EMBR_SERVICE_TWAI_TASK_SOFT_SHUTDOWN 0
+#endif
+
 class TWAI : public embr::service::v1::Service
 {
     using this_type = TWAI;
     using Service = embr::service::v1::Service;
 
 protected:
+#if FEATURE_EMBR_SERVICE_TWAI_TASK
     TaskHandle_t worker = nullptr;
+#endif
 
     static constexpr const unsigned OPTION_AUTORX = 0x01;
 

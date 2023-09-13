@@ -256,11 +256,22 @@ inline void TWAI::runtime<TSubject, TImpl>::worker_()
     ESP_LOGD(TAG, "worker: entry - polling period: %u",
         CONFIG_TWAI_WORKER_POLL_MS);
 
+    // DEBT: Consider using xTaskNotify / xTaskNotifyWait, though
+    // a simple flag is nice because service doesn't have to track entire task handle
+
+    // Might also be interesting to do so to wake up/sleep this task when in an
+    // unstarted state, or perhaps vTaskSuspend
+
+    // NOTE: This task really requires no cleanup, so a direct vTaskDelete is reasonable
+    // too
+
+    constexpr unsigned timeout = pdMS_TO_TICKS(CONFIG_TWAI_WORKER_POLL_MS);
+
     while(signal_task_shutdown() == false)
     {
         uint32_t alerts;
 
-        esp_err_t r = twai_read_alerts(&alerts, pdMS_TO_TICKS(CONFIG_TWAI_WORKER_POLL_MS));
+        esp_err_t r = twai_read_alerts(&alerts, timeout);
 
         switch(r)
         {
@@ -272,7 +283,18 @@ inline void TWAI::runtime<TSubject, TImpl>::worker_()
                 //ESP_LOGV(TAG, "worker: timeout");
                 break;
 
+            case ESP_ERR_INVALID_ARG:
+                // Invalid argument here doesn't bring down the whole service per se,
+                // but you can expect things aren't gonna work right
+                if(state() == Started)  state(Degraded);
+                break;
+
+            case ESP_ERR_INVALID_STATE:
             default:
+                vTaskDelay(timeout);
+                //ESP_LOGV(TAG, "worker: error getting TWAI alert");
+                // DEBT: Something feels a little off about setting error over and over again
+                // on overall service
                 state(Error, ErrConfig);
                 break;
         }
@@ -291,7 +313,12 @@ void TWAI::runtime<TSubject, TImpl>::worker__(void* pvParameters)
 template <class TSubject, class TImpl>
 inline BaseType_t TWAI::runtime<TSubject, TImpl>::start_task()
 {
+#if FEATURE_EMBR_SERVICE_TWAI_TASK
     TaskHandle_t* handle = &this->worker;
+#else
+    TaskHandle_t storage;
+    TaskHandle_t* handle = &storage;
+#endif
 
     BaseType_t r = xTaskCreate(worker__,
         "TWAI worker",
@@ -306,8 +333,17 @@ inline BaseType_t TWAI::runtime<TSubject, TImpl>::start_task()
 
 // DEBT: Put this off in a twai.cpp somewhere so that we don't have to specify
 // inline
+// NOTE: Untested
 inline auto TWAI::on_stop() -> state_result
 {
+#if FEATURE_EMBR_SERVICE_TWAI_TASK_SOFT_SHUTDOWN
+    signal_task_shutdown(true);
+#elif FEATURE_EMBR_SERVICE_TWAI_TASK
+    if(worker != nullptr)   vTaskDelete(worker);
+#else
+    signal_task_shutdown(true);
+#endif
+
     // DEBT: Do actual service state adjustments here, instead of
     // error check
     ESP_ERROR_CHECK(twai_stop());
