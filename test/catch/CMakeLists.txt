@@ -18,6 +18,7 @@ set(SOURCE_FILES
     bits-test.cpp
     bitset-test.cpp
     debounce-test.cpp
+    delegate-queue-test.cpp
     observer-test.cpp
     experimental-test.cpp
     property-test.cpp

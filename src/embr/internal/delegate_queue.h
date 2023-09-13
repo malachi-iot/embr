@@ -48,6 +48,11 @@ struct delegate_queue : TImpl
         buffer.create(sz, RINGBUF_TYPE_NOSPLIT);
     }
 
+    ~delegate_queue()
+    {
+        buffer.free();
+    }
+
     template <typename F>
     struct item : item_base
     {
@@ -182,7 +187,7 @@ struct delegate_queue : TImpl
         typedef item<F> item_type;
 
         // DEBT: there's no isr xRingbufferSendAcquire variant that I could find, sure
-        // wish there was
+        // wish there was.  See https://github.com/espressif/esp-idf/issues/10527
         item_type i(std::move(f), std::forward<TArgs>(args)...);
 
         impl_type::on_enqueue(&i);
@@ -213,7 +218,7 @@ struct delegate_queue : TImpl
     }
 
     template <class F>
-    BaseType_t dequeue(F&& f, TickType_t ticksToWait)
+    BaseType_t dequeue(F&& run_after_delegate, TickType_t ticksToWait)
     {
         size_t sz;
         auto i = (item_assist*)buffer.receive(&sz, ticksToWait);
@@ -222,7 +227,7 @@ struct delegate_queue : TImpl
 
         i->delegate();
 
-        f(i);
+        run_after_delegate(i);
 
         impl_type::on_dequeue(i);
 
