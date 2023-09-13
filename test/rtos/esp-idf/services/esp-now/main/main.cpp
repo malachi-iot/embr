@@ -17,6 +17,8 @@
 #include <embr/platform/esp-idf/service/flash.hpp>
 #include <embr/platform/esp-idf/service/wifi.hpp>
 
+#include <embr/platform/esp-idf/board.h>
+
 // Adapted from
 // https://github.com/espressif/esp-idf/blob/v5.1.1/examples/wifi/espnow/main/espnow_example_main.c
 
@@ -24,6 +26,7 @@
 namespace service = embr::esp_idf::service::v1;
 using Diagnostic = service::Diagnostic;
 using namespace estd::chrono_literals;
+using board_traits = embr::esp_idf::board_traits;
 
 #include "app.h"
 
@@ -40,7 +43,7 @@ using wifi_type = service::WiFi::static_type<tier2>;
 
 using tier1 = tier2::append<esp_now_type, wifi_type>;
 
-embr::freertos::worker::Service::runtime<tier1> worker(512);
+embr::freertos::service::v1::Worker::runtime<tier1> worker(512);
 
 }
 
@@ -166,6 +169,10 @@ extern "C" void app_main()
     broadcast_peer.encrypt = false;
     estd::copy_n(broadcast_mac, ESP_NOW_ETH_ALEN, broadcast_peer.peer_addr);
     ESP_ERROR_CHECK(esp_now_add_peer(&broadcast_peer));
+
+    ESP_LOGI(TAG, "startup: vendor=%s board=%s",
+        board_traits::vendor,
+        board_traits::name);
 
     ESP_LOGI(TAG, "startup: sizeof App=%u, App::EspNow::recv_info=%u, wifi_pkt_rx_ctrl_t=%u",
         sizeof(App), sizeof(App::EspNow::recv_info),

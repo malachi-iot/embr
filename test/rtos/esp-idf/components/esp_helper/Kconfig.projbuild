@@ -1,12 +1,15 @@
 menu "Embr Helper config"
 
-    menu "Network"
+    menu "WiFi Network"
         config WIFI_SSID
             string "WiFi SSID Name"
 
         config WIFI_PASSWORD
             string "WiFi Password"
     endmenu
+
+    # "not found"
+    #source "Kconfigs/esp32c3.targets"
 
     # Not an esp-idf convention per se, I am putting my own commonly used settings here
     choice
@@ -31,6 +34,10 @@ menu "Embr Helper config"
             bool "Espressif ESP32 Wrover Kit 4.1"
             depends on IDF_TARGET_ESP32
 
+        config BOARD_ESP32_LOPY
+            bool "LoPy"
+            depends on IDF_TARGET_ESP32
+
         config BOARD_ESP32S3_UM_FEATHERS3
             bool "Unexpected Maker FeatherS3"
             depends on IDF_TARGET_ESP32S3
@@ -39,7 +46,15 @@ menu "Embr Helper config"
             bool "LILYGO T-QT Pro"
             depends on IDF_TARGET_ESP32S3
 
-    endchoice
+        config BOARD_ESP32S3_LILYGO_T5_EINK_2_3
+            bool "LILYGO T5 4.7in E-Ink v2.3"
+            depends on IDF_TARGET_ESP32S3
+
+        config BOARD_ESP32S3_SEEED_XIAO
+            bool "Seeed Studio Xiao ESP32S3"
+            depends on IDF_TARGET_ESP32S3
+
+        endchoice
 
     #menu "Peripherals"
 
@@ -57,6 +72,8 @@ menu "Embr Helper config"
                 bool "Disabled"
             config TWAI_TIMING_25K
                 bool "25Kbit"
+            config TWAI_TIMING_100K
+                bool "100Kbit"
             config TWAI_TIMING_125K
                 bool "125Kbit"
             config TWAI_TIMING_250K
@@ -71,9 +88,11 @@ menu "Embr Helper config"
             int
             default 0 if TWAI_DISABLED
             default 25 if TWAI_TIMING_25K
+            default 100 if TWAI_TIMING_100K
             default 125 if TWAI_TIMING_125K
             default 250 if TWAI_TIMING_250K
             default 500 if TWAI_TIMING_500K
+            default 800 if TWAI_TIMING_800K
             default 1000 if TWAI_TIMING_1M
 
         config GPIO_TWAI_TX

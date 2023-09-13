@@ -21,7 +21,7 @@
 #undef FEATURE_TMR_WORKER
 #endif
 
-namespace embr { namespace freertos { namespace worker {
+namespace embr { namespace freertos { namespace worker { inline namespace v1 {
 
 typedef embr::internal::delegate_queue<> queue_type;
 
@@ -75,9 +75,15 @@ struct Service : embr::Service
 extern Service& queue;
 
 
-}
+}}
 
 }}
+
+namespace embr { namespace freertos { namespace service { inline namespace v1 {
+
+using Worker = embr::freertos::worker::v1::Service;
+
+}}}}
 
 template <typename F>
 inline embr::freertos::worker::queue_type& operator <<(
