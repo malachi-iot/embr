@@ -68,7 +68,52 @@ void init_gpio()
     status_led.set_direction(GPIO_MODE_OUTPUT);
 }
 #else
-void init_gpio() {}
+embr::esp_idf::gpio status_led((gpio_num_t)-1);
+
+// DEBT: While we work out our variadic selectors, temporarily depend on this guy
+bool has_status_led() { return (int)status_led != -1; }
+
+template <class Traits>
+static void init_gpio1()
+{
+    static const char* TAG = "init_gpio1";
+
+    namespace R = embr::esp_idf::R;
+
+    // DEBT: Need a 0-element 'selector' as well, if we're gonna keep the paradigm
+    // DEBT: Change 'selector' to 'select' in this context.  The underlying code
+    // is more or less selector<>::selected which makes sense at that low level, but high
+    // level not so much
+
+    using selected = typename Traits::io::selector<R::traits_selector<R::led, R::trait::status> >;
+
+    ESP_LOGD(TAG, "selected.size = %u", selected::size());
+
+    // This next part requires c++17
+    if constexpr (selected::size() > 0)
+    {
+        using mux = selected::first::type;
+
+        ESP_LOGI(TAG, "status LED pin=%u", mux::pin);
+
+        status_led = embr::esp_idf::gpio(mux::pin);
+        status_led.set_direction(GPIO_MODE_OUTPUT);
+
+        if constexpr (mux::traits::template selector<R::is_in_selector<R::color::blue> >::size() > 0)
+        {
+            ESP_LOGD(TAG, "status LED color=blue");
+        }
+    }
+    else
+    {
+
+    }
+}
+
+void init_gpio()
+{
+    init_gpio1<board_traits>();
+}
 #endif
 
 #if defined(CONFIG_BOARD_ESP32_UNSPECIFIED)
@@ -105,6 +150,8 @@ extern "C" void app_main()
 
 #if FEATURE_EMBR_BOARD_STATUS_LED
         status_led.level(counter % 2 == 0);
+#else
+        if(has_status_led())    status_led.level(counter % 2 == 0);
 #endif
     }
 }

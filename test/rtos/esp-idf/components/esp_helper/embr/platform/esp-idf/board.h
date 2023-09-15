@@ -40,6 +40,9 @@ struct board_traits
 #elif defined(CONFIG_BOARD_ESP32S3_UM_FEATHERS3)
     static constexpr const char* vendor = "Unexpected Maker";
     static constexpr const char* name = "Feather S3";
+#elif defined(CONFIG_BOARD_ESP32S3_REJSACAN_V3_1)
+    static constexpr const char* vendor = "Magnus Thome";
+    static constexpr const char* name = "RejsaCAN v3.1";
 #else
     static constexpr const char* vendor = "Unspecified";
     static constexpr const char* name = "Generic";
@@ -97,6 +100,12 @@ struct board_traits
         R::mux<3, R::spi_clk<0>>,
         R::mux<5, R::spi_cs<0>>,
         R::mux<47, R::button>
+#elif defined(CONFIG_BOARD_ESP32S3_REJSACAN_V3_1)
+        R::mux<0, R::button>,
+        R::mux<10, R::led, R::color::blue, R::trait::status>,
+        R::mux<11, R::led, R::color::yellow>,
+        R::mux<13, R::can_rx>,
+        R::mux<14, R::can_tx>
 #endif
         >;
 

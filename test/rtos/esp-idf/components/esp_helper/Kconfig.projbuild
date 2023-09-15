@@ -42,6 +42,10 @@ menu "Embr Helper config"
             bool "Unexpected Maker FeatherS3"
             depends on IDF_TARGET_ESP32S3
 
+        config BOARD_ESP32S3_REJSACAN_V3_1
+            bool "Magnus Thome's RejsaCAN v3.1"
+            depends on IDF_TARGET_ESP32S3
+
         config BOARD_ESP32S3_LILYGO_T_QT_PRO
             bool "LILYGO T-QT Pro"
             depends on IDF_TARGET_ESP32S3
@@ -97,12 +101,14 @@ menu "Embr Helper config"
 
         config GPIO_TWAI_TX
             int "TWAI TX pin"
+            default 14 if BOARD_ESP32S3_REJSACAN_V3_1
             default 5
             depends on !TWAI_DISABLED
 
         config GPIO_TWAI_RX
             int "TWAI RX pin"
             default 3 if BOARD_ESP32S3_UM_FEATHERS3
+            default 13 if BOARD_ESP32S3_REJSACAN_V3_1
             default 4
             depends on !TWAI_DISABLED
 
