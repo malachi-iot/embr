@@ -1,10 +1,12 @@
 #pragma once
 
-#include <estd/type_traits.h>
-
 #include <driver/gpio.h>
 
+#include "selector.h"
+
 // EXPERIMENTAL
+// DEBT: Document why I chose R - I think because Android liked that for static resources
+// DEBT: Most of this can move out of esp_idf specific area
 
 namespace embr { namespace esp_idf { inline namespace exp { namespace R {
 
@@ -17,13 +19,42 @@ enum class colors
     yellow = 0xFFFF00
 };
 
+constexpr const char* to_string(colors c)
+{
+    switch(c)
+    {
+        case colors::green:     return "green";
+        case colors::blue:      return "blue";
+        case colors::red:       return "red";
+        case colors::yellow:    return "yellow";
+        
+        default:            return "undefined";
+    }
+};
+
+
+// Use for simpler scenarios where it's a mere eval to a bool or false without
+// need of index
+template <template <class> class E>
+struct passthrough_selector
+{
+    template <class T_j, size_t>
+    using evaluator = E<T_j>;
+};
+
 namespace color {
 template <colors c>
 using trait = estd::integral_constant<colors, c>;
 
 using red = trait<colors::red>;
 using blue = trait<colors::blue>;
+using green = trait<colors::green>;
 using yellow = trait<colors::yellow>;
+
+template <class>    struct is_trait : estd::false_type {};
+template <colors c> struct is_trait<trait<c>> : estd::true_type {};
+
+using selector = passthrough_selector<is_trait>;
 
 };
 
@@ -56,6 +87,9 @@ struct rmt_output : output {};
 struct button : gpio_input {};
 
 struct rgb_led : output {};
+
+template <size_t I, class Tag = void>
+struct group : estd::integral_constant<size_t, I> {};
 
 template <unsigned I>
 struct indexed_gpio_output : gpio_output
@@ -102,34 +136,13 @@ struct mux
     using trait = Trait;
 
     using traits = estd::variadic::types<Trait, Traits...>;
+
+    template <class E>
+    using select = typename traits::selector<E>;
+
+    template <class E>
+    using single = typename select<E>::single::type;
 };
 
-
-// Like is_same_selector, but instead evaluates all of ...Types to see
-// if one of them is present
-// DEBT: I'm thinking we can name this "any_selector" - but not sure
-// DEBT: Once we work that out, put this into 'estd'
-template <class ...Types>
-struct is_in_selector
-{
-    using requested_types = estd::variadic::types<Types...>;
-
-
-    template <class T_j>
-    using helper2 = typename requested_types::selector<estd::internal::is_same_selector<T_j> >;
-
-    template <class T_j, size_t>
-    using evaluator = estd::bool_constant<helper2<T_j>::size() != 0>;
-};
-
-template <class ...Traits>
-struct traits_selector
-{
-    template <class T_j>
-    using helper = typename T_j::traits::selector<is_in_selector<Traits...> >;
-
-    template <class T_j, size_t>
-    using evaluator = estd::bool_constant<helper<T_j>::size() == sizeof...(Traits)>;
-};
 
 }}}}

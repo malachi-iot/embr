@@ -70,10 +70,15 @@ void init_gpio()
 #else
 embr::esp_idf::gpio status_led((gpio_num_t)-1);
 
-// DEBT: While we work out our variadic selectors, temporarily depend on this guy
-bool has_status_led() { return (int)status_led != -1; }
+namespace embr_R = embr::esp_idf::R;
 
-template <class Traits>
+template <class Traits = board_traits>
+using status_leds = typename Traits::io::selector<
+        embr::R::traits_selector<
+            embr_R::led,
+            embr_R::trait::status> >;
+
+template <class Traits = board_traits>
 static void init_gpio1()
 {
     static const char* TAG = "init_gpio1";
@@ -85,7 +90,7 @@ static void init_gpio1()
     // is more or less selector<>::selected which makes sense at that low level, but high
     // level not so much
 
-    using selected = typename Traits::io::selector<R::traits_selector<R::led, R::trait::status> >;
+    using selected = status_leds<Traits>;
 
     ESP_LOGD(TAG, "selected.size = %u", selected::size());
 
@@ -99,20 +104,24 @@ static void init_gpio1()
         status_led = embr::esp_idf::gpio(mux::pin);
         status_led.set_direction(GPIO_MODE_OUTPUT);
 
-        if constexpr (mux::traits::template selector<R::is_in_selector<R::color::blue> >::size() > 0)
+        using colors = typename mux::select<R::color::selector>;
+
+        if constexpr (colors::size() > 0)
         {
-            ESP_LOGD(TAG, "status LED color=blue");
+            using color = colors::single::type;
+
+            ESP_LOGD(TAG, "status LED color=%s", to_string(color::value));
         }
     }
     else
     {
-
+        ESP_LOGD(TAG, "Not configuring status LED");
     }
 }
 
 void init_gpio()
 {
-    init_gpio1<board_traits>();
+    init_gpio1<>();
 }
 #endif
 
@@ -151,7 +160,7 @@ extern "C" void app_main()
 #if FEATURE_EMBR_BOARD_STATUS_LED
         status_led.level(counter % 2 == 0);
 #else
-        if(has_status_led())    status_led.level(counter % 2 == 0);
+        if(status_leds<>::size())    status_led.level(counter % 2 == 0);
 #endif
     }
 }
