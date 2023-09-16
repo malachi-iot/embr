@@ -48,6 +48,7 @@ These tests are all for variants of Espressif ESP32
 | 28AUG23 | services/ledc | ESP32-C3-DevKitM-1  | ESP32C3        | v5.1.1   | Pass     | 
 | 03AUG23 | services/twai | ESP-WROVER-KIT v4.1 | ESP32-WROVER-E | v5.0.3   | Pass     |
 | 03SEP23 | services/twai | ESP32C3 Xiao        | ESP32C3        | v5.1.1   | Pass     |
+| 15SEP23 | services/twai | RejsaCAN v3.1       | ESP32S3        | v5.1.1   | Pass     |
 | 17AUG23 | services/wifi | ESP32C3 Xiao        | ESP32C3        | v5.1     | Pass     |
 | 11JAN23 | timer-sched  | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v5.0.0   | Pass     | Runtime complaints about timer not initializing - still runs
 | 30DEC22 | udp-echo     | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v4.4.3   | Pass     |

@@ -152,7 +152,7 @@ extern "C" void app_main()
 #ifdef CONFIG_TWAI_TEST_TASK
         estd::this_thread::sleep_for(estd::chrono::seconds(2));
 #else
-        app_domain::twai.poll(pdMS_TO_TICKS(5000));
+        app_domain::twai.poll(pdMS_TO_TICKS(2000));
 #endif
 
         ESP_LOGI(TAG, "counting: %d", ++counter);
