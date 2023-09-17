@@ -70,6 +70,17 @@ using namespace estd::chrono_literals;
 
 using board_traits = embr::esp_idf::board_traits;
 
+namespace embr_R = embr::esp_idf::R;
+
+// DEBT: Cannot yet do this sometimes because estd::variadic::types<> isn't yet online
+#ifndef BOARD_ESP32_UNSPECIFIED
+using status_leds = board_traits::io::selector<
+        embr::R::traits_selector<
+            embr_R::led,
+            embr_R::trait::status> >;
+#endif
+
+
 led_strip_handle_t configure_led(void);
 
 #if FEATURE_EMBR_BOARD_STATUS_LED
@@ -90,6 +101,8 @@ void init_gpio()
     led_strip = configure_led();
 }
 #else
+embr::esp_idf::gpio status_led((gpio_num_t)-1);
+
 void init_gpio() {}
 #endif
 
