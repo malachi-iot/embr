@@ -32,7 +32,7 @@ struct is_in_selector
 
 
     template <class T_j>
-    using types_contains = typename requested_types::selector<estd::internal::is_same_selector<T_j> >;
+    using types_contains = typename requested_types::where<estd::internal::is_same_selector<T_j> >;
 
     template <class T_j, size_t>
     using evaluator = estd::bool_constant<types_contains<T_j>::size() != 0>;
@@ -44,7 +44,7 @@ struct traits_selector
 {
     // DEBT: Improve this name
     template <class T_j>
-    using helper = typename T_j::traits::selector<is_in_selector<Traits...> >;
+    using helper = typename T_j::traits::where<is_in_selector<Traits...> >;
 
     template <class T_j, size_t>
     using evaluator = estd::bool_constant<helper<T_j>::size() == sizeof...(Traits)>;

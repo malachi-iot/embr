@@ -78,7 +78,7 @@ struct is_same_impl_selector
 
 // Grabs anything out of list whose impl matches up to specified runtime
 template <class T, class ...Args>
-using select_impl = estd::variadic::selector<is_same_impl_selector<T>, Args...>;
+using select_impl = estd::variadic::v1::selector<is_same_impl_selector<T>, Args...>;
 
 
 template <class Runtime, class Tuple>

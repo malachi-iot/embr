@@ -73,7 +73,7 @@ embr::esp_idf::gpio status_led((gpio_num_t)-1);
 namespace embr_R = embr::esp_idf::R;
 
 template <class Traits = board_traits>
-using status_leds = typename Traits::io::selector<
+using status_leds = typename Traits::io::where<
         embr::R::traits_selector<
             embr_R::led,
             embr_R::trait::status> >;
@@ -97,18 +97,19 @@ static void init_gpio1()
     // This next part requires c++17
     if constexpr (selected::size() > 0)
     {
-        using mux = selected::first::type;
+        // We expect one and only one status LED
+        using mux = selected::single;
 
         ESP_LOGI(TAG, "status LED pin=%u", mux::pin);
 
         status_led = embr::esp_idf::gpio(mux::pin);
         status_led.set_direction(GPIO_MODE_OUTPUT);
 
-        using colors = typename mux::select<R::color::selector>;
+        using colors = typename mux::where<R::color::selector>;
 
         if constexpr (colors::size() > 0)
         {
-            using color = colors::single::type;
+            using color = colors::single;
 
             ESP_LOGD(TAG, "status LED color=%s", to_string(color::value));
         }

@@ -138,10 +138,7 @@ struct mux
     using traits = estd::variadic::types<Trait, Traits...>;
 
     template <class E>
-    using select = typename traits::selector<E>;
-
-    template <class E>
-    using single = typename select<E>::single::type;
+    using where = typename traits::where<E>;
 };
 
 
