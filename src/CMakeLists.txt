@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.13)
 
-project(embr VERSION 0.2.0 LANGUAGES CXX)
+project(embr VERSION 0.3.0 LANGUAGES CXX)
 
 include(../tools/cmake/setvars.cmake)
 
