@@ -1,16 +1,16 @@
-# embr - Embedded Malachi Burke Resources
+# embr
 
 A monolithic library comprised of useful code for embedded oriented operations
 
-## platform-independent components include:
+## Platform-independent components:
 
 * Subject/Observer = observer pattern optimized for embedded
-* DataPump = I/O queueing
-* DataPort = I/O queueing mated to Subject/Observer
-* Netbuf = an abstraction of DMA/PBUF pattern
+* Services = low or zero overhead event-driven service subsystem
+* Bit manipulation library for large datasets
 
-## platform-dependend components are planned to include:
+## Platform-dependend components:
 
-* LWiP Netbuf/PBUF wrapper
+* LWiP Netbuf/PBUF wrapper into streambufs
+* esp-idf implementations of aformentioned Services, such as for TWAI, GPTimer
 
 Explicitly depends on estdlib
