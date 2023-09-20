@@ -30,13 +30,13 @@ inline void Service::worker(void* arg)
 
 inline Service::state_result Service::on_start()
 {
-    // DEBT
-    constexpr unsigned CONFIG_MIOT_WORKER_TASK_STACK = 4096;
-
 #if FEATURE_TMR_WORKER == 0
+    // DEBT: Make this configurable somehow
+    constexpr unsigned stack_size = 4096;
+
     // It's helpful to run this at a not-the-lowest priority so that it can
     // edge out timer task etc
-    BaseType_t ret = xTaskCreate(worker, TAG, CONFIG_MIOT_WORKER_TASK_STACK, this, 4, NULL);
+    BaseType_t ret = xTaskCreate(worker, TAG, stack_size, this, 4, NULL);
 
     if(ret != pdTRUE)
     {
