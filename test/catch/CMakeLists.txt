@@ -9,8 +9,19 @@ add_definitions(-DUNIT_TESTING=1)
 
 include(../../tools/cmake/setvars.cmake)
 
-add_subdirectory(${EXT_DIR}/estdlib/ext/Catch2 catch)
 add_subdirectory(${ROOT_DIR}/src embr)
+
+Set(FETCHCONTENT_QUIET FALSE)
+
+FetchContent_Declare(
+    Catch2
+    GIT_REPOSITORY  https://github.com/catchorg/Catch2.git
+    GIT_TAG         v2.13.10
+    GIT_PROGRESS    TRUE
+    GIT_SHALLOW     TRUE
+)
+
+FetchContent_MakeAvailable(Catch2)
 
 set(SOURCE_FILES
     main.cpp

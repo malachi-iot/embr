@@ -4,10 +4,8 @@ project(embr VERSION 0.3.0 LANGUAGES CXX)
 
 include(../tools/cmake/setvars.cmake)
 
-set(ESTDLIB_DIR ${EXT_DIR}/estdlib/src)
-
 if(NOT TARGET estd)
-    add_subdirectory(${ESTDLIB_DIR} estd)
+    add_subdirectory(${ESTD_DIR} estd)
 endif()
 
 # NOTE: SOURCE_FILES not picked up ever.  Below target_include_directories
