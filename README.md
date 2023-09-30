@@ -8,8 +8,9 @@ A monolithic library comprised of useful code for embedded oriented operations
 * Services = low or zero overhead event-driven service subsystem
 * Bit manipulation library for large datasets
 
-## Platform-dependend components:
+## Platform-dependent components:
 
+* LWiP C++ wrappers
 * LWiP Netbuf/PBUF wrapper into streambufs
 * esp-idf implementations of aformentioned Services, such as for TWAI, GPTimer
 
