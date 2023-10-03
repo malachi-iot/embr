@@ -43,6 +43,9 @@ struct board_traits
 #elif defined(CONFIG_BOARD_ESP32S3_REJSACAN_V3_1)
     static constexpr const char* vendor = "Magnus Thome";
     static constexpr const char* name = "RejsaCAN v3.1";
+#elif defined(CONFIG_BOARD_ESP32S3_LILYGO_T_QT_PRO)
+    static constexpr const char* vendor = "LilyGO";
+    static constexpr const char* name = "QT Pro";
 #else
     static constexpr const char* vendor = "Unspecified";
     static constexpr const char* name = "Generic";
