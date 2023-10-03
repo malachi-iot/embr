@@ -54,6 +54,7 @@ These tests are all for variants of Espressif ESP32
 | 30DEC22 | udp-echo     | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v4.4.3   | Pass     |
 | 30DEC22 | udp-echo     | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v5.0.0   | Pass     |
 | 29SEP23 | udp-echo     | Lilygo QT Pro        | ESP32S3        | v5.1.1   | Pass     |
+| 29SEP23 | udp-echo     | WEMOS D1             | ESP32          | v5.1.1   | Pass     |
 | 30DEC22 | unity        | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v4.4.3   | Pass     |
 | 15AUG23 | unity        | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v5.0.3   | Pass | Was hitting LWIP_TCPIP_CORE_LOCKING glitch[^1], not now
 | 13SEP23 | unity        | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v5.1.1   | Pass     |
