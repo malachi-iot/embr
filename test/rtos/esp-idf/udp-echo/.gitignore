@@ -1,0 +1,3 @@
+# Unique to udp-echo test, we never let defaults get checked in
+# This way we can cache WiFi credentials as we switch targets
+sdkconfig.defaults

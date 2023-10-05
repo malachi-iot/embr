@@ -11,7 +11,8 @@
 import sys
 from socket import *
 
-ECHO_PORT = 50000 + 7
+ECHO_PORT = 7
+#ECHO_PORT = 50000 + 7
 BUFSIZE = 2048
 
 def main():
@@ -54,7 +55,7 @@ def client():
     addr = host, port
     s = socket(AF_INET, SOCK_DGRAM)
     s.bind(('', 0))
-    print('udp echo client ready, reading stdin')
+    print('udp echo client ready [port {}], reading stdin'.format(port))
     while 1:
         line = sys.stdin.readline()
         if not line:
