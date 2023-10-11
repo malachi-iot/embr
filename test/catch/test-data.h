@@ -48,4 +48,8 @@ inline void compare(const uint8_t lhs[], const uint8_t rhs[], size_t count)
         REQUIRE(lhs[i] == rhs[i]);
 }
 
+static const char* json_user = "{'user':{'age':30,'name':'Fred'}}";
+static const char* json_prefs = "{'prefs':[1,2,3,'hi2u']}";
+
+
 }

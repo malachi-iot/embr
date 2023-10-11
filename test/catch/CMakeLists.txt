@@ -30,6 +30,7 @@ set(SOURCE_FILES
     bitset-test.cpp
     debounce-test.cpp
     delegate-queue-test.cpp
+    json-test.cpp
     observer-test.cpp
     experimental-test.cpp
     property-test.cpp
