@@ -83,8 +83,8 @@ struct board_traits
         R::mux<2, R::led, R::color::blue, R::trait::status>
 #elif defined(CONFIG_BOARD_ESP32_ESP_WROVER_KIT_41)
         R::mux<0, R::button>,
-        R::mux<0, R::led, R::color::green, R::group<0>>,
-        R::mux<2, R::led, R::color::red,   R::group<0>, R::trait::status>,
+        R::mux<0, R::led, R::color::red,   R::group<0>, R::trait::status>,
+        R::mux<2, R::led, R::color::green, R::group<0>>,
         R::mux<4, R::led, R::color::blue,  R::group<0>>
 #elif defined(CONFIG_BOARD_ESP32C3_DEVKITM_1)
         R::mux<8, R::ws2812>,
