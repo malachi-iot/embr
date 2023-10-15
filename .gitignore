@@ -39,7 +39,7 @@ cmake-build-*/
 
 # Qt specific
 build/
-test/build-catch-*
+test/build-*
 *.user
 
 # Visual Studio specific

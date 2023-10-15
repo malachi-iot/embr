@@ -7,7 +7,7 @@
 
 namespace embr { namespace json {
 
-namespace v1 {
+inline namespace v1 {
 
 template <class TOptions>
 template <class TStreambuf, class TBase>
