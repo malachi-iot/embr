@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.1)
 
-project(embr-unity-tests-lib VERSION 1.0.0)
+project(embr-unity-lib VERSION 1.0.0)
 
 set(ROOT_DIR ${PROJECT_SOURCE_DIR}/../..)
 set(ESTDLIB_DIR ${ROOT_DIR}/ext/estdlib)
@@ -31,12 +31,19 @@ endif()
 
 include(sources.cmake)
 
-add_library(${PROJECT_NAME} 
-    ${SOURCES}
-    )
+# As per https://stackoverflow.com/questions/25199677/how-to-detect-if-current-scope-has-a-parent-in-cmake
 
-#target_link_libraries(embr-unity-tests-lib ALIAS unity-tests-lib)
-add_library(unity-tests-lib ALIAS embr-unity-tests-lib)
+get_directory_property(hasParent PARENT_DIRECTORY)
+if(hasParent)
+    message(STATUS "${PROJECT_NAME}: Building as library")
+    add_library(${PROJECT_NAME} ${SOURCES})
+
+    add_library(unity-tests-lib ALIAS ${PROJECT_NAME})
+else()
+    message(STATUS "${PROJECT_NAME}: Building as standalone")
+    add_executable(${PROJECT_NAME} main.cpp ${SOURCES})
+endif()
+
 target_link_libraries(${PROJECT_NAME} unity embr malachi-iot::estd)
 
 target_include_directories(${PROJECT_NAME} PUBLIC .)
