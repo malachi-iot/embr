@@ -2,9 +2,6 @@ cmake_minimum_required(VERSION 3.17)
 
 project(embr-unit-test VERSION 1.0.0)
 
-# necessary for Catch2
-set(CMAKE_CXX_STANDARD 11)
-
 add_definitions(-DUNIT_TESTING=1)
 
 include(../../tools/cmake/setvars.cmake)
@@ -42,5 +39,8 @@ set(SOURCE_FILES
     )
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
+
+# necessary for Catch2
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_11)
 
 target_link_libraries(${PROJECT_NAME} embr malachi-iot::estd Catch2)
