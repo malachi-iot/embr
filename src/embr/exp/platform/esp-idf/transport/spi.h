@@ -1,6 +1,10 @@
 #pragma once
 
+// DEBT: Split out master/slave portions
 #include <driver/spi_master.h>
+#include <driver/spi_slave.h>
+
+#include "v1/transport.h"
 
 // For the time being we only focus on 'master' mode
 // 'slave' mode I am thinking will be a 2nd transport
@@ -19,7 +23,38 @@ struct SpiMasterTransport
     };
 };
 
+
+struct SpiSlaveTransport
+{
+    const spi_host_device_t host;
+};
+
 }
+
+template <>
+struct transport_traits<esp_idf::SpiSlaveTransport> : transport_traits_defaults
+{
+    using transaction_type = spi_slave_transaction_t;
+    using transport_type = esp_idf::SpiSlaveTransport;
+
+    struct transaction
+    {
+        constexpr static transaction_type begin()
+        {
+            return {};
+        }
+
+        static esp_err_t end(transaction_type)
+        {
+            return {};
+        }
+
+        static esp_err_t commit(const transport_type& tp, transaction_type** t)
+        {
+            return spi_slave_get_trans_result(tp.host, t, portMAX_DELAY);
+        }
+    };
+};
 
 template <>
 struct transport_traits<esp_idf::SpiMasterTransport> : transport_traits_defaults
@@ -44,7 +79,12 @@ struct transport_traits<esp_idf::SpiMasterTransport> : transport_traits_defaults
         }
 
 
-        static esp_err_t commit(const transport_type& tp, transaction_type* t)
+        static esp_err_t commit(const transport_type& tp, transaction_type** t)
+        {
+            return spi_device_get_trans_result(tp.handle, t, portMAX_DELAY);
+        }
+
+        static esp_err_t commit_old(const transport_type& tp, transaction_type* t)
         {
             return spi_device_queue_trans(tp.handle, t, portMAX_DELAY);
         }
@@ -94,6 +134,22 @@ struct mode<esp_idf::SpiMasterTransport, TRANSPORT_TRAIT_TRANSACTED> :
     {
         trans_desc->cmd = command.cmd;
         return read(trans_desc, data, len, instance);
+    }
+};
+
+template <>
+struct mode<esp_idf::SpiSlaveTransport, TRANSPORT_TRAIT_TRANSACTED> :
+  esp_idf::SpiSlaveTransport
+{
+    using traits = transport_traits<esp_idf::SpiSlaveTransport>;
+
+    esp_err_t read(spi_slave_transaction_t* trans_desc, void* data, std::size_t len, void* instance = nullptr)
+    {
+        trans_desc->length = len;
+        trans_desc->rx_buffer = data;
+        trans_desc->user = instance;
+
+        return spi_slave_queue_trans(host, trans_desc, portMAX_DELAY);
     }
 };
 

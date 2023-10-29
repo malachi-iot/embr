@@ -102,7 +102,9 @@ extern "C" void app_main()
 
     ESP_LOGI(TAG, "Board: %s %s", board_traits::vendor, board_traits::name);
 
+#if CONFIG_TWAI_TIMING
     app_domain::twai.start();
+#endif
 
     test(transport);
 
