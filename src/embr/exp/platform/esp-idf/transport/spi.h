@@ -135,6 +135,16 @@ struct mode<esp_idf::SpiMasterTransport, TRANSPORT_TRAIT_TRANSACTED> :
         trans_desc->cmd = command.cmd;
         return read(trans_desc, data, len, instance);
     }
+
+    esp_err_t duplex(spi_transaction_t* trans_desc, void* rx, void* tx, std::size_t len, void* instance = nullptr)
+    {
+        trans_desc->length = len;
+        trans_desc->rx_buffer = rx;
+        trans_desc->tx_buffer = tx;
+        trans_desc->user = instance;
+
+        return spi_device_queue_trans(handle, trans_desc, portMAX_DELAY);
+    }
 };
 
 template <>
