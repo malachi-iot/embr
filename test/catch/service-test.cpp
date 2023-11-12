@@ -787,6 +787,7 @@ TEST_CASE("Services", "[services]")
         DependentService7& top = estd::get<2>(auto_depend);
         std::bitset<3> visited;
         int counter = 0;
+        // DEBT: Get to the bottom of what's causing warnings here
         auto_depend.visit(
             experimental::service_starter_functor<DependentService7>{top, counter},
             auto_depend,

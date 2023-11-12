@@ -145,6 +145,7 @@ struct service_starter_functor
         // Recursively scan 'tuple' for depends_on
         tuple.visit(service_starter_functor<T>{vi.value, counter}, tuple, b);
 
+        // DEBT: This is generating warnings
         using runtime = typename T::template runtime<subject_type, impl_type>;
 
         do_autostart((runtime&)vi.value, tuple);

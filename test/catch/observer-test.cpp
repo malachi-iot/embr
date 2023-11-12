@@ -324,6 +324,14 @@ TEST_CASE("observer")
             }
         }
     }
+    SECTION("v1")
+    {
+        // TODO: Will displace layer1::subject once https://github.com/malachi-iot/estdlib/issues/17
+        // is addressed
+        embr::v1::subject<StatefulObserver, StatelessObserver> s1;
+        // TODO: Make a subject constructor that takes parameters
+        embr::subject<StatefulObserver, StatelessObserver> s2;
+    }
     SECTION("experimental")
     {
         SECTION("from delegate")

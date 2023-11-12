@@ -188,6 +188,17 @@ auto append(layer0::subject<Observers...>, Observer& o) -> layer1::subject<Obser
 
 }
 
+inline namespace v1 {
+
+// Once https://github.com/malachi-iot/estdlib/issues/17 is resolved,
+// this will displace layer0 and layer1 - though layer0 can then morph
+// into something that enforces 0-size
+
+template <class ...Observers>
+using subject = layer1::subject<Observers...>;
+
+}
+
 #endif
 
 
