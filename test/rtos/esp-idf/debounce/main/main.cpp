@@ -27,7 +27,6 @@ namespace debounce = embr::esp_idf::debounce::v1::ultimate;
 
 
 #define GPIO_INPUT_IO_0     CONFIG_DIAGNOSTIC_GPIO1
-#define GPIO_INPUT_PIN_SEL  (1ULL<<GPIO_INPUT_IO_0)
 
 estd::tuple<
     debounce::Debouncer<GPIO_INPUT_IO_0, true>,
@@ -64,28 +63,13 @@ inline void App::on_notify(Timer::event::callback)
 #endif
 }
 
+extern embr::esp_idf::gpio status_led;
+
 
 inline void App::on_notify(Event e)
 {
     log(TAG, e);
-}
-
-
-static void init_gpio_input()
-{
-    static const char* TAG = "init_gpio_input";
-
-    ESP_LOGD(TAG, "entry");
-
-    gpio_config_t io_conf = {};
-
-    io_conf.intr_type = GPIO_INTR_DISABLE;
-    io_conf.pin_bit_mask = GPIO_INPUT_PIN_SEL;
-    io_conf.mode = GPIO_MODE_INPUT;
-    io_conf.pull_up_en = GPIO_PULLUP_ENABLE;
-    io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
-
-    ESP_ERROR_CHECK(gpio_config(&io_conf));
+    status_led.level(e.state == embr::debounce::States::On);
 }
 
 
@@ -153,7 +137,7 @@ extern "C" void app_main()
 
     timer.start(&config, &alarm_config);
 
-    init_gpio_input();
+    App::init();
 
 #ifdef CONFIG_DIAGNOSTIC_PERFMON
     // perfmon stuff lifted from components/perfmon/test/test_perfmon_ansi.c

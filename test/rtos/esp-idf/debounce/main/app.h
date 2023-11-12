@@ -21,6 +21,8 @@ struct App
 
     // By way of embr::esp_idf::service::Event
     void on_notify(Event);
+
+    static void init();
 };
 
 
