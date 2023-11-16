@@ -3,6 +3,7 @@
 #include <estd/tuple.h>
 
 #include "notify_helper.h"
+#include "observer/notified.h"
 #include "fwd.h"
 
 #if FEATURE_EMBR_OBSERVER
@@ -143,6 +144,14 @@ protected:
         return notify_helper(observer, e, c, true);
     }
 
+    template <int index, class Event, class Context>
+    constexpr bool _notified_helper(const Event& e, Context& c)
+    {
+        valref_type<index> observer = estd::get<index>(observers());
+
+        return notified_helper(observer, e, c, true);
+    }
+
     constexpr explicit tuple_base(TObservers&&...observers) :
         tuple_type(std::forward<TObservers>(observers)...)
     {}
@@ -190,6 +199,20 @@ protected:
                     e, c, true);
     }
 
+    template <int index, class Event, class Context>
+    static constexpr bool _notified_helper(const Event& e, Context& c)
+    {
+        using type = type_at_index<index>;
+        //using observer_type = typename p<index>::type;
+
+        static_assert(estd::is_empty<type>::value, "layer0 demands empty type");
+
+        // SFINAE magic to call best matching on_notify function
+        return notified_helper(
+            p<index>::value(type{}),
+            e, c, true);
+    }
+
 public:
     // DEBT: Don't love using the consuming 'subject' directly here, but putting this alias
     // in 'subject' itself presents an issue for layer1 scenarios
@@ -204,7 +227,7 @@ class subject : public TBase
     typedef TBase base_type;
     using visitor = typename base_type::types::visitor;
 
-    struct functor
+    struct notifying_functor
     {
         template <size_t I, class T, class Event>
         constexpr bool operator()(estd::variadic::type<I, T>, subject& this_, Event& e) const
@@ -219,20 +242,47 @@ class subject : public TBase
         }
     };
 
+    struct notified_functor
+    {
+        template <size_t I, class T, class Event, class Context>
+        constexpr bool operator()(estd::variadic::type<I, T>, subject& this_, Event& e, Context& c) const
+        {
+            return (this_.template _notified_helper<I>(e, c), false);
+        }
+
+        template <size_t I, class T, class Event, class Context>
+        constexpr bool operator()(estd::variadic::type<I, T>, subject& this_, Event& e, const Context& c) const
+        {
+            return (this_.template _notified_helper<I>(e, c), false);
+        }
+    };
+
 public:
     ESTD_CPP_FORWARDING_CTOR(subject)
     ESTD_CPP_DEFAULT_CTOR(subject)
 
-    template <class TEvent>
-    void notify(const TEvent& e)
+    template <class Event>
+    void notify(const Event& e)
     {
-        visitor::visit(functor{}, *this, e);
+        visitor::visit(notifying_functor{}, *this, e);
+        // FIX: This one needs to go in reverse, we're simulating a pipeline operation
+        visitor::visit(notified_functor{}, *this, e, estd::monostate{});
     }
 
-    template <class TEvent, class TContext>
-    void notify(const TEvent& e, TContext& c)
+    template <class Event, class Context>
+    void notify(const Event& e, Context& c)
     {
-        visitor::visit(functor{}, *this, e, c);
+        visitor::visit(notifying_functor{}, *this, e, c);
+        // FIX: This one needs to go in reverse, we're simulating a pipeline operation
+        visitor::visit(notified_functor{}, *this, e, c);
+    }
+
+    template <class Event, class Context>
+    void notify(const Event& e, Context& c) const
+    {
+        visitor::visit(notifying_functor{}, *this, e, c);
+        // FIX: This one needs to go in reverse, we're simulating a pipeline operation
+        visitor::visit(notified_functor{}, *this, e, c);
     }
 };
 

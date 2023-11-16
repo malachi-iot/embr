@@ -13,6 +13,7 @@
 namespace embr { namespace experimental {
 
 // For a fully ref'd out subject
+// DEBT: High maintenance since it duplicates existing subject code
 template <class ...Observers>
 class tupleref_base
 {
@@ -48,6 +49,14 @@ protected:
         valref_type<index> observer = estd::get<index>(observers());
 
         return notify_helper(observer, e, c, true);
+    }
+
+    template <int index, class TEvent, class TContext>
+    bool _notified_helper(const TEvent& e, TContext& c)
+    {
+        valref_type<index> observer = estd::get<index>(observers());
+
+        return notified_helper(observer, e, c, true);
     }
 
 public:
