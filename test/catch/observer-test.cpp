@@ -78,8 +78,9 @@ TEST_CASE("observer")
     SECTION("general compiler sanity checks")
     {
         // for debian x64 gcc
-        REQUIRE(sizeof(int) == 4);
-        REQUIRE(sizeof(StatefulObserver) == sizeof(int) * 6);
+        //REQUIRE(sizeof(int) == 4);
+        // 2nd int being a bool
+        REQUIRE(sizeof(StatefulObserver) == (sizeof(int) * 6) + sizeof(int));
     }
     SECTION("void subject")
     {
@@ -167,8 +168,11 @@ TEST_CASE("observer")
             const StatefulObserver& so = estd::get<1>(s.observers());
 
             REQUIRE(so.id == StatefulObserver::default_id());
+            REQUIRE(so.got_notified == false);
 
             s.notify(3);
+
+            REQUIRE(so.got_notified == true);
 
             // count 3 times, once per stateless observer
             REQUIRE(counter == 3);

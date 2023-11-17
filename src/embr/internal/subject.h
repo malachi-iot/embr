@@ -265,24 +265,21 @@ public:
     void notify(const Event& e)
     {
         visitor::visit(notifying_functor{}, *this, e);
-        // FIX: This one needs to go in reverse, we're simulating a pipeline operation
-        visitor::visit(notified_functor{}, *this, e, estd::monostate{});
+        visitor::visit_reverse(notified_functor{}, *this, e, estd::monostate{});
     }
 
     template <class Event, class Context>
     void notify(const Event& e, Context& c)
     {
         visitor::visit(notifying_functor{}, *this, e, c);
-        // FIX: This one needs to go in reverse, we're simulating a pipeline operation
-        visitor::visit(notified_functor{}, *this, e, c);
+        visitor::visit_reverse(notified_functor{}, *this, e, c);
     }
 
     template <class Event, class Context>
     void notify(const Event& e, Context& c) const
     {
         visitor::visit(notifying_functor{}, *this, e, c);
-        // FIX: This one needs to go in reverse, we're simulating a pipeline operation
-        visitor::visit(notified_functor{}, *this, e, c);
+        visitor::visit_reverse(notified_functor{}, *this, e, c);
     }
 };
 

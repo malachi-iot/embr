@@ -67,6 +67,7 @@ public:
     int_type context_counter = 0;
     int_type converting_counter = 0;
     int_type last_int = -1;
+    bool got_notified = false;
 
     StatefulObserver() : id(default_id()) {}
 
@@ -76,6 +77,11 @@ public:
     {
         REQUIRE(val == expected);
         last_int = val;
+    }
+
+    void on_notified(int val)
+    {
+        got_notified = true;
     }
 
     void on_notify(event_3 e, event_3& context)
