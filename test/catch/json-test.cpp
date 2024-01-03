@@ -39,6 +39,14 @@ TEST_CASE("json tests", "[json]")
         {
             auto j = make_fluent(e, out);
 
+            SECTION("minimal")
+            {
+                make_fluent(e, out)
+
+                ("user")
+                    ("name", "Fred")
+                ();
+            }
             SECTION("user")
             {
                 REQUIRE(e.level() == 0);

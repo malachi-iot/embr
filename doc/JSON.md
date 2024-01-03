@@ -12,25 +12,39 @@ the `estd::detail::basic_ostream` of your preference.  Naturally, the
 `estd::detail::basic_ostream` also doesn't specifically mandate dynamic
 allocation, though you may find you want to (i.e. the LwIP version)
 
+The following core and fluent interfaces both output the following to a stack allocated 128 byte string buffer
+
+```
+"user":{"age":30,"name":"Fred"}
+```
+
 ### Core Interface
 
-Takes only 32 bits
+Takes only 32 bits.  Gets the job done in the leanest fashion possible
+
+```
+estd::detail::basic_ostream<estd::layer1::basic_out_stringbuf<char, 128> out;
+embr::json::v1::encoder<> e;
+
+e.begin(out, "user");
+e.add(out, "age", 30);
+e.add(out, "name", "Fred");
+e.end(out);
+```
 
 ### Fluent Interface
 
 Takes space of only two references (pointers)
 
 ```
+estd::detail::basic_ostream<estd::layer1::basic_out_stringbuf<char, 128> out;
+embr::json::v1::encoder<> e;
+auto make_fluent(e, out)
+
 ("user")
     ("age", 30)
     ("name", "Fred")
 ();
-```
-
-This snippet yields:
-
-```
-"user":{"age":30,"name":"Fred"}
 ```
 
 ## Decoder

@@ -21,7 +21,8 @@ enum modes
 template <class TOut, class TOptions, int mode = minij::core>
 class fluent;
 
-
+// TODO: Do variant of this where streambuf and/or encoder can be
+// values rather than references (optimization)
 template <class TStreambuf, class TBase, class TOptions, int mode_>
 class fluent<estd::detail::basic_ostream<TStreambuf, TBase>, TOptions, mode_>
 {
