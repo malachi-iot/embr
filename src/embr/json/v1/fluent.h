@@ -20,11 +20,12 @@ enum modes
 
 }
 
-template <class TOut, class Encoder = encoder<>, int mode = minij::core>
+template <class Out, class Encoder = encoder<>, int mode = minij::core>
 class fluent;
 
-// TODO: Do variant of this where streambuf and/or encoder can be
-// values rather than references (optimization)
+// TODO: Do variant of this where streambuf can be
+// value rather than references (optimization)
+// DEBT: Use c++20 concept to enforce 'Encoder' signature
 template <class TStreambuf, class TBase, class Encoder, int mode_>
 class fluent<estd::detail::basic_ostream<TStreambuf, TBase>, Encoder, mode_>
 {
@@ -84,7 +85,7 @@ public:
     }
 
     template <class T>
-    this_type& array_item(T value)
+    this_type& array_item(const T& value)
     {
         json.array_item(out, value);
         return *this;
@@ -107,7 +108,7 @@ public:
     }
 
     template <typename T>
-    this_type& operator()(const char* key, T value)
+    this_type& operator()(const char* key, const T& value)
     {
         return add(key, value);
     }
@@ -153,8 +154,8 @@ fluent& operator=(const char* key)
 };
 
 // TODO: Look into that fnptr-like magic that ostream uses for its endl
-template <class TOut, class Encoder, int mode>
-fluent<TOut, Encoder, mode>& end(fluent<TOut, Encoder, mode>& j)
+template <class Out, class Encoder, int mode>
+fluent<Out, Encoder, mode>& end(fluent<Out, Encoder, mode>& j)
 {
     return j.end();
 }
@@ -176,17 +177,17 @@ public:
         base_type::array_item(item);
     }
 
-    template <class T, class ... TArgs>
-    void array_items(T item, TArgs...args)
+    template <class T, class ... Args>
+    void array_items(T item, Args...args)
     {
         base_type::array_item(item);
-        array_items(std::forward<TArgs>(args)...);
+        array_items(std::forward<Args>(args)...);
     }
 
-    template <class ... TArgs>
-    base_type& operator()(TArgs...args)
+    template <class ... Args>
+    base_type& operator()(Args...args)
     {
-        array_items(std::forward<TArgs>(args)...);
+        array_items(std::forward<Args>(args)...);
         base_type::end();
         return *this;
     }

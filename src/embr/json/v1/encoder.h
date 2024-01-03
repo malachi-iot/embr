@@ -42,10 +42,14 @@ struct lean : base
 template <class TOptions = options::lean>
 class encoder : TOptions
 {
+    // DEBT: Feels like we can optimize 'has_items'
+    // DEBT: Consider a feature flag to reduce all this to 16-bit
+    // (would then max out at 8 levels instead of 16)
     struct
     {
-        uint32_t has_items_: 8;
-        uint32_t level_: 5;
+        // tracks whether a certain nested level has any items
+        uint32_t has_items_: 16;
+        uint32_t level_: 4;
         uint32_t in_array_: 1;
     };
 

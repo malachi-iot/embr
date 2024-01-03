@@ -5,7 +5,7 @@ You see where I'm going here, right?
 
 ## Encoder
 
-Encoder itself takes at most 3 words of memory, and 1 word in a pinch.
+In a 32-bit environment, encoder itself takes at most 3 words of memory, and 1 word in a pinch.
 
 This does not include memory used by the output buffer, as maintained by
 the `estd::detail::basic_ostream` of your preference.  Naturally, the
@@ -47,6 +47,12 @@ auto make_fluent(out)
 ```
 
 An additional `make_fluent` is available accepting an encoder reference resulting in a slightly different memory signature.
+
+### Configurability
+
+### Limitations
+
+Maximum nested levels to 16.
 
 ## Decoder
 
