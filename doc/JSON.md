@@ -34,18 +34,19 @@ e.end(out);
 
 ### Fluent Interface
 
-Takes space of only two references (pointers)
+Takes space of core encoder (one word) and one references (pointer) to `out`
 
 ```
 estd::detail::basic_ostream<estd::layer1::basic_out_stringbuf<char, 128> out;
-embr::json::v1::encoder<> e;
-auto make_fluent(e, out)
+auto make_fluent(out)
 
 ("user")
     ("age", 30)
     ("name", "Fred")
 ();
 ```
+
+An additional `make_fluent` is available accepting an encoder reference resulting in a slightly different memory signature.
 
 ## Decoder
 

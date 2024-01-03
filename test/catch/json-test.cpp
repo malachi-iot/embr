@@ -41,11 +41,13 @@ TEST_CASE("json tests", "[json]")
 
             SECTION("minimal")
             {
-                make_fluent(e, out)
+                make_fluent(out)
 
-                ("user")
-                    ("name", "Fred")
+                ("u")
+                    ("a", 30)
                 ();
+
+                REQUIRE(str == "\"u\":{\"a\":30}");
             }
             SECTION("user")
             {

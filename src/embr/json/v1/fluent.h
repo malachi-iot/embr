@@ -1,5 +1,7 @@
 #pragma once
 
+#include <estd/type_traits.h>
+
 #include "encoder.h"
 
 namespace embr { namespace json {
@@ -18,32 +20,37 @@ enum modes
 
 }
 
-template <class TOut, class TOptions, int mode = minij::core>
+template <class TOut, class Encoder = encoder<>, int mode = minij::core>
 class fluent;
 
 // TODO: Do variant of this where streambuf and/or encoder can be
 // values rather than references (optimization)
-template <class TStreambuf, class TBase, class TOptions, int mode_>
-class fluent<estd::detail::basic_ostream<TStreambuf, TBase>, TOptions, mode_>
+template <class TStreambuf, class TBase, class Encoder, int mode_>
+class fluent<estd::detail::basic_ostream<TStreambuf, TBase>, Encoder, mode_>
 {
     typedef estd::detail::basic_ostream <TStreambuf, TBase> out_type;
-    typedef TOptions options_type;
+    typedef Encoder encoder_type;
+    typedef typename estd::remove_cvref<Encoder>::type::options_type options_type;
 
-    typedef fluent<out_type, options_type> default_type;
-    typedef fluent<out_type, options_type, mode_> this_type;
-    typedef fluent<out_type, options_type, minij::array> array_type;
-    typedef fluent<out_type, options_type, minij::normal> mode2_type;
-    typedef fluent<out_type, options_type, minij::begin> begin_type;
+    typedef fluent<out_type, encoder_type> default_type;
+    typedef fluent<out_type, encoder_type, mode_> this_type;
+    typedef fluent<out_type, encoder_type, minij::array> array_type;
+    typedef fluent<out_type, encoder_type, minij::normal> mode2_type;
+    typedef fluent<out_type, encoder_type, minij::begin> begin_type;
 
     static ESTD_CPP_CONSTEXPR_RET int mode() { return mode_; }
 
     out_type& out;
-    encoder<TOptions>& json;
+    encoder_type json;
 
 public:
-    ESTD_CPP_CONSTEXPR_RET fluent(out_type& out, encoder<TOptions>& json) :
+    ESTD_CPP_CONSTEXPR_RET fluent(out_type& out, encoder<options_type>& json) :
         out(out),
         json(json)
+    {}
+
+    ESTD_CPP_CONSTEXPR_RET fluent(out_type& out) :
+        out(out)
     {}
 
 #if __cpp_rvalue_references
@@ -146,19 +153,19 @@ fluent& operator=(const char* key)
 };
 
 // TODO: Look into that fnptr-like magic that ostream uses for its endl
-template <class TOut, class TOptions, int mode>
-fluent<TOut, TOptions, mode>& end(fluent<TOut, TOptions, mode>& j)
+template <class TOut, class Encoder, int mode>
+fluent<TOut, Encoder, mode>& end(fluent<TOut, Encoder, mode>& j)
 {
     return j.end();
 }
 
-template <class TStreambuf, class TBase, class TOptions>
-class fluent<estd::detail::basic_ostream<TStreambuf, TBase>, TOptions, minij::array> :
-    public fluent<estd::detail::basic_ostream<TStreambuf, TBase>, TOptions>
+template <class TStreambuf, class TBase, class Encoder>
+class fluent<estd::detail::basic_ostream<TStreambuf, TBase>, Encoder, minij::array> :
+    public fluent<estd::detail::basic_ostream<TStreambuf, TBase>, Encoder>
 {
-    typedef fluent<estd::detail::basic_ostream<TStreambuf, TBase>, TOptions>
+    typedef fluent<estd::detail::basic_ostream<TStreambuf, TBase>, Encoder>
             base_type;
-    typedef fluent<estd::detail::basic_ostream<TStreambuf, TBase>, TOptions,
+    typedef fluent<estd::detail::basic_ostream<TStreambuf, TBase>, Encoder,
             minij::array>
             this_type;
 
@@ -185,9 +192,9 @@ public:
     }
 };
 
-template <class TStreambuf, class TBase, class TOptions>
-class fluent<estd::detail::basic_ostream<TStreambuf, TBase>, TOptions, minij::begin> :
-    public fluent<estd::detail::basic_ostream<TStreambuf, TBase>, TOptions>
+template <class TStreambuf, class TBase, class Encoder>
+class fluent<estd::detail::basic_ostream<TStreambuf, TBase>, Encoder, minij::begin> :
+    public fluent<estd::detail::basic_ostream<TStreambuf, TBase>, Encoder>
 {
 public:
     fluent& operator=(const char* key)
@@ -213,11 +220,25 @@ fluent <TOut>& operator>(fluent <TOut>& j, fluent <TOut>&)
 
 // TODO: Rework this so that encoder can be inline inside the fluent mechanism
 
-template <class TStreambuf, class TBase, class TOptions>
-fluent<estd::detail::basic_ostream<TStreambuf, TBase>, TOptions>
-ESTD_CPP_CONSTEXPR_RET make_fluent(encoder<TOptions>& json, estd::detail::basic_ostream<TStreambuf, TBase>& out)
+template <class TStreambuf, class TBase, class Options>
+fluent<estd::detail::basic_ostream<TStreambuf, TBase>, encoder<Options>& >
+ESTD_CPP_CONSTEXPR_RET make_fluent(encoder<Options>& json, estd::detail::basic_ostream<TStreambuf, TBase>& out)
 {
-    return fluent<estd::detail::basic_ostream<TStreambuf, TBase>, TOptions> (out, json);
+    return fluent<
+        estd::detail::basic_ostream<TStreambuf, TBase>,
+        encoder<Options>& >
+        (out, json);
+}
+
+// DEBT: Double check that ADL doesn't get us into trouble here.  I think it will,
+// so plan to rename these to 'fluent_json'
+template <class TStreambuf, class TBase>
+fluent<estd::detail::basic_ostream<TStreambuf, TBase> >
+ESTD_CPP_CONSTEXPR_RET make_fluent(estd::detail::basic_ostream<TStreambuf, TBase>& out)
+{
+    return fluent<
+        estd::detail::basic_ostream<TStreambuf, TBase> >
+        (out);
 }
 
 }

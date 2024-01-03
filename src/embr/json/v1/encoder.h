@@ -42,8 +42,6 @@ struct lean : base
 template <class TOptions = options::lean>
 class encoder : TOptions
 {
-    typedef TOptions options_type;
-
     struct
     {
         uint32_t has_items_: 8;
@@ -52,6 +50,8 @@ class encoder : TOptions
     };
 
 public:
+    typedef TOptions options_type;
+
     ESTD_CPP_CONSTEXPR_RET encoder() : has_items_(0), level_(0), in_array_(0)
     {
 
