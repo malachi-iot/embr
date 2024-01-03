@@ -19,11 +19,11 @@ enum modes
 }
 
 template <class TOut, class TOptions, int mode = minij::core>
-struct fluent;
+class fluent;
 
 
 template <class TStreambuf, class TBase, class TOptions, int mode_>
-struct fluent<estd::detail::basic_ostream<TStreambuf, TBase>, TOptions, mode_>
+class fluent<estd::detail::basic_ostream<TStreambuf, TBase>, TOptions, mode_>
 {
     typedef estd::detail::basic_ostream <TStreambuf, TBase> out_type;
     typedef TOptions options_type;
@@ -39,9 +39,16 @@ struct fluent<estd::detail::basic_ostream<TStreambuf, TBase>, TOptions, mode_>
     out_type& out;
     encoder<TOptions>& json;
 
-    fluent(out_type& out, encoder<TOptions>& json) :
-            out(out),
-            json(json) {}
+public:
+    ESTD_CPP_CONSTEXPR_RET fluent(out_type& out, encoder<TOptions>& json) :
+        out(out),
+        json(json)
+    {}
+
+#if __cpp_rvalue_references
+    fluent(const fluent&) = default;
+    fluent(fluent&&) = default;
+#endif
 
     template <typename T>
     this_type& add(const char* key, T value)
@@ -145,8 +152,8 @@ fluent<TOut, TOptions, mode>& end(fluent<TOut, TOptions, mode>& j)
 }
 
 template <class TStreambuf, class TBase, class TOptions>
-struct fluent<estd::detail::basic_ostream<TStreambuf, TBase>, TOptions, minij::array> :
-    fluent<estd::detail::basic_ostream<TStreambuf, TBase>, TOptions>
+class fluent<estd::detail::basic_ostream<TStreambuf, TBase>, TOptions, minij::array> :
+    public fluent<estd::detail::basic_ostream<TStreambuf, TBase>, TOptions>
 {
     typedef fluent<estd::detail::basic_ostream<TStreambuf, TBase>, TOptions>
             base_type;
@@ -154,6 +161,7 @@ struct fluent<estd::detail::basic_ostream<TStreambuf, TBase>, TOptions, minij::a
             minij::array>
             this_type;
 
+public:
     template <class T>
     void array_items(T item)
     {
@@ -177,9 +185,10 @@ struct fluent<estd::detail::basic_ostream<TStreambuf, TBase>, TOptions, minij::a
 };
 
 template <class TStreambuf, class TBase, class TOptions>
-struct fluent<estd::detail::basic_ostream<TStreambuf, TBase>, TOptions, minij::begin> :
-    fluent<estd::detail::basic_ostream<TStreambuf, TBase>, TOptions>
+class fluent<estd::detail::basic_ostream<TStreambuf, TBase>, TOptions, minij::begin> :
+    public fluent<estd::detail::basic_ostream<TStreambuf, TBase>, TOptions>
 {
+public:
     fluent& operator=(const char* key)
     {
         return *this;
@@ -205,7 +214,7 @@ fluent <TOut>& operator>(fluent <TOut>& j, fluent <TOut>&)
 
 template <class TStreambuf, class TBase, class TOptions>
 fluent<estd::detail::basic_ostream<TStreambuf, TBase>, TOptions>
-make_fluent(encoder<TOptions>& json, estd::detail::basic_ostream<TStreambuf, TBase>& out)
+ESTD_CPP_CONSTEXPR_RET make_fluent(encoder<TOptions>& json, estd::detail::basic_ostream<TStreambuf, TBase>& out)
 {
     return fluent<estd::detail::basic_ostream<TStreambuf, TBase>, TOptions> (out, json);
 }

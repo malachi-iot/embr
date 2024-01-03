@@ -43,4 +43,6 @@ add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 # necessary for Catch2
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_11)
 
+target_compile_definitions(${PROJECT_NAME} PRIVATE UNIT_TESTING=1)
+
 target_link_libraries(${PROJECT_NAME} embr malachi-iot::estd Catch2)

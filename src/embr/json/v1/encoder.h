@@ -40,18 +40,19 @@ struct lean : base
 
 
 template <class TOptions = options::lean>
-struct encoder : TOptions
+class encoder : TOptions
 {
     typedef TOptions options_type;
 
     struct
     {
         uint32_t has_items_: 8;
-        uint32_t level_: 3;
+        uint32_t level_: 5;
         uint32_t in_array_: 1;
     };
 
-    encoder() : has_items_(0), level_(0), in_array_(0)
+public:
+    ESTD_CPP_CONSTEXPR_RET encoder() : has_items_(0), level_(0), in_array_(0)
     {
 
     }
@@ -214,6 +215,11 @@ struct encoder : TOptions
         add_key(out, key);
         raw(out, value);
     }
+
+    // Interrogations.  Not used in normal operation
+    
+    /// What our current nest level is
+    ESTD_CPP_CONSTEXPR_RET uint16_t level() const { return level_; }
 };
 
 

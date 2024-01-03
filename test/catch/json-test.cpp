@@ -18,6 +18,7 @@ struct single_quoted : v1::options::lean
 TEST_CASE("json tests", "[json]")
 {
     estd::detail::basic_ostream<estd::layer1::basic_out_stringbuf<char, 128> > out;
+    auto& str = out.rdbuf()->str();
 
     SECTION("v1")
     {
@@ -26,7 +27,13 @@ TEST_CASE("json tests", "[json]")
         SECTION("encoder")
         {
             e.begin(out);
+            e.begin(out, "user");
+            e.add(out, "age", 30);
+            e.add(out, "name", "Fred");
             e.end(out);
+            e.end(out);
+
+            REQUIRE(str == test::json_user);
         }
         SECTION("fluent")
         {
@@ -34,16 +41,22 @@ TEST_CASE("json tests", "[json]")
 
             SECTION("user")
             {
+                REQUIRE(e.level() == 0);
+
                 j.begin()
 
                 ("user")
                     ("age", 30)
                     ("name", "Fred")
-                --;
+                ();
+
+                REQUIRE(e.level() == 1);
 
                 j.end();
 
-                REQUIRE(out.rdbuf()->str() == test::json_user);
+                REQUIRE(e.level() == 0);
+
+                REQUIRE(str == test::json_user);
             }
             SECTION("array")
             {
@@ -53,7 +66,13 @@ TEST_CASE("json tests", "[json]")
 
                 j.end();
 
-                REQUIRE(out.rdbuf()->str() == test::json_prefs);
+                REQUIRE(str == test::json_prefs);
+            }
+            SECTION("int")
+            {
+                j("str", 10);
+
+                REQUIRE(str == "'str':10");
             }
         }
     }
