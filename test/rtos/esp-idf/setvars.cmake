@@ -8,7 +8,6 @@ set(EXTRA_COMPONENT_DIRS "${CMAKE_CURRENT_LIST_DIR}/components")
 set(COMPONENTS main)
 
 add_compile_definitions("FEATURE_EMBR_ESP_LEGACY_DEBOUNCE=0")
-add_compile_definitions("FEATURE_EMBR_ESP_TIMER_SCHEDULER=0")
 
 include(${EMBR_ROOT_DIR}/tools/esp-idf/project.cmake)
 

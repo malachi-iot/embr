@@ -3,6 +3,8 @@ cmake_minimum_required(VERSION 3.5)
 
 SET(EMBR_ROOT_DIR ${CMAKE_CURRENT_LIST_DIR}/../../../..)
 
+add_compile_definitions("FEATURE_EMBR_ESP_TIMER_SCHEDULER=1")
+
 # Include the components directory of the main application:
 #
 set(EXTRA_COMPONENT_DIRS "../components")

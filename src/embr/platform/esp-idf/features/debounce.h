@@ -11,5 +11,5 @@
 // By and large one WOULD want this always enabled, but it creates warnings
 // due to deprecation of pre 5.0 gptimer
 #ifndef FEATURE_EMBR_ESP_TIMER_SCHEDULER
-#define FEATURE_EMBR_ESP_TIMER_SCHEDULER 1
+#define FEATURE_EMBR_ESP_TIMER_SCHEDULER 0
 #endif

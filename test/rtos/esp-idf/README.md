@@ -36,6 +36,7 @@ These tests are all for variants of Espressif ESP32
 | 18AUG23 | debounce     | ESP32C3 Xiao         | ESP32C3        | v5.1     | Pass     | Tested against GPIO9 boot button
 | 19DEC22 | observer     | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v4.4.3   | Pass     |
 | 15AUG23 | observer     | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v5.0.3   | Pass     |
+| 07JAN24 | observer     | Lilygo QT Pro        | ESP32S3        | v5.1.2   | Pass     | 
 | 15DEC22 | scheduler    | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v4.4.3   | Pass     |
 | 15AUG23 | scheduler    | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v5.0.3   | Pass     |
 | 14JAN23 | scheduler    | WEMOS D1             | ESP32          | v5.0     | Pass     |
@@ -53,7 +54,7 @@ These tests are all for variants of Espressif ESP32
 | 11JAN23 | timer-sched  | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v5.0.0   | Pass     | Runtime complaints about timer not initializing - still runs
 | 30DEC22 | udp-echo     | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v4.4.3   | Pass     |
 | 30DEC22 | udp-echo     | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v5.0.0   | Pass     |
-| 29SEP23 | udp-echo     | Lilygo QT Pro        | ESP32S3        | v5.1.1   | Pass     |
+| 07JAN24 | udp-echo     | Lilygo QT Pro        | ESP32S3        | v5.1.2   | Pass     |
 | 29SEP23 | udp-echo     | WEMOS D1             | ESP32          | v5.1.1   | Pass     |
 | 30DEC22 | unity        | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v4.4.3   | Pass     |
 | 15AUG23 | unity        | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v5.0.3   | Pass | Was hitting LWIP_TCPIP_CORE_LOCKING glitch[^1], not now
@@ -63,6 +64,7 @@ These tests are all for variants of Espressif ESP32
 | 10JUL23 | unity        | WEMOS D1             | ESP32          | v5.0.2   | Pass     |
 | 25AUG23 | unity        | FeatherS3            | ESP32S3        | v5.1.1   | Pass     | 
 | 17SEP23 | unity        | RejsaCAN v3.1        | ESP32S3        | v5.1.1   | Pass     | 
+| 07JAN24 | unity        | Lilygo QT Pro        | ESP32S3        | v5.1.2   | Pass     | 
 
 # References
 

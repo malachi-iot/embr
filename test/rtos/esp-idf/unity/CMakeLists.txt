@@ -16,5 +16,8 @@ include(${EMBR_ROOT_DIR}/tools/esp-idf/project.cmake)
 #
 set(TEST_COMPONENTS "testable" CACHE STRING "List of components to test")
 
+# Turns on legacy (warning generating) esp-idf 4.x timer wrapper
+#add_compile_definitions("FEATURE_EMBR_ESP_TIMER_SCHEDULER=1")
+
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 project(unit_test_test)
