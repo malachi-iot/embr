@@ -144,12 +144,23 @@ protected:
         return notify_helper(observer, e, c, true);
     }
 
-    template <int index, class Event, class Context>
-    constexpr bool _notified_helper(const Event& e, Context& c)
-    {
-        valref_type<index> observer = estd::get<index>(observers());
+    template <std::size_t index>
+    using const_valref_type = typename estd::tuple_element<index, tuple_type>::const_valref_type;
 
-        return notified_helper(observer, e, c, true);
+    template <int index, class Event, class Context>
+    constexpr bool _notified_helper(const Event& e, Context& c) const
+    {
+        /*
+        const_valref_type<index> observer = estd::get<index>(observers());
+
+        return notified_helper(observer, e, c, true);   */
+        return notified_helper(estd::get<index>(observers()), e, c, true);
+    }
+
+    template <int index, class Event, class Context>
+    bool _notified_helper(const Event& e, Context& c)
+    {
+        return notified_helper(estd::get<index>(observers()), e, c, true);
     }
 
     constexpr explicit tuple_base(TObservers&&...observers) :
