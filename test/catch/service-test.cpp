@@ -293,12 +293,20 @@ public:
         // NOTE: Somehow referenced-wrapped flavor not only gets instantiated,
         // but referring via integral constant sends it into some odd constexpr loop
         //using instance_type = estd::integral_constant<runtime*, &instance>;
+#if FEATURE_SERVICE_TEST_1
+        // Compiles, but creates distracting and concerning warnings.  Experimental
+        // anyway
         using static_type = estd::integral_constant<
             typename static_factory::runtime_type*,
             &static_factory::instance>;
+#endif
 
         // Results in incomplete type error
         //using static_type2 = typename static_factory2<TSubject, this_type>::static_type;
+
+        // NOTE: Not used, just proving we can do this without warnings/errorrs
+        using static_type3 = embr::property::v1::PropertyContainer::static_factory<
+            TSubject, TImpl>;
     };
 
 

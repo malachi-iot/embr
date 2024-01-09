@@ -106,6 +106,14 @@ void do_autostart(Runtime& runtime, Tuple& tuple)
     runtime.start();
 }
 
+// NOTE: Doesn't help.  Just keeping here so we know that
+template <class T, class Subject, class Impl>
+struct runtime_access_workaround : T
+{
+    using base_type = T;
+    using runtime2 = typename base_type::template runtime<Subject, Impl>;
+};
+
 
 // Designed to be used on tuple::visit of all services
 template <class Service>
@@ -156,7 +164,11 @@ struct service_starter_functor
 
         // DEBT: This is generating warnings
         using runtime = typename T::template runtime<subject_type, impl_type>;
+        //using runtime = typename runtime_access_workaround<T, subject_type, impl_type>::runtime2;
 
+        // TODO: Look out, casting to reference is one of those few areas
+        // that isn't quite interchangeable with pointer behavior.  Consider
+        // breaking out to a teporary variable
         do_autostart((runtime&)vi.value, tuple);
 
         return false;
