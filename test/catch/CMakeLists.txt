@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.17)
 
 project(embr-unit-test VERSION 1.0.0)
 
+# Sorta works, but generates a billion warnings.  PGGCC-36 attempts to
+# isolate why.  Disabing for that reason
+option(EMBR_EXP_AUTOSTART "Experimental autostart testing" OFF)
+
 add_definitions(-DUNIT_TESTING=1)
 
 include(../../tools/cmake/setvars.cmake)
@@ -37,6 +41,10 @@ set(SOURCE_FILES
     streambuf-test.cpp
     word-test.cpp
     )
+
+if(EMBR_EXP_AUTOSTART)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE FEATURE_EMBR_EXP_AUTOSTART=1)
+endif()
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 

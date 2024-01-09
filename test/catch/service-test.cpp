@@ -1,7 +1,10 @@
 #include <catch2/catch.hpp>
 
 #include <embr/service.h>
+#include <embr/exp/refsubject.h>
+#if FEATURE_EMBR_EXP_AUTOSTART
 #include <embr/exp/autostart.h>
+#endif
 
 #include "property-test.h"
 
@@ -795,15 +798,18 @@ TEST_CASE("Services", "[services]")
         DependentService7& top = estd::get<2>(auto_depend);
         std::bitset<3> visited;
         int counter = 0;
+#if FEATURE_EMBR_EXP_AUTOSTART
         // DEBT: Get to the bottom of what's causing warnings here
         auto_depend.visit(
             experimental::service_starter_functor<DependentService7>{top, counter},
             auto_depend,
             visited);
             //[&]{ counter++; });
+#endif
 
         std::tuple<estd::monostate> t2;
 
+#if FEATURE_EMBR_EXP_AUTOSTART
         REQUIRE(estd::get<0>(auto_depend).start_counter == 1);
         REQUIRE(estd::get<1>(auto_depend).start_counter == 1);
         REQUIRE(estd::get<2>(auto_depend).start_counter == 1);
@@ -814,6 +820,7 @@ TEST_CASE("Services", "[services]")
         REQUIRE(estd::get<2>(auto_depend).state_change_counter == 3);
 
         //INFO("counter: " << counter);
+#endif
 
         auto& v = std::get<0>(t2);
 
