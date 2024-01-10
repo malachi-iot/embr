@@ -330,11 +330,15 @@ TEST_CASE("observer")
     }
     SECTION("v1")
     {
-        // TODO: Will displace layer1::subject once https://github.com/malachi-iot/estdlib/issues/17
-        // is addressed
+        // v1 defaults to layer1, which can sparse out to nothingness.
+        // however, it lacks layer0's append capability
         embr::v1::subject<StatefulObserver, StatelessObserver> s1;
+        embr::v1::subject<StatelessObserver, StatelessObserver, StatelessObserver> s2;
         // TODO: Make a subject constructor that takes parameters
-        embr::subject<StatefulObserver, StatelessObserver> s2;
+        //embr::subject<StatefulObserver, StatelessObserver> s2;
+
+        REQUIRE(sizeof(s1) == sizeof(StatefulObserver));
+        REQUIRE(sizeof(s2) == sizeof(StatelessObserver));
     }
     SECTION("experimental")
     {

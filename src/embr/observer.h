@@ -190,9 +190,9 @@ auto append(layer0::subject<Observers...>, Observer& o) -> layer1::subject<Obser
 
 inline namespace v1 {
 
-// Once https://github.com/malachi-iot/estdlib/issues/17 is resolved,
-// this will displace layer0 and layer1 - though layer0 can then morph
-// into something that enforces 0-size
+// This almost handles both layer0 and layer1 - though layer0 may morph
+// into something that enforces 0-size.  Also, only layer0
+// has 'append' capability
 
 template <class ...Observers>
 using subject = layer1::subject<Observers...>;

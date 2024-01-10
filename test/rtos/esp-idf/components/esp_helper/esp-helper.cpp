@@ -10,6 +10,8 @@
 #include "experimental/observer-event-handler.hpp"
 #include <embr/observer.h>
 
+// NOTE: All these experimental events are superseded by embr::esp_idf::service::v1::WiFi and friends
+
 // lifting from my own user_main and from
 // https://github.com/espressif/esp-idf/blob/v3.3/examples/wifi/getting_started/station/main/station_example_main.c
 // https://github.com/espressif/esp-idf/blob/v4.0-beta2/examples/wifi/getting_started/station/main/station_example_main.c
