@@ -1,3 +1,5 @@
+#pragma once
+
 // Used to require 'bootloader_support' component, but that's a little annoying just to get
 // at one enum, so duplicating it via 'chip_ids' below
 
