@@ -61,10 +61,12 @@ These tests are all for variants of Espressif ESP32
 | 13SEP23 | unity        | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v5.1.1   | Pass     |
 | 10JAN23 | unity        | ESP32-C3-DevKitM-1   | ESP32C3        | v5.0.0   | Pass     | 
 | 19AUG23 | unity        | ESP32-C3-DevKitM-1   | ESP32C3        | v5.1     | Pass     | 
+| 10JAN24 | unity        | Seeed Xiao           | ESP32C3        | v5.1.2   | Pass     | 
 | 10JUL23 | unity        | WEMOS D1             | ESP32          | v5.0.2   | Pass     |
 | 25AUG23 | unity        | FeatherS3            | ESP32S3        | v5.1.1   | Pass     | 
 | 17SEP23 | unity        | RejsaCAN v3.1        | ESP32S3        | v5.1.1   | Pass     | 
 | 07JAN24 | unity        | Lilygo QT Pro        | ESP32S3        | v5.1.2   | Pass     | 
+| 10JAN24 | unity        | WaveShare DevKit     | ESP32C6        | v5.1.2   | ?        | 
 
 # References
 

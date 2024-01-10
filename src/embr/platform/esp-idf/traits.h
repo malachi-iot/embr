@@ -45,19 +45,25 @@ struct chip_traits;
 template <>
 struct chip_traits<chip_id::ESP32>
 {
-    static const char* name() { return "ESP32"; }
+    static constexpr const char* name() { return "ESP32"; }
 };
 
 template <>
 struct chip_traits<chip_id::ESP32C3>
 {
-    static const char* name() { return "ESP32C3"; }
+    static constexpr const char* name() { return "ESP32C3"; }
+};
+
+template <>
+struct chip_traits<chip_id::ESP32C6>
+{
+    static constexpr const char* name() { return "ESP32C6"; }
 };
 
 template <>
 struct chip_traits<chip_id::ESP32S3>
 {
-    static const char* name() { return "ESP32S3"; }
+    static constexpr const char* name() { return "ESP32S3"; }
 };
 
 
