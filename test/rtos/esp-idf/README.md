@@ -66,7 +66,7 @@ These tests are all for variants of Espressif ESP32
 | 25AUG23 | unity        | FeatherS3            | ESP32S3        | v5.1.1   | Pass     | 
 | 17SEP23 | unity        | RejsaCAN v3.1        | ESP32S3        | v5.1.1   | Pass     | 
 | 07JAN24 | unity        | Lilygo QT Pro        | ESP32S3        | v5.1.2   | Pass     | 
-| 10JAN24 | unity        | WaveShare DevKit     | ESP32C6        | v5.1.2   | ?        | 
+| 10JAN24 | unity        | WaveShare DevKit     | ESP32C6        | v5.1.2   | Pass     | 
 
 # References
 

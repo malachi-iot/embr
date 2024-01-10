@@ -23,6 +23,9 @@ namespace embr { namespace esp_idf {
 #define FEATURE_EMBR_BOARD_STATUS_LED EMBR_BOARD_LED_TYPE_SIMPLE
 #endif
 
+// DEBT: Idea of all in one was nice, but at this point separate (maybe specialized?)
+// board trait structs would be better
+
 struct board_traits
 {
 #ifdef CONFIG_BOARD_ESP32_WEMOS_MINI32
@@ -46,6 +49,9 @@ struct board_traits
 #elif defined(CONFIG_BOARD_ESP32S3_LILYGO_T_QT_PRO)
     static constexpr const char* vendor = "LilyGO";
     static constexpr const char* name = "QT Pro";
+#elif defined(CONFIG_BOARD_ESP32C6_WAVESHARE_DEVKIT)
+    static constexpr const char* vendor = "WaveShare";
+    static constexpr const char* name = "DevKit ESP32C6";
 #else
     static constexpr const char* vendor = "Unspecified";
     static constexpr const char* name = "Generic";

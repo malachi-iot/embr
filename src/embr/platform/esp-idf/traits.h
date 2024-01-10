@@ -9,12 +9,13 @@ namespace embr { namespace esp_idf {
 enum class chip_id
 {
     ESP32,
+    ESP32C2,
+    ESP32C3,
+    ESP32C6,
+    ESP32C61,
     ESP32S2,
     ESP32S3,
-    ESP32C3,
     ESP32H2,
-    ESP32C2,
-    ESP32C6,
 
 #if CONFIG_IDF_TARGET_ESP32
     Current = ESP32
