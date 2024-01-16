@@ -9,6 +9,14 @@
 
 #include "peripherals.h"
 
+#ifdef CONFIG_IDF_TARGET_ESP32
+#include "board/esp32/traits.h"
+#elif CONFIG_IDF_TARGET_ESP32C3
+#include "board/esp32c3/traits.h"
+#elif CONFIG_IDF_TARGET_ESP32S3
+#include "board/esp32s3/traits.h"
+#endif
+
 // NOTE: Don't go *too* crazy with this, because if we do we might be better
 // served porting this to modm
 

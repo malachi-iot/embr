@@ -38,16 +38,39 @@ struct is_in_selector
     using evaluator = estd::bool_constant<types_contains<T_j>::size() != 0>;
 };
 
+
+// DEBT: Cheating a bit, we don't want to ever specialize this way because
+// we'd screw up scenarios where we want selector to move through many variadic::types
+template <class ...Types>
+struct is_in_selector<estd::variadic::types<Types...> > : is_in_selector<Types...>
+{
+
+};
+
+
 // Selector which works on 'mux' variadic to select muxes based on particular rigid trait types
 template <class ...Traits>
 struct traits_selector
 {
+    using requested_traits = estd::variadic::types<Traits...>;
+
+    // T_j is expected to be a 'mux'
     // DEBT: Improve this name
+    // NOTE: This is backward, instead of searching in a mux for particular traits,
+    // we want to search particular traits per mux.
+    // i.e. we are searching that all traits in the mux are present in requested traits,
+    // when we should be searching that all requested traits are present in the mux traits.
+    // That said, it seems to compile anyway, belying expected behavior
     template <class T_j>
     using helper = typename T_j::traits::where<is_in_selector<Traits...> >;
 
+    // Investigate whether all Traits are present for a given mux
+    template <class Mux>
+    using helper2 = typename requested_traits::where<is_in_selector<typename Mux::traits>>;
+
+    // T_j is expected to be a 'mux'
     template <class T_j, size_t>
-    using evaluator = estd::bool_constant<helper<T_j>::size() == sizeof...(Traits)>;
+    using evaluator = estd::bool_constant<helper2<T_j>::size() == sizeof...(Traits)>;
 };
 
 }}}

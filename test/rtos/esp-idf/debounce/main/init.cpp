@@ -10,6 +10,8 @@
 #define GPIO_INPUT_IO_0     CONFIG_DIAGNOSTIC_GPIO1
 #define GPIO_INPUT_PIN_SEL  (1ULL<<GPIO_INPUT_IO_0)
 
+using board_traits = embr::esp_idf::board_traits;
+
 namespace embr { namespace esp_idf {
 
 using status_leds = board_traits::io::where<
@@ -55,6 +57,10 @@ static void init_gpio_output()
 
     using leds = embr::esp_idf::status_leds;
 
+#ifdef CONFIG_BOARD_ESP32_UNSPECIFIED
+#warning "No board specified, status LED probably will fail"
+#endif
+
     if constexpr (leds::size() > 0)
     {
         // We expect one and only one status LED
@@ -70,6 +76,8 @@ static void init_gpio_output()
 
 void App::init()
 {
+    ESP_LOGI(TAG, "init: vendor=%s name=%s", board_traits::vendor, board_traits::name);
+
     init_gptimer();
     init_gpio_input();
     init_gpio_output();
