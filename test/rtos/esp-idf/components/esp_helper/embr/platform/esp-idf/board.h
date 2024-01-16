@@ -8,16 +8,8 @@
 #include <embr/platform/esp-idf/traits.h>
 
 #include "peripherals.h"
-
-#ifdef CONFIG_IDF_TARGET_ESP32
-#include "board/esp32/traits.h"
-#elif CONFIG_IDF_TARGET_ESP32C3
-#include "board/esp32c3/traits.h"
-#elif CONFIG_IDF_TARGET_ESP32C6
-#include "board/esp32c6/traits.h"
-#elif CONFIG_IDF_TARGET_ESP32S3
-#include "board/esp32s3/traits.h"
-#endif
+#include "board/traits.h"
+#include "board/overlay.h"
 
 namespace embr { namespace esp_idf {
 

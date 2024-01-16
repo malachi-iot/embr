@@ -144,5 +144,12 @@ struct mux
     using where = typename traits::where<E>;
 };
 
+// which Arduino pin this maps to
+template <unsigned pin_>
+struct arduino
+{
+    static constexpr unsigned pin = pin_;
+};
+
 
 }}}}

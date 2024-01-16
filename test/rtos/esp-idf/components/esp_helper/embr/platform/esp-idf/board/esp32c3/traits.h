@@ -10,7 +10,10 @@ struct board : v1::internal::board
     static constexpr const char* vendor = "Seeed Studio";
     static constexpr const char* name = "XIAO";
 
-    using io = mux<R::mux<9, R::button>>;
+    using io = mux<
+        R::mux<9, R::arduino<9>, R::button>,
+        R::mux<2, R::arduino<0>>
+        >;
 
 #elif CONFIG_BOARD_ESP32C3_DEVKITM_1
     static constexpr const char* vendor = "Espressif";

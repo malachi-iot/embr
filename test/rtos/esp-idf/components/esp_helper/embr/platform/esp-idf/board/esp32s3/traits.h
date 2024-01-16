@@ -23,6 +23,7 @@ struct board : v1::internal::board
     using io = mux<
 #if defined(CONFIG_BOARD_ESP32S3_SEEED_XIAO)
         R::mux<21, R::led, R::color::orange, R::trait::status>,
+        R::mux<1, R::arduino<0>>,
         R::mux<0, R::button>
 #elif defined(CONFIG_BOARD_ESP32S3_UM_FEATHERS3)
         R::mux<40, R::ws2812>,
