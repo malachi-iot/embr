@@ -10,16 +10,16 @@
 #define GPIO_INPUT_IO_0     CONFIG_DIAGNOSTIC_GPIO1
 #define GPIO_INPUT_PIN_SEL  (1ULL<<GPIO_INPUT_IO_0)
 
-using board_traits = embr::esp_idf::board_traits;
+using board_traits = embr::esp_idf::traits::v1::board;
 
-namespace embr { namespace esp_idf {
+//namespace embr { namespace esp_idf {
 
 using status_leds = board_traits::io::where<
         embr::R::traits_selector<
-            esp_idf::R::led,
-            esp_idf::R::trait::status> >;
+            embr::esp_idf::R::led,
+            embr::esp_idf::R::trait::status> >;
 
-}}
+//}}
 
 
 
@@ -51,32 +51,44 @@ static void init_gpio_input()
 }
 
 
+template <class Leds>
+static void init_status_led()
+{
+    static const char* TAG = "init_status_led";
+
+    // We expect one and only one status LED
+    using mux = Leds::single;
+
+    status_led = embr::esp_idf::gpio(mux::pin);
+    status_led.set_direction(GPIO_MODE_OUTPUT);
+
+    ESP_LOGD(TAG, "pin=%u", mux::pin);
+}
+
+
 static void init_gpio_output()
 {
     static const char* TAG = "init_gpio_output";
 
-    using leds = embr::esp_idf::status_leds;
+    using leds = status_leds;
 
 #ifdef CONFIG_BOARD_ESP32_UNSPECIFIED
-#warning "No board specified, status LED probably will fail"
+#warning "No board specified, status LED offline"
 #endif
 
+    ESP_LOGV(TAG, "leds::size()=%u", leds::size());
+
     if constexpr (leds::size() > 0)
-    {
-        // We expect one and only one status LED
-        using mux = leds::single;
-
-        status_led = embr::esp_idf::gpio(mux::pin);
-        status_led.set_direction(GPIO_MODE_OUTPUT);
-
-        ESP_LOGV(TAG, "pin=%u", mux::pin);
-    }
+        init_status_led<leds>();
 }
 
 
 void App::init()
 {
-    ESP_LOGI(TAG, "init: vendor=%s name=%s", board_traits::vendor, board_traits::name);
+    ESP_LOGI(TAG, "init: board=%s %s (%s)",
+        board_traits::vendor,
+        board_traits::name,
+        board_traits::chip);
 
     init_gptimer();
     init_gpio_input();
