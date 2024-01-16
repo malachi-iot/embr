@@ -51,6 +51,8 @@ static void init_gpio_input()
 
 static void init_gpio_output()
 {
+    static const char* TAG = "init_gpio_output";
+
     using leds = embr::esp_idf::status_leds;
 
     if constexpr (leds::size() > 0)
@@ -60,6 +62,8 @@ static void init_gpio_output()
 
         status_led = embr::esp_idf::gpio(mux::pin);
         status_led.set_direction(GPIO_MODE_OUTPUT);
+
+        ESP_LOGV(TAG, "pin=%u", mux::pin);
     }
 }
 

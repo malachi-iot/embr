@@ -16,7 +16,8 @@ enum class colors
     red = 0xFF0000,
     green = 0x00FF00,
     blue = 0x0000FF,
-    yellow = 0xFFFF00
+    yellow = 0xFFFF00,
+    orange = 0xFFA500
 };
 
 constexpr const char* to_string(colors c)
@@ -27,6 +28,7 @@ constexpr const char* to_string(colors c)
         case colors::blue:      return "blue";
         case colors::red:       return "red";
         case colors::yellow:    return "yellow";
+        case colors::orange:    return "orange";
         
         default:            return "undefined";
     }
@@ -50,6 +52,7 @@ using red = trait<colors::red>;
 using blue = trait<colors::blue>;
 using green = trait<colors::green>;
 using yellow = trait<colors::yellow>;
+using orange = trait<colors::orange>;
 
 template <class>    struct is_trait : estd::false_type {};
 template <colors c> struct is_trait<trait<c>> : estd::true_type {};

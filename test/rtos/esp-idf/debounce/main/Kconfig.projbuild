@@ -3,11 +3,13 @@ menu "Debounce Test"
     config DIAGNOSTIC_GPIO1
         int "#1 GPIO to evaluate input on"
         default 2 if IDF_TARGET_ESP32C3
-        default 0 if IDF_TARGET_ESP32
+        #default 0 if IDF_TARGET_ESP32
+        default 0
 
     config DIAGNOSTIC_PERFMON
         bool "Performance profiling"
         default y if IDF_TARGET_ESP32
-        default n if IDF_TARGET_ESP32C3
+        #default n if IDF_TARGET_ESP32C3
+        default n
 
 endmenu

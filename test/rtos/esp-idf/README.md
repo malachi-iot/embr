@@ -34,6 +34,7 @@ These tests are all for variants of Espressif ESP32
 | 04JAN23 | button       | ESP32-C3-DevKitM-1   | ESP32C3        | v5.0.0   | Pass     |
 | 15AUG23 | debounce     | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v5.0.3   | Pass     |
 | 18AUG23 | debounce     | ESP32C3 Xiao         | ESP32C3        | v5.1     | Pass     | Tested against GPIO9 boot button
+| 15JAN24 | debounce     | Seeed Xiao           | ESP32S3        | v5.1.2   | Pass     |
 | 19DEC22 | observer     | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v4.4.3   | Pass     |
 | 15AUG23 | observer     | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v5.0.3   | Pass     |
 | 07JAN24 | observer     | Lilygo QT Pro        | ESP32S3        | v5.1.2   | Pass     | 
@@ -62,6 +63,7 @@ These tests are all for variants of Espressif ESP32
 | 10JAN23 | unity        | ESP32-C3-DevKitM-1   | ESP32C3        | v5.0.0   | Pass     | 
 | 19AUG23 | unity        | ESP32-C3-DevKitM-1   | ESP32C3        | v5.1     | Pass     | 
 | 10JAN24 | unity        | Seeed Xiao           | ESP32C3        | v5.1.2   | Pass     | 
+| 15JAN24 | unity        | Seeed Xiao           | ESP32S3        | v5.1.2   | Pass     | 
 | 10JUL23 | unity        | WEMOS D1             | ESP32          | v5.0.2   | Pass     |
 | 25AUG23 | unity        | FeatherS3            | ESP32S3        | v5.1.1   | Pass     | 
 | 17SEP23 | unity        | RejsaCAN v3.1        | ESP32S3        | v5.1.1   | Pass     | 

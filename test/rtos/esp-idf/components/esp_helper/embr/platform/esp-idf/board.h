@@ -40,6 +40,9 @@ struct board_traits
 #elif defined(CONFIG_BOARD_ESP32C3_SEEED_XIAO)
     static constexpr const char* vendor = "Seeed Studio";
     static constexpr const char* name = "XIAO ESP32C3";
+#elif defined(CONFIG_BOARD_ESP32S3_SEEED_XIAO)
+    static constexpr const char* vendor = "Seeed Studio";
+    static constexpr const char* name = "XIAO ESP32S3";
 #elif defined(CONFIG_BOARD_ESP32S3_UM_FEATHERS3)
     static constexpr const char* vendor = "Unexpected Maker";
     static constexpr const char* name = "Feather S3";
@@ -97,6 +100,9 @@ struct board_traits
         R::mux<9, R::button>
 #elif defined(CONFIG_BOARD_ESP32C3_SEEED_XIAO)
         R::mux<9, R::button>
+#elif defined(CONFIG_BOARD_ESP32S3_SEEED_XIAO)
+        R::mux<21, R::led, R::color::orange, R::trait::status>,
+        R::mux<0, R::button>
 #elif defined(CONFIG_BOARD_ESP32S3_UM_FEATHERS3)
         R::mux<40, R::ws2812>,
         R::mux<13, R::led, R::color::blue, R::trait::status>,
