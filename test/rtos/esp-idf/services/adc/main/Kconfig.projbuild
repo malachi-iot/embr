@@ -1,0 +1,9 @@
+menu "Embr Services Test: GPIO"
+
+    config DIAGNOSTIC_GPIO1
+        int "#1 GPIO to evaluate input on"
+        default 9 if IDF_TARGET_ESP32C3
+        default 39 if IDF_TARGET_ESP32
+        default 0
+
+endmenu
