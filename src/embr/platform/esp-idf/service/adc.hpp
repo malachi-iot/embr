@@ -36,7 +36,9 @@ bool IRAM_ATTR ADC::runtime<TSubject, TImpl>::s_conv_done_cb(
 {
     BaseType_t mustYield = pdFALSE;
 
-    ((runtime*) user_data)->notify(event::converted{handle, edata, &mustYield});
+    ((runtime*) user_data)->notify(event::converted{
+        handle,
+        edata, &mustYield});
 
     //Notify that ADC continuous driver has done enough number of conversions
     //vTaskNotifyGiveFromISR(s_task_handle, &mustYield);
