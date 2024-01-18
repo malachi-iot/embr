@@ -9,20 +9,35 @@
 #include <embr/platform/esp-idf/service/gpio.h>
 
 
-struct App
+class App
 {
     static constexpr const char* TAG = "App";
 
+public:
     struct gpio
     {
         gpio_num_t pin : 7;
         unsigned level : 1;
     };
 
-    // DEBT: Doesn't work I think we need to use uninitialized_array for layer1
-    //estd::freertos::layer1::queue<embr::esp_idf::gpio, 5> q;
-    estd::freertos::layer1::queue<gpio, 5> q;
+    struct io
+    {
+        uint16_t value;
+    };
 
+    // DEBT: Make this private
+    estd::freertos::layer1::queue<gpio, 5> q;
+    estd::freertos::layer1::queue<io, 5> q2;
+
+private:
+    // DEBT: No doubt this is clumsy.  Referring to app singleton
+    // from within a static void
+    static void start(const adc_continuous_handle_cfg_t*,
+        const adc_continuous_config_t*);
+
+    void start();
+
+public:
     template <class T>
     using changed = embr::event::PropertyChanged<T>;
 
@@ -37,5 +52,10 @@ struct App
 namespace app_domain {
 
 extern App app;
+
+using singleton = estd::integral_constant<App*, &app>;
+using top_tier = embr::layer0::subject<singleton>;
+
+extern App::ADC::runtime<top_tier> adc;
 
 }

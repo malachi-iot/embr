@@ -30,10 +30,10 @@ namespace app_domain {
 
 App app;
 
-typedef estd::integral_constant<App*, &app> app_singleton;
-typedef embr::layer0::subject<Diagnostic, app_singleton> filter_observer;
+typedef embr::layer0::subject<Diagnostic, singleton> filter_observer;
 
 App::GPIO::runtime<filter_observer> gpio;
+App::ADC::runtime<top_tier> adc;
 
 }
 
