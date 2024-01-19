@@ -13,35 +13,18 @@ namespace embr { namespace esp_idf {
 
 namespace service { inline namespace v1 {
 
-namespace experimental {
-
-template <class TService>
-bool IRAM_ATTR adc_conv_done_cb(
-    adc_continuous_handle_t handle,
-    const adc_continuous_evt_data_t *edata, void *user_data)
-{
-    BaseType_t mustYield = pdFALSE;
-
-    return (mustYield == pdTRUE);
-}
-
-
-}
-
-
+// NOTE: Watch out for https://github.com/espressif/esp-idf/issues/4542 -
+// you'll have to do a linker fragment file
 template <class TSubject, class TImpl>
-bool IRAM_ATTR ADC::runtime<TSubject, TImpl>::s_conv_done_cb(
+bool IRAM_ATTR ADC::runtime<TSubject, TImpl>::conv_done_cb(
     adc_continuous_handle_t handle,
-    const adc_continuous_evt_data_t *edata, void *user_data)
+    const adc_continuous_evt_data_t* edata, void* user_data)
 {
     BaseType_t mustYield = pdFALSE;
 
     ((runtime*) user_data)->notify(event::converted{
         handle,
         edata, &mustYield});
-
-    //Notify that ADC continuous driver has done enough number of conversions
-    //vTaskNotifyGiveFromISR(s_task_handle, &mustYield);
 
     return (mustYield == pdTRUE);
 }
@@ -75,11 +58,11 @@ auto ADC::runtime<TSubject, TImpl>::on_start(
     {
         adc_continuous_evt_cbs_t cbs =
         {
-            // FIX: [17] kills us here
-            .on_conv_done = s_conv_done_cb,
-            //.on_conv_done = experimental::adc_conv_done_cb<runtime>,
-
-            //.on_conv_done = experimental::adc_conv_done_cb2,
+            // NOTE: Watch out for templated IRAM glitch
+            .on_conv_done = conv_done_cb,
+            // DEBT: Do overflow event too.  May not ever care because
+            // this event service you'll likely want pure DMA mode.  See
+            // PGESP-41 README section 3
             .on_pool_ovf = nullptr,
         };
         ESP_GOTO_ON_ERROR(adc_continuous_register_event_callbacks(handle, &cbs, this),

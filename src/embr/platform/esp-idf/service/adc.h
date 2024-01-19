@@ -53,6 +53,7 @@ struct ADC : embr::Service
 
             using value_type = adc::digi_output_data<>;
             using pointer = const value_type*;
+            using reference = const value_type&;
 
             pointer begin() const { return (pointer) edata->conv_frame_buffer; }
             pointer end() const { return (pointer) edata->conv_frame_buffer + edata->size; }
@@ -67,7 +68,7 @@ struct ADC : embr::Service
 
     EMBR_PROPERTY_RUNTIME_BEGIN(embr::Service)
 
-        static bool s_conv_done_cb(
+        static bool conv_done_cb(
             adc_continuous_handle_t handle,
             const adc_continuous_evt_data_t *edata, void *user_data);
         

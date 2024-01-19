@@ -44,6 +44,7 @@ extern "C" void app_main()
 
     unsigned long counter = 0;
     constexpr static unsigned long thinner = SOC_ADC_SAMPLE_FREQ_THRES_LOW / 100;
+    unsigned waiting = 0;
 
     app_domain::app.start();
 
@@ -58,6 +59,7 @@ extern "C" void app_main()
         {
             sample = frame.begin;
             got_data = true;
+            waiting += app_domain::app.q.messages_waiting();
         }
 
         if(counter % thinner == 0)
@@ -73,7 +75,9 @@ extern "C" void app_main()
                     (unsigned)sample->data());
             }
 
-            ESP_LOGD(TAG, "isr_counter: %d", isr_counter);
+            ESP_LOGD(TAG, "isr_counter: %d / waiting: %u",
+                isr_counter,
+                waiting);
         }
 
         ++counter;

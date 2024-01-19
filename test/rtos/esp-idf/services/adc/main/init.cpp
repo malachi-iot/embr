@@ -2,15 +2,17 @@
 
 // https://docs.espressif.com/projects/esp-idf/en/v5.1.2/esp32/api-reference/peripherals/adc_continuous.html
 
-#define EXAMPLE_READ_LEN   256
+#define FRAME_LEN   256
 
 #if CONFIG_IDF_TARGET_ESP32
 #define ADC_CONV_MODE       ADC_CONV_SINGLE_UNIT_1  //ESP32 only supports ADC1 DMA mode
 #define ADC_OUTPUT_TYPE     ADC_DIGI_OUTPUT_FORMAT_TYPE1
 #elif CONFIG_IDF_TARGET_ESP32S2
 #define ADC_CONV_MODE       ADC_CONV_BOTH_UNIT
+// DEBT: Other examples put S2 as TYPE1, so I am confused and expect issues with S2
+// here
 #define ADC_OUTPUT_TYPE     ADC_DIGI_OUTPUT_FORMAT_TYPE2
-#elif CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32H2 || CONFIG_IDF_TARGET_ESP32C2
+#elif CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32H2 || CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C6
 #define ADC_CONV_MODE       ADC_CONV_ALTER_UNIT     //ESP32C3 only supports alter mode
 #define ADC_OUTPUT_TYPE     ADC_DIGI_OUTPUT_FORMAT_TYPE2
 #elif CONFIG_IDF_TARGET_ESP32S3
@@ -18,16 +20,8 @@
 #define ADC_OUTPUT_TYPE     ADC_DIGI_OUTPUT_FORMAT_TYPE2
 #endif
 
-#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32S3 || CONFIG_IDF_TARGET_ESP32H2 || CONFIG_IDF_TARGET_ESP32C2
+static adc_channel_t channel[] { (adc_channel_t) CONFIG_DIAGNOSTIC_ADC };
 //static adc_channel_t channel[3] = {ADC_CHANNEL_2, ADC_CHANNEL_3, (adc_channel_t)(ADC_CHANNEL_0 | 1 << 3)};
-static adc_channel_t channel[] = {ADC_CHANNEL_1};
-#endif
-#if CONFIG_IDF_TARGET_ESP32S2
-static adc_channel_t channel[3] = {ADC_CHANNEL_2, ADC_CHANNEL_3, (adc_channel_t)(ADC_CHANNEL_0 | 1 << 3)};
-#endif
-#if CONFIG_IDF_TARGET_ESP32
-static adc_channel_t channel[1] = {ADC_CHANNEL_7};
-#endif
 
 #define GET_UNIT(x)        ((x>>3) & 0x1)
 
@@ -35,12 +29,9 @@ void App::start()
 {
     adc_continuous_handle_cfg_t frame_config =
     {
-        // DEBT: Document here what diff is between frame size and store buf
-        // size
-        .max_store_buf_size = 1024,
-        // TODO: Increase this number for regular ESP32 since it reads so fast,
-        // we get interrupted a LOT
-        .conv_frame_size = EXAMPLE_READ_LEN,
+        // This is allocated to xRingbuffer
+        .max_store_buf_size = 1,
+        .conv_frame_size = FRAME_LEN,
     };
 
     adc_digi_pattern_config_t adc_pattern[SOC_ADC_PATT_LEN_MAX];
