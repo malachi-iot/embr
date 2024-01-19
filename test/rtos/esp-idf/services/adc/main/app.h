@@ -14,20 +14,17 @@ class App
     static constexpr const char* TAG = "App";
 
 public:
-    struct gpio
-    {
-        gpio_num_t pin : 7;
-        unsigned level : 1;
-    };
+    using ADC = embr::esp_idf::service::v1::ADC;
 
     struct io
     {
-        uint16_t value;
+        using pointer = ADC::event::converted::pointer;
+
+        pointer begin, end;
     };
 
     // DEBT: Make this private
-    estd::freertos::layer1::queue<gpio, 5> q;
-    estd::freertos::layer1::queue<io, 5> q2;
+    estd::freertos::layer1::queue<io, 5> q;
 
 private:
     // DEBT: No doubt this is clumsy.  Referring to app singleton
@@ -35,17 +32,13 @@ private:
     static void start(const adc_continuous_handle_cfg_t*,
         const adc_continuous_config_t*);
 
-    void start();
-
 public:
     template <class T>
     using changed = embr::event::PropertyChanged<T>;
 
-    using GPIO = embr::esp_idf::service::v1::GPIO<false>;
-    using ADC = embr::esp_idf::service::v1::ADC;
-
-    void on_notify(GPIO::event::gpio);
     void on_notify(ADC::event::converted);
+
+    void start();
 };
 
 

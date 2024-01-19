@@ -1,9 +1,8 @@
-menu "Embr Services Test: GPIO"
+menu "Embr Services Test: ADC"
 
-    config DIAGNOSTIC_GPIO1
-        int "#1 GPIO to evaluate input on"
-        default 9 if IDF_TARGET_ESP32C3
-        default 39 if IDF_TARGET_ESP32
+    # DEBT: Not used yet
+    config DIAGNOSTIC_ADC
+        int "Which ADC channel to focus on"
         default 0
 
 endmenu

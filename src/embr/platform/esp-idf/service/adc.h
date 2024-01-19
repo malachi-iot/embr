@@ -1,6 +1,7 @@
 #pragma once
 
 #include <esp_adc/adc_continuous.h>
+#include "../adc.h"
 #include <embr/service.h>
 
 namespace embr { namespace esp_idf {
@@ -49,6 +50,18 @@ struct ADC : embr::Service
             const adc_continuous_handle_t handle;   // NOTE: This is available via runtime
             const adc_continuous_evt_data_t* const edata;
             BaseType_t* const must_yield;
+
+            using value_type = adc::digi_output_data<>;
+            using pointer = const value_type*;
+
+            pointer begin() const { return (pointer) edata->conv_frame_buffer; }
+            pointer end() const { return (pointer) edata->conv_frame_buffer + edata->size; }
+            unsigned size() const
+            {
+                static_assert(sizeof(value_type) == SOC_ADC_DIGI_RESULT_BYTES, "Serious Chipset/ADC configuration issue");
+
+                return edata->size / sizeof(value_type);
+            }
         };
     };
 

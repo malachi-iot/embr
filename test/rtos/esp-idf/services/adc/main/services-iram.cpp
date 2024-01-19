@@ -12,6 +12,8 @@
 #define ADC_GET_DATA(p_data)        ((p_data)->type2.data)
 #endif
 
+volatile int isr_counter = 0;
+
 // callback won't be inline, but its cascade out to notify can be
 inline void App::on_notify(ADC::event::converted e)
 {
@@ -24,12 +26,13 @@ inline void App::on_notify(ADC::event::converted e)
         uint32_t data = ADC_GET_DATA(p);
     }
 
-    q2.send_from_isr({0});
+    q.send_from_isr({e.begin(), e.end()});
+    isr_counter = isr_counter + 1;
 }
 
 // Has to reside in IRAM module because adc.start generates the
 // callback which itself must be in IRAM [2]
-void start(const adc_continuous_handle_cfg_t* frame_config,
+void App::start(const adc_continuous_handle_cfg_t* frame_config,
     const adc_continuous_config_t* config)
 {
     app_domain::adc.start(frame_config, config);
