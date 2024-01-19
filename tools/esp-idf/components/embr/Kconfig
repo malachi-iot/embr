@@ -14,58 +14,68 @@ menu "Embr config"
                 and go as quickly as possible leaving heavy processing for other tasks
     endmenu
 
-    menu "esp-idf"
-
-        menu "High Resolution Timer Scheduler"
-
-            config EMBR_ESP_IDF_TIMER_PROFILING
-                bool "Timer Scheduler ISR profiler"
-                default 0
-                help
-                    Turn on or off esp-idf Timer Scheduler ISR profiler, which collects
-                    a few timestamps of the lifecycle of the ISR then renders them via ESP_DRAM_LOGI
-
-        endmenu
-
-        menu "Logging Groups"
-        #menuconfig M
-        #if M
-            #help
-            #    Value of 0 = disabled
-            #    Value of 1 = normal logging
-            #    Value of 2 = ISR logging 
-            # Cannot get help text to work for the life of me here
-                    
-            config EMBR_LOG_GROUP_0
-                int "Log Group 0"
-                range 0 2
-                default 0
-
-            config EMBR_LOG_GROUP_1
-                int "Log Group 1"
-                range 0 2
-                default 0
-
-            config EMBR_LOG_GROUP_2
-                int "Log Group 2"
-                range 0 2
-                default 0
-                    
-            config EMBR_LOG_GROUP_3
-                int "Log Group 3"
-                range 0 2
-                default 0
-
-            config EMBR_LOG_GROUP_4
-                int "Log Group 4"
-                range 0 2
-                default 0
-
+    menu "Services"
+        config EMBR_ESP_SERVICE_ADC_QUEUE_SIZE
+            int "Size of queue type offered by ADC service"
+            default 5
             help
-                hello
-        #endif
-        endmenu
+                Do not change this unless you really know what you're doing!
+                adc_continuous has a hardcoded value of 5 which seems to map
+                to a DMA ring buffer.  embr ADC service offers an RTOS queue
+                to communicate those buffers.  If you offer too many, strange
+                things will happen.  This configuration point is only here because
+                ADC service depends on that internal behavior and it may change
+                out from under us.
+    endmenu
 
+    menu "High Resolution Timer Scheduler"
+
+        config EMBR_ESP_IDF_TIMER_PROFILING
+            bool "Timer Scheduler ISR profiler"
+            default 0
+            help
+                Turn on or off esp-idf Timer Scheduler ISR profiler, which collects
+                a few timestamps of the lifecycle of the ISR then renders them via ESP_DRAM_LOGI
+
+    endmenu
+
+    menu "Logging Groups"
+    #menuconfig M
+    #if M
+        #help
+        #    Value of 0 = disabled
+        #    Value of 1 = normal logging
+        #    Value of 2 = ISR logging 
+        # Cannot get help text to work for the life of me here
+                
+        config EMBR_LOG_GROUP_0
+            int "Log Group 0"
+            range 0 2
+            default 0
+
+        config EMBR_LOG_GROUP_1
+            int "Log Group 1"
+            range 0 2
+            default 0
+
+        config EMBR_LOG_GROUP_2
+            int "Log Group 2"
+            range 0 2
+            default 0
+                
+        config EMBR_LOG_GROUP_3
+            int "Log Group 3"
+            range 0 2
+            default 0
+
+        config EMBR_LOG_GROUP_4
+            int "Log Group 4"
+            range 0 2
+            default 0
+
+        help
+            hello
+    #endif
     endmenu
 
 endmenu

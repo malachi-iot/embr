@@ -26,6 +26,12 @@ bool IRAM_ATTR ADC::runtime<TSubject, TImpl>::conv_done_cb(
         handle,
         edata, &mustYield});
 
+// EXPERIMENTAL
+#if CONFIG_EMBR_ESP_SERVICE_ADC_AUTO_QUEUE
+    // Not ready yet
+    q.send_from_isr({ e });
+#endif
+
     return (mustYield == pdTRUE);
 }
 

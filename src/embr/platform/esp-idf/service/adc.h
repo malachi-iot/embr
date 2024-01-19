@@ -16,6 +16,12 @@ namespace service { inline namespace v1 {
 #define CONFIG_EMBR_ESP_SERVICE_ADC_QUEUE_SIZE 5
 #endif
 
+// EXPERIMENTAL
+// Think I might prefer forcing app to explicitly do the RTOS queue management
+#ifndef CONFIG_EMBR_ESP_SERVICE_ADC_AUTO_QUEUE
+#define CONFIG_EMBR_ESP_SERVICE_ADC_AUTO_QUEUE 0
+#endif
+
 // Specifically continuous mode
 struct ADC : embr::Service
 {
@@ -88,6 +94,10 @@ struct ADC : embr::Service
     // elegant.
     using queue = estd::freertos::layer1::queue<event::frame,
         CONFIG_EMBR_ESP_SERVICE_ADC_QUEUE_SIZE>;
+
+#if CONFIG_EMBR_ESP_SERVICE_ADC_AUTO_QUEUE
+    queue q;
+#endif
 
     EMBR_PROPERTY_RUNTIME_BEGIN(embr::Service)
 
