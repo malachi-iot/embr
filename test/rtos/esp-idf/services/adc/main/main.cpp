@@ -53,13 +53,15 @@ extern "C" void app_main()
     {
         App::io frame;
         App::io::pointer sample = nullptr;
-        bool got_data = false;
+        bool got_data = false;  // Just in case a malformed frame appears with a null begin()
 
         //if(app_domain::app.q.receive(&frame, estd::chrono::milliseconds(10)))
         if(app_domain::app.q.receive(&frame))
         {
-            sample = frame.begin;
+            sample = frame.begin();
             got_data = true;
+            
+            // We're falling behind, take note
             waiting += app_domain::app.q.messages_waiting() > 3;
         }
 

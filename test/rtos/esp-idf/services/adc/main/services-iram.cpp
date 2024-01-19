@@ -15,7 +15,7 @@ inline void App::on_notify(ADC::event::converted e)
     }
 
     // DEBT: Do e.must_yield for more performance
-    BaseType_t success = q.send_from_isr({e.begin(), e.end()});
+    BaseType_t success = q.send_from_isr({ e });
     if(success == pdFALSE)  isr_overrun = isr_overrun + 1;
 
     isr_counter = isr_counter + 1;

@@ -1,33 +1,20 @@
 #pragma once
 
 #include <esp_adc/adc_continuous.h>
-#include "../adc.h"
+
+#include <estd/port/freertos/queue.h>
+
 #include <embr/service.h>
+
+#include "../adc.h"
 
 namespace embr { namespace esp_idf {
 
 namespace service { inline namespace v1 {
 
-namespace experimental {
-
-template <class TService>
-bool IRAM_ATTR adc_conv_done_cb(
-    adc_continuous_handle_t handle,
-    const adc_continuous_evt_data_t *edata, void *user_data);
-
-bool IRAM_ATTR adc_conv_done_cb2(
-    adc_continuous_handle_t handle,
-    const adc_continuous_evt_data_t *edata, void *user_data);
-
-bool IRAM_ATTR adc_conv_done_cb3(
-    adc_continuous_handle_t handle,
-    const adc_continuous_evt_data_t *edata, void *user_data);
-
-bool adc_conv_done_cb4(
-    adc_continuous_handle_t handle,
-    const adc_continuous_evt_data_t *edata, void *user_data);
-
-}
+#ifndef CONFIG_EMBR_ESP_SERVICE_ADC_QUEUE_SIZE
+#define CONFIG_EMBR_ESP_SERVICE_ADC_QUEUE_SIZE 5
+#endif
 
 // Specifically continuous mode
 struct ADC : embr::Service
@@ -65,7 +52,42 @@ struct ADC : embr::Service
                 return edata->size / sizeof(value_type);
             }
         };
+
+        class frame
+        {
+        public:
+            using pointer = converted::pointer;
+
+        private:            
+            pointer begin_, end_;
+        
+        public:
+            constexpr frame(pointer begin, pointer end) :
+                begin_{begin},
+                end_{end}
+            {}
+
+            frame(const converted& c) :
+                begin_{c.begin()},
+                end_{c.end()}
+            {}
+
+            frame() = default;
+            frame(const frame&) = default;
+
+            pointer begin() const { return begin_; }
+            pointer end() const { return end_; }
+        };
     };
+
+    // NOTE: 5 is a magic number here, that's what seems to be the number of DMA
+    // slots hardcoded in the adc_continuous code.  Be careful that is probably subject
+    // to change.
+    // Even though this is a lossless queue (will block/abort on full) the underlying DMA
+    // buffers will keep rotating through, effectively making this a lossy queue.  Strangely
+    // elegant.
+    using queue = estd::freertos::layer1::queue<event::frame,
+        CONFIG_EMBR_ESP_SERVICE_ADC_QUEUE_SIZE>;
 
     EMBR_PROPERTY_RUNTIME_BEGIN(embr::Service)
 

@@ -16,21 +16,10 @@ class App
 public:
     using ADC = embr::esp_idf::service::v1::ADC;
 
-    struct io
-    {
-        using pointer = ADC::event::converted::pointer;
-
-        pointer begin, end;
-    };
-
     // DEBT: Make this private
-    // NOTE: 5 is a magic number here, that's what seems to be the number of DMA
-    // slots hardcoded in the adc_continuous code.  Be careful that is probably subject
-    // to change.
-    // Even though this is a lossless queue (will block/abort on full) the underlying DMA
-    // buffers will keep rotating through, effectively making this a lossy queue.  Strangely
-    // elegant.
-    estd::freertos::layer1::queue<io, 5> q;
+    ADC::queue q;
+
+    using io = ADC::queue::value_type;
 
 private:
     // DEBT: No doubt this is clumsy.  Referring to app singleton
