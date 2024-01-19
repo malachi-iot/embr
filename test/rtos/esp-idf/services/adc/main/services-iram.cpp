@@ -3,6 +3,7 @@
 #include "app.h"
 
 volatile int isr_counter = 0;
+volatile int isr_overrun = 0;
 
 // callback won't be inline, but its cascade out to notify can be
 inline void App::on_notify(ADC::event::converted e)
@@ -13,7 +14,10 @@ inline void App::on_notify(ADC::event::converted e)
     {
     }
 
-    q.send_from_isr({e.begin(), e.end()});
+    // DEBT: Do e.must_yield for more performance
+    BaseType_t success = q.send_from_isr({e.begin(), e.end()});
+    if(success == pdFALSE)  isr_overrun = isr_overrun + 1;
+
     isr_counter = isr_counter + 1;
 }
 

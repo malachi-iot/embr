@@ -33,6 +33,7 @@ App::ADC::runtime<top_tier> adc;
 
 
 extern int isr_counter;
+extern int isr_overrun;
 
 
 extern "C" void app_main()
@@ -59,7 +60,7 @@ extern "C" void app_main()
         {
             sample = frame.begin;
             got_data = true;
-            waiting += app_domain::app.q.messages_waiting();
+            waiting += app_domain::app.q.messages_waiting() > 3;
         }
 
         if(counter % thinner == 0)
@@ -75,8 +76,9 @@ extern "C" void app_main()
                     (unsigned)sample->data());
             }
 
-            ESP_LOGD(TAG, "isr_counter: %d / waiting: %u",
+            ESP_LOGD(TAG, "isr_counter: %d / overrun: %d, waiting: %u",
                 isr_counter,
+                isr_overrun,
                 waiting);
         }
 

@@ -64,7 +64,6 @@ void App::start()
         // ESP32 = 20000
         .sample_freq_hz = SOC_ADC_SAMPLE_FREQ_THRES_LOW,
         .conv_mode = ADC_CONV_MODE,
-        // TODO: See adc_digi_output_data_t type
         .format = ADC_OUTPUT_TYPE,
     };
 
