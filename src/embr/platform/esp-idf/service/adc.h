@@ -59,6 +59,7 @@ struct ADC : embr::Service
             pointer end() const { return (pointer) edata->conv_frame_buffer + edata->size; }
             unsigned size() const
             {
+                // DEBT: One of the ESP32 varieties I think doesn't define this macro, so watch out
                 static_assert(sizeof(value_type) == SOC_ADC_DIGI_RESULT_BYTES, "Serious Chipset/ADC configuration issue");
 
                 return edata->size / sizeof(value_type);
@@ -70,7 +71,7 @@ struct ADC : embr::Service
 
         static bool conv_done_cb(
             adc_continuous_handle_t handle,
-            const adc_continuous_evt_data_t *edata, void *user_data);
+            const adc_continuous_evt_data_t* edata, void* user_data);
         
         state_result on_start(
             const adc_continuous_handle_cfg_t*,
