@@ -134,6 +134,7 @@ public:
         static void worker__(void*);
         void worker_();
         void broadcast(uint32_t alerts);
+        void update_state(uint32_t alerts);
 
     EMBR_SERVICE_RUNTIME_END
 

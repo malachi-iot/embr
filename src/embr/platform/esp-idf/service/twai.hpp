@@ -8,6 +8,12 @@
 
 #include "twai.h"
 
+// Takes a little extra time and memory to notice unwanted behaviors
+#if !FEATURE_EMBR_SERVICE_TWAI_SANITY_CHECK
+#define FEATURE_EMBR_SERVICE_TWAI_SANITY_CHECK 1
+#endif
+
+
 namespace embr::esp_idf {
 
 namespace service { inline namespace v1 {
@@ -49,6 +55,9 @@ auto TWAI::runtime<TSubject, TImpl>::on_start(
 
             if(r != ESP_OK) return { Error, ErrConfig };
 
+            // DEBT: Add in configuration point to disable/enable some of these.  Or,
+            // ideally, detect if any observers even care in the first place
+
             //Prepare to trigger errors, reconfigure alerts to detect change in error state
             r = twai_reconfigure_alerts(
                 TWAI_ALERT_ERR_ACTIVE |
@@ -57,7 +66,9 @@ auto TWAI::runtime<TSubject, TImpl>::on_start(
                 TWAI_ALERT_BUS_ERROR |
                 TWAI_ALERT_ERR_PASS | 
                 TWAI_ALERT_BUS_OFF |
+                TWAI_ALERT_RECOVERY_IN_PROGRESS |
                 TWAI_ALERT_BUS_RECOVERED |
+                TWAI_ALERT_PERIPH_RESET |
 
                 // DEBT: May want to enable this sometimes, consider making this 
                 // a configuration point for service.  That said, one can call
@@ -66,6 +77,8 @@ auto TWAI::runtime<TSubject, TImpl>::on_start(
 
                 TWAI_ALERT_RX_DATA |
                 TWAI_ALERT_RX_QUEUE_FULL |
+                TWAI_ALERT_RX_FIFO_OVERRUN |
+                TWAI_ALERT_TX_RETRIED |
                 TWAI_ALERT_TX_FAILED
                 , NULL);
 
@@ -144,8 +157,12 @@ auto TWAI::runtime<TSubject, TImpl>::on_start() -> state_result
 
     static constexpr twai_filter_config_t f_config = TWAI_FILTER_CONFIG_ACCEPT_ALL();
     static constexpr twai_timing_config_t t_config =
-#if CONFIG_TWAI_TIMING == 25
+#if CONFIG_TWAI_TIMING == 16
+        TWAI_TIMING_CONFIG_16KBITS();
+#elif CONFIG_TWAI_TIMING == 25
         TWAI_TIMING_CONFIG_25KBITS();
+#elif CONFIG_TWAI_TIMING == 50
+        TWAI_TIMING_CONFIG_50KBITS();
 #elif CONFIG_TWAI_TIMING == 100
         TWAI_TIMING_CONFIG_100KBITS();
 #elif CONFIG_TWAI_TIMING == 125
@@ -185,7 +202,6 @@ auto TWAI::runtime<TSubject, TImpl>::on_start() -> state_result
 }
 #endif
 
-
 template <class TSubject, class TImpl>
 void TWAI::runtime<TSubject, TImpl>::broadcast(uint32_t alerts)
 {
@@ -199,8 +215,24 @@ void TWAI::runtime<TSubject, TImpl>::broadcast(uint32_t alerts)
         {
             twai_message_t message;
 
+#if FEATURE_EMBR_SERVICE_TWAI_SANITY_CHECK
+            int sanity_check = 20;
+#endif
+
             while(twai_receive(&message, 0) == ESP_OK)
+            {
+#if FEATURE_EMBR_SERVICE_TWAI_SANITY_CHECK
+                // Observed twai_receive go into an "infinite receive" mode when 3 nodes
+                // where terminated but only two were powered.  Doesn't reliably give a
+                // TWAI_ALERT_BUS_ERROR, and even when it does we still infinitely receive.
+                if(--sanity_check == 0)
+                {
+                    ESP_LOGW(TAG, "Getting too many consecutive reads.  Is the bus over-terminated?");
+                    break;
+                }
+#endif
                 notify(event::autorx{message});
+            }
         }
         else
         {
@@ -243,6 +275,14 @@ void TWAI::runtime<TSubject, TImpl>::broadcast(uint32_t alerts)
     {
         notify(event::tx{});
     }
+}
+
+template <class TSubject, class TImpl>
+void TWAI::runtime<TSubject, TImpl>::update_state(uint32_t alerts)
+{
+    // TODO: Do same thing as check_status here, but via alerts
+    // NOTE: Observed are TWAI_ALERT_BUS_ERROR alerts with no compensating recovery
+    // alert, just immediately followed by non-err alerts like TWAI_ALERT_RX_DATA
 }
 
 
@@ -365,6 +405,7 @@ esp_err_t TWAI::runtime<TSubject, TImpl>::poll(TickType_t ticks_to_wait)
     {
         case ESP_OK:
             broadcast(alerts);
+            update_state(alerts);
             break;
 
         case ESP_ERR_TIMEOUT:
