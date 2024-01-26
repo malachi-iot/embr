@@ -2,17 +2,13 @@
 
 #include "fwd.h"
 #include "base.h"
-#include "time.h"
+#include "seconds.h"
 
 // DEBT: Review the SAE j1939 standard units docs before going too far into this
 // and other of our units/ folder friends
 namespace embr { namespace units {
 
 namespace internal {
-
-// DEBT: This is just a placeholder, we expect estd to fuse chrono and units together
-// and supply us this tag
-struct seconds_tag {};
 
 struct amps_tag {};
 using amp_seconds_tag = estd::internal::units::compound_tag<amps_tag, seconds_tag>;

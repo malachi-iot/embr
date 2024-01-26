@@ -9,6 +9,9 @@ namespace internal {
 template <class Rep>
 using passthrough = estd::internal::units::passthrough<Rep>;
 
+template <class T1, class T2>
+using compound_tag = estd::internal::units::compound_tag<T1, T2>;
+
 }
 
 namespace detail {
