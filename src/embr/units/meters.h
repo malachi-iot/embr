@@ -1,5 +1,7 @@
 #pragma once
 
+#include <estd/chrono.h>
+
 #include "base.h"
 #include "seconds.h"
 
