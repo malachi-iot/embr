@@ -1,0 +1,11 @@
+config BOARD_ESP32_WEMOS_MINI32
+    bool "Wemos Mini32 D1 (ESP32)"
+    depends on IDF_TARGET_ESP32
+
+config BOARD_ESP32_ESP_WROVER_KIT_41
+    bool "Espressif ESP32 Wrover Kit 4.1"
+    depends on IDF_TARGET_ESP32
+
+config BOARD_ESP32_LOPY
+    bool "LoPy"
+    depends on IDF_TARGET_ESP32

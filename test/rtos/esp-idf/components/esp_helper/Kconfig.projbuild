@@ -8,9 +8,8 @@ menu "Embr Helper config"
             string "WiFi Password"
     endmenu
 
-    # "not found"
-    #source "Kconfigs/esp32c3.targets"
-
+    # Thank you https://esp32.com/viewtopic.php?t=17736 for 'rsource' knowledge
+    
     # Not an esp-idf convention per se, I am putting my own commonly used settings here
     choice
         prompt "Select Development Board"
@@ -18,9 +17,9 @@ menu "Embr Helper config"
         config BOARD_ESP32_UNSPECIFIED
             bool "Unspecified Target"
 
-        config BOARD_ESP32_WEMOS_MINI32
-            bool "Wemos Mini32 D1 (ESP32)"
-            depends on IDF_TARGET_ESP32
+        rsource "Kconfigs/esp32.targets"
+        rsource "Kconfigs/esp32c3.targets"
+        rsource "Kconfigs/esp32s3.targets"
 
         config BOARD_ESP32C3_SEEED_XIAO
             bool "Seeed Studio Xiao ESP32C3"
@@ -33,34 +32,6 @@ menu "Embr Helper config"
         config BOARD_ESP32C6_WAVESHARE_DEVKIT
             bool "WaveShare ESP32C6 DevKit"
             depends on IDF_TARGET_ESP32C6
-
-        config BOARD_ESP32_ESP_WROVER_KIT_41
-            bool "Espressif ESP32 Wrover Kit 4.1"
-            depends on IDF_TARGET_ESP32
-
-        config BOARD_ESP32_LOPY
-            bool "LoPy"
-            depends on IDF_TARGET_ESP32
-
-        config BOARD_ESP32S3_UM_FEATHERS3
-            bool "Unexpected Maker FeatherS3"
-            depends on IDF_TARGET_ESP32S3
-
-        config BOARD_ESP32S3_REJSACAN_V3_1
-            bool "Magnus Thome's RejsaCAN v3.1"
-            depends on IDF_TARGET_ESP32S3
-
-        config BOARD_ESP32S3_LILYGO_T_QT_PRO
-            bool "LILYGO T-QT Pro"
-            depends on IDF_TARGET_ESP32S3
-
-        config BOARD_ESP32S3_LILYGO_T5_EINK_2_3
-            bool "LILYGO T5 4.7in E-Ink v2.3"
-            depends on IDF_TARGET_ESP32S3
-
-        config BOARD_ESP32S3_SEEED_XIAO
-            bool "Seeed Studio Xiao ESP32S3"
-            depends on IDF_TARGET_ESP32S3
 
         endchoice
 
@@ -91,6 +62,16 @@ menu "Embr Helper config"
             config TWAI_TIMING_1M
                 bool "1Mbit"
         endchoice
+
+        config FORM_FACTOR_XIAO
+            int
+            default 0
+            default 1 if BOARD_ESP32S3_SEEED_XIAO || BOARD_ESP32C3_SEEED_XIAO
+            default 1 if BOARD_ESP32S3_LILYGO_T_QT_PRO
+
+        config FORM_FACTOR_FEATHER
+            int
+            default 0
 
         config TWAI_TIMING
             int

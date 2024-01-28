@@ -1,0 +1,27 @@
+config BOARD_ESP32S3_FREENOVE
+    bool "FreeNove ESP32S3 CAM"
+    depends on IDF_TARGET_ESP32S3
+
+config BOARD_ESP32S3_LILYGO_TCAM_S3
+    bool "LILYGO T-Camera S3"
+    depends on IDF_TARGET_ESP32S3
+
+config BOARD_ESP32S3_LILYGO_T_QT_PRO
+    bool "LILYGO T-QT Pro"
+    depends on IDF_TARGET_ESP32S3
+
+config BOARD_ESP32S3_LILYGO_T5_EINK_2_3
+    bool "LILYGO T5 4.7in E-Ink v2.3"
+    depends on IDF_TARGET_ESP32S3
+
+config BOARD_ESP32S3_REJSACAN_V3_1
+    bool "Magnus Thome's RejsaCAN v3.1"
+    depends on IDF_TARGET_ESP32S3
+
+config BOARD_ESP32S3_SEEED_XIAO
+    bool "Seeed Studio Xiao ESP32S3 (Sense)"
+    depends on IDF_TARGET_ESP32S3
+
+config BOARD_ESP32S3_UM_FEATHERS3
+    bool "Unexpected Maker FeatherS3"
+    depends on IDF_TARGET_ESP32S3
