@@ -55,9 +55,9 @@ menu "Embr Helper config"
                 bool "1Mbit"
         endchoice
 
-        choice
-            prompt "Expansion / Carrier"
-        endchoice
+        #choice
+        #    prompt "Expansion / Carrier"
+        #endchoice
 
         config FORM_FACTOR_XIAO
             int
