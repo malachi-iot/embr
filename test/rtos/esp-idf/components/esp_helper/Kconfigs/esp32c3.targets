@@ -1,0 +1,8 @@
+config BOARD_ESP32C3_SEEED_XIAO
+    bool "Seeed Studio Xiao ESP32C3"
+    depends on IDF_TARGET_ESP32C3
+
+config BOARD_ESP32C3_DEVKITM_1
+    bool "Espressif ESP32C3 DevKitM-1"
+    depends on IDF_TARGET_ESP32C3
+

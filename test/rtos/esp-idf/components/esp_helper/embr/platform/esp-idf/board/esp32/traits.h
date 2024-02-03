@@ -23,6 +23,9 @@ struct board : v1::internal::board
         R::mux<0, R::led, R::color::red,   R::group<0>, R::trait::status>,
         R::mux<2, R::led, R::color::green, R::group<0>>,
         R::mux<4, R::led, R::color::blue,  R::group<0>>>;
+#elif BOARD_ESP32_M5_TIMER_CAMERA_X
+    static constexpr const char* vendor = "M5";
+    static constexpr const char* name = "Timer Camera X";
 #endif
 };
 

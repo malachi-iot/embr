@@ -9,6 +9,9 @@ struct board : v1::internal::board
 #if CONFIG_BOARD_ESP32S3_SEEED_XIAO
     static constexpr const char* vendor = "Seeed Studio";
     static constexpr const char* name = "XIAO";
+#elif CONFIG_BOARD_ESP32S3_FREENOVE
+    static constexpr const char* vendor = "FreeNove";
+    static constexpr const char* name = "S3";
 #elif CONFIG_BOARD_ESP32S3_UM_FEATHERS3
     static constexpr const char* vendor = "Unexpected Maker";
     static constexpr const char* name = "FeatherS3";

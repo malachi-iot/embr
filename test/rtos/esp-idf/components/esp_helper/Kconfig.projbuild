@@ -21,14 +21,6 @@ menu "Embr Helper config"
         rsource "Kconfigs/esp32c3.targets"
         rsource "Kconfigs/esp32s3.targets"
 
-        config BOARD_ESP32C3_SEEED_XIAO
-            bool "Seeed Studio Xiao ESP32C3"
-            depends on IDF_TARGET_ESP32C3
-
-        config BOARD_ESP32C3_DEVKITM_1
-            bool "Espressif ESP32C3 DevKitM-1"
-            depends on IDF_TARGET_ESP32C3
-
         config BOARD_ESP32C6_WAVESHARE_DEVKIT
             bool "WaveShare ESP32C6 DevKit"
             depends on IDF_TARGET_ESP32C6
