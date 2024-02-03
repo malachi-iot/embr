@@ -33,7 +33,7 @@ menu "Embr Helper config"
             bool "WaveShare ESP32C6 DevKit"
             depends on IDF_TARGET_ESP32C6
 
-        endchoice
+    endchoice
 
     #menu "Peripherals"
 
@@ -63,14 +63,19 @@ menu "Embr Helper config"
                 bool "1Mbit"
         endchoice
 
+        choice
+            prompt "Expansion / Carrier"
+        endchoice
+
         config FORM_FACTOR_XIAO
             int
-            default 0
             default 1 if BOARD_ESP32S3_SEEED_XIAO || BOARD_ESP32C3_SEEED_XIAO
             default 1 if BOARD_ESP32S3_LILYGO_T_QT_PRO
+            default 0
 
         config FORM_FACTOR_FEATHER
             int
+            default 1 if BOARD_ESP32S3_UM_FEATHERS3
             default 0
 
         config TWAI_TIMING
@@ -107,6 +112,29 @@ menu "Embr Helper config"
             config TWAI_LISTEN_ONLY
                 bool "Listen Only"
         endchoice
+
+        # DEBT: Experimenting with this here, probably prefer this in traits.  However,
+        # useful for manual config
+        menuconfig SDMMC_ENABLED
+            bool "SDMMC Card"
+            default y if BOARD_ESP32S3_SEEED_XIAO || BOARD_ESP32S3_FREENOVE
+
+        if SDMMC_ENABLED
+            config IO_SDMMC_D0
+                int "SDMMC data 0 pin (D0)"
+                default 8 if BOARD_ESP32S3_SEEED_XIAO
+                default 40 if BOARD_ESP32S3_FREENOVE
+
+            config IO_SDMMC_CMD
+                int "SDMMC command pin (CMD)"
+                default 9 if BOARD_ESP32S3_SEEED_XIAO
+                default 38 if BOARD_ESP32S3_FREENOVE
+
+            config IO_SDMMC_CLK
+                int "SDMMC clock pin (CLK)"
+                default 7 if BOARD_ESP32S3_SEEED_XIAO
+                default 39 if BOARD_ESP32S3_FREENOVE
+        endif
 
     #endmenu
 
