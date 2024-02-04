@@ -47,6 +47,20 @@ public:
 
 };
 
+// DEBT: Move this out to estd
+template <class Streambuf>
+class simple_buffer_ostreambuf :
+    public estd::internal::impl::streambuf_base<typename Streambuf::traits_type>
+{
+    Streambuf streambuf_;
+
+    // TODO: Make this an is-a not a has-a so we can do both istreambuf and ostreambuf
+    estd::layer1::string<64, false> buf_;
+
+public:
+    ESTD_CPP_FORWARDING_CTOR_MEMBER(simple_buffer_ostreambuf, streambuf_)
+};
+
 }
 
 // DEBT: It's time to liberate streambuf from 'internal', but estd::detail::streambuf might
