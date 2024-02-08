@@ -148,6 +148,7 @@ struct __attribute__((packed)) local_file : header::local_file
     {
         length.filename = v.size();
 
+        // DEBT: I think it's time to give lock/unlock the 'mutable' treatment
         memcpy(data, v.clock(), length.filename);
 
         v.cunlock();
