@@ -2,6 +2,7 @@
 
 #include <embr/streambuf.h>
 #include <embr/observer.h>
+#include <embr/internal/zip/ostreambuf.h>
 
 
 using namespace embr::experimental;
@@ -77,5 +78,12 @@ TEST_CASE("streambuf test", "[streambuf]")
         REQUIRE(o.counter_sbumpc == 1);
 
         //sb.sputn("hi2u", 4);
+    }
+    SECTION("zip")
+    {
+        embr::zip::header::EOCD eocd;
+
+        REQUIRE(sizeof(eocd) == 22);
+        REQUIRE(sizeof(embr::zip::header::local_file) == 30);
     }
 }
