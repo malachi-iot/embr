@@ -1,5 +1,6 @@
 #pragma once
 
+#include <estd/variant.h>
 #include <estd/internal/impl/streambuf.h>
 
 #include "headers.h"
@@ -16,12 +17,24 @@ class container_ostreambuf :
 {
     using base_type = estd::internal::impl::wrapped_streambuf_base<Streambuf>;
 
+    estd::variant<
+        header::layer1::local_file<128> > state_;
+
 public:
     ESTD_CPP_FORWARDING_CTOR(container_ostreambuf)
 
     // Demarcate a new file entry
-    template <class TimePoint>
-    void file(char* name, TimePoint stamp, uint32_t len, uint32_t crc);
+    template <class Impl, class TimePoint>
+    void file(const estd::detail::basic_string<Impl>& name, TimePoint stamp)
+    {
+        // NOTE: Our variant has additional get here to bypass runtime checks.
+        // Therefore, it's incumbent on US to make sure we're in the right state
+        header::layer1::local_file<128>* lf = state_.get<0>();
+        lf->h.flags = header::flags::data_descriptor;
+        lf->filename(estd::layer2::const_string(name));
+
+        //base_type::rdbuf().sputn(lf, 0);
+    }
 };
 
 }}}

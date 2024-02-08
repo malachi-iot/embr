@@ -88,9 +88,12 @@ TEST_CASE("streambuf test", "[streambuf]")
 
         embr::zip::header::layer1::local_file<64> lf{};
 
-        memcpy(lf.data, "hello", 5);
-        lf.length.filename = 5;
+        lf.filename(estd::layer2::const_string("hello"));
+        //memcpy(lf.data, "hello", 5);
+        //lf.length.filename = 5;
 
         REQUIRE(lf.filename() == "hello");
+
+        //embr::zip::impl::container_ostreambuf<> out;
     }
 }

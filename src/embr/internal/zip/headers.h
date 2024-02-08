@@ -3,10 +3,12 @@
 #include <estd/string_view.h>
 
 // As per https://medium.com/@felixstridsberg/the-zip-file-format-6c8a160d1c34
+// and https://users.cs.jmu.edu/buchhofp/forensics/formats/pkzip.html
 
 #define EMBR_ZIP_CENTRAL_DIRECTORY_SIGNATURE    0x02014B50
 #define EMBR_ZIP_LOCAL_FILE_SIGNATURE           0x04034b50
 #define EMBR_ZIP_EOCD_SIGNATURE                 0x06054b50
+#define EMBR_ZIP_CRC_MAGIC                      0xDEBB20E3
 
 namespace embr { namespace zip { namespace header {
 
@@ -16,6 +18,34 @@ namespace embr { namespace zip { namespace header {
 // itself shows no sign of this.  Would be pretty useful to have that
 // TODO: 'bytes' units might come in handy here too
 
+namespace flags {
+
+// Not making enum class since regular enums seem to fare better in bitwise operations
+enum local_file : uint16_t
+{
+    encrypted_file =    0x0001,
+    compression1 =      0x0002,
+    compression2 =      0x0004,
+    data_descriptor =   0x0008
+};
+
+}
+
+// "The data descriptor is only present if bit 3 of the bit flag field is set"
+struct __attribute__((packed)) data_descriptor
+{
+    uint32_t crc;
+    uint32_t compressed_size;
+    uint32_t uncompressed_size;
+};
+
+struct __attribute__((packed)) extra_field
+{
+    uint16_t id;
+    uint16_t size;
+};
+
+
 struct __attribute__((packed)) local_file
 {
     uint32_t signature;
@@ -23,7 +53,7 @@ struct __attribute__((packed)) local_file
 
     struct __attribute__((packed)) header
     {
-        uint16_t flags;
+        flags::local_file flags;
         uint16_t compression_method;
         uint16_t time;
         uint16_t date;
@@ -38,6 +68,16 @@ struct __attribute__((packed)) local_file
         uint16_t extra;
 
     }   length;
+
+    uint32_t total_size() const
+    {
+        uint32_t sz = length.filename + length.extra + length.compressed;
+
+        if(h.flags & flags::data_descriptor)
+            sz += sizeof(data_descriptor);
+
+        return sz;
+    }
 
     //char filename[];
 
@@ -94,10 +134,23 @@ struct __attribute__((packed)) local_file : header::local_file
 {
     char data[N];
 
+    /// "name of the file including an optional relative path.
+    /// All slashes in the path should be forward slashes '/'."
+    /// @return
     estd::string_view filename()
     {
         // DEBT: https://github.com/malachi-iot/estdlib/issues/24
         return { data, (int16_t)length.filename };
+    }
+
+    template <class Impl>
+    void filename(const estd::detail::basic_string<Impl>& v)
+    {
+        length.filename = v.size();
+
+        memcpy(data, v.clock(), length.filename);
+
+        v.cunlock();
     }
 
     estd::span<uint8_t> extra()
