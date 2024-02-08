@@ -85,5 +85,12 @@ TEST_CASE("streambuf test", "[streambuf]")
 
         REQUIRE(sizeof(eocd) == 22);
         REQUIRE(sizeof(embr::zip::header::local_file) == 30);
+
+        embr::zip::header::layer1::local_file<64> lf{};
+
+        memcpy(lf.data, "hello", 5);
+        lf.length.filename = 5;
+
+        REQUIRE(lf.filename() == "hello");
     }
 }

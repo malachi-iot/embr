@@ -1,5 +1,7 @@
 #pragma once
 
+#include <estd/string_view.h>
+
 // As per https://medium.com/@felixstridsberg/the-zip-file-format-6c8a160d1c34
 
 #define EMBR_ZIP_CENTRAL_DIRECTORY_SIGNATURE    0x02014B50
@@ -37,7 +39,7 @@ struct __attribute__((packed)) local_file
 
     }   length;
 
-    char filename[];
+    //char filename[];
 
     // TBD: extra hangs off the end of filename
 };
@@ -61,7 +63,7 @@ struct __attribute__((packed)) central_directory
     uint32_t external_attributes;
     uint32_t local_file_offset;
 
-    char filename[];
+    //char filename[];
 };
 
 struct __attribute__((packed)) end_of_central_directory
@@ -84,5 +86,49 @@ struct __attribute__((packed)) end_of_central_directory
 };
 
 using EOCD = end_of_central_directory;
+
+namespace layer1 {
+
+template <uint16_t N>
+struct __attribute__((packed)) local_file : header::local_file
+{
+    char data[N];
+
+    estd::string_view filename()
+    {
+        // DEBT: https://github.com/malachi-iot/estdlib/issues/24
+        return { data, (int16_t)length.filename };
+    }
+
+    estd::span<uint8_t> extra()
+    {
+        return { data + length.filename, length.extra };
+    }
+};
+
+template <uint16_t N>
+struct __attribute__((packed)) central_directory : header::central_directory
+{
+    char data[N];
+
+    estd::string_view filename()
+    {
+        // DEBT: https://github.com/malachi-iot/estdlib/issues/24
+        return { data, (int16_t)length.filename };
+    }
+
+    estd::span<uint8_t> extra()
+    {
+        return { data + length.filename, length.extra };
+    }
+
+    estd::span<uint8_t> comment()
+    {
+        return { data + length.filename + length.extra, length.file_comment };
+    }
+};
+
+
+}
 
 }}}
