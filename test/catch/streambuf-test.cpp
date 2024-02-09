@@ -1,5 +1,7 @@
 #include <catch2/catch.hpp>
 
+#include <estd/sstream.h>
+
 #include <embr/streambuf.h>
 #include <embr/observer.h>
 #include <embr/internal/zip/ostreambuf.h>
@@ -81,7 +83,10 @@ TEST_CASE("streambuf test", "[streambuf]")
     }
     SECTION("zip")
     {
+        using ostream_type = estd::layer1::ostringstream<256, false>;
+        ostream_type out;
         embr::zip::header::EOCD eocd;
+        const ostream_type::streambuf_type::string_type& s = out.rdbuf()->str();
 
         REQUIRE(sizeof(eocd) == 22);
         REQUIRE(sizeof(embr::zip::header::local_file) == 30);
@@ -94,6 +99,21 @@ TEST_CASE("streambuf test", "[streambuf]")
 
         REQUIRE(lf.filename() == "hello");
 
-        //embr::zip::impl::container_ostreambuf<> out;
+        embr::zip::container_ostreambuf<ostream_type::streambuf_type&> zip(*out.rdbuf());
+
+        zip.file("hello", 0);
+
+        REQUIRE(s.length() == sizeof(embr::zip::header::local_file) + 5);
+
+        zip.sputn("1234", 4);
+
+        REQUIRE(s.length() == sizeof(embr::zip::header::local_file) + 9);
+
+        zip.finalize_file();
+
+        REQUIRE(s.length() ==
+            sizeof(embr::zip::header::local_file) + 9 +
+            sizeof(embr::zip::header::data_descriptor) + 5 +
+            sizeof(embr::zip::header::central_directory));
     }
 }
