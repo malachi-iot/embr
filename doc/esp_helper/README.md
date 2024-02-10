@@ -1,5 +1,7 @@
 # esp-helper esp-idf component
 
+Document v0.1
+
 # Detail
 
 ## 1. Design Goals
@@ -19,9 +21,13 @@ Given its lineage, the component is still somewhat clumsy.  In particular:
 
 ## 2. Usage
 
-### 2.1. Including into a project
+### 2.1. Inclusion in a project
 
 ### 2.2. Configuring
+
+Component registers itself via `Kconfig`, so regular `esp.py menuconfig` picks it up.
+
+For details, see [Kconfig settings](MenuConfig.md)
 
 ## 3. Opinions & Observations
 
