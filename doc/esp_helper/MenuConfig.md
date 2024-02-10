@@ -23,7 +23,7 @@ On selecting, some options are presented:
 
 ![helper config](img/menuconfig-helper.png)
 
-#### 2.2.1. WiFi Credentials
+#### 2.1. WiFi Credentials
 
 Pretty self explanatory.  Picked up automatically by `esp_helper`'s
 wifi_init_sta() method.
@@ -31,7 +31,7 @@ wifi_init_sta() method.
 Any more exotic provisioning is outside the scope
 of this mechanism, and may conflict.
 
-#### 2.2.2. Target Board
+#### 2.2. Target Board
 
 Many development boards are present.  If yours is available,
 select it.  Note that `idf.py set-target` is required to select
@@ -39,7 +39,9 @@ the desired ESP32 architecture, and boards are filtered by that.
 
 ![target board](img/menuconfig_s3_target.png)
 
-#### 2.2.3. SD Card
+#### 2.3. TWAI
+
+#### 2.4. SD Card
 
 Specifies SDMMC pin mappings.  Auto populates if board type is selected*
 
