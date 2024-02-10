@@ -7,11 +7,17 @@ Document v0.1
 Component registers itself via `Kconfig`, so regular `esp.py menuconfig` picks it up.
 Component is seen as:
 
-# 1. RESERVED
+![top level config](img/menuconfig1.png)
+
+# 1. Design Goals
+
+High level system-wide configuration pertaining to a particular board and its
+peripherals.
+
+Note that board selection in section 2.2.2. cascades out to `board::traits`
+mechanism.
 
 # 2. Usage
-
-![top level config](img/menuconfig1.png)
 
 On selecting, some options are presented:
 
