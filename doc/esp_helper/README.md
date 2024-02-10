@@ -11,6 +11,10 @@ Since then, it has grown into a useful utility for ESP32 app development overall
 
 ### 1.1. Features
 
+#### 1.1.1. WiFi assist
+
+#### 1.1.2. Board Traits
+
 ### 1.2. Caveats
 
 Given its lineage, the component is still somewhat clumsy.  In particular:
@@ -22,6 +26,8 @@ Given its lineage, the component is still somewhat clumsy.  In particular:
 ## 2. Usage
 
 ### 2.1. Inclusion in a project
+
+Clumsily, one must scoop up `components` folder from `test` directory.
 
 ### 2.2. Configuring
 

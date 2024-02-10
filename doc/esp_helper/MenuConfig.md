@@ -1,5 +1,7 @@
 # esp-helper: Kconfig
 
+Describes how to use the `Kconfig` feature of esp-helper
+
 Document v0.1
 
 # Detail
@@ -9,12 +11,15 @@ Component is seen as:
 
 ![top level config](img/menuconfig1.png)
 
+For overall `esp_helper` documentation,
+[click here](README.md)
+
 # 1. Design Goals
 
 High level system-wide configuration pertaining to a particular board and its
 peripherals.
 
-Note that board selection in section 2.2.2. cascades out to `board::traits`
+Note that board selection in section 2.2. cascades out to `board::traits`
 mechanism.
 
 # 2. Usage
