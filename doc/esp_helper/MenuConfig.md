@@ -46,11 +46,13 @@ the desired ESP32 architecture, and boards are filtered by that.
 
 #### 2.3. TWAI
 
+Sets TWAI (CAN) bus speed.  Intended for use by [embr::service::TWAI](../esp-idf/services/TWAI.md)
+
 #### 2.4. SD Card
 
 Specifies SDMMC pin mappings.  Auto populates if board type is selected*
 
-> This one is fiddly.  It only works right when target board from 2.2.1.
+> This one is fiddly.  It only works right when target board from 2.2.
 > is *already selected* when menuconfig starts.  When in doubt,
 > select desired target board and restart menuconfig.
 
