@@ -13,6 +13,7 @@ set(COMPONENT_SRCS
     ${COMPONENT_SRCS2}
     "dummy.cpp"
     "experimental.cpp"
+    memory.cpp
     power.cpp
     "timer.cpp")
 
