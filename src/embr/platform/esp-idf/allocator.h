@@ -10,8 +10,12 @@
 #define FEATURE_CAPS_ALLOCATOR_TRUE_MAX_SIZE 1
 #endif
 
+namespace embr { namespace esp_idf {
+
+// TODO: Consider the void = T trick that greater/less pull - can we do it here?
+
 template <class T, uint32_t caps, typename Size = uint32_t>
-struct caps_allocator
+struct allocator
 {
     ESTD_CPP_STD_VALUE_TYPE(T);
 
@@ -32,9 +36,11 @@ struct caps_allocator
     template <class T2>
     struct rebind
     {
-        using other = caps_allocator<T2, caps>;
+        using other = allocator<T2, caps>;
     };
 };
+
+}}
 
 namespace std {
 
@@ -49,9 +55,9 @@ namespace std {
 // However, that begins with c++23 so we can squeak by for now.
 
 template <class T, uint32_t caps>
-struct allocator_traits<caps_allocator<T, caps> >   // NOLINT - see above c++23 commentary
+struct allocator_traits<embr::esp_idf::allocator<T, caps> >   // NOLINT - see above c++23 commentary
 {
-    using allocator_type = caps_allocator<T, caps>;
+    using allocator_type = embr::esp_idf::allocator<T, caps>;
 
     ESTD_CPP_STD_VALUE_TYPE(T);
 
