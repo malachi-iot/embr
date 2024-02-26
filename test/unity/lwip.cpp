@@ -152,7 +152,13 @@ static void test_endpoint_equality()
 
 static void test_tcp()
 {
-    embr::lwip::experimental::tcp_pcb_ostreambuf<estd::char_traits<char> > sbimpl;
+    using namespace embr::lwip::experimental;
+    using oimpl = tcp_pcb_ostreambuf<estd::char_traits<char> >;
+    //using iimpl = tcp_pcb_istreambuf<estd::char_traits<char> >;
+    using osb_type = estd::detail::streambuf<oimpl>;
+    //using isb_type = estd::detail::streambuf<iimpl>;
+
+    osb_type osb;
 }
 
 #ifdef ESP_IDF_TESTING

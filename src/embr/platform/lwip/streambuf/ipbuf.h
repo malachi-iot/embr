@@ -13,16 +13,16 @@ namespace upgrading {
 
 namespace impl {
 
-template <class TCharTraits>
+template <class CharTraits>
 struct ipbuf_streambuf : 
-    pbuf_streambuf_base<TCharTraits>,
-    pbuf_current_base<TCharTraits>,
-    estd::internal::impl::in_pos_streambuf_base<TCharTraits>
+    pbuf_streambuf_base<CharTraits>,
+    pbuf_current_base<CharTraits>,
+    estd::internal::impl::in_pos_streambuf_base<CharTraits>
 {
-    typedef pbuf_streambuf_base<TCharTraits> pbuf_base_type;
-    typedef estd::internal::impl::in_pos_streambuf_base<TCharTraits> base_type;
-    typedef pbuf_current_base<TCharTraits> pbuf_current_base_type;
-    typedef TCharTraits traits_type;
+    typedef pbuf_streambuf_base<CharTraits> pbuf_base_type;
+    typedef estd::internal::impl::in_pos_streambuf_base<CharTraits> base_type;
+    typedef pbuf_current_base<CharTraits> pbuf_current_base_type;
+    typedef CharTraits traits_type;
 
     typedef Pbuf::pointer pbuf_pointer;
     typedef Pbuf::size_type size_type;

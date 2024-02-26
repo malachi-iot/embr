@@ -2,6 +2,8 @@
 
 #include <estd/internal/impl/streambuf.h>
 
+#include "ipbuf.h"
+
 #include "../tcp.h"
 
 // In development, so experimental
@@ -16,8 +18,10 @@ enum tcp_pcb_ostreambuf_mode
 
 template <class CharTraits, tcp_pcb_ostreambuf_mode = MODE_BUFFERED1,
     class Base = estd::internal::impl::streambuf_base<CharTraits> >
-class tcp_pcb_ostreambuf : Base
+class tcp_pcb_ostreambuf : public Base
 {
+    using base_type = Base;
+    
     tcp::Pcb pcb_;
 
 protected:
@@ -53,7 +57,8 @@ public:
 
 template <class CharTraits>
 class tcp_pcb_istreambuf :
-    public estd::internal::impl::streambuf_base<CharTraits>
+    //public estd::internal::impl::streambuf_base<CharTraits>
+    public impl::ipbuf_streambuf<CharTraits>
 {
     tcp::Pcb pcb_;
 
