@@ -2,6 +2,7 @@
 
 #include "streambuf/ipbuf.h"
 #include "streambuf/opbuf.h"
+#include "streambuf/tcp_pcb.h"
 //#include "legacy/streambuf.h"
 
 namespace embr { namespace lwip {

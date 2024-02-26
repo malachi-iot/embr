@@ -11,6 +11,8 @@
 #include <embr/platform/lwip/pbuf.h>
 #include <embr/platform/lwip/udp.h>
 
+#include <embr/platform/lwip/streambuf.h>
+
 // If LwIP loopback capability is present, then consider enabling our loopback tests
 #if LWIP_HAVE_LOOPIF && LWIP_LOOPBACK_MAX_PBUFS
 #ifndef FEATURE_EMBR_LWIP_LOOPBACK_TESTS
@@ -148,6 +150,11 @@ static void test_endpoint_equality()
     //TEST_ASSERT_TRUE(endpoint1 != endpoint3);
 }
 
+static void test_tcp()
+{
+    embr::lwip::experimental::tcp_pcb_ostreambuf<estd::char_traits<char> > sbimpl;
+}
+
 #ifdef ESP_IDF_TESTING
 TEST_CASE("lwip wrapper / general tests", "[lwip]")
 #else
@@ -160,6 +167,7 @@ void test_lwip()
     RUN_TEST(test_endpoint_configuration);
     RUN_TEST(test_rtos_loopback);
     RUN_TEST(test_endpoint_equality);
+    RUN_TEST(test_tcp);
 }
 
 #endif
