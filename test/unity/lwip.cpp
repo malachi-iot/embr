@@ -156,9 +156,11 @@ static void test_tcp()
     using oimpl = tcp_pcb_ostreambuf<estd::char_traits<char> >;
     //using iimpl = tcp_pcb_istreambuf<estd::char_traits<char> >;
     using osb_type = estd::detail::streambuf<oimpl>;
+    //using ostream_type = estd::detail::basic_ostream<osb_type>;
     //using isb_type = estd::detail::streambuf<iimpl>;
 
-    osb_type osb;
+    //ostream_type out;
+    osb_type out;
 }
 
 #ifdef ESP_IDF_TESTING
