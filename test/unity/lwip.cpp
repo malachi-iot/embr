@@ -151,31 +151,69 @@ static void test_endpoint_equality()
     //TEST_ASSERT_TRUE(endpoint1 != endpoint3);
 }
 
+using tcp_pcb_ostreambuf =
+    estd::detail::streambuf<
+        embr::lwip::experimental::tcp_pcb_ostreambuf<
+            estd::char_traits<char>
+        >
+    >;
+using tcp_pcb_istreambuf =
+    estd::detail::streambuf<
+        embr::lwip::experimental::tcp_pcb_istreambuf<
+            estd::char_traits<char>
+        >
+    >;
+using tcp_pcb_ostream = estd::detail::basic_ostream<tcp_pcb_ostreambuf>;
+using tcp_pcb_istream = estd::detail::basic_istream<tcp_pcb_istreambuf>;
+
+static err_t test_tcp_accept(void* arg, struct tcp_pcb* newpcb, err_t err)
+{
+    // newpcb = "The new connection pcb"
+
+    tcp_pcb_ostream out(newpcb);
+
+    out << "hello";
+
+    return ERR_OK;
+}
+
+static err_t test_tcp_recv(void* arg, struct tcp_pcb* pcb, struct pbuf* p, err_t err)
+{
+    return ERR_OK;
+}
+
+
+static err_t test_tcp_connected(void* arg, struct tcp_pcb* pcb, err_t err)
+{
+    // Incomplete type
+    //tcp_pcb_istream in(pcb);
+
+    // Needs a pbuf but we don't have that yet
+    //tcp_pcb_istreambuf in(pcb);
+
+    return ERR_OK;
+}
+
 static void test_tcp()
 {
     embr::lwip::internal::Endpoint<>
         endpoint_client(&loopback_addr, 10000),
         endpoint_server(&loopback2, 80);
 
-    using namespace embr::lwip::experimental;
     embr::lwip::tcp::Pcb pcb_client, pcb_server;
 
     pcb_server.create();
     pcb_server.bind(endpoint_server);
     pcb_server.listen(10);
+    pcb_server.accept(test_tcp_accept);
 
-    using oimpl = tcp_pcb_ostreambuf<estd::char_traits<char> >;
-    //using iimpl = tcp_pcb_istreambuf<estd::char_traits<char> >;
-    using osb_type = estd::detail::streambuf<oimpl>;
-    using ostream_type = estd::detail::basic_ostream<osb_type>;
-    //using isb_type = estd::detail::streambuf<iimpl>;
+    pcb_client.create();
+    pcb_client.connect(endpoint_server, test_tcp_connected);
 
-    ostream_type out(pcb_server);
-    //osb_type out;
-
-    out << "hello";
+    // Now, must wait for connect/accept chain to complete
 
     pcb_server.close();
+    pcb_client.close();
 }
 
 #ifdef ESP_IDF_TESTING

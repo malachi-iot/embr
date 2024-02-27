@@ -111,6 +111,7 @@ class tcp_pcb_istreambuf :
     }
 
 public:
+    constexpr tcp_pcb_istreambuf(tcp::Pcb pcb) : pcb_{pcb} {}
 };
 
 }}}

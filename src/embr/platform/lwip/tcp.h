@@ -8,6 +8,7 @@ extern "C" {
 }
 
 #include <estd/internal/platform.h>
+#include "../../internal/unique.h"
 
 #ifndef FEATURE_EMBR_LWIP_TCP_PCB_STRICT
 #define FEATURE_EMBR_LWIP_TCP_PCB_STRICT 1
@@ -76,6 +77,17 @@ public:
         return r;
     }
 
+    err_t connect(const ip_addr_t* addr, uint16_t port, tcp_connected_fn connected)
+    {
+        return tcp_connect(pcb, addr, port, connected);
+    }
+
+    template <bool v>
+    err_t connect(const embr::lwip::internal::Endpoint<v>& ep, tcp_connected_fn connected)
+    {
+        return tcp_connect(pcb, ep.address(), ep.port(), connected);
+    }
+
     void arg(void* v) const
     {
         tcp_arg(pcb, v);
@@ -129,6 +141,17 @@ public:
         tcp_recved(pcb, len);
     }
 
+    err_t shutdown(int shut_rx, int shut_tx)
+    {
+        const err_t r = tcp_shutdown(pcb, shut_rx, shut_tx);
+
+#if FEATURE_EMBR_LWIP_TCP_PCB_STRICT
+        if(r == ERR_OK) pcb = nullptr;
+#endif
+
+        return r;
+    }
+
     constexpr uint16_t sndbuf() const
     {
         return tcp_sndbuf(pcb);
@@ -140,4 +163,16 @@ public:
     }
 };
 
-}}}
+}}
+
+namespace experimental {
+
+template<>
+struct Unique<lwip::tcp::Pcb>
+{
+
+};
+
+}
+
+}
