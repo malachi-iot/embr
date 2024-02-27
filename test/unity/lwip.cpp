@@ -12,6 +12,7 @@
 #include <embr/platform/lwip/udp.h>
 
 #include <embr/platform/lwip/streambuf.h>
+#include <estd/ostream.h>
 
 // If LwIP loopback capability is present, then consider enabling our loopback tests
 #if LWIP_HAVE_LOOPIF && LWIP_LOOPBACK_MAX_PBUFS
@@ -152,15 +153,29 @@ static void test_endpoint_equality()
 
 static void test_tcp()
 {
+    embr::lwip::internal::Endpoint<>
+        endpoint_client(&loopback_addr, 10000),
+        endpoint_server(&loopback2, 80);
+
     using namespace embr::lwip::experimental;
+    embr::lwip::tcp::Pcb pcb_client, pcb_server;
+
+    pcb_server.create();
+    pcb_server.bind(endpoint_server);
+    pcb_server.listen(10);
+
     using oimpl = tcp_pcb_ostreambuf<estd::char_traits<char> >;
     //using iimpl = tcp_pcb_istreambuf<estd::char_traits<char> >;
     using osb_type = estd::detail::streambuf<oimpl>;
-    //using ostream_type = estd::detail::basic_ostream<osb_type>;
+    using ostream_type = estd::detail::basic_ostream<osb_type>;
     //using isb_type = estd::detail::streambuf<iimpl>;
 
-    //ostream_type out;
-    osb_type out;
+    ostream_type out(pcb_server);
+    //osb_type out;
+
+    out << "hello";
+
+    pcb_server.close();
 }
 
 #ifdef ESP_IDF_TESTING

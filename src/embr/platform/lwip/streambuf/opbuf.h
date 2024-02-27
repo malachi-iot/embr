@@ -15,16 +15,16 @@ namespace upgrading {
 
 namespace impl {
 
-template <class TCharTraits, unsigned grow_by = EMBR_LWIP_PBUF_OSTREAMBUF_GROW_BY>
+template <class CharTraits, unsigned grow_by = EMBR_LWIP_PBUF_OSTREAMBUF_GROW_BY>
 struct opbuf_streambuf : 
-    pbuf_streambuf_base<TCharTraits>,
-    pbuf_current_base<TCharTraits>,
-    estd::internal::impl::out_pos_streambuf_base<TCharTraits>
+    pbuf_streambuf_base<CharTraits>,
+    pbuf_current_base<CharTraits>,
+    estd::internal::impl::out_pos_streambuf_base<CharTraits>
 {
-    typedef pbuf_streambuf_base<TCharTraits> pbuf_base_type;
-    typedef estd::internal::impl::out_pos_streambuf_base<TCharTraits> base_type;
-    typedef pbuf_current_base<TCharTraits> pbuf_current_base_type;
-    typedef TCharTraits traits_type;
+    typedef pbuf_streambuf_base<CharTraits> pbuf_base_type;
+    typedef estd::internal::impl::out_pos_streambuf_base<CharTraits> base_type;
+    typedef pbuf_current_base<CharTraits> pbuf_current_base_type;
+    typedef CharTraits traits_type;
 
     typedef typename traits_type::char_type char_type;
     typedef typename traits_type::int_type int_type;
