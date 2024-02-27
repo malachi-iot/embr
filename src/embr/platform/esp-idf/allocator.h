@@ -38,6 +38,15 @@ struct allocator
     {
         using other = allocator<T2, caps>;
     };
+
+    allocator() = default;
+    allocator(const allocator&) = default;
+
+    // This would be tricky if we weren't stateless, but like they say:
+    // "Since the default allocator is stateless, the constructors have no visible effect."
+    // https://en.cppreference.com/w/cpp/memory/allocator/allocator
+    template <class U>
+    constexpr allocator(const allocator<U, caps, Size>&) {};
 };
 
 }}
