@@ -200,18 +200,33 @@ static void test_tcp()
         endpoint_client(&loopback_addr, 10000),
         endpoint_server(&loopback2, 80);
 
-    embr::lwip::tcp::Pcb pcb_client, pcb_server;
+    embr::lwip::tcp::Pcb
+        // DEBT: Explicitly specifying nullptr as we work out auto_null constructor
+        pcb_client(nullptr),
+        pcb_server(nullptr);
 
     pcb_server.create();
+
+    TEST_ASSERT_TRUE(pcb_server.valid());
+
     pcb_server.bind(endpoint_server);
     pcb_server.listen(10);
     pcb_server.accept(test_tcp_accept);
 
     pcb_client.create();
+
+    TEST_ASSERT_TRUE(pcb_client.valid());
+
     pcb_client.bind(endpoint_client);
     pcb_client.connect(endpoint_server, test_tcp_connected);
 
     // Now, must wait for connect/accept chain to complete
+
+    TEST_ASSERT_TRUE(pcb_client.valid());
+    TEST_ASSERT_TRUE(pcb_server.valid());
+
+    // Crashes here.
+    // Are we seeing https://savannah.nongnu.org/bugs/?62141 ?
 
     pcb_server.close();
     pcb_client.close();

@@ -29,6 +29,7 @@ protected:
     pointer pcb;
 
 public:
+    // DEBT: account for auto_null in default constructor
     PcbBase() = default;
     PcbBase(pointer pcb) : pcb(pcb) {}
     PcbBase(pointer pcb, void* arg) : pcb(pcb)
@@ -156,6 +157,8 @@ public:
     {
         return tcp_sndbuf(pcb);
     }
+
+    constexpr bool valid() const { return pcb != nullptr; }
 
     err_t write(const void* buf, uint16_t len, uint8_t flags) const
     {
