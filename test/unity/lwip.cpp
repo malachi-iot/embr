@@ -168,6 +168,10 @@ using tcp_pcb_istream = estd::detail::basic_istream<tcp_pcb_istreambuf>;
 
 static err_t test_tcp_accept(void* arg, struct tcp_pcb* newpcb, err_t err)
 {
+    const char* TAG = "test_tcp_accept";
+
+    ESP_LOGI(TAG, "entry");
+
     // newpcb = "The new connection pcb"
 
     tcp_pcb_ostream out(newpcb);
@@ -179,12 +183,20 @@ static err_t test_tcp_accept(void* arg, struct tcp_pcb* newpcb, err_t err)
 
 static err_t test_tcp_recv(void* arg, struct tcp_pcb* pcb, struct pbuf* p, err_t err)
 {
+    const char* TAG = "test_tcp_recv";
+
+    ESP_LOGI(TAG, "entry");
+
     return ERR_OK;
 }
 
 
 static err_t test_tcp_connected(void* arg, struct tcp_pcb* pcb, err_t err)
 {
+    const char* TAG = "test_tcp_connected";
+
+    ESP_LOGI(TAG, "entry");
+
     // Incomplete type
     //tcp_pcb_istream in(pcb);
 
@@ -218,6 +230,7 @@ static void test_tcp()
     TEST_ASSERT_TRUE(pcb_client.valid());
 
     pcb_client.bind(endpoint_client);
+    pcb_client.recv(test_tcp_recv);
     pcb_client.connect(endpoint_server, test_tcp_connected);
 
     // Now, must wait for connect/accept chain to complete
