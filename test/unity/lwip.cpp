@@ -208,6 +208,7 @@ static void test_tcp()
     pcb_server.accept(test_tcp_accept);
 
     pcb_client.create();
+    pcb_client.bind(endpoint_client);
     pcb_client.connect(endpoint_server, test_tcp_connected);
 
     // Now, must wait for connect/accept chain to complete

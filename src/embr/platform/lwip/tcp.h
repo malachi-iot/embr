@@ -14,24 +14,29 @@ extern "C" {
 #define FEATURE_EMBR_LWIP_TCP_PCB_STRICT 1
 #endif
 
+// Lots of ads, lots of information
+// https://lwip.fandom.com/wiki/Raw/TCP
+
 namespace embr { namespace lwip { namespace tcp {
 
-class Pcb
+template <bool auto_null = true>
+class PcbBase
 {
 public:
     typedef struct tcp_pcb* pointer;
 
-private:
+protected:
     pointer pcb;
 
 public:
-    Pcb() = default;
-    Pcb(pointer pcb) : pcb(pcb) {}
-    Pcb(pointer pcb, void* arg) : pcb(pcb)
+    PcbBase() = default;
+    PcbBase(pointer pcb) : pcb(pcb) {}
+    PcbBase(pointer pcb, void* arg) : pcb(pcb)
     {
         tcp_arg(pcb, arg);
     }
 
+    // DEBT: Not same convention that udp::Pcb used
     void create()
     {
         pcb = tcp_new();
@@ -45,9 +50,8 @@ public:
     void abort()
     {
         tcp_abort(pcb);
-#if FEATURE_EMBR_LWIP_TCP_PCB_STRICT
-        pcb = nullptr;
-#endif
+
+        if(auto_null)   pcb = nullptr;
     }
 
     void accept(tcp_accept_fn accept) const
@@ -70,9 +74,7 @@ public:
     {
         const err_t r = tcp_close(pcb);
 
-#if FEATURE_EMBR_LWIP_TCP_PCB_STRICT
-        if(r == ERR_OK) pcb = nullptr;
-#endif
+        if(auto_null && r == ERR_OK) pcb = nullptr;
 
         return r;
     }
@@ -145,9 +147,7 @@ public:
     {
         const err_t r = tcp_shutdown(pcb, shut_rx, shut_tx);
 
-#if FEATURE_EMBR_LWIP_TCP_PCB_STRICT
-        if(r == ERR_OK) pcb = nullptr;
-#endif
+        if(auto_null && r == ERR_OK) pcb = nullptr;
 
         return r;
     }
@@ -163,14 +163,34 @@ public:
     }
 };
 
+using Pcb = PcbBase<FEATURE_EMBR_LWIP_TCP_PCB_STRICT>;
+
 }}
 
 namespace experimental {
 
 template<>
-struct Unique<lwip::tcp::Pcb>
+struct Unique<lwip::tcp::Pcb> : lwip::tcp::PcbBase<true>
 {
+    using base_type = lwip::tcp::PcbBase<true>;
 
+    Unique() : base_type(tcp_new()) {}
+
+    template <bool v>
+    Unique(const lwip::internal::Endpoint<v>& bind_to) :
+        base_type(tcp_new())
+    {
+        base_type::bind(bind_to);
+    }
+
+    Unique(Unique&& move_from) : base_type{move_from}
+    {
+        move_from.pcb = nullptr;
+    }
+    ~Unique()
+    {
+        if(base_type::pcb)    base_type::close();
+    }
 };
 
 }

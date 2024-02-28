@@ -116,6 +116,9 @@ public:
 
     void disconnect() { udp_disconnect(pcb); }
 
+    // DEBT: Consider removing this and expecting explicit 'udp_new'
+    // from callers.  'create' is a murky maradigm (should it be static
+    // or not?)
     inline static pcb_pointer create()
     {
         return udp_new();
