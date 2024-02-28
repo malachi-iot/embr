@@ -42,9 +42,9 @@ public:
         pcb = tcp_new();
     }
 
-    void create(uint8_t type)
+    void create(lwip_ip_addr_type type)
     {
-        pcb = tcp_new_ip_type(type);
+        pcb = tcp_new_ip_type((uint8_t)type);
     }
 
     void abort()

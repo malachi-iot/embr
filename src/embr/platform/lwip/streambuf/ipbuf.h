@@ -115,12 +115,12 @@ public:
     }
 
 #ifdef __cpp_variadic_templates
-        template <class ...TArgs>
-        ipbuf_streambuf(TArgs&&... args) :
-            pbuf_base_type(std::forward<TArgs>(args)...),
-            pbuf_current_base_type(pbuf_base_type::pbuf)
-        {
-        }
+    template <class ...TArgs>
+    ipbuf_streambuf(TArgs&&... args) :
+        pbuf_base_type(std::forward<TArgs>(args)...),
+        pbuf_current_base_type(pbuf_base_type::pbuf)
+    {
+    }
 #endif
 };
 

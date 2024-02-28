@@ -32,12 +32,18 @@ protected:
 #endif
     size_type size() const { return pbuf.length(); }
 
+    // EXPERIMENTAL - permit a pseudo-non-init
+    pbuf_streambuf_base() :
+        // DEBT: This brute force bypasses the awkward v1::Pbuf RAII mechanism
+        pbuf((Pbuf::pointer) nullptr, false)
+    {}
+
 #ifdef __cpp_variadic_templates
-        template <class ...TArgs>
-        pbuf_streambuf_base(TArgs&&... args) :
-                pbuf(std::forward<TArgs>(args)...)
-        {
-        }
+    template <class ...TArgs>
+    pbuf_streambuf_base(TArgs&&... args) :
+            pbuf(std::forward<TArgs>(args)...)
+    {
+    }
 #endif
 
 public:
@@ -77,6 +83,9 @@ protected:
         pbuf_current = next;
         return true;
     }
+
+    // NOTE: Be careful with this one, explicit init will be needed
+    pbuf_current_base() = default;
 
 public:
     pbuf_current_base(const PbufBase& pbuf) :

@@ -189,7 +189,7 @@ static err_t test_tcp_connected(void* arg, struct tcp_pcb* pcb, err_t err)
     //tcp_pcb_istream in(pcb);
 
     // Needs a pbuf but we don't have that yet
-    //tcp_pcb_istreambuf in(pcb);
+    tcp_pcb_istreambuf in(pcb);
 
     return ERR_OK;
 }

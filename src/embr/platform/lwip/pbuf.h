@@ -217,6 +217,10 @@ struct Pbuf : PbufBase
 
 #ifdef FEATURE_CPP_INLINE_NAMESPACE
 }   // v1
+
+inline namespace v2 {
+
+}
 #endif
 
 }}
