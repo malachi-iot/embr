@@ -151,6 +151,9 @@ static void test_endpoint_equality()
     //TEST_ASSERT_TRUE(endpoint1 != endpoint3);
 }
 
+// Some help from
+// https://stackoverflow.com/questions/76945727/lwip-stack-modified-echo-server-example-sending-data
+
 using tcp_pcb_ostreambuf =
     estd::detail::streambuf<
         embr::lwip::experimental::tcp_pcb_ostreambuf<
@@ -178,14 +181,32 @@ static err_t test_tcp_accept(void* arg, struct tcp_pcb* newpcb, err_t err)
 
     out << "hello";
 
+    ESP_LOGI(TAG, "exit");
+
     return ERR_OK;
 }
 
-static err_t test_tcp_recv(void* arg, struct tcp_pcb* pcb, struct pbuf* p, err_t err)
+static err_t test_tcp_client_recv(void* arg, struct tcp_pcb* _pcb, struct pbuf* p, err_t err)
 {
     const char* TAG = "test_tcp_recv";
+    embr::lwip::tcp::Pcb pcb(_pcb);
+    embr::lwip::ipbuf_streambuf in(p);
+    char buf[32];
+    int avail = in.in_avail();
 
-    ESP_LOGI(TAG, "entry");
+    pcb.recved(avail);
+
+    int count = in.sgetn(buf, 32);
+    TEST_ASSERT_LESS_THAN(32, count);
+    TEST_ASSERT_EQUAL(avail, count);
+    // FIX: Not advancing input sequence
+    //TEST_ASSERT_EQUAL(0, in.in_avail());
+
+    buf[count]  = 0;
+
+    ESP_LOGI(TAG, "p=%p, buf=%s (%d)", p, buf, count);
+
+    pbuf_free(p);
 
     return ERR_OK;
 }
@@ -195,13 +216,19 @@ static err_t test_tcp_connected(void* arg, struct tcp_pcb* pcb, err_t err)
 {
     const char* TAG = "test_tcp_connected";
 
+    embr::lwip::tcp::Pcb connection(pcb);
+
     ESP_LOGI(TAG, "entry");
+
+    connection.recv(test_tcp_client_recv);
 
     // Incomplete type
     //tcp_pcb_istream in(pcb);
 
     // Needs a pbuf but we don't have that yet
     tcp_pcb_istreambuf in(pcb);
+
+    ESP_LOGI(TAG, "exit");
 
     return ERR_OK;
 }
@@ -230,8 +257,12 @@ static void test_tcp()
     TEST_ASSERT_TRUE(pcb_client.valid());
 
     pcb_client.bind(endpoint_client);
-    pcb_client.recv(test_tcp_recv);
+    //pcb_client.recv(test_tcp_client_recv);
+
     pcb_client.connect(endpoint_server, test_tcp_connected);
+
+    //return;
+
 
     // Now, must wait for connect/accept chain to complete
 
@@ -241,8 +272,8 @@ static void test_tcp()
     // Crashes here.
     // Are we seeing https://savannah.nongnu.org/bugs/?62141 ?
 
-    pcb_server.close();
-    pcb_client.close();
+    //pcb_server.close();
+    //pcb_client.close();
 }
 
 #ifdef ESP_IDF_TESTING
