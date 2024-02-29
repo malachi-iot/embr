@@ -1,5 +1,7 @@
 #include "unit-test.h"
 
+#include <estd/thread.h>
+
 // DEBT: Re-enable this on Arduino when lwip is present
 #if !defined(ARDUINO) && defined(ESP_PLATFORM) || defined(EMBR_PICOW_BOARD)
 
@@ -169,6 +171,9 @@ using tcp_pcb_istreambuf =
 using tcp_pcb_ostream = estd::detail::basic_ostream<tcp_pcb_ostreambuf>;
 using tcp_pcb_istream = estd::detail::basic_istream<tcp_pcb_istreambuf>;
 
+volatile bool spinwait = false;
+static estd::layer1::string<32> tcp_buf;
+
 static err_t test_tcp_accept(void* arg, struct tcp_pcb* newpcb, err_t err)
 {
     const char* TAG = "test_tcp_accept";
@@ -201,11 +206,12 @@ static err_t test_tcp_client_recv(void* arg, struct tcp_pcb* _pcb, struct pbuf* 
     {
         pcb.close();
         pcb.recv(nullptr);  // Not sure this matters
+        spinwait = true;
         return ERR_OK;
     }
 
     embr::lwip::ipbuf_streambuf in(p);
-    char buf[32];
+    char* buf = tcp_buf.data();
     int avail = in.in_avail();
 
     pcb.recved(avail);
@@ -216,7 +222,7 @@ static err_t test_tcp_client_recv(void* arg, struct tcp_pcb* _pcb, struct pbuf* 
     // FIX: Not advancing input sequence
     //TEST_ASSERT_EQUAL(0, in.in_avail());
 
-    buf[count]  = 0;
+    buf[count] = 0;
 
     ESP_LOGI(TAG, "p=%p, buf=%s (%d)", p, buf, count);
 
@@ -295,6 +301,16 @@ static void test_tcp()
     // nasty crashes occur ... at best
     tcpip_callback(test_tcp, nullptr);
     //test_tcp(nullptr);
+
+    // Don't spinwait in the thunked function.  If this wasn't a unit test we would use
+    // a semaphore etc.
+
+    while(spinwait == false)
+    {
+        estd::this_thread::sleep_for(estd::chrono::milliseconds(200));
+    }
+
+    TEST_ASSERT_TRUE(tcp_buf == "hello");
 }
 
 #ifdef ESP_IDF_TESTING
