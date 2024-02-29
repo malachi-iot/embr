@@ -60,6 +60,16 @@ public:
         tcp_accept(pcb, accept);
     }
 
+    void backlog_accepted() const
+    {
+        tcp_backlog_accepted(pcb);
+    }
+
+    void backlog_delayed() const
+    {
+        tcp_backlog_delayed(pcb);
+    }
+
     err_t bind(const ip_addr_t* addr, uint16_t port) const
     {
         return tcp_bind(pcb, addr, port);
@@ -69,6 +79,11 @@ public:
     err_t bind(const embr::lwip::internal::Endpoint<v>& ep)
     {
         return tcp_bind(pcb, ep.address(), ep.port());
+    }
+
+    void bind(const struct netif* netif)
+    {
+        tcp_bind_netif(pcb, netif);
     }
 
     err_t close()
