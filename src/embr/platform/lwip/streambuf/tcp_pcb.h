@@ -34,10 +34,14 @@ private:
 
     // amount of buffer space left we can write to
     // DEBT: Look into formalizing xout_avail() or similar
+    // TODO: Really need to thunk this, but usually should be OK.  However,
+    // when it's not, could cause some serious head-scratching
     constexpr int_type xout_avail() const
     {
         return pcb_.sndbuf();
     }
+
+    // TODO: May need to bring in delegate_queue to thunk sensibly
 
     // https://lists.gnu.org/archive/html/lwip-users/2009-11/msg00018.html
     // PSH flag is probably ignored, but we'll be optimistic and say DON'T
