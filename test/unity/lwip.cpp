@@ -181,7 +181,11 @@ static err_t test_tcp_accept(void* arg, struct tcp_pcb* newpcb, err_t err)
 
     out << "hello";
 
+    out.flush();
+
     ESP_LOGI(TAG, "exit");
+
+    tcp_close(newpcb);
 
     return ERR_OK;
 }
@@ -190,6 +194,14 @@ static err_t test_tcp_client_recv(void* arg, struct tcp_pcb* _pcb, struct pbuf* 
 {
     const char* TAG = "test_tcp_recv";
     embr::lwip::tcp::Pcb pcb(_pcb);
+
+    if(p == nullptr)
+    {
+        pcb.close();
+        pcb.recv(nullptr);
+        return ERR_OK;
+    }
+
     embr::lwip::ipbuf_streambuf in(p);
     char buf[32];
     int avail = in.in_avail();
@@ -218,8 +230,9 @@ static err_t test_tcp_connected(void* arg, struct tcp_pcb* pcb, err_t err)
 
     embr::lwip::tcp::Pcb connection(pcb);
 
-    ESP_LOGI(TAG, "entry");
+    ESP_LOGI(TAG, "entry: pcb=%p, err=%d", pcb, err);
 
+    //connection.arg(nullptr);  doesn't matter
     connection.recv(test_tcp_client_recv);
 
     // Incomplete type
@@ -249,16 +262,16 @@ static void test_tcp()
     TEST_ASSERT_TRUE(pcb_server.valid());
 
     pcb_server.bind(endpoint_server);
-    pcb_server.listen(10);
+    TEST_ASSERT_TRUE(pcb_server.listen());
     pcb_server.accept(test_tcp_accept);
+
+    //pcb_server.arg(nullptr);  // doesn't matter
 
     pcb_client.create();
 
     TEST_ASSERT_TRUE(pcb_client.valid());
 
     pcb_client.bind(endpoint_client);
-    //pcb_client.recv(test_tcp_client_recv);
-
     pcb_client.connect(endpoint_server, test_tcp_connected);
 
     //return;
@@ -272,8 +285,9 @@ static void test_tcp()
     // Crashes here.
     // Are we seeing https://savannah.nongnu.org/bugs/?62141 ?
 
-    //pcb_server.close();
-    //pcb_client.close();
+    //pcb_server.accept(nullptr);   // makes no difference
+    pcb_server.close();
+    pcb_client.close();
 }
 
 #ifdef ESP_IDF_TESTING

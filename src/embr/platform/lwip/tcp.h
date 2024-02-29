@@ -101,7 +101,7 @@ public:
         tcp_err(pcb, efn);
     }
 
-    bool listen(uint8_t backlog)
+    bool listen(uint8_t backlog = TCP_DEFAULT_LISTEN_BACKLOG)
     {
         tcp_pcb* reallocated = tcp_listen_with_backlog(pcb, backlog);
 
