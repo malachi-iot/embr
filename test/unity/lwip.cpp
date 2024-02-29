@@ -248,7 +248,7 @@ static err_t test_tcp_connected(void* arg, struct tcp_pcb* pcb, err_t err)
     return ERR_OK;
 }
 
-static void test_tcp()
+static void test_tcp(void *)
 {
     embr::lwip::internal::Endpoint<>
         endpoint_client(&loopback_addr, 10000),
@@ -284,12 +284,17 @@ static void test_tcp()
     TEST_ASSERT_TRUE(pcb_client.valid());
     TEST_ASSERT_TRUE(pcb_server.valid());
 
-    // Crashes here.
-    // Are we seeing https://savannah.nongnu.org/bugs/?62141 ?
+    // Don't close yet since we are running on a deferred call
+    //pcb_server.close();
+    //pcb_client.close();
+}
 
-    //pcb_server.accept(nullptr);   // makes no difference
-    pcb_server.close();
-    pcb_client.close();
+static void test_tcp()
+{
+    // Remember tcp_pcb "raw" APIs must be thunked onto tcp task! otherwise
+    // nasty crashes occur ... at best
+    tcpip_callback(test_tcp, nullptr);
+    //test_tcp(nullptr);
 }
 
 #ifdef ESP_IDF_TESTING

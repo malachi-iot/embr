@@ -6,6 +6,7 @@ set(COMPONENT_SRCS2
     ${SRCS_PATH}/unity/lwip.cpp
     ${SRCS_PATH}/unity/observer.cpp
     ${SRCS_PATH}/unity/pbuf.cpp
+    ${SRCS_PATH}/unity/setup.cpp
     ${SRCS_PATH}/unity/transport.cpp
     ${SRCS_PATH}/unity/word.cpp)
 
