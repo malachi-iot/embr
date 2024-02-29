@@ -181,11 +181,13 @@ static err_t test_tcp_accept(void* arg, struct tcp_pcb* newpcb, err_t err)
 
     out << "hello";
 
-    out.flush();
+    out.flush();    // calls pubsync() -> tcp_output()
 
     ESP_LOGI(TAG, "exit");
 
-    tcp_close(newpcb);
+    out.rdbuf()->close();
+
+    //tcp_close(newpcb);
 
     return ERR_OK;
 }
@@ -198,7 +200,7 @@ static err_t test_tcp_client_recv(void* arg, struct tcp_pcb* _pcb, struct pbuf* 
     if(p == nullptr)
     {
         pcb.close();
-        pcb.recv(nullptr);
+        pcb.recv(nullptr);  // Not sure this matters
         return ERR_OK;
     }
 

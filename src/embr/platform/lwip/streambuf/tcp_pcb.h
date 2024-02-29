@@ -39,6 +39,9 @@ private:
         return pcb_.sndbuf();
     }
 
+    // https://lists.gnu.org/archive/html/lwip-users/2009-11/msg00018.html
+    // PSH flag is probably ignored, but we'll be optimistic and say DON'T
+    // push for individual characters
     int_type sputc_ll(char_type c)
     {
         return pcb_.write(&c, 1, TCP_WRITE_FLAG_COPY | TCP_WRITE_FLAG_MORE) == 
@@ -64,9 +67,6 @@ public:
         pcb_{copy_from}
     {}
 
-    // https://lists.gnu.org/archive/html/lwip-users/2009-11/msg00018.html
-    // PSH flag is probably ignored, but we'll be optimistic and say DON'T
-    // push for individual characters
     int_type sputc(char c)
     {
         if(xout_avail() == 0)
@@ -83,6 +83,14 @@ public:
 
         pcb_.write(buf, len, TCP_WRITE_FLAG_COPY);
         return len;
+    }
+
+
+    // EXPERIMENTAL
+    // Not sure it's clean to do this here... probably OK
+    void close()
+    {
+        pcb_.close();
     }
 };
 

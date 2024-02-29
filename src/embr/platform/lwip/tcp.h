@@ -159,6 +159,11 @@ public:
         tcp_recved(pcb, len);
     }
 
+    void sent(tcp_sent_fn sent)
+    {
+        tcp_sent(pcb, sent);
+    }
+
     err_t shutdown(int shut_rx, int shut_tx)
     {
         const err_t r = tcp_shutdown(pcb, shut_rx, shut_tx);
