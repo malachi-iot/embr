@@ -16,6 +16,10 @@
 #include <embr/platform/lwip/streambuf.h>
 #include <estd/ostream.h>
 
+#if ESTD_OS_FREERTOS
+#include <estd/port/freertos/event_groups.h>
+#endif
+
 // If LwIP loopback capability is present, then consider enabling our loopback tests
 #if LWIP_HAVE_LOOPIF && LWIP_LOOPBACK_MAX_PBUFS
 #ifndef FEATURE_EMBR_LWIP_LOOPBACK_TESTS
@@ -312,9 +316,52 @@ using netconn_istreambuf =
 using netconn_ostream = estd::detail::basic_ostream<netconn_ostreambuf>;
 using netconn_istream = estd::detail::basic_istream<netconn_istreambuf>;
 
+// If we're really lucky, maybe this can upgrade to streambuf_rx_event for system-wide
+// goodness
+#if ESTD_OS_FREERTOS
+estd::freertos::event_group<true> netconn_rx_event;
+estd::freertos::event_group<true> netconn_err_event;
+#endif
+
+
+// DEBT: Use estd::intrusive_forward_list once it stabalizes
+embr::lwip::experimental::netconn_streambuf_untemplated* base_netconn = nullptr;
+
+
+// NOTE: This whole notion is based on guidance from
+// https://doc.ecoscentric.com/ref/lwip-api-sequential-netconn-new-with-callback.html
+// https://lists.gnu.org/archive/html/lwip-devel/2008-02/msg00048.html
+// However, LwIP has potentially conflicting instruction:
+// https://lwip.fandom.com/wiki/Netconn_API
+// It's starting to seem that the meaning of the event changes depending on the operation
+static void eval_netconn_callback(
+    embr::lwip::experimental::netconn_streambuf_untemplated* n,
+    netconn_evt evt)
+{
+    const unsigned rtos_evt = 1 << n->event_id();
+#if ESTD_OS_FREERTOS
+    if(evt == NETCONN_EVT_RCVMINUS) netconn_rx_event.set_bits(rtos_evt);
+    else if(evt == NETCONN_EVT_ERROR) netconn_err_event.set_bits(rtos_evt);
+#endif
+}
+
+// Re-associates netconn back to our streambuf + stream framework
 static void test_netconn_callback(netconn* nc, netconn_evt evt, uint16_t len)
 {
+    using node_type = embr::lwip::experimental::netconn_streambuf_untemplated*;
 
+    node_type current = base_netconn;
+
+    while(current != nullptr)
+    {
+        if(current->is_match(nc))
+        {
+            eval_netconn_callback(current, evt);
+            return;
+        }
+
+        current = current->next_;
+    }
 }
 
 
@@ -334,15 +381,21 @@ static void test_tcp_netconn()
 
     TEST_ASSERT_EQUAL(ERR_OK, r);
 
-    netconn* _conn_accept;
-
-    r = conn_server.accept(&_conn_accept);
+    // NOTE: callback is copied from conn_server as per
+    // https://www.mail-archive.com/lwip-users@nongnu.org/msg20003.html
+    // Also - "we live with having one callback for all types of connections in the socket layer."
+    // which I'd put at 80% true, but true enough that it looks like we need one single callback
+    // which cascades out through a linked list through all participating streambufs, since
+    // there doesn't appear to be an 'arg' parameter
+    embr::lwip::Netconn conn_accept;
+    r = conn_server.accept(&conn_accept);
     TEST_ASSERT_EQUAL(ERR_OK, r);
-    embr::lwip::Netconn conn_accept(_conn_accept);
 
     netconn_ostream out(conn_accept);
     netconn_istreambuf isb(conn_client);
     //netconn_istream in(conn_client);
+
+    base_netconn = &isb;
 
     out.write("Hello", 6);
     //out.flush();
@@ -350,6 +403,14 @@ static void test_tcp_netconn()
     TEST_ASSERT_EQUAL(0, isb.pubsync());
     TEST_ASSERT_EQUAL(6, isb.in_avail());
     TEST_ASSERT_EQUAL_STRING("Hello", isb.gptr());
+
+#if ESTD_OS_FREERTOS
+    // Verify rx bit got set
+    EventBits_t rb = netconn_rx_event.wait_bits(1, true, true,
+        estd::chrono::milliseconds(100));
+
+    TEST_ASSERT_EQUAL(1, rb);
+#endif
 }
 
 

@@ -12,15 +12,46 @@
 
 namespace embr { namespace lwip { namespace experimental {
 
-template <class CharTraits,
-    class Base = estd::internal::impl::streambuf_base<CharTraits> >
-class netconn_streambuf_base : public Base
+class netconn_streambuf_untemplated
 {
 protected:
     Netconn conn_;
 
-    netconn_streambuf_base(const Netconn& netconn) :
+    // DEBT: For FreeRTOS event bit position only, and not relevant to all use cases
+    // so optimize out via specialization or similar
+    // NOTE: Hardcoded to one as we experiment, that will need to change
+    const int event_id_ = 1;
+
+    netconn_streambuf_untemplated(const Netconn& netconn) :
         conn_{netconn}
+    {}
+
+public:
+    // EXPERIMENTAL, for traversal through singular callback.  Note also
+    // if one copies the streambuf, multiples of these with the same ID are
+    // going to appear.  Obviously public access is also a no no
+    netconn_streambuf_untemplated* next_ = nullptr;
+
+    constexpr int event_id() const
+    {
+        return event_id_;
+    }
+
+    constexpr bool is_match(netconn* n) const
+    {
+        return conn_.native() == n;
+    }
+};
+
+
+template <class CharTraits,
+    class Base = estd::internal::impl::streambuf_base<CharTraits> >
+class netconn_streambuf_base : public Base,
+    public netconn_streambuf_untemplated
+{
+protected:
+    netconn_streambuf_base(const Netconn& netconn) :
+        netconn_streambuf_untemplated{netconn}
     {}
 
 public:

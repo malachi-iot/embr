@@ -57,6 +57,11 @@ public:
         return netconn_accept(conn, new_conn);
     }
 
+    err_t accept(Netconn* new_conn)
+    {
+        return netconn_accept(conn, &new_conn->conn);
+    }
+
     err_t bind(uint16_t port)
     {
         return netconn_bind(conn, NULLPTR, port);
@@ -164,6 +169,9 @@ public:
     {
         return netconn_write_partly(conn, dataptr, size, flags, bytes_written);
     }
+
+    // EXPERIMENTAL
+    pointer native() const { return conn; }
 };
 
 namespace experimental {
