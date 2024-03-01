@@ -39,6 +39,9 @@ class netconn_ostreambuf : public Base
 
     using size_type = estd::streamsize;
     uint16_t pos_begin_ = 0, pos_end_ = 0;
+    // DEBT: Thunking means this is the max we'll ever emit per thunk.
+    // Will want to explore 'vector' flavor for a pseudo-queue/scatter gather
+    // approach
     static constexpr unsigned tot_len_ = 128;
 
 protected:
@@ -52,6 +55,14 @@ protected:
         // All sync'd up, leave
         if(pos_begin_ == pos_end_) return 0;
 
+        // TODO: Deep dive into write_partly to see what the nature of
+        // the DONTBLOCK buffer treatment really is (does it ever get copied?
+        // how do we know it's safe to release our own buffer?)
+        // 10 minute dive tells us "netconn_apimsg" is called with a semaphore which
+        // appears to wait until the tcp thread has picked up and completed
+        // "lwip_netconn_do_write" and "lwip_netconn_do_writemore".
+        // These do appear to sequentially update bytes_written via results of
+        // "tcp_write" (our buddy!)
         size_t bytes_written;
         err_t r = base_type::conn_.write_partly(
             pbase() + pos_begin_, to_send(),
