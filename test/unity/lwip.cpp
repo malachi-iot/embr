@@ -347,10 +347,9 @@ static void test_tcp_netconn()
     out.write("Hello", 6);
     //out.flush();
 
-    //isb.pubsync();
-    isb.pubsync();
+    TEST_ASSERT_EQUAL(0, isb.pubsync());
     TEST_ASSERT_EQUAL(6, isb.in_avail());
-    //TEST_ASSERT_EQUAL_STRING("Hello", isb.gptr());
+    TEST_ASSERT_EQUAL_STRING("Hello", isb.gptr());
 }
 
 

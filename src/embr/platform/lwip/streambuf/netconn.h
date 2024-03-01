@@ -1,5 +1,9 @@
 #pragma once
 
+#if ESP_PLATFORM
+#include <esp_log.h>
+#endif
+
 #include "../netconn.h"
 #include "../pbuf.h"
 
@@ -43,17 +47,18 @@ protected:
         return pos_end_ - pos_begin_;
     }
 
-    int sync()
+    int sync(uint8_t flags = NETCONN_DONTBLOCK)
     {
         // All sync'd up, leave
         if(pos_begin_ == pos_end_) return 0;
 
         size_t bytes_written;
         err_t r = base_type::conn_.write_partly(
-            pptr(), to_send(),
-            NETCONN_DONTBLOCK, // | NETCONN_MORE,
+            pbase() + pos_begin_, to_send(),
+            flags,
             &bytes_written
             );
+
         pos_begin_ += bytes_written;
 
         if(pos_begin_ == pos_end_)
@@ -97,16 +102,16 @@ public:
 
     int_type sputc(char_type c)
     {
-        sync();
+        sync(NETCONN_DONTBLOCK | NETCONN_MORE);
         *pptr() = c;
         ++pos_end_;
-        sync();
+        sync(NETCONN_DONTBLOCK | NETCONN_MORE);
         return c;
     }
 
     size_type xsputn(const char_type* s, size_type count)
     {
-        sync();
+        sync(NETCONN_DONTBLOCK | NETCONN_MORE);
 
         uint16_t to_write = xout_avail();
 
@@ -116,7 +121,10 @@ public:
 
         pos_end_ += to_write;
 
-        sync();
+        if(to_write == count)
+            sync();
+        else
+            sync(NETCONN_DONTBLOCK | NETCONN_MORE);
 
         return to_write;
     }
@@ -129,6 +137,10 @@ class netconn_istreambuf : public Base
 {
     using base_type = Base;
 
+#if ESP_PLATFORM
+    static constexpr const char* TAG = "netconn_istreambuf";
+#endif
+
 protected:
     // DEBT: Whipping this up, but really we need proper pbuf_istreambuf as a base class here
     PbufBase in_;
@@ -139,6 +151,22 @@ protected:
         if(!in_.valid()) return 0;
 
         return in_.length() - pos_;
+    }
+
+    err_t sync_ll()
+    {
+        pbuf* new_buf;
+
+        err_t r = base_type::conn_.recv_tcp_pbuf(
+            &new_buf,
+            NETCONN_DONTBLOCK);
+
+#if ESP_PLATFORM
+        ESP_LOGV(TAG, "sync_ll c=%c", *(char*)new_buf->payload);
+#endif
+        in_ = new_buf;
+
+        return r;
     }
 
     int sync()
@@ -161,15 +189,7 @@ protected:
             pos_ = 0;
         }
 
-        pbuf* new_buf;
-
-        err_t r = base_type::conn_.recv_tcp_pbuf(
-            &new_buf,
-            NETCONN_DONTBLOCK);
-
-        in_ = new_buf;
-
-        return r == ERR_OK ? 0 : -1;
+        return sync_ll() == ERR_OK ? 0 : -1;
     }
 
 public:
