@@ -16,6 +16,34 @@ enum tcp_pcb_ostreambuf_mode
     MODE_UNBUFFERED     // zero-copy - BE CAREFUL!
 };
 
+// TODO: See if we can piggyback Socket / Netconn queue mechanism (they have to thunk too)
+// rather than rolling our own.  tcpip_callback itself does not suffice because we need
+// storage for our thunk message if we wish to stay async
+
+enum ThunkTypes
+{
+    THUNK_OUTPUT,
+    THUNK_WRITE,
+    THUNK_WRITE_C
+};
+
+struct ThunkMessage
+{
+    //ThunkTypes type;
+    union
+    {
+        struct
+        {
+            estd::span<uint8_t> buf;
+
+        }   write;
+        struct
+        {
+            char v;
+        }   write_c;
+    };
+};
+
 template <class CharTraits, tcp_pcb_ostreambuf_mode = MODE_BUFFERED1,
     class Base = estd::internal::impl::streambuf_base<CharTraits> >
 class tcp_pcb_ostreambuf : public Base
