@@ -30,6 +30,9 @@ protected:
     pointer conn;
 
 public:
+    Netconn() = default;
+    Netconn(pointer conn) : conn{conn} {}
+
     bool has_conn() const { return conn != NULLPTR; }
 
     bool new_with_proto_and_callback(netconn_type t, uint8_t proto, netconn_callback callback)
@@ -84,6 +87,11 @@ public:
         return netconn_getaddr(conn, addr, port, local);
     }
 
+    err_t listen()
+    {
+        return netconn_listen(conn);
+    }
+
     err_t recv(netbuf_type** buf)
     {
         return netconn_recv(conn, buf);
@@ -92,6 +100,11 @@ public:
     err_t recv(Netbuf* buf)
     {
         return netconn_recv(conn, &buf->buf);
+    }
+
+    err_t recv_tcp_pbuf(pbuf** new_pbuf, uint8_t flags)
+    {
+        return netconn_recv_tcp_pbuf_flags(conn, new_pbuf, flags);
     }
 
     /**
@@ -119,7 +132,8 @@ public:
         return netconn_sendto(conn, buf, addr, port);
     }
 
-    err_t send(netbuf_type* buf, Endpoint e)
+    template <bool use_pointer>
+    err_t send(netbuf_type* buf, internal::Endpoint<use_pointer> e)
     {
         return netconn_sendto(conn, buf, e.address(), e.port());
     }
@@ -144,6 +158,11 @@ public:
     void nonblocking(bool val)
     {
         netconn_set_nonblocking(conn, val);
+    }
+
+    err_t write_partly(const void* dataptr, size_t size, uint8_t flags, size_t* bytes_written)
+    {
+        return netconn_write_partly(conn, dataptr, size, flags, bytes_written);
     }
 };
 

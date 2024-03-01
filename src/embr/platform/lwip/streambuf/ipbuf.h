@@ -106,6 +106,7 @@ protected:
     }
 
 public:
+    // base class gbump is enough for uflow/sgetc to bump things forward automatically
     int_type underflow()
     {
         // DEBT: Technically we need to check xin_avail first

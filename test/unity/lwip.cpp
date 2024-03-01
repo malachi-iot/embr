@@ -254,7 +254,8 @@ static err_t test_tcp_connected(void* arg, struct tcp_pcb* pcb, err_t err)
     return ERR_OK;
 }
 
-static void test_tcp(void *)
+
+static void test_tcp_pcb(void *)
 {
     embr::lwip::internal::Endpoint<>
         endpoint_client(&loopback_addr, 10000),
@@ -295,11 +296,71 @@ static void test_tcp(void *)
     //pcb_client.close();
 }
 
+
+using netconn_ostreambuf =
+    estd::detail::streambuf<
+        embr::lwip::experimental::netconn_ostreambuf<
+            estd::char_traits<char>
+        >
+    >;
+using netconn_istreambuf =
+    estd::detail::streambuf<
+        embr::lwip::experimental::netconn_istreambuf<
+            estd::char_traits<char>
+        >
+    >;
+using netconn_ostream = estd::detail::basic_ostream<netconn_ostreambuf>;
+using netconn_istream = estd::detail::basic_istream<netconn_istreambuf>;
+
+static void test_netconn_callback(netconn* nc, netconn_evt evt, uint16_t len)
+{
+
+}
+
+
+static void test_tcp_netconn()
+{
+    embr::lwip::Netconn conn_server, conn_client;
+
+    conn_server.new_with_proto_and_callback(NETCONN_TCP, 0, test_netconn_callback);
+    conn_client.new_with_proto_and_callback(NETCONN_TCP, 0, test_netconn_callback);
+
+    conn_server.nonblocking(true);
+    // NOTE: Somehow '80' is reserved at this point
+    conn_server.bind(81);
+    conn_server.listen();
+
+    err_t r = conn_client.connect(&loopback_addr, 81);
+
+    TEST_ASSERT_EQUAL(ERR_OK, r);
+
+    netconn* _conn_accept;
+
+    r = conn_server.accept(&_conn_accept);
+    TEST_ASSERT_EQUAL(ERR_OK, r);
+    embr::lwip::Netconn conn_accept(_conn_accept);
+
+    netconn_ostream out(conn_accept);
+    netconn_istreambuf isb(conn_client);
+    //netconn_istream in(conn_client);
+
+    out.write("Hello", 6);
+    //out.flush();
+
+    //isb.pubsync();
+    isb.pubsync();
+    TEST_ASSERT_EQUAL(6, isb.in_avail());
+    //TEST_ASSERT_EQUAL_STRING("Hello", isb.gptr());
+}
+
+
 static void test_tcp()
 {
+    test_tcp_netconn();
+
     // Remember tcp_pcb "raw" APIs must be thunked onto tcp task! otherwise
     // nasty crashes occur ... at best
-    tcpip_callback(test_tcp, nullptr);
+    tcpip_callback(test_tcp_pcb, nullptr);
     //test_tcp(nullptr);
 
     // Don't spinwait in the thunked function.  If this wasn't a unit test we would use

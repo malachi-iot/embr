@@ -1,0 +1,236 @@
+#pragma once
+
+#include "../netconn.h"
+#include "../pbuf.h"
+
+
+#include <estd/internal/impl/streambuf.h>
+
+namespace embr { namespace lwip { namespace experimental {
+
+template <class CharTraits,
+    class Base = estd::internal::impl::streambuf_base<CharTraits> >
+class netconn_streambuf_base : public Base
+{
+protected:
+    Netconn conn_;
+
+    netconn_streambuf_base(const Netconn& netconn) :
+        conn_{netconn}
+    {}
+
+public:
+};
+
+template <class CharTraits,
+    class Base = netconn_streambuf_base<CharTraits> >
+class netconn_ostreambuf : public Base
+{
+    using base_type = Base;
+
+    // DEBT: Do a bipbuffer instead.  This ought to get us going, though we'll get a
+    // crush factor when high speed sends overwhelm sync() creating less and less
+    // full writes as you close to the buffer end
+    v1::PbufBase out_;
+
+    using size_type = estd::streamsize;
+    uint16_t pos_begin_ = 0, pos_end_ = 0;
+    static constexpr unsigned tot_len_ = 128;
+
+protected:
+    constexpr uint16_t to_send() const
+    {
+        return pos_end_ - pos_begin_;
+    }
+
+    int sync()
+    {
+        // All sync'd up, leave
+        if(pos_begin_ == pos_end_) return 0;
+
+        size_t bytes_written;
+        err_t r = base_type::conn_.write_partly(
+            pptr(), to_send(),
+            NETCONN_DONTBLOCK, // | NETCONN_MORE,
+            &bytes_written
+            );
+        pos_begin_ += bytes_written;
+
+        if(pos_begin_ == pos_end_)
+            pos_begin_ = pos_end_ = 0;
+
+        return r == ERR_OK ? 0 : -1;
+    }
+
+    constexpr uint16_t xout_avail() const
+    {
+        return tot_len_ - pos_end_;
+    }
+
+public:
+    using typename Base::char_type;
+    using typename Base::int_type;
+    using typename Base::traits_type;
+
+    //char_type* eback() const
+    char_type* pbase() const
+    {
+        return static_cast<char_type*>(out_.payload());
+    }
+
+    char_type* pptr() const
+    {
+        return pbase() + pos_end_;
+    }
+
+    char_type* epptr() const
+    {
+        // NOTE: Docs indicate pbuf won't be chained (which is a bit of a bummer and
+        // revelation) - but for the time being that's convenient, this length() will
+        // be same as tot_length
+        return pbase() + out_.length();
+    }
+
+    netconn_ostreambuf(const Netconn& conn) :
+        base_type(conn),
+        out_(tot_len_, PBUF_RAW) {}
+
+    int_type sputc(char_type c)
+    {
+        sync();
+        *pptr() = c;
+        ++pos_end_;
+        sync();
+        return c;
+    }
+
+    size_type xsputn(const char_type* s, size_type count)
+    {
+        sync();
+
+        uint16_t to_write = xout_avail();
+
+        if(count < to_write)    to_write = count;
+
+        memcpy(pptr(), s, to_write);
+
+        pos_end_ += to_write;
+
+        sync();
+
+        return to_write;
+    }
+};
+
+
+template <class CharTraits,
+    class Base = netconn_streambuf_base<CharTraits> >
+class netconn_istreambuf : public Base
+{
+    using base_type = Base;
+
+protected:
+    // DEBT: Whipping this up, but really we need proper pbuf_istreambuf as a base class here
+    PbufBase in_;
+    uint16_t pos_ = 0;
+
+    constexpr uint16_t xin_avail() const
+    {
+        if(!in_.valid()) return 0;
+
+        return in_.length() - pos_;
+    }
+
+    int sync()
+    {
+        // DEBT: Crude way to handle start condition before we receive anything.  I think
+        // i'd prefer some kind of ROM 0-buf
+        if(in_.valid())
+        {
+            // DEBT: Can't sync until all data has been read.  We'll need a proper packet
+            // queue for that (and probably for ostreambuf too)
+            if(pos_ != in_.length()) return -1;
+
+            if(pos_ > in_.length())
+            {
+                assert("Looks like chain DEBT caught up to us");
+            }
+
+            // We finally consumed all of the pbuf
+            in_.free();
+            pos_ = 0;
+        }
+
+        pbuf* new_buf;
+
+        err_t r = base_type::conn_.recv_tcp_pbuf(
+            &new_buf,
+            NETCONN_DONTBLOCK);
+
+        in_ = new_buf;
+
+        return r == ERR_OK ? 0 : -1;
+    }
+
+public:
+    using typename Base::char_type;
+    using typename Base::int_type;
+    using typename Base::traits_type;
+
+    char_type* eback() const
+    {
+        return static_cast<char_type*>(in_.payload());
+    }
+
+    char_type* gptr() const
+    {
+        return eback() + pos_;
+    }
+
+    char_type* egptr() const
+    {
+        return eback() + in_.length();
+    }
+
+    void gbump(int count)
+    {
+        pos_ += count;
+    }
+
+    estd::streamsize showmanyc()
+    {
+        return xin_avail();
+    }
+
+    int_type underflow()
+    {
+        sync();
+        if(xin_avail() == 0) return traits_type::eof();
+        return traits_type::to_int_type(*gptr());
+    }
+
+    char_type xsgetc() const { return *gptr(); }
+
+    estd::streamsize xsgetn(char_type* dest, estd::streamsize count)
+    {
+        sync();
+
+        // FIX: Chaining could goof us up here. Watch out
+        uint16_t copied = in_.copy_partial(dest, count, pos_);
+
+        pos_ += copied;
+
+        sync();
+
+        return copied;
+    }
+
+    //ESTD_CPP_FORWARDING_CTOR(netconn_istreambuf)
+    netconn_istreambuf(const Netconn& conn) :
+        base_type(conn),
+        in_(nullptr)    // DEBT
+    {}
+};
+
+
+}}}

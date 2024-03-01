@@ -97,9 +97,9 @@ public:
         return netbuf_fromport(buf);
     }
 
-    Endpoint fromendpoint() const
+    internal::Endpoint<true> fromendpoint() const
     {
-        return Endpoint(fromaddr(), fromport());
+        return { fromaddr(), fromport() };
     }
 
     operator pointer() { return buf; }

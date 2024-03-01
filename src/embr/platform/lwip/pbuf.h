@@ -63,7 +63,7 @@ public:
 
     void* payload() const { return p->payload; }
 
-    size_type length() const { return p->len; }
+    ESTD_CPP_CONSTEXPR_RET size_type length() const { return p->len; }
 
     size_type total_length() const 
     {
