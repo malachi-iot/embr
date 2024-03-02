@@ -91,6 +91,14 @@ class netconn_ostreambuf : public Base,
 {
     using base_type = Base;
 
+    // When true, indicates that end of an xsputn phase should send a PSH
+    // once it fully writes out the data.  I speculate setting this to false
+    // may increase bandwidth somewhat, while true decreases latency
+    constexpr bool do_psh()
+    {
+        return true;
+    }
+
 protected:
     constexpr uint16_t to_send() const
     {
@@ -171,20 +179,47 @@ public:
     {
         sync(NETCONN_DONTBLOCK | NETCONN_MORE);
 
-        uint16_t to_write = xout_avail();
+        uint16_t to_write;
+        size_t bytes_written;
 
-        if(count < to_write)    to_write = count;
+        if(to_send() == 0)
+        {
+            err_t r = base_type::conn_.write_partly(
+                s, count,
+                NETCONN_DONTBLOCK | NETCONN_MORE,
+                &bytes_written);
+
+            if(r != ERR_OK) return 0;
+
+            // If write succeeded and *ALL* bytes written, then no need
+            // for local buffer shenanigans - we're out
+            if(bytes_written == count) return count;
+
+            // Otherwise, skip by what was written and cache up the rest
+            s += bytes_written;
+            to_write = count - bytes_written;
+        }
+        else
+        {
+            bytes_written = 0;
+            to_write = count;
+        }
+
+        if (to_write > xout_avail())
+            to_write = xout_avail();
 
         memcpy(pptr(), s, to_write);
 
         pos_end_ += to_write;
 
-        if(to_write == count)
+        if(do_psh() && bytes_written + to_write == count)
+            // If we definitely write 100% of what was asked of us,
+            // flag PSH
             sync();
         else
             sync(NETCONN_DONTBLOCK | NETCONN_MORE);
 
-        return to_write;
+        return bytes_written + to_write;
     }
 };
 

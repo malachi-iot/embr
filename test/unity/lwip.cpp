@@ -403,6 +403,7 @@ static void test_tcp_netconn()
     base_netconn = &isb;
 
     out.write("Hello", 6);
+    TEST_ASSERT(out.good());
     //out.flush();
 
     TEST_ASSERT_EQUAL(0, isb.pubsync());
