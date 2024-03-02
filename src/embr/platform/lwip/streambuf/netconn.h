@@ -10,6 +10,11 @@
 
 #include <estd/internal/impl/streambuf.h>
 
+#ifndef FEATURE_EMBR_LWIP_NETCONN_EVENT
+#define FEATURE_EMBR_LWIP_NETCONN_EVENT 1
+#endif
+
+
 namespace embr { namespace lwip { namespace experimental {
 
 class netconn_streambuf_untemplated
@@ -17,16 +22,19 @@ class netconn_streambuf_untemplated
 protected:
     Netconn conn_;
 
+#if FEATURE_EMBR_LWIP_NETCONN_EVENT
     // DEBT: For FreeRTOS event bit position only, and not relevant to all use cases
     // so optimize out via specialization or similar
     // NOTE: Hardcoded to one as we experiment, that will need to change
     const int event_id_ = 1;
+#endif
 
     netconn_streambuf_untemplated(const Netconn& netconn) :
         conn_{netconn}
     {}
 
 public:
+#if FEATURE_EMBR_LWIP_NETCONN_EVENT
     // EXPERIMENTAL, for traversal through singular callback.  Note also
     // if one copies the streambuf, multiples of these with the same ID are
     // going to appear.  Obviously public access is also a no no
@@ -36,6 +44,7 @@ public:
     {
         return event_id_;
     }
+#endif
 
     constexpr bool is_match(netconn* n) const
     {
@@ -57,12 +66,9 @@ protected:
 public:
 };
 
-template <class CharTraits,
-    class Base = netconn_streambuf_base<CharTraits> >
-class netconn_ostreambuf : public Base
+class netconn_ostreambuf_untemplated
 {
-    using base_type = Base;
-
+protected:
     // DEBT: Do a bipbuffer instead.  This ought to get us going, though we'll get a
     // crush factor when high speed sends overwhelm sync() creating less and less
     // full writes as you close to the buffer end
@@ -74,6 +80,16 @@ class netconn_ostreambuf : public Base
     // Will want to explore 'vector' flavor for a pseudo-queue/scatter gather
     // approach
     static constexpr unsigned tot_len_ = 128;
+
+    ESTD_CPP_FORWARDING_CTOR_MEMBER(netconn_ostreambuf_untemplated, out_)
+};
+
+template <class CharTraits,
+    class Base = netconn_streambuf_base<CharTraits> >
+class netconn_ostreambuf : public Base,
+    public netconn_ostreambuf_untemplated
+{
+    using base_type = Base;
 
 protected:
     constexpr uint16_t to_send() const
@@ -140,7 +156,7 @@ public:
 
     netconn_ostreambuf(const Netconn& conn) :
         base_type(conn),
-        out_(tot_len_, PBUF_RAW) {}
+        netconn_ostreambuf_untemplated(tot_len_, PBUF_RAW) {}
 
     int_type sputc(char_type c)
     {

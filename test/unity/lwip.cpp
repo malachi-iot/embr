@@ -335,10 +335,15 @@ embr::lwip::experimental::netconn_streambuf_untemplated* base_netconn = nullptr;
 // https://lwip.fandom.com/wiki/Netconn_API
 // It's starting to seem that the meaning of the event changes depending on the operation
 static void eval_netconn_callback(
+    netconn* nc,
     embr::lwip::experimental::netconn_streambuf_untemplated* n,
     netconn_evt evt)
 {
-    const unsigned rtos_evt = 1 << n->event_id();
+    const char* TAG = "eval_netconn_callback";
+    const unsigned rtos_evt = 1 << (n->event_id() - 1);
+
+    ESP_LOGI(TAG, "netconn=%p, rtos_evt = %x", nc, rtos_evt);
+
 #if ESTD_OS_FREERTOS
     if(evt == NETCONN_EVT_RCVMINUS) netconn_rx_event.set_bits(rtos_evt);
     else if(evt == NETCONN_EVT_ERROR) netconn_err_event.set_bits(rtos_evt);
@@ -356,7 +361,7 @@ static void test_netconn_callback(netconn* nc, netconn_evt evt, uint16_t len)
     {
         if(current->is_match(nc))
         {
-            eval_netconn_callback(current, evt);
+            eval_netconn_callback(nc, current, evt);
             return;
         }
 

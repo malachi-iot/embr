@@ -171,7 +171,7 @@ public:
     }
 
     // EXPERIMENTAL
-    pointer native() const { return conn; }
+    constexpr pointer native() const { return conn; }
 };
 
 namespace experimental {
