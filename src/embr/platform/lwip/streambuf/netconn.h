@@ -75,7 +75,12 @@ protected:
     v1::PbufBase out_;
 
     using size_type = estd::streamsize;
+    // begin = where to start next send from
+    // end = current position for consumer + where to end next send
     uint16_t pos_begin_ = 0, pos_end_ = 0;
+    // NETCONN_EVT_SENDPLUS *probably* indicates how to update this
+    // https://doc.ecoscentric.com/ref/lwip-api-sequential-netconn-new-with-callback.html
+    uint16_t pos_end_ack_ = 0;
     // DEBT: Thunking means this is the max we'll ever emit per thunk.
     // Will want to explore 'vector' flavor for a pseudo-queue/scatter gather
     // approach
@@ -99,6 +104,13 @@ class netconn_ostreambuf : public Base,
         return true;
     }
 
+    // When true, leverages nocopy on xsputn.  Buffers cannot change until
+    // ACK is received!
+    constexpr bool ro_mode()
+    {
+        return false;
+    }
+
 protected:
     constexpr uint16_t to_send() const
     {
@@ -117,7 +129,8 @@ protected:
         // appears to wait until the tcp thread has picked up and completed
         // "lwip_netconn_do_write" and "lwip_netconn_do_writemore".
         // These do appear to sequentially update bytes_written via results of
-        // "tcp_write" (our buddy!)
+        // "tcp_write" (our buddy!).  Doc from "tcp_write" tells us:
+        // "This also means that the memory behind dataptr must not change until the data is ACKed by the remote host"
         size_t bytes_written;
         err_t r = base_type::conn_.write_partly(
             pbase() + pos_begin_, to_send(),
@@ -182,7 +195,7 @@ public:
         uint16_t to_write;
         size_t bytes_written;
 
-        if(to_send() == 0)
+        if(ro_mode() && to_send() == 0)
         {
             err_t r = base_type::conn_.write_partly(
                 s, count,
