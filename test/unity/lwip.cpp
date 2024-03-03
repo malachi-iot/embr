@@ -430,8 +430,8 @@ static void test_tcp_netconn_copy()
 {
     embr::lwip::Netconn conn_server, conn_client;
 
-    conn_server.new_with_proto_and_callback(NETCONN_TCP, 0, nullptr);
-    conn_client.new_with_proto_and_callback(NETCONN_TCP, 0, nullptr);
+    conn_server.alloc(NETCONN_TCP);
+    conn_client.alloc(NETCONN_TCP);
 
     conn_server.nonblocking(true);
     // NOTE: Somehow '80' is reserved at this point

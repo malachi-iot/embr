@@ -38,7 +38,19 @@ public:
     bool new_with_proto_and_callback(netconn_type t, uint8_t proto, netconn_callback callback)
     {
         conn = netconn_new_with_proto_and_callback(t, proto, callback);
-        return has_conn();;
+        return has_conn();
+    }
+
+    bool alloc(netconn_type t, uint8_t proto, netconn_callback callback = nullptr)
+    {
+        conn = netconn_new_with_proto_and_callback(t, proto, callback);
+        return has_conn();
+    }
+
+    bool alloc(netconn_type t, netconn_callback callback = nullptr)
+    {
+        conn = netconn_new_with_proto_and_callback(t, 0, callback);
+        return has_conn();
     }
 
     err_t del()
