@@ -303,7 +303,7 @@ static void test_tcp_pcb(void *)
 
 using netconn_ostreambuf =
     estd::detail::streambuf<
-        embr::lwip::experimental::netconn_ostreambuf<
+        embr::lwip::experimental::netconn_nocopy_ostreambuf<
             estd::char_traits<char>
         >
     >;

@@ -91,7 +91,34 @@ protected:
 
 template <class CharTraits,
     class Base = netconn_streambuf_base<CharTraits> >
-class netconn_ostreambuf : public Base,
+class netconn_copy_ostreambuf : public Base
+{
+    using base_type = Base;
+
+protected:
+    Netconn conn_;
+
+public:
+    using typename Base::char_type;
+    using typename Base::int_type;
+    using typename Base::traits_type;
+    using size_type = estd::streamsize;
+
+    size_type xsputn(const char_type* s, size_type count)
+    {
+        size_t bytes_written;
+
+        err_t r = conn_.write_partly(s, count, NETCONN_NOFLAG, &bytes_written);
+
+        if(r != ERR_OK) return 0;
+
+        return bytes_written;
+    }
+};
+
+template <class CharTraits,
+    class Base = netconn_streambuf_base<CharTraits> >
+class netconn_nocopy_ostreambuf : public Base,
     public netconn_ostreambuf_untemplated
 {
     using base_type = Base;
@@ -175,7 +202,7 @@ public:
         return pbase() + out_.length();
     }
 
-    netconn_ostreambuf(const Netconn& conn) :
+    netconn_nocopy_ostreambuf(const Netconn& conn) :
         base_type(conn),
         netconn_ostreambuf_untemplated(tot_len_, PBUF_RAW) {}
 
