@@ -12,7 +12,7 @@ This is a big ask, and makes this streambuf less practical.
 Leans heavily on this, making this streambuf very much not
 zerocopy.  Bummer.
 
-## netconn
+## netconn (nocopy)
 
 Coming along well.  Currently the following areas need
 ironing out:
@@ -64,3 +64,14 @@ Our buffer treatment is crude, presuming one contiguous
 region provided by a pbuf.  What is truly called for here is
 a circular buffer combined with resiliency to smaller non-contiguous
 regions.
+
+## netconn (copy)
+
+Due to complexity of 'nocopy' variety, we have a stand-in which is not
+as efficient and uses the netbuff copy mechanism.
+
+Considered mild DEBT because:
+
+* presence of streambuf implies efficiency, which this somewhat is not
+* mild because we're still nonblocking and there *are* conceivable use
+  cases specifically for this variety, even when our 'nocopy' comes online

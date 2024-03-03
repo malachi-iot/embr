@@ -90,13 +90,36 @@ protected:
 };
 
 template <class CharTraits,
-    class Base = netconn_streambuf_base<CharTraits> >
+    class Base = estd::internal::impl::streambuf_base<CharTraits> >
 class netconn_copy_ostreambuf : public Base
 {
     using base_type = Base;
 
+    union
+    {
+        unsigned raw_ = 0;
+
+        struct
+        {
+            bool nocopy_ : 1;
+        };
+    };
+
 protected:
     Netconn conn_;
+
+    // EXPERIMENTAL, pretty sure won't work.  Trying to force an immediate PSH
+    int sync()
+    {
+        size_t bytes_written;
+
+        err_t r = conn_.write_partly(nullptr, 0,
+            NETCONN_DONTBLOCK,
+            &bytes_written);
+
+        if(r != ERR_OK) return traits_type::eof();
+
+    }
 
 public:
     using typename Base::char_type;
@@ -104,18 +127,43 @@ public:
     using typename Base::traits_type;
     using size_type = estd::streamsize;
 
+    int_type sputc(char_type c)
+    {
+        size_t bytes_written;
+
+        err_t r = conn_.write_partly(&c, 1,
+            NETCONN_DONTBLOCK | NETCONN_COPY | NETCONN_MORE,
+            &bytes_written);
+
+        if(r != ERR_OK) return traits_type::eof();
+
+        return traits_type::to_int_type(c);
+    }
+
     size_type xsputn(const char_type* s, size_type count)
     {
         size_t bytes_written;
 
-        err_t r = conn_.write_partly(s, count, NETCONN_NOFLAG, &bytes_written);
+        err_t r = conn_.write_partly(s, count,
+            NETCONN_DONTBLOCK | NETCONN_COPY | NETCONN_MORE,
+            &bytes_written);
 
         if(r != ERR_OK) return 0;
 
         return bytes_written;
     }
+
+    netconn_copy_ostreambuf(const Netconn& conn) :
+        conn_{conn}
+    {}
 };
 
+// DEBT: 'nocopy' is a slight misnomer.  While true, the characteristic
+// is specifically the presence of an intermediate buffer to which
+// external parties may interact directly and which we lift from without
+// copying.  Accurate.  However, the 'copy' variety technically could
+// do some nocopy too if you can assure it that the outgoing buffer is
+// non volatile.
 template <class CharTraits,
     class Base = netconn_streambuf_base<CharTraits> >
 class netconn_nocopy_ostreambuf : public Base,

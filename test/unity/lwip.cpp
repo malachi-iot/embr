@@ -301,9 +301,15 @@ static void test_tcp_pcb(void *)
 }
 
 
-using netconn_ostreambuf =
+using netconn_nocopy_ostreambuf =
     estd::detail::streambuf<
         embr::lwip::experimental::netconn_nocopy_ostreambuf<
+            estd::char_traits<char>
+        >
+    >;
+using netconn_copy_ostreambuf =
+    estd::detail::streambuf<
+        embr::lwip::experimental::netconn_copy_ostreambuf<
             estd::char_traits<char>
         >
     >;
@@ -313,7 +319,8 @@ using netconn_istreambuf =
             estd::char_traits<char>
         >
     >;
-using netconn_ostream = estd::detail::basic_ostream<netconn_ostreambuf>;
+using netconn_nocopy_ostream = estd::detail::basic_ostream<netconn_nocopy_ostreambuf>;
+using netconn_copy_ostream = estd::detail::basic_ostream<netconn_copy_ostreambuf>;
 using netconn_istream = estd::detail::basic_istream<netconn_istreambuf>;
 
 // If we're really lucky, maybe this can upgrade to streambuf_rx_event for system-wide
@@ -370,7 +377,7 @@ static void test_netconn_callback(netconn* nc, netconn_evt evt, uint16_t len)
 }
 
 
-static void test_tcp_netconn()
+static void test_tcp_netconn_nocopy()
 {
     embr::lwip::Netconn conn_server, conn_client;
 
@@ -396,7 +403,7 @@ static void test_tcp_netconn()
     r = conn_server.accept(&conn_accept);
     TEST_ASSERT_EQUAL(ERR_OK, r);
 
-    netconn_ostream out(conn_accept);
+    netconn_nocopy_ostream out(conn_accept);
     netconn_istreambuf isb(conn_client);
     //netconn_istream in(conn_client);
 
@@ -419,10 +426,33 @@ static void test_tcp_netconn()
 #endif
 }
 
+static void test_tcp_netconn_copy()
+{
+    embr::lwip::Netconn conn_server, conn_client;
+
+    conn_server.new_with_proto_and_callback(NETCONN_TCP, 0, nullptr);
+    conn_client.new_with_proto_and_callback(NETCONN_TCP, 0, nullptr);
+
+    conn_server.nonblocking(true);
+    // NOTE: Somehow '80' is reserved at this point
+    conn_server.bind(81);
+    conn_server.listen();
+
+    err_t r = conn_client.connect(&loopback_addr, 81);
+
+    TEST_ASSERT_EQUAL(ERR_OK, r);
+
+    embr::lwip::Netconn conn_accept;
+    r = conn_server.accept(&conn_accept);
+    TEST_ASSERT_EQUAL(ERR_OK, r);
+
+    netconn_copy_ostream out(conn_accept);
+}
 
 static void test_tcp()
 {
-    test_tcp_netconn();
+    test_tcp_netconn_nocopy();
+    test_tcp_netconn_copy();
 
     // Remember tcp_pcb "raw" APIs must be thunked onto tcp task! otherwise
     // nasty crashes occur ... at best
