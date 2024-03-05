@@ -49,9 +49,9 @@ template <class CharTraits, tcp_pcb_ostreambuf_mode = MODE_BUFFERED1,
 class tcp_pcb_ostreambuf : public Base
 {
     using base_type = Base;
-    
-protected:
-    typedef CharTraits traits_type;
+
+public:
+    using typename base_type::traits_type;
 
     // DEBT: Change detail::streambuf to rely *only* on traits_type exposition
     typedef typename traits_type::char_type char_type;

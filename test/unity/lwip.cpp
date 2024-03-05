@@ -444,6 +444,9 @@ static void test_tcp_netconn_copy()
 
     embr::lwip::Netconn conn_accept;
     r = conn_server.accept(&conn_accept);
+    // FIX
+    // ESP32 gives us ERR_WOULDBLOCK
+    // ESP32S3 didn't seem to
     TEST_ASSERT_EQUAL(ERR_OK, r);
 
     netconn_copy_ostream out(conn_accept);

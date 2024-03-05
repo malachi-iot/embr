@@ -24,7 +24,7 @@ struct opbuf_streambuf :
     typedef pbuf_streambuf_base<CharTraits> pbuf_base_type;
     typedef estd::internal::impl::out_pos_streambuf_base<CharTraits> base_type;
     typedef pbuf_current_base<CharTraits> pbuf_current_base_type;
-    typedef CharTraits traits_type;
+    using typename base_type::traits_type;
 
     typedef typename traits_type::char_type char_type;
     typedef typename traits_type::int_type int_type;
@@ -112,7 +112,7 @@ public:
 
 // Placing non-inline because it's kinda bulky
 template <class TCharTraits, unsigned grow_by>
-typename TCharTraits::int_type opbuf_streambuf<TCharTraits, grow_by>::overflow(int_type ch)
+auto opbuf_streambuf<TCharTraits, grow_by>::overflow(int_type ch) -> int_type
 {
     // If there's no buffer space left to write to
     if(xout_avail() == 0)

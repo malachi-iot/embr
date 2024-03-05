@@ -22,7 +22,7 @@ struct ipbuf_streambuf :
     typedef pbuf_streambuf_base<CharTraits> pbuf_base_type;
     typedef estd::internal::impl::in_pos_streambuf_base<CharTraits> base_type;
     typedef pbuf_current_base<CharTraits> pbuf_current_base_type;
-    typedef CharTraits traits_type;
+    using typename base_type::traits_type;
 
     typedef Pbuf::pointer pbuf_pointer;
     typedef Pbuf::size_type size_type;
