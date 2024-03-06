@@ -10,6 +10,10 @@
 
 #include <estd/internal/impl/streambuf.h>
 
+#if FEATURE_ESTD_STREAMBUF_TRAITS
+#include <estd/port/freertos/event_groups.h>
+#endif
+
 #ifndef FEATURE_EMBR_LWIP_NETCONN_EVENT
 #define FEATURE_EMBR_LWIP_NETCONN_EVENT 1
 #endif
@@ -19,6 +23,8 @@ namespace embr { namespace lwip { namespace experimental {
 
 class netconn_streambuf_untemplated
 {
+    using this_type = netconn_streambuf_untemplated;
+
 protected:
     Netconn conn_;
 
@@ -50,6 +56,61 @@ public:
     {
         return conn_.native() == n;
     }
+
+#if FEATURE_ESTD_STREAMBUF_TRAITS
+    // Watch out for naming here, this traits_type isn't usable on its own, instead MI
+    // must be used later down the line
+    struct traits_type
+    {
+        struct signal
+        {
+            static constexpr int cts_bit_ = 1;
+            static constexpr int dtr_bit_ = 2;
+            static constexpr estd::chrono::milliseconds timeout { 100 };
+
+            estd::freertos::event_group<true> event_;
+
+            // TODO: Feature flag in RTOS mode specifically, otherwise you might have to
+            // poll it anyway
+            bool wait_dtr(this_type* sb)
+            {
+                return event_.wait_bits(dtr_bit_, true, true,
+                    timeout) & dtr_bit_;
+            }
+
+            // Auto subtract len_exp from awaiting_ack_bytes_ (EXPERIMENTAL)
+            // on success
+            bool wait_cts(this_type* sb, int len_exp = 0)
+            {
+                bool r = event_.wait_bits(cts_bit_, true, true,
+                    timeout) & cts_bit_;
+
+                // Happening in event handler proper, don't do here
+                //if(r)   sb->awaiting_ack_bytes_ -= len_exp;
+
+                return r;
+            }
+
+            void set_dtr()
+            {
+                event_.set_bits(dtr_bit_);
+            }
+
+            void set_cts()
+            {
+                event_.set_bits(cts_bit_);
+            }
+        };
+    };
+
+    // accumulate how many bytes we sent off, idea being we decrement them (perhaps manually)
+    // on consuming during nocopy, perhaps during a special wait_cts which takes a length param?
+    unsigned awaiting_ack_bytes_ = 0;
+
+    // DEBT: For now no extra linked list trickery, 1 streambuf is associated to 1 at most
+    // ostream/istream
+    traits_type::signal* signal_ = nullptr;
+#endif
 };
 
 
@@ -64,6 +125,18 @@ protected:
     {}
 
 public:
+#if FEATURE_ESTD_STREAMBUF_TRAITS
+    struct traits_type : CharTraits,
+        netconn_streambuf_untemplated::traits_type
+    {
+
+    };
+
+    void signal(traits_type::signal* v)
+    {
+        signal_ = v;
+    }
+#endif
 };
 
 class netconn_ostreambuf_untemplated
@@ -215,6 +288,10 @@ protected:
 
         pos_begin_ += bytes_written;
 
+#if FEATURE_ESTD_STREAMBUF_TRAITS
+        base_type::awaiting_ack_bytes_ += bytes_written;
+#endif
+
         if(pos_begin_ == pos_end_)
             pos_begin_ = pos_end_ = 0;
 
@@ -278,6 +355,10 @@ public:
                 &bytes_written);
 
             if(r != ERR_OK) return 0;
+
+#if FEATURE_ESTD_STREAMBUF_TRAITS
+            base_type::awaiting_ack_bytes_ += bytes_written;
+#endif
 
             // If write succeeded and *ALL* bytes written, then no need
             // for local buffer shenanigans - we're out

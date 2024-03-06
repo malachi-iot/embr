@@ -344,31 +344,51 @@ embr::lwip::experimental::netconn_streambuf_untemplated* base_netconn = nullptr;
 static void eval_netconn_callback(
     netconn* nc,
     embr::lwip::experimental::netconn_streambuf_untemplated* n,
-    netconn_evt evt)
+    netconn_evt evt,
+    uint16_t len)
 {
     const char* TAG = "eval_netconn_callback";
     const unsigned rtos_evt = 1 << (n->event_id() - 1);
 
-    ESP_LOGI(TAG, "netconn=%p, rtos_evt = %x", nc, rtos_evt);
+    ESP_LOGI(TAG, "netconn=%p, rtos_evt=%x, len=%d, awaiting_ack=%d",
+        nc, rtos_evt, len, n->awaiting_ack_bytes_);
 
 #if ESTD_OS_FREERTOS
     if(evt == NETCONN_EVT_RCVMINUS) netconn_rx_event.set_bits(rtos_evt);
     else if(evt == NETCONN_EVT_ERROR) netconn_err_event.set_bits(rtos_evt);
+#if FEATURE_ESTD_STREAMBUF_TRAITS
+    // TODO: Still TBD who should decrement awaiting_ack_bytes_
+    // DEBT: Do tidier check for null on n->signal_ (maybe we expect not null always here?)
+    if(evt == NETCONN_EVT_SENDPLUS && len && n->signal_)
+    {
+        n->signal_->set_cts();
+        n->awaiting_ack_bytes_ -= len;
+    }
+    else if(evt == NETCONN_EVT_RCVMINUS && len && n->signal_)
+    {
+        n->signal_->set_dtr();
+    }
+#endif
 #endif
 }
 
 // Re-associates netconn back to our streambuf + stream framework
 static void test_netconn_callback(netconn* nc, netconn_evt evt, uint16_t len)
 {
+    const char* TAG = "test_netconn_callback";
+
+    ESP_LOGI(TAG, "netconn=%p, evt=%x, len=%d", nc, evt, len);
+
     using node_type = embr::lwip::experimental::netconn_streambuf_untemplated*;
 
     node_type current = base_netconn;
 
     while(current != nullptr)
     {
+        // If incoming netconn* matches our streambuf...
         if(current->is_match(nc))
         {
-            eval_netconn_callback(nc, current, evt);
+            eval_netconn_callback(nc, current, evt, len);
             return;
         }
 
@@ -404,10 +424,14 @@ static void test_tcp_netconn_nocopy()
     TEST_ASSERT_EQUAL(ERR_OK, r);
 
     netconn_nocopy_ostream out(conn_accept);
+    TEST_ASSERT_NOT_NULL(conn_accept.native()->callback);
     netconn_istreambuf isb(conn_client);
+    netconn_nocopy_ostreambuf& osb = *out.rdbuf();
     //netconn_istream in(conn_client);
 
     base_netconn = &isb;
+    base_netconn->next_ = &osb;
+    osb.next_ = nullptr;
 
     out.write("Hello", 6);
     TEST_ASSERT(out.good());
@@ -428,25 +452,23 @@ static void test_tcp_netconn_nocopy()
 
 static void test_tcp_netconn_copy()
 {
+    // DEBT: Somehow previous ports (80, 81) don't free up when we reach here
+    constexpr int port = 82;
     embr::lwip::Netconn conn_server, conn_client;
 
     conn_server.alloc(NETCONN_TCP);
     conn_client.alloc(NETCONN_TCP);
 
     conn_server.nonblocking(true);
-    // NOTE: Somehow '80' is reserved at this point
-    conn_server.bind(81);
-    conn_server.listen();
+    TEST_ASSERT_EQUAL(ERR_OK, conn_server.bind(port));
+    TEST_ASSERT_EQUAL(ERR_OK, conn_server.listen());
 
-    err_t r = conn_client.connect(&loopback_addr, 81);
+    err_t r = conn_client.connect(&loopback_addr, port);
 
     TEST_ASSERT_EQUAL(ERR_OK, r);
 
     embr::lwip::Netconn conn_accept;
     r = conn_server.accept(&conn_accept);
-    // FIX
-    // ESP32 gives us ERR_WOULDBLOCK
-    // ESP32S3 didn't seem to
     TEST_ASSERT_EQUAL(ERR_OK, r);
 
     netconn_copy_ostream out(conn_accept);
