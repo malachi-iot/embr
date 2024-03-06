@@ -347,11 +347,15 @@ static void eval_netconn_callback(
     netconn_evt evt,
     uint16_t len)
 {
-    const char* TAG = "eval_netconn_callback";
+#if FEATURE_EMBR_LWIP_NETCONN_EVENT
     const unsigned rtos_evt = 1 << (n->event_id() - 1);
+
+#if FEATURE_ESTD_STREAMBUF_TRAITS
+    const char* TAG = "eval_netconn_callback";
 
     ESP_LOGI(TAG, "netconn=%p, rtos_evt=%x, len=%d, awaiting_ack=%d",
         nc, rtos_evt, len, n->awaiting_ack_bytes_);
+#endif
 
 #if ESTD_OS_FREERTOS
     if(evt == NETCONN_EVT_RCVMINUS) netconn_rx_event.set_bits(rtos_evt);
@@ -370,6 +374,7 @@ static void eval_netconn_callback(
     }
 #endif
 #endif
+#endif  // FEATURE_EMBR_LWIP_NETCONN_EVENT
 }
 
 // Re-associates netconn back to our streambuf + stream framework
@@ -379,6 +384,7 @@ static void test_netconn_callback(netconn* nc, netconn_evt evt, uint16_t len)
 
     ESP_LOGI(TAG, "netconn=%p, evt=%x, len=%d", nc, evt, len);
 
+#if FEATURE_EMBR_LWIP_NETCONN_EVENT
     using node_type = embr::lwip::experimental::netconn_streambuf_untemplated*;
 
     node_type current = base_netconn;
@@ -394,6 +400,7 @@ static void test_netconn_callback(netconn* nc, netconn_evt evt, uint16_t len)
 
         current = current->next_;
     }
+#endif
 }
 
 
@@ -429,9 +436,11 @@ static void test_tcp_netconn_nocopy()
     netconn_nocopy_ostreambuf& osb = *out.rdbuf();
     //netconn_istream in(conn_client);
 
+#if FEATURE_EMBR_LWIP_NETCONN_EVENT
     base_netconn = &isb;
     base_netconn->next_ = &osb;
     osb.next_ = nullptr;
+#endif
 
     out.write("Hello", 6);
     TEST_ASSERT(out.good());
@@ -441,7 +450,7 @@ static void test_tcp_netconn_nocopy()
     TEST_ASSERT_EQUAL(6, isb.in_avail());
     TEST_ASSERT_EQUAL_STRING("Hello", isb.gptr());
 
-#if ESTD_OS_FREERTOS
+#if ESTD_OS_FREERTOS && FEATURE_EMBR_LWIP_NETCONN_EVENT
     // Verify rx bit got set
     EventBits_t rb = netconn_rx_event.wait_bits(1, true, true,
         estd::chrono::milliseconds(100));
