@@ -31,3 +31,17 @@ constexpr amps<Rep, estd::ratio<Period3::num, Period3::den> > operator /(const w
 
 
 }}
+
+namespace estd::internal::units {
+
+template <>
+struct traits<embr::units::internal::watts_tag>
+{
+    static constexpr const char* name() { return "watts"; }
+
+    static constexpr const char* abbrev() { return "W"; }
+
+    static constexpr si::quantities quantity = si::quantities::electric_current;
+};
+
+}

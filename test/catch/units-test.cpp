@@ -109,7 +109,11 @@ TEST_CASE("units")
     }
     SECTION("watts")
     {
+        watts<uint16_t> w{1000};
 
+        write(out, w);
+
+        REQUIRE(s == "1000 watts");
     }
     SECTION("conversions")
     {
@@ -124,6 +128,8 @@ TEST_CASE("units")
     }
     SECTION("rates/speed")
     {
+        // NOTE: Compound units like this aren't quite fleshed out yet
+
         SECTION("meters per second")
         {
             constexpr kilometers_per_hour<uint8_t> kph(60);

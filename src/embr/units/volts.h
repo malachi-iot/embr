@@ -39,10 +39,9 @@ struct traits<embr::units::internal::volts_tag>
 {
     static constexpr const char* name() { return "volts"; }
 
-    // DEBT: Feature flag in proper degree symbol if we can
     static constexpr const char* abbrev() { return "V"; }
 
-    static constexpr si::quantities quanitiy = si::quantities::electric_current;
+    //static constexpr si::quantities quantity = si::quantities::electric_current;
 };
 
 }
