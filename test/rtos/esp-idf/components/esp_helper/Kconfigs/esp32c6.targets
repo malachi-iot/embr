@@ -1,0 +1,15 @@
+config BOARD_ESP32C6_DEVKITC_1
+    bool "Espressif ESP32C6 DevKitC-1"
+    depends on IDF_TARGET_ESP32C6
+
+config BOARD_ESP32C6_SEEED_XIAO
+    bool "Seeed Studio Xiao ESP32C6"
+    depends on IDF_TARGET_ESP32C6
+
+config BOARD_ESP32C6_SPARKFUN_THINGPLUS
+    bool "SparkFun ESP32C6 Thing Plus"
+    depends on IDF_TARGET_ESP32C6
+
+config BOARD_ESP32C6_WAVESHARE_DEVKIT
+    bool "WaveShare ESP32C6 DevKit"
+    depends on IDF_TARGET_ESP32C6

@@ -19,11 +19,8 @@ menu "Embr Helper config"
 
         rsource "Kconfigs/esp32.targets"
         rsource "Kconfigs/esp32c3.targets"
+        rsource "Kconfigs/esp32c6.targets"
         rsource "Kconfigs/esp32s3.targets"
-
-        config BOARD_ESP32C6_WAVESHARE_DEVKIT
-            bool "WaveShare ESP32C6 DevKit"
-            depends on IDF_TARGET_ESP32C6
 
     endchoice
 
