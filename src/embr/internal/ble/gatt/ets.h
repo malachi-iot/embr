@@ -9,26 +9,29 @@
 
 namespace embr::internal::ble::gatt {
 
-PACK(struct ElapsedTime
+struct ElapsedTimeBase
 {
-    /*
     enum Flags : uint8_t
     {
-        TIME_OF_DAY             = 0x00,
-        TIME_TICK               = 0x01,
+        TIME_OF_DAY        = 0x00,
+        TICK               = 0x01,
 
-        TIME_LOCAL              = 0x00,
-        TIME_UTC                = 0x02,
+        LOCAL              = 0x00,
+        UTC                = 0x02,
 
-        TIME_RESOLUTION_1S      = 0x00,
-        TIME_RESOLUTION_100MS   = 0x01,
-        TIME_RESOLUTION_1MS     = 0x02,
-        TIME_RESOLUTION_100U    = 0x03,
+        RESOLUTION_1S      = 0x00,
+        RESOLUTION_100MS   = 0x01,
+        RESOLUTION_1MS     = 0x02,
+        RESOLUTION_100U    = 0x03,
 
-        TIME_OFFSET_UNUSED      = 0x00
+        OFFSET_UNUSED      = 0x00
     };
 
-    Flags flags; */
+    //static constexpr uint8_t TICK   = 0x01, RESOLUTION_1S = 0;
+};
+
+PACK(struct ElapsedTime : ElapsedTimeBase
+{
     uint8_t flags;
     uint8_t value[6];
     uint8_t sync_source;
