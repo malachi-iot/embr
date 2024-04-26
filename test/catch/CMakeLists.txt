@@ -39,6 +39,7 @@ set(SOURCE_FILES
     scheduler-test.cpp
     service-test.cpp
     streambuf-test.cpp
+    thunk-test.cpp
     units-test.cpp
     word-test.cpp
     )
