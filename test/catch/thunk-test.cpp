@@ -13,14 +13,13 @@ TEST_CASE("thunk")
         {
             ++val;
         });
-        /*
         t.enqueue([&](void*)
         {
-            ++val;
-        }); */
+            val += 4;
+        });
         t.invoke();
         t.invoke();
 
-        REQUIRE(val == 1);
+        REQUIRE(val == 5);
     }
 }

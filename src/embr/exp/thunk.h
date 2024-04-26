@@ -18,7 +18,7 @@ class Thunk
     {
         // Size of model portion only
         unsigned sz;
-        function_type function;
+        //function_type function;
         uint8_t model[];
 
         /*
@@ -30,10 +30,15 @@ class Thunk
 
         }   */
 
-        unsigned size() const
+        static unsigned size(unsigned sz)
         {
             //return sizeof(sz) + sizeof(function) + sz;
-            return sizeof(Item) + sz;
+            return offsetof(Item, model) + sz;
+        }
+
+        unsigned size() const
+        {
+            return size(sz);
         }
     };
 
@@ -45,7 +50,7 @@ public:
     template <class F>
     void enqueue(F&& f)
     {
-        using inline_function = estd::experimental::inline_function<F, void(void*)>;
+        //using inline_function = estd::experimental::inline_function<F, void(void*)>;
         using model_type = function_type::model<F>;
         //int sz = sizeof(inline_function) + sizeof(Item);
 
@@ -63,7 +68,7 @@ public:
 
         item->sz = sizeof(model_type);
         model_type* m = new (item->model) model_type(std::forward<F>(f));
-        new (&item->function) function_type(m);
+        //new (&item->function) function_type(m);
 
         buf_.offer_end(item->size());
     }
@@ -73,8 +78,12 @@ public:
         auto item = (Item*)buf_.peek();
 
         if(item == nullptr) return;
+        auto model = (function_type::model_base*)item->model;
 
-        item->function(nullptr);
+        function_type f(model);
+        f({});
+
+        //item->function(nullptr);
 
         buf_.poll(item->size());
     }
