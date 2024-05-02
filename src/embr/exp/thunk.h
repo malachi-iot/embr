@@ -47,6 +47,7 @@ class Thunk
     estd::layer1::bipbuf<256> buf_;
 
 public:
+    // DEBT: See if we can find clever way to oerload and handle no-parameter flavor of F too
     template <class F>
     void enqueue(F&& f)
     {
