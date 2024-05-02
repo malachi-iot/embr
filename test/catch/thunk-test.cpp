@@ -2,12 +2,17 @@
 
 #include <embr/exp/thunk.h>
 
+// Excellent breakdown of functor behavior:
+// https://ricomariani.medium.com/std-function-teardown-and-discussion-a4f148929809
+
 // DEBT: Instead of tracker/tracked use estd internal underpinnings for
 // shared_ptr
 
 struct Tracker
 {
+    // ref count
     int count = 0;
+    // total operations
     int total = 0;
 
     Tracker() = default;
@@ -15,6 +20,11 @@ struct Tracker
     void inc()
     {
         ++count;
+        ++total;
+    }
+
+    void inc_total()
+    {
         ++total;
     }
 };
@@ -32,6 +42,13 @@ struct Tracked
     Tracked(const Tracked& t) : tracker(t.tracker)
     {
         tracker->inc();
+    }
+
+    Tracked(Tracked&& move_from) :
+        tracker(move_from.tracker)
+    {
+        move_from.tracker = nullptr;
+        tracker->inc_total();
     }
 
     ~Tracked()
@@ -63,6 +80,13 @@ TEST_CASE("thunk")
     }
     SECTION("dtor testing")
     {
+        SECTION("baseline")
+        {
+            Tracker tracker;
+            Tracked tracked(&tracker);
+
+            REQUIRE(tracker.count == 1);
+        }
         SECTION("raw")
         {
             Tracker tracker;
@@ -96,12 +120,11 @@ TEST_CASE("thunk")
                 });
 
                 REQUIRE(tracker.count == 2);
-                REQUIRE(tracker.total == 3);
+                REQUIRE(tracker.total == 4);
 
                 t.invoke();
 
-                // FIX: dtor doesn't run, damn
-                //REQUIRE(tracker.count == 1);
+                REQUIRE(tracker.count == 1);
             }
 
             REQUIRE(tracker.count == 1);
