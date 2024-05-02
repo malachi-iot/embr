@@ -47,6 +47,8 @@ class Thunk
 
     estd::layer1::bipbuf<256> buf_;
 
+    // NOTE: We're gonna bake this right into function itself:
+    // https://github.com/malachi-iot/estdlib/issues/39
     template <class F>
     class Wrapper
     {
@@ -113,8 +115,11 @@ public:
         function_type f(model);
         f();
 
-        // DEBT: Doesn't call dtor, but perhaps should.  Depends on whether std::function
-        // does so (probably, but not sure)
+        // DEBT: Doesn't call dtor, but perhaps should.  Additionally, our thunk
+        // behavior in fact prefers NOT to since we know invocation time is immediately
+        // followed by dtor, so a kind of baked-in optimization.  Therefore, we'd
+        // like specialized flavors of model with and without destruct capability
+        // See https://github.com/malachi-iot/estdlib/issues/39
         //model->~model_base();
 
         //item->function(nullptr);
