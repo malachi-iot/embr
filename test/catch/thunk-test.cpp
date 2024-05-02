@@ -8,9 +8,15 @@
 struct Tracker
 {
     int count = 0;
+    int total = 0;
 
     Tracker() = default;
 
+    void inc()
+    {
+        ++count;
+        ++total;
+    }
 };
 
 
@@ -20,12 +26,12 @@ struct Tracked
 
     Tracked(Tracker* tracker) : tracker{tracker}
     {
-        ++tracker->count;
+        tracker->inc();
     }
 
     Tracked(const Tracked& t) : tracker(t.tracker)
     {
-        ++tracker->count;
+        tracker->inc();
     }
 
     ~Tracked()
@@ -42,11 +48,11 @@ TEST_CASE("thunk")
     {
         int val = 0;
 
-        t.enqueue([&](void*)
+        t.enqueue([&]
         {
             ++val;
         });
-        t.enqueue([&](void*)
+        t.enqueue([&]
         {
             val += 4;
         });
@@ -57,19 +63,48 @@ TEST_CASE("thunk")
     }
     SECTION("dtor testing")
     {
-        Tracker tracker;
-        Tracked tracked(&tracker);
-
-        REQUIRE(tracker.count == 1);
-
-        t.enqueue([tracked, &tracker](void*)
+        SECTION("raw")
         {
-            REQUIRE(tracker.count == 2);
-        });
+            Tracker tracker;
+            Tracked tracked(&tracker);
 
-        t.invoke();
+            {
+                auto f1 = [tracked, &tracker]
+                {
+                    REQUIRE(tracker.count == 2);
+                };
 
-        // FIX: dtor doesn't run, damn
-        //REQUIRE(tracker.count == 1);
+                REQUIRE(tracker.count == 2);
+                REQUIRE(tracker.total == 2);
+
+                f1();
+
+                REQUIRE(tracker.total == 2);
+            }
+
+            REQUIRE(tracker.count == 1);
+        }
+        SECTION("thunked")
+        {
+            Tracker tracker;
+            Tracked tracked(&tracker);
+
+            {
+                t.enqueue([tracked, &tracker]
+                {
+                    REQUIRE(tracker.count == 2);
+                });
+
+                REQUIRE(tracker.count == 2);
+                REQUIRE(tracker.total == 3);
+
+                t.invoke();
+
+                // FIX: dtor doesn't run, damn
+                //REQUIRE(tracker.count == 1);
+            }
+
+            REQUIRE(tracker.count == 1);
+        }
     }
 }

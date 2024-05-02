@@ -9,7 +9,7 @@ namespace embr { namespace experimental {
 //template <class Bipbuf>
 class Thunk
 {
-    using function_type = estd::detail::function<void(void*)>;
+    using function_type = estd::detail::function<void(void)>;
 
     // DEBT: It's possible an inline function flavor of this could do away
     // with intermediate model* since it knows in this context that model
@@ -82,7 +82,7 @@ public:
         auto model = (function_type::model_base*)item->model;
 
         function_type f(model);
-        f({});
+        f();
 
         //item->function(nullptr);
 
