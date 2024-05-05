@@ -36,7 +36,8 @@ TEST_CASE("units")
         SECTION("int")
         {
             milliamps<uint16_t> ma{3600};
-            amps<uint8_t> a = ma;
+            // DEBT: Can't do an = here, but would like to.  This requires a default ctor
+            amps<uint8_t> a(ma);
 
             REQUIRE(a.count() == 3);
 

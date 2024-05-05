@@ -139,8 +139,7 @@ struct __attribute__((packed)) local_file : header::local_file
     /// @return
     estd::string_view filename()
     {
-        // DEBT: https://github.com/malachi-iot/estdlib/issues/24
-        return { data, (int16_t)length.filename };
+        return { data, length.filename };
     }
 
     template <class Impl>
