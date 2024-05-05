@@ -6,8 +6,8 @@
 
 namespace embr { namespace experimental {
 
-//template <class Bipbuf>
-class Thunk
+template <ESTD_CPP_CONCEPT(estd::concepts::v1::Bipbuf) Buf>
+class ThunkBase
 {
     using function_type = estd::detail::v2::function<
         void(void),
@@ -54,7 +54,8 @@ class Thunk
 
 
 
-    estd::layer1::bipbuf<256> buf_;
+    //estd::layer1::bipbuf<256> buf_;
+    Buf buf_;
 
     // We baked this right into function itself:
     // https://github.com/malachi-iot/estdlib/issues/39
@@ -75,6 +76,8 @@ class Thunk
     };  */
 
 public:
+    ESTD_CPP_FORWARDING_CTOR_MEMBER(ThunkBase, buf_)
+
     // DEBT: See if we can find clever way to oerload and handle no-parameter flavor of F too
     template <class F>
     bool enqueue(F&& f)
@@ -134,5 +137,8 @@ public:
         buf_.poll(item->size());
     }
 };
+
+using Thunk = ThunkBase<estd::layer1::bipbuf<256>>;
+using Thunk2 = ThunkBase<estd::layer3::bipbuf>;
 
 }}

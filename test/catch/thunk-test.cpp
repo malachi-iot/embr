@@ -133,4 +133,27 @@ TEST_CASE("thunk")
             REQUIRE(tracker.count == 1);
         }
     }
+    SECTION("layer3::bipbuf")
+    {
+        union
+        {
+            bipbuf_t buf;
+            char allocated[1024];
+        };
+
+        int counter = 0;
+
+        // DEBT: Passing in bipbuf_t + size not preferred way (heading towards deprecated).
+        // We want a new
+        // constructor which takes 'allocated' directly.  Note flavor which
+        // -only- passes in bipbuf_t is OK, but that requires a discrete bipbuf init call
+        embr::experimental::Thunk2 t2(&buf, sizeof(allocated) - sizeof(buf));
+
+        REQUIRE(t2.empty() == true);
+        t2.enqueue([&]{ ++counter; });
+        REQUIRE(t2.empty() == false);
+        t2.invoke();
+        REQUIRE(counter == 1);
+        REQUIRE(t2.empty() == true);
+    }
 }
