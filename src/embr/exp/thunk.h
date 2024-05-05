@@ -9,7 +9,9 @@ namespace embr { namespace experimental {
 //template <class Bipbuf>
 class Thunk
 {
-    using function_type = estd::detail::function<void(void)>;
+    using function_type = estd::detail::v2::function<
+        void(void),
+        estd::detail::impl::function_fnptr2_opt>;
     using model_base = typename function_type::model_base;
 
     // DEBT: It's possible an inline function flavor of this could do away
@@ -67,7 +69,7 @@ class Thunk
 public:
     // DEBT: See if we can find clever way to oerload and handle no-parameter flavor of F too
     template <class F>
-    void enqueue(F&& f)
+    bool enqueue(F&& f)
     {
         /*
         auto f2 = [f]
@@ -79,19 +81,17 @@ public:
         using F2 = decltype(f2); */
 
         //Wrapper<F> f2 { std::move(f) };
-        using F2 = Wrapper<F>;
+        //using F2 = Wrapper<F>;
+        using F2 = F;
 
         //using inline_function = estd::experimental::inline_function<F, void(void*)>;
         using model_type = function_type::model<F2>;
         //int sz = sizeof(inline_function) + sizeof(Item);
 
-        // Need to make sure we have enough space
-        //if(buf_.unused())
-        auto b = buf_.offer_begin();
-        auto item = (Item*) b;
-        //item->sz = sz;
+        // Make sure we have enough space
+        if(buf_.unused() < sizeof(model_type))  return false;
 
-        //new (b) Item { sz, }
+        auto item = (Item*) buf_.offer_begin();
 
         // DEBT: I think I really want a move here, but C++ scolds me
         //function_type::model<F>(std::forward<F>(f));
@@ -99,10 +99,12 @@ public:
 
         item->sz = sizeof(model_type);
         //model_type* m = new (item->model) model_type(std::move(f));
-        model_type* m = new (item->model) model_type(std::forward<F>(f));
+        new (item->model) model_type(std::forward<F>(f));
         //new (&item->function) function_type(m);
 
         buf_.offer_end(item->size());
+
+        return true;
     }
 
     void invoke()

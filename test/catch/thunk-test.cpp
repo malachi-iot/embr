@@ -120,7 +120,7 @@ TEST_CASE("thunk")
                 });
 
                 REQUIRE(tracker.count == 2);
-                REQUIRE(tracker.total == 4);
+                REQUIRE(tracker.total == 3);
 
                 t.invoke();
 

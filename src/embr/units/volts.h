@@ -32,7 +32,7 @@ using microvolts = volts<Rep, estd::micro, F>;
 
 }}
 
-namespace estd::internal::units {
+namespace estd { namespace internal { namespace units {
 
 template <>
 struct traits<embr::units::internal::volts_tag>
@@ -44,4 +44,4 @@ struct traits<embr::units::internal::volts_tag>
     //static constexpr si::quantities quantity = si::quantities::electric_current;
 };
 
-}
+}}}

@@ -32,7 +32,7 @@ constexpr amps<Rep, estd::ratio<Period3::num, Period3::den> > operator /(const w
 
 }}
 
-namespace estd::internal::units {
+namespace estd { namespace internal { namespace units {
 
 template <>
 struct traits<embr::units::internal::watts_tag>
@@ -44,4 +44,4 @@ struct traits<embr::units::internal::watts_tag>
     static constexpr si::quantities quantity = si::quantities::electric_current;
 };
 
-}
+}}}
