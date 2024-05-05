@@ -20,7 +20,14 @@ class Thunk
     struct Item
     {
         // Size of model portion only
-        unsigned sz;
+        struct
+        {
+            // Functor bigger than 64k?  I don't think so!
+            unsigned sz : 16;
+            // Dormant, just for experimentation
+            unsigned flag1 : 1;
+        };
+
         //function_type function;
         uint8_t model[];
 
@@ -49,8 +56,9 @@ class Thunk
 
     estd::layer1::bipbuf<256> buf_;
 
-    // NOTE: We're gonna bake this right into function itself:
+    // We baked this right into function itself:
     // https://github.com/malachi-iot/estdlib/issues/39
+    /*
     template <class F>
     class Wrapper
     {
@@ -64,7 +72,7 @@ class Thunk
             f();
             f.~F();
         }
-    };
+    };  */
 
 public:
     // DEBT: See if we can find clever way to oerload and handle no-parameter flavor of F too
@@ -107,6 +115,11 @@ public:
         return true;
     }
 
+    bool empty() const
+    {
+        return buf_.used() == 0;
+    }
+
     void invoke()
     {
         auto item = (Item*)buf_.peek();
@@ -114,17 +127,9 @@ public:
         if(item == nullptr) return;
         auto model = (model_base*)item->model;
 
-        function_type f(model);
-        f();
-
-        // DEBT: Doesn't call dtor, but perhaps should.  Additionally, our thunk
-        // behavior in fact prefers NOT to since we know invocation time is immediately
-        // followed by dtor, so a kind of baked-in optimization.  Therefore, we'd
-        // like specialized flavors of model with and without destruct capability
-        // See https://github.com/malachi-iot/estdlib/issues/39
-        //model->~model_base();
-
-        //item->function(nullptr);
+        // Models are directly invocable just like their function owners.
+        // fnptr2_opt also calls functor destructor.
+        (*model)();
 
         buf_.poll(item->size());
     }

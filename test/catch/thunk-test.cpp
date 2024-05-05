@@ -75,6 +75,7 @@ TEST_CASE("thunk")
         });
         t.invoke();
         t.invoke();
+        REQUIRE(t.empty());
 
         REQUIRE(val == 5);
     }
@@ -119,12 +120,14 @@ TEST_CASE("thunk")
                     REQUIRE(tracker.count == 2);
                 });
 
+                REQUIRE(t.empty() == false);
                 REQUIRE(tracker.count == 2);
                 REQUIRE(tracker.total == 3);
 
                 t.invoke();
 
                 REQUIRE(tracker.count == 1);
+                REQUIRE(t.empty());
             }
 
             REQUIRE(tracker.count == 1);
