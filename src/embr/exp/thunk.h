@@ -9,6 +9,8 @@ namespace embr { namespace experimental {
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::Bipbuf) Buf>
 class ThunkBase
 {
+    // Edge-case version which auto-invokes functor destructor immediately
+    // after invocation
     using function_type = estd::detail::v2::function<
         void(void),
         estd::detail::impl::function_fnptr2_opt>;
@@ -22,25 +24,17 @@ class ThunkBase
         // Size of model portion only
         struct
         {
-            // Functor bigger than 64k?  I don't think so!
-            unsigned sz : 16;
+            // Functor max size:
+            // * 4k on 16-bit (AVR)
+            // * 512MB on 32-bit (ESP32)
+            unsigned sz : (sizeof(unsigned) * 8) - 4;
             // Dormant, just for experimentation
             unsigned flag1 : 1;
         };
 
-        //function_type function;
         uint8_t model[];
 
-        /*
-        template <class F>
-        Item(unsigned sz, F&& f) :
-            sz(sz),
-        {
-            using inline_function = estd::experimental::inline_function<F, void(void*)>;
-
-        }   */
-
-        static unsigned size(unsigned sz)
+        static constexpr unsigned size(unsigned sz)
         {
             //return sizeof(sz) + sizeof(function) + sz;
             return offsetof(Item, model) + sz;
@@ -54,7 +48,6 @@ class ThunkBase
 
 
 
-    //estd::layer1::bipbuf<256> buf_;
     Buf buf_;
 
     // We baked this right into function itself:
