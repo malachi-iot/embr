@@ -6,8 +6,17 @@
 
 namespace embr { namespace experimental {
 
-template <ESTD_CPP_CONCEPT(estd::concepts::v1::Bipbuf) Buf>
-class ThunkBase
+struct NoopMutex
+{
+    static constexpr bool lock_push() { return {}; }
+    static constexpr bool unlock_push() { return {}; }
+    static constexpr bool lock_pop() { return {}; }
+    static constexpr bool unlock_pop() { return {}; }
+};
+
+template <ESTD_CPP_CONCEPT(estd::concepts::v1::Bipbuf) Buf,
+    class Mutex>
+class ThunkBase : protected Mutex
 {
     // Edge-case version which auto-invokes functor destructor immediately
     // after invocation
@@ -46,7 +55,7 @@ class ThunkBase
         }
     };
 
-
+    Mutex& mutex() { return *this; }
 
     Buf buf_;
 
@@ -72,8 +81,8 @@ public:
     ESTD_CPP_FORWARDING_CTOR_MEMBER(ThunkBase, buf_)
 
     // DEBT: See if we can find clever way to oerload and handle no-parameter flavor of F too
-    template <class F>
-    bool enqueue(F&& f)
+    template <class F, class Mutex2>
+    bool enqueue(F&& f, Mutex2 mutex)
     {
         /*
         auto f2 = [f]
@@ -92,6 +101,8 @@ public:
         using model_type = function_type::model<F2>;
         //int sz = sizeof(inline_function) + sizeof(Item);
 
+        mutex.lock_push();
+
         // Make sure we have enough space
         if(buf_.unused() < sizeof(model_type))  return false;
 
@@ -108,7 +119,15 @@ public:
 
         buf_.offer_end(item->size());
 
+        mutex.unlock_push();
+
         return true;
+    }
+
+    template <class F>
+    bool enqueue(F&& f)
+    {
+        return enqueue(std::forward<F>(f), mutex());
     }
 
     bool empty() const
@@ -116,9 +135,12 @@ public:
         return buf_.used() == 0;
     }
 
-    void invoke()
+    template <class Mutex2>
+    void invoke(Mutex2 mutex)
     {
+        mutex.lock_pop();
         auto item = (Item*)buf_.peek();
+        mutex.unlock_pop();
 
         if(item == nullptr) return;
         auto model = (model_base*)item->model;
@@ -127,11 +149,30 @@ public:
         // fnptr2_opt also calls functor destructor.
         (*model)();
 
+        mutex.lock_pop();
         buf_.poll(item->size());
+        mutex.unlock_pop();
+    }
+
+    void invoke()
+    {
+        return invoke(mutex());
     }
 };
 
-using Thunk = ThunkBase<estd::layer1::bipbuf<256>>;
-using Thunk2 = ThunkBase<estd::layer3::bipbuf>;
+namespace layer1 {
+
+template <unsigned N, class Mutex = NoopMutex>
+using Thunk = ThunkBase<estd::layer1::bipbuf<N>, Mutex>;
+
+}
+
+namespace layer3 {
+
+template <class Mutex = NoopMutex>
+using Thunk = ThunkBase<estd::layer3::bipbuf, Mutex>;
+
+}
+
 
 }}

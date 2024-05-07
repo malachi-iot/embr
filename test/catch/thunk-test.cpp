@@ -59,7 +59,7 @@ struct Tracked
 
 TEST_CASE("thunk")
 {
-    embr::experimental::Thunk t;
+    embr::experimental::layer1::Thunk<256> t;
 
     SECTION("pt1")
     {
@@ -147,7 +147,7 @@ TEST_CASE("thunk")
         // We want a new
         // constructor which takes 'allocated' directly.  Note flavor which
         // -only- passes in bipbuf_t is OK, but that requires a discrete bipbuf init call
-        embr::experimental::Thunk2 t2(&buf, sizeof(allocated) - sizeof(buf));
+        embr::experimental::layer3::Thunk<> t2(&buf, sizeof(allocated) - sizeof(buf));
 
         REQUIRE(t2.empty() == true);
         t2.enqueue([&]{ ++counter; });
