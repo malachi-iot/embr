@@ -41,7 +41,7 @@ class ThunkBase : protected Mutex
             unsigned flag1 : 1;
         };
 
-        uint8_t model[];
+        char model[];
 
         static constexpr unsigned size(unsigned sz)
         {
@@ -136,13 +136,13 @@ public:
     }
 
     template <class Mutex2>
-    void invoke(Mutex2 mutex)
+    bool invoke(Mutex2 mutex)
     {
         mutex.lock_pop();
         auto item = (Item*)buf_.peek();
         mutex.unlock_pop();
 
-        if(item == nullptr) return;
+        if(item == nullptr) return false;
         auto model = (model_base*)item->model;
 
         // Models are directly invocable just like their function owners.
@@ -152,9 +152,10 @@ public:
         mutex.lock_pop();
         buf_.poll(item->size());
         mutex.unlock_pop();
+        return true;
     }
 
-    void invoke()
+    bool invoke()
     {
         return invoke(mutex());
     }
