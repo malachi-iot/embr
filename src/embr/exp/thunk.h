@@ -1,5 +1,7 @@
 #pragma once
 
+#include <new>
+
 #include <estd/cstddef.h>   // DEBT: bip/buffer should include this itself for 'byte'
 #include <estd/internal/bip/buffer.h>
 #include <estd/functional.h>
@@ -158,6 +160,11 @@ public:
     bool invoke()
     {
         return invoke(mutex());
+    }
+
+    void invoke_all()
+    {
+        while(invoke());
     }
 };
 
