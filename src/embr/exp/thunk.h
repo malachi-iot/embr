@@ -132,6 +132,11 @@ public:
         return enqueue(std::forward<F>(f), mutex());
     }
 
+    unsigned used() const
+    {
+        return buf_.used();
+    }
+
     bool empty() const
     {
         return buf_.used() == 0;
@@ -141,7 +146,9 @@ public:
     bool invoke(Mutex2 mutex)
     {
         mutex.lock_pop();
-        auto item = (Item*)buf_.peek();
+        // NOTE: size(0) just a formality, producing minimum model size for us
+        // to query peek with.
+        auto item = (Item*)buf_.peek(Item::size(0));
         mutex.unlock_pop();
 
         if(item == nullptr) return false;
