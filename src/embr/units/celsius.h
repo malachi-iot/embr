@@ -24,7 +24,7 @@ constexpr celsius<unsigned> operator ""_celsius(unsigned long long int v)
 
 }}
 
-namespace estd::internal::units {
+namespace estd { namespace internal { namespace units {
 
 template <>
 struct traits<embr::units::internal::celsius_tag>
@@ -39,4 +39,4 @@ struct traits<embr::units::internal::celsius_tag>
     static constexpr si::quantities quanitiy = si::quantities::temperature;
 };
 
-}
+}}}

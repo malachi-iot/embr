@@ -5,6 +5,7 @@
 #include <estd/internal/units/bytes.h>  // Just for sanity check make sure si specializations don't collide
 
 #include <embr/units/celsius.h>
+#include <embr/units/decibels.h>
 #include <embr/units/feet.h>
 #include <embr/units/frequency.h>
 #include <embr/units/meters.h>
@@ -12,6 +13,9 @@
 #include <embr/units/rpm.h>
 #include <embr/units/volts.h>
 #include <embr/units/watts.h>
+#include <embr/units/weight.h>
+#include <embr/units/volume.h>
+
 
 using namespace embr;
 using namespace embr::units;
@@ -68,10 +72,17 @@ TEST_CASE("units")
     }
     SECTION("meters")
     {
-        kilometers<int> km{32};
-        meters<int> m{km};
+        SECTION("km")
+        {
+            kilometers<int> km{32};
+            meters<int> m{km};
 
-        REQUIRE(m.count() == 32000);
+            REQUIRE(m.count() == 32000);
+
+            write_abbrev(out, km);
+
+            REQUIRE(s == "32km");
+        }
     }
     SECTION("rpm")
     {

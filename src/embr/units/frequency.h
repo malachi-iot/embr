@@ -14,7 +14,7 @@ using khz = hz<Rep, estd::ratio<1000, 1>>;
 
 }}
 
-namespace estd::internal::units {
+namespace estd { namespace internal { namespace units {
 
 template <>
 struct traits<embr::units::internal::frequency_tag>
@@ -23,4 +23,4 @@ struct traits<embr::units::internal::frequency_tag>
     static constexpr const char* abbrev() { return "Hz"; }
 };
 
-}
+}}}

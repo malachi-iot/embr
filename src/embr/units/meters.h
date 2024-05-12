@@ -25,6 +25,9 @@ template <typename Rep, typename F = internal::passthrough<Rep> >
 using millimeters = meters<Rep, estd::milli, F>;
 
 template <typename Rep, typename F = internal::passthrough<Rep> >
+using micrometers = meters<Rep, estd::micro, F>;
+
+template <typename Rep, typename F = internal::passthrough<Rep> >
 using kilometers = meters<Rep, estd::kilo, F>;
 
 template <typename Rep, class Period = estd::ratio<1>, typename F = internal::passthrough<Rep> >
@@ -53,3 +56,16 @@ struct traits<internal::meters_second_tag>
 
 
 }}
+
+namespace estd { namespace internal { namespace units {
+
+template <>
+struct traits<embr::units::internal::meters_tag>
+{
+    static constexpr const char* name() { return "meters"; }
+    static constexpr const char* abbrev() { return "m"; }
+};
+
+
+}}}
+
