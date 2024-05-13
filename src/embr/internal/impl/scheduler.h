@@ -308,12 +308,12 @@ struct Traditional<false> : TraditionalBase
 };
 
 
-template <typename TTimePoint>
-struct Function : ReferenceBase<TTimePoint>,
+template <typename TimePoint, template <class> class Impl = estd::detail::impl::function_default>
+struct Function : ReferenceBase<TimePoint>,
     tag::Function
 {
-    typedef TTimePoint time_point;
-    typedef estd::detail::function<void(time_point*, time_point)> function_type;
+    typedef TimePoint time_point;
+    using function_type = estd::detail::v2::function<void(time_point*, time_point), Impl>;
 
     template <class F>
     static estd::experimental::inline_function<F, void(time_point*, time_point)> make_function(F&& f)
