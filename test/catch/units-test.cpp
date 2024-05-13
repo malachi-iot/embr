@@ -63,6 +63,14 @@ TEST_CASE("units")
 
         REQUIRE(out.rdbuf()->str() == "-40 deg C");
     }
+    SECTION("decibels")
+    {
+        decibels<int> d1{5};
+
+        write_abbrev(out, d1);
+
+        REQUIRE(s == "5dB");
+    }
     SECTION("feet")
     {
         yards<int> y{10};

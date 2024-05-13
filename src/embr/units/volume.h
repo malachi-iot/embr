@@ -16,6 +16,21 @@ struct fluid_ounces_tag {};
 
 }
 
+template <typename Rep, class Period = estd::ratio<1>, typename F = internal::passthrough<Rep> >
+using liters = detail::unit<Rep, Period, internal::liters_tag, F>;
+
+template <typename Rep, class Period = estd::ratio<1>, typename F = internal::passthrough<Rep> >
+using ounces = detail::unit<Rep, Period, internal::ounces_tag, F>;
+
+template <typename Rep, class Period = estd::ratio<1>, typename F = internal::passthrough<Rep> >
+using fluid_ounces = detail::unit<Rep, Period, internal::fluid_ounces_tag, F>;
+
+template <typename Rep, typename F = internal::passthrough<Rep> >
+using quarts = fluid_ounces<Rep, estd::ratio<32, 1>>;
+
+template <typename Rep, typename F = internal::passthrough<Rep> >
+using gallons = fluid_ounces<Rep, estd::ratio<128, 1>>;
+
 }}
 
 

@@ -6,9 +6,16 @@ namespace embr { namespace units {
 
 namespace internal {
 
-struct decibels_tag {};
+struct bels_tag {};
 
 }
+
+template <typename Rep, class Period = estd::ratio<1>, typename F = internal::passthrough<Rep> >
+using bels = detail::unit<Rep, Period, internal::bels_tag, F>;
+
+template <typename Rep, typename F = internal::passthrough<Rep> >
+using decibels = bels<Rep, estd::deci, F>;
+
 
 }}
 
@@ -16,13 +23,10 @@ struct decibels_tag {};
 namespace estd { namespace internal { namespace units {
 
 template <>
-struct traits<embr::units::internal::decibels_tag>
+struct traits<embr::units::internal::bels_tag>
 {
-    static constexpr const char* name() { return "decibels"; }
-
-    static constexpr const char* abbrev() { return "dB"; }
-
-    static constexpr si::quantities quantity = si::quantities::electric_current;
+    static constexpr const char* name() { return "bels"; }
+    static constexpr const char* abbrev() { return "B"; }
 };
 
 
