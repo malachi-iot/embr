@@ -322,6 +322,10 @@ public:
         return t;
     }
 
+private:
+    template <class TContext>
+    bool process_one(time_point current_time, context_type<TContext>& context);
+
 public:
     Scheduler() = default;
     //Scheduler(TSubject subject) : subject_provider(subject) {}
@@ -456,6 +460,21 @@ public:
         context_type<> context = create_context();
 
         process(current_time, context);
+    }
+
+    /// Process only the topmost item if present
+    /// @param current_time
+    /// @return true if item is present and processed (implying perhaps other items present also)
+    /// false if no item was present
+    bool process_one(time_point current_time)
+    {
+        context_type<> context = create_context();
+
+        // DEBT: Clumsy usage of mutex_guard here.  But to put it into private process_one
+        // would invite a recursive-mutex behavior since regular process also uses process_one
+        mutex_guard m(context);
+
+        return process_one(current_time, context);
     }
 
     void process_in_isr(time_point current_time)
