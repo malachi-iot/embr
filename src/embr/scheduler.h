@@ -13,96 +13,6 @@ namespace embr {
 
 namespace internal {
 
-namespace scheduler {
-
-// DEBT: See Scheduler constructor comments
-struct impl_params_tag {};
-
-}
-
-
-namespace events {
-
-template<class TSchedulerImpl>
-struct Scheduler
-{
-    typedef TSchedulerImpl impl_type;
-};
-
-
-template<class TSchedulerImpl, bool is_const = true>
-struct ValueBase : Scheduler<TSchedulerImpl>
-{
-    typedef typename TSchedulerImpl::value_type _value_type;
-    typedef typename estd::conditional<is_const, const _value_type, _value_type>::type value_type;
-
-    // DEBT: Needs better name, this represents the control/meta structure going in
-    // the sorted heap.  Be advised the heap one may be a copy of this
-    value_type& value;
-
-    ValueBase(value_type& value) : value(value) {}
-};
-
-template <class TSchedulerImpl>
-struct Scheduling : ValueBase<TSchedulerImpl>
-{
-    typedef ValueBase<TSchedulerImpl> base_type;
-
-    Scheduling(typename base_type::value_type& value) : base_type(value) {}
-};
-
-
-// DEBT: Consider how to semi standardize collection operation events, somewhat similar to how C#
-// does with IObservableCollection
-template <class TSchedulerImpl>
-struct Scheduled : ValueBase<TSchedulerImpl>
-{
-    typedef ValueBase<TSchedulerImpl> base_type;
-
-    Scheduled(typename base_type::value_type& value) : base_type(value) {}
-};
-
-
-template <class TSchedulerImpl>
-struct Removed : ValueBase<TSchedulerImpl>
-{
-    typedef ValueBase<TSchedulerImpl> base_type;
-
-    Removed(typename base_type::value_type& value) : base_type(value) {}
-};
-
-
-template <class TSchedulerImpl>
-struct Processing : ValueBase<TSchedulerImpl>
-{
-    typedef ValueBase<TSchedulerImpl> base_type;
-    typedef typename base_type::impl_type::time_point time_point;
-
-    const time_point current_time;
-
-    Processing(typename base_type::value_type& value, time_point current_time) :
-        base_type(value), current_time(current_time)
-    {}
-};
-
-
-template <class TSchedulerImpl>
-struct Processed : Scheduler<TSchedulerImpl>
-{
-    typedef Scheduler<TSchedulerImpl> base_type;
-    typedef typename base_type::impl_type::time_point time_point;
-
-    const time_point current_time;
-
-    // DEBT: Need to actually store 'value'
-
-    Processed(typename base_type::impl_type::value_type* value, time_point current_time) :
-        current_time(current_time)
-    {}
-};
-
-}
-
 /**
  *
  * @tparam TContainer raw container for priority_queue usage.  Its value_type must be
@@ -292,7 +202,7 @@ protected:
         }
 
     public:
-        mutex_guard(context_base_type& context) : context(context)
+        explicit mutex_guard(context_base_type& context) : context(context)
         {
             lock();
         }
@@ -330,7 +240,7 @@ public:
     Scheduler() = default;
     //Scheduler(TSubject subject) : subject_provider(subject) {}
     Scheduler(const TSubject& subject) : subject_provider(subject) {}
-#ifdef FEATURE_CPP_MOVESEMANTIC
+#ifdef __cpp_rvalue_references
     Scheduler(TSubject&& subject) : subject_provider(std::move(subject))
     {
 
@@ -364,7 +274,7 @@ public:
         schedule_internal(value, context);
     }
 
-#ifdef FEATURE_CPP_MOVESEMANTIC
+#ifdef __cpp_rvalue_references
     void schedule(value_type&& value)
     {
         do_notify_scheduling(value);
@@ -470,11 +380,16 @@ public:
     {
         context_type<> context = create_context();
 
-        // DEBT: Clumsy usage of mutex_guard here.  But to put it into private process_one
+        // DEBT: Clumsy usage of mutex_guard & context here.  But to put it into private process_one
         // would invite a recursive-mutex behavior since regular process also uses process_one
         mutex_guard m(context);
+        context.is_processing(true);
 
-        return process_one(current_time, context);
+        bool processed = process_one(current_time, context);
+
+        context.is_processing(false);
+
+        return processed;
     }
 
     void process_in_isr(time_point current_time)
@@ -499,7 +414,7 @@ public:
 
         // brute force through underlying container attempting to match
 
-        for(auto& i : event_queue.container())
+        for(reference i : event_queue.container())
         {
             if(i.match(value))
                 return &i;
