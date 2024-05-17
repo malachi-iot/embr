@@ -212,11 +212,11 @@ protected:
 
     // No mutex is what makes this an internal call
     template <class TContext>
-    inline void schedule_internal(value_type& value, context_type<TContext>& context)
+    inline void schedule_internal(value_type&& value, context_type<TContext>& context)
     {
         do_notify_scheduling(value, context);
 
-        event_queue.push(value);
+        event_queue.push(std::forward<value_type>(value));
 
         do_notify_scheduled(value, context);
     }

@@ -22,17 +22,19 @@ bool Scheduler<Container, Impl, Subject>::process_one(time_point current_time, c
         do_notify_processed(t.get(), current_time, context);
 
         // Need to do this because *t is a pointer into event_queue and the pop moves
-        // items around.
-        value_type copied = *t;
+        // items around.  We trust that moves are relatively inexpensive
+        // DEBT: As an optimization, pay attention to a feature flag on impl which disables/adjusts this
+        // DEBT: As an optimization, see if we can briefly double-schedule the same item to avoid this
+        // move altogether (i.e. call schedule_internal *before* pop)
+        value_type moved(std::move(*t));
 
         event_queue.pop();
 
-        subject_provider::value().notify(removed_event_type (copied), context);
+        subject_provider::value().notify(removed_event_type (moved), context);
 
         if(reschedule_requested)
         {
-            // DEBT: Doesn't handle move variant
-            schedule_internal(copied, context);
+            schedule_internal(std::move(moved), context);
         }
 
         // Processed this item and potentially more are awaiting, denoted by true
