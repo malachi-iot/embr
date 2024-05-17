@@ -80,6 +80,11 @@ public:
         pbuf_free(p);
     }
 
+    void ref() const
+    {
+        pbuf_ref(p);
+    }
+
     size_type copy_partial(void* s, size_type len, size_type offset) const
     {
         return pbuf_copy_partial(p, s, len, offset);
