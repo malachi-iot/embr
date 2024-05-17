@@ -51,8 +51,10 @@ public:
 
     PbufBase(pointer p) : p(p) {}
     PbufBase() = delete;
-    PbufBase(size_type size, pbuf_layer layer = PBUF_TRANSPORT) : 
-        p(pbuf_alloc(layer, size, PBUF_RAM))
+    PbufBase(size_type size,
+        pbuf_layer layer = PBUF_TRANSPORT,
+        pbuf_type type = PBUF_RAM) : 
+        p(pbuf_alloc(layer, size, type))
     {
     }
 
@@ -90,12 +92,12 @@ public:
         return pbuf_copy_partial(p, s, len, offset);
     }
 
-    void concat(pointer t)
+    void concat(pointer t) const
     {
         pbuf_cat(p, t);
     }
 
-    void chain(pointer t)
+    void chain(pointer t) const
     {
         pbuf_chain(p, t);
     }
@@ -185,7 +187,10 @@ estd::tuple<PbufBase, PbufBase::size_type> delta_length(PbufBase start, PbufBase
 // management
 struct Pbuf : PbufBase
 {
-    Pbuf(size_type size) : PbufBase(size)
+    Pbuf(size_type size,
+        pbuf_layer layer = PBUF_TRANSPORT,
+        pbuf_type type = PBUF_RAM) : 
+        PbufBase(size, layer, type)
     {
     }
 
@@ -201,7 +206,7 @@ struct Pbuf : PbufBase
         if(bump_reference) pbuf_ref(pbuf());
     }
 
-#ifdef FEATURE_CPP_MOVESEMANTIC
+#ifdef __cpp_rvalue_references
     Pbuf(Pbuf&& move_from) :
         PbufBase(move_from.p)
     {
