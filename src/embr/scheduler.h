@@ -20,14 +20,14 @@ namespace internal {
  * @tparam TImpl
  * @tparam TSubject optional observer which can listen for schedule and remove events
  */
-template <class TContainer,
-    class TImpl,
-    class TSubject = embr::void_subject
+template <class Container,
+    class Impl,
+    class Subject = embr::void_subject
     >
 class Scheduler :
-    public TImpl,
-    protected estd::internal::struct_evaporator<TSubject>,
-    protected estd::internal::struct_evaporator<typename TImpl::mutex>
+    public Impl,
+    protected estd::internal::struct_evaporator<Subject>,
+    protected estd::internal::struct_evaporator<typename Impl::mutex>
 {
     typedef Scheduler this_type;
 
@@ -40,20 +40,18 @@ class Scheduler :
     friend class embr::internal::scheduler::impl::ReferenceBaseBase::Buddy;
 
 protected:
-    typedef TContainer container_type;
+    typedef Container container_type;
 
 public:
-    typedef typename container_type::value_type value_type;
-    typedef value_type& reference;
-    typedef const value_type& const_reference;
-    typedef TImpl impl_type;
+    ESTD_CPP_STD_VALUE_TYPE(typename container_type::value_type)
+
+    typedef Impl impl_type;
     typedef typename impl_type::context_factory context_factory;
     typedef typename impl_type::time_point time_point;
     typedef SchedulerContextBase<this_type> context_base_type;
 
-    // DEBT: May want c++03 guards here
-    template <class TUserContext = estd::monostate>
-    using context_type = SchedulerContext<this_type, TUserContext>;
+    template <class UserContext = estd::monostate>
+    using context_type = SchedulerContext<this_type, UserContext>;
 
     // EXPERIMENTAL, different way to get at typedefs
     struct event
@@ -65,7 +63,7 @@ public:
     typedef estd::internal::struct_evaporator<mutex_type> mutex_provider;
 
 protected:
-    typedef estd::internal::struct_evaporator<TSubject> subject_provider;
+    typedef estd::internal::struct_evaporator<Subject> subject_provider;
 
     typedef events::Scheduling<impl_type> scheduling_event_type;
     typedef events::Scheduled<impl_type> scheduled_event_type;
@@ -239,22 +237,19 @@ private:
 public:
     Scheduler() = default;
     //Scheduler(TSubject subject) : subject_provider(subject) {}
-    Scheduler(const TSubject& subject) : subject_provider(subject) {}
-#ifdef __cpp_rvalue_references
-    Scheduler(TSubject&& subject) : subject_provider(std::move(subject))
+    Scheduler(const Subject& subject) : subject_provider(subject) {}
+    Scheduler(Subject&& subject) : subject_provider(std::move(subject))
     {
 
     }
-#endif
-#ifdef __cpp_variadic_templates
     // impl-initializing version
     // DEBT: impl_params_tag necessary to disambiguate from TSubject initializers above
-    template <typename ...TArgs>
-    constexpr Scheduler(scheduler::impl_params_tag, TArgs&&...args) : impl_type(std::forward<TArgs>(args)...)
+    template <typename ...Args>
+    constexpr Scheduler(scheduler::impl_params_tag, Args&&...args) :
+        impl_type(std::forward<Args>(args)...)
     {
 
     }
-#endif
 
     // DEBT: No mutex operation here, be careful!
     void schedule(const value_type& value)
@@ -451,12 +446,12 @@ public:
 namespace layer1 {
 
 template <int count,
-    class TImpl = embr::internal::scheduler::impl::Function<estd::chrono::steady_clock::time_point>,
-    class TSubject = void_subject>
+    class Impl = embr::internal::scheduler::impl::Function<estd::chrono::steady_clock::time_point>,
+    class Subject = void_subject>
 struct Scheduler :
-    embr::internal::Scheduler<estd::layer1::vector<typename TImpl::value_type, count>, TImpl, TSubject>
+    embr::internal::Scheduler<estd::layer1::vector<typename Impl::value_type, count>, Impl, Subject>
 {
-    typedef embr::internal::Scheduler<estd::layer1::vector<typename TImpl::value_type, count>, TImpl, TSubject> base_type;
+    typedef embr::internal::Scheduler<estd::layer1::vector<typename Impl::value_type, count>, Impl, Subject> base_type;
 
     ESTD_CPP_FORWARDING_CTOR(Scheduler)
 };
