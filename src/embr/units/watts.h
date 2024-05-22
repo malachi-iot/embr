@@ -16,6 +16,9 @@ template <typename Rep, class Period = estd::ratio<1>, typename F = internal::pa
 using watts = detail::unit<Rep, Period, internal::watts_tag, F>;
 
 template <typename Rep, typename F = internal::passthrough<Rep> >
+using kilowatts = watts<Rep, estd::kilo, F>;
+
+template <typename Rep, typename F = internal::passthrough<Rep> >
 using milliwatts = watts<Rep, estd::milli, F>;
 
 // EXPERIMENTAL

@@ -25,6 +25,9 @@ using amps = detail::unit<Rep, Period, internal::amps_tag, F>;
 template <class Rep, typename F = internal::passthrough<Rep> >
 using milliamps = amps<Rep, estd::milli, F>;
 
+template <class Rep, typename F = internal::passthrough<Rep> >
+using microamps = amps<Rep, estd::micro, F>;
+
 template <class Rep, class Period = estd::ratio<1>, typename F = internal::passthrough<Rep> >
 using amp_seconds = detail::unit<Rep, Period, internal::amp_seconds_tag, F>;
 

@@ -28,6 +28,9 @@ template <typename Rep, typename F = internal::passthrough<Rep> >
 using micrometers = meters<Rep, estd::micro, F>;
 
 template <typename Rep, typename F = internal::passthrough<Rep> >
+using nanoometers = meters<Rep, estd::nano, F>;
+
+template <typename Rep, typename F = internal::passthrough<Rep> >
 using kilometers = meters<Rep, estd::kilo, F>;
 
 template <typename Rep, class Period = estd::ratio<1>, typename F = internal::passthrough<Rep> >

@@ -2,6 +2,12 @@
 
 #include "base.h"
 
+// DEBT: Account for dB suffixes, such as:
+// A - acoustic
+// V - volt
+// m - milliwatt
+// https://www.softdb.com/blog/difference-between-db-dba/
+
 namespace embr { namespace units {
 
 namespace internal {
