@@ -147,8 +147,9 @@ struct ReferenceBaseBase
 protected:
     // EXPERIMENTAL accessor class
     template <class TScheduler>
-    struct Buddy
+    class Buddy
     {
+    public:
         typedef TScheduler scheduler_type;
         typedef typename scheduler_type::container_type container_type;
 
