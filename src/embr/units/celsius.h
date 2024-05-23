@@ -36,7 +36,7 @@ struct traits<embr::units::internal::celsius_tag>
     // doesn't come through in esp.py terminal
     static constexpr const char* abbrev() { return " deg C"; }
 
-    static constexpr si::quantities quanitiy = si::quantities::temperature;
+    static constexpr si::quantities quantity = si::quantities::temperature;
 };
 
 }}}
