@@ -53,18 +53,18 @@ struct numeric_limits<embr::word<bits, false, strict> >
 #if __cplusplus >= 201103L
 // Converts word back to requested integer with a compile time guard against
 // narrowing conversion
-template <class TInt, size_t bits, bool is_signed, embr::word_strictness strict,
+template <class Int, size_t bits, bool is_signed, embr::word_strictness strict,
 typename enable_if<
 #if FEATURE_EMBR_WORD_STRICTNESS
     (!embr::any<strict, embr::word_strictness::narrowing>()) ||
 #endif
-    (estd::numeric_limits<TInt>::max() >= estd::numeric_limits<embr::word<bits> >::max()), bool>::type = true>
+    (estd::numeric_limits<Int>::max() >= estd::numeric_limits<embr::word<bits> >::max()), bool>::type = true>
 #else
 // For c++03 is is just a noop for forward compatibility.
 // DEBT: If need be, a c++03 version could be made using the UINT_MAX style defines
-template <class TInt, size_t bits, bool is_signed, embr::word_strictness strict>
+template <class Int, size_t bits, bool is_signed, embr::word_strictness strict>
 #endif
-ESTD_CPP_CONSTEXPR_RET TInt to_integer(embr::word<bits, is_signed, strict> w)
+ESTD_CPP_CONSTEXPR_RET Int to_integer(embr::word<bits, is_signed, strict> w)
 {
     return w.cvalue();
 }
@@ -128,7 +128,7 @@ public:
     // assignable to 11-bit words
     word& operator=(type value)
     {
-        return * (new (this) word(value));
+        return * (new (this) word(value));      // NOLINT
     }
 
     word& operator++()
@@ -177,8 +177,8 @@ public:
         return *this;
     }
 
-    template <class TInt>
-    inline word& operator <<=(TInt r)
+    template <class Int>
+    inline word& operator <<=(Int r)
     {
         // DEBT: If strict masking is on, apply mask here - and consider an overflow detect feature
         base_type::value_ <<= r;
@@ -288,34 +288,34 @@ ESTD_CPP_CONSTEXPR_RET word<bits, is_signed, s> operator *(
     return l * word<bits, is_signed, s>(r);
 }
 
-template <size_t bits, bool is_signed, word_strictness s, typename TInt EMBR_WORD_ARITHMETIC>
-ESTD_CPP_CONSTEXPR_RET TInt operator *(
-    word<bits, is_signed, s> l, TInt r)
+template <size_t bits, bool is_signed, word_strictness s, typename Int EMBR_WORD_ARITHMETIC>
+ESTD_CPP_CONSTEXPR_RET Int operator *(
+    word<bits, is_signed, s> l, Int r)
 {
     return l.value() * r;
 }
 
-template <size_t bits, typename TInt>
-ESTD_CPP_CONSTEXPR_RET word<bits> operator <<(word<bits> l, TInt r)
+template <size_t bits, typename Int>
+ESTD_CPP_CONSTEXPR_RET word<bits> operator <<(word<bits> l, Int r)
 {
     return word<bits>(l.cvalue() << r);
 }
 
-template <size_t bits, typename TInt>
-ESTD_CPP_CONSTEXPR_RET word<bits> operator >>(word<bits> l, TInt r)
+template <size_t bits, typename Int>
+ESTD_CPP_CONSTEXPR_RET word<bits> operator >>(word<bits> l, Int r)
 {
     return word<bits>(l.cvalue() >> r);
 }
 
 
-template <size_t bits, bool is_signed, word_strictness s, typename T, typename TInt>
-ESTD_CPP_CONSTEXPR_RET bool operator !=(word<bits, is_signed, s, T> l, TInt r)
+template <size_t bits, bool is_signed, word_strictness s, typename T, typename Int>
+ESTD_CPP_CONSTEXPR_RET bool operator !=(word<bits, is_signed, s, T> l, Int r)
 {
     return l.cvalue() != r;
 }
 
-template <size_t bits, bool is_signed, word_strictness s, typename T, typename TInt>
-ESTD_CPP_CONSTEXPR_RET bool operator ==(word<bits, is_signed, s, T> l, TInt r)
+template <size_t bits, bool is_signed, word_strictness s, typename T, typename Int>
+ESTD_CPP_CONSTEXPR_RET bool operator ==(word<bits, is_signed, s, T> l, Int r)
 {
     return l.cvalue() == r;
 }
