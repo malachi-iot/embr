@@ -2,6 +2,8 @@
 
 ## Results
 
+Superceded by ../README.md
+
 |   Date  | Vendor    | Platform      | Result    | Notes |
 | ------- | --------- | ----------    | ------    | ----- |
 | 21APR22 | Espressif | ESP32S        | Pass      |
