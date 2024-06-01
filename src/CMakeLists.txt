@@ -17,6 +17,11 @@ include(sources.cmake)
 add_library(${PROJECT_NAME} INTERFACE)
 add_library(malachi-iot::embr ALIAS ${PROJECT_NAME})
 
+# DEBT: Was done for macOS, but it doesn't pick it up.  Once that is resolved,
+# bring these in
+#target_compile_features(estd INTERFACE cxx_std_11)
+#target_compile_features(embr INTERFACE cxx_std_11)
+
 target_sources(${PROJECT_NAME} INTERFACE ${SOURCE_FILES} ${INCLUDE_FILES})
 
 configure_file(../tools/cmake/version.in.h ${CMAKE_CURRENT_SOURCE_DIR}/embr/version.h)

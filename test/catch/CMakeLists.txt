@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.17)
 
 project(embr-unit-test VERSION 1.0.0)
 
+# DEBT: On macOS target_compile_features isn't working as expected, so brute
+# forcing here
+set(CMAKE_CXX_STANDARD 11)
+
 # Sorta works, but generates a billion warnings.  PGGCC-36 attempts to
 # isolate why.  Disabing for that reason
 option(EMBR_EXP_AUTOSTART "Experimental autostart testing" OFF)
