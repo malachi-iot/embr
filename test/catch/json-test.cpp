@@ -1,4 +1,4 @@
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 
 #include <embr/json/decoder.h>
 #include <embr/json/encoder.hpp>

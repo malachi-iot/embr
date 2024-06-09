@@ -4,7 +4,7 @@
  * 1. Reserved
  * 2. bits/README.md
  */
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 
 #include <embr/bits/bits.hpp>
 

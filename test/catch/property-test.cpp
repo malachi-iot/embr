@@ -1,4 +1,4 @@
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 
 #include <embr/observer.h>
 #include <embr/property/v1/notifier.h>

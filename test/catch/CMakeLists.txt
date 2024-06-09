@@ -21,7 +21,7 @@ Set(FETCHCONTENT_QUIET FALSE)
 FetchContent_Declare(
     Catch2
     GIT_REPOSITORY  https://github.com/catchorg/Catch2.git
-    GIT_TAG         v2.13.10
+    GIT_TAG         v3.6.0
     GIT_PROGRESS    TRUE
     GIT_SHALLOW     TRUE
 )
@@ -29,7 +29,6 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(Catch2)
 
 set(SOURCE_FILES
-    main.cpp
     basics-test.cpp
     bits-test.cpp
     bitset-test.cpp
@@ -59,4 +58,4 @@ target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_11)
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE UNIT_TESTING=1)
 
-target_link_libraries(${PROJECT_NAME} embr malachi-iot::estd Catch2)
+target_link_libraries(${PROJECT_NAME} embr malachi-iot::estd Catch2::Catch2WithMain)

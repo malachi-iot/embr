@@ -1,4 +1,4 @@
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 
 #include <embr/service.h>
 #include <embr/exp/refsubject.h>
@@ -442,7 +442,7 @@ protected:
 
     int do_private_stuff() const
     {
-        INFO("DependentService4: doing private stuff")
+        INFO("DependentService4: doing private stuff");
         return value1 + 1;
     }
 
