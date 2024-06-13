@@ -80,15 +80,15 @@ struct delegate_observer<F, Arg1> make_delegate_observer(F&& f)
 
 namespace layer1 {
 
-template <class ...TObservers>
+template <class ...Observers>
 using subject = internal::subject<
-    internal::tuple_base<TObservers...> >;
+    internal::tuple_base<Observers...> >;
 
-template <class ...TObservers>
-subject<TObservers&&...> make_subject(TObservers&&...observers)
+template <class ...Observers>
+constexpr subject<Observers...> make_subject(Observers&&...observers)
 {
-    return subject<TObservers&&...>(
-            std::forward<TObservers>(observers)...);
+    return subject<Observers...>(
+            std::forward<Observers>(observers)...);
 }
 
 
