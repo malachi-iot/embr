@@ -166,14 +166,14 @@ public:
         out << quote(false) << value << quote(false);
     }
 
-    template <class TStreambuf, class TBase>
-    void raw(estd::internal::basic_ostream <TStreambuf, TBase>& out, int value)
+    template <class Streambuf, class Base>
+    void raw(estd::detail::basic_ostream<Streambuf, Base>& out, int value)
     {
         out << value;
     }
 
-    template <class TStreambuf, class TBase, typename T>
-    void array_item(estd::detail::basic_ostream <TStreambuf, TBase>& out, T value)
+    template <class Streambuf, class Base, typename T>
+    void array_item(estd::detail::basic_ostream<Streambuf, Base>& out, T value)
     {
         if (has_items())
         {

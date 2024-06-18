@@ -9,9 +9,9 @@ namespace embr { namespace json {
 
 inline namespace v1 {
 
-template <class TOptions>
-template <class TStreambuf, class TBase>
-inline void encoder<TOptions>::do_eol(estd::internal::basic_ostream<TStreambuf, TBase>& out)
+template <class Options>
+template <class Streambuf, class Base>
+inline void encoder<Options>::do_eol(estd::detail::basic_ostream<Streambuf, Base>& out)
 {
     if (options_type::use_eol()) out << estd::endl;
 }
