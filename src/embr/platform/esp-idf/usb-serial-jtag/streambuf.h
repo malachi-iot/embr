@@ -10,19 +10,9 @@ namespace embr::esp_idf {
 
 namespace impl {
 
-/*
- * TODO: Ultimately this particular streambuf will be combined I/O variety
 template <class CharTraits>
-struct iusj_streambuf : estd::internal::impl::streambuf_base<CharTraits>
-{
-    streamsize xsgetn(char_type* s, streamsize count)
-    {
-
-    }
-};  */
-
-template <class CharTraits>
-struct usj_streambuf : estd::internal::impl::streambuf_base<CharTraits>
+struct usj_streambuf : estd::internal::impl::streambuf_base<CharTraits>,
+    estd::internal::streambuf_sbumpc_tag
 {
     using base_type = estd::internal::impl::streambuf_base<CharTraits>;
 
@@ -44,7 +34,7 @@ public:
     {
         //const int_type _ch = traits_type::to_int_type(ch);
         //int_type result = overflow(_ch);
-        int result = usb_serial_jtag_write_bytes(&ch, 1, 0);
+        int result = usb_serial_jtag_write_bytes(&ch, sizeof(ch), 0);
         //if(result == traits_type::eof()) return traits_type::eof();
         //return _ch;
         return result == 1 ?
@@ -56,12 +46,26 @@ public:
     {
         return usb_serial_jtag_write_bytes(s, count, 0);
     }
+
+    int_type sbumpc()
+    {
+        char_type ch;
+        int result = usb_serial_jtag_read_bytes(&ch, sizeof(ch), 0);
+        return result == 1 ?
+            traits_type::to_int_type(ch) :
+            traits_type::eof();
+    }
+
+    estd::streamsize xsgetn(char_type* s, estd::streamsize count)
+    {
+        return usb_serial_jtag_read_bytes(s, count, 0);
+    }
 };
 
 }
 
 template <class Char, class CharTraits = estd::char_traits<char> >
-using ousj_streambuf = estd::detail::streambuf<
+using usj_streambuf = estd::detail::streambuf<
     impl::usj_streambuf<CharTraits> >;
 
 }
