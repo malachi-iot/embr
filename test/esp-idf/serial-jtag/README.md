@@ -1,7 +1,16 @@
+# Overview
+
+Support streambuf code for "baby" USB ACM/JTAG adapter present on ESP32C3, C6
 
 # 1. Design Goals
 
+Low level streambuf wrapper functional.
+
+Any kind of extra buffering/intelligence is purely for testing and proof of concept.
+
 # 2. Infrastructure
+
+ESP32C6 DevKit used
 
 # 3. Opinions & Observations
 
@@ -15,6 +24,11 @@ Section 31 of datasheet [1] goes into detail on the limited USB peripheral
 Seems that one can't inhibit log output on one console without inhibiting it on the other [2]
 
 # 4. Conclusions
+
+## 4.1. ESP32C6
+
+ESP-IDF v5.1.4 does not output, although input does seem to work
+ESP-IDF v5.2.2 input and output works
 
 # References
 
