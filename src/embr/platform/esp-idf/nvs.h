@@ -31,9 +31,29 @@ public:
         return nvs_get_str(h, key, out_value, sz);
     }
 
+    esp_err_t get(const char* key, uint8_t* out_value)
+    {
+        return nvs_get_u8(h, key, out_value);
+    }
+
     esp_err_t set_blob(const char* key, const void* buffer, std::size_t sz)
     {
         return nvs_set_blob(h, key, buffer, sz);
+    }
+
+    esp_err_t set(const char* key, uint8_t value)
+    {
+        return nvs_set_u8(h, key, value);
+    }
+
+    esp_err_t set(const char* key, int8_t value)
+    {
+        return nvs_set_i8(h, key, value);
+    }
+
+    esp_err_t set(const char* key, uint16_t value)
+    {
+        return nvs_set_u16(h, key, value);
     }
 
     void close()
