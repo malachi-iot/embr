@@ -41,6 +41,11 @@ public:
         return nvs_get_u16(h, key, out_value);
     }
 
+    esp_err_t get(const char* key, uint32_t* out_value)
+    {
+        return nvs_get_u32(h, key, out_value);
+    }
+
     esp_err_t set_blob(const char* key, const void* buffer, std::size_t sz)
     {
         return nvs_set_blob(h, key, buffer, sz);
@@ -64,6 +69,11 @@ public:
     esp_err_t set(const char* key, int16_t value)
     {
         return nvs_set_i16(h, key, value);
+    }
+
+    esp_err_t set(const char* key, uint32_t value)
+    {
+        return nvs_set_u32(h, key, value);
     }
 
     void close()
@@ -107,3 +117,13 @@ esp_err_t set(Handle h, const char* key, T* blob)
 
 
 }}}
+
+namespace embr { namespace internal {
+
+template <>
+struct scoped_guard_traits<esp_idf::nvs::Handle>
+{
+    using status_type = esp_err_t;
+};
+
+}}

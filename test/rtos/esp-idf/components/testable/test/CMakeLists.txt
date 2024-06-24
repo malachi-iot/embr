@@ -15,6 +15,7 @@ set(COMPONENT_SRCS
     "dummy.cpp"
     "experimental.cpp"
     memory.cpp
+    nvs.cpp
     power.cpp
     "timer.cpp")
 
