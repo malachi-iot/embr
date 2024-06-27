@@ -26,7 +26,7 @@ template <class TInt>
 unsigned width_deducer_old(TInt v)
 {
     constexpr unsigned byte_width = byte_size();
-    constexpr unsigned max_width = sizeof(TInt) * byte_width;
+    //constexpr unsigned max_width = sizeof(TInt) * byte_width;
     TInt max_mask = estd::numeric_limits<TInt>::max();
     constexpr unsigned min_width = byte_width;
     constexpr TInt min_mask = (1 << byte_width) - 1;

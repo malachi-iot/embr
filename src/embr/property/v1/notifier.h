@@ -123,6 +123,10 @@ protected:
         typedef typename TTraits::owner_type owner_type;
         const char* name = traits_type::name();
         const char* owner_name = owner_type::name();
+
+        // Quiet down warnings
+        (void)name;
+        (void)owner_name;
 #endif
         auto current_v = traits_type::get(store);
 
