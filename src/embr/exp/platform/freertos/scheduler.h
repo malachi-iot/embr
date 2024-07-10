@@ -100,7 +100,7 @@ struct NotifierObserver
             ESP_LOGV(TAG, "on_notify(scheduling) early wakeup tagged");
         }
 
-        ESP_LOGD(TAG, "on_notify(scheduling)");
+        ESP_LOGV(TAG, "on_notify(scheduling)");
     }
 
     // 'bigger' one above consumes call, so this one doesn't get called.  Acceptable behavior
@@ -112,8 +112,8 @@ struct NotifierObserver
         ESP_LOGW(TAG, "on_notify(scheduling) 2");
     }
 
-    template <class TImpl>
-    void on_notify(embr::internal::events::Scheduled<TImpl> scheduled)
+    template <class Impl>
+    void on_notify(embr::internal::events::Scheduled<Impl> scheduled)
     {
         if(early_wakeup)
         {
