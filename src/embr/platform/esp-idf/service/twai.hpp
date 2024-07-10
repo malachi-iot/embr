@@ -265,7 +265,7 @@ void TWAI::runtime<TSubject, TImpl>::broadcast(uint32_t alerts)
     }
     if(alerts & TWAI_ALERT_BUS_OFF)
     {
-        
+        notify(event::error<event::OFF>{});
     }
     if(alerts & TWAI_ALERT_TX_RETRIED)
     {

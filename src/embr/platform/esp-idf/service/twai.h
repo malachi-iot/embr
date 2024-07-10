@@ -74,10 +74,12 @@ public:
         // tx succeeded
         struct tx {};
 
+        // DEBT: Not always errors... statuses instead?
         enum errors
         {
             ACTIVE,
-            BUS,
+            BUS,    // bus error
+            OFF,    // bus-off
             RX,
             TX,
             PASSIVE,
