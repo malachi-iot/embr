@@ -28,7 +28,7 @@ On selecting, some options are presented:
 
 ![helper config](img/menuconfig-helper.png)
 
-#### 2.1. WiFi Credentials
+#### 2.1. WiFi Network (Credentials)
 
 Pretty self explanatory.  Picked up automatically by `esp_helper`'s
 wifi_init_sta() method.
@@ -36,7 +36,7 @@ wifi_init_sta() method.
 Any more exotic provisioning is outside the scope
 of this mechanism, and may conflict.
 
-#### 2.2. Target Board
+#### 2.2. Select Development Board
 
 Many development boards are present.  If yours is available,
 select it.  Note that `idf.py set-target` is required to select

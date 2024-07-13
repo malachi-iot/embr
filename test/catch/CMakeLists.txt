@@ -28,6 +28,14 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(Catch2)
 
+set(EXTRA_FILES
+    README.md
+    doc/esp_helper/MenuConfig.md
+)
+
+list(TRANSFORM EXTRA_FILES PREPEND ${ROOT_DIR}/)
+
+
 set(SOURCE_FILES
     basics-test.cpp
     bits-test.cpp
@@ -51,7 +59,7 @@ if(EMBR_EXP_AUTOSTART)
     target_compile_definitions(${PROJECT_NAME} PRIVATE FEATURE_EMBR_EXP_AUTOSTART=1)
 endif()
 
-add_executable(${PROJECT_NAME} ${SOURCE_FILES})
+add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${EXTRA_FILES})
 
 # necessary for Catch2
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_11)
