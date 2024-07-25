@@ -1,0 +1,42 @@
+{
+    "name": "embr",
+    "keywords": "std, STL",
+    "description": "Utilities for embedded development",
+    "repository":
+    {
+        "type": "git",
+        "url": ""
+    },
+    "authors":
+    [
+        {
+            "name": "Malachi Burke",
+            "maintainer": true
+        }
+    ],
+    "license": "Apache-2.0",
+    "build":
+    {
+        "srcFilter":
+        [
+            "+<*>",
+            "-<.idea>"
+        ]
+    },
+    "export": {
+        "exclude": [
+            "test",
+            "ext"
+        ]
+    },
+    "examples": [
+        "examples/pio/*/src/*.cpp"
+    ],
+    "version": "0.3.1",
+    "frameworks": [
+        "arduino",
+        "espidf",
+        "freertos"
+    ],
+    "platforms": "*"
+}
