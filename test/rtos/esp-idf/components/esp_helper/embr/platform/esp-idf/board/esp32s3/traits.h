@@ -9,6 +9,9 @@ struct board : v1::internal::board
 #if CONFIG_BOARD_ESP32S3_SEEED_XIAO
     static constexpr const char* vendor = "Seeed Studio";
     static constexpr const char* name = "XIAO";
+#elif BOARD_ESP32S3_ADAFRUIT_FEATHER_REVTFT
+    static constexpr const char* vendor = "Adafruit";
+    static constexpr const char* name = "Feather Reverse TFT";
 #elif CONFIG_BOARD_ESP32S3_FREENOVE
     static constexpr const char* vendor = "FreeNove";
     static constexpr const char* name = "S3";
@@ -21,6 +24,9 @@ struct board : v1::internal::board
 #elif CONFIG_BOARD_ESP32S3_LILYGO_T_QT_PRO
     static constexpr const char* vendor = "LilyGO";
     static constexpr const char* name = "QT Pro";
+#elif BOARD_ESP32S3_LILYGO_T5_EINK_2_3
+    static constexpr const char* vendor = "LilyGO";
+    static constexpr const char* name = "T5 EInk 2.3";
 #endif
 
     using io = mux<

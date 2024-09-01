@@ -1,0 +1,4 @@
+config BOARD_ESP32P4_ESPRESSIF_FUNCTION
+    bool "Espressif ESP32P4 Function Board"
+    depends on IDF_TARGET_ESP32P4
+

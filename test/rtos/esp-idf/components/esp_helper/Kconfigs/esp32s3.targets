@@ -1,3 +1,7 @@
+config BOARD_ESP32S3_ADAFRUIT_FEATHER_REVTFT
+    bool "Adafruit Feather Reverse TFT"
+    depends on IDF_TARGET_ESP32S3
+
 config BOARD_ESP32S3_FREENOVE
     bool "FreeNove ESP32S3 CAM"
     depends on IDF_TARGET_ESP32S3

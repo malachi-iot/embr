@@ -20,6 +20,7 @@ menu "Embr Helper config"
         rsource "Kconfigs/esp32.targets"
         rsource "Kconfigs/esp32c3.targets"
         rsource "Kconfigs/esp32c6.targets"
+        rsource "Kconfigs/esp32p4.targets"
         rsource "Kconfigs/esp32s3.targets"
 
     endchoice
