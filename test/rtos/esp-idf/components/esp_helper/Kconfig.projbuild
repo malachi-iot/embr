@@ -59,13 +59,15 @@ menu "Embr Helper config"
 
         config FORM_FACTOR_XIAO
             int
-            default 1 if BOARD_ESP32S3_SEEED_XIAO || BOARD_ESP32C3_SEEED_XIAO
+            default 1 if BOARD_ESP32S3_SEEED_XIAO || BOARD_ESP32C3_SEEED_XIAO || BOARD_ESP32C6_SEEED_XIAO
             default 1 if BOARD_ESP32S3_LILYGO_T_QT_PRO
             default 0
 
         config FORM_FACTOR_FEATHER
             int
             default 1 if BOARD_ESP32S3_UM_FEATHERS3
+            default 1 if BOARD_ESP32S3_ADAFRUIT_FEATHER_REVTFT
+            default 1 if BOARD_ESP32C6_SPARKFUN_THINGPLUS
             default 0
 
         config TWAI_TIMING
