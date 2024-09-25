@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.13)
 
-project(embr VERSION 0.3.1 LANGUAGES CXX)
+project(embr VERSION 0.3.1 LANGUAGES CXX
+    DESCRIPTION "Embedded Burke Research: support tools"
+    HOMEPAGE_URL "https://github.com/malachi-iot/embr")
 
 include(../tools/cmake/setvars.cmake)
 
@@ -24,7 +26,7 @@ add_library(malachi-iot::embr ALIAS ${PROJECT_NAME})
 
 target_sources(${PROJECT_NAME} INTERFACE ${SOURCE_FILES} ${INCLUDE_FILES})
 
-configure_file(../tools/cmake/version.in.h ${CMAKE_CURRENT_SOURCE_DIR}/embr/version.h)
+include(../tools/cmake/version.cmake)
 
 # This line is largely superflous.  No linking happens for an INTERFACE library.
 # estd itself does demand some linking.  I speculate this line will come in handy

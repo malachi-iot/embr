@@ -1,0 +1,41 @@
+{
+    "name": "embr",
+    "description": "${PROJECT_DESCRIPTION}",
+    "repository":
+    {
+        "type": "git",
+        "url": "${PROJECT_HOMEPAGE_URL}"
+    },
+    "authors":
+    [
+        {
+            "name": "Malachi Burke",
+            "maintainer": true
+        }
+    ],
+    "license": "Apache-2.0",
+    "build":
+    {
+        "srcFilter":
+        [
+            "+<*>",
+            "-<.idea>"
+        ]
+    },
+    "export": {
+        "exclude": [
+            "test",
+            "ext"
+        ]
+    },
+    "examples": [
+        "examples/pio/*/src/*.cpp"
+    ],
+    "version": "${PROJECT_VERSION}",
+    "frameworks": [
+        "arduino",
+        "espidf",
+        "freertos"
+    ],
+    "platforms": "*"
+}
