@@ -6,10 +6,10 @@ set(WORKING_DIR ${CMAKE_CURRENT_LIST_DIR}/in)
 
 message(DEBUG "version.cmake: ${CMAKE_CURRENT_SOURCE_DIR} / ${WORKING_DIR}")
 
-# DEBT: 'port' is not a great destination
+# DEBT: We can now directly use estd version.in.h
 configure_file(
     ${WORKING_DIR}/version.in.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/estd/port/version.h)
+    ${CMAKE_CURRENT_SOURCE_DIR}/embr/version.h)
 
 # esp-idf: For internal testing
 configure_file(

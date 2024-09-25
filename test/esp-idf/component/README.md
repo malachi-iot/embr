@@ -1,0 +1,1 @@
+Test to make sure our own idf_component.yml behaves as expected
