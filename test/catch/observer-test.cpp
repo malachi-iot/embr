@@ -227,6 +227,7 @@ TEST_CASE("observer")
                 REQUIRE(o2.counter == 0);
 
                 auto s = embr::layer1::make_subject(
+                            StatelessObserver(),
                             o1,
                             o2);
 
