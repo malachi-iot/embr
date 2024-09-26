@@ -1,14 +1,8 @@
 set(COMPONENT_SRCS "esp-helper.cpp")
 set(COMPONENT_ADD_INCLUDEDIRS ".")
 
-# As we transition from 'estdlib' to 'estd' naming
-if(NOT DEFINED ESTD_COMPONENT_NAME)
-	set(ESTD_COMPONENT_NAME estdlib)
-endif()
-
 # DEBT: Phase out esp_event here, service::EventLoop supersedes it
-# DEBT: Phase out estd here, since embr is supposed to carry that forward... maybe.. since it's not PRIV_REQUIRES
-set(COMPONENT_REQUIRES nvs_flash embr ${ESTD_COMPONENT_NAME} esp_event esp_wifi)
+set(COMPONENT_REQUIRES nvs_flash embr esp_event esp_wifi)
 
 # 25AUG23 MB: Not sure how to conditionally include led_strip component
 # itself, and I don't want to ALWAYS include it.  That being a prerequisite,

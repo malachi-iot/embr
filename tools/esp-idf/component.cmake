@@ -3,7 +3,7 @@ set(SRC_DIR ${ROOT_DIR}/src)
 
 # As we transition from 'estdlib' to 'estd' naming
 if(NOT DEFINED ESTD_COMPONENT_NAME)
-	set(ESTD_COMPONENT_NAME estdlib)
+	set(ESTD_COMPONENT_NAME estd)
 endif()
 
 set(COMPONENT_REQUIRES ${ESTD_COMPONENT_NAME} driver esp_event esp_timer)

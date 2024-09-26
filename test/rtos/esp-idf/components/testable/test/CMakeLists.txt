@@ -19,7 +19,7 @@ set(COMPONENT_SRCS
     power.cpp
     "timer.cpp")
 
-set(COMPONENT_REQUIRES estdlib embr unity testable esp_helper esp_psram)
+set(COMPONENT_REQUIRES embr unity testable esp_helper esp_psram)
 
 register_component()
 
