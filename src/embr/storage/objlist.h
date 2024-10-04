@@ -121,9 +121,27 @@ public:
 
 }}}
 
-namespace embr { namespace layer1 {
+namespace embr {
+
+namespace layer1 { inline namespace v1 {
 
 template <unsigned N>
-using objlist = detail::v1::objlist<detail::v1::layer1::objstack<N>>;
+using objlist = detail::v1::objlist<layer1::v1::objstack<N>>;
 
 }}
+
+namespace layer2 { inline namespace v1 {
+
+template <unsigned N>
+using objlist = detail::v1::objlist<layer2::v1::objstack<N>>;
+
+}}
+
+namespace layer3 { inline namespace v1 {
+
+// UNTESTED
+using objlist = detail::v1::objlist<layer3::v1::objstack>;
+
+}}
+
+}

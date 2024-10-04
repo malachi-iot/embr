@@ -7,33 +7,28 @@
 
 namespace embr { namespace detail { inline namespace v1 {
 
-// TODO: Can probably make all this happen with layer1::array etc
-
 template <int alignment_, class Int>
 static constexpr Int align(Int v)
 {
     return ((v + ((1 << alignment_) - 1)) >> alignment_) << alignment_;
 }
 
-namespace layer1 { inline namespace v1 {
-
-template <unsigned N>
-using objstack_container = estd::array<char, N>;
-
-// DEBT: I think this guy would prefer to live straight under embr::layer1 -- this feels too far
-// nested
-template <unsigned N, unsigned alignment = 2>
+template <class Container, unsigned alignment = 2>
 class objstack
 {
-    char buffer_[N];
+    Container buffer_;
     char* current_;
 
 public:
+    using container_type = Container;
+
     static constexpr unsigned alignment_ = alignment;
     using size_type = unsigned;
 
-    constexpr objstack() :
-        current_{buffer_}
+    template <class ...Args>
+    constexpr explicit objstack(Args&&...args) :
+        buffer_(std::forward<Args>(args)...),
+        current_{buffer_.data()}
     {
 
     }
@@ -55,7 +50,7 @@ public:
 
     void dealloc(void* ptr)
     {
-        current_ = ptr;
+        current_ = (char*)ptr;
     }
 
     void dealloc(size_type sz)
@@ -64,24 +59,33 @@ public:
     }
 
     char* current() { return current_; }
+    const char* current() const { return current_; }
 
-    const char* limit() const { return buffer_ + N; }
+    constexpr const char* limit() const { return buffer_.end(); }
 };
+
+}}}
+
+namespace embr {
+
+namespace layer1 { inline namespace v1 {
+
+template <unsigned N>
+using objstack = detail::objstack<estd::array<char, N>>;
 
 }}
 
 namespace layer2 { inline namespace v1 {
 
 template <unsigned N>
-using objstack_container = estd::span<char, N>;
+using objstack = detail::objstack<estd::span<char, N>>;
 
 }}
 
 namespace layer3 { inline namespace v1 {
 
-template <unsigned N>
-using objstack_container = estd::span<char>;
+using objstack = detail::objstack<estd::span<char>>;
 
 }}
 
-}}}
+}

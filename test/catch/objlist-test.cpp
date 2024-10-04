@@ -26,7 +26,20 @@ TEST_CASE("Object list, Object stack", "[objlist]")
     using objlist_type = embr::layer1::objlist<256>;
     using element_type = objlist_type::value_type;
     using pointer = objlist_type::pointer;
+    using objlist3_type = embr::layer3::objlist;
+    char temp[256];
 
+    SECTION("objstack")
+    {
+        SECTION("layer2")
+        {
+            embr::layer2::v1::objstack<256> stack(temp);
+        }
+        SECTION("layer3")
+        {
+            embr::layer3::v1::objstack stack(temp);
+        }
+    }
     SECTION("particulars")
     {
         element_type elem(0, -1);
