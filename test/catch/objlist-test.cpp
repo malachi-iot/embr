@@ -13,7 +13,7 @@ unsigned total_allocated(embr::detail::v1::objlist<Objstack>& objlist)
     objlist.walk([&](pointer p)
     {
         if(p->allocated_)
-            sz += p->size_;
+            sz += p->size();
     });
 
     return sz;
@@ -30,8 +30,16 @@ TEST_CASE("Object list, Object stack", "[objlist]")
     SECTION("particulars")
     {
         element_type elem(0, -1);
+        element_type elem2(0, 0);
 
         REQUIRE(elem.next_diff() == -4);
+        REQUIRE(elem2.next() == nullptr);
+
+        elem.next(&elem2);
+
+        pointer next = elem.next();
+
+        REQUIRE(next == &elem2);
     }
     SECTION("list")
     {
@@ -48,12 +56,12 @@ TEST_CASE("Object list, Object stack", "[objlist]")
         // FIX: Looks like a precision loss/miscalculation on our alignment trick
         pointer next = e1b->next();
 
-        //REQUIRE(next == e2b);
+        REQUIRE(next == e2b);
 
         REQUIRE(total_allocated(objlist) == 32 + 65);
 
-        //objlist.dealloc_next(e1b);
+        objlist.dealloc_next(e1b);
 
-        //REQUIRE(total_allocated(objlist) == 32 + 33);
+        REQUIRE(total_allocated(objlist) == 32 + 33);
     }
 }

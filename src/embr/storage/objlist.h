@@ -3,76 +3,21 @@
 #include <estd/internal/platform.h>
 
 #include "objstack.h"
+#include "objlist_element.h"
 
 namespace embr { namespace detail { inline namespace v1 {
 
-template <int alignment>
-struct objlist_element
-{
-    // In bits
-    static constexpr int alignment_ = alignment;
-
-    template <class Int>
-    static constexpr Int align(Int v)
-    {
-        return (v + ((1 << alignment_) - 1) >> alignment_) << alignment_;
-    }
-
-    ///< true unaligned size
-    unsigned size_ : 16;
-
-    int next_ : 14;    ///< aligned pointer offset
-
-    // Perhaps we can deduce this based on what list it is in?  Don't know.
-    // It is convenient to have it here
-    bool allocated_ : 1;
-
-    constexpr objlist_element(unsigned size, int next) :
-        size_{size},
-        next_{next},
-        allocated_{false}
-    {
-
-    }
-
-    constexpr int next_diff() const
-    {
-        return next_ << alignment_;
-    }
-
-    objlist_element* next() const
-    {
-        if(next_ == 0)  return nullptr;
-
-        auto base = (char*) this;
-        const int delta = next_diff();
-
-        return reinterpret_cast<objlist_element*>(base + delta);
-    }
-
-    void next(objlist_element* v)
-    {
-        auto base = (char*) this;
-        auto incoming = (char*) v;
-        int delta = (incoming - base) >> alignment_;
-
-        next_ = delta;
-    }
-
-    char data_[];
-};
-
 // DEBT: Do concept & concept wrapper here
-template <class Objstack>
+template <class Objstack, unsigned alignment = 2>
 class objlist
 {
     Objstack stack_;
-    char* base_;
+    char* base_{};
 
     using objstack_type = Objstack;
 
 public:
-    using value_type = objlist_element<2>;
+    using value_type = objlist_element<alignment>;
     using pointer = value_type*;
     using const_pointer = const value_type*;
     using size_type = typename objstack_type::size_type;
@@ -94,7 +39,8 @@ protected:
 
             f(p);
 
-            pos += sizeof(value_type) + p->size_;
+            // DEBT: Can optimize if p->size() is already in alignment mode
+            pos += sizeof(value_type) + align<alignment>(p->size());
         }
     }
 
@@ -114,9 +60,9 @@ protected:
 public:
     //ESTD_CPP_FORWARDING_CTOR_MEMBER(objlist, stack_)
     template <class ...Args>
-    constexpr objlist(Args&&...args) :
+    constexpr explicit objlist(Args&&...args) :
         stack_(std::forward<Args>(args)...),
-        base_(stack_.current())
+        base_{stack_.current()}
     {}
 
     pointer alloc(pointer prev, size_type sz)
@@ -142,7 +88,7 @@ public:
 
         char* end = stack_.current();
         auto compare = (char*) deallocating;
-        const unsigned offset = sizeof(value_type) + deallocating->size_;
+        const unsigned offset = sizeof(value_type) + deallocating->size();
 
         deallocating->allocated_ = false;
 
