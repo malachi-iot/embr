@@ -1,5 +1,7 @@
 #pragma once
 
+#include "fwd.h"
+
 namespace embr { namespace detail { inline namespace v1 {
 
 template <int alignment, bool align_size = false>
@@ -8,16 +10,16 @@ struct objlist_element
     // In bits
     static constexpr int alignment_ = alignment;
 
+    friend class objlist_base<alignment>;
+
 private:
-    ///< true unaligned size
     unsigned size_ : 16;
-
-public:
-    int next_ : 14;    ///< aligned pointer offset
-
+    int next_ : 14;        ///< aligned pointer offset
     // Perhaps we can deduce this based on what list it is in?  Don't know.
     // It is convenient to have it here
     bool allocated_ : 1;
+
+public:
 
     static constexpr unsigned size_shl(unsigned sz)
     {
@@ -35,6 +37,11 @@ public:
         allocated_{false}
     {
 
+    }
+
+    constexpr bool allocated() const
+    {
+        return allocated_;
     }
 
     constexpr unsigned size() const

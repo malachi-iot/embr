@@ -7,17 +7,39 @@
 
 namespace embr { namespace detail { inline namespace v1 {
 
+template <unsigned alignment>
+class objlist_base
+{
+protected:
+    using value_type = objlist_element<alignment>;
+    using pointer = value_type*;
+
+    void alloc(pointer p, unsigned sz)
+    {
+        new (p) value_type(sz, 0);
+
+        p->allocated_ = true;
+    }
+
+    void dealloc(pointer prev, pointer p)
+    {
+        prev->next_ = p->next_;
+        p->allocated_ = false;
+    }
+};
+
 // DEBT: Do concept & concept wrapper here
-template <class Objstack, unsigned alignment = 2>
-class objlist
+template <class Objstack, unsigned alignment>
+class objlist : public objlist_base<alignment> // NOLINT(*-pro-type-member-init)
 {
     Objstack stack_;
-    char* base_{};
+    char* base_;    // DEBT: Somehow linter freaks out about this guy
 
+    using base_type = objlist_base<alignment>;
     using objstack_type = Objstack;
 
 public:
-    using value_type = objlist_element<alignment>;
+    using value_type = typename base_type::value_type;
     using pointer = value_type*;
     using const_pointer = const value_type*;
     using size_type = typename objstack_type::size_type;
@@ -71,11 +93,9 @@ public:
 
         if(p == nullptr)    return nullptr;
 
-        new (p) value_type(sz, 0);
+        base_type::alloc(p, sz);
 
         if(prev)    prev->next(p);
-
-        p->allocated_ = true;
 
         return p;
     }
@@ -84,13 +104,12 @@ public:
     {
         pointer deallocating = p->next();
 
-        p->next_ = deallocating->next_;
+        base_type::dealloc(p, deallocating);
 
         char* end = stack_.current();
         auto compare = (char*) deallocating;
-        const unsigned offset = sizeof(value_type) + deallocating->size();
-
-        deallocating->allocated_ = false;
+        const unsigned offset = sizeof(value_type) +
+            align<alignment>(deallocating->size());
 
         if(compare + offset == end)
         {

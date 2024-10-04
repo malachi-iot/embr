@@ -12,7 +12,7 @@ unsigned total_allocated(embr::detail::v1::objlist<Objstack>& objlist)
 
     objlist.walk([&](pointer p)
     {
-        if(p->allocated_)
+        if(p->allocated())
             sz += p->size();
     });
 
@@ -63,5 +63,7 @@ TEST_CASE("Object list, Object stack", "[objlist]")
         objlist.dealloc_next(e1b);
 
         REQUIRE(total_allocated(objlist) == 32 + 33);
+
+        objlist.alloc(e2b, 5);
     }
 }

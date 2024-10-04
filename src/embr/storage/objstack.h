@@ -1,5 +1,8 @@
 #pragma once
 
+#include <estd/array.h>
+#include <estd/span.h>
+
 #include "fwd.h"
 
 namespace embr { namespace detail { inline namespace v1 {
@@ -13,6 +16,9 @@ static constexpr Int align(Int v)
 }
 
 namespace layer1 { inline namespace v1 {
+
+template <unsigned N>
+using objstack_container = estd::array<char, N>;
 
 // DEBT: I think this guy would prefer to live straight under embr::layer1 -- this feels too far
 // nested
@@ -61,6 +67,20 @@ public:
 
     const char* limit() const { return buffer_ + N; }
 };
+
+}}
+
+namespace layer2 { inline namespace v1 {
+
+template <unsigned N>
+using objstack_container = estd::span<char, N>;
+
+}}
+
+namespace layer3 { inline namespace v1 {
+
+template <unsigned N>
+using objstack_container = estd::span<char>;
 
 }}
 

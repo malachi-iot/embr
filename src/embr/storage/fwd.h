@@ -18,4 +18,10 @@ concept Objstack = requires(T v)
 
 }}
 
+template <unsigned alignment>
+class objlist_base;
+
+template <class Objstack, unsigned alignment = 2>
+class objlist;
+
 }}}
