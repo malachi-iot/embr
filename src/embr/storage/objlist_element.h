@@ -10,12 +10,29 @@ struct objlist_element_extra
 {
     objlist_element_move_fn move_;
 
+    template <class T>
+    static void move_helper(void* source, void* dest)
+    {
+        auto s = (T*) source;
+        T& s2 = *s;
+
+        if(dest)
+        {
+            // FIX: Needs testing
+            new (dest) T(std::move(s2));
+        }
+
+        s2.~T();
+    }
+
     char data_[];
 };
 
 template <int alignment, bool align_size = false>
 struct objlist_element
 {
+    using pointer = objlist_element*;
+
     // In bits
     static constexpr int alignment_ = alignment;
 
@@ -76,9 +93,14 @@ public:
         return next_ << alignment_;
     }
 
+    constexpr bool last() const
+    {
+        return next_ == 0;
+    }
+
     objlist_element* next() const
     {
-        if(next_ == 0)  return nullptr;
+        if(last())  return nullptr;
 
         auto base = (char*) this;
         const int delta = next_diff();
@@ -94,6 +116,21 @@ public:
         delta >>= alignment_;
 
         next_ = delta;
+    }
+
+    pointer last()
+    {
+        pointer p = this;
+
+        for(;;)
+        {
+            pointer p_next = p->next();
+            if(p_next == nullptr) return p;
+            p = p_next;
+        }
+
+        // Looks like I finally discovered the use of a non-returning returning function
+        return {};
     }
 
     void dealloc()
@@ -112,6 +149,15 @@ public:
             return data_ + sizeof(objlist_element_extra);
         else
             return data_;
+    }
+
+    template <class T, class ...Args>
+    T* emplace(Args&&...args)
+    {
+        moveptr_ = true;
+        auto data = (objlist_element_extra*) data_;
+        data->move_ = objlist_element_extra::move_helper<T>;
+        return new (data->data_) T(std::forward<Args>(args)...);
     }
 };
 

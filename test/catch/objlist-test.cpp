@@ -96,8 +96,19 @@ TEST_CASE("Object list, Object stack", "[objlist]")
     }
     SECTION("funclist")
     {
-        //objlist_type objlist;
-        //embr::detail::funclist<void(int), objlist_type> list; //{&objlist};
-        //list += [](int) {};
+        int counter = 0;
+        objlist_type objlist;
+        embr::detail::funclist<void(int), objlist_type> list(&objlist); //{&objlist};
+        list += [&](int v) { counter += v; };
+        list.fire(5);
+
+        REQUIRE(counter == 5);
+
+        embr::detail::funclist<void(int), objlist_type> list2(&objlist);
+
+        list2 += [&](int v) { counter -= v; };
+        list2.fire(1);
+
+        REQUIRE(counter == 4);
     }
 }
