@@ -14,11 +14,16 @@ protected:
     using value_type = objlist_element<alignment>;
     using pointer = value_type*;
 
-    void alloc(pointer p, unsigned sz)
+    void alloc(pointer p, unsigned sz, objlist_element_move_fn move_fn)
     {
         new (p) value_type(sz, 0);
 
         p->allocated_ = true;
+        if(move_fn)
+        {
+            //p->moveptr_ = true;
+
+        }
     }
 
     void dealloc(pointer prev, pointer p)
@@ -61,8 +66,7 @@ protected:
 
             f(p);
 
-            // DEBT: Can optimize if p->size() is already in alignment mode
-            pos += sizeof(value_type) + align<alignment>(p->size());
+            pos += p->total_size();
         }
     }
 
@@ -79,6 +83,8 @@ protected:
         }
     }
 
+    const objstack_type& stack() const { return stack_; }
+
 public:
     //ESTD_CPP_FORWARDING_CTOR_MEMBER(objlist, stack_)
     template <class ...Args>
@@ -87,13 +93,13 @@ public:
         base_{stack_.current()}
     {}
 
-    pointer alloc(pointer prev, size_type sz)
+    pointer alloc(pointer prev, size_type sz, objlist_element_move_fn move_fn = nullptr)
     {
         auto p = (pointer)stack_.alloc(sizeof(value_type) + sz);
 
         if(p == nullptr)    return nullptr;
 
-        base_type::alloc(p, sz);
+        base_type::alloc(p, sz, move_fn);
 
         if(prev)    prev->next(p);
 
@@ -108,8 +114,7 @@ public:
 
         char* end = stack_.current();
         auto compare = (char*) deallocating;
-        const unsigned offset = sizeof(value_type) +
-            align<alignment>(deallocating->size());
+        const unsigned offset = deallocating->total_size();
 
         if(compare + offset == end)
         {

@@ -1,6 +1,7 @@
 #include <catch2/catch_all.hpp>
 
 #include <embr/storage/objlist.h>
+#include <embr/storage/funclist.h>
 
 template <class Objstack>
 unsigned total_allocated(embr::detail::v1::objlist<Objstack>& objlist)
@@ -54,7 +55,7 @@ TEST_CASE("Object list, Object stack", "[objlist]")
 
         REQUIRE(next == &elem2);
     }
-    SECTION("list")
+    SECTION("layer1: list")
     {
         objlist_type objlist;
 
@@ -78,5 +79,25 @@ TEST_CASE("Object list, Object stack", "[objlist]")
         REQUIRE(total_allocated(objlist) == 32 + 33);
 
         objlist.alloc(e2b, 5);
+    }
+    SECTION("layer3: list")
+    {
+        objlist3_type list(temp);
+
+        pointer e1a = list.alloc(nullptr, 16);
+        pointer e2a = list.alloc(e1a, 16);
+
+        REQUIRE((char*)e1a == temp);
+        REQUIRE(((char*)e2a) + e2a->total_size()  == list.stack().current());
+
+        list.dealloc_next(e1a);
+
+        REQUIRE((char*)e2a == list.stack().current());
+    }
+    SECTION("funclist")
+    {
+        //objlist_type objlist;
+        //embr::detail::funclist<void(int), objlist_type> list; //{&objlist};
+        //list += [](int) {};
     }
 }

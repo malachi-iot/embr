@@ -4,6 +4,15 @@
 
 namespace embr { namespace detail { inline namespace v1 {
 
+typedef void (*objlist_element_move_fn)(void* source, void* dest);
+
+struct objlist_element_extra
+{
+    objlist_element_move_fn move_;
+
+    char data_[];
+};
+
 template <int alignment, bool align_size = false>
 struct objlist_element
 {
@@ -18,8 +27,8 @@ private:
     // Perhaps we can deduce this based on what list it is in?  Don't know.
     // It is convenient to have it here
     bool allocated_ : 1;
-
-public:
+    bool moveptr_ : 1;      ///< First sizeof(intptr_t) bytes in data_ is a moveptr
+    char data_[];
 
     static constexpr unsigned size_shl(unsigned sz)
     {
@@ -31,10 +40,13 @@ public:
         return align_size ? sz >> alignment : sz;
     }
 
+public:
+
     constexpr objlist_element(unsigned size, int next) :
         size_{size_shr(size)},
         next_{next},
-        allocated_{false}
+        allocated_{false},
+        moveptr_{false}
     {
 
     }
@@ -44,9 +56,19 @@ public:
         return allocated_;
     }
 
+    // size of data payload
     constexpr unsigned size() const
     {
         return size_shl(size_);
+    }
+
+    constexpr unsigned total_size() const
+    {
+        // DEBT: This can be optimized and account for align_size
+        return
+            align<alignment>(size()) +
+                (moveptr_ ? sizeof(objlist_element_extra) : 0) +
+                sizeof(objlist_element);
     }
 
     constexpr int next_diff() const
@@ -74,7 +96,23 @@ public:
         next_ = delta;
     }
 
-    char data_[];
+    void dealloc()
+    {
+        if(moveptr_)
+        {
+            auto extra = (objlist_element_extra*)data_;
+
+            extra->move_(this, nullptr);
+        }
+    }
+
+    char* data()
+    {
+        if(moveptr_)
+            return data_ + sizeof(objlist_element_extra);
+        else
+            return data_;
+    }
 };
 
 
