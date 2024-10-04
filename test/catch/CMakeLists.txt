@@ -45,6 +45,7 @@ set(SOURCE_FILES
     json-test.cpp
     observer-test.cpp
     experimental-test.cpp
+    objlist-test.cpp
     property-test.cpp
     runtime-ratio-test.cpp
     scheduler-test.cpp
