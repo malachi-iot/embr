@@ -98,6 +98,18 @@ public:
         return p;
     }
 
+    template <class T, class ...Args>
+    pointer emplace(pointer prev, Args&&...args)
+    {
+        pointer p = alloc(prev, sizeof(T) + sizeof(objlist_element_extra));
+
+        if(p == nullptr)    return nullptr;
+
+        p->template emplace<T>(std::forward<Args>(args)...);
+
+        return p;
+    }
+
     void dealloc_next(pointer p)
     {
         pointer deallocating = p->next();

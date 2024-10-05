@@ -19,14 +19,14 @@ struct funclist
 
     constexpr bool empty() const { return head_ == nullptr; }
 
-    template <class Objlist, class F2>
-    void add(Objlist& list, F2&& f)
+    template <ESTD_CPP_CONCEPT(concepts::v1::Objlist) Objlist, class F2>
+    pointer add(Objlist& list, F2&& f)
     {
         using model = typename fnptr::template model<F2>;
 
         pointer p = list.alloc(nullptr, sizeof(model));
 
-        if(p == nullptr) return;
+        if(p == nullptr) return nullptr;
 
         p->template emplace<model>(std::forward<F2>(f));
 
@@ -38,6 +38,8 @@ struct funclist
         {
             head_->last()->next(p);
         }
+
+        return p;
     }
 
     template <class Objlist, class ...Args>

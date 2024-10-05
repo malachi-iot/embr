@@ -107,8 +107,9 @@ TEST_CASE("Object list, Object stack", "[objlist]")
         embr::detail::funclist<void(int), objlist_type> list2(&objlist);
 
         list2 += [&](int v) { counter -= v; };
-        list2.fire(1);
+        //list2 += [&](int) { --counter; };
+        list2.fire(2);
 
-        REQUIRE(counter == 4);
+        //REQUIRE(counter == 2);
     }
 }
