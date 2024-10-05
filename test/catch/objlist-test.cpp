@@ -43,8 +43,8 @@ TEST_CASE("Object list, Object stack", "[objlist]")
     }
     SECTION("particulars")
     {
-        element_type elem(0, -1);
-        element_type elem2(0, 0);
+        element_type elem(0, -1, false);
+        element_type elem2(0, 0, false);
 
         REQUIRE(elem.next_diff() == -4);
         REQUIRE(elem2.next() == nullptr);
@@ -107,9 +107,9 @@ TEST_CASE("Object list, Object stack", "[objlist]")
         embr::detail::funclist<void(int), objlist_type> list2(&objlist);
 
         list2 += [&](int v) { counter -= v; };
-        //list2 += [&](int) { --counter; };
+        list2 += [&](int) { --counter; };
         list2.fire(2);
 
-        //REQUIRE(counter == 2);
+        REQUIRE(counter == 2);
     }
 }

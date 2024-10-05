@@ -57,10 +57,10 @@ private:
 
 public:
 
-    constexpr objlist_element(unsigned size, int next) :
+    constexpr objlist_element(unsigned size, int next, bool allocated) :
         size_{size_shr(size)},
         next_{next},
-        allocated_{false},
+        allocated_{allocated},
         moveptr_{false}
     {
 

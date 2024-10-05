@@ -19,7 +19,8 @@ static void test_objlist1()
 static void test_funclist1()
 {
     int counter = 0;
-    using objlist_type = embr::layer1::objlist<128>;
+    using objstack_type = embr::layer1::objstack<128, 3>;
+    using objlist_type = embr::detail::objlist<objstack_type>;
     static objlist_type objlist;
     embr::detail::funclist<void(int), objlist_type> list(&objlist);
 
@@ -27,9 +28,9 @@ static void test_funclist1()
     list += [&](int v) { counter += 1; };
 
     // FIX
-    //list.fire(5);
+    list.fire(5);
 
-    //TEST_ASSERT_EQUAL(6, counter);
+    TEST_ASSERT_EQUAL(6, counter);
 }
 
 static void test_funclist2()
@@ -40,11 +41,11 @@ static void test_funclist2()
     embr::detail::funclist<void(int), objlist_type> list(&objlist);
 
     list += [&](int v) { counter += v; };
-    //list += [&](int v) { counter += 1; };
+    list += [&](int v) { counter += 1; };
 
     list.fire(5);
 
-    TEST_ASSERT_EQUAL(5, counter);
+    TEST_ASSERT_EQUAL(6, counter);
 }
 
 

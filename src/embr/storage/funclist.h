@@ -24,11 +24,9 @@ struct funclist
     {
         using model = typename fnptr::template model<F2>;
 
-        pointer p = list.alloc(nullptr, sizeof(model));
+        pointer p = list.template emplace<model>(nullptr, std::forward<F2>(f));
 
         if(p == nullptr) return nullptr;
-
-        p->template emplace<model>(std::forward<F2>(f));
 
         if(empty())
         {

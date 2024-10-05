@@ -15,19 +15,8 @@ protected:
     using value_type = objlist_element<alignment, always_extra>;
     using pointer = value_type*;
 
-    // These two look like they can comfortably live in objlist_element itself
-
-    static void alloc(pointer p, unsigned sz, objlist_element_move_fn move_fn)
-    {
-        new (p) value_type(sz, 0);
-
-        p->allocated_ = true;
-        if(move_fn)
-        {
-            //p->moveptr_ = true;
-
-        }
-    }
+    // This looks like it can comfortably live in objlist_element itself ... although
+    // hiding this function from others is nice
 
     static void dealloc(pointer prev, pointer p)
     {
@@ -85,13 +74,13 @@ public:
         base_{stack_.current()}
     {}
 
-    pointer alloc(pointer prev, size_type sz, objlist_element_move_fn move_fn = nullptr)
+    pointer alloc(pointer prev, size_type sz)
     {
         auto p = (pointer)stack_.alloc(sizeof(value_type) + sz);
 
         if(p == nullptr)    return nullptr;
 
-        base_type::alloc(p, sz, move_fn);
+        new (p) value_type(sz, 0, true);
 
         if(prev)    prev->next(p);
 
@@ -101,6 +90,7 @@ public:
     template <class T, class ...Args>
     pointer emplace(pointer prev, Args&&...args)
     {
+        // DEBT: Knowing here that we need +'objlist_element_extra' during an emplace is a little sloppy
         pointer p = alloc(prev, sizeof(T) + sizeof(objlist_element_extra));
 
         if(p == nullptr)    return nullptr;
@@ -134,15 +124,15 @@ namespace embr {
 
 namespace layer1 { inline namespace v1 {
 
-template <unsigned N>
-using objlist = detail::v1::objlist<layer1::v1::objstack<N>>;
+template <unsigned N, unsigned alignment = EMBR_OBJSTACK_DEFAULT_ALIGNMENT>
+using objlist = detail::v1::objlist<layer1::v1::objstack<N, alignment>>;
 
 }}
 
 namespace layer2 { inline namespace v1 {
 
-template <unsigned N>
-using objlist = detail::v1::objlist<layer2::v1::objstack<N>>;
+template <unsigned N, unsigned alignment = EMBR_OBJSTACK_DEFAULT_ALIGNMENT>
+using objlist = detail::v1::objlist<layer2::v1::objstack<N, alignment>>;
 
 }}
 
