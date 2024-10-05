@@ -12,6 +12,8 @@
 
 namespace embr { namespace detail { inline namespace v1 {
 
+typedef void (*objlist_element_move_fn)(void* source, void* dest);
+
 namespace concepts { inline namespace v1 {
 
 #if __cpp_concepts
@@ -37,11 +39,12 @@ concept ObjlistElement = requires(T v)
 
 }}
 
-template <unsigned alignment>
+template <unsigned alignment, bool always_extra>
 class objlist_base;
 
 template <ESTD_CPP_CONCEPT(concepts::Objstack) Objstack,
-    unsigned alignment = EMBR_OBJSTACK_DEFAULT_ALIGNMENT>
+    unsigned alignment = EMBR_OBJSTACK_DEFAULT_ALIGNMENT,
+    bool always_extra = false>
 class objlist;
 
 }}}

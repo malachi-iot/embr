@@ -4,8 +4,6 @@
 
 namespace embr { namespace detail { inline namespace v1 {
 
-typedef void (*objlist_element_move_fn)(void* source, void* dest);
-
 struct objlist_element_extra
 {
     objlist_element_move_fn move_;
@@ -28,7 +26,7 @@ struct objlist_element_extra
     char data_[];
 };
 
-template <int alignment, bool align_size = false>
+template <int alignment, bool align_size = false, bool always_extra = false>
 struct objlist_element
 {
     using pointer = objlist_element*;
@@ -36,7 +34,7 @@ struct objlist_element
     // In bits
     static constexpr int alignment_ = alignment;
 
-    friend class objlist_base<alignment>;
+    friend class objlist_base<alignment, always_extra>;
 
 private:
     unsigned size_ : 16;
@@ -143,10 +141,16 @@ public:
         }
     }
 
+    char* extended_data()
+    {
+        auto extra = (objlist_element_extra*) data_;
+        return extra->data_;
+    }
+
     char* data()
     {
-        if(moveptr_)
-            return data_ + sizeof(objlist_element_extra);
+        if(always_extra || moveptr_)
+            return extended_data();
         else
             return data_;
     }

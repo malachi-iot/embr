@@ -2,19 +2,22 @@
 
 #include <estd/internal/platform.h>
 
+#include "fwd.h"
 #include "objstack.h"
-#include "objlist_element.h"
+#include "objlist_element.hpp"
 
 namespace embr { namespace detail { inline namespace v1 {
 
-template <unsigned alignment>
+template <unsigned alignment, bool always_extra>
 class objlist_base
 {
 protected:
-    using value_type = objlist_element<alignment>;
+    using value_type = objlist_element<alignment, always_extra>;
     using pointer = value_type*;
 
-    void alloc(pointer p, unsigned sz, objlist_element_move_fn move_fn)
+    // These two look like they can comfortably live in objlist_element itself
+
+    static void alloc(pointer p, unsigned sz, objlist_element_move_fn move_fn)
     {
         new (p) value_type(sz, 0);
 
@@ -26,20 +29,23 @@ protected:
         }
     }
 
-    void dealloc(pointer prev, pointer p)
+    static void dealloc(pointer prev, pointer p)
     {
         prev->next_ = p->next_;
         p->allocated_ = false;
     }
 };
 
-template <ESTD_CPP_CONCEPT(concepts::Objstack) Objstack, unsigned alignment>
-class objlist : public objlist_base<alignment> // NOLINT(*-pro-type-member-init)
+template <ESTD_CPP_CONCEPT(concepts::Objstack) Objstack,
+    unsigned alignment,
+    bool always_extra
+    >
+class objlist : public objlist_base<alignment, always_extra> // NOLINT(*-pro-type-member-init)
 {
     Objstack stack_;
     char* base_;    // DEBT: Somehow linter freaks out about this guy
 
-    using base_type = objlist_base<alignment>;
+    using base_type = objlist_base<alignment, always_extra>;
     using objstack_type = Objstack;
 
 public:

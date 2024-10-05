@@ -2,6 +2,7 @@
   <dictionary name="malachi">
     <words>
       <w>funclist</w>
+      <w>moveptr</w>
       <w>objstack</w>
     </words>
   </dictionary>
