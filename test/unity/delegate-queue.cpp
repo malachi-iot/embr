@@ -47,5 +47,6 @@ TEST_CASE("delegate queue", "[delegate-queue]")
 #else
 void test_delegate_queue()
 {
+    // DEBT: I thought we redid this using a our own pseudo ring buffer? Guess not
 }
 #endif

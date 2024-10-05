@@ -11,6 +11,7 @@
 #endif
 
 void test_bits();
+void test_delegate_queue();
 void test_lwip();
 void test_observer();
 void test_word();

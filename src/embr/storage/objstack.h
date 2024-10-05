@@ -37,8 +37,6 @@ public:
     {
         sz = align<alignment_>(sz);
 
-        const char* const end = limit();
-
         if(current_ + sz > limit()) return nullptr;
 
         void* allocated = current_;

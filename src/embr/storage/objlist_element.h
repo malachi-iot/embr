@@ -159,6 +159,26 @@ public:
         data->move_ = objlist_element_extra::move_helper<T>;
         return new (data->data_) T(std::forward<Args>(args)...);
     }
+
+    /// From this node, walk forward to the end of the node chain
+    /// @tparam F
+    /// @param f
+    // DEBT: A const flavor of this would be very nice
+    template <class F>
+    void walk(F&& f)
+    {
+        pointer current = this;
+
+        // NOTE: A little crazy this works with a null this, but why not...
+        while(current != nullptr)
+        {
+            pointer next = current->next();
+
+            f(current, next);
+
+            current = next;
+        }
+    }
 };
 
 

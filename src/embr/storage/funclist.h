@@ -45,9 +45,7 @@ struct funclist
     {
         using model = typename fnptr::model_base;
 
-        // DEBT: Combining everything into objlist makes knowing which 'walk' to
-        // call a little confusing
-        list.walk(head_, [&](pointer p, pointer)
+        head_->walk([&](pointer p, pointer)
         {
             auto m = (model*)p->data();
 

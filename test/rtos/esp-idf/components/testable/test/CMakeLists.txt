@@ -9,13 +9,11 @@ include(${UNITY_DIR}/sources.cmake)
 
 list(TRANSFORM SOURCES PREPEND ${UNITY_DIR}/)
 
-message(STATUS "ROOT: ${ROOT_DIR}")
+message(DEBUG "ROOT: testable ROOT_DIR=${ROOT_DIR}")
 
 set(SRCS_PATH ../../../../..)
 
 set(COMPONENT_SRCS2 ${SOURCES}
-    ${SRCS_PATH}/unity/delegate-queue.cpp
-    ${SRCS_PATH}/unity/observer.cpp
     ${SRCS_PATH}/unity/pbuf.cpp
     ${SRCS_PATH}/unity/transport.cpp)
 

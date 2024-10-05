@@ -1,13 +1,10 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.15)
 
 project(embr-unity-lib VERSION 1.0.0)
 
-set(ROOT_DIR ${PROJECT_SOURCE_DIR}/../..)
-set(ESTDLIB_DIR ${ROOT_DIR}/ext/estdlib)
-set(EMBR_DIR ${ROOT_DIR}/src)
+include(${CMAKE_CURRENT_LIST_DIR}/../../tools/cmake/setvars.cmake)
 
-# DEBT: Be advised this overwrites ROOT_DIR with 'estdlib' location
-include(${ESTDLIB_DIR}/tools/cmake/setvars.cmake)
+set(EMBR_DIR ${ROOT_DIR}/src)
 
 Set(FETCHCONTENT_QUIET FALSE)
 

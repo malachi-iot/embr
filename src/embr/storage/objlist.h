@@ -70,19 +70,6 @@ protected:
         }
     }
 
-    template <class F>
-    void walk(pointer current, F&& f)
-    {
-        while(current != nullptr)
-        {
-            pointer next = current->next();
-
-            f(current, next);
-
-            current = next;
-        }
-    }
-
     const objstack_type& stack() const { return stack_; }
 
 public:
