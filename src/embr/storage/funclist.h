@@ -34,7 +34,7 @@ struct funclist
         }
         else
         {
-            head_->last()->next(p);
+            head_->get_last()->next(p);
         }
 
         return p;

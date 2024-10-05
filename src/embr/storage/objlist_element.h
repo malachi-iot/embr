@@ -93,14 +93,14 @@ public:
         return next_ << alignment_;
     }
 
-    constexpr bool last() const
+    constexpr bool is_last() const
     {
         return next_ == 0;
     }
 
     objlist_element* next() const
     {
-        if(last())  return nullptr;
+        if(is_last())  return nullptr;
 
         auto base = (char*) this;
         const int delta = next_diff();
@@ -118,7 +118,7 @@ public:
         next_ = delta;
     }
 
-    pointer last()
+    pointer get_last()
     {
         pointer p = this;
 

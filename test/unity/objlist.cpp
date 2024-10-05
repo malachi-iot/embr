@@ -18,11 +18,15 @@ static void test_objlist1()
 
 static void test_funclist1()
 {
+    using namespace embr::detail::v1;
+
     int counter = 0;
     using objstack_type = embr::layer1::objstack<128, 3>;
-    using objlist_type = embr::detail::objlist<objstack_type>;
+    using objlist_type = objlist<objstack_type,
+        // DEBT: Clunky combining of options, but getting there
+        objlist_element_options(OBJLIST_ELEMENT_ALWAYS_EXTRA | OBJLIST_ELEMENT_ALIGN_SIZE)>;
     static objlist_type objlist;
-    embr::detail::funclist<void(int), objlist_type> list(&objlist);
+    funclist<void(int), objlist_type> list(&objlist);
 
     list += [&](int v) { counter += v; };
     list += [&](int v) { counter += 1; };
