@@ -1,14 +1,23 @@
 # DEBT: Resolve this with existing source.cmake
+get_filename_component(ROOT_DIR
+    ${CMAKE_CURRENT_LIST_DIR}/../../../../../..
+    ABSOLUTE)
+
+set(UNITY_DIR ${ROOT_DIR}/test/unity)
+
+include(${UNITY_DIR}/sources.cmake)
+
+list(TRANSFORM SOURCES PREPEND ${UNITY_DIR}/)
+
+message(STATUS "ROOT: ${ROOT_DIR}")
+
 set(SRCS_PATH ../../../../..)
-set(COMPONENT_SRCS2 
-    ${SRCS_PATH}/unity/bits.cpp
+
+set(COMPONENT_SRCS2 ${SOURCES}
     ${SRCS_PATH}/unity/delegate-queue.cpp
-    ${SRCS_PATH}/unity/lwip.cpp
     ${SRCS_PATH}/unity/observer.cpp
     ${SRCS_PATH}/unity/pbuf.cpp
-    ${SRCS_PATH}/unity/setup.cpp
-    ${SRCS_PATH}/unity/transport.cpp
-    ${SRCS_PATH}/unity/word.cpp)
+    ${SRCS_PATH}/unity/transport.cpp)
 
 set(COMPONENT_SRCS
     ${COMPONENT_SRCS2}
