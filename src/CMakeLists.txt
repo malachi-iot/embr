@@ -24,6 +24,8 @@ add_library(malachi-iot::embr ALIAS ${PROJECT_NAME})
 
 target_sources(${PROJECT_NAME} INTERFACE ${SOURCE_FILES} ${INCLUDE_FILES})
 
+target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_11)
+
 configure_file(${ROOT_DIR}/tools/cmake/version.in.h ${CMAKE_CURRENT_SOURCE_DIR}/embr/version.h)
 
 # This line is largely superflous.  No linking happens for an INTERFACE library.

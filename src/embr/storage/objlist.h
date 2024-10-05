@@ -33,8 +33,7 @@ protected:
     }
 };
 
-// DEBT: Do concept & concept wrapper here
-template <class Objstack, unsigned alignment>
+template <ESTD_CPP_CONCEPT(concepts::Objstack) Objstack, unsigned alignment>
 class objlist : public objlist_base<alignment> // NOLINT(*-pro-type-member-init)
 {
     Objstack stack_;

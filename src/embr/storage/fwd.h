@@ -4,6 +4,12 @@
 #include <concepts>
 #endif
 
+#ifndef EMBR_OBJSTACK_DEFAULT_ALIGNMENT
+// In bits (0=1 byte aligned, 1=2, 2=4, etc)
+#define EMBR_OBJSTACK_DEFAULT_ALIGNMENT 2
+#endif
+
+
 namespace embr { namespace detail { inline namespace v1 {
 
 namespace concepts { inline namespace v1 {
@@ -12,7 +18,20 @@ namespace concepts { inline namespace v1 {
 template <class T>
 concept Objstack = requires(T v)
 {
-    v.alloc();
+    v.alloc(0);
+};
+
+template <class T>
+concept Objlist = requires(T v)
+{
+    v.alloc({}, 0);
+};
+
+template <class T>
+concept ObjlistElement = requires(T v)
+{
+    v.size();
+    v.next();
 };
 #endif
 
@@ -21,7 +40,8 @@ concept Objstack = requires(T v)
 template <unsigned alignment>
 class objlist_base;
 
-template <class Objstack, unsigned alignment = 2>
+template <ESTD_CPP_CONCEPT(concepts::Objstack) Objstack,
+    unsigned alignment = EMBR_OBJSTACK_DEFAULT_ALIGNMENT>
 class objlist;
 
 }}}

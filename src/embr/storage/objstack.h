@@ -13,7 +13,7 @@ static constexpr Int align(Int v)
     return ((v + ((1 << alignment_) - 1)) >> alignment_) << alignment_;
 }
 
-template <class Container, unsigned alignment = 2>
+template <class Container, unsigned alignment>
 class objstack
 {
     Container buffer_;
@@ -70,21 +70,21 @@ namespace embr {
 
 namespace layer1 { inline namespace v1 {
 
-template <unsigned N>
-using objstack = detail::objstack<estd::array<char, N>>;
+template <unsigned N, unsigned alignment = EMBR_OBJSTACK_DEFAULT_ALIGNMENT>
+using objstack = detail::objstack<estd::array<char, N>, alignment>;
 
 }}
 
 namespace layer2 { inline namespace v1 {
 
-template <unsigned N>
-using objstack = detail::objstack<estd::span<char, N>>;
+template <unsigned N, unsigned alignment = EMBR_OBJSTACK_DEFAULT_ALIGNMENT>
+using objstack = detail::objstack<estd::span<char, N>, alignment>;
 
 }}
 
 namespace layer3 { inline namespace v1 {
 
-using objstack = detail::objstack<estd::span<char>>;
+using objstack = detail::objstack<estd::span<char>, EMBR_OBJSTACK_DEFAULT_ALIGNMENT>;
 
 }}
 

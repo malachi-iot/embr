@@ -8,7 +8,7 @@ namespace embr { namespace detail { inline namespace v1 {
 
 namespace impl {
 
-template <class F, class Element>
+template <class F, ESTD_CPP_CONCEPT(concepts::v1::ObjlistElement) Element>
 struct funclist
 {
     using value_type = Element;
@@ -56,7 +56,7 @@ struct funclist
 
 }
 
-template <class F, class Objlist>
+template <class F, ESTD_CPP_CONCEPT(concepts::v1::Objlist) Objlist>
 class funclist
 {
     using objlist_type = Objlist;
@@ -67,7 +67,7 @@ class funclist
     impl::funclist<F, value_type> impl_;
 
 public:
-    constexpr funclist(objlist_type* objlist) :
+    constexpr explicit funclist(objlist_type* objlist) :
         list_{objlist}
     {
 
