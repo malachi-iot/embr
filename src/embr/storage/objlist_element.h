@@ -26,15 +26,17 @@ struct objlist_element_extra
     char data_[];
 };
 
-template <int alignment, bool align_size = false, bool always_extra = false>
+template <int alignment, objlist_element_options options>
 struct objlist_element
 {
     using pointer = objlist_element*;
 
     // In bits
     static constexpr int alignment_ = alignment;
+    static constexpr bool align_size = options & OBJLIST_ELEMENT_ALIGN_SIZE;
+    static constexpr bool always_extra = options & OBJLIST_ELEMENT_ALWAYS_EXTRA;
 
-    friend class objlist_base<alignment, always_extra>;
+    friend class objlist_base<objlist_element>;
 
 private:
     unsigned size_ : 16;

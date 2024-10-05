@@ -8,11 +8,13 @@
 
 namespace embr { namespace detail { inline namespace v1 {
 
-template <unsigned alignment, bool always_extra>
+// DEBT: Creates a concept-dependency loop somehow
+//template <ESTD_CPP_CONCEPT(concepts::ObjlistElement) Element>
+template <class Element>
 class objlist_base
 {
 protected:
-    using value_type = objlist_element<alignment, always_extra>;
+    using value_type = Element;
     using pointer = value_type*;
 
     // This looks like it can comfortably live in objlist_element itself ... although
@@ -25,16 +27,13 @@ protected:
     }
 };
 
-template <ESTD_CPP_CONCEPT(concepts::Objstack) Objstack,
-    unsigned alignment,
-    bool always_extra
-    >
-class objlist : public objlist_base<alignment, always_extra> // NOLINT(*-pro-type-member-init)
+template <ESTD_CPP_CONCEPT(concepts::v1::Objstack) Objstack, objlist_element_options oeo>
+class objlist : public objlist_base<objlist_element<Objstack::alignment_, oeo>> // NOLINT(*-pro-type-member-init)
 {
     Objstack stack_;
     char* base_;    // DEBT: Somehow linter freaks out about this guy
 
-    using base_type = objlist_base<alignment, always_extra>;
+    using base_type = objlist_base<objlist_element<Objstack::alignment_, oeo>>;
     using objstack_type = Objstack;
 
 public:
@@ -124,15 +123,21 @@ namespace embr {
 
 namespace layer1 { inline namespace v1 {
 
-template <unsigned N, unsigned alignment = EMBR_OBJSTACK_DEFAULT_ALIGNMENT>
-using objlist = detail::v1::objlist<layer1::v1::objstack<N, alignment>>;
+template <unsigned N,
+    unsigned alignment = EMBR_OBJSTACK_DEFAULT_ALIGNMENT,
+    detail::objlist_element_options oeo = OBJLIST_ELEMENT_DEFAULT
+    >
+using objlist = detail::v1::objlist<layer1::v1::objstack<N, alignment>, oeo>;
 
 }}
 
 namespace layer2 { inline namespace v1 {
 
-template <unsigned N, unsigned alignment = EMBR_OBJSTACK_DEFAULT_ALIGNMENT>
-using objlist = detail::v1::objlist<layer2::v1::objstack<N, alignment>>;
+template <unsigned N,
+    unsigned alignment = EMBR_OBJSTACK_DEFAULT_ALIGNMENT,
+    detail::objlist_element_options oeo = OBJLIST_ELEMENT_DEFAULT
+    >
+using objlist = detail::v1::objlist<layer2::v1::objstack<N, alignment>, oeo>;
 
 }}
 
