@@ -26,8 +26,16 @@ struct objlist_element_extra
     char data_[];
 };
 
-template <int alignment, objlist_element_options options>
+namespace internal {
+
 struct objlist_element
+{
+};
+
+}
+
+template <int alignment, objlist_element_options options, class T2>
+struct objlist_element : internal::objlist_element
 {
     using pointer = objlist_element*;
 
@@ -143,10 +151,10 @@ public:
         }
     }
 
-    char* extended_data()
+    T2* extended_data()
     {
         auto extra = (objlist_element_extra*) data_;
-        return extra->data_;
+        return static_cast<T2*>(extra->data_);
     }
 
     char* data()

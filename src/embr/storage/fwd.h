@@ -51,7 +51,7 @@ enum objlist_element_options
 #define OBJLIST_ELEMENT_DEFAULT embr::detail::v1::OBJLIST_ELEMENT_NONE
 #endif
 
-template <int alignment, objlist_element_options options = OBJLIST_ELEMENT_DEFAULT>
+template <int alignment, objlist_element_options options = OBJLIST_ELEMENT_DEFAULT, class T = char>
 struct objlist_element;
 
 //template <ESTD_CPP_CONCEPT(concepts::ObjlistElement)>

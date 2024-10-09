@@ -33,14 +33,18 @@ class objlist : public objlist_base<objlist_element<Objstack::alignment_, oeo>> 
     Objstack stack_;
     char* base_;    // DEBT: Somehow linter freaks out about this guy
 
-    using base_type = objlist_base<objlist_element<Objstack::alignment_, oeo>>;
     using objstack_type = Objstack;
+    static constexpr int alignment_ = Objstack::alignment_;
+    using base_type = objlist_base<objlist_element<alignment_, oeo>>;
 
 public:
     using value_type = typename base_type::value_type;
     using pointer = value_type*;
     using const_pointer = const value_type*;
     using size_type = typename objstack_type::size_type;
+
+    template <class T>
+    using typed_pointer = objlist_element<alignment_, oeo, T>*;
 
 #if UNIT_TESTING
 public:
@@ -73,9 +77,10 @@ public:
         base_{stack_.current()}
     {}
 
-    pointer alloc(pointer prev, size_type sz)
+    template <class T = char>
+    typed_pointer<T> alloc(pointer prev, size_type sz)
     {
-        auto p = (pointer)stack_.alloc(sizeof(value_type) + sz);
+        auto p = (typed_pointer<T>)stack_.alloc(sizeof(value_type) + sz);
 
         if(p == nullptr)    return nullptr;
 

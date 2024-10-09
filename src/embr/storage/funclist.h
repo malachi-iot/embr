@@ -14,11 +14,17 @@ struct objlist_function_factory
     using fn_impl = estd::detail::impl::function_fnptr2<F>;
 
     template <ESTD_CPP_CONCEPT(concepts::v1::Objlist) Objlist, class F2>
-    static typename Objlist::pointer add(typename Objlist::pointer prev, Objlist& list, F2&& f)
+    static typename Objlist::pointer emplace(typename Objlist::pointer prev, Objlist& list, F2&& f)
     {
         using model = typename fn_impl::template model<F2>;
 
         return list.template emplace<model>(prev, std::forward<F2>(f));
+    }
+
+    template <ESTD_CPP_CONCEPT(concepts::v1::Objlist) Objlist, class F2>
+    static typename Objlist::pointer emplace(Objlist& list, F2&& f)
+    {
+        return emplace(nullptr, list, std::forward<F2>(f));
     }
 };
 
@@ -45,7 +51,7 @@ struct funclist
         using model = typename fnptr::template model<F2>;
 
         pointer p = list.template emplace<model>(nullptr, std::forward<F2>(f)); */
-        pointer p = factory::add(
+        pointer p = factory::emplace(
             nullptr,
             list,
             std::forward<F2>(f));

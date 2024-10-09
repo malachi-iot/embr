@@ -94,6 +94,23 @@ TEST_CASE("Object list, Object stack", "[objlist]")
 
         REQUIRE((char*)e2a == list.stack().current());
     }
+    SECTION("func factory")
+    {
+        int counter = 0;
+        objlist_type objlist;
+        using factory = embr::detail::internal::objlist_function_factory<void(int)>;
+        using model = factory::fn_impl::model_base;
+
+        objlist_type::pointer p = factory::emplace(objlist, [&](int v)
+        {
+            counter += 5;
+        });
+
+        auto m = (model*)p->data();
+        (*m)(5);
+
+        REQUIRE(counter == 5);
+    }
     SECTION("funclist")
     {
         int counter = 0;
