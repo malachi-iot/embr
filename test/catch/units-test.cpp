@@ -3,6 +3,7 @@
 #include <estd/sstream.h>
 #include <estd/internal/units/ostream.h>
 #include <estd/internal/units/bytes.h>  // Just for sanity check make sure si specializations don't collide
+#include <estd/internal/units/operators.hpp>
 
 #include <embr/units/celsius.h>
 #include <embr/units/decibels.h>
@@ -112,6 +113,10 @@ TEST_CASE("units")
             out << estd::put_unit(v);
 
             REQUIRE(s == "5.00V");
+
+            v += 0.5;
+
+            REQUIRE(v > 5.049);
         }
         SECTION("int")
         {
@@ -125,6 +130,14 @@ TEST_CASE("units")
             write(out, dv);
 
             REQUIRE(out.rdbuf()->str() == "36 decivolts");
+
+            microvolts<uint32_t> uv = mv + dv;
+
+            out.rdbuf()->clear();
+
+            write(out, uv);
+
+            REQUIRE(out.rdbuf()->str() == "7200000 microvolts");
         }
     }
     SECTION("watts")
