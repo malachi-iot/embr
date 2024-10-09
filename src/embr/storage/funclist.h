@@ -6,6 +6,24 @@
 
 namespace embr { namespace detail { inline namespace v1 {
 
+namespace internal {
+
+template <class F>
+struct objlist_function_factory
+{
+    using fn_impl = estd::detail::impl::function_fnptr2<F>;
+
+    template <ESTD_CPP_CONCEPT(concepts::v1::Objlist) Objlist, class F2>
+    static typename Objlist::pointer add(typename Objlist::pointer prev, Objlist& list, F2&& f)
+    {
+        using model = typename fn_impl::template model<F2>;
+
+        return list.template emplace<model>(prev, std::forward<F2>(f));
+    }
+};
+
+}
+
 namespace impl {
 
 template <class F, ESTD_CPP_CONCEPT(concepts::v1::ObjlistElement) Element>
@@ -15,16 +33,22 @@ struct funclist
     using pointer = Element*;
 
     pointer head_ = nullptr;
-    using fnptr = estd::detail::impl::function_fnptr2<F>;
+    using factory = internal::objlist_function_factory<F>;
+    using fn_impl = factory::fn_impl;
 
     constexpr bool empty() const { return head_ == nullptr; }
 
     template <ESTD_CPP_CONCEPT(concepts::v1::Objlist) Objlist, class F2>
     pointer add(Objlist& list, F2&& f)
     {
+        /*
         using model = typename fnptr::template model<F2>;
 
-        pointer p = list.template emplace<model>(nullptr, std::forward<F2>(f));
+        pointer p = list.template emplace<model>(nullptr, std::forward<F2>(f)); */
+        pointer p = factory::add(
+            nullptr,
+            list,
+            std::forward<F2>(f));
 
         if(p == nullptr) return nullptr;
 
@@ -43,7 +67,7 @@ struct funclist
     template <class Objlist, class ...Args>
     void fire(Objlist& list, Args&&...args)
     {
-        using model = typename fnptr::model_base;
+        using model = typename fn_impl::model_base;
 
         head_->walk([&](pointer p, pointer)
         {
