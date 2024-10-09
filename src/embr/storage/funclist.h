@@ -12,7 +12,7 @@ template <class F>
 struct objlist_function_factory
 {
     using fn_impl = estd::detail::impl::function_fnptr2<F>;
-    using model = fn_impl::model_base;
+    using model = typename fn_impl::model_base;
 
     template <ESTD_CPP_CONCEPT(concepts::v1::Objlist) Objlist, class F2>
     static typename Objlist::pointer emplace(typename Objlist::pointer prev, Objlist& list, F2&& f)
@@ -41,7 +41,7 @@ struct funclist
 
     pointer head_ = nullptr;
     using factory = internal::objlist_function_factory<F>;
-    using fn_impl = factory::fn_impl;
+    using fn_impl = typename factory::fn_impl;
 
     constexpr bool empty() const { return head_ == nullptr; }
 
