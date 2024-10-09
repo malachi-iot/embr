@@ -54,6 +54,17 @@ TEST_CASE("Object list, Object stack", "[objlist]")
         pointer next = elem.next();
 
         REQUIRE(next == &elem2);
+
+        SECTION("conversion")
+        {
+            // No dice
+            /*
+            using type1 = embr::detail::objlist_element<4, embr::detail::OBJLIST_ELEMENT_ALWAYS_EXTRA, float>;
+            using type2 = embr::detail::objlist_element<4, embr::detail::OBJLIST_ELEMENT_ALWAYS_EXTRA, char>;
+
+            type1 v1(4, 0, false);
+            type2* v2 = &v1; */
+        }
     }
     SECTION("layer1: list")
     {
@@ -99,7 +110,7 @@ TEST_CASE("Object list, Object stack", "[objlist]")
         int counter = 0;
         objlist_type objlist;
         using factory = embr::detail::internal::objlist_function_factory<void(int)>;
-        using model = factory::fn_impl::model_base;
+        using model = factory::model;
 
         objlist_type::pointer p = factory::emplace(objlist, [&](int v)
         {

@@ -12,13 +12,14 @@ template <class F>
 struct objlist_function_factory
 {
     using fn_impl = estd::detail::impl::function_fnptr2<F>;
+    using model = fn_impl::model_base;
 
     template <ESTD_CPP_CONCEPT(concepts::v1::Objlist) Objlist, class F2>
     static typename Objlist::pointer emplace(typename Objlist::pointer prev, Objlist& list, F2&& f)
     {
-        using model = typename fn_impl::template model<F2>;
+        using m = typename fn_impl::template model<F2>;
 
-        return list.template emplace<model>(prev, std::forward<F2>(f));
+        return list.template emplace<m>(prev, std::forward<F2>(f));
     }
 
     template <ESTD_CPP_CONCEPT(concepts::v1::Objlist) Objlist, class F2>

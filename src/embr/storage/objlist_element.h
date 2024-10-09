@@ -47,12 +47,21 @@ struct objlist_element : internal::objlist_element
     friend class objlist_base<objlist_element>;
 
 private:
-    unsigned size_ : 16;
-    int next_ : 14;        ///< aligned pointer offset
-    // Perhaps we can deduce this based on what list it is in?  Don't know.
-    // It is convenient to have it here
-    bool allocated_ : 1;
-    bool moveptr_ : 1;      ///< First sizeof(intptr_t) bytes in data_ is a moveptr
+    union
+    {
+        struct
+        {
+            unsigned size_ : 16;
+            int next_ : 14;        ///< aligned pointer offset
+            // Perhaps we can deduce this based on what list it is in?  Don't know.
+            // It is convenient to have it here
+            bool allocated_ : 1;
+            bool moveptr_ : 1;      ///< First sizeof(intptr_t) bytes in data_ is a moveptr
+        };
+
+        char raw[1 << alignment_];
+    };
+
     char data_[];
 
     static constexpr unsigned size_shl(unsigned sz)
@@ -66,7 +75,6 @@ private:
     }
 
 public:
-
     constexpr objlist_element(unsigned size, int next, bool allocated) :
         size_{size_shr(size)},
         next_{next},
@@ -192,6 +200,14 @@ public:
 
             current = next;
         }
+    }
+
+    // EXPERIMENTAL
+    operator objlist_element<alignment, options, char*>&()
+    {
+        auto c = (objlist_element<alignment, options, char*>*) this;
+
+        return *c;
     }
 };
 
