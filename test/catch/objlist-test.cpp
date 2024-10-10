@@ -136,7 +136,7 @@ TEST_CASE("Object list, Object stack", "[objlist]")
 
         list2 += [&](int v) { counter -= v; };
         list2 += [&](int) { --counter; };
-        list2.fire(2);
+        list2(2);
 
         REQUIRE(counter == 2);
     }

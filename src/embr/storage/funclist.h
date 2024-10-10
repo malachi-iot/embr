@@ -88,8 +88,9 @@ struct funclist
 }
 
 template <class F, ESTD_CPP_CONCEPT(concepts::v1::Objlist) Objlist>
-class funclist
+class funclist_base
 {
+protected:
     using objlist_type = Objlist;
     using value_type = typename objlist_type::value_type;
     using pointer = typename objlist_type::pointer;
@@ -97,24 +98,46 @@ class funclist
     Objlist* list_;
     impl::funclist<F, value_type> impl_;
 
-public:
-    constexpr explicit funclist(objlist_type* objlist) :
+    constexpr explicit funclist_base(objlist_type* objlist) :
         list_{objlist}
     {
 
     }
 
+public:
     template <class F2>
     void operator+=(F2&& f)
     {
         impl_.add(*list_, std::forward<F2>(f));
     }
+};
+
+
+// Separating this out so that funclist_base may be exposed more generally
+// without everyone accessing 'fire' method
+template <class F, ESTD_CPP_CONCEPT(concepts::v1::Objlist) Objlist>
+class funclist : public funclist_base<F, Objlist>
+{
+    using base_type = funclist_base<F, Objlist>;
+    using typename base_type::objlist_type;
+
+public:
+    constexpr explicit funclist(objlist_type* objlist) :
+        base_type(objlist)
+    {}
 
     template <class ...Args>
     void fire(Args&&...args)
     {
-        impl_.fire(*list_, std::forward<Args>(args)...);
+        base_type::impl_.fire(*base_type::list_, std::forward<Args>(args)...);
+    }
+
+    template <class ...Args>
+    void operator()(Args&&...args)
+    {
+        fire(std::forward<Args>(args)...);
     }
 };
+
 
 }}}
