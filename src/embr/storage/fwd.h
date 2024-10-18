@@ -40,6 +40,7 @@ concept ObjlistElement = requires(T v)
 
 }}
 
+// 18OCT24 TODO: Seems this would prefer to live out in embr namespace
 enum objlist_element_options
 {
     OBJLIST_ELEMENT_NONE = 0,

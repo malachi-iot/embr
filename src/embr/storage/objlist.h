@@ -80,6 +80,7 @@ public:
     template <class T = char>
     typed_pointer<T> alloc(pointer prev, size_type sz)
     {
+        // value_type is core objlist_element
         auto p = (typed_pointer<T>)stack_.alloc(sizeof(value_type) + sz);
 
         if(p == nullptr)    return nullptr;

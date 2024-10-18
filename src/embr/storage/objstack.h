@@ -13,7 +13,7 @@ static constexpr Int align(Int v)
     return ((v + ((1 << alignment_) - 1)) >> alignment_) << alignment_;
 }
 
-template <class Container, unsigned alignment>
+template <class Container, unsigned alignment, bool bounds_check = true>
 class objstack
 {
     Container buffer_;
@@ -37,7 +37,7 @@ public:
     {
         sz = align<alignment_>(sz);
 
-        if(current_ + sz > limit()) return nullptr;
+        if(bounds_check && current_ + sz > limit()) return nullptr;
 
         void* allocated = current_;
 

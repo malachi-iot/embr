@@ -105,6 +105,15 @@ TEST_CASE("Object list, Object stack", "[objlist]")
 
         REQUIRE((char*)e2a == list.stack().current());
     }
+    SECTION("objlist with other options")
+    {
+        using objlist_type2 = embr::layer1::objlist<64, 0, embr::detail::v1::OBJLIST_ELEMENT_ALWAYS_EXTRA>;
+        objlist_type2 objlist;
+
+        objlist_type2::pointer p = objlist.emplace<int>(nullptr, 5);
+
+        REQUIRE(p != nullptr);
+    }
     SECTION("func factory")
     {
         int counter = 0;

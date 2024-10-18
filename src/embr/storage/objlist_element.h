@@ -43,6 +43,7 @@ struct objlist_element : internal::objlist_element
     static constexpr int alignment_ = alignment;
     static constexpr bool align_size = options & OBJLIST_ELEMENT_ALIGN_SIZE;
     static constexpr bool always_extra = options & OBJLIST_ELEMENT_ALWAYS_EXTRA;
+    static constexpr bool never_extra = false;
 
     friend class objlist_base<objlist_element>;
 
@@ -56,7 +57,7 @@ private:
             // Perhaps we can deduce this based on what list it is in?  Don't know.
             // It is convenient to have it here
             bool allocated_ : 1;
-            bool moveptr_ : 1;      ///< First sizeof(intptr_t) bytes in data_ is a moveptr
+            bool extra_ : 1;      ///< First sizeof(intptr_t) bytes in data_ is a moveptr
         };
 
         char raw[1 << alignment_];
@@ -79,7 +80,7 @@ public:
         size_{size_shr(size)},
         next_{next},
         allocated_{allocated},
-        moveptr_{false}
+        extra_{false}
     {
 
     }
@@ -100,7 +101,7 @@ public:
         // DEBT: This can be optimized and account for align_size
         return
             align<alignment>(size()) +
-                (moveptr_ ? sizeof(objlist_element_extra) : 0) +
+                (extra_ ? sizeof(objlist_element_extra) : 0) +
                 sizeof(objlist_element);
     }
 
@@ -151,7 +152,7 @@ public:
 
     void dealloc()
     {
-        if(moveptr_)
+        if(extra_)
         {
             auto extra = (objlist_element_extra*)data_;
 
@@ -167,16 +168,24 @@ public:
 
     char* data()
     {
-        if(always_extra || moveptr_)
+        if(always_extra || extra_)
             return extended_data();
         else
             return data_;
     }
 
     template <class T, class ...Args>
+    T* emplace_without_extra(Args&&...args)
+    {
+        return new (data_) T(std::forward<Args>(args)...);
+    }
+
+    template <class T, class ...Args>
     T* emplace(Args&&...args)
     {
-        moveptr_ = true;
+        if constexpr(never_extra) return emplace_without_extra<T>(std::forward<Args>(args)...);
+
+        extra_ = true;
         auto data = (objlist_element_extra*) data_;
         data->move_ = objlist_element_extra::move_helper<T>;
         return new (data->data_) T(std::forward<Args>(args)...);
