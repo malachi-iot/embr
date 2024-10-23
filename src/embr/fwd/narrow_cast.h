@@ -1,7 +1,6 @@
 #pragma once
 
 namespace embr {
-
 namespace internal {
 
 /// Helper to forcefully reduce precision on type U to type T
@@ -14,5 +13,4 @@ struct narrow_cast;
 
 
 }
-
 }

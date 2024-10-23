@@ -7,7 +7,7 @@
 #include "narrow_cast.h"
 #include "type_from_bits.h"
 
-namespace embr {
+namespace embr { inline namespace v1 {
 
 #if FEATURE_EMBR_WORD_STRICTNESS
 // DEBT: Perhaps word_attributes might be better?
@@ -43,4 +43,4 @@ template <size_t bits, bool is_signed = false, word_strictness strict =
     typename TInt = typename type_from_bits<bits, is_signed>::type>
 class word;
 
-}
+}}

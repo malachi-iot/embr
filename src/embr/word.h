@@ -3,6 +3,7 @@
 #include <estd/cstdint.h>
 #include <estd/type_traits.h>
 
+#include "fwd/word.h"
 #include "internal/word.h"
 
 #if FEATURE_EMBR_WORD_STRICTNESS
@@ -11,7 +12,7 @@
 
 #include "platform/guard-in.h"
 
-namespace embr {
+namespace embr { inline namespace v1 {
 
 #if __cplusplus >= 201103L
 template <class T, class U>
@@ -26,7 +27,7 @@ constexpr T narrow_cast(U&& u) noexcept
 #endif
 
 
-}
+}}
 
 namespace estd {
 
@@ -70,7 +71,7 @@ ESTD_CPP_CONSTEXPR_RET Int to_integer(embr::word<bits, is_signed, strict> w)
 }
 
 }
-namespace embr {
+namespace embr { inline namespace v1 {
 
 
 
@@ -330,7 +331,7 @@ constexpr bool operator ==(const word<bits>& lhs, const word<bits>& rhs)
 } */
 
 
-}
+}}
 
 #pragma pop_macro("EMBR_WORD_ARITHMETIC")
 

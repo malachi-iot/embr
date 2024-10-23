@@ -10,7 +10,9 @@ namespace embr {
 template <size_t bits>
 struct type_from_bits<bits, false, estd::internal::Range<(bits <= 8)> > :
     estd::type_identity<uint8_t>
-{ };
+{
+    //static constexpr const int size =
+};
 
 template <size_t bits>
 struct type_from_bits<bits, false, estd::internal::Range<(bits > 8 && bits <= 16)> > :

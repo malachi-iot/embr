@@ -12,7 +12,7 @@
 #include "narrow_cast.h"
 #include "type_from_bits.h"
 
-namespace embr {
+namespace embr { inline namespace v1 {
 
 #if FEATURE_EMBR_WORD_STRICTNESS
 
@@ -38,8 +38,9 @@ constexpr bool all()
 
 #endif
 
+}}  // embr::v1
 
-namespace internal {
+namespace embr { namespace internal {
 
 // This is the opposite of what we want.  We actually want narrow_cast to be very permissive.
 // to_integer already does compile time disallow of too much narrowing
@@ -140,7 +141,4 @@ public:
 
 
 
-}
-
-
-}
+}}  // embr::internal
