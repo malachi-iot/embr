@@ -9,6 +9,7 @@
 #include "../enum_mask.h"   // NOTE: Only in support of experimental 'attributes'
 #endif
 
+#include "flags.h"
 #include "narrow_cast.h"
 #include "type_from_bits.h"
 
@@ -142,3 +143,13 @@ public:
 
 
 }}  // embr::internal
+
+namespace embr { namespace v2 {
+
+template <size_t bits, word_options o>
+struct word
+{
+
+};
+
+}}

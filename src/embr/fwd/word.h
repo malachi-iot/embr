@@ -1,9 +1,11 @@
 #pragma once
 
+#include <estd/bit.h>
 #include <estd/internal/platform.h>
 
 #include "../internal/features.h"
 
+#include "flags.h"
 #include "narrow_cast.h"
 #include "type_from_bits.h"
 
@@ -43,4 +45,18 @@ template <size_t bits, bool is_signed = false, word_strictness strict =
     typename TInt = typename type_from_bits<bits, is_signed>::type>
 class word;
 
-}}
+}}  // embr::v1
+
+// NOTE: Trouble in paradise with the whole v1/v2 thing - isn't so great when applied to a whole big namespace
+namespace embr { namespace v2 {
+
+enum class word_options
+{
+    dummy
+};
+
+template <size_t bits, word_options o =
+    experimental::flags<word_options>(word_options::dummy) | word_options::dummy>
+struct word;
+
+}}  // embr::v2
