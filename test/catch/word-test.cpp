@@ -130,4 +130,11 @@ TEST_CASE("word type test", "[word]")
 
         REQUIRE(seconds2.count() == 0);
     }
+    SECTION("alias up")
+    {
+        REQUIRE(internal::alias_up(3, 8) == 8);
+        REQUIRE(internal::alias_up(7, 8) == 8);
+        REQUIRE(internal::alias_up(8, 8) == 8);
+        REQUIRE(internal::alias_up(9, 8) == 16);
+    }
 }
