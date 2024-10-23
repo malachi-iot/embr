@@ -52,11 +52,21 @@ namespace embr { namespace v2 {
 
 enum class word_options
 {
-    dummy
+    none,
+    narrowing = 0x01,
+    init_masking = 0x02,
+    storage_masking = 0x04,
+    dummy,
+
+    native = 0x1000,
+    big_endian = 0x2000,
+    little_endian = 0x4000,
+
+    masking = init_masking | storage_masking
 };
 
 template <size_t bits, word_options o =
-    experimental::flags<word_options>(word_options::dummy) | word_options::dummy>
+    experimental::flags(word_options::none) | word_options::dummy>
 struct word;
 
 }}  // embr::v2
