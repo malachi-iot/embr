@@ -58,7 +58,7 @@ enum class word_options
     init_masking = 0x02,
     storage_masking = 0x04,
     is_signed = 0x08,
-    aligned = 0x10,
+    packed = 0x10,
     dummy,
 
     native = 0x1000,

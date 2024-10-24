@@ -143,7 +143,7 @@ public:
 
 template <size_t bits, v2::word_options o>
 //struct word_v2_base<bits, o, estd::enable_if_t<o == v2::word_options::native>>
-struct word_v2_base<bits, o, o & v2::word_options::native> :
+struct word_v2_base<bits, o, o & v2::word_options::native && !(o & v2::word_options::packed)> :
     type_from_bits<bits, o & v2::word_options::is_signed>
 {
     using base_type = type_from_bits<bits, o & v2::word_options::is_signed>;
@@ -155,6 +155,21 @@ struct word_v2_base<bits, o, o & v2::word_options::native> :
         type v_;
     };
 
+};
+
+
+template <size_t bits, v2::word_options o>
+struct word_v2_base<bits, o,
+    o & v2::word_options::native &&
+        o & v2::word_options::packed &&
+        //type_from_bits<bits, false>::size % 2 == 1> :
+        true> :
+    type_from_bits<bits, o & v2::word_options::is_signed>
+{
+    using base_type = type_from_bits<bits, o & v2::word_options::is_signed>;
+    using typename base_type::type;
+
+    uint8_t raw_[base_type::size];
 };
 
 
