@@ -54,7 +54,7 @@ namespace embr { namespace v2 {
 enum class word_options
 {
     none,
-    narrowing = 0x01,
+    narrowing = 0x01,           ///< compile time enforcement to prohibit narrowing to less precise types
     init_masking = 0x02,
     storage_masking = 0x04,
     is_signed = 0x08,

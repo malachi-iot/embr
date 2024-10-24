@@ -224,18 +224,60 @@ struct packer<uint32_t, 3, true>
 
     static constexpr uint32_t unpack(const uint8_t* in)
     {
-        return in[1] << 8 | in[2];
+        return in[0] << 16 | in[1] << 8 | in[2];
+    }
+};
+
+// NOTE: This flavor truncates on unpack
+template <>
+struct packer<uint32_t, 6, true>
+{
+    static uint8_t* pack(uint32_t in, uint8_t* out)
+    {
+        out[0] = 0;
+        out[1] = 0;
+        out[3] = in >> 16 & 0xFF;
+        out[4] = in >> 8 & 0xFF;
+        out[5] = in & 0xFF;
+        return out;
+    }
+
+    static constexpr uint32_t unpack(const uint8_t* in)
+    {
+        return in[2] << 24 | in[3] << 16 | in[4] << 8 | in[5];
     }
 };
 
 
+// NOTE: This flavor truncates on on pack
+template <>
+struct packer<uint64_t, 6, true>
+{
+    static uint8_t* pack(uint64_t in, uint8_t* out)
+    {
+        out[0] = in >> 32 & 0xFF;
+        out[1] = in >> 24 & 0xFF;
+        out[3] = in >> 16 & 0xFF;
+        out[4] = in >> 8 & 0xFF;
+        out[5] = in & 0xFF;
+        return out;
+    }
+
+    static constexpr uint64_t unpack(const uint8_t* in)
+    {
+        return uint64_t(in[0]) << 40 | uint64_t(in[1]) << 32 | in[2] << 24 | in[3] << 16 | in[4] << 8 | in[5];
+    }
+};
+
+
+// native endian flavor using regular storage
 template <size_t bits, v2::word_options o>
 //struct word_v2_base<bits, o, estd::enable_if_t<o == v2::word_options::native>>
 struct word_v2_base<bits, o,
     estd::enable_if_t<
         is_native_endian<o>::value &&
         !(o & v2::word_options::packed) ||
-        type_from_bits<bits, false>::size % 2 == 0>> :
+        type_from_bits<bits, false>::matched>> :
     type_from_bits<bits, o & v2::word_options::is_signed>
 {
     using base_type = type_from_bits<bits, o & v2::word_options::is_signed>;
@@ -254,12 +296,13 @@ struct word_v2_base<bits, o,
 };
 
 
+// non-native endian flavor using regular storage
 template <size_t bits, v2::word_options o>
 struct word_v2_base<bits, o,
     estd::enable_if_t<
         is_native_endian<o>::value == false &&
             !(o & v2::word_options::packed) ||
-        type_from_bits<bits, false>::size % 2 == 0>> :
+        type_from_bits<bits, false>::matched>> :
     type_from_bits<bits, o & v2::word_options::is_signed>
 {
     using base_type = type_from_bits<bits, o & v2::word_options::is_signed>;
@@ -283,12 +326,13 @@ struct word_v2_base<bits, o,
 };
 
 
+// native flavor using raw byte storage
 template <size_t bits, v2::word_options o>
 struct word_v2_base<bits, o,
     estd::enable_if_t<
         is_native_endian<o>::value &&
         o & v2::word_options::packed &&
-        type_from_bits<bits, false>::size % 2 == 1>> :
+        type_from_bits<bits, false>::matched == false>> :
         //true>> :
     type_from_bits<bits, o & v2::word_options::is_signed>
 {

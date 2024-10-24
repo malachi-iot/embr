@@ -143,9 +143,11 @@ TEST_CASE("word type test", "[word]")
         {
             v2::word<21> v(5);
             v2::word<21, v2::word_options::packed> v2(5);
+            v2::word<48, v2::word_options::packed> v3(10);
 
             REQUIRE(sizeof(v) == 4);
             REQUIRE(sizeof(v2) == 3);
+            REQUIRE(sizeof(v3) == 6);
 
             // Doesn't work - getting too tired to reasonably continue,
             // word_retriever is starting to mutate into the unknown...
