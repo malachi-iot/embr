@@ -1,5 +1,6 @@
 #pragma once
 
+#include <estd/bit.h>
 // This include is primarily for access to ESTD_CPP_CONSTEXPR_RET
 #include <estd/internal/locale.h>
 
@@ -140,14 +141,48 @@ public:
     }
 };
 
+template <bool native>
+struct word_retriever;
+
+template <>
+struct word_retriever<true>
+{
+    template <class Numeric>
+    static constexpr Numeric get(const Numeric& v) { return v; }
+};
+
+template <>
+struct word_retriever<false>
+{
+    template <class Numeric>
+    static constexpr Numeric get(const Numeric& v)
+    {
+        return estd::byteswap(v);
+    }
+
+    static void get(const uint8_t* in, uint32_t* out)
+    {
+        // I think we could cast out to uint8_t* and initialize it directly too
+        uint8_t v[4] { 0, in[2], in[1], in[0] };
+        *out = *(uint32_t*) v;
+    }
+};
+
 
 template <size_t bits, v2::word_options o>
 //struct word_v2_base<bits, o, estd::enable_if_t<o == v2::word_options::native>>
-struct word_v2_base<bits, o, o & v2::word_options::native && !(o & v2::word_options::packed)> :
+struct word_v2_base<bits, o,
+    estd::enable_if_t<
+        !(o & v2::word_options::packed) ||
+        type_from_bits<bits, false>::size % 2 == 0>> :
     type_from_bits<bits, o & v2::word_options::is_signed>
 {
     using base_type = type_from_bits<bits, o & v2::word_options::is_signed>;
     using typename base_type::type;
+
+    static constexpr bool native = o & v2::word_options::native;
+
+    using retriever = word_retriever<native>;
 
     union
     {
@@ -155,21 +190,46 @@ struct word_v2_base<bits, o, o & v2::word_options::native && !(o & v2::word_opti
         type v_;
     };
 
+    word_v2_base() = default;
+    constexpr word_v2_base(const type& copy_from) : v_{copy_from}
+    {
+    }
+
+    constexpr operator type() const
+    {
+        return retriever::get(v_);
+    }
 };
 
 
 template <size_t bits, v2::word_options o>
 struct word_v2_base<bits, o,
-    o & v2::word_options::native &&
+    estd::enable_if_t<
         o & v2::word_options::packed &&
-        //type_from_bits<bits, false>::size % 2 == 1> :
-        true> :
+        type_from_bits<bits, false>::size % 2 == 1>> :
+        //true>> :
     type_from_bits<bits, o & v2::word_options::is_signed>
 {
     using base_type = type_from_bits<bits, o & v2::word_options::is_signed>;
     using typename base_type::type;
 
+    static constexpr bool native = o & v2::word_options::native;
+
+    using retriever = word_retriever<native>;
+
     uint8_t raw_[base_type::size];
+
+    word_v2_base() = default;
+    constexpr word_v2_base(const type& copy_from) :
+        raw_{}
+    {}
+
+    operator type() const
+    {
+        type v;
+        retriever::get(raw_, &v);
+        return v;
+    }
 };
 
 
@@ -180,7 +240,14 @@ namespace embr { namespace v2 {
 template <size_t bits, word_options o>
 struct word : internal::word_v2_base<bits, o>
 {
+    using base_type = internal::word_v2_base<bits, o>;
+    using typename base_type::type;
 
+public:
+    word() = default;
+    constexpr word(const type& copy_from) : base_type(copy_from)
+    {
+    }
 };
 
 }}

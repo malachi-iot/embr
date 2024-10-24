@@ -59,26 +59,30 @@ enum class word_options
     storage_masking = 0x04,
     is_signed = 0x08,
     packed = 0x10,
-    dummy,
 
-    native = 0x1000,
-    big_endian = 0x2000,
-    little_endian = 0x4000,
+    //native = 0x1000,            ///< word internal contents is native endian
+    big_endian = 0x2000,        ///< word internal contents is big endian
+    little_endian = 0x4000,     ///< word internal contents is little endian
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+    native = little_endian,
+#else
+    native = big_endian,
+#endif
 
     masking = init_masking | storage_masking
 };
 
 EMBR_FLAGS(word_options)
 
-template <size_t bits, word_options o = word_options::none | word_options::dummy>
+template <size_t bits, word_options o = word_options::native>
 struct word;
 
 }}  // embr::v2
 
 namespace embr { namespace internal {
 
-//template <size_t bits, v2::word_options o, class enabled = void>
-template <size_t bits, v2::word_options o, bool enabled = false>
+template <size_t bits, v2::word_options o, class enabled = void>
+//template <size_t bits, v2::word_options o, bool enabled = false>
 struct word_v2_base;
 
 }}
