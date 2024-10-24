@@ -5,7 +5,8 @@
 
 #include "../internal/features.h"
 
-#include "flags.h"
+//#include "flags.h"
+#include "../internal/flags.h"
 #include "narrow_cast.h"
 #include "type_from_bits.h"
 
@@ -56,6 +57,8 @@ enum class word_options
     narrowing = 0x01,
     init_masking = 0x02,
     storage_masking = 0x04,
+    is_signed = 0x08,
+    aligned = 0x10,
     dummy,
 
     native = 0x1000,
@@ -65,8 +68,17 @@ enum class word_options
     masking = init_masking | storage_masking
 };
 
-template <size_t bits, word_options o =
-    experimental::flags(word_options::none) | word_options::dummy>
+EMBR_FLAGS(word_options)
+
+template <size_t bits, word_options o = word_options::none | word_options::dummy>
 struct word;
 
 }}  // embr::v2
+
+namespace embr { namespace internal {
+
+//template <size_t bits, v2::word_options o, class enabled = void>
+template <size_t bits, v2::word_options o, bool enabled = false>
+struct word_v2_base;
+
+}}

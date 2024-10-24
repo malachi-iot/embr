@@ -141,13 +141,29 @@ public:
 };
 
 
+template <size_t bits, v2::word_options o>
+//struct word_v2_base<bits, o, estd::enable_if_t<o == v2::word_options::native>>
+struct word_v2_base<bits, o, o & v2::word_options::native> :
+    type_from_bits<bits, o & v2::word_options::is_signed>
+{
+    using base_type = type_from_bits<bits, o & v2::word_options::is_signed>;
+    using typename base_type::type;
+
+    union
+    {
+        uint8_t raw_[base_type::size];
+        type v_;
+    };
+
+};
+
 
 }}  // embr::internal
 
 namespace embr { namespace v2 {
 
 template <size_t bits, word_options o>
-struct word
+struct word : internal::word_v2_base<bits, o>
 {
 
 };
