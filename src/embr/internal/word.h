@@ -1,5 +1,6 @@
 #pragma once
 
+#include <estd/algorithm.h>
 #include <estd/bit.h>
 // This include is primarily for access to ESTD_CPP_CONSTEXPR_RET
 #include <estd/internal/locale.h>
@@ -236,15 +237,19 @@ struct packer<uint32_t, 6, true>
     {
         out[0] = 0;
         out[1] = 0;
-        out[3] = in >> 16 & 0xFF;
-        out[4] = in >> 8 & 0xFF;
-        out[5] = in & 0xFF;
+        *((uint32_t*) out) = in;
+        /*
+        out[2] = in >> 24;
+        out[3] = in >> 16;
+        out[4] = in >> 8;
+        out[5] = in;    */
         return out;
     }
 
     static constexpr uint32_t unpack(const uint8_t* in)
     {
-        return in[2] << 24 | in[3] << 16 | in[4] << 8 | in[5];
+        return * (const uint32_t*) in + 2;
+        //return in[2] << 24 | in[3] << 16 | in[4] << 8 | in[5];
     }
 };
 
@@ -255,11 +260,15 @@ struct packer<uint64_t, 6, true>
 {
     static uint8_t* pack(uint64_t in, uint8_t* out)
     {
-        out[0] = in >> 32 & 0xFF;
-        out[1] = in >> 24 & 0xFF;
-        out[3] = in >> 16 & 0xFF;
-        out[4] = in >> 8 & 0xFF;
-        out[5] = in & 0xFF;
+        /*
+        out[0] = in >> 40;
+        out[1] = in >> 32;
+        out[2] = in >> 24;
+        out[3] = in >> 16;
+        out[4] = in >> 8;
+        out[5] = in;*/
+        // native flavor, we can do pure byte copies and pointer tricks
+        estd::copy_n(((uint8_t*)&in), 6, out);
         return out;
     }
 

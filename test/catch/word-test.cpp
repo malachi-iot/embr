@@ -143,7 +143,9 @@ TEST_CASE("word type test", "[word]")
         {
             v2::word<21> v(5);
             v2::word<21, v2::word_options::packed> v2(5);
-            v2::word<48, v2::word_options::packed> v3(10);
+            v2::word<48, v2::word_options::packed> v3(5);
+
+            uint64_t _v3 = v3;
 
             REQUIRE(sizeof(v) == 4);
             REQUIRE(sizeof(v2) == 3);
@@ -152,6 +154,7 @@ TEST_CASE("word type test", "[word]")
             // Doesn't work - getting too tired to reasonably continue,
             // word_retriever is starting to mutate into the unknown...
             REQUIRE(v == v2);
+            //REQUIRE(v3 == v2);
         }
     }
 }
