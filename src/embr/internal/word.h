@@ -142,6 +142,13 @@ public:
 };
 
 template <v2::word_options o>
+using map_to_endian = estd::integral_constant<
+    estd::endian,
+    !(o & v2::word_options::endian_mask) ? estd::endian::native :
+        o & v2::word_options::big_endian ? estd::endian::big : estd::endian::little>;
+
+
+template <v2::word_options o>
 using is_native_endian = estd::bool_constant<
     (!(o & v2::word_options::endian_mask) ||
     ((o & v2::word_options::endian_mask) == v2::word_options::native))>;
@@ -180,10 +187,53 @@ struct word_retriever<o, estd::enable_if_t<
 };
 
 
+template <class T, size_t size, bool native>
+struct packer;
+
+// NOTE: This flavor truncates on unpack
+template <>
+struct packer<uint16_t, 3, true>
+{
+    static void pack(uint16_t in, uint8_t* out)
+    {
+        out[0] = 0;
+        out[1] = in >> 8;
+        out[2] = in & 0xFF;
+    }
+
+    static uint16_t unpack(const uint8_t* in)
+    {
+        uint16_t v = in[1];
+        v <<= 8;
+        v |= in[0];
+        return v;
+    }
+};
+
+// NOTE: This flavor truncates on pack
+template <>
+struct packer<uint32_t, 3, true>
+{
+    static uint8_t* pack(uint32_t in, uint8_t* out)
+    {
+        out[0] = in >> 16 & 0xFF;
+        out[1] = in >> 8 & 0xFF;
+        out[2] = in & 0xFF;
+        return out;
+    }
+
+    static constexpr uint32_t unpack(const uint8_t* in)
+    {
+        return in[1] << 8 | in[2];
+    }
+};
+
+
 template <size_t bits, v2::word_options o>
 //struct word_v2_base<bits, o, estd::enable_if_t<o == v2::word_options::native>>
 struct word_v2_base<bits, o,
     estd::enable_if_t<
+        is_native_endian<o>::value &&
         !(o & v2::word_options::packed) ||
         type_from_bits<bits, false>::size % 2 == 0>> :
     type_from_bits<bits, o & v2::word_options::is_signed>
@@ -191,22 +241,44 @@ struct word_v2_base<bits, o,
     using base_type = type_from_bits<bits, o & v2::word_options::is_signed>;
     using typename base_type::type;
 
-    using retriever = word_retriever<o>;
+    static constexpr estd::endian endian = estd::endian::native;
 
-    union
-    {
-        uint8_t raw_[base_type::size];
-        type v_;
-    };
+    type v_;
 
     word_v2_base() = default;
     constexpr word_v2_base(const type& copy_from) : v_{copy_from}
     {
     }
 
+    constexpr operator type() const { return v_; }
+};
+
+
+template <size_t bits, v2::word_options o>
+struct word_v2_base<bits, o,
+    estd::enable_if_t<
+        is_native_endian<o>::value == false &&
+            !(o & v2::word_options::packed) ||
+        type_from_bits<bits, false>::size % 2 == 0>> :
+    type_from_bits<bits, o & v2::word_options::is_signed>
+{
+    using base_type = type_from_bits<bits, o & v2::word_options::is_signed>;
+    using typename base_type::type;
+
+    static constexpr estd::endian endian = map_to_endian<o>::value;
+
+    // Stored in "wrong" order (byte swapped)
+    type v_;
+
+    word_v2_base() = default;
+    constexpr word_v2_base(const type& copy_from) :
+        v_{estd::byteswap(copy_from)}
+    {
+    }
+
     constexpr operator type() const
     {
-        return retriever::get(v_);
+        return estd::byteswap(v_);
     }
 };
 
@@ -214,6 +286,7 @@ struct word_v2_base<bits, o,
 template <size_t bits, v2::word_options o>
 struct word_v2_base<bits, o,
     estd::enable_if_t<
+        is_native_endian<o>::value &&
         o & v2::word_options::packed &&
         type_from_bits<bits, false>::size % 2 == 1>> :
         //true>> :
@@ -222,20 +295,21 @@ struct word_v2_base<bits, o,
     using base_type = type_from_bits<bits, o & v2::word_options::is_signed>;
     using typename base_type::type;
 
-    using retriever = word_retriever<o>;
+    static constexpr estd::endian endian = estd::endian::native;
+
+    using pack = packer<type, base_type::size, true>;
 
     uint8_t raw_[base_type::size];
 
     word_v2_base() = default;
-    constexpr word_v2_base(const type& copy_from) :
-        raw_{}
-    {}
-
-    operator type() const
+    word_v2_base(const type& copy_from)
     {
-        type v;
-        retriever::get(raw_, &v);
-        return v;
+        pack::pack(copy_from, raw_);
+    }
+
+    constexpr operator type() const
+    {
+        return pack::unpack(raw_);
     }
 };
 
