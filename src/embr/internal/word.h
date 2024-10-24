@@ -188,6 +188,7 @@ struct word_retriever<o, estd::enable_if_t<
 };
 
 
+// DEBT: 'platform' really feels like it out to be 'source'
 template <class T, size_t size, estd::endian target,
     estd::endian platform = estd::endian::native>
 struct packer;
@@ -230,6 +231,7 @@ struct packer<uint32_t, 3, estd::endian::little, estd::endian::little>
     }
 };
 
+
 // NOTE: This flavor truncates on unpack
 template <>
 struct packer<uint32_t, 6, estd::endian::little, estd::endian::little>
@@ -249,17 +251,42 @@ struct packer<uint32_t, 6, estd::endian::little, estd::endian::little>
 
     static constexpr uint32_t unpack(const uint8_t* in)
     {
-        return * (const uint32_t*) in + 2;
+        return * (const uint32_t*) in;
+        //return * (const uint32_t*) in + 2;
         //return in[2] << 24 | in[3] << 16 | in[4] << 8 | in[5];
     }
 };
 
 
-// NOTE: This flavor truncates on on pack
-template <>
-struct packer<uint64_t, 6, estd::endian::little, estd::endian::little>
+template <class Integer, size_t N>
+struct packer<Integer, N, estd::endian::big, estd::endian::big>
 {
-    static uint8_t* pack(uint64_t in, uint8_t* out)
+    using value_type = Integer;
+    static constexpr size_t smallest_N = estd::min(N, sizeof(value_type));
+    static constexpr size_t largest_N = estd::max(N, sizeof(value_type));
+
+    static uint8_t* pack(value_type in, uint8_t* out)
+    {
+        estd::copy_n(((uint8_t*)&in), smallest_N, out);
+        if(N > sizeof(value_type))
+        {
+            for(unsigned i = 0; i < N - sizeof(value_type); i++)
+                out[i] = 0;
+        }
+
+        return out;
+    }
+};
+
+// NOTE: This flavor truncates on on pack
+template <size_t N>
+struct packer<uint64_t, N, estd::endian::little, estd::endian::little>
+{
+    using value_type = uint64_t;
+    static constexpr size_t smallest_N = estd::min(N, sizeof(value_type));
+    static constexpr size_t largest_N = estd::max(N, sizeof(value_type));
+
+    static uint8_t* pack(value_type in, uint8_t* out)
     {
         /*
         out[0] = in >> 40;
@@ -269,15 +296,23 @@ struct packer<uint64_t, 6, estd::endian::little, estd::endian::little>
         out[4] = in >> 8;
         out[5] = in;*/
         // native flavor, we can do pure byte copies and pointer tricks
-        estd::copy_n(((uint8_t*)&in), 6, out);
+        estd::copy_n(((uint8_t*)&in), smallest_N, out);
+        if(N > sizeof(value_type))
+        {
+            for(unsigned i = sizeof(value_type); i < N; i++)
+                out[i] = 0;
+        }
+
         return out;
     }
 
-    static uint64_t unpack(const uint8_t* in)
+    static value_type unpack(const uint8_t* in)
     {
-        uint64_t out;
+        value_type out;
 
-        estd::copy_n(in, 6, (uint8_t*)&out);
+        if(N < sizeof(value_type))  out = 0;
+
+        estd::copy_n(in, N, (uint8_t*)&out);
         return out;
     }
 

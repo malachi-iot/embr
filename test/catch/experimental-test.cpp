@@ -233,7 +233,7 @@ TEST_CASE("experimental test", "[experimental]")
     {
         // stringbufs still a mess, so using span variety
         //typedef estd::experimental::ostringstream<128> ostream_type;
-        typedef estd::experimental::ospanstream ostream_type;
+        typedef estd::detail::ospanstream ostream_type;
         typedef estd::detail::ispanstream istream_type;
 
         struct Transport

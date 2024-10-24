@@ -53,6 +53,13 @@ struct type_from_bits<bits, false, estd::internal::Range<(bits > 32 && bits <= 6
     internal::type_from_bits_base<uint64_t, bits>
 { };
 
+#if __SIZEOF_INT128__
+template <size_t bits>
+struct type_from_bits<bits, false, estd::internal::Range<(bits > 64 && bits <= 128)> > :
+    internal::type_from_bits_base<__uint128_t, bits>
+{ };
+#endif
+
 
 template <size_t bits>
 struct type_from_bits<bits, true, estd::internal::Range<(bits <= 8)> > :
@@ -73,6 +80,13 @@ template <size_t bits>
 struct type_from_bits<bits, true, estd::internal::Range<(bits > 32 && bits <= 64)> > :
     internal::type_from_bits_base<int64_t, bits>
 { };
+
+#if __SIZEOF_INT128__
+template <size_t bits>
+struct type_from_bits<bits, true, estd::internal::Range<(bits > 64 && bits <= 128)> > :
+    internal::type_from_bits_base<__int128_t, bits>
+{ };
+#endif
 
 
 }
