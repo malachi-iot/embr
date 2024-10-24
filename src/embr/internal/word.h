@@ -141,18 +141,29 @@ public:
     }
 };
 
-template <bool native>
+template <v2::word_options o>
+using is_native_endian = estd::bool_constant<
+    (!(o & v2::word_options::endian_mask) ||
+    ((o & v2::word_options::endian_mask) == v2::word_options::native))>;
+
+
+// FIX: This guy is starting to head in too many directions at once
+template <v2::word_options o, class enabled = void>
 struct word_retriever;
 
-template <>
-struct word_retriever<true>
+template <v2::word_options o>
+struct word_retriever<o, estd::enable_if_t<
+    !(o & v2::word_options::packed) &&
+    is_native_endian<o>::value>>
 {
     template <class Numeric>
     static constexpr Numeric get(const Numeric& v) { return v; }
 };
 
-template <>
-struct word_retriever<false>
+template <v2::word_options o>
+struct word_retriever<o, estd::enable_if_t<
+    o & v2::word_options::packed &&
+    is_native_endian<o>::value == true>>
 {
     template <class Numeric>
     static constexpr Numeric get(const Numeric& v)
@@ -180,9 +191,7 @@ struct word_v2_base<bits, o,
     using base_type = type_from_bits<bits, o & v2::word_options::is_signed>;
     using typename base_type::type;
 
-    static constexpr bool native = o & v2::word_options::native;
-
-    using retriever = word_retriever<native>;
+    using retriever = word_retriever<o>;
 
     union
     {
@@ -213,9 +222,7 @@ struct word_v2_base<bits, o,
     using base_type = type_from_bits<bits, o & v2::word_options::is_signed>;
     using typename base_type::type;
 
-    static constexpr bool native = o & v2::word_options::native;
-
-    using retriever = word_retriever<native>;
+    using retriever = word_retriever<o>;
 
     uint8_t raw_[base_type::size];
 

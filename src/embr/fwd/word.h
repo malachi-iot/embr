@@ -68,6 +68,7 @@ enum class word_options
 #else
     native = big_endian,
 #endif
+    endian_mask = big_endian | little_endian,
 
     masking = init_masking | storage_masking
 };
