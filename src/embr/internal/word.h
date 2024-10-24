@@ -188,12 +188,13 @@ struct word_retriever<o, estd::enable_if_t<
 };
 
 
-template <class T, size_t size, bool native>
+template <class T, size_t size, estd::endian target,
+    estd::endian platform = estd::endian::native>
 struct packer;
 
 // NOTE: This flavor truncates on unpack
 template <>
-struct packer<uint16_t, 3, true>
+struct packer<uint16_t, 3, estd::endian::little, estd::endian::little>
 {
     static void pack(uint16_t in, uint8_t* out)
     {
@@ -213,7 +214,7 @@ struct packer<uint16_t, 3, true>
 
 // NOTE: This flavor truncates on pack
 template <>
-struct packer<uint32_t, 3, true>
+struct packer<uint32_t, 3, estd::endian::little, estd::endian::little>
 {
     static uint8_t* pack(uint32_t in, uint8_t* out)
     {
@@ -231,13 +232,13 @@ struct packer<uint32_t, 3, true>
 
 // NOTE: This flavor truncates on unpack
 template <>
-struct packer<uint32_t, 6, true>
+struct packer<uint32_t, 6, estd::endian::little, estd::endian::little>
 {
     static uint8_t* pack(uint32_t in, uint8_t* out)
     {
-        out[0] = 0;
-        out[1] = 0;
         *((uint32_t*) out) = in;
+        out[4] = 0;
+        out[5] = 0;
         /*
         out[2] = in >> 24;
         out[3] = in >> 16;
@@ -256,7 +257,7 @@ struct packer<uint32_t, 6, true>
 
 // NOTE: This flavor truncates on on pack
 template <>
-struct packer<uint64_t, 6, true>
+struct packer<uint64_t, 6, estd::endian::little, estd::endian::little>
 {
     static uint8_t* pack(uint64_t in, uint8_t* out)
     {
@@ -272,9 +273,19 @@ struct packer<uint64_t, 6, true>
         return out;
     }
 
-    static constexpr uint64_t unpack(const uint8_t* in)
+    static uint64_t unpack(const uint8_t* in)
     {
-        return uint64_t(in[0]) << 40 | uint64_t(in[1]) << 32 | in[2] << 24 | in[3] << 16 | in[4] << 8 | in[5];
+        uint64_t out;
+
+        estd::copy_n(in, 6, (uint8_t*)&out);
+        return out;
+    }
+
+    static constexpr uint64_t unpack_constexpr(const uint8_t* in)
+    {
+        // Could do this with copy_n in theory, but that would require some fancy casting
+        // and trickier to make constexpr
+        return uint64_t(in[5]) << 40 | uint64_t(in[4]) << 32 | in[3] << 24 | in[2] << 16 | in[1] << 8 | in[0];
     }
 };
 
@@ -350,7 +361,7 @@ struct word_v2_base<bits, o,
 
     static constexpr estd::endian endian = estd::endian::native;
 
-    using pack = packer<type, base_type::size, true>;
+    using pack = packer<type, base_type::size, endian>;
 
     uint8_t raw_[base_type::size];
 

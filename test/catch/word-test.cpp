@@ -154,7 +154,7 @@ TEST_CASE("word type test", "[word]")
             // Doesn't work - getting too tired to reasonably continue,
             // word_retriever is starting to mutate into the unknown...
             REQUIRE(v == v2);
-            //REQUIRE(v3 == v2);
+            REQUIRE(v3 == v2);
         }
     }
 }
