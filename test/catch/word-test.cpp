@@ -141,21 +141,27 @@ TEST_CASE("word type test", "[word]")
         }
         SECTION("storage")
         {
-            v2::word<21> v(5);
-            v2::word<21, v2::word_options::packed> v2(5);
-            v2::word<48, v2::word_options::packed> v3(5);
-            //v2::word<65, v2::word_options::packed> v4(5);
+            SECTION("native")
+            {
+                v2::word<21> v(5);
+                v2::word<21, v2::word_options::packed> v2(5);
+                v2::word<48, v2::word_options::packed> v3(5);
+                v2::word<65, v2::word_options::packed> v4(5);
 
-            uint64_t _v3 = v3;
+                uint64_t _v3 = v3;
+                uint32_t _v4 = v4;
 
-            REQUIRE(sizeof(v) == 4);
-            REQUIRE(sizeof(v2) == 3);
-            REQUIRE(sizeof(v3) == 6);
+                REQUIRE(sizeof(v) == 4);
+                REQUIRE(sizeof(v2) == 3);
+                REQUIRE(sizeof(v3) == 6);
+                REQUIRE(sizeof(v4) == 9);
 
-            // Doesn't work - getting too tired to reasonably continue,
-            // word_retriever is starting to mutate into the unknown...
-            REQUIRE(v == v2);
-            REQUIRE(v3 == v2);
+                // Doesn't work - getting too tired to reasonably continue,
+                // word_retriever is starting to mutate into the unknown...
+                REQUIRE(v == v2);
+                REQUIRE(v3 == v2);
+                REQUIRE(v4 == v);
+            }
         }
     }
 }

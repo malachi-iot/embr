@@ -231,32 +231,43 @@ struct packer<uint32_t, 3, estd::endian::little, estd::endian::little>
     }
 };
 
-
-// NOTE: This flavor truncates on unpack
-template <>
-struct packer<uint32_t, 6, estd::endian::little, estd::endian::little>
+template <typename Integer, size_t N>
+struct packer<Integer, N, estd::endian::big, estd::endian::little>
 {
-    static uint8_t* pack(uint32_t in, uint8_t* out)
+    using value_type = Integer;
+    static constexpr size_t smallest_N = estd::min(N, sizeof(value_type));
+    static constexpr size_t largest_N = estd::max(N, sizeof(value_type));
+
+    static uint8_t* pack(value_type in, uint8_t* out)
     {
-        *((uint32_t*) out) = in;
-        out[4] = 0;
-        out[5] = 0;
-        /*
-        out[2] = in >> 24;
-        out[3] = in >> 16;
-        out[4] = in >> 8;
-        out[5] = in;    */
+        auto in_ptr = (uint8_t*)&in;
+        // in is little endian, and we are a little endian machine
+        // out is big endian
+        std::reverse_copy(in_ptr, in_ptr + smallest_N, out);
+    }
+
+    static value_type unpack(const uint8_t* in)
+    {
+        // in is big endian
+        // out is little endian, and we are a little endian machine
+
+        value_type out;
+
+        if(N < sizeof(value_type))
+            out = 0;
+
+        if(N > sizeof(value_type))
+        {
+            std::reverse_copy(in + (N - sizeof(value_type)), in + N, (uint8_t*)&out);
+        }
+        else
+        {
+            std::reverse_copy(in, in + N, (uint8_t*)&out);
+        }
+
         return out;
     }
-
-    static constexpr uint32_t unpack(const uint8_t* in)
-    {
-        return * (const uint32_t*) in;
-        //return * (const uint32_t*) in + 2;
-        //return in[2] << 24 | in[3] << 16 | in[4] << 8 | in[5];
-    }
 };
-
 
 template <class Integer, size_t N>
 struct packer<Integer, N, estd::endian::big, estd::endian::big>
@@ -279,10 +290,10 @@ struct packer<Integer, N, estd::endian::big, estd::endian::big>
 };
 
 // NOTE: This flavor truncates on on pack
-template <size_t N>
-struct packer<uint64_t, N, estd::endian::little, estd::endian::little>
+template <typename Integer, size_t N>
+struct packer<Integer, N, estd::endian::little, estd::endian::little>
 {
-    using value_type = uint64_t;
+    using value_type = Integer;
     static constexpr size_t smallest_N = estd::min(N, sizeof(value_type));
     static constexpr size_t largest_N = estd::max(N, sizeof(value_type));
 
@@ -409,6 +420,11 @@ struct word_v2_base<bits, o,
     constexpr operator type() const
     {
         return pack::unpack(raw_);
+    }
+
+    constexpr bool operator==(const word_v2_base& compare_to)
+    {
+        return estd::equal(raw_, raw_ + base_type::size, compare_to.raw_);
     }
 };
 

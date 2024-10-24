@@ -88,5 +88,10 @@ struct type_from_bits<bits, true, estd::internal::Range<(bits > 64 && bits <= 12
 { };
 #endif
 
+template <size_t bits, bool is_signed>
+struct type_from_bits<bits, is_signed, estd::internal::Range<(bits > 128)> > :
+    internal::type_from_bits_base<estd::monostate, bits>
+{ };
+
 
 }
