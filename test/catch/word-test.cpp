@@ -4,6 +4,8 @@
 #include <embr/bits/word.hpp>
 #include <estd/chrono.h>
 
+#include <embr/internal/word/v2/word.h>
+
 using namespace embr;
 
 TEST_CASE("word type test", "[word]")
