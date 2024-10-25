@@ -19,6 +19,9 @@ using is_native_endian = estd::bool_constant<
     (!(o & v2::word_options::endian_mask) ||
         ((o & v2::word_options::endian_mask) == v2::word_options::native))>;
 
+template <v2::word_options o1, v2::word_options o2>
+using is_matching_endian = estd::bool_constant<map_to_endian<o1>::value == map_to_endian<o2>::value>;
+
 
 // FIX: This guy is starting to head in too many directions at once
 template <v2::word_options o, class enabled = void>
@@ -57,7 +60,7 @@ struct word_retriever<o,
 
 // Helper function to access the nth element of an array at compile time.
 template <size_t N, typename T, size_t Size>
-constexpr T get_element(const T (&arr)[Size])
+constexpr const T& get_element(const T (&arr)[Size])
 {
     static_assert(N < Size, "Index out of bounds");
     return arr[N];
@@ -75,6 +78,8 @@ struct word_v2_base<bits, o,
     type_from_bits<bits, o & v2::word_options::is_signed>
 {
     using base_type = type_from_bits<bits, o & v2::word_options::is_signed>;
+    using this_type = word_v2_base;
+
     using typename base_type::type;
 
     static constexpr estd::endian endian = estd::endian::native;
@@ -86,7 +91,27 @@ struct word_v2_base<bits, o,
     {
     }
 
-    constexpr operator type() const { return v_; }
+    constexpr type value() const { return v_; }
+
+    // NOTE: Somehow bool operator==() doesn't get picked up here.  Just as well,
+    // I prefer external == anyway.  Perhaps that's the c++ language expectation?
+    template <size_t bits2, v2::word_options o2, class Enabled = void>
+    constexpr bool equals(const word_v2_base<bits2, o2>& compare_to) const
+    {
+        return v_ == compare_to.value();
+    }
+
+    this_type& operator++()
+    {
+        ++v_;
+        return *this;
+    }
+
+    this_type& operator+=(const type& v)
+    {
+        v_ += v;
+        return *this;
+    }
 };
 
 
@@ -113,14 +138,17 @@ struct word_v2_base<bits, o,
     {
     }
 
-    constexpr operator type() const
+    constexpr type value() const { return estd::byteswap(v_); }
+
+    template <size_t bits2, v2::word_options o2>
+    constexpr bool equals(const word_v2_base<bits2, o2>& compare_to) const
     {
-        return estd::byteswap(v_);
+        return value() == compare_to.value();
     }
 
     constexpr bool operator==(const word_v2_base& compare_to) const
     {
-        return v_ == compare_to.v;
+        return v_ == compare_to.v_;
     }
 };
 
@@ -188,7 +216,7 @@ public:
 #endif
 
 
-    constexpr operator type() const
+    constexpr type value() const
     {
         return pack::unpack(raw_);
     }
@@ -196,6 +224,12 @@ public:
     constexpr bool operator==(const word_v2_base& compare_to) const
     {
         return estd::equal(raw_, raw_ + base_type::size, compare_to.raw_);
+    }
+
+    template <size_t bits2, v2::word_options o2>
+    constexpr bool equals(const word_v2_base<bits2, o2>& compare_to) const
+    {
+        return value() == compare_to.value();
     }
 };
 
@@ -228,6 +262,13 @@ public:
     constexpr word(const type& copy_from) : base_type(copy_from)
     {
     }
+
+    // DEBT: Make this word_option-able and default it to off
+    /*
+    constexpr operator type() const
+    {
+        return base_type::value();
+    }   */
 };
 
 }}

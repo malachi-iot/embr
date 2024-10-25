@@ -5,6 +5,7 @@
 #include <estd/chrono.h>
 
 #include <embr/internal/word/v2/word.h>
+#include <embr/internal/word/v2/operators.h>
 
 using namespace embr;
 
@@ -151,8 +152,8 @@ TEST_CASE("word type test", "[word]")
                 v2::word<65, v2::word_options::packed> v4(5);
                 constexpr static v2::word<7> c1{5};
 
-                uint64_t _v3 = v3;
-                uint32_t _v4 = v4;
+                uint64_t _v3 = v3.value();
+                uint32_t _v4 = v4.value();
 
                 REQUIRE(sizeof(v) == 4);
                 REQUIRE(sizeof(v2) == 3);
@@ -198,13 +199,11 @@ TEST_CASE("word type test", "[word]")
                 static constexpr internal::word_v2_base<24,
                     v2::word_options::packed | v2::word_options::big_endian> c1({ 0, 1, 2 });
 
-                // DEBT: Odd, can't do c1 comparison directly
-                unsigned v1 = c1;
-
-                // Somehow in this case we get ambiguous type
+                // FIX: This one is unhappy
+                //unsigned v1 = c1.value();
                 //bool b1 = v1 == c1;
 
-                REQUIRE(v1 == 0x102);
+                REQUIRE(c1 == 0x102);
             }
         }
     }
