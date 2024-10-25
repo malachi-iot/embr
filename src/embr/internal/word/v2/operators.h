@@ -2,8 +2,10 @@
 
 namespace embr { namespace v2 {
 
-template <size_t bits, word_options o, typename Int>
-constexpr bool operator ==(const word<bits, o>& l, Int r)
+template <size_t bits, word_options o>
+constexpr bool operator ==(
+    const word<bits, o>& l,
+    const typename word<bits, o>::type& r)
 {
     return l.value() == r;
 }
