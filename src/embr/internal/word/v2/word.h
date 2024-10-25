@@ -55,7 +55,13 @@ struct word_retriever<o,
 };
 
 
-
+// Helper function to access the nth element of an array at compile time.
+template <size_t N, typename T, size_t Size>
+constexpr T get_element(const T (&arr)[Size])
+{
+    static_assert(N < Size, "Index out of bounds");
+    return arr[N];
+}
 
 
 // native endian flavor using regular storage
@@ -130,6 +136,7 @@ struct word_v2_base<bits, o,
 {
     using base_type = type_from_bits<bits, o & v2::word_options::is_signed>;
     using typename base_type::type;
+    using base_type::size;
 
     static constexpr estd::endian endian = map_to_endian<o>::value;
 
@@ -151,6 +158,26 @@ struct word_v2_base<bits, o,
 #endif  */
     //template <typename... Args>
     //constexpr word_v2_base(float, Args&&...args) : raw_{ std::forward<Args>(args)... } {}
+
+private:
+    template <size_t... I>
+    explicit constexpr word_v2_base(
+        const uint8_t (&raw)[size],
+        estd::index_sequence<I...>) :
+        raw_{get_element<I>(raw)...}
+    {
+
+    }
+
+public:
+    constexpr word_v2_base(const uint8_t (&raw)[size]) :
+        word_v2_base(raw, estd::make_index_sequence<size>{})
+    {
+
+    }
+
+    // This actually works, but I am annoyed by the double-init of raw
+#if UNUSED
     constexpr word_v2_base(const uint8_t (&raw)[base_type::size])
         // DEBT: gcc 12.2 needs this initializer-list init, others didn't
         : raw_{}
@@ -158,6 +185,7 @@ struct word_v2_base<bits, o,
         // surprisingly this is c++11 constexpr-friendly
         for(int i = 0; i < base_type::size; i++) raw_[i] = raw[i];
     }
+#endif
 
 
     constexpr operator type() const
