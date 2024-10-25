@@ -162,6 +162,15 @@ TEST_CASE("word type test", "[word]")
                 REQUIRE(v3 == v2);
                 REQUIRE(v4 == v);
             }
+            SECTION("big endian")
+            {
+                v2::word<21, v2::word_options::big_endian> v(5);
+                //v2::word<21, v2::word_options::big_endian | v2::word_options::packed> v2(5);
+
+#if __LITTLE_ENDIAN__
+                REQUIRE(v.v_ == 0x05000000);
+#endif
+            }
         }
     }
 }

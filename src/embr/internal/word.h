@@ -231,6 +231,44 @@ struct packer<uint32_t, 3, estd::endian::little, estd::endian::little>
     }
 };
 
+
+// Just incase somehow hardcoding 0 speeds things up.  probably regular fill_n just fine
+template <class ForwardIt, typename Size>
+inline ForwardIt fill_zero_n(ForwardIt first, const Size& count)
+{
+    for(unsigned i = count; i != 0; i--) *first++ = 0;
+
+    return first;
+}
+
+
+template <typename Integer, size_t N>
+struct packer<Integer, N, estd::endian::little, estd::endian::big>
+{
+    using value_type = Integer;
+    static constexpr size_t smallest_N = estd::min(N, sizeof(value_type));
+    static constexpr size_t largest_N = estd::max(N, sizeof(value_type));
+
+    // Only valid when N > sizeof(value_type)
+    static constexpr size_t offset = N - sizeof(value_type);
+
+    // in is big endian, and we are a big endian machine
+    // out is little endian
+    static uint8_t* pack(value_type in, uint8_t* out)
+    {
+        // If N is higher precision than Integer, pad end of LE raw data
+        if(N > sizeof(value_type))
+        {
+            fill_zero_n(out + sizeof(value_type), offset);
+        }
+
+        auto in_ptr = (uint8_t*)&in;
+        std::reverse_copy(in_ptr, in_ptr + smallest_N, out);
+        return out;
+    }
+};
+
+
 template <typename Integer, size_t N>
 struct packer<Integer, N, estd::endian::big, estd::endian::little>
 {
@@ -238,19 +276,25 @@ struct packer<Integer, N, estd::endian::big, estd::endian::little>
     static constexpr size_t smallest_N = estd::min(N, sizeof(value_type));
     static constexpr size_t largest_N = estd::max(N, sizeof(value_type));
 
+    // Only valid when N > sizeof(value_type)
+    static constexpr size_t offset = N - sizeof(value_type);
+
+    // in is little endian, and we are a little endian machine
+    // out is big endian
     static uint8_t* pack(value_type in, uint8_t* out)
     {
+        // If N is higher precision than Integer, pad beginning of BE raw data
+        if(N > sizeof(value_type))  out = fill_zero_n(out, offset);
+
         auto in_ptr = (uint8_t*)&in;
-        // in is little endian, and we are a little endian machine
-        // out is big endian
         std::reverse_copy(in_ptr, in_ptr + smallest_N, out);
+        return out;
     }
 
+    // in is big endian
+    // out is little endian, and we are a little endian machine
     static value_type unpack(const uint8_t* in)
     {
-        // in is big endian
-        // out is little endian, and we are a little endian machine
-
         value_type out;
 
         if(N < sizeof(value_type))
@@ -258,10 +302,12 @@ struct packer<Integer, N, estd::endian::big, estd::endian::little>
 
         if(N > sizeof(value_type))
         {
-            std::reverse_copy(in + (N - sizeof(value_type)), in + N, (uint8_t*)&out);
+            // If Integer is less precise than N
+            std::reverse_copy(in + offset, in + N, (uint8_t*)&out);
         }
         else
         {
+            // If Integer is more precise than N, or as precise as N
             std::reverse_copy(in, in + N, (uint8_t*)&out);
         }
 
@@ -342,8 +388,8 @@ template <size_t bits, v2::word_options o>
 struct word_v2_base<bits, o,
     estd::enable_if_t<
         is_native_endian<o>::value &&
-        !(o & v2::word_options::packed) ||
-        type_from_bits<bits, false>::matched>> :
+        (!(o & v2::word_options::packed) ||
+        type_from_bits<bits, false>::matched)>> :
     type_from_bits<bits, o & v2::word_options::is_signed>
 {
     using base_type = type_from_bits<bits, o & v2::word_options::is_signed>;
@@ -367,8 +413,8 @@ template <size_t bits, v2::word_options o>
 struct word_v2_base<bits, o,
     estd::enable_if_t<
         is_native_endian<o>::value == false &&
-            !(o & v2::word_options::packed) ||
-        type_from_bits<bits, false>::matched>> :
+            (!(o & v2::word_options::packed) ||
+        type_from_bits<bits, false>::matched)>> :
     type_from_bits<bits, o & v2::word_options::is_signed>
 {
     using base_type = type_from_bits<bits, o & v2::word_options::is_signed>;
