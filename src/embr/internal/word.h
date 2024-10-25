@@ -193,6 +193,7 @@ template <class T, size_t size, estd::endian target,
     estd::endian platform = estd::endian::native>
 struct packer;
 
+#if UNUSED
 // NOTE: This flavor truncates on unpack
 template <>
 struct packer<uint16_t, 3, estd::endian::little, estd::endian::little>
@@ -230,6 +231,7 @@ struct packer<uint32_t, 3, estd::endian::little, estd::endian::little>
         return in[0] << 16 | in[1] << 8 | in[2];
     }
 };
+#endif
 
 
 // Just incase somehow hardcoding 0 speeds things up.  probably regular fill_n just fine
@@ -435,14 +437,19 @@ struct word_v2_base<bits, o,
     {
         return estd::byteswap(v_);
     }
+
+    constexpr bool operator==(const word_v2_base& compare_to) const
+    {
+        return v_ == compare_to.v;
+    }
 };
 
 
-// native flavor using raw byte storage
+// flavor using raw byte storage
 template <size_t bits, v2::word_options o>
 struct word_v2_base<bits, o,
     estd::enable_if_t<
-        is_native_endian<o>::value &&
+        //is_native_endian<o>::value &&
         o & v2::word_options::packed &&
         type_from_bits<bits, false>::matched == false>> :
         //true>> :
@@ -451,7 +458,7 @@ struct word_v2_base<bits, o,
     using base_type = type_from_bits<bits, o & v2::word_options::is_signed>;
     using typename base_type::type;
 
-    static constexpr estd::endian endian = estd::endian::native;
+    static constexpr estd::endian endian = map_to_endian<o>::value;
 
     using pack = packer<type, base_type::size, endian>;
 
@@ -468,12 +475,24 @@ struct word_v2_base<bits, o,
         return pack::unpack(raw_);
     }
 
-    constexpr bool operator==(const word_v2_base& compare_to)
+    constexpr bool operator==(const word_v2_base& compare_to) const
     {
         return estd::equal(raw_, raw_ + base_type::size, compare_to.raw_);
     }
 };
 
+/*
+// non-native flavor using raw byte storage
+template <size_t bits, v2::word_options o>
+struct word_v2_base<bits, o,
+    estd::enable_if_t<
+        is_native_endian<o>::value == false &&
+        o & v2::word_options::packed &&
+        type_from_bits<bits, false>::matched == false>> :
+    type_from_bits<bits, o & v2::word_options::is_signed>
+{
+};
+*/
 
 }}  // embr::internal
 
