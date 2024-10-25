@@ -140,8 +140,19 @@ struct word_v2_base<bits, o,
 
     constexpr type value() const { return estd::byteswap(v_); }
 
-    template <size_t bits2, v2::word_options o2>
+    /* almost there, just conflicts with other equals
+    template <size_t bits2, v2::word_options o2,
+        class Enabled = estd::enable_if_t<
+            is_matching_endian<o, o2>::value &&
+            estd::is_same<typename word_v2_base<bits2, o2>::type, type>::value
+        >>
     constexpr bool equals(const word_v2_base<bits2, o2>& compare_to) const
+    {
+        return v_ == compare_to.v_;
+    }   */
+
+    template <size_t bits2, v2::word_options o2>
+    constexpr bool equals(const word_v2_base<bits2, o2>& compare_to, bool = {}) const
     {
         return value() == compare_to.value();
     }
