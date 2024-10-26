@@ -150,12 +150,13 @@ TEST_CASE("word type test", "[word]")
 
                 SECTION("reverse sequence")
                 {
-                    //using seq = embr::internal::make_reverse_integer_sequence<size_t, 4>;
-                    //using seq = estd::make_integer_sequence<size_t, 4>;
+                    using seq = embr::internal::make_reverse_integer_sequence<size_t, 4>;
 
-                    //REQUIRE(seq::get<0>::value == 0);
-                    //REQUIRE(seq::get<1>::value == 1);
-                    //REQUIRE(seq::get<2>::value == 1);
+                    REQUIRE(seq::size() == 4);
+                    REQUIRE(seq::get<0>::value == 3);
+                    REQUIRE(seq::get<1>::value == 2);
+                    REQUIRE(seq::get<2>::value == 1);
+                    REQUIRE(seq::get<3>::value == 0);
                 }
                 SECTION("array")
                 {
@@ -165,6 +166,11 @@ TEST_CASE("word type test", "[word]")
                 {
                     uint8_t out[4];
                     embr::internal::noloop_reverse_copy<4>(v, out);
+
+                    REQUIRE(out[0] == 4);
+                    REQUIRE(out[1] == 3);
+                    REQUIRE(out[2] == 2);
+                    REQUIRE(out[3] == 1);
                 }
             }
             SECTION("native")

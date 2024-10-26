@@ -114,10 +114,13 @@ constexpr const void set_elements(const T* in, T* out)
 
 
 template<typename T, std::size_t NN, std::size_t N = NN, T... Is>
-struct make_reverse_integer_sequence : make_reverse_integer_sequence<T, N-1, NN-N, Is...> {};
+struct make_reverse_integer_sequence : make_reverse_integer_sequence<T, NN, N-1, NN-N, Is...> {};
 
 template<typename T, std::size_t NN, T... Is>
 struct make_reverse_integer_sequence<T, NN, 0, Is...> : estd::integer_sequence<T, Is...> {};
+
+template<std::size_t N>
+using make_reverse_index_sequence = make_reverse_integer_sequence<std::size_t, N>;
 
 
 template <class T, size_t ...I>
@@ -127,9 +130,9 @@ void noloop_reverse_copy_helper(const T* in, T* out, estd::index_sequence<I...>)
 }
 
 template <size_t N, class T>
-void noloop_reverse_copy(const T* in, T* out)
+constexpr T* noloop_reverse_copy(const T* in, T* out)
 {
-    //new (out) set_elements<N, T>{in, make_reverse_integer_sequence<size_t, N>{}};
+    return (T*) new (out) set_elements<N, T>{in, make_reverse_index_sequence<N>{}};
     //noloop_reverse_copy_helper(in, out, make_reverse_integer_sequence<size_t, N>{});
 }
 
@@ -138,7 +141,7 @@ void noloop_reverse_copy(const T* in, T* out)
 template <class ForwardIt, typename Size>
 constexpr ForwardIt fill_zero_n(ForwardIt first, Size count)
 {
-    for(count; count != 0; count--) *first++ = 0;
+    for(; count != 0; count--) *first++ = 0;
 
     return first;
 }
@@ -156,7 +159,7 @@ struct packer<Integer, N, estd::endian::little, estd::endian::big>
 
     // in is big endian, and we are a big endian machine
     // out is little endian
-    static uint8_t* pack(value_type in, uint8_t* out)
+    static uint8_t* pack(const value_type& in, uint8_t* out)
     {
         // If N is higher precision than Integer, pad end of LE raw data
         if(N > sizeof(value_type))
@@ -164,7 +167,7 @@ struct packer<Integer, N, estd::endian::little, estd::endian::big>
             fill_zero_n(out + sizeof(value_type), offset);
         }
 
-        auto in_ptr = (uint8_t*)&in;
+        auto in_ptr = (const uint8_t*)&in;
         // DEBT: Make an estd reverse_copy
         std::reverse_copy(in_ptr, in_ptr + smallest_N, out);
         return out;
