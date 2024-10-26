@@ -148,6 +148,15 @@ TEST_CASE("word type test", "[word]")
             {
                 uint8_t v[4] { 1, 2, 3, 4 };
 
+                SECTION("reverse sequence")
+                {
+                    //using seq = embr::internal::make_reverse_integer_sequence<size_t, 4>;
+                    //using seq = estd::make_integer_sequence<size_t, 4>;
+
+                    //REQUIRE(seq::get<0>::value == 0);
+                    //REQUIRE(seq::get<1>::value == 1);
+                    //REQUIRE(seq::get<2>::value == 1);
+                }
                 SECTION("array")
                 {
                     embr::internal::fill_zero_n(v, 4);

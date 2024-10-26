@@ -57,8 +57,8 @@ constexpr const T& get_element(const T (&arr)[Size])
     return arr[N];
 }
 
-template <size_t N, typename T, size_t Size>
-constexpr const T& get_element(const T* arr)
+template <size_t N, typename T>
+constexpr const T& get_element2(const T* arr)
 {
     return arr[N];
 }
@@ -69,24 +69,68 @@ constexpr const T& set_element(const T* in, T* out)
     return out[I] = in[I];
 }
 
+template <class T, size_t N>
+struct array_helper;
 
-template<typename T, std::size_t N, T... Is>
-struct make_reverse_integer_sequence : make_reverse_integer_sequence<T, N-1, N+1, Is...> {};
+template <class T, size_t N>
+struct array_helper
+{
+    using base_type = array_helper<T, N - 1>;
 
-template<typename T, T... Is>
-struct make_reverse_integer_sequence<T, 0, Is...> : estd::integer_sequence<T, Is...> {};
+    static constexpr T& copy(const T* in, T* out, T&&)
+    {
+        return base_type::copy(in + 1, out + 1, *out = *in);
+    }
+};
+
+template <class T>
+struct array_helper<T, 0>
+{
+    static constexpr T& copy(const T* in, T* out, T&&)
+    {
+        return *out = *in;
+    }
+};
+
+template <size_t N, class T>
+struct set_elements
+{
+    T out_[N];
+
+    template <size_t ...I>
+    constexpr set_elements(const T* in, estd::index_sequence<I...>) :
+        out_{get_element2<I>(in)...}   {}
+
+    constexpr set_elements(const T* in) :
+        set_elements(in, estd::make_index_sequence<N>{}) {}
+};
+
+/*
+template <size_t ...I, typename T>
+constexpr const void set_elements(const T* in, T* out)
+{
+    return out[I] = in[I];
+}*/
+
+
+template<typename T, std::size_t NN, std::size_t N = NN, T... Is>
+struct make_reverse_integer_sequence : make_reverse_integer_sequence<T, N-1, NN-N, Is...> {};
+
+template<typename T, std::size_t NN, T... Is>
+struct make_reverse_integer_sequence<T, NN, 0, Is...> : estd::integer_sequence<T, Is...> {};
 
 
 template <class T, size_t ...I>
 void noloop_reverse_copy_helper(const T* in, T* out, estd::index_sequence<I...>)
 {
-    set_element<I...>(in, out);
+    //set_element<I...>(in, out);
 }
 
 template <size_t N, class T>
 void noloop_reverse_copy(const T* in, T* out)
 {
-    //noloop_reverse_copy_helper(in, out, make_reverse_integer_sequence<N>{});
+    //new (out) set_elements<N, T>{in, make_reverse_integer_sequence<size_t, N>{}};
+    //noloop_reverse_copy_helper(in, out, make_reverse_integer_sequence<size_t, N>{});
 }
 
 
