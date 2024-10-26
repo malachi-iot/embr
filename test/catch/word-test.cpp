@@ -148,6 +148,13 @@ TEST_CASE("word type test", "[word]")
             {
                 uint8_t v[4] { 1, 2, 3, 4 };
 
+                SECTION("fancy array init")
+                {
+                    uint8_t out[4];
+                    new (out) embr::internal::set_elements<4, uint8_t>{v};
+
+                    REQUIRE(memcmp(out, v, 4) == 0);
+                }
                 SECTION("reverse sequence")
                 {
                     using seq = embr::internal::make_reverse_integer_sequence<size_t, 4>;

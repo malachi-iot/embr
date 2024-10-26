@@ -95,11 +95,11 @@ struct array_helper<T, 0>
 template <size_t N, class T>
 struct set_elements
 {
-    T out_[N];
+    T array[N];
 
     template <size_t ...I>
     constexpr set_elements(const T* in, estd::index_sequence<I...>) :
-        out_{get_element2<I>(in)...}   {}
+        array{in[I]...}   {}
 
     constexpr set_elements(const T* in) :
         set_elements(in, estd::make_index_sequence<N>{}) {}
@@ -132,7 +132,7 @@ void noloop_reverse_copy_helper(const T* in, T* out, estd::index_sequence<I...>)
 template <size_t N, class T>
 constexpr T* noloop_reverse_copy(const T* in, T* out)
 {
-    return (T*) new (out) set_elements<N, T>{in, make_reverse_index_sequence<N>{}};
+    return (new (out) set_elements<N, T>{in, make_reverse_index_sequence<N>{}})->array;
     //noloop_reverse_copy_helper(in, out, make_reverse_integer_sequence<size_t, N>{});
 }
 
@@ -169,7 +169,8 @@ struct packer<Integer, N, estd::endian::little, estd::endian::big>
 
         auto in_ptr = (const uint8_t*)&in;
         // DEBT: Make an estd reverse_copy
-        std::reverse_copy(in_ptr, in_ptr + smallest_N, out);
+        noloop_reverse_copy<smallest_N>(in_ptr, out);
+        //std::reverse_copy(in_ptr, in_ptr + smallest_N, out);
         return out;
     }
 };
@@ -193,7 +194,8 @@ struct packer<Integer, N, estd::endian::big, estd::endian::little>
         if(N > sizeof(value_type))  out = fill_zero_n(out, offset);
 
         auto in_ptr = (uint8_t*)&in;
-        std::reverse_copy(in_ptr, in_ptr + smallest_N, out);
+        noloop_reverse_copy<smallest_N>(in_ptr, out);
+        //std::reverse_copy(in_ptr, in_ptr + smallest_N, out);
     }
 
     // in is big endian
@@ -208,12 +210,14 @@ struct packer<Integer, N, estd::endian::big, estd::endian::little>
         if(N > sizeof(value_type))
         {
             // If Integer is less precise than N
-            std::reverse_copy(in + offset, in + N, (uint8_t*)&out);
+            noloop_reverse_copy<N - offset>(in + offset, (uint8_t*)&out);
+            //std::reverse_copy(in + offset, in + N, (uint8_t*)&out);
         }
         else
         {
             // If Integer is more precise than N, or as precise as N
-            std::reverse_copy(in, in + N, (uint8_t*)&out);
+            noloop_reverse_copy<N>(in, (uint8_t*)&out);
+            //std::reverse_copy(in, in + N, (uint8_t*)&out);
         }
 
         return out;
