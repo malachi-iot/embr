@@ -155,16 +155,6 @@ TEST_CASE("word type test", "[word]")
 
                     REQUIRE(memcmp(out, v, 4) == 0);
                 }
-                SECTION("reverse sequence")
-                {
-                    using seq = embr::internal::make_reverse_integer_sequence<size_t, 4>;
-
-                    REQUIRE(seq::size() == 4);
-                    REQUIRE(seq::get<0>::value == 3);
-                    REQUIRE(seq::get<1>::value == 2);
-                    REQUIRE(seq::get<2>::value == 1);
-                    REQUIRE(seq::get<3>::value == 0);
-                }
                 SECTION("array")
                 {
                     embr::internal::fill_zero_n(v, 4);

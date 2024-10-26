@@ -112,17 +112,6 @@ constexpr const void set_elements(const T* in, T* out)
     return out[I] = in[I];
 }*/
 
-
-template<typename T, std::size_t NN, std::size_t N = NN, T... Is>
-struct make_reverse_integer_sequence : make_reverse_integer_sequence<T, NN, N-1, NN-N, Is...> {};
-
-template<typename T, std::size_t NN, T... Is>
-struct make_reverse_integer_sequence<T, NN, 0, Is...> : estd::integer_sequence<T, Is...> {};
-
-template<std::size_t N>
-using make_reverse_index_sequence = make_reverse_integer_sequence<std::size_t, N>;
-
-
 template <class T, size_t ...I>
 void noloop_reverse_copy_helper(const T* in, T* out, estd::index_sequence<I...>)
 {
@@ -132,7 +121,7 @@ void noloop_reverse_copy_helper(const T* in, T* out, estd::index_sequence<I...>)
 template <size_t N, class T>
 constexpr T* noloop_reverse_copy(const T* in, T* out)
 {
-    return (new (out) set_elements<N, T>{in, make_reverse_index_sequence<N>{}})->array;
+    return (new (out) set_elements<N, T>{in, estd::make_reverse_index_sequence<N>{}})->array;
     //noloop_reverse_copy_helper(in, out, make_reverse_integer_sequence<size_t, N>{});
 }
 
@@ -184,7 +173,7 @@ struct packer<Integer, N, estd::endian::big, estd::endian::little>
     static constexpr size_t largest_N = estd::max(N, sizeof(value_type));
 
     // Only valid when N > sizeof(value_type)
-    static constexpr size_t offset = N - sizeof(value_type);
+    static constexpr size_t offset = N > sizeof(value_type) ? (N - sizeof(value_type)) : 0;
 
     // in is little endian, and we are a little endian machine
     // out is big endian
