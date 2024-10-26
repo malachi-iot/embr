@@ -144,6 +144,20 @@ TEST_CASE("word type test", "[word]")
         }
         SECTION("storage")
         {
+            SECTION("support")
+            {
+                uint8_t v[4] { 1, 2, 3, 4 };
+
+                SECTION("array")
+                {
+                    embr::internal::fill_zero_n(v, 4);
+                }
+                SECTION("noloop_reverse_copy")
+                {
+                    uint8_t out[4];
+                    embr::internal::noloop_reverse_copy<4>(v, out);
+                }
+            }
             SECTION("native")
             {
                 v2::word<21> v(5);

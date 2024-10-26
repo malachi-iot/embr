@@ -57,14 +57,44 @@ constexpr const T& get_element(const T (&arr)[Size])
     return arr[N];
 }
 
+template <size_t N, typename T, size_t Size>
+constexpr const T& get_element(const T* arr)
+{
+    return arr[N];
+}
 
+template <size_t I, typename T>
+constexpr const T& set_element(const T* in, T* out)
+{
+    return out[I] = in[I];
+}
+
+
+template<typename T, std::size_t N, T... Is>
+struct make_reverse_integer_sequence : make_reverse_integer_sequence<T, N-1, N+1, Is...> {};
+
+template<typename T, T... Is>
+struct make_reverse_integer_sequence<T, 0, Is...> : estd::integer_sequence<T, Is...> {};
+
+
+template <class T, size_t ...I>
+void noloop_reverse_copy_helper(const T* in, T* out, estd::index_sequence<I...>)
+{
+    set_element<I...>(in, out);
+}
+
+template <size_t N, class T>
+void noloop_reverse_copy(const T* in, T* out)
+{
+    //noloop_reverse_copy_helper(in, out, make_reverse_integer_sequence<N>{});
+}
 
 
 // Just incase somehow hardcoding 0 speeds things up.  probably regular fill_n just fine
 template <class ForwardIt, typename Size>
-inline ForwardIt fill_zero_n(ForwardIt first, const Size& count)
+constexpr ForwardIt fill_zero_n(ForwardIt first, Size count)
 {
-    for(unsigned i = count; i != 0; i--) *first++ = 0;
+    for(count; count != 0; count--) *first++ = 0;
 
     return first;
 }
@@ -110,14 +140,13 @@ struct packer<Integer, N, estd::endian::big, estd::endian::little>
 
     // in is little endian, and we are a little endian machine
     // out is big endian
-    static uint8_t* pack(value_type in, uint8_t* out)
+    static void pack(value_type in, uint8_t* out)
     {
         // If N is higher precision than Integer, pad beginning of BE raw data
         if(N > sizeof(value_type))  out = fill_zero_n(out, offset);
 
         auto in_ptr = (uint8_t*)&in;
         std::reverse_copy(in_ptr, in_ptr + smallest_N, out);
-        return out;
     }
 
     // in is big endian
