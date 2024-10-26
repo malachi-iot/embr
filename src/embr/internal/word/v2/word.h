@@ -2,6 +2,7 @@
 
 #include "../packer.h"
 
+#include "../../type_from_bits.h"
 #include "enum.h"
 #include "fwd.h"
 
@@ -56,15 +57,6 @@ struct word_retriever<o,
         *out = *(uint32_t*) v;
     }
 };
-
-
-// Helper function to access the nth element of an array at compile time.
-template <size_t N, typename T, size_t Size>
-constexpr const T& get_element(const T (&arr)[Size])
-{
-    static_assert(N < Size, "Index out of bounds");
-    return arr[N];
-}
 
 
 // native endian flavor using regular storage

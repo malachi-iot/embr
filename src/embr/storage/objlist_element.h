@@ -183,7 +183,11 @@ public:
     template <class T, class ...Args>
     T* emplace(Args&&...args)
     {
-        if constexpr(never_extra) return emplace_without_extra<T>(std::forward<Args>(args)...);
+        if
+#if __cpp_if_constexpr
+            constexpr
+#endif
+            (never_extra) return emplace_without_extra<T>(std::forward<Args>(args)...);
 
         extra_ = true;
         auto data = (objlist_element_extra*) data_;

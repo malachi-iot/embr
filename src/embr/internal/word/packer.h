@@ -49,6 +49,16 @@ struct packer<uint32_t, 3, estd::endian::little, estd::endian::little>
 };
 #endif
 
+// Helper function to access the nth element of an array at compile time.
+template <size_t N, typename T, size_t Size>
+constexpr const T& get_element(const T (&arr)[Size])
+{
+    static_assert(N < Size, "Index out of bounds");
+    return arr[N];
+}
+
+
+
 
 // Just incase somehow hardcoding 0 speeds things up.  probably regular fill_n just fine
 template <class ForwardIt, typename Size>
@@ -81,6 +91,7 @@ struct packer<Integer, N, estd::endian::little, estd::endian::big>
         }
 
         auto in_ptr = (uint8_t*)&in;
+        // DEBT: Make an estd reverse_copy
         std::reverse_copy(in_ptr, in_ptr + smallest_N, out);
         return out;
     }
