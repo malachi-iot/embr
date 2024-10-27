@@ -299,14 +299,16 @@ TEST_CASE("word type test", "[word]")
                 static_assert(internal::is_castable<o, o3>::value, "implicit shouldn't disqualify castable");
                 static_assert(internal::is_castable<o, v2::word_options::implicit>::value, "implicit shouldn't disqualify castable");
 
+                static_assert(internal::is_castable<o, v2::word_options::packed>::value == false,
+                    "both or neither must be packed");
+
                 // Mysterious that this doesn't work
-                /*
                 static_assert(
                     internal::can_cast<
                         v2::word<21>,
                         v2::word<21, v2::word_options::implicit>>::value,
                     "words should be castable even when one is implicit and one isn't"
-                    );  */
+                    );
             }
         }
         SECTION("units")

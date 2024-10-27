@@ -35,7 +35,7 @@ namespace embr { namespace v2 {
 ///
 /// @tparam padding - first 16 bits = left/msb padding, second 16 bits = right/lsb padding - EXPERIMENTAL, DORMANT
 ///
-template <size_t bits, word_options o = word_options::native, uint16_t padding = 0>
+template <size_t bits, word_options o = word_options::none, uint16_t padding = 0>
 #if FEATURE_EMBR_WORD_ALIAS
 using word = internal::word_v2_layer<bits, o>;
 #else

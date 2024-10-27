@@ -80,6 +80,8 @@ constexpr bool operator==(const flags<Enum>& lhs, const flags<Enum>& rhs)
 }}
 
 
+// DEBT: All of these really ought to use int_type
+
 template <class Enum>
 constexpr embr::experimental::flags<Enum> or_helper(const Enum& lhs, const Enum& rhs)
 {
@@ -93,6 +95,12 @@ constexpr embr::experimental::flags<Enum> and_helper(const Enum& lhs, const Enum
 }
 
 template <class Enum>
+constexpr embr::experimental::flags<Enum> xor_helper(const Enum& lhs, const Enum& rhs)
+{
+    return embr::experimental::flags<Enum>(Enum(int(lhs) ^ int(rhs)));
+}
+
+template <class Enum>
 constexpr embr::experimental::flags<Enum> not_helper(const Enum& v)
 {
     return embr::experimental::flags<Enum>(Enum(~int(v)));
@@ -102,6 +110,8 @@ constexpr embr::experimental::flags<Enum> not_helper(const Enum& v)
 #define EMBR_FLAGS(Enum)    \
 constexpr embr::experimental::flags<Enum> operator~(const Enum& v)    \
 { return not_helper(v); }     \
+constexpr embr::experimental::flags<Enum> operator^(const Enum& lhs, const Enum& rhs)    \
+{ return xor_helper(lhs, rhs); }     \
 constexpr embr::experimental::flags<Enum> operator|(const Enum& lhs, const Enum& rhs)    \
 { return or_helper(lhs, rhs); }     \
 constexpr embr::experimental::flags<Enum> operator&(const Enum& lhs, const Enum& rhs)    \

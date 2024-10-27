@@ -27,6 +27,9 @@ using is_native_endian = estd::bool_constant<
 template <v2::word_options o1, v2::word_options o2>
 using is_matching_endian = estd::bool_constant<map_to_endian<o1>::value == map_to_endian<o2>::value>;
 
+// Interesting, but XOR is probably way better
+template <v2::word_options o1, v2::word_options o2, v2::word_options matching>
+using is_matching_options = estd::bool_constant<(o1 & matching) == (o2 & matching)>;
 
 // FIX: This guy is starting to head in too many directions at once
 template <v2::word_options o, class enabled = void>
@@ -309,10 +312,14 @@ struct word_v2_layer<bits, o, estd::enable_if_t<!(o & v2::word_options::implicit
 template <v2::word_options o, v2::word_options o2, class Enabled = void>
 struct is_castable : estd::bool_constant<false> {};
 
+// Presumed that bits match already
 template <v2::word_options o, v2::word_options o2>
 struct is_castable<
     o, o2,
-    estd::enable_if_t<(o & ~v2::word_options::implicit) == (o2 & ~v2::word_options::implicit)>> :
+    estd::enable_if_t<
+        is_matching_endian<o, o2>::value &&
+        // DEBT: With matching endianness and resolved type, a packed and non packed could in fact be castable
+        !((o ^ o2) & v2::word_options::packed)>> :
     estd::bool_constant<true>
 {};
 
