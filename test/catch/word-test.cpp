@@ -8,6 +8,7 @@
 #include <embr/word.h>
 #include <embr/bits/word.hpp>
 
+#include <embr/internal/flags.h>
 #include <embr/internal/word/v2/word.h>
 #include <embr/internal/word/v2/operators.h>
 
@@ -153,6 +154,19 @@ TEST_CASE("word type test", "[word]")
 
                 REQUIRE((v & v2::word_options::native) == false);
                 REQUIRE((v & v2::word_options::implicit) == true);
+            }
+            SECTION("compare")
+            {
+                auto v1 = v2::word_options::none | v2::word_options::implicit;
+                auto v2 = v2::word_options::none | v2::word_options::implicit;
+
+                bool b = v1 == v2;
+
+                REQUIRE(b);
+
+                auto v3 = v2::word_options::implicit & ~v2::word_options::implicit;
+
+                REQUIRE(v3 == v2::word_options::none);
             }
         }
         SECTION("alias up")

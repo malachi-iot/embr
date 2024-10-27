@@ -63,6 +63,19 @@ constexpr flags<Enum> operator|(const flags<Enum>& lhs, const Enum& rhs)
     return flags<Enum>(Enum(lhs.value() | rhs));
 }
 
+template <class Enum>
+constexpr bool operator==(const flags<Enum>& lhs, const Enum& rhs)
+{
+    return lhs.value() == rhs;
+}
+
+
+template <class Enum>
+constexpr bool operator==(const flags<Enum>& lhs, const flags<Enum>& rhs)
+{
+    return lhs.value() == rhs.value();
+}
+
 
 }}
 
