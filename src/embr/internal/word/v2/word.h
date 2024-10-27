@@ -85,6 +85,14 @@ struct word_v2_base<bits, o,
     {
     }
 
+    template <size_t bits2, v2::word_options o2>
+    constexpr word_v2_base(const word_v2_base<bits2, o2>& copy_from) :
+        // value() always retrieves native endian, and v_ in this class is always native endian
+        v_{copy_from.value()}
+    {
+
+    }
+
     constexpr type value() const { return v_; }
 
     // NOTE: Somehow bool operator==() doesn't get picked up here.  Just as well,
@@ -314,7 +322,7 @@ public:
     }
 
     template <size_t bits2, word_options o2>
-    constexpr word(const internal::word_v2_base<bits2, o>& copy_from) :
+    constexpr word(const internal::word_v2_base<bits2, o2>& copy_from) :
         base_type(copy_from)
     {
 
