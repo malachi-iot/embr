@@ -6,7 +6,7 @@
 #include "../internal/features.h"
 
 //#include "flags.h"
-#include "../internal/flags.h"
+#include "../flags.h"
 #include "narrow_cast.h"
 #include "type_from_bits.h"
 

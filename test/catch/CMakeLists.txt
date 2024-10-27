@@ -43,6 +43,7 @@ set(SOURCE_FILES
     ble-test.cpp
     debounce-test.cpp
     delegate-queue-test.cpp
+    flags-test.cpp
     json-test.cpp
     observer-test.cpp
     experimental-test.cpp

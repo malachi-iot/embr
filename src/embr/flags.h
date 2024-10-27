@@ -2,7 +2,7 @@
 
 #include <estd/internal/type_traits.h>
 
-#include "../fwd/flags.h"
+#include "fwd/flags.h"
 
 namespace embr { inline namespace v1 {
 
@@ -81,6 +81,12 @@ template <class Enum>
 constexpr bool operator==(const flags<Enum>& lhs, const flags<Enum>& rhs)
 {
     return lhs.value() == rhs.value();
+}
+
+template <class Enum>
+constexpr bool operator!=(const flags<Enum>& lhs, const flags<Enum>& rhs)
+{
+    return lhs.value() != rhs.value();
 }
 
 
