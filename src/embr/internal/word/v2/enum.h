@@ -15,6 +15,8 @@ enum class word_options
     packed = 0x10,              ///< specify underlying storage as raw byte array.  Even-matched bounadries go to regular storage anyway
     raw = 0x20,                 ///< specify underlying storage as raw byte array - always  (DORMANT)
 
+    implicit = 0x40,            ///< implicitly convert to integer
+
     //native = 0x1000,            ///< word internal contents is native endian
     big_endian = 0x2000,        ///< word internal contents is big endian
     little_endian = 0x4000,     ///< word internal contents is little endian

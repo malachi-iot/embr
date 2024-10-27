@@ -48,6 +48,9 @@ PACK(struct ElapsedTime : ElapsedTimeBase
     //uint8_t value[6];
     uint8_t sync_source;
     uint8_t offset;
+
+    rep_100ms as_100ms() const { return rep_100ms{ value }; }
+    rep_1ms as_1ms() const { return rep_1ms{ value }; }
 });
 
 }}}}    // embr::ble::gatt::v1

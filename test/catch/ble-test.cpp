@@ -11,14 +11,17 @@ TEST_CASE("BLE")
         using et_type = embr::ble::gatt::ElapsedTime;
         embr::ble::gatt::ElapsedTime et;
 
+        REQUIRE(sizeof(et) == 9);
+
         et.value = 123;
         et_type::rep_100ms v(et.value);
-        //constexpr estd::chrono::milliseconds compare_to(12300);
+        constexpr estd::chrono::milliseconds compare_to(12300);
         // FIX: Can't convert since v won't present as an integer.  Also, doing so now
         // causes a ton of == overload issues
-        //estd::chrono::milliseconds v2(v);
+        estd::chrono::milliseconds v2(v);
+        estd::chrono::milliseconds v3(et.as_100ms());
 
-        REQUIRE(sizeof(et) == 9);
-        //REQUIRE(v == compare_to);
+        REQUIRE(v2 == compare_to);
+        REQUIRE(v == compare_to);
     }
 }

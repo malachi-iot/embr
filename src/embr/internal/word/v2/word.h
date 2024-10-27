@@ -3,8 +3,10 @@
 #include "../packer.h"
 
 #include "../../type_from_bits.h"
+#include "common_type.h"
 #include "enum.h"
 #include "fwd.h"
+#include "numeric_limits.h"
 
 namespace embr { namespace internal {
 
@@ -263,15 +265,44 @@ struct word_v2_base<bits, o,
 };
 */
 
+template <size_t bits, v2::word_options o, class Enabled = void>
+struct word_v2_layer;
+
+template <size_t bits, v2::word_options o>
+struct word_v2_layer<bits, o, estd::enable_if_t<o & v2::word_options::implicit>> :
+    word_v2_base<bits, o>
+{
+    using base_type = word_v2_base<bits, o>;
+    using typename base_type::type;
+
+    ESTD_CPP_FORWARDING_CTOR(word_v2_layer)
+
+    constexpr operator type() const
+    {
+        return base_type::value();
+    }
+};
+
+template <size_t bits, v2::word_options o>
+struct word_v2_layer<bits, o, estd::enable_if_t<!(o & v2::word_options::implicit)>> :
+    word_v2_base<bits, o>
+{
+    using base_type = word_v2_base<bits, o>;
+    using typename base_type::type;
+
+    ESTD_CPP_FORWARDING_CTOR(word_v2_layer)
+};
+
+
 }}  // embr::internal
 
 
 namespace embr { namespace v2 {
 
 template <size_t bits, word_options o, uint16_t padding>
-struct word : internal::word_v2_base<bits, o>
+struct word : internal::word_v2_layer<bits, o>
 {
-    using base_type = internal::word_v2_base<bits, o>;
+    using base_type = internal::word_v2_layer<bits, o>;
     using typename base_type::type;
 
 public:
@@ -279,13 +310,6 @@ public:
     constexpr word(const type& copy_from) : base_type(copy_from)
     {
     }
-
-    /*
-    // DEBT: Make this word_option-able and default it to off
-    constexpr operator type() const
-    {
-        return base_type::value();
-    }   */
 };
 
 }}

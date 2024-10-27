@@ -243,6 +243,12 @@ TEST_CASE("word type test", "[word]")
                 REQUIRE(c1 == 0x102);
             }
         }
+        SECTION("implicit")
+        {
+            v2::word<21, v2::word_options::implicit> v(5);
+
+            REQUIRE(v == 5);
+        }
         SECTION("units")
         {
             units::meters<v2::word<21, v2::word_options::packed>> v(5);
