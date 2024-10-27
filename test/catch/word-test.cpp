@@ -295,20 +295,17 @@ TEST_CASE("word type test", "[word]")
 
                 REQUIRE(b1);
 
-                b1 = internal::is_castable<o, o2>::value;
+                static_assert(internal::is_castable<o, o2>::value, "default values should always match");
+                static_assert(internal::is_castable<o, o3>::value, "implicit shouldn't disqualify castable");
+                static_assert(internal::is_castable<o, v2::word_options::implicit>::value, "implicit shouldn't disqualify castable");
 
-                REQUIRE(b1);
-
-                b1 = internal::is_castable<o, o3>::value;
-
-                REQUIRE(b1);
-
+                // Mysterious that this doesn't work
                 /*
                 static_assert(
                     internal::can_cast<
                         v2::word<21>,
                         v2::word<21, v2::word_options::implicit>>::value,
-                    ""
+                    "words should be castable even when one is implicit and one isn't"
                     );  */
             }
         }
