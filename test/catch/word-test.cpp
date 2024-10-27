@@ -155,6 +155,13 @@ TEST_CASE("word type test", "[word]")
                 REQUIRE((v & v2::word_options::native) == false);
                 REQUIRE((v & v2::word_options::implicit) == true);
             }
+            SECTION("xor")
+            {
+                constexpr auto v1 = v2::word_options::implicit;
+                constexpr auto v2 = v1 ^ v2::word_options::implicit;
+
+                REQUIRE(v2 == false);
+            }
             SECTION("compare")
             {
                 auto v1 = v2::word_options::none | v2::word_options::implicit;

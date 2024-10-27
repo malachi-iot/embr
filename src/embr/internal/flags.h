@@ -6,12 +6,15 @@
 
 namespace embr { namespace experimental {
 
+///
+/// \brief The flags class
+///
 template <class Enum>
 class flags
 {
 public:
 #if FEATURE_ESTD_UNDERLYING_TYPE
-    using int_type = estd::underlying_type<Enum>;
+    using int_type = typename estd::underlying_type<Enum>::type;
 #else
     using int_type = int;
 #endif
@@ -26,7 +29,7 @@ private:
 
 public:
     constexpr explicit flags(int_type v) :
-        value_{v}
+        value_{value_type(v)}
     {}
 
     constexpr flags(const value_type& value) : value_{value}    {}
@@ -43,25 +46,29 @@ public:
 
     constexpr value_type value() const { return value_; }
 
+    // Putting these all as members instead of freestanding operators for easy access to int_type
+
     constexpr flags operator~() const
     {
-        return flags(~value_);
+        return flags(~int_type(value_));
+    }
+
+    constexpr flags operator ^(const value_type& v) const
+    {
+        return flags{int_type(v) ^ int_type(value_)};
+    }
+
+    constexpr flags operator |(const value_type& v) const
+    {
+        return flags{int_type(v) ^ int_type(value_)};
+    }
+
+    constexpr flags operator &(const value_type& v) const
+    {
+        return flags{int_type(v) & int_type(value_)};
     }
 };
 
-
-template <class Enum>
-constexpr flags<Enum> operator|(const flags<Enum>& lhs, const flags<Enum>& rhs)
-{
-    return flags<Enum>(Enum(lhs.value() | rhs.value()));
-}
-
-
-template <class Enum>
-constexpr flags<Enum> operator|(const flags<Enum>& lhs, const Enum& rhs)
-{
-    return flags<Enum>(Enum(lhs.value() | rhs));
-}
 
 template <class Enum>
 constexpr bool operator==(const flags<Enum>& lhs, const Enum& rhs)
@@ -80,40 +87,14 @@ constexpr bool operator==(const flags<Enum>& lhs, const flags<Enum>& rhs)
 }}
 
 
-// DEBT: All of these really ought to use int_type
-
-template <class Enum>
-constexpr embr::experimental::flags<Enum> or_helper(const Enum& lhs, const Enum& rhs)
-{
-    return embr::experimental::flags<Enum>(Enum(int(lhs) | int(rhs)));
-}
-
-template <class Enum>
-constexpr embr::experimental::flags<Enum> and_helper(const Enum& lhs, const Enum& rhs)
-{
-    return embr::experimental::flags<Enum>(Enum(int(lhs) & int(rhs)));
-}
-
-template <class Enum>
-constexpr embr::experimental::flags<Enum> xor_helper(const Enum& lhs, const Enum& rhs)
-{
-    return embr::experimental::flags<Enum>(Enum(int(lhs) ^ int(rhs)));
-}
-
-template <class Enum>
-constexpr embr::experimental::flags<Enum> not_helper(const Enum& v)
-{
-    return embr::experimental::flags<Enum>(Enum(~int(v)));
-}
-
-
+// Auto-promotes 'Enum' to flags<Enum> during these operations
 #define EMBR_FLAGS(Enum)    \
 constexpr embr::experimental::flags<Enum> operator~(const Enum& v)    \
-{ return not_helper(v); }     \
+{ return ~embr::experimental::flags<Enum>(v); }     \
 constexpr embr::experimental::flags<Enum> operator^(const Enum& lhs, const Enum& rhs)    \
-{ return xor_helper(lhs, rhs); }     \
+{ return embr::experimental::flags<Enum>(lhs) ^ rhs; }     \
 constexpr embr::experimental::flags<Enum> operator|(const Enum& lhs, const Enum& rhs)    \
-{ return or_helper(lhs, rhs); }     \
+{ return embr::experimental::flags<Enum>(lhs) | rhs; }     \
 constexpr embr::experimental::flags<Enum> operator&(const Enum& lhs, const Enum& rhs)    \
-{ return and_helper(lhs, rhs); }
+{ return embr::experimental::flags<Enum>(lhs) & rhs; }
 
