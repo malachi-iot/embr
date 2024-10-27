@@ -245,9 +245,17 @@ TEST_CASE("word type test", "[word]")
         }
         SECTION("implicit")
         {
-            v2::word<21, v2::word_options::implicit> v(5);
+            SECTION("equals")
+            {
+                v2::word<21, v2::word_options::implicit> v(5);
 
-            REQUIRE(v == 5);
+                REQUIRE(v == 5);
+            }
+            SECTION("conversion")
+            {
+                v2::word<21> v(5);
+                //v2::word<21, v2::word_options::implicit> v2(v);
+            }
         }
         SECTION("units")
         {

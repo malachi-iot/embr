@@ -265,9 +265,6 @@ struct word_v2_base<bits, o,
 };
 */
 
-template <size_t bits, v2::word_options o, class Enabled = void>
-struct word_v2_layer;
-
 template <size_t bits, v2::word_options o>
 struct word_v2_layer<bits, o, estd::enable_if_t<o & v2::word_options::implicit>> :
     word_v2_base<bits, o>
@@ -277,6 +274,7 @@ struct word_v2_layer<bits, o, estd::enable_if_t<o & v2::word_options::implicit>>
 
     ESTD_CPP_FORWARDING_CTOR(word_v2_layer)
 
+    // DEBT: I think we can achieve this by enable_if on return type
     constexpr operator type() const
     {
         return base_type::value();
@@ -299,6 +297,7 @@ struct word_v2_layer<bits, o, estd::enable_if_t<!(o & v2::word_options::implicit
 
 namespace embr { namespace v2 {
 
+#if !FEATURE_EMBR_WORD_ALIAS
 template <size_t bits, word_options o, uint16_t padding>
 struct word : internal::word_v2_layer<bits, o>
 {
@@ -306,10 +305,21 @@ struct word : internal::word_v2_layer<bits, o>
     using typename base_type::type;
 
 public:
+    // Doesn't pick up implicit =
+    //ESTD_CPP_FORWARDING_CTOR(word)
+
     word() = default;
     constexpr word(const type& copy_from) : base_type(copy_from)
     {
     }
+
+    template <size_t bits2, word_options o2>
+    constexpr word(const internal::word_v2_base<bits2, o>& copy_from) :
+        base_type(copy_from)
+    {
+
+    }
 };
+#endif
 
 }}
