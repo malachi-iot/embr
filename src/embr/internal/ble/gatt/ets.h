@@ -1,5 +1,7 @@
 #pragma once
 
+#include <estd/cstdint.h>
+
 // Elapsed Time field characteristic is defined in
 // Gatt Supplemental Service Section 3.77
 
