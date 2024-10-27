@@ -14,7 +14,25 @@
 
 namespace embr { namespace ble { namespace gatt { inline namespace v1 {
 
-struct ElapsedTimeBase
+///
+/// @brief GATT_Specification_Supplement.pdf (2024-02-21) 3.229 p.179
+///
+struct TimeSourceBase
+{
+    enum TimeSourceValues : uint8_t
+    {
+        TIME_SOURCE_UNKNOWN =   0,
+        TIME_SOURCE_NTP,
+        TIME_SOURCE_GPS,
+        TIME_SOURCE_RADIO,
+        TIME_SOURCE_MANUAL,
+        TIME_SOURCE_ATOMIC,
+        TIME_SOURCE_CELL,
+        TIME_SOURCE_NONE
+    };
+};
+
+struct ElapsedTimeBase : TimeSourceBase
 {
     using rep = gatt::v1::word<48, v2::word_options::implicit>;
 
@@ -47,8 +65,8 @@ PACK(struct ElapsedTime : ElapsedTimeBase
 {
     uint8_t flags;
     uint48 value;
-    uint8_t sync_source;
-    uint8_t offset;
+    TimeSourceValues sync_source;
+    int8_t offset;
 
     const rep_1s& as_1s() const { return value.as<rep_1s>(); }
     const rep_100ms& as_100ms() const { return value.as<rep_100ms>(); }
