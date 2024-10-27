@@ -16,12 +16,11 @@ TEST_CASE("BLE")
         et.value = 123;
         et_type::rep_100ms v(et.value);
         constexpr estd::chrono::milliseconds compare_to(12300);
-        // FIX: Can't convert since v won't present as an integer.  Also, doing so now
-        // causes a ton of == overload issues
         estd::chrono::milliseconds v2(v);
         estd::chrono::milliseconds v3(et.as_100ms());
 
         REQUIRE(v2 == compare_to);
         REQUIRE(v == compare_to);
+        REQUIRE(v3 == compare_to);
     }
 }

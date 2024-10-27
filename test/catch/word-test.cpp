@@ -275,7 +275,6 @@ TEST_CASE("word type test", "[word]")
                 static_assert(internal::is_castable<o, v2::word_options::packed>::value == false,
                     "both or neither must be packed");
 
-                // Mysterious that this doesn't work
                 static_assert(
                     internal::can_cast<
                         v2::word<21>,

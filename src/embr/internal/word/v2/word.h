@@ -209,6 +209,14 @@ public:
 
     }
 
+    // If this guy is close enough to qualify as castable, he certainly can be raw memory copied
+    template <v2::word_options o2, class = estd::enable_if_t<is_castable<o, o2>::value>>
+    constexpr word_v2_base(const word_v2_base<bits, o2>& copy_from) :
+        word_v2_base(copy_from.raw_)
+    {
+
+    }
+
     // This actually works, but I am annoyed by the double-init of raw
 #if UNUSED
     constexpr word_v2_base(const uint8_t (&raw)[base_type::size])
@@ -320,12 +328,10 @@ public:
 
     }
 
-    // DEBT: Filter this further by compatible types, sizes, etc.
     template <class Word>
     const Word& as() const
     {
-        //static_assert(embr::internal::is_matching_endian<Word::options, o>::value, "");
-        static_assert(embr::internal::can_cast<word, Word>::value, "");
+        static_assert(embr::internal::can_cast<word, Word>::value, "Invalid cast");
 
         return * reinterpret_cast<const Word*>(this);
     }

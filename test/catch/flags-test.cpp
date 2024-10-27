@@ -8,8 +8,6 @@ TEST_CASE("flags (compile-time capable)", "[flags]")
 {
     using namespace embr;
 
-    // DEBT: This deserves its own .cpp probably
-
     SECTION("~ (not)")
     {
         auto v = ~v2::word_options::native;

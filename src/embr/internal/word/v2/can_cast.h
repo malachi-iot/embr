@@ -14,6 +14,7 @@ template <v2::word_options o, v2::word_options o2, class Enabled = void>
 struct is_castable : estd::bool_constant<false> {};
 
 // Presumed that bits match already
+// Does NOT pay attention to sign, you are on your own there
 template <v2::word_options o, v2::word_options o2>
 struct is_castable<
     o, o2,

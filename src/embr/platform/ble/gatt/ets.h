@@ -46,14 +46,14 @@ struct ElapsedTimeBase
 PACK(struct ElapsedTime : ElapsedTimeBase
 {
     uint8_t flags;
-    //uint48 value; // bring this guy back once our init ctor more sorted out
-    rep value;
-    //uint8_t value[6];
+    uint48 value;
     uint8_t sync_source;
     uint8_t offset;
 
+    const rep_1s& as_1s() const { return value.as<rep_1s>(); }
     const rep_100ms& as_100ms() const { return value.as<rep_100ms>(); }
     const rep_1ms& as_1ms() const { return value.as<rep_1ms>(); }
+    const rep_100us& as_100us() const { return value.as<rep_100us>(); }
 });
 
 }}}}    // embr::ble::gatt::v1
