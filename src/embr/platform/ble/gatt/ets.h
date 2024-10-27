@@ -1,10 +1,10 @@
 #pragma once
 
+#include <estd/chrono.h>
 #include <estd/cstdint.h>
 
-#include "../../../internal/word/v2/word.h"
-
 #include "fwd.h"
+#include "int.h"
 
 // Elapsed Time field characteristic is defined in
 // Gatt Supplemental Service Section 3.77
@@ -33,12 +33,19 @@ struct ElapsedTimeBase
     };
 
     //static constexpr uint8_t TICK   = 0x01, RESOLUTION_1S = 0;
+
+    // NOTE: PACK trickery prohibits these from residing inside 'ElapsedTime'
+    using rep_1s = estd::chrono::duration<uint48>;
+    using rep_100ms = estd::chrono::duration<uint48, estd::ratio<100, 1000>>;
+    using rep_1ms = estd::chrono::duration<uint48, estd::milli>;
+    using rep_100us = estd::chrono::duration<uint48, estd::ratio<100, 1000000>>;
 };
 
 PACK(struct ElapsedTime : ElapsedTimeBase
 {
     uint8_t flags;
-    uint8_t value[6];
+    uint48 value;
+    //uint8_t value[6];
     uint8_t sync_source;
     uint8_t offset;
 });

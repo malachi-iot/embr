@@ -168,6 +168,7 @@ struct word_v2_base<bits, o,
     using base_type = type_from_bits<bits, o & v2::word_options::is_signed>;
     using typename base_type::type;
     using base_type::size;
+    using this_type = word_v2_base;
 
     static constexpr estd::endian endian = map_to_endian<o>::value;
 
@@ -224,6 +225,19 @@ public:
         return pack::unpack(raw_);
     }
 
+    this_type& operator+=(const type& addendum)
+    {
+        type added = value() + addendum;
+        pack::pack(added, raw_);
+        return *this;
+    }
+
+    template <size_t bits2, v2::word_options o2>
+    this_type& operator+=(const word_v2_base<bits2, o2>& addendum)
+    {
+        return operator+=(addendum.value());
+    }
+
     constexpr bool operator==(const word_v2_base& compare_to) const
     {
         return estd::equal(raw_, raw_ + base_type::size, compare_to.raw_);
@@ -254,7 +268,7 @@ struct word_v2_base<bits, o,
 
 namespace embr { namespace v2 {
 
-template <size_t bits, word_options o>
+template <size_t bits, word_options o, uint16_t padding>
 struct word : internal::word_v2_base<bits, o>
 {
     using base_type = internal::word_v2_base<bits, o>;
@@ -266,8 +280,8 @@ public:
     {
     }
 
-    // DEBT: Make this word_option-able and default it to off
     /*
+    // DEBT: Make this word_option-able and default it to off
     constexpr operator type() const
     {
         return base_type::value();

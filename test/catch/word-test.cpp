@@ -1,11 +1,18 @@
 #include <catch2/catch_all.hpp>
 
+#include <estd/chrono.h>
+
+// DEBT: Seems very much like this should get auto included
+#include <estd/internal/units/operators.hpp>
+
 #include <embr/word.h>
 #include <embr/bits/word.hpp>
-#include <estd/chrono.h>
 
 #include <embr/internal/word/v2/word.h>
 #include <embr/internal/word/v2/operators.h>
+
+// For testing on new 'v2' word.  Once v2 word settles down, move word-units test out to units area
+#include <embr/units/meters.h>
 
 using namespace embr;
 
@@ -235,6 +242,14 @@ TEST_CASE("word type test", "[word]")
 
                 REQUIRE(c1 == 0x102);
             }
+        }
+        SECTION("units")
+        {
+            units::meters<v2::word<21, v2::word_options::packed>> v(5);
+
+            v += 10;
+
+            REQUIRE(v.count() == 15);
         }
     }
 }
