@@ -287,6 +287,30 @@ TEST_CASE("word type test", "[word]")
                 REQUIRE(v2 == 5);
                 REQUIRE(v2 == v3);
             }
+            SECTION("cast")
+            {
+                constexpr v2::word_options o{}, o2{}, o3{v2::word_options::implicit};
+
+                bool b1 = (o & ~v2::word_options::implicit) == (o2 & ~v2::word_options::implicit);
+
+                REQUIRE(b1);
+
+                b1 = internal::is_castable<o, o2>::value;
+
+                REQUIRE(b1);
+
+                b1 = internal::is_castable<o, o3>::value;
+
+                REQUIRE(b1);
+
+                /*
+                static_assert(
+                    internal::can_cast<
+                        v2::word<21>,
+                        v2::word<21, v2::word_options::implicit>>::value,
+                    ""
+                    );  */
+            }
         }
         SECTION("units")
         {
