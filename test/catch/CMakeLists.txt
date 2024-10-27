@@ -40,6 +40,7 @@ set(SOURCE_FILES
     basics-test.cpp
     bits-test.cpp
     bitset-test.cpp
+    ble-test.cpp
     debounce-test.cpp
     delegate-queue-test.cpp
     json-test.cpp

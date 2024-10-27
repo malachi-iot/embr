@@ -2,14 +2,17 @@
 
 #include <estd/cstdint.h>
 
+#include "../../../internal/word/v2/word.h"
+
 #include "fwd.h"
 
 // Elapsed Time field characteristic is defined in
 // Gatt Supplemental Service Section 3.77
 
 // See ETS_v1.0.pdf
+// See GATT_Specification_Supplement.pdf (2024-02-21) 3.77 p.90
 
-namespace embr::ble::gatt { inline namespace v1 {
+namespace embr { namespace ble { namespace gatt { inline namespace v1 {
 
 struct ElapsedTimeBase
 {
@@ -40,4 +43,4 @@ PACK(struct ElapsedTime : ElapsedTimeBase
     uint8_t offset;
 });
 
-}}
+}}}}    // embr::ble::gatt::v1
