@@ -21,6 +21,10 @@ struct GCC_58798_WORKAROUND word_v2_base;
 template <size_t bits, v2::word_options o, class Enabled = void>
 struct GCC_58798_WORKAROUND word_v2_layer;
 
+// Indicates whether L can 100% safely cast to R
+template <class L, class R>
+struct can_cast;
+
 }}
 
 // NOTE: Trouble in paradise with the whole v1/v2 thing - isn't so great when applied to a whole big namespace

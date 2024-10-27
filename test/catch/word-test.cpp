@@ -142,6 +142,19 @@ TEST_CASE("word type test", "[word]")
     }
     SECTION("v2")
     {
+        SECTION("flags")
+        {
+            // DEBT: This deserves its own .cpp probably
+
+            SECTION("~ (not)")
+            {
+                auto v = ~v2::word_options::native;
+                //auto v2 = unsigned(v.value());
+
+                REQUIRE((v & v2::word_options::native) == false);
+                REQUIRE((v & v2::word_options::implicit) == true);
+            }
+        }
         SECTION("alias up")
         {
             REQUIRE(internal::alias_up(3, 8) == 8);

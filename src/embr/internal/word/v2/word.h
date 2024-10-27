@@ -1,5 +1,7 @@
 #pragma once
 
+#include <estd/internal/fwd/chrono.h>
+
 #include "../packer.h"
 
 #include "../../type_from_bits.h"
@@ -279,6 +281,7 @@ struct word_v2_layer<bits, o, estd::enable_if_t<o & v2::word_options::implicit>>
 {
     using base_type = word_v2_base<bits, o>;
     using typename base_type::type;
+    static constexpr v2::word_options options = o;
 
     ESTD_CPP_FORWARDING_CTOR(word_v2_layer)
 
@@ -295,10 +298,24 @@ struct word_v2_layer<bits, o, estd::enable_if_t<!(o & v2::word_options::implicit
 {
     using base_type = word_v2_base<bits, o>;
     using typename base_type::type;
+    static constexpr v2::word_options options = o;
 
     ESTD_CPP_FORWARDING_CTOR(word_v2_layer)
 };
 
+template <class L, class R>
+struct can_cast : estd::bool_constant<false> {};
+
+// NOTE: For the time being, we can expect all 'word' cast attempts to place 'word' on the left
+
+// DEBT: Needs to strip off 'implicit'
+template <size_t bits, v2::word_options o, v2::word_options o2, class Period>
+struct can_cast<
+    v2::word<bits, o>,
+    estd::chrono::duration<v2::word<bits, o2>, Period>> :
+    estd::bool_constant<true>
+{
+};
 
 }}  // embr::internal
 
@@ -326,6 +343,16 @@ public:
         base_type(copy_from)
     {
 
+    }
+
+    // DEBT: Filter this further by compatible types, sizes, etc.
+    template <class Word>
+    const Word& as() const
+    {
+        //static_assert(embr::internal::is_matching_endian<Word::options, o>::value, "");
+        static_assert(embr::internal::can_cast<word, Word>::value, "");
+
+        return * reinterpret_cast<const Word*>(this);
     }
 };
 #endif
