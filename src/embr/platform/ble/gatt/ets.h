@@ -46,6 +46,7 @@ struct ElapsedTimeBase
 PACK(struct ElapsedTime : ElapsedTimeBase
 {
     uint8_t flags;
+    //uint48 value; // bring this guy back once our init ctor more sorted out
     rep value;
     //uint8_t value[6];
     uint8_t sync_source;

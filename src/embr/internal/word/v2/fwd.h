@@ -1,5 +1,7 @@
 #pragma once
 
+#include <estd/internal/raw/type_traits.h>  // Low dependency type_traits suitable for fwd
+
 #include "enum.h"
 #include "feature.h"
 
@@ -22,8 +24,8 @@ template <size_t bits, v2::word_options o, class Enabled = void>
 struct GCC_58798_WORKAROUND word_v2_layer;
 
 // Indicates whether L can 100% safely cast to R
-template <class L, class R>
-struct can_cast;
+template <class L, class R, class Enabled = void>
+struct can_cast : estd::bool_constant<false> {};
 
 }}
 

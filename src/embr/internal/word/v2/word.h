@@ -303,16 +303,15 @@ struct word_v2_layer<bits, o, estd::enable_if_t<!(o & v2::word_options::implicit
     ESTD_CPP_FORWARDING_CTOR(word_v2_layer)
 };
 
-template <class L, class R>
-struct can_cast : estd::bool_constant<false> {};
-
 // NOTE: For the time being, we can expect all 'word' cast attempts to place 'word' on the left
 
-// DEBT: Needs to strip off 'implicit'
 template <size_t bits, v2::word_options o, v2::word_options o2, class Period>
 struct can_cast<
     v2::word<bits, o>,
-    estd::chrono::duration<v2::word<bits, o2>, Period>> :
+    estd::chrono::duration<v2::word<bits, o2>, Period>,
+    estd::enable_if_t<
+        // DEBT: Poorly tested at this time
+        (o & ~v2::word_options::implicit) == (o2 & ~v2::word_options::implicit)>> :
     estd::bool_constant<true>
 {
 };
