@@ -1,11 +1,8 @@
 #pragma once
 
-namespace embr { namespace experimental {
+namespace embr { inline namespace v1 {
 
 template <class Enum>
 class flags;
-
-template <class Enum>
-constexpr flags<Enum> operator|(const flags<Enum>& lhs, const Enum& rhs);
 
 }}

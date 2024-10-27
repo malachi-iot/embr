@@ -4,7 +4,7 @@
 
 #include "../fwd/flags.h"
 
-namespace embr { namespace experimental {
+namespace embr { inline namespace v1 {
 
 ///
 /// \brief The flags class
@@ -89,12 +89,12 @@ constexpr bool operator==(const flags<Enum>& lhs, const flags<Enum>& rhs)
 
 // Auto-promotes 'Enum' to flags<Enum> during these operations
 #define EMBR_FLAGS(Enum)    \
-constexpr embr::experimental::flags<Enum> operator~(const Enum& v)    \
-{ return ~embr::experimental::flags<Enum>(v); }     \
-constexpr embr::experimental::flags<Enum> operator^(const Enum& lhs, const Enum& rhs)    \
-{ return embr::experimental::flags<Enum>(lhs) ^ rhs; }     \
-constexpr embr::experimental::flags<Enum> operator|(const Enum& lhs, const Enum& rhs)    \
-{ return embr::experimental::flags<Enum>(lhs) | rhs; }     \
-constexpr embr::experimental::flags<Enum> operator&(const Enum& lhs, const Enum& rhs)    \
-{ return embr::experimental::flags<Enum>(lhs) & rhs; }
+constexpr embr::v1::flags<Enum> operator~(const Enum& v)    \
+{ return ~embr::v1::flags<Enum>(v); }     \
+constexpr embr::v1::flags<Enum> operator^(const Enum& lhs, const Enum& rhs)    \
+{ return embr::v1::flags<Enum>(lhs) ^ rhs; }     \
+constexpr embr::v1::flags<Enum> operator|(const Enum& lhs, const Enum& rhs)    \
+{ return embr::v1::flags<Enum>(lhs) | rhs; }     \
+constexpr embr::v1::flags<Enum> operator&(const Enum& lhs, const Enum& rhs)    \
+{ return embr::v1::flags<Enum>(lhs) & rhs; }
 
