@@ -162,8 +162,8 @@ template <size_t bits, v2::word_options o>
 struct word_v2_base<bits, o,
     estd::enable_if_t<
         //is_native_endian<o>::value &&
-        o & v2::word_options::packed &&
-        type_from_bits<bits, false>::matched == false>> :
+        o & v2::word_options::raw || (o & v2::word_options::packed &&
+        type_from_bits<bits, false>::matched == false)>> :
     type_from_bits<bits, o & v2::word_options::is_signed>
 {
     using base_type = type_from_bits<bits, o & v2::word_options::is_signed>;
