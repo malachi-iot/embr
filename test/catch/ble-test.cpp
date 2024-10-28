@@ -1,11 +1,14 @@
 #include <catch2/catch_all.hpp>
 
 #include <embr/platform/ble/gatt/ets.h>
+#include <embr/platform/ble/gatt/char/date-time.h>
 
 // NOTE: Limited to testing GATT/GAP BLE data types.
 
 TEST_CASE("BLE")
 {
+    using namespace embr::ble;
+
     SECTION("Elapsed Time Service")
     {
         using et_type = embr::ble::gatt::ElapsedTime;
@@ -22,5 +25,16 @@ TEST_CASE("BLE")
         REQUIRE(v2 == compare_to);
         REQUIRE(v == compare_to);
         REQUIRE(v3 == compare_to);
+    }
+    SECTION("gatt characteristics")
+    {
+        SECTION("date time")
+        {
+            gatt::DateTime dt;
+        }
+        SECTION("current elapsed time")
+        {
+            REQUIRE(sizeof(gatt::CurrentElapsedTime) == 11);
+        }
     }
 }
