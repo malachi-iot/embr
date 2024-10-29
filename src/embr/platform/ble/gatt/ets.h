@@ -31,5 +31,10 @@ PACK(struct CurrentElapsedTime : internal::CurrentElapsedTimeBase    // NOLINT
     ClockCapabilities capabilities;
 });
 
+struct ElapsedTimeService
+{
+    static constexpr uint16_t uuid = 0x183F;
+};
+
 }}}}
 
