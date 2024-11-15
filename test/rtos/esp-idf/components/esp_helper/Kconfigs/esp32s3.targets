@@ -26,6 +26,10 @@ config BOARD_ESP32S3_SEEED_XIAO
     bool "Seeed Studio Xiao ESP32S3 (Sense)"
     depends on IDF_TARGET_ESP32S3
 
+config BOARD_ESP32S3_UM_BLING
+    bool "Unexpected Maker BLING!"
+    depends on IDF_TARGET_ESP32S3
+
 config BOARD_ESP32S3_UM_FEATHERS3
     bool "Unexpected Maker FeatherS3"
     depends on IDF_TARGET_ESP32S3
