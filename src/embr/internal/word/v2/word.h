@@ -23,6 +23,7 @@ struct word_traits
     static constexpr unsigned bits = bits_;
     static constexpr ot options = o;
 
+    static constexpr uint32_t pad = padding;
     static constexpr unsigned lhs_pad = padding & 0xFF00 >> 8;
     static constexpr unsigned rhs_pad = padding & 0xFF;
 
@@ -322,6 +323,30 @@ struct word_v2_layer<bits, o, estd::enable_if_t<!(o & v2::word_options::implicit
 
 
 namespace embr { namespace detail { inline namespace v2 {
+
+template <class Traits>
+struct word<Traits, estd::enable_if_t<Traits::pad != 0>>
+{
+
+};
+
+
+template <class Traits>
+struct word<Traits, estd::enable_if_t<
+    Traits::pad == 0 &&
+    Traits::endian == estd::endian::native>>
+{
+
+};
+
+template <class Traits>
+struct word<Traits, estd::enable_if_t<
+    Traits::pad == 0 &&
+    Traits::endian != estd::endian::native>>
+{
+
+};
+
 
 }}}
 
