@@ -13,6 +13,24 @@
 
 namespace embr { namespace internal {
 
+// Enough options are starting to appear that perhaps a consolidated "traits" is more tidy
+// EXPERIMENTAL
+template <unsigned bits_, v2::word_options o, uint32_t padding>
+struct word_traits
+{
+    using ot = v2::word_options;
+
+    static constexpr unsigned bits = bits_;
+    static constexpr ot options = o;
+
+    static constexpr unsigned lhs_pad = padding & 0xFF00 >> 8;
+    static constexpr unsigned rhs_pad = padding & 0xFF;
+
+    static constexpr estd::endian endian = map_to_endian<o>::value;
+
+    using int_type = type_from_bits<bits, o & ot::is_signed>;
+};
+
 // Interesting, but XOR is probably way better
 template <v2::word_options o1, v2::word_options o2, v2::word_options matching>
 using is_matching_options = estd::bool_constant<(o1 & matching) == (o2 & matching)>;
@@ -303,16 +321,25 @@ struct word_v2_layer<bits, o, estd::enable_if_t<!(o & v2::word_options::implicit
 }}  // embr::internal
 
 
+namespace embr { namespace detail { inline namespace v2 {
+
+}}}
+
+
+
 namespace embr { namespace v2 {
 
 #if !FEATURE_EMBR_WORD_ALIAS
-template <size_t bits, word_options o, uint16_t padding>
+template <size_t bits, word_options o, uint32_t padding>
 struct word : internal::word_v2_layer<bits, o>
 {
     using base_type = internal::word_v2_layer<bits, o>;
     using typename base_type::type;
 
 public:
+    // DEBT: Move init of this guy elsewhere
+    using traits = internal::word_traits<bits, o, padding>;
+
     // Doesn't pick up implicit =
     //ESTD_CPP_FORWARDING_CTOR(word)
 
