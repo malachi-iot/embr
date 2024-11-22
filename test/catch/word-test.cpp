@@ -242,6 +242,39 @@ TEST_CASE("word type test", "[word]")
 
                 REQUIRE(c1 == 0x102);
             }
+            SECTION("detail::v2")
+            {
+                SECTION("raw 15 bit, base")
+                {
+                    using traits = internal::word_traits<15, v2::word_options::raw>;
+
+                    using type = detail::v2::word_base<traits>;
+
+                    type w{};
+
+                    REQUIRE(w.value()[0] == 0);
+                }
+                SECTION("natural 15 bit, base")
+                {
+                    using traits = internal::word_traits<15, v2::word_options::none>;
+
+                    using type = detail::v2::word_base<traits>;
+
+                    type w{};
+
+                    REQUIRE(w.value() == 0);
+                }
+                SECTION("raw 15 bit")
+                {
+                    using traits = internal::word_traits<15, v2::word_options::raw>;
+
+                    using type = detail::v2::word<traits>;
+
+                    type w{5};
+
+                    REQUIRE(w.value() == 5);
+                }
+            }
         }
         SECTION("implicit")
         {

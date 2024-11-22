@@ -26,6 +26,7 @@ template <class T, size_t bits_>
 struct type_from_bits_base : estd::type_identity<T>
 {
     static constexpr const unsigned bits = bits_;
+    /// size in bytes, aliased up
     static constexpr const unsigned size = internal::alias_up(bits, 8) / 8;
     static constexpr const bool matched = bits / 8 == sizeof(T);
 };

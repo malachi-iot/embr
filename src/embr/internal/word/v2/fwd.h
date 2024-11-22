@@ -20,7 +20,7 @@ struct GCC_58798_WORKAROUND word_v2_base;
 template <size_t bits, v2::word_options o, class Enabled = void>
 struct GCC_58798_WORKAROUND word_v2_layer;
 
-template <unsigned bits_, v2::word_options o, uint32_t padding>
+template <unsigned bits_, v2::word_options o, uint32_t padding = 0>
 struct word_traits;
 
 

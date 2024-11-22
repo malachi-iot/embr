@@ -10,27 +10,9 @@
 #include "enum.h"
 #include "fwd.h"
 #include "numeric_limits.h"
+#include "traits.h"
 
 namespace embr { namespace internal {
-
-// Enough options are starting to appear that perhaps a consolidated "traits" is more tidy
-// EXPERIMENTAL
-template <unsigned bits_, v2::word_options o, uint32_t padding>
-struct word_traits
-{
-    using ot = v2::word_options;
-
-    static constexpr unsigned bits = bits_;
-    static constexpr ot options = o;
-
-    static constexpr uint32_t pad = padding;
-    static constexpr unsigned lhs_pad = padding & 0xFF00 >> 8;
-    static constexpr unsigned rhs_pad = padding & 0xFF;
-
-    static constexpr estd::endian endian = map_to_endian<o>::value;
-
-    using int_type = type_from_bits<bits, o & ot::is_signed>;
-};
 
 // Interesting, but XOR is probably way better
 template <v2::word_options o1, v2::word_options o2, v2::word_options matching>
@@ -324,27 +306,89 @@ struct word_v2_layer<bits, o, estd::enable_if_t<!(o & v2::word_options::implicit
 
 namespace embr { namespace detail { inline namespace v2 {
 
+// Where non-specialized-ish things can happen
+// So far is "word_storage"
 template <class Traits>
-struct word<Traits, estd::enable_if_t<Traits::pad != 0>>
+struct word_base
 {
+    using traits = Traits;
+    using value_type = typename traits::int_type;
+    using type = estd::conditional_t<traits::is_array,
+        uint8_t[traits::info::size],
+        value_type>;
 
+    using pack = internal::packer<value_type, traits::info::size, traits::endian>;
+
+protected:
+    template <size_t... I>
+    explicit constexpr word_base(
+        const uint8_t (&raw)[traits::info::size],
+        estd::index_sequence<I...>) :
+        value_{get_element<I>(raw)...}
+    {
+
+    }
+
+    type value_;
+
+public:
+    word_base() = default;
+    word_base(const word_base&) = default;
+    constexpr explicit word_base(const type& copy_from) : value_{copy_from}   {}
+
+    // Unfancy accessor for native value - later on down the line reprocessing occurs
+    constexpr const type& value() const { return value_; }
+};
+
+template <class Traits>
+struct word<Traits, estd::enable_if_t<Traits::pad != 0>> :
+    word_base<Traits>
+{
+    using base_type = word_base<Traits>;
 };
 
 
 template <class Traits>
 struct word<Traits, estd::enable_if_t<
     Traits::pad == 0 &&
-    Traits::endian == estd::endian::native>>
+    Traits::is_array == false &&
+    Traits::endian == estd::endian::native>> :
+    word_base<Traits>
 {
-
+    using base_type = word_base<Traits>;
 };
 
 template <class Traits>
 struct word<Traits, estd::enable_if_t<
     Traits::pad == 0 &&
-    Traits::endian != estd::endian::native>>
+    Traits::is_array == true &&
+    Traits::endian == estd::endian::native>> :
+    word_base<Traits>
 {
+    using base_type = word_base<Traits>;
+    using typename base_type::value_type;
+    using typename base_type::type;
+    using typename base_type::pack;
+    using base_type::value_;
 
+    word(const value_type& copy_from)       // NOLINT
+    {
+        pack::pack(copy_from, value_);
+    }
+
+    constexpr value_type value() const      // NOLINT
+    {
+        return pack::unpack(value_);
+    }
+};
+
+template <class Traits>
+struct word<Traits, estd::enable_if_t<
+    Traits::pad == 0 &&
+    Traits::endian != estd::endian::native>> :
+    word_base<Traits>
+{
+    using base_type = word_base<Traits>;
 };
 
 

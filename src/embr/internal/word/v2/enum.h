@@ -12,7 +12,7 @@ enum class word_options
     storage_masking = 0x04,
     is_signed = 0x08,
 
-    packed = 0x10,              ///< specify underlying storage as raw byte array.  Even-matched bounadries go to regular storage anyway
+    packed = 0x10,              ///< specify underlying storage as native type OR raw byte array if native type doesn't fit bit count evenly
     raw = 0x20,                 ///< specify underlying storage as raw byte array - always
 
     implicit = 0x40,            ///< implicitly convert to integer

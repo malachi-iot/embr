@@ -241,6 +241,8 @@ struct packer<Integer, N, estd::endian::little, estd::endian::little>
     static constexpr size_t smallest_N = estd::min(N, sizeof(value_type));
     static constexpr size_t largest_N = estd::max(N, sizeof(value_type));
 
+    // TODO: A constexpr-friendly version of this would be very useful
+
     static uint8_t* pack(value_type in, uint8_t* out)
     {
         /*
