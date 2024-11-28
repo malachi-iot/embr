@@ -24,7 +24,7 @@ struct word_traits {
 
     static constexpr bool is_array = (o & ot::raw) | (o & ot::packed && !info::matched);
 
-    using int_type = info::type;
+    using int_type = typename info::type;
     using value_type = embr::detail::v2::word<this_type>;
 };
 

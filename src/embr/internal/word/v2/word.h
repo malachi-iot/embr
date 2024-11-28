@@ -324,7 +324,7 @@ protected:
     explicit constexpr word_base(
         const uint8_t (&raw)[traits::info::size],
         estd::index_sequence<I...>) :
-        value_{get_element<I>(raw)...}
+        value_{embr::internal::get_element<I>(raw)...}
     {
 
     }
