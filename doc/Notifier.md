@@ -4,6 +4,14 @@ TBD: Move some of the Services.md descriptions into here and link them
 
 ## Properties
 
+Paradigm:
+
+Set up property meta/declaration via EMBR_PROPERTIES_BEGIN & EMBR_PROPERTIES_END
+Each meta/declaration is a EMBR_PROPERTY_ID or EMBR_PROPERTY_ID_EXT
+
+This sets up an `id` class instantied as `fields_` where the actualy data storage
+for properties is held also.
+
 ## Macros
 
 ### EMBR_PROPERTIES_BEGIN / EMBR_PROPERTIES_END
@@ -19,11 +27,12 @@ runtime.  A bit confusing, DEBT
 
 ### EMBR_PROPERTIES_SPARSE_BEGIN / EMBR_PROPERTIES_SPARSE_END
 
-Operates without creating a suborinate/helper instance
+Creates a subordinate `id` class without the `fields_` instance.  You provide
+the storage
 
 ### EMBR_PROPERTY
 
-Happily sits freestanding in a service runtime
+Happily sits freestanding in a service runtime.  getter/setter wrappers for `EMBR_PROPERTY_ID`
 
 ### EMBR_PROPERTY_ALIAS
 
@@ -38,6 +47,8 @@ Calls EMBR_PROPERTY_ID2_2
 Seems to have numeric/enum style ID associated with property
 
 ### EMBR_PROPERTY_ID_LOOKUP
+
+Sets up helper `lookup` struct to map and ID back to the property name
 
 ### EMBR_PROPERTY_ID2_2
 
