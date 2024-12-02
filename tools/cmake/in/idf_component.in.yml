@@ -8,3 +8,6 @@ files:
   exclude:
     - "test/**/*"
     - "CHANGELOG.md"
+dependencies:
+  malachi-iot/estd:
+    version: ">=0.8.1"
