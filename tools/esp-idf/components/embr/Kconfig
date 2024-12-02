@@ -68,4 +68,97 @@ menu "Embr config"
 
     endmenu
 
+    # Thank you https://esp32.com/viewtopic.php?t=17736 for 'rsource' knowledge
+    
+    # Not an esp-idf convention per se, I am putting my own commonly used settings here
+    choice
+        prompt "Select Development Board"
+
+        config BOARD_ESP32_UNSPECIFIED
+            bool "Unspecified Target"
+
+        rsource "Kconfigs/esp32.targets"
+        rsource "Kconfigs/esp32c3.targets"
+        rsource "Kconfigs/esp32c6.targets"
+        rsource "Kconfigs/esp32p4.targets"
+        rsource "Kconfigs/esp32s3.targets"
+
+    endchoice
+
+    choice
+        prompt "TWAI"
+        default TWAI_DISABLED
+        help
+            Used to assist in configuring embr::esp_idf::service::TWAI.
+            Note that explicit start() call is still required
+
+        config TWAI_DISABLED
+            bool "Disabled"
+        config TWAI_TIMING_25K
+            bool "25Kbit"
+        config TWAI_TIMING_100K
+            bool "100Kbit"
+        config TWAI_TIMING_125K
+            bool "125Kbit"
+        config TWAI_TIMING_250K
+            bool "250Kbit"
+        config TWAI_TIMING_500K
+            bool "500Kbit"
+        config TWAI_TIMING_1M
+            bool "1Mbit"
+    endchoice
+
+    #choice
+    #    prompt "Expansion / Carrier"
+    #endchoice
+
+    config FORM_FACTOR_XIAO
+        int
+        default 1 if BOARD_ESP32S3_SEEED_XIAO || BOARD_ESP32C3_SEEED_XIAO || BOARD_ESP32C6_SEEED_XIAO
+        default 1 if BOARD_ESP32S3_LILYGO_T_QT_PRO
+        default 0
+
+    config FORM_FACTOR_FEATHER
+        int
+        default 1 if BOARD_ESP32S3_UM_FEATHERS3
+        default 1 if BOARD_ESP32S3_ADAFRUIT_FEATHER_REVTFT
+        default 1 if BOARD_ESP32C6_SPARKFUN_THINGPLUS
+        default 0
+
+    config TWAI_TIMING
+        int
+        default 0 if TWAI_DISABLED
+        default 25 if TWAI_TIMING_25K
+        default 100 if TWAI_TIMING_100K
+        default 125 if TWAI_TIMING_125K
+        default 250 if TWAI_TIMING_250K
+        default 500 if TWAI_TIMING_500K
+        default 800 if TWAI_TIMING_800K
+        default 1000 if TWAI_TIMING_1M
+
+    config GPIO_TWAI_TX
+        int "TWAI TX pin"
+        default 14 if BOARD_ESP32S3_REJSACAN_V3_1
+        default 5
+        depends on !TWAI_DISABLED
+
+    config GPIO_TWAI_RX
+        int "TWAI RX pin"
+        default 3 if BOARD_ESP32S3_UM_FEATHERS3
+        default 13 if BOARD_ESP32S3_REJSACAN_V3_1
+        default 4
+        depends on !TWAI_DISABLED
+
+    choice
+        prompt "TWAI mode"
+        depends on !TWAI_DISABLED
+
+        default TWAI_MODE_NORMAL
+        config TWAI_MODE_NORMAL
+            bool "Normal"
+        config TWAI_LISTEN_ONLY
+            bool "Listen Only"
+    endchoice
+
+
 endmenu
