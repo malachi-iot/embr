@@ -12,6 +12,7 @@ endif()
 # INTERFACE effectively makes it a **/*.h header library.  So, source.cmake
 # is effectively a NOOP and we keep it around just for reference.
 include(sources.cmake)
+include(${ROOT_DIR}/tools/cmake/version.cmake)
 
 # https://stackoverflow.com/questions/5957134/how-do-i-set-up-cmake-to-generate-header-only-projects
 add_library(${PROJECT_NAME} INTERFACE)
@@ -25,8 +26,6 @@ add_library(malachi-iot::embr ALIAS ${PROJECT_NAME})
 target_sources(${PROJECT_NAME} INTERFACE ${SOURCE_FILES} ${INCLUDE_FILES})
 
 target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_11)
-
-configure_file(${ROOT_DIR}/tools/cmake/version.in.h ${CMAKE_CURRENT_SOURCE_DIR}/embr/version.h)
 
 # This line is largely superflous.  No linking happens for an INTERFACE library.
 # estd itself does demand some linking.  I speculate this line will come in handy
