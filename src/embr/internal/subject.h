@@ -10,7 +10,7 @@
 
 namespace embr { namespace internal {
 
-template <class ...TObservers>
+template <class ...Observers>
 class tuple_base;
 
 
@@ -111,14 +111,14 @@ class subject_visitor
     }
 };
 
-template <class ...TObservers>
-class tuple_base : public estd::tuple<TObservers...>
+template <class ...Observers>
+class tuple_base : public estd::tuple<Observers...>
 {
 protected:
-    using types = estd::variadic::types<TObservers...>;
+    using types = estd::variadic::types<Observers...>;
 
 public:
-    using tuple_type = estd::tuple<TObservers...>;
+    using tuple_type = estd::tuple<Observers...>;
 
     tuple_type& observers() { return *this; }
     const tuple_type& observers() const { return *this; }
@@ -163,18 +163,19 @@ protected:
         return notified_helper(estd::get<index>(observers()), e, c, true);
     }
 
-    constexpr explicit tuple_base(TObservers&&...observers) :
-        tuple_type(std::forward<TObservers>(observers)...)
+    constexpr explicit tuple_base(Observers&&...observers) :
+        tuple_type(std::forward<Observers>(observers)...)
     {}
 
     tuple_base() = default;
 };
 
-template <class ...TObservers>
+// DEBT: May be able to phase this out now that estd::tuple can do empty base optimization
+template <class ...Observers>
 class stateless_base : tag::stateless_subject
 {
 protected:
-    using types = estd::variadic::types<TObservers...>;
+    using types = estd::variadic::types<Observers...>;
 
     template <size_t index>
     using type_at_index = typename types::template get<index>;
@@ -227,16 +228,20 @@ protected:
 public:
     // DEBT: Don't love using the consuming 'subject' directly here, but putting this alias
     // in 'subject' itself presents an issue for layer1 scenarios
-    template <class ...TObservers2>
-    using append = subject<stateless_base<TObservers..., TObservers2...>>;
+    template <class ...Observers2>
+    using append = subject<stateless_base<Observers..., Observers2...>>;
 };
 
 
-template <class TBase>
-class subject : public TBase
+// Inheriting from tuple to enjoy empty struct optimization
+// DEBT: May be able to hard wire to tuple, since now estd::tuple natively
+// performs empty base optimization
+template <class TupleLike, class Predicate>
+class subject : public TupleLike
 {
-    typedef TBase base_type;
+    typedef TupleLike base_type;
     using visitor = typename base_type::types::visitor;
+    using predicate = Predicate;
 
     struct notifying_functor
     {
@@ -274,6 +279,13 @@ public:
 
     template <class Event>
     void notify(const Event& e)
+    {
+        visitor::visit(notifying_functor{}, *this, e);
+        visitor::visit_reverse(notified_functor{}, *this, e, estd::monostate{});
+    }
+
+    template <class Event>
+    void notify(const Event& e) const
     {
         visitor::visit(notifying_functor{}, *this, e);
         visitor::visit_reverse(notified_functor{}, *this, e, estd::monostate{});

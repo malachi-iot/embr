@@ -6,14 +6,14 @@ struct void_subject
 {
     /// @brief noop notify
     /// \tparam TEvent
-    template <class TEvent>
-    void notify(const TEvent&) const {}
+    template <class Event>
+    void notify(const Event&) const {}
 
     /// @brief noop notify
     /// \tparam TEvent
     /// \tparam TContext
-    template <class TEvent, class TContext>
-    void notify(const TEvent&, TContext&) const {}
+    template <class Event, class Context>
+    void notify(const Event&, Context&) const {}
 };
 
 

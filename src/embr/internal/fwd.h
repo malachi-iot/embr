@@ -2,7 +2,7 @@
 
 namespace embr { namespace internal {
 
-template <class TBase>
+template <class TupleLike, class Predicate = void>
 class subject;
 
 }}
