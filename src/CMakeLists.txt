@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.13)
 
-project(embr VERSION 0.3.1 LANGUAGES CXX)
+project(embr VERSION 0.3.1 LANGUAGES CXX
+    DESCRIPTION "Embedded utility library"
+    HOMEPAGE_URL "https://github.com/malachi-iot/embr"
+    )
 
 include(../tools/cmake/setvars.cmake)
 

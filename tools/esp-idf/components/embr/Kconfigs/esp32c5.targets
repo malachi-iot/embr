@@ -1,0 +1,2 @@
+config BOARD_ESP32C5_DEVKITC_1
+    bool "Espressif ESP32C5 DevKitC-1"
