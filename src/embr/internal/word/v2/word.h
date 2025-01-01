@@ -437,25 +437,3 @@ public:
 #endif
 
 }}
-
-
-namespace embr {
-
-// DEBT: Clumsy stuff here - hopefully we can refactor this into embr::detail::v2::word
-
-template <size_t bits, v2::word_options o>
-// Compiler gets annoyed when implicit is active here since it identifies two viable == paths
-constexpr estd::enable_if_t<!(o & v2::word_options::implicit), bool>
-    operator==(const internal::word_v2_base<bits, o>& lhs, const typename internal::word_v2_base<bits, o>::type& rhs)
-{
-    return lhs.equals(rhs);
-}
-
-template <size_t bits, v2::word_options o, uint32_t padding>
-constexpr bool operator==(const v2::word<bits, o, padding>& lhs, const v2::word<bits, o, padding>& rhs)
-{
-    return lhs.equals(rhs);
-}
-
-
-}
