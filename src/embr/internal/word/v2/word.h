@@ -60,13 +60,11 @@ struct word_v2_base<bits, o,
     estd::enable_if_t<
         is_native_endian<o>::value &&
         (!(o & v2::word_options::packed) ||
-            type_from_bits<bits, false>::matched)>> :
-    type_from_bits<bits, o & v2::word_options::is_signed>
+            type_from_bits<bits, false>::matched)>>
 {
-    using base_type = type_from_bits<bits, o & v2::word_options::is_signed>;
     using this_type = word_v2_base;
 
-    using typename base_type::type;
+    using type = type_from_bits_t<bits, o & v2::word_options::is_signed>;
 
     static constexpr estd::endian endian = estd::endian::native;
 
@@ -115,11 +113,9 @@ struct word_v2_base<bits, o,
     estd::enable_if_t<
         is_native_endian<o>::value == false &&
         (!(o & v2::word_options::packed) ||
-            type_from_bits<bits, false>::matched)>> :
-    type_from_bits<bits, o & v2::word_options::is_signed>
+            type_from_bits<bits, false>::matched)>>
 {
-    using base_type = type_from_bits<bits, o & v2::word_options::is_signed>;
-    using typename base_type::type;
+    using type = type_from_bits_t<bits, o & v2::word_options::is_signed>;
 
     static constexpr estd::endian endian = map_to_endian<o>::value;
 

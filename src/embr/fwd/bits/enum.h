@@ -2,6 +2,7 @@
 
 namespace embr { namespace bits {
 
+// DEBT: Use estd flavor here, if possible
 enum endianness
 {
     no_endian,                  ///< Operations which only happen within a byte, therefore no endianness is involved

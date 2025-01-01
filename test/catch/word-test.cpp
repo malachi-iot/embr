@@ -18,6 +18,13 @@ using namespace embr;
 
 TEST_CASE("word type test", "[word]")
 {
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+    constexpr auto opposite_endian = embr::v2::word_options::big_endian;
+#else
+    constexpr auto opposite_endian = embr::v2::word_options::little_endian;
+#endif
+
+
     SECTION("enum_mask")
     {
         SECTION("low level")
@@ -274,6 +281,12 @@ TEST_CASE("word type test", "[word]")
 
                     REQUIRE(w.value() == 5);
                 }
+            }
+            SECTION("comparison")
+            {
+                v2::word<24, opposite_endian> v(5);
+
+                REQUIRE(v == 5);
             }
         }
         SECTION("implicit")
