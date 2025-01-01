@@ -284,9 +284,14 @@ TEST_CASE("word type test", "[word]")
             }
             SECTION("comparison")
             {
-                v2::word<24, opposite_endian> v(5);
+                SECTION("opposite")
+                {
+                    v2::word<24, opposite_endian> v(5);
+                    v2::word<32, opposite_endian> v1(6);
 
-                REQUIRE(v == 5);
+                    REQUIRE(v == 5);
+                    REQUIRE(v1 == 6);
+                }
             }
         }
         SECTION("implicit")
