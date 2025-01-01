@@ -26,16 +26,17 @@ constexpr auto opposite_endian = embr::v2::word_options::little_endian;
 template <v2::word_options o>
 struct
     __attribute__ ((packed))
-    __attribute__ ((aligned(4)))
+    //__attribute__ ((aligned(4)))
     packed1_header
 {
-
+    template <unsigned bits>
+    using word = v2::word<bits, o>;
 };
 
 template <v2::word_options o>
 struct
     __attribute__ ((packed))
-    __attribute__ ((aligned(4)))
+    //__attribute__ ((aligned(4)))
     packed1 : packed1_header<o>
 {
     template <unsigned bits>
@@ -322,22 +323,25 @@ TEST_CASE("word type test", "[word]")
             {
                 using type = packed1<opposite_endian>;
 
-                type p;
+                type ps[4], *p;
+
+                p = &ps[0];
 
                 // https://github.com/malachi-iot/embr/issues/15
 
-                static_assert(sizeof(type) == 12, "");
+                static_assert(sizeof(type) == 11, "");
+                //static_assert(sizeof(type) == 12, "");
                 static_assert(offsetof(type, v1) == 1, "");
                 static_assert(offsetof(type, v2) == 3, "");
 
 
-                p.v1 = 1;
-                p.v2 = 2;
-                p.v3 = 3;
+                p->v1 = 1;
+                p->v2 = 2;
+                p->v3 = 3;
 
-                REQUIRE(p.v1 == 1);
-                REQUIRE(p.v2 == 2);
-                REQUIRE(p.v3 == 3);
+                REQUIRE(p->v1 == 1);
+                REQUIRE(p->v2 == 2);
+                REQUIRE(p->v3 == 3);
             }
         }
         SECTION("implicit")
