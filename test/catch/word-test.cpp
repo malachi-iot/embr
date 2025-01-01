@@ -16,15 +16,28 @@
 
 using namespace embr;
 
-TEST_CASE("word type test", "[word]")
-{
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-    constexpr auto opposite_endian = embr::v2::word_options::big_endian;
+constexpr auto opposite_endian = embr::v2::word_options::big_endian;
 #else
-    constexpr auto opposite_endian = embr::v2::word_options::little_endian;
+constexpr auto opposite_endian = embr::v2::word_options::little_endian;
 #endif
 
+struct
+    __attribute__ ((__packed__))
+    packed1
+{
+    template <unsigned bits>
+    using word = v2::word<bits, opposite_endian>;
 
+    //word<7> v0;   // Not supported yet
+    uint8_t v0;
+    word<15> v1;
+    word<24> v2;
+    word<32> v3;
+};
+
+TEST_CASE("word type test", "[word]")
+{
     SECTION("enum_mask")
     {
         SECTION("low level")
@@ -292,6 +305,20 @@ TEST_CASE("word type test", "[word]")
                     REQUIRE(v == 5);
                     REQUIRE(v1 == 6);
                 }
+            }
+            SECTION("packed foreign-endian struct")
+            {
+                packed1 p;
+
+                // https://github.com/malachi-iot/embr/issues/15
+
+                p.v1 = 1;
+                p.v2 = 2;
+                p.v3 = 3;
+
+                REQUIRE(p.v1 == 1);
+                REQUIRE(p.v2 == 2);
+                REQUIRE(p.v3 == 3);
             }
         }
         SECTION("implicit")
