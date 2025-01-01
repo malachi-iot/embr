@@ -22,12 +22,24 @@ constexpr auto opposite_endian = embr::v2::word_options::big_endian;
 constexpr auto opposite_endian = embr::v2::word_options::little_endian;
 #endif
 
+
+template <v2::word_options o>
 struct
-    __attribute__ ((__packed__))
-    packed1
+    __attribute__ ((packed))
+    __attribute__ ((aligned(4)))
+    packed1_header
+{
+
+};
+
+template <v2::word_options o>
+struct
+    __attribute__ ((packed))
+    __attribute__ ((aligned(4)))
+    packed1 : packed1_header<o>
 {
     template <unsigned bits>
-    using word = v2::word<bits, opposite_endian>;
+    using word = v2::word<bits, o>;
 
     //word<7> v0;   // Not supported yet
     uint8_t v0;
@@ -308,9 +320,16 @@ TEST_CASE("word type test", "[word]")
             }
             SECTION("packed foreign-endian struct")
             {
-                packed1 p;
+                using type = packed1<opposite_endian>;
+
+                type p;
 
                 // https://github.com/malachi-iot/embr/issues/15
+
+                static_assert(sizeof(type) == 12, "");
+                static_assert(offsetof(type, v1) == 1, "");
+                static_assert(offsetof(type, v2) == 3, "");
+
 
                 p.v1 = 1;
                 p.v2 = 2;
