@@ -24,12 +24,18 @@ extern "C" void app_main()
 
     init_flash();
     
-    ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
+    ESP_LOGI(TAG, "startup");
+
+    /*
+     * 05JAN25 MB Disabling since it interferes with QEMU mode
+     * We don't use WiFi in unit test, IIRC we do this
+     * to get LwIP loopback + esp_events.  However, disabling
+     * this doesn't seem to impact those.  
 #ifdef FEATURE_IDF_DEFAULT_EVENT_LOOP
     wifi_init_sta();
 #else
     wifi_init_sta(event_handler);
-#endif
+#endif  */
 
     // --------
 
