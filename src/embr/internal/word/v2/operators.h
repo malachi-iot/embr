@@ -17,6 +17,8 @@ inline constexpr auto operator ==(
 }
 
 
+// Subtle difference, safe_align mode forces a copy to reduce pointer of unaligned address
+// scenarios.  Probably optimized out in most cases
 template <size_t bits, word_options o>
 inline constexpr auto operator ==(
     const word<bits, o> l,

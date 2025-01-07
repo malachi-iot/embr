@@ -343,10 +343,10 @@ TEST_CASE("word type test", "[word]")
 
                 p->v0 = 0;
 
-                // our "safe_align" option
-                // DEBT: It appears Catch2 takes address of these fellows, thus diminishing
                 REQUIRE(p->v1.value() == 1);
-                REQUIRE(p->v2 == 2);
+                REQUIRE(p->v2.value() == 2);
+                // DEBT: It appears Catch2 takes address of these, thus diminishing
+                // our "safe_align" option
                 REQUIRE(p->v3 == 3);
             }
         }
