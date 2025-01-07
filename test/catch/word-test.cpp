@@ -29,8 +29,8 @@ struct
     //__attribute__ ((aligned(4)))
     packed1_header
 {
-    template <unsigned bits>
-    using word = v2::word<bits, o>;
+    //template <unsigned bits>
+    //using word = v2::word<bits, o | v2::word_options::safe_align>;
 };
 
 template <v2::word_options o>
@@ -40,7 +40,7 @@ struct
     packed1 : packed1_header<o>
 {
     template <unsigned bits>
-    using word = v2::word<bits, o>;
+    using word = v2::word<bits, o | v2::word_options::safe_align>;
 
     //word<7> v0;   // Not supported yet
     uint8_t v0;
@@ -339,7 +339,13 @@ TEST_CASE("word type test", "[word]")
                 p->v2 = 2;
                 p->v3 = 3;
 
-                REQUIRE(p->v1 == 1);
+                bool b = p->v1 == 1;
+
+                p->v0 = 0;
+
+                // our "safe_align" option
+                // DEBT: It appears Catch2 takes address of these fellows, thus diminishing
+                REQUIRE(p->v1.value() == 1);
                 REQUIRE(p->v2 == 2);
                 REQUIRE(p->v3 == 3);
             }

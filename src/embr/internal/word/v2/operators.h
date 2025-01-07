@@ -8,9 +8,20 @@ namespace embr { namespace v2 {
 
 // Implicit mode confuses == and we get a billion candidates
 template <size_t bits, word_options o>
-constexpr estd::enable_if_t<!(o & word_options::implicit), bool> operator ==(
+inline constexpr auto operator ==(
     const word<bits, o>& l,
-    const typename word<bits, o>::type& r)
+    const typename word<bits, o>::type& r) ->
+    estd::enable_if_t<!(o & word_options::implicit) && !(o & word_options::safe_align), bool>
+{
+    return l.value() == r;
+}
+
+
+template <size_t bits, word_options o>
+inline constexpr auto operator ==(
+    const word<bits, o> l,
+    const typename word<bits, o>::type& r) ->
+    estd::enable_if_t<!(o & word_options::implicit) && o & word_options::safe_align, bool>
 {
     return l.value() == r;
 }

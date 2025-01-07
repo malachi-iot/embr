@@ -16,6 +16,7 @@ enum class word_options
     raw = 0x20,                 ///< specify underlying storage as raw byte array - always
 
     implicit = 0x40,            ///< implicitly convert to integer
+    safe_align = 0x80,          ///< take extra measures in anticipation of not memory-aligned
 
     //native = 0x1000,            ///< word internal contents is native endian
     big_endian = 0x2000,        ///< word internal contents is big endian

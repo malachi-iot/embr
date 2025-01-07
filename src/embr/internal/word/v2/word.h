@@ -426,6 +426,7 @@ public:
 
     }
 
+    // DEBT: In theory this could be a constexpr, but C++ doesn't like casting in that scenario
     template <class Word>
     const Word& as() const
     {
