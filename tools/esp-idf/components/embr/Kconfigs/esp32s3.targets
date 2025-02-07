@@ -32,3 +32,6 @@ config BOARD_ESP32S3_UM_FEATHERS3
 config BOARD_ESP32S3_WAVESHARE_AMOLED_1_91
     bool "Waveshare AMOLED 1.91 inch"
 
+# https://www.waveshare.com/wiki/ESP32-S3-Touch-LCD-4.3
+config BOARD_ESP32S3_WAVESHARE_LCD_4_3
+    bool "Waveshare LCD 4.3 inch"
