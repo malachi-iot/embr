@@ -74,9 +74,7 @@ public:
     template <class F>
     static void encode(int s, char_type prev, F&& out, bool pad)
     {
-        // FIX: A condition exists where end character is missing,
-        // expect we need this s-- line or similar, but that makes it worse
-        //if(s-- == 0)   s = 2;
+        if(s-- == 0)   s = 2;
 
         if(s == 0)
         {
