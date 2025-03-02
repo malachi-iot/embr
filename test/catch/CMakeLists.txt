@@ -27,6 +27,7 @@ list(TRANSFORM EXTRA_FILES PREPEND ${ROOT_DIR}/)
 
 
 set(SOURCE_FILES
+    base64-test.cpp
     basics-test.cpp
     bits-test.cpp
     bitset-test.cpp
