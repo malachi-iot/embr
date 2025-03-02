@@ -20,6 +20,9 @@ include(${ROOT_DIR}/tools/cmake/version.cmake)
 # https://stackoverflow.com/questions/5957134/how-do-i-set-up-cmake-to-generate-header-only-projects
 add_library(${PROJECT_NAME} INTERFACE)
 add_library(malachi-iot::embr ALIAS ${PROJECT_NAME})
+add_library(embr::embr_interface ALIAS ${PROJECT_NAME})
+# TODO: Bring this guy in
+#add_library(embr::embr STATIC ${SOURCE_FILES})
 
 # DEBT: Was done for macOS, but it doesn't pick it up.  Once that is resolved,
 # bring these in
