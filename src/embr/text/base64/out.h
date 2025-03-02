@@ -31,6 +31,8 @@ struct out_base64_streambuf : estd::internal::impl::streambuf_base<estd::char_tr
 
 public:
     using typename base_type::traits_type;
+    // DEBT: Something about upper char_type is registering as pure int
+    using typename base_type::char_type;
     typedef typename traits_type::off_type off_type;
     typedef typename traits_type::pos_type pos_type;
     typedef typename traits_type::int_type int_type;
