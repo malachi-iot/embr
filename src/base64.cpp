@@ -1,3 +1,8 @@
+// NOTE: Fun fact, linker gets upset if we don't include these headers - it mangles or locates
+// base64en, base64de differently otherwiwse
+#include "embr/text/base64/in.h"
+#include "embr/text/base64/out.h"
+
 namespace embr { namespace text { inline namespace v1 { namespace impl {
 
 /* BASE 64 encode table */

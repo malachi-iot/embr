@@ -23,6 +23,6 @@ TEST_CASE("base64", "[text base64 streambuf]")
         out_base64_streambuf<sstreambuf> out;
 
         // FIX: Linker error here on base64en
-        //out.sputn("hi2u", 4);
+        out.sputn("hi2u", 4);
     }
 }

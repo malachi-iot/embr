@@ -60,4 +60,5 @@ target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_11)
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE UNIT_TESTING=1)
 
-target_link_libraries(${PROJECT_NAME} embr malachi-iot::estd Catch2::Catch2WithMain)
+target_link_libraries(${PROJECT_NAME} PRIVATE embr::embr)
+target_link_libraries(${PROJECT_NAME} PRIVATE malachi-iot::estd Catch2::Catch2WithMain)

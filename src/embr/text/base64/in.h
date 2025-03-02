@@ -2,7 +2,7 @@
 
 #include <estd/streambuf.h>
 
-namespace embr { namespace text { inline namespace v1 {
+namespace embr { namespace text { inline namespace v1 { namespace impl {
 
 extern const signed char base64de[];
 
@@ -10,4 +10,4 @@ extern const signed char base64de[];
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Wrapped>
 struct in_base64_streambuf;
 
-}}}
+}}}}
