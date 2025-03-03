@@ -37,7 +37,7 @@ private:
         if(ch == '=')   return; // TODO: return 'OK'
 
         if(ch < BASE64DE_FIRST || ch > BASE64DE_LAST ||
-            c = base64de[ch - BASE64DE_FIRST] == -1)
+            (c = base64de[ch - BASE64DE_FIRST]) == -1)
             return; // TODO: Return 'invalid'
 
         switch(s_)
