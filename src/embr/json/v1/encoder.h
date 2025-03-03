@@ -2,6 +2,11 @@
 
 #include <estd/iosfwd.h>
 
+// DEBT: Really ought to be FEATURE_STD_STRING_VIEW
+#if FEATURE_STD_STRING
+#include <string_view>
+#endif
+
 namespace embr { namespace json {
 
 inline namespace v1 {
@@ -13,6 +18,8 @@ namespace options {
 
 // use_spaces() describes whitespace between key/value elements,
 // and does not relate to tab()
+
+// TODO: Refactor to use estd::flags
 
 struct base
 {
@@ -147,8 +154,8 @@ public:
         ++level_;
     }
 
-    template <class TStreambuf, class TBase>
-    void array(estd::detail::basic_ostream<TStreambuf, TBase>& out, const char* key)
+    template <class Streambuf, class Base>
+    void array(estd::detail::basic_ostream<Streambuf, Base>& out, const char* key)
     {
         in_array_ = 1;
 
@@ -160,11 +167,24 @@ public:
 
     // TODO: deduce what kind of quote would be better by inspecting value, or
     // at least provide a compile time hint
-    template <class TStreambuf, class TBase>
-    void raw(estd::detail::basic_ostream<TStreambuf, TBase>& out, const char* value)
+    template <class Streambuf, class Base>
+    void raw(estd::detail::basic_ostream<Streambuf, Base>& out, const char* value)
     {
         out << quote(false) << value << quote(false);
     }
+
+    // DEBT: Make a string_helper or similar since there are a bunch of different ways
+    // for a string to get in here
+#if FEATURE_STD_STRING
+    template <class Streambuf, class Base>
+    void raw(estd::detail::basic_ostream<Streambuf, Base>& out, std::string_view value)
+    {
+        out << quote(false);
+        // DEBT: Make a proper estd override for std::string_view
+        out.write(value.data(), value.size());
+        out << quote(false);
+    }
+#endif
 
     template <class Streambuf, class Base>
     void raw(estd::detail::basic_ostream<Streambuf, Base>& out, int value)
