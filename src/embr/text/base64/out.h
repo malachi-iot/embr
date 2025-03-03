@@ -11,7 +11,7 @@ extern const char base64en[];
 // Adaptation of https://github.com/nkolban/esp32-snippets/blob/master/cloud/GCP/JWT/base64url.cpp which
 // interestingly was already present (in a very old form) in playground.esp repo as a submodule
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::OutStreambuf) Wrapped>
-struct out_base64_streambuf : estd::internal::impl::streambuf_base<estd::char_traits<char>>
+class out_base64_streambuf : public estd::internal::impl::streambuf_base<estd::char_traits<char>>
 {
     using base_type = estd::internal::impl::streambuf_base<estd::char_traits<char>>;
     using wrapped_type = estd::remove_reference_t<Wrapped>;
@@ -36,8 +36,8 @@ public:
     typedef typename traits_type::off_type off_type;
     typedef typename traits_type::pos_type pos_type;
     typedef typename traits_type::int_type int_type;
-    int s_ = 0;
     char_type prev_;
+    int8_t s_ = 0;
 
     template <class ...Args>
     constexpr out_base64_streambuf(Args&&...args) :
@@ -46,7 +46,7 @@ public:
 
     ~out_base64_streambuf()
     {
-        // FIX: JWT decoder seems to get upset when finalizing payload
+        // NOTE: Auto finalize presumes padding character is wanted
         if(auto_finalize)   finalize();
     }
 
@@ -57,18 +57,18 @@ public:
     {
         switch(s)
         {
-        case 0:
-            out(base64en[(ch >> 2) & 0x3F]);
-            break;
+            case 0:
+                out(base64en[(ch >> 2) & 0x3F]);
+                break;
 
-        case 1:
-            out(base64en[((prev & 0x3) << 4) + ((ch >> 4) & 0xF)]);
-            break;
+            case 1:
+                out(base64en[((prev & 0x3) << 4) + ((ch >> 4) & 0xF)]);
+                break;
 
-        case 2:
-            out(base64en[((prev & 0xF) << 2) + ((ch >> 6) & 0x3)]);
-            out(base64en[ch & 0x3F]);
-            break;
+            case 2:
+                out(base64en[((prev & 0xF) << 2) + ((ch >> 6) & 0x3)]);
+                out(base64en[ch & 0x3F]);
+                break;
         }
     }
 

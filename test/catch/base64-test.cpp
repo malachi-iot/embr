@@ -80,14 +80,13 @@ TEST_CASE("base64", "[text base64 streambuf]")
         w.clear();
 
         const char* in = fake_jwt_payload;
-        out.sputn(in, 50);
-        in += 50;
-        out.sputn(in, sizeof(fake_jwt_payload) - 50);
+        out.sputn(in, 55);
+        in += 55;
+        out.sputn(in, (sizeof(fake_jwt_payload) - 1) - 55);
         out.finalize(true);
 
         // TODO: In addition to this failure, something about char/char_type is acting strangely in debugger,
         // seemingly an int all the time
-        // FIX: Fails
-        //REQUIRE(str == fake_jwt_payload_base64);
+        REQUIRE(str == fake_jwt_payload_base64);
     }
 }
