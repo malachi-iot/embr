@@ -2,6 +2,7 @@ set(SOURCES
         bits.cpp
         delegate-queue.cpp
         lwip.cpp
+        misc.cpp
         objlist.cpp
         observer.cpp
         setup.cpp

@@ -71,6 +71,7 @@ These tests are all for variants of Espressif ESP32
 | 10JAN24 | unity        | WaveShare DevKit     | ESP32C6        | v5.1.2   | Pass     | 
 | 05JAN25 | unity        | QEMU                 | ESP32          | v5.3.2   | Pass     | NOTE: LwIP loopback now flaky due to disabled WiFi init
 | 25JAN25 | unity        | QEMU                 | ESP32S3        | v5.3.2   | Pass     |
+| 07MAR25 | unity        | QEMU                 | ESP32          | v5.4.0   | Pass     |
 
 # References
 
