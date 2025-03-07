@@ -1,15 +1,11 @@
 cmake_minimum_required(VERSION 3.13)
 
-project(embr VERSION 0.3.1 LANGUAGES CXX
+project(embr VERSION 0.3.2 LANGUAGES CXX
     DESCRIPTION "Embedded utility library"
     HOMEPAGE_URL "https://github.com/malachi-iot/embr"
     )
 
 include(../tools/cmake/setvars.cmake)
-
-if(NOT TARGET estd)
-    add_subdirectory(${ESTD_DIR} estd)
-endif()
 
 # NOTE: SOURCE_FILES not picked up ever.  Below target_include_directories
 # INTERFACE effectively makes it a **/*.h header library.  So, source.cmake
@@ -24,6 +20,8 @@ add_library(malachi-iot::embr ALIAS ${PROJECT_NAME})
 add_library(embr_static STATIC ${SOURCE_FILES})
 add_library(embr::embr ALIAS embr_static)
 add_library(embr::embr_interface ALIAS ${PROJECT_NAME})
+
+CPMAddPackage("gh:malachi-iot/estdlib@0.8.3")
 
 # DEBT: Was done for macOS, but it doesn't pick it up.  Once that is resolved,
 # bring these in

@@ -57,6 +57,7 @@ These tests are all for variants of Espressif ESP32
 | 30DEC22 | udp-echo     | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v5.0.0   | Pass     |
 | 07JAN24 | udp-echo     | Lilygo QT Pro        | ESP32S3        | v5.1.2   | Pass     |
 | 29SEP23 | udp-echo     | WEMOS D1             | ESP32          | v5.1.1   | Pass     |
+| 07MAR25 | udp-echo     | Seeed Xiao           | ESP32C6        | v5.3.2   | Compiles | Faulty hardware suspected, WiFi does not come online
 | 30DEC22 | unity        | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v4.4.3   | Pass     |
 | 15AUG23 | unity        | ESP-WROVER-KIT v4.1  | ESP32-WROVER-E | v5.0.3   | Pass | Was hitting LWIP_TCPIP_CORE_LOCKING glitch[^1], not now
 | 16JAN24 | unity        | ESP-WROVER-KIT v4.1  | ESP32          | v5.1.2   | Pass     |
@@ -70,7 +71,7 @@ These tests are all for variants of Espressif ESP32
 | 07JAN24 | unity        | Lilygo QT Pro        | ESP32S3        | v5.1.2   | Pass     | 
 | 10JAN24 | unity        | WaveShare DevKit     | ESP32C6        | v5.1.2   | Pass     | 
 | 05JAN25 | unity        | QEMU                 | ESP32          | v5.3.2   | Pass     | NOTE: LwIP loopback now flaky due to disabled WiFi init
-| 25JAN25 | unity        | QEMU                 | ESP32S3        | v5.3.2   | Pass     |
+| 07MAR25 | unity        | QEMU                 | ESP32S3        | v5.3.2   | Pass     |
 | 07MAR25 | unity        | QEMU                 | ESP32          | v5.4.0   | Pass     |
 
 # References
