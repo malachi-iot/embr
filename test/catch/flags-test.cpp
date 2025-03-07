@@ -4,6 +4,8 @@
 #include <embr/internal/word/v2/enum.h>
 
 
+// DEBT: Some duplication with estd::flags testing, but useful to have
+// our word options sanity checked too so leaving for now
 TEST_CASE("flags (compile-time capable)", "[flags]")
 {
     using namespace embr;
