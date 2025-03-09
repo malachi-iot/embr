@@ -1,3 +1,7 @@
 [*.{c,C,cpp,CPP,h,H}]
 indent_style = space
 indent_size = 4
+
+# https://learn.microsoft.com/en-us/visualstudio/ide/cpp-editorconfig-properties?view=vs-2022
+# Seems to make no difference
+cpp_indent_namespace_contents = false

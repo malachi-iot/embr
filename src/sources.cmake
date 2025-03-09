@@ -15,6 +15,7 @@ set(INCLUDE_FILES
 
 set(SOURCE_FILES
     base64.cpp
+    dsp.cpp
     embr/internal/general.cpp
     embr/service/service_v1.cpp
     )
