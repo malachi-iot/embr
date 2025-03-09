@@ -16,7 +16,9 @@ TEST_CASE("dsp tests", "[dsp]")
 void test_dsp()
 #endif
 {
-    //dsp::init_sin_table();
+#if FEATURE_EMBR_DSP_PRECALC_TABLE
+    dsp::init_sin_table();
+#endif
 
     RUN_TEST(test_sinf);
 }

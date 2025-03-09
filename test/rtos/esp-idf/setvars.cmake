@@ -1,7 +1,6 @@
 get_filename_component(EMBR_ROOT_DIR ${CMAKE_CURRENT_LIST_DIR}/../../.. ABSOLUTE)
 
-# Include the components directory of the main application:
-#
+# Include the components directory of this test area
 set(EXTRA_COMPONENT_DIRS "${CMAKE_CURRENT_LIST_DIR}/components")
 
 # Disables auto included components
