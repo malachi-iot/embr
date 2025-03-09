@@ -4,13 +4,38 @@ menu "dsp"
         bool "sin/cos precalc"
         default y
         help
-            Indicates whether to pre allocate static space for prealloc
-            tables.  Note that linker removes this if not actually used, so is
-            largely harmless to leave enabled.
+            Indicates whether activate dsp globals, be they static tables or pointers
+            Linker removes this if not actually used, so is largely harmless to leave enabled.
+
+    config EMBR_DSP_PRECALC_TABLE_STATIC
+        bool "static table allocation"
+        default y
+        depends on EMBR_DSP_PRECALC_TABLE
+        help
+            Indicates whether to pre allocate static space for precalc
+            tables.  False means init calls will require a pointer of your
+            own.
 
     config EMBR_DSP_PRECALC_TABLE_SZ
         int "sin/cos precalc table size"
         default 4096
         depends on EMBR_DSP_PRECALC_TABLE
+        help
+            Whether tables are statically allocated or not, constexpr sizing is used
+            to squeeze that extra drop of performance
+
+    choice
+        prompt "algorithm used by global table [NOT ACTIVATED YET]"
+        depends on EMBR_DSP_PRECALC_TABLE
+
+        config EMBR_DSP_PRECALC_ALGO_FULL
+            bool "Full"
+
+        config EMBR_DSP_PRECALC_ALGO_HALF
+            bool "Half"
+
+        config EMBR_DSP_PRECALC_ALGO_QUART
+            bool "Half"
+    endchoice
 
 endmenu
