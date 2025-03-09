@@ -1,6 +1,7 @@
 set(SOURCES
         bits.cpp
         delegate-queue.cpp
+        dsp.cpp
         lwip.cpp
         misc.cpp
         objlist.cpp
