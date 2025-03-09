@@ -1,4 +1,4 @@
-#include "embr/dsp/precalc.h"
+#include "embr/dsp/precalc/sin.h"
 
 namespace embr { namespace dsp { inline namespace v1 {
 
