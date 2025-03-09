@@ -4,6 +4,20 @@
 
 #include <estd/span.h>
 
+#if ESP_PLATFORM
+// FIX: ESP-IDF seems to treat 'y' here as a 1, but regular GCC doesn't.  This is too wide
+// a descrepency, I am not understanding something
+#define EMBR_DSP_PRECALC_TABLE CONFIG_EMBR_DSP_PRECALC_TABLE
+#else
+#define EMBR_DSP_PRECALC_TABLE 1
+#endif
+
+#if CONFIG_EMBR_DSP_PRECALC_TABLE_SZ
+#define EMBR_DSP_PRECALC_TABLE_SZ   CONFIG_EMBR_DSP_PRECALC_TABLE_SZ
+#elif !EMBR_DSP_PRECALC_TABLE_SZ
+#define EMBR_DSP_PRECALC_TABLE_SZ   4096
+#endif
+
 namespace embr { namespace dsp { inline namespace v1 {
 
 enum precalc_modes
@@ -11,9 +25,13 @@ enum precalc_modes
     PRECALC_FULL,
     PRECALC_HALF,
     PRECALC_QUART,
+
+    PRECALC_DEFAULT = PRECALC_HALF
 };
 
 namespace detail {
+
+extern float sin_table[EMBR_DSP_PRECALC_TABLE_SZ];
 
 template <precalc_modes>
 struct precalc;
@@ -87,16 +105,21 @@ struct precalc<PRECALC_QUART>
 
 }
 
-template <precalc_modes mode = PRECALC_HALF, typename T, estd::size_t N>
+template <precalc_modes mode = PRECALC_DEFAULT, typename T, estd::size_t N>
 void init_sin_table(estd::span<T, N> table)
 {
     detail::precalc<mode>::init_sin(table);
 }
 
-template <precalc_modes mode = PRECALC_HALF, typename T, estd::size_t N>
+template <precalc_modes mode = PRECALC_DEFAULT, typename T, estd::size_t N>
 constexpr T sin_lookup(const estd::span<T, N>& table, T v)
 {
     return detail::precalc<mode>::sin(table, v);
+}
+
+constexpr float sin_lookup(float v)
+{
+    return detail::precalc<PRECALC_DEFAULT>::sin(estd::span<float, EMBR_DSP_PRECALC_TABLE_SZ>{detail::sin_table}, v);
 }
 
 void init_sin_table();
