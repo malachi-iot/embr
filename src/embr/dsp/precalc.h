@@ -25,8 +25,8 @@ struct precalc<PRECALC_HALF>
         }
     }
 
-    template <typename T, estd::size_t N>
-    constexpr static T sin(const estd::span<T, N>& table, T v)
+    template <typename T, estd::size_t N, typename T2>
+    constexpr static T sin(const estd::span<T, N>& table, T2 v)
     {
         constexpr unsigned mask = N * 2 - 1;
 
@@ -56,8 +56,8 @@ struct precalc<PRECALC_QUART>
         }
     }
 
-    template <typename T, estd::size_t N>
-    constexpr static T sin(const estd::span<T, N>& table, T v)
+    template <typename T, estd::size_t N, typename T2>
+    constexpr static T sin(const estd::span<T, N>& table, T2 v)
     {
         constexpr unsigned mask = N * 4 - 1;
 
@@ -86,15 +86,15 @@ void init_sin_table(estd::span<T, N> table)
     detail::precalc<mode>::init_sin(table);
 }
 
-template <precalc_modes mode = PRECALC_DEFAULT, typename T, estd::size_t N>
-constexpr T sin_lookup(const estd::span<T, N>& table, T v)
+template <precalc_modes mode = PRECALC_DEFAULT, typename T, estd::size_t N, typename T2>
+constexpr T sin_lookup(const estd::span<T, N>& table, T2 v)
 {
     return detail::precalc<mode>::sin(table, v);
 }
 
 constexpr float sin_lookup(float v)
 {
-    return detail::precalc<PRECALC_DEFAULT>::sin(estd::span<float, EMBR_DSP_PRECALC_TABLE_SZ>{detail::sin_table}, v);
+    return detail::precalc<PRECALC_DEFAULT>::sin(estd::span<const float, EMBR_DSP_PRECALC_TABLE_SZ>{detail::sin_table}, v);
 }
 
 void init_sin_table();
