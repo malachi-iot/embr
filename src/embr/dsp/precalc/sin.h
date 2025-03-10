@@ -27,14 +27,15 @@ struct precalc<PRECALC_FULL>
         }
     }
 
-    template <typename T, estd::size_t N, typename T2>
+    template <bool do_mask = true, typename T, estd::size_t N, typename T2>
     constexpr static T sin(const estd::span<T, N>& table, T2 v)
     {
         constexpr unsigned mask = N - 1;
+        static constexpr T2 multiplier = N / (2 * M_PI);
 
-        unsigned i = std::round(v * N / M_PI);
+        unsigned i = std::round(v * multiplier);
 
-        i &= mask;
+        if(do_mask)     i &= mask;
 
         return table[i];
     }
@@ -54,19 +55,22 @@ struct precalc<PRECALC_HALF>
         }
     }
 
+    template <estd::size_t N, bool do_mask = true, typename T, typename T2>
+    constexpr static T sin_ll(const T* table, T2 v)
+    {
+        constexpr unsigned mask = N * 2 - 1;
+        static constexpr T N_div_pi = N / M_PI;
+        unsigned i = (unsigned)std::round(v * N_div_pi);
+
+        if constexpr(do_mask)   i &= mask;
+
+        return i < N ? table[i] : -table[i - N];
+    }
+
     template <typename T, estd::size_t N, typename T2>
     constexpr static T sin(const estd::span<T, N>& table, T2 v)
     {
-        constexpr unsigned mask = N * 2 - 1;
-
-        unsigned i = std::round(v * N / M_PI);
-
-        i &= mask;
-
-        if(i < N)
-            return table[i];
-        else
-            return -table[i - N];
+        return sin_ll<N>(table.data(), v);
     }
 };
 

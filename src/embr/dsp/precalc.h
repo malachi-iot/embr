@@ -23,6 +23,7 @@ constexpr T sin_lookup(const estd::span<T, N>& table, T2 v)
 
 constexpr float sin_lookup(float v)
 {
+    //return detail::sin_table[(int)(v * 3.14f)];
     return detail::precalc<PRECALC_DEFAULT>::sin(estd::span<const float, EMBR_DSP_PRECALC_TABLE_SZ>{detail::sin_table}, v);
 }
 
