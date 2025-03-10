@@ -12,6 +12,7 @@ namespace embr { namespace dsp { inline namespace v1 {
 
 namespace detail {
 
+// UNTESTED
 template <>
 struct precalc<PRECALC_FULL>
 {
@@ -24,6 +25,18 @@ struct precalc<PRECALC_FULL>
             const auto v = i * 2 * M_PI / N;
             *data = std::sin(v);
         }
+    }
+
+    template <typename T, estd::size_t N, typename T2>
+    constexpr static T sin(const estd::span<T, N>& table, T2 v)
+    {
+        constexpr unsigned mask = N - 1;
+
+        unsigned i = std::round(v * N / M_PI);
+
+        i &= mask;
+
+        return table[i];
     }
 };
 
