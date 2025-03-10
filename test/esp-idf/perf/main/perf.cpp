@@ -10,4 +10,5 @@ static const char* TAG = "embr::perf";
 extern "C" void app_main(void)
 {
     test_dsp();
+    test_span();
 }

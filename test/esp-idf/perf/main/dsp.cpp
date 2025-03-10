@@ -8,19 +8,33 @@ static const char* TAG = "embr::perf::dsp";
 
 void test_dsp()
 {
+    Profiler p;
+
     embr::dsp::init_sin_table();
 
-    for(float v = 0; v < 1; v += 0.001)
-    {
+    float j = 0;
 
+    p.reset();
+
+    for(float v = 0; v < 10; v += 0.001)
+    {
+        j += std::sin(v);
     }
 
-    ESP_LOGI(TAG, "");
+    duration m1 = p.mark();
 
-    for(float v = 0; v < 1; v += 0.001)
+    ESP_LOGI(TAG, "std::sin %f %" PRIu64 "us", j, m1.count());
+
+    j = 0;
+
+    p.reset();
+
+    for(float v = 0; v < 10; v += 0.001)
     {
-
+        j += embr::dsp::sin_lookup(v);
     }
 
-    ESP_LOGI(TAG, "");
+    duration m2 = p.mark();
+
+    ESP_LOGI(TAG, "embr::dsp::sin_lookup %f %" PRIu64 "us", j, m2.count());
 }

@@ -13,6 +13,21 @@ namespace embr { namespace dsp { inline namespace v1 {
 namespace detail {
 
 template <>
+struct precalc<PRECALC_FULL>
+{
+    template <typename T, estd::size_t N>
+    void static init_sin(estd::span<T, N> table)
+    {
+        T* data = table.data();
+        for(int i = 0; i < N; i++, data++)
+        {
+            const auto v = i * 2 * M_PI / N;
+            *data = std::sin(v);
+        }
+    }
+};
+
+template <>
 struct precalc<PRECALC_HALF>
 {
     template <typename T, estd::size_t N>
