@@ -1,2 +1,4 @@
-idf_component_register(SRCS "perf.c"
-                    INCLUDE_DIRS ".")
+idf_component_register(SRCS "dsp.cpp" "perf.cpp"
+    INCLUDE_DIRS "."
+    REQUIRES embr
+    )
