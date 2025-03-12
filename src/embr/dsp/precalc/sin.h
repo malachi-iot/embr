@@ -31,7 +31,7 @@ struct precalc<PRECALC_FULL>
     constexpr static T sin(const estd::span<T, N>& table, T2 v)
     {
         constexpr unsigned mask = N - 1;
-        static constexpr T2 multiplier = N / (2 * M_PI);
+        constexpr T2 multiplier = N / (2 * M_PI);
 
         unsigned i = std::round(v * multiplier);
 
@@ -59,7 +59,7 @@ struct precalc<PRECALC_HALF>
     constexpr static T sin_ll(const T* table, T2 v)
     {
         constexpr unsigned mask = N * 2 - 1;
-        static constexpr T N_div_pi = N / M_PI;
+        constexpr T N_div_pi = N / M_PI;
         unsigned i = (unsigned)std::round(v * N_div_pi);
 
         if constexpr(do_mask)   i &= mask;
