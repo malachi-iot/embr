@@ -16,6 +16,7 @@ class phase_generator
     scalar_type incr_;
     scalar_type phase_;
 
+    // DEBT: Probably better if this is scalar_type
     static constexpr double two_pi = 2 * M_PI; // 2*pi = 360˚ = one full cycle
 
 public:
@@ -27,12 +28,24 @@ public:
     {
     }
 
-    static constexpr phase_generator from_frequency(scalar_type freq, unsigned hz, scalar_type phase = 0)
+    constexpr static scalar_type incr_from_freq(scalar_type v, unsigned hz)
     {
-        return phase_generator(two_pi * hz / freq, phase);
+        return two_pi / hz * v;
+    }
+
+    static constexpr phase_generator from_freq(scalar_type freq, unsigned hz, scalar_type phase = 0)
+    {
+        return phase_generator(incr_from_freq(freq, hz), phase);
+    }
+
+    void freq(scalar_type v, unsigned hz)
+    {
+        incr_ = incr_from_freq(v, hz);
     }
 
     constexpr scalar_type operator*() const { return phase_; }
+
+    constexpr scalar_type phase() const { return phase_; }
 
     // DEBT: Prefer not to do this
     scalar_type& operator*() { return phase_; }

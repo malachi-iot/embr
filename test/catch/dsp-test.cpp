@@ -49,6 +49,11 @@ TEST_CASE("dsp")
     SECTION("phase")
     {
         dsp::v1::phase_generator<float> gen(0.1);
-        dsp::v1::phase_generator<float> gen2 = dsp::v1::phase_generator<float>::from_frequency(1000, 48000);
+        dsp::v1::phase_generator<float> gen2 = dsp::v1::phase_generator<float>::from_freq(1146, 48000);
+
+        REQUIRE(gen2.incr() >= 0.15);
+        REQUIRE(gen2.incr() < 0.16);
+        ++gen2;
+        REQUIRE(gen2.incr() == gen2.phase());
     }
 }
