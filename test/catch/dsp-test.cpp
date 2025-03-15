@@ -1,6 +1,7 @@
 #include <catch2/catch_all.hpp>
 
 #include <embr/dsp/precalc.h>
+#include <embr/dsp/v1/phase.h>
 
 using namespace embr;
 
@@ -16,27 +17,38 @@ void compare(const estd::span<T, N>& t, T v)
 
 TEST_CASE("dsp")
 {
-    double* table = new double[8192];
-    auto table2 = new float[4096];
-    estd::span<double, 8192> t(table);
-    estd::span<float, 4096> t2(table2);
+    SECTION("precalc")
+    {
+        double* table = new double[8192];
+        auto table2 = new float[4096];
+        estd::span<double, 8192> t(table);
+        estd::span<float, 4096> t2(table2);
 
-    dsp::v1::init_sin_table(t);
-    dsp::v1::init_sin_table(t2);
+        dsp::v1::init_sin_table(t);
+        dsp::v1::init_sin_table(t2);
 
-    compare(t, 0.2);
-    compare(t, 1.0);
-    compare(t, 3.0);
-    compare(t, 9.0);
-    compare(t, 32.0);
+        compare(t, 0.2);
+        compare(t, 1.0);
+        compare(t, 3.0);
+        compare(t, 9.0);
+        compare(t, 32.0);
 
-    compare(t2, 0.2f);
+        compare(t2, 0.2f);
 
-    dsp::v1::init_sin_table<dsp::PRECALC_QUART>(t2);
+        dsp::v1::init_sin_table<dsp::PRECALC_QUART>(t2);
 
-    compare<dsp::PRECALC_QUART>(t2, 0.2f);
-    compare<dsp::PRECALC_QUART>(t2, 3.0f);
-    compare<dsp::PRECALC_QUART>(t2, 6.0f);
-    compare<dsp::PRECALC_QUART>(t2, 9.0f);
-    compare<dsp::PRECALC_QUART>(t2, 32.0f);
+        compare<dsp::PRECALC_QUART>(t2, 0.2f);
+        compare<dsp::PRECALC_QUART>(t2, 3.0f);
+        compare<dsp::PRECALC_QUART>(t2, 6.0f);
+        compare<dsp::PRECALC_QUART>(t2, 9.0f);
+        compare<dsp::PRECALC_QUART>(t2, 32.0f);
+
+        delete table;
+        delete table2;
+    }
+    SECTION("phase")
+    {
+        dsp::v1::phase_generator<float> gen(0.1);
+        dsp::v1::phase_generator<float> gen2 = dsp::v1::phase_generator<float>::from_frequency(1000, 48000);
+    }
 }

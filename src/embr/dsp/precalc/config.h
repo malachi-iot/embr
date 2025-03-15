@@ -11,6 +11,7 @@
 
 #else
 
+// 14MAR25 FIX: Broken/unfinished, only static mode works right now
 #ifndef FEATURE_EMBR_DSP_PRECALC_TABLE_STATIC
 #define FEATURE_EMBR_DSP_PRECALC_TABLE_STATIC 1
 #endif
