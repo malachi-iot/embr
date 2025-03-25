@@ -829,7 +829,6 @@ TEST_CASE("Services", "[services]")
     }
     SECTION("v2")
     {
-        using namespace service::v2;
         using service = embr::service::v2::service;
 
         service s{service::Running};
@@ -839,5 +838,9 @@ TEST_CASE("Services", "[services]")
         s.substate(service::ErrConfig);
 
         REQUIRE(s.state() == service::Error);
+
+        s.substate(service::Sleeping);
+
+        REQUIRE(s.state() == service::Stopped);
     }
 }

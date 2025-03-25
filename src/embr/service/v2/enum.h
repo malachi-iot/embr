@@ -32,6 +32,7 @@ struct service
         Finished,           ///< finished running, now in 'off' state
         Restarting,         ///< When restarting, only this is emitted - not Starting
         Starting,           ///< Reflects movement from Stopped::Unstarted to Started::Running - does NOT reflect restart
+        Sleeping,           ///< Has dozed off and is currently asleep
         Paused,
         Resuming,
         Waking,             ///< This precedes a Starting state when coming out of a sleeping state
@@ -46,8 +47,8 @@ struct service
         Degraded,
         Pausing,
         Stopping,
-        Resetting,          ///< When restarting, this is the transition out of running -> stopped state
-        Sleeping,           ///< In process of entering sleep mode
+        Resetting,          ///< When restarting, this is the transition out of running -> restarting state
+        DozingOff,          ///< In process of entering sleep mode
         Sparse,             ///< Sparse services default to this special running state - 90% overlap with "indeterminate"
 
         // error states
@@ -60,8 +61,6 @@ struct service
         SUBSTATES_MAX
     };
 
-    substates substate_ = Unstarted;
-
     [[nodiscard]] constexpr substates substate() const { return substate_; }
     [[nodiscard]] constexpr states state() const
     {
@@ -71,6 +70,8 @@ struct service
 #ifndef UNIT_TESTING
 protected:
 #endif
+    substates substate_ = Unstarted;
+
     void substate(substates s)
     {
         substate_ = s;

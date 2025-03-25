@@ -4,7 +4,9 @@
 #include <embr/internal/bitset.h>
 
 using namespace estd;
-using ostringstream = experimental::ostringstream<128>;
+using ostringstream = layer1::ostringstream<128>;
+
+// DEBT: Obviously this guy belongs in estd.  bitset has an internal dependency on embr::word
 
 TEST_CASE("bitset test", "[bitset]")
 {
