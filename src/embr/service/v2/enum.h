@@ -20,8 +20,8 @@ struct service
         STATES_MAX
     };
 
-    // yields 32 possible substates per category, allowing us to stay within 8 bits
-    static constexpr unsigned separator = 6;
+    // yields 32 possible substates per category, allowing us to stay well within 8 bits
+    static constexpr unsigned separator = 5;
 
     enum substates
     {
@@ -52,11 +52,13 @@ struct service
         Sparse,             ///< Sparse services default to this special running state - 90% overlap with "indeterminate"
 
         // error states
+
+        /// error code was not recognized or provided
+        ErrUnspecified = Error << separator,
         /// service configuration error, usually on startup or configuring
-        ErrConfig = Error << separator,
+        ErrConfig,
         ErrMemory,         ///< service ran out of memory, or detected memory corruption
         ErrTimeout,
-        ErrUnspecified,    ///< internal error code was not recognized or provided
 
         SUBSTATES_MAX
     };
@@ -76,6 +78,16 @@ protected:
     {
         substate_ = s;
     };
+
+    void state(substates s)
+    {
+        substate_ = s;
+    }
+
+    void state(states s)
+    {
+        substate_ = static_cast<substates>(s << separator);
+    }
 };
 
 }

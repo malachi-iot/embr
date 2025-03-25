@@ -7,6 +7,7 @@ using namespace estd;
 using ostringstream = layer1::ostringstream<128>;
 
 // DEBT: Obviously this guy belongs in estd.  bitset has an internal dependency on embr::word
+// See // See https://github.com/malachi-iot/estdlib/issues/59
 
 TEST_CASE("bitset test", "[bitset]")
 {

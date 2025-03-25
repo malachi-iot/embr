@@ -829,7 +829,7 @@ TEST_CASE("Services", "[services]")
     }
     SECTION("v2")
     {
-        using service = embr::service::v2::service;
+        using service = v2::service;
 
         service s{service::Running};
 

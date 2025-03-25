@@ -4,6 +4,8 @@
 
 #include "../word.h"
 
+// See https://github.com/malachi-iot/estdlib/issues/59
+
 #if __cpp_exceptions
 // DEBT: Since for optional and variant we already made our own versions, it's time
 // we corralled them and "out_of_range" here
