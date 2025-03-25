@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../../flags.h"
+#include <estd/flags.h>
 
 namespace embr { namespace v2 {
 
@@ -31,6 +31,6 @@ enum class word_options
     masking = init_masking | storage_masking
 };
 
-EMBR_FLAGS(word_options)
+ESTD_FLAGS(word_options)
 
 }}

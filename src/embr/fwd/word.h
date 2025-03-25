@@ -1,12 +1,11 @@
 #pragma once
 
 #include <estd/bit.h>
+#include <estd/flags.h>
 #include <estd/internal/platform.h>
 
 #include "../internal/features.h"
 
-//#include "flags.h"
-#include "../flags.h"
 #include "narrow_cast.h"
 #include "type_from_bits.h"
 

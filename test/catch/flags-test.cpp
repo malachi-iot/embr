@@ -1,6 +1,5 @@
 #include <catch2/catch_all.hpp>
 
-#include <embr/flags.h>
 #include <embr/internal/word/v2/enum.h>
 
 
