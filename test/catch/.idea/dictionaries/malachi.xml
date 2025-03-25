@@ -4,6 +4,7 @@
       <w>funclist</w>
       <w>moveptr</w>
       <w>objstack</w>
+      <w>substate</w>
     </words>
   </dictionary>
 </component>
