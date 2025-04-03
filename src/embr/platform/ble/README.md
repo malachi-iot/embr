@@ -16,12 +16,15 @@ After much deliberation whether to put this code here ot pgqt-util, `embr` felt 
 
 | Term      | Context   | Description
 | -         | -         | - 
-| BR/EDR    |           | ? relates to SDP
+| BR/EDR    |           | More or less is Bluetooth Classic
+| CID       | L2CAP     | Channel ID
+| EATT      | BLE       | Enhanced Attribute Protocol (concurrency)
 | L2CAP CoC |           | L2CAP Connection-oriented Channel
 | LSO       |           | Least Significant Octet first (little endian)
 | OTS       |           | Object Transfer Service
 | OLCP      | OTS       | Object List Control Point [1.1]
 | OACP      | OTS       | Object Action Control Point [2]
+| PSM       | L2CAP     | Protocol/Service Multiplexer (identifies protocol)
 | SDP       |           | Service Discovery Protocol
 | SM        |           | ?
 
