@@ -4,6 +4,7 @@
 
 #include "fwd.h"
 
+#include "char/object-size.h"
 #include "char/olcp.h"
 #include "char/oacp.h"
 #include "char/ots-feature.h"

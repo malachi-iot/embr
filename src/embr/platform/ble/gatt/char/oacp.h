@@ -1,7 +1,7 @@
 
 // OTS_v10.pdf [1.2] Section 3.3
 
-#include "../fwd.h"
+#include "fwd.h"
 #include "../int.h"
 
 namespace embr { namespace ble { namespace gatt { inline namespace v1 {
@@ -45,6 +45,17 @@ PACK(struct ObjectActionControlPoint : ObjectActionControlPointBase
         OffsetLength checksum;
     });
 });
+
+template <>
+struct characteristic_traits<ObjectActionControlPoint>
+{
+    static constexpr const char* description()
+    {
+        return "Object Action Control Point";
+    }
+
+    static constexpr uint16_t uuid = 0x2AC5;
+};
 
 }}}}
 
