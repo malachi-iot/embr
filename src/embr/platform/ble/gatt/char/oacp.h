@@ -32,11 +32,34 @@ struct ObjectActionControlPointBase
         uint32 size;
         int type;   // DEBT: placeholder
     });
+
+    enum ResultCodes : uint8_t
+    {
+        SUCCESS = 1,
+        UNSUPPORTED_OPCODE,
+        INVALID_PARAMETER,
+        INSUFFICIENT_RESOURCES,
+        INVALID_OBJECT,
+        CHANNEL_UNAVAILABLE,
+        UNSUPPORTED_TYPE,
+        NOT_PERMITTED,
+        OBJECT_LOCKED,
+        FAILED
+    };
+
+    PACK(struct Response
+    {
+        OpCodes opcode;
+        ResultCodes result_code;
+        // TODO: add parameter here
+    });
 };
 
 PACK(struct ObjectActionControlPoint : ObjectActionControlPointBase
 {
     OpCodes opcode;
+
+    // DEBT: Technically only gcc really plays nice here due to type-punning
     PACK(union
     {
         char parameter[20];
