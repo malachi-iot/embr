@@ -4,6 +4,10 @@
 
 #include "fwd.h"
 
+#include "char/olcp.h"
+#include "char/oacp.h"
+#include "char/ots-feature.h"
+
 namespace embr { namespace ble { namespace gatt { inline namespace v1 {
 
 }}}}

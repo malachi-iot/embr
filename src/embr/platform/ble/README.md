@@ -16,10 +16,13 @@ After much deliberation whether to put this code here ot pgqt-util, `embr` felt 
 
 | Term      | Context   | Description
 | -         | -         | - 
+| BR/EDR    |           | ? relates to SDP
+| L2CAP CoC |           | L2CAP Connection-oriented Channel
 | OTS       |           | Object Transfer Service
 | OLCP      | OTS       | Object List Control Point [1.1]
 | OACP      | OTS       | Object Action Control Point [2]
 | SDP       |           | Service Discovery Protocol
+| SM        |           | ?
 
 # References
 
