@@ -18,6 +18,7 @@ After much deliberation whether to put this code here ot pgqt-util, `embr` felt 
 | -         | -         | - 
 | BR/EDR    |           | ? relates to SDP
 | L2CAP CoC |           | L2CAP Connection-oriented Channel
+| LSO       |           | Least Significant Octet first (little endian)
 | OTS       |           | Object Transfer Service
 | OLCP      | OTS       | Object List Control Point [1.1]
 | OACP      | OTS       | Object Action Control Point [2]
