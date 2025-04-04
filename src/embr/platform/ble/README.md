@@ -19,8 +19,12 @@ After much deliberation whether to put this code here ot pgqt-util, `embr` felt 
 | BR/EDR    |           | More or less is Bluetooth Classic
 | CID       | L2CAP     | Channel ID
 | EATT      | BLE       | Enhanced Attribute Protocol (concurrency)
+| HCI       | BLE       | Host Controller Interface
+| HIDD      | BLE       | Host Interface Device Description (profile)
+| HS        | NimBLE    | Host Stack
 | L2CAP CoC |           | L2CAP Connection-oriented Channel
 | LSO       |           | Least Significant Octet first (little endian)
+| NPL       | NimBLE    | Nimble Porting Layer
 | OTS       |           | Object Transfer Service
 | OLCP      | OTS       | Object List Control Point [1.1]
 | OACP      | OTS       | Object Action Control Point [2]
