@@ -1,6 +1,6 @@
 // OTS_v10.pdf [1.2] Section 3.4
 
-#include "../fwd.h"
+#include "fwd.h"
 #include "../int.h"
 
 namespace embr { namespace ble { namespace gatt {
@@ -24,6 +24,18 @@ struct ObjectProperties
 
     uint32 properties;
 };
+
+template <>
+struct characteristic_traits<ObjectProperties>
+{
+    static constexpr const char* description()
+    {
+        return "Object Properties";
+    }
+
+    static constexpr uint16_t uuid = 0x2AC4;
+};
+
     
 }
 

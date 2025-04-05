@@ -77,7 +77,7 @@ struct characteristic_traits<ObjectActionControlPoint>
         return "Object Action Control Point";
     }
 
-    static constexpr uint16_t uuid = 0x2AC5;
+    static constexpr v1::uuid::Characteristic16 uuid = v1::uuid::ObjectActionControlPoint;
 };
 
 }}}}

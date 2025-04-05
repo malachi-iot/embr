@@ -15,4 +15,16 @@ PACK(struct ObjectSize
     
 }
 
+template <>
+struct characteristic_traits<v1::ObjectSize>
+{
+    static constexpr const char* description()
+    {
+        return "Object Size";
+    }
+
+    static constexpr uint16_t uuid = 0x2AC0;
+};
+
+
 }}}

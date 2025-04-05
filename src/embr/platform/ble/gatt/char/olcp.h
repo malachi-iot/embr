@@ -31,6 +31,18 @@ PACK(struct ObjectListControlPoint : ObjectListControlPointBase
     uint8_t parameter[6];
 });
 
+template <>
+struct characteristic_traits<ObjectListControlPoint>
+{
+    static constexpr const char* description()
+    {
+        return "Object List Control Point";
+    }
+
+    static constexpr uint16_t uuid = 0x2AC6;
+};
+
+
 }
 
 }}}
