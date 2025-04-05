@@ -10,6 +10,7 @@ enum Characteristic16
     ObjectSize = 0x2AC0,
     ObjectProperties = 0x2AC4,
     ObjectActionControlPoint = 0x2AC5,
+    ObjectListControlPoint = 0x2AC6,
     ObjectChanged = 0x2AC8,
     ObjectId = 0x2AC3,
 };

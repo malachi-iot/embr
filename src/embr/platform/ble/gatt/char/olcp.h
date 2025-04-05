@@ -1,7 +1,7 @@
 
 // OTS_v10.pdf [1.2] Section 3.4
 
-#include "../fwd.h"
+#include "fwd.h"
 #include "../int.h"
 
 namespace embr { namespace ble { namespace gatt {
@@ -39,7 +39,7 @@ struct characteristic_traits<ObjectListControlPoint>
         return "Object List Control Point";
     }
 
-    static constexpr uint16_t uuid = 0x2AC6;
+    static constexpr v1::uuid::Characteristic16 uuid = v1::uuid::ObjectActionControlPoint;;
 };
 
 
