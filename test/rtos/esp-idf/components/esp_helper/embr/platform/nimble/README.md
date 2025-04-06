@@ -5,3 +5,4 @@ Not putting under esp-idf folder since their port from mynewt seems pretty faith
 Not putting under a Mynewt folder since I am too new to the ecosystem to know how to really organize it,
 and fortunately esp_helper is all experimental-ish to begin with
  
+05APR25 OBSOLETE - use non esp_helper variety
