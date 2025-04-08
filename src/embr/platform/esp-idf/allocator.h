@@ -70,9 +70,9 @@ struct allocator_traits<embr::esp_idf::allocator<T, caps> >   // NOLINT - see ab
 
     ESTD_CPP_STD_VALUE_TYPE(T);
 
-    using difference_type = pointer_traits<pointer>::difference_type;
-    using void_pointer = pointer_traits<pointer>::template rebind<void>;
-    using const_void_pointer = pointer_traits<pointer>::template rebind<const void>;
+    using difference_type = typename pointer_traits<pointer>::difference_type;
+    using void_pointer = typename pointer_traits<pointer>::template rebind<void>;
+    using const_void_pointer = typename pointer_traits<pointer>::template rebind<const void>;
     using size_type = make_unsigned_t<difference_type>;
 
     //template <class ...Args>
