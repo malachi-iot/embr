@@ -121,12 +121,12 @@ struct allocator_traits<embr::esp_idf::allocator<T, caps> >   // NOLINT - see ab
     // NOTE: c++ spec indicates this can supersede 'rebind' within alloc, but gcc 12.2
     // mandates 'rebind' be present
     template <class T2>
-    using rebind_alloc = allocator_type::template rebind<T2>::other;
+    using rebind_alloc = typename allocator_type::template rebind<T2>::other;
 
     template <class T2>
     using rebind_traits = allocator_traits<rebind_alloc<T2>>;
 
-    using is_always_equal = is_empty<allocator_type>::type;
+    using is_always_equal = typename is_empty<allocator_type>::type;
 
     // Used for scoped allocators, not really applicable to us just here for conformance
     static constexpr allocator_type select_on_container_copy_construction(
