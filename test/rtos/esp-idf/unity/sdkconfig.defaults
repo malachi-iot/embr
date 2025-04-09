@@ -1,6 +1,2 @@
-# Enable PSRAM, but only on explicit demand
-CONFIG_SPIRAM=y
-CONFIG_SPIRAM_USE_CAPS_ALLOC=y
-
 # DEBT: Make this a big timeout rather than completely disabling WDT
 CONFIG_ESP_TASK_WDT_INIT=n

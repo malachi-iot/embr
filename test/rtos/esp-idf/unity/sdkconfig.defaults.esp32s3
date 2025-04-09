@@ -1,0 +1,3 @@
+# Enable PSRAM, but only on explicit demand
+CONFIG_SPIRAM=y
+CONFIG_SPIRAM_USE_CAPS_ALLOC=y
