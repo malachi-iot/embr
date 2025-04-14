@@ -14,7 +14,7 @@ add_definitions(-DUNIT_TESTING=1)
 
 include(../../tools/cmake/setvars.cmake)
 
-CPMAddPackage("gh:catchorg/Catch2@3.7.1")
+CPMAddPackage("gh:catchorg/Catch2@3.8.1")
 
 add_subdirectory(${ROOT_DIR}/src embr)
 

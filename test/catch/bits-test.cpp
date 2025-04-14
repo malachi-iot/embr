@@ -23,6 +23,13 @@ void clear(estd::array<uint8_t, N>& a)
     estd::fill(a.begin(), a.end(), 0);
 }
 
+// DEBT: Workaround for https://github.com/malachi-iot/estdlib/issues/98 bug
+template <unsigned N>
+void clear(estd::array<uint8_t, N>& a)
+{
+  estd::fill(a.begin(), a.end(), 0);
+}
+
 template <estd::size_t N>
 void clear(estd::span<uint8_t, N>& s)
 {
@@ -333,8 +340,9 @@ TEST_CASE("bits2")
         SECTION("encoder")
         {
             bits::layer1::encoder<bits::big_endian, 4, bits::lsb_to_msb, bits::msb_to_lsb> e;
+            estd::array<uint8_t, 4>& e1 = e;
 
-            clear(e);
+            clear(e1);
 
             e.set<uint8_t>(0, bits::descriptor{4, 3}, 3);
 
