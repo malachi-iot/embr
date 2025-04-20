@@ -10,7 +10,7 @@ inline namespace v1 {
 
 struct ObjectListControlPointBase
 {
-    enum OpCodes : uint8_t
+    enum Opcodes : uint8_t
     {
         FIRST = 1,
         LAST,
@@ -27,7 +27,7 @@ struct ObjectListControlPointBase
 
 PACK(struct ObjectListControlPoint : ObjectListControlPointBase
 {
-    OpCodes opcode;
+    Opcodes opcode;
     uint8_t parameter[6];
 });
 

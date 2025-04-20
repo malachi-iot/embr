@@ -8,7 +8,7 @@ namespace embr { namespace ble { namespace gatt { inline namespace v1 {
 
 struct ObjectActionControlPointBase
 {
-    enum OpCodes : uint8_t
+    enum Opcodes : uint8_t
     {
         CREATE = 1,
         DELETE,
@@ -49,7 +49,7 @@ struct ObjectActionControlPointBase
 
     PACK(struct Response
     {
-        OpCodes opcode;
+        Opcodes opcode;
         ResultCodes result_code;
         // TODO: add parameter here
     });
@@ -57,12 +57,13 @@ struct ObjectActionControlPointBase
 
 PACK(struct ObjectActionControlPoint : ObjectActionControlPointBase
 {
-    OpCodes opcode;
+    Opcodes opcode;
 
     // DEBT: Technically only gcc really plays nice here due to type-punning
     PACK(union
     {
         char parameter[20];
+        Create create;
         OffsetLength read;
         OffsetLength write;
         OffsetLength checksum;
