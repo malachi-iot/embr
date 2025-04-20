@@ -3,6 +3,8 @@
 #include "../../../internal/pack.h"
 #include "../../../internal/word/v2/fwd.h"
 
+#include "enum.h"
+
 namespace embr { namespace ble { namespace gatt { inline namespace v1 {
 
 // "All fields in a characteristic or descriptor are little endian unless otherwise stated."

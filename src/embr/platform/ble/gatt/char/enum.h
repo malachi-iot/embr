@@ -4,8 +4,14 @@ inline namespace v1 { namespace uuid {
 
 // Assigned_Numbers.pdf Section 3.8.1
 
-enum Characteristic16
+enum Characteristic16 : uint16_t
 {
+    AudioInputControlPoint = 0x2B7B,
+    AudioInputDescription = 0x2B7C,
+    AudioInputState = 0x2B77,
+    AUdioInputStatus = 0x2B7A,
+    AudioInputType = 0x2B79,
+    GainSettingProperties = 0x2B78,
     ObjectName = 0x2ABE,
     ObjectSize = 0x2AC0,
     ObjectProperties = 0x2AC4,

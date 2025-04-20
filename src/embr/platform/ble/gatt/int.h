@@ -5,6 +5,7 @@
 
 namespace embr { namespace ble { namespace gatt { inline namespace v1 {
 
+using int8 = int8_t;
 using uint8 = uint8_t;
 using uint16 = word<16>;
 using uint24 = word<24>;
