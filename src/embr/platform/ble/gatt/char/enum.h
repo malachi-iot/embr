@@ -1,3 +1,5 @@
+#pragma once
+
 namespace embr { namespace ble { namespace gatt {
 
 inline namespace v1 { namespace uuid {

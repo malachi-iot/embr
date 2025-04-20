@@ -1,3 +1,4 @@
+#pragma once
 
 // OTS_v10.pdf [1.2] Section 3.3
 

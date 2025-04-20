@@ -1,3 +1,5 @@
+#pragma once
+
 #include "char/audio-input-control-point.h"
 #include "char/audio-input-state.h"
 #include "char/audio-input-status.h"
