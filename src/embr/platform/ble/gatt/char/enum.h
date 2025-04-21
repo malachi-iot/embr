@@ -1,5 +1,7 @@
 #pragma once
 
+#include <estd/cstdint.h>
+
 namespace embr { namespace ble { namespace gatt {
 
 inline namespace v1 { namespace uuid {
