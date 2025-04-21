@@ -10,6 +10,7 @@ enum Services16 : uint16_t
 {
     AudioInputControl = 0x1843,
     ObjectTransfer = 0x1825,
+    VolumeControlService = 0x1844
 };
 
 }}

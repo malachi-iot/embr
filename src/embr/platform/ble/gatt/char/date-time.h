@@ -1,3 +1,5 @@
+#pragma once
+
 #include <estd/chrono.h>
 #include <estd/cstdint.h>
 
