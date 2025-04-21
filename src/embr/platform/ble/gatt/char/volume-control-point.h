@@ -6,9 +6,7 @@
 #include "../int.h"
 #include "enum.h"
 
-namespace embr { namespace ble { namespace gatt {
-
-inline namespace v1 {
+namespace embr { namespace ble { namespace gatt { inline namespace v1 {
 
 struct VolumeControlPointBase
 {
