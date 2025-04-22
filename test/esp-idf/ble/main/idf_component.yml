@@ -1,0 +1,3 @@
+dependencies:
+  embr-nimble:
+    path: ../../../../lib/esp-idf/embr-nimble
