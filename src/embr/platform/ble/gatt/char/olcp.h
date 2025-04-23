@@ -24,6 +24,36 @@ struct ObjectListControlPointBase
 
         RESPONSE_CODE = 0x70,
     };
+
+    enum ListSortOrders : uint8_t
+    {
+        BY_NAME = 1,
+        BY_TYPE,
+        BY_SIZE,
+        BY_CREATED,
+        BY_MODIFIED,
+
+        // OR mask
+        ASCENDING = 0,
+        DESCENDING = 0x10,
+    };
+
+    enum ResultCodes : uint8_t
+    {
+        SUCCESS = 1,
+        UNSUPPORTED_OPCODE,
+        INVALID_PARAMETER,
+        FAILED,
+        OUT_OF_BOUNDS,
+        TOO_MANY_OBJECTS,
+        NO_OBJECT
+    };
+
+    PACK(struct Response
+    {
+        Opcodes opcode;
+        ResultCodes result_code;
+    });
 };
 
 PACK(struct ObjectListControlPoint : ObjectListControlPointBase

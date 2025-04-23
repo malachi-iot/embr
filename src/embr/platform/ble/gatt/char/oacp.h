@@ -52,7 +52,11 @@ struct ObjectActionControlPointBase
     {
         Opcodes opcode;
         ResultCodes result_code;
-        // TODO: add parameter here
+        // parameter
+        PACK(union
+        {
+            uint32 checksum;
+        });
     });
 };
 
