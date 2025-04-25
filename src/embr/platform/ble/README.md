@@ -28,8 +28,10 @@ After much deliberation whether to put this code here ot pgqt-util, `embr` felt 
 | OTS       |           | Object Transfer Service
 | OLCP      | OTS       | Object List Control Point [1.1]
 | OACP      | OTS       | Object Action Control Point [2]
+| PDU       |           | Protocol Data Unit
 | PSM       | L2CAP     | Protocol/Service Multiplexer (identifies protocol)
 | SDP       |           | Service Discovery Protocol
+| SDU       |           | Service Data Unit (Application-level payload, especially with L2CAP CoC)
 | SM        |           | ?
 
 # References
