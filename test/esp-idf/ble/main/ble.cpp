@@ -4,6 +4,7 @@
 #include <embr/platform/ble/gatt/ots.h>
 #include <embr/platform/ble/gatt/vcs.h>
 #include <embr/platform/nimble/gatt/session.h>
+#include <embr/platform/nimble/uuid.h>
 
 extern "C" void app_main(void)
 {
