@@ -52,9 +52,11 @@ struct ObjectActionControlPointBase
     {
         Opcodes opcode;
         ResultCodes result_code;
-        // parameter
+
         PACK(union
         {
+            // DEBT: Arbitrary size here, placeholder for EXEC return
+            char parameter[10];
             uint32 checksum;
         });
     });
@@ -72,6 +74,7 @@ PACK(struct ObjectActionControlPoint : ObjectActionControlPointBase
         OffsetLength read;
         OffsetLength write;
         OffsetLength checksum;
+        Response response;
     });
 });
 
