@@ -34,7 +34,7 @@ struct TimeSourceBase
 
 struct ElapsedTimeBase : TimeSourceBase
 {
-    using rep = gatt::v1::word<48, v2::word_options::implicit>;
+    using rep = uint48;
 
     enum Flags : uint8_t
     {
@@ -64,7 +64,7 @@ struct ElapsedTimeBase : TimeSourceBase
 PACK(struct ElapsedTime : ElapsedTimeBase   // NOLINT
 {
     uint8_t flags;
-    uint48 value;
+    rep value;
     TimeSourceValues sync_source;
     int8_t offset;
 
