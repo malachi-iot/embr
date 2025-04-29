@@ -2,6 +2,7 @@
 
 #include <embr/platform/ble/gatt/ets.h>
 #include <embr/platform/ble/gatt/char/date-time.h>
+#include <embr/platform/ble/gatt/ots.h>
 
 // NOTE: Limited to testing GATT/GAP BLE data types.
 
@@ -35,6 +36,21 @@ TEST_CASE("BLE")
         SECTION("current elapsed time")
         {
             REQUIRE(sizeof(gatt::CurrentElapsedTime) == 11);
+        }
+        SECTION("object access control point")
+        {
+            using type = gatt::ObjectActionControlPoint;
+            type oacp;
+            oacp.opcode = type::CHECKSUM;
+            oacp.checksum.length = 10;
+            oacp.checksum.offset = 10;
+            auto raw = (const uint8_t*) &oacp;
+
+            REQUIRE(raw[0] == 3);
+            REQUIRE(raw[1] == 10);
+            REQUIRE(raw[2] == 0);
+            REQUIRE(raw[5] == 10);
+            REQUIRE(raw[6] == 0);
         }
     }
 }

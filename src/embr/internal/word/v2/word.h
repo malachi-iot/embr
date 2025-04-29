@@ -283,6 +283,7 @@ struct word_v2_layer<bits, o, estd::enable_if_t<o & v2::word_options::implicit>>
     using typename base_type::type;
     static constexpr v2::word_options options = o;
 
+    word_v2_layer() = default;
     ESTD_CPP_FORWARDING_CTOR(word_v2_layer)
 
     // DEBT: I think we can achieve this by enable_if on return type
@@ -300,6 +301,7 @@ struct word_v2_layer<bits, o, estd::enable_if_t<!(o & v2::word_options::implicit
     using typename base_type::type;
     static constexpr v2::word_options options = o;
 
+    word_v2_layer() = default;
     ESTD_CPP_FORWARDING_CTOR(word_v2_layer)
 };
 

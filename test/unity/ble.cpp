@@ -8,14 +8,13 @@ using namespace embr::ble;
 
 static void test_ots()
 {
-    /* FIX: Doesn't work due (probably) to non-trivial uint32 
-    union
-    {
-        //gatt::v1::ObjectActionControlPoint::Create oacp_create;
+    using oacp_type = gatt::v1::ObjectActionControlPoint;
 
-        gatt::uint32 v;
-    };
-    */
+    oacp_type oacp;
+
+    oacp.opcode = oacp_type::CHECKSUM;
+    oacp.checksum.length = 10;
+    oacp.checksum.offset = 10;
 }
 
 #ifdef ESP_IDF_TESTING

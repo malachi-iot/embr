@@ -390,6 +390,14 @@ TEST_CASE("word type test", "[word]")
                     );
             }
         }
+        SECTION("triviality")
+        {
+            union
+            {
+                v2::word<16> w16;
+                v2::word<32> w32;
+            };
+        }
         SECTION("units")
         {
             units::meters<v2::word<21, v2::word_options::packed>> v(5);
