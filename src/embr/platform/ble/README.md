@@ -16,6 +16,7 @@ After much deliberation whether to put this code here ot pgqt-util, `embr` felt 
 
 | Term      | Context   | Description
 | -         | -         | - 
+| ACL       | BLE       | Asynchronous Connection-Less (packets)
 | BR/EDR    |           | More or less is Bluetooth Classic
 | CID       | L2CAP     | Channel ID
 | EATT      | BLE       | Enhanced Attribute Protocol (concurrency)
@@ -33,6 +34,7 @@ After much deliberation whether to put this code here ot pgqt-util, `embr` felt 
 | SDP       |           | Service Discovery Protocol
 | SDU       |           | Service Data Unit (Application-level payload, especially with L2CAP CoC)
 | SM        |           | ?
+| SMP       |           | Security related
 
 # References
 
