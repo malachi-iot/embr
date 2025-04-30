@@ -2,10 +2,13 @@
 
 #include "fwd.h"
 
+#include <estd/limits.h>
+
 namespace estd {
 
 template <size_t bits, embr::v2::word_options o>
-struct numeric_limits<embr::v2::word<bits, o> >
+struct numeric_limits<embr::v2::word<bits, o> > :
+    numeric_limits<typename embr::v2::word<bits, o>::type>
 {
     using word_type = embr::v2::word<bits, o>;
     using type = typename word_type::type;
