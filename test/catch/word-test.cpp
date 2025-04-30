@@ -182,6 +182,34 @@ TEST_CASE("word type test", "[word]")
             REQUIRE(internal::alias_up(8, 8) == 8);
             REQUIRE(internal::alias_up(9, 8) == 16);
         }
+        SECTION("limits")
+        {
+            SECTION("int24")
+            {
+                using limits = estd::numeric_limits<v2::word<24, v2::word_options::is_signed>>;
+                constexpr auto min = limits::min();
+                constexpr auto max = limits::max();
+
+                REQUIRE(min == -8388608);
+                REQUIRE(max == 0x7FFFFF);
+            }
+            SECTION("uint24")
+            {
+                using limits = estd::numeric_limits<v2::word<24>>;
+
+                REQUIRE(limits::max() == 0xFFFFFF);
+            }
+            SECTION("int9")
+            {
+                using limits = estd::numeric_limits<v2::word<9, v2::word_options::is_signed>>;
+                constexpr auto min = limits::min();
+                constexpr auto max = limits::max();
+
+                REQUIRE(min == -256);
+                REQUIRE(max == 255);
+
+            }
+        }
         SECTION("storage")
         {
             SECTION("support")

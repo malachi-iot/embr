@@ -170,15 +170,17 @@ struct word_v2_base<bits, o,
     type_from_bits<bits, o & v2::word_options::is_signed>
 {
     using base_type = type_from_bits<bits, o & v2::word_options::is_signed>;
+
+    // smallest primitive type which can fully represent this word
     using typename base_type::type;
-    using base_type::size;
+    using base_type::size;  // size in bytes
     using this_type = word_v2_base;
 
     static constexpr estd::endian endian = map_to_endian<o>::value;
 
-    using pack = packer<type, base_type::size, endian>;
+    using pack = packer<type, size, endian>;
 
-    uint8_t raw_[base_type::size];
+    uint8_t raw_[size];
 
     word_v2_base() = default;
     word_v2_base(const type& copy_from)
@@ -252,7 +254,7 @@ public:
 
     constexpr bool equals(const word_v2_base& compare_to) const
     {
-        return estd::equal(raw_, raw_ + base_type::size, compare_to.raw_);
+        return estd::equal(raw_, raw_ + size, compare_to.raw_);
     }
 
     template <size_t bits2, v2::word_options o2>
