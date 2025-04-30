@@ -184,6 +184,15 @@ TEST_CASE("word type test", "[word]")
         }
         SECTION("limits")
         {
+            SECTION("int9")
+            {
+                using limits = estd::numeric_limits<v2::word<9, v2::word_options::is_signed>>;
+                constexpr auto min = limits::min();
+                constexpr auto max = limits::max();
+
+                REQUIRE(min == -256);
+                REQUIRE(max == 255);
+            }
             SECTION("int24")
             {
                 using limits = estd::numeric_limits<v2::word<24, v2::word_options::is_signed>>;
@@ -199,15 +208,12 @@ TEST_CASE("word type test", "[word]")
 
                 REQUIRE(limits::max() == 0xFFFFFF);
             }
-            SECTION("int9")
+            SECTION("uint48")
             {
-                using limits = estd::numeric_limits<v2::word<9, v2::word_options::is_signed>>;
-                constexpr auto min = limits::min();
-                constexpr auto max = limits::max();
+                using uint48 = v2::word<48, v2::word_options::packed>;
+                using limits = estd::numeric_limits<uint48>;
 
-                REQUIRE(min == -256);
-                REQUIRE(max == 255);
-
+                static_assert(sizeof(uint48) == 6, "");
             }
         }
         SECTION("storage")
@@ -417,6 +423,20 @@ TEST_CASE("word type test", "[word]")
                     "words should be castable even when one is implicit and one isn't"
                     );
             }
+            SECTION("operators")
+            {
+                using uint48 = v2::word<48, v2::word_options::packed>;
+
+                uint48 v{};
+
+                v += 5;
+
+                REQUIRE(v == 5);
+
+                v *= 10;
+
+                REQUIRE(v == 50);
+            }
         }
         SECTION("triviality")
         {
@@ -424,6 +444,7 @@ TEST_CASE("word type test", "[word]")
             {
                 v2::word<16> w16;
                 v2::word<32> w32;
+                v2::word<48, v2::word_options::packed> w48;
             };
         }
         SECTION("units")

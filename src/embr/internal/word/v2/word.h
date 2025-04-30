@@ -241,6 +241,8 @@ public:
 
     this_type& operator+=(const type& addendum)
     {
+        // DEBT: This is permissive, type can easily be larger i.e. size == 3 would
+        // be 'type' of uint32_t
         type added = value() + addendum;
         pack::pack(added, raw_);
         return *this;
@@ -250,6 +252,15 @@ public:
     this_type& operator+=(const word_v2_base<bits2, o2>& addendum)
     {
         return operator+=(addendum.value());
+    }
+
+    this_type& operator*=(const type& rhs)
+    {
+        // DEBT: This is permissive, type can easily be larger i.e. size == 3 would
+        // be 'type' of uint32_t
+        type v = value() * rhs;
+        pack::pack(v, raw_);
+        return *this;
     }
 
     constexpr bool equals(const word_v2_base& compare_to) const
