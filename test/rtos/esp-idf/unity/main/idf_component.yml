@@ -1,0 +1,3 @@
+dependencies:
+  embr-storage:
+    path: ../../../../../lib/esp-idf/embr-storage

@@ -1,0 +1,7 @@
+version: "0.1.0"
+description: "Embedded utility library: ESP-IDF NVS support code"
+url: "https://github.com/malachi-iot/embr"
+repository: "https://github.com/malachi-iot/embr"
+license: "Apache-2.0"
+dependencies:
+  malachi-iot/estd: "^0.8"

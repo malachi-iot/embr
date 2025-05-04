@@ -3,6 +3,7 @@
 #include <esp_log.h>
 
 #include <embr/platform/esp-idf/nvs.h>
+#include <embr/esp-idf/nvs-allocator.h>
 
 using namespace embr;
 
