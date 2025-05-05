@@ -22,12 +22,17 @@ struct nvs_allocator_base
 
     // Positions/sizes are in multiples of sector_size
 
+    // DEBT: Can be optimized down
     struct header
     {
-        uint16_t next;  // npos = nullptr/end of ll
-        uint16_t size;
+        uint16_t size_in_sectors;
         uint16_t id;    // 0 = control table
         uint16_t allocated : 1;
+
+        uint16_t size_in_bytes() const
+        {
+            return size_in_sectors * sector_size;
+        }
     }   __attribute__((packed));
 
     const esp_partition_t* partition_;
@@ -59,14 +64,15 @@ struct nvs_allocator_base
     struct accessor
     {
         nvs_allocator_base* parent_;
-        uint16_t pos_;  // x sector size
+        uint16_t pos_in_sectors_;  // x sector size
         // DEBT: Side effect-y, for now
         mmap_handle_t mmap_handle_;
+        uint16_t pos() const { return pos_in_sectors_ * sector_size; }
 
         const header* mmap()
         {
             const void* data;
-            ESP_ERROR_CHECK(parent_->mmap(pos_ * sector_size, &data, &mmap_handle_));
+            ESP_ERROR_CHECK(parent_->mmap(pos(), &data, &mmap_handle_));
             return (const header*) data;
         }
 
@@ -77,7 +83,7 @@ struct nvs_allocator_base
 
         constexpr bool operator ==(const accessor& other) const
         {
-            return pos_ == other.pos_;
+            return pos_in_sectors_ == other.pos_in_sectors_;
         }
     };
 
@@ -87,7 +93,8 @@ struct nvs_allocator_base
     {
         iterator& operator++()
         {
-            pos_ = mmap()->next;
+            pos_in_sectors_ += mmap()->size_in_sectors;
+            //pos_ = mmap()->next;
             munmap();
             return *this;
         }
@@ -100,7 +107,7 @@ struct nvs_allocator_base
         iterator it;
 
         it.parent_ = this;
-        it.pos_ = 0;
+        it.pos_in_sectors_ = 0;
 
         return it;
     }
@@ -111,21 +118,25 @@ struct nvs_allocator_base
         iterator it;
 
         it.parent_ = this;
-        it.pos_ = npos;
+        it.pos_in_sectors_ = npos;
 
         return it;
+    }
+
+    constexpr uint16_t size_in_blocks() const
+    {
+        return partition_->size / sector_size;
     }
 
     // NOTE: Best if you only doing this really for a brand new fresh partition
     // an erase is better if we're already formatted
     void format()
     {
-        const uint16_t part_size_in_blocks = partition_->size / sector_size;
-        header h{1, 1, 0, true};
+        header h{1, 0, true};
 
         write(0, &h, sizeof(h));
 
-        h = {npos, part_size_in_blocks, 1, false};
+        h = {static_cast<uint16_t>(size_in_blocks() - 1), 1, false};
 
         write(sector_size, &h, sizeof(h));
     }
