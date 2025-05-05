@@ -70,10 +70,14 @@ struct nvs_allocator_base
     estd::freertos::timed_mutex<true> data_lock_;
     //SemaphoreHandle_t data_lock_;
 
-    void open()
+    esp_err_t open()
     {
         partition_ = esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_ANY, "embr");
         //ESP_ERROR_CHECK(wl_mount(partition_, wl_handle_));
+
+        // TODO: do esp_partition_verify
+
+        return partition_ == nullptr ? ESP_ERR_NO_MEM : ESP_OK;
     }
 
     esp_err_t mmap(size_t offset, const void** data, esp_partition_mmap_handle_t* out_handle)
@@ -82,9 +86,9 @@ struct nvs_allocator_base
     }
 
     // NOTE: offset isn't truly needed and mainly used for debugging who locked mmap
-    esp_err_t mmap(size_t offset)
+    esp_err_t mmap(size_t offset, estd::chrono::freertos_clock::duration timeout = estd::chrono::seconds(1))
     {
-        if(!data_lock_.try_lock_for(estd::chrono::seconds(1)))
+        if(!data_lock_.try_lock_for(timeout))
             return ESP_ERR_TIMEOUT;
         return mmap(offset, &data_, &mmap_handle_);
     }
@@ -96,7 +100,7 @@ struct nvs_allocator_base
         data_lock_.unlock();
     }
 
-    const header* data() const { return data_; } 
+    const header* data() const { return (const header*)data_; } 
 
     // DEBT: We're gonna find out soon why they keep these APIs separate I'm sure
     esp_err_t write(size_t addr, const void* src, size_t size)
@@ -179,6 +183,13 @@ struct nvs_allocator_base
     constexpr uint16_t size_in_blocks() const
     {
         return partition_->size / sector_size;
+    }
+
+    bool is_formatted()
+    {
+        header h;
+        //read(0, )
+        return false;
     }
 
     // NOTE: Best if you only doing this really for a brand new fresh partition
