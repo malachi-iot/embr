@@ -80,6 +80,13 @@ struct nvs_allocator_base
         return partition_ == nullptr ? ESP_ERR_NO_MEM : ESP_OK;
     }
 
+    void close()
+    {
+        munmap();
+        partition_ = nullptr;
+    }
+
+    // DEBT: Make him map entire partition size
     esp_err_t mmap(size_t offset, const void** data, esp_partition_mmap_handle_t* out_handle)
     {
         return esp_partition_mmap(partition_, offset, sector_size, ESP_PARTITION_MMAP_DATA, data, out_handle);
@@ -95,6 +102,9 @@ struct nvs_allocator_base
 
     void munmap()
     {
+        // DEBT: May want another mutex
+        if(data_ == nullptr)    return;
+
         esp_partition_munmap(mmap_handle_);
         data_ = nullptr;
         data_lock_.unlock();
@@ -102,10 +112,13 @@ struct nvs_allocator_base
 
     const header* data() const { return (const header*)data_; } 
 
-    // DEBT: We're gonna find out soon why they keep these APIs separate I'm sure
+    esp_err_t erase_range(size_t addr, size_t size) const
+    {
+        return esp_partition_erase_range(partition_, addr, size);
+    }
+
     esp_err_t write(size_t addr, const void* src, size_t size)
     {
-        ESP_ERROR_CHECK(esp_partition_erase_range(partition_, addr, size));
         return esp_partition_write(partition_, addr, src, size);
     }
 
@@ -185,7 +198,9 @@ struct nvs_allocator_base
         return partition_->size / sector_size;
     }
 
-    bool is_formatted()
+    // is_empty indicates whether it's already erased (all 0xFF), avoiding an additional
+    // erase_range possibly
+    bool is_formatted(bool* is_empty = nullptr)
     {
         header h;
         //read(0, )
@@ -194,15 +209,21 @@ struct nvs_allocator_base
 
     // NOTE: Best if you only doing this really for a brand new fresh partition
     // an erase is better if we're already formatted
-    void format()
+    esp_err_t format(bool with_erase = true)
     {
+        if(with_erase)  ESP_ERROR_CHECK(erase_range(0, sector_size));
+
+        esp_err_t err;
+
         header h{1, 0, true};
 
-        write(0, &h, sizeof(h));
+        err = write(0, &h, sizeof(h));
+
+        if(err != ESP_OK)   return err;
 
         h = {static_cast<uint16_t>(size_in_blocks() - 1), 1, false};
 
-        write(sector_size, &h, sizeof(h));
+        return write(sector_size, &h, sizeof(h));
     }
 
     // Deallocate everything except control block
