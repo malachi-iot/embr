@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# Opened ticket https://github.com/espressif/esp-idf/issues/15908
+
+# AI generated
+
+# Strip ESP-IDF’s default -drive arg (if needed) or modify as desired
+#exec qemu-system-xtensa "$@" -drive file=build/unit_test_test.bin,format=raw,readonly=off -nographic -serial mon:stdio
+
+#!/bin/bash
+
+filtered_args=()
+skip_next=false
+
+for arg in "$@"; do
+    if [[ "$arg" == "-drive" ]]; then
+        skip_next=true
+        continue
+    fi
+    if $skip_next; then
+        skip_next=false
+        continue
+    fi
+    filtered_args+=("$arg")
+done
+
+# Add your own writable drive option
+filtered_args+=("-drive" "file=build/unit_test_test.bin,format=raw,readonly=off")
+
+# Ensure -nographic and serial output to terminal are preserved
+if [[ ! " ${filtered_args[@]} " =~ " -nographic " ]]; then
+    filtered_args+=("-nographic")
+fi
+if [[ ! " ${filtered_args[@]} " =~ " -serial " ]]; then
+    filtered_args+=("-serial" "mon:stdio")
+fi
+
+exec qemu-system-xtensa "${filtered_args[@]}"
+
