@@ -64,6 +64,8 @@ PACK(struct ObjectListControlPoint : ObjectListControlPointBase
     {
         uint8_t parameter[6];
         Response response;
+        uint48 goto_object_id;
+        ListSortOrders order;
     });
 });
 
@@ -75,7 +77,7 @@ struct characteristic_traits<ObjectListControlPoint>
         return "Object List Control Point";
     }
 
-    static constexpr v1::uuid::Characteristic16 uuid = v1::uuid::ObjectActionControlPoint;;
+    static constexpr v1::uuid::Characteristic16 uuid = v1::uuid::ObjectListControlPoint;;
 };
 
 
