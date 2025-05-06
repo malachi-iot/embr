@@ -5,10 +5,19 @@
 
 #include <embr/platform/esp-idf/nvs.h>
 #include <embr/esp-idf/nvs-allocator.h>
+#include <embr/esp-idf/nvs/streambuf.h>
 
 using namespace embr;
 
 static const char* TAG = "unity::nvs";
+
+char sector_buffer[4096];
+
+static void test_nvs_ostreambuf()
+{
+    esp_idf::nvs::impl::ostreambuf buf(sector_buffer);
+}
+
 
 static void test_nvs_allocator()
 {
@@ -30,13 +39,11 @@ static void test_nvs_allocator()
         const type::header* header = na.data();
 
         TEST_ASSERT_EQUAL(ESP_ERR_TIMEOUT, na.mmap(0, estd::chrono::milliseconds(50)));
+
+        TEST_ASSERT_EQUAL(1, header->size_in_blocks);
+        TEST_ASSERT_EQUAL(0, header->id);
+
         na.munmap();
-
-        // TODO: Failing.  We get 0xBAAD 0x3AAD here, very suspicious.  Feels like I'm doing
-        // something wrong... but maybe QEMU doesn't have a virtual flash?
-        //TEST_ASSERT_EQUAL(1, header->size_in_blocks);
-        //TEST_ASSERT_EQUAL(0, header->id);
-
         na.close();
     }
 
@@ -55,4 +62,5 @@ TEST_CASE("nvs wrappers", "[nvs]")
     h.close();
 
     RUN_TEST(test_nvs_allocator);
+    RUN_TEST(test_nvs_ostreambuf);
 }
