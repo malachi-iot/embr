@@ -61,6 +61,7 @@ struct nvs_allocator_base : nvs::partition
     }   __attribute__((packed));    */
 
 
+    // A null header indicates it and the remainder of the sector are null
     struct header
     {
         uint16_t size_in_blocks;
@@ -84,6 +85,13 @@ struct nvs_allocator_base : nvs::partition
         void* payload()
         {
             return this + (offsetof(header, write_counter) + size_in_sectors());
+        }
+
+        // DEBT: Really, we want to do this based off id, but in the short term
+        // size_in_blocks will do
+        constexpr bool null() const
+        {
+            return size_in_blocks == 0xFFFF;
         }
 
     }   __attribute__((packed));

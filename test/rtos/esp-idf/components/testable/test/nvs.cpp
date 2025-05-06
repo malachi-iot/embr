@@ -11,11 +11,11 @@ using namespace embr;
 
 static const char* TAG = "unity::nvs";
 
-char sector_buffer[4096];
+//char sector_buffer[4096];
 
 static void test_nvs_ostreambuf()
 {
-    esp_idf::nvs::impl::ostreambuf buf(sector_buffer);
+    esp_idf::nvs::impl::ostreambuf<> os;
 }
 
 
