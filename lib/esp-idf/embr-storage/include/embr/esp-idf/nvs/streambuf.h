@@ -21,7 +21,7 @@ class ostreambuf :
     uint16_t offset_{};
     const esp_partition_t* partition_;
 
-    void sync()
+    int sync()
     {
         const unsigned offset = offset_ * sector_size;
         esp_err_t ret;

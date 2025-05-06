@@ -18,11 +18,36 @@ namespace embr::esp_idf {
 // https://docs.espressif.com/projects/esp-idf/en/v5.4.1/esp32/api-reference/storage/partition.html
 // https://docs.espressif.com/projects/esp-idf/en/v5.4.1/esp32/api-reference/storage/wear-levelling.html
 
-struct nvs_allocator_base
+namespace nvs {
+
+struct partition
+{
+    static constexpr unsigned sector_size = SPI_FLASH_SEC_SIZE;
+
+    const esp_partition_t* partition_;
+
+    esp_err_t erase_range(size_t addr, size_t size) const
+    {
+        return esp_partition_erase_range(partition_, addr, size);
+    }
+
+    esp_err_t write(size_t addr, const void* src, size_t size) const
+    {
+        return esp_partition_write(partition_, addr, src, size);
+    }
+
+    esp_err_t read(size_t offset, void* dst, size_t size) const
+    {
+        return esp_partition_read(partition_, offset, dst, size);
+    }
+};
+
+}
+
+struct nvs_allocator_base : nvs::partition
 {
     using mmap_handle_t = esp_partition_mmap_handle_t;
 
-    static constexpr unsigned sector_size = SPI_FLASH_SEC_SIZE;
     static constexpr unsigned block_size = 256;
     static constexpr auto npos = (uint16_t) -1;
 
@@ -63,7 +88,6 @@ struct nvs_allocator_base
 
     }   __attribute__((packed));
 
-    const esp_partition_t* partition_;
     const void* data_ {};
     //wl_handle_t* wl_handle_;
     mmap_handle_t mmap_handle_;
@@ -111,21 +135,6 @@ struct nvs_allocator_base
     }
 
     const header* data() const { return (const header*)data_; } 
-
-    esp_err_t erase_range(size_t addr, size_t size) const
-    {
-        return esp_partition_erase_range(partition_, addr, size);
-    }
-
-    esp_err_t write(size_t addr, const void* src, size_t size)
-    {
-        return esp_partition_write(partition_, addr, src, size);
-    }
-
-    esp_err_t read(size_t offset, void* dst, size_t size) const
-    {
-        return esp_partition_read(partition_, offset, dst, size);
-    }
 
     struct accessor
     {
