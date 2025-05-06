@@ -28,6 +28,7 @@ struct ObjectListFilterBase
         MARKED
     };
 
+    // "same format as the Date Time characteristic" (OTSv10.pdf Table 3.28)
     PACK(struct TimeBetween
     {
         DateTime timestamp1;
@@ -43,12 +44,12 @@ struct ObjectListFilterBase
 
 PACK(struct ObjectListFilter : ObjectListFilterBase
 {
-    uint8_t filter;
-    union
+    Filters filter;
+    PACK(union
     {
         TimeBetween time_between;
         SizeBetween size_between;
-    };
+    });
 });
     
 }

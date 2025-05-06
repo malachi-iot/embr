@@ -53,13 +53,18 @@ struct ObjectListControlPointBase
     {
         Opcodes opcode;
         ResultCodes result_code;
+        uint32 number_of_objects;
     });
 };
 
 PACK(struct ObjectListControlPoint : ObjectListControlPointBase
 {
     Opcodes opcode;
-    uint8_t parameter[6];
+    PACK(union
+    {
+        uint8_t parameter[6];
+        Response response;
+    });
 });
 
 template <>
