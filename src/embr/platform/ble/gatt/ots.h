@@ -4,6 +4,7 @@
 
 #include "fwd.h"
 
+#include "char/object-list-filter.h"
 #include "char/object-properties.h"
 #include "char/object-size.h"
 #include "char/olcp.h"

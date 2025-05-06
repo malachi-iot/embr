@@ -21,6 +21,7 @@ enum Characteristic16 : uint16_t
     ObjectChanged = 0x2AC8,
     ObjectId = 0x2AC3,
     ObjectListControlPoint = 0x2AC6,
+    ObjectListFilter = 0x2AC7,
     ObjectName = 0x2ABE,
     ObjectProperties = 0x2AC4,
     ObjectSize = 0x2AC0,
