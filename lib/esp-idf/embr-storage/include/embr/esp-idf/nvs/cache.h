@@ -23,8 +23,15 @@ namespace nvs {
 struct partition
 {
     static constexpr unsigned sector_size = SPI_FLASH_SEC_SIZE;
+    using const_pointer = const esp_partition_t*;
 
-    const esp_partition_t* partition_;
+    const_pointer partition_;
+
+    /*
+    static const_pointer find_first()
+    {
+        return esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_ANY, "embr");
+    }   */
 
     esp_err_t erase_range(size_t addr, size_t size) const
     {
@@ -64,9 +71,18 @@ struct nvs_allocator_base : nvs::partition
     // A null header indicates it and the remainder of the sector are null
     struct header
     {
-        uint16_t size_in_blocks;
-        uint16_t id : 14;    // 0 = control table
-        uint16_t allocated : 1;
+        union
+        {
+            struct
+            {
+                uint16_t size_in_blocks;
+                uint16_t id : 14;    // 0 = control table, -1 = empty
+                uint16_t free : 1;
+                uint16_t align : 1;
+            }   __attribute__((packed));
+
+            uint32_t raw;
+        }   __attribute__((packed));
 
         uint16_t size_in_bytes() const
         {
@@ -232,13 +248,13 @@ struct nvs_allocator_base : nvs::partition
 
         esp_err_t err;
 
-        header h{1, 0, true};
+        header h{1, 0, true, false};
 
         err = write(0, &h, sizeof(h));
 
         if(err != ESP_OK)   return err;
 
-        h = {static_cast<uint16_t>(size_in_blocks() - 1), 1, false};
+        h = {static_cast<uint16_t>(size_in_blocks() - 1), 1, false, false};
 
         return write(sector_size, &h, sizeof(h));
     }

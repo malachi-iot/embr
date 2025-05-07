@@ -17,8 +17,17 @@ class ostreambuf :
 
     //using base_type = estd::internal::impl::out_span_streambuf<char, sector_size>;
     using base_type = estd::internal::impl::out_pos_streambuf_base<CharTraits>;
-    using typename base_type::int_type;
+
+public:
     using typename base_type::traits_type;
+    using typename base_type::char_type;
+    using typename base_type::int_type;
+
+    using base_type::pbump;
+    using base_type::pos;
+
+private:
+    using streamsize = estd::streamsize;
 
     // multiples of sector_size, intra-sector position maintained by out_span base
     // NOTE: Optimization idea is to use an absolute 32-bit pos and modulo out the sector offset
@@ -36,17 +45,46 @@ class ostreambuf :
         return ret == ESP_OK ? 0 : -1;
     }   */
 
+    constexpr uint32_t offset() const
+    {
+        return offset_ * sector_size + pos();
+    } 
+
     // amount of buffer space left we can write to
-    constexpr int_type xout_avail() const { return sector_size - this->pos(); }
+    constexpr int_type xout_avail() const { return sector_size - pos(); }
 
 protected:
     int_type overflow(int_type ch = traits_type::eof())
     {
+        const char_type c = traits_type::to_char_type(ch);
+ 
+        esp_err_t ret = esp_partition_write(partition_, offset(), &c, sizeof(char_type));
+
+        pbump(1);
+
         return ch;
     }
 
 public:
     ESTD_CPP_FORWARDING_CTOR(ostreambuf)
+
+    streamsize xsputn(const char_type* s, streamsize count)
+    {
+        esp_err_t ret = esp_partition_write(partition_, offset(), s, count);
+
+        pbump(count);
+
+        return count;
+    }
 };
+
+}
+
+namespace embr::esp_idf::nvs {
+
+template <class CharTraits>
+using basic_ostreambuf = estd::internal::streambuf<impl::ostreambuf<CharTraits>>;
+
+using ostreambuf = basic_ostreambuf<estd::char_traits<char>>;
 
 }

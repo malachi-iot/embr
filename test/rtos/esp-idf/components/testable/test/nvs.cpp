@@ -15,7 +15,7 @@ static const char* TAG = "unity::nvs";
 
 static void test_nvs_ostreambuf()
 {
-    esp_idf::nvs::impl::ostreambuf<> os;
+    esp_idf::nvs::ostreambuf os;
 }
 
 
