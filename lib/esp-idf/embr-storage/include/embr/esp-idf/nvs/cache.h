@@ -56,6 +56,7 @@ struct nvs_allocator_base : nvs::partition
     using mmap_handle_t = esp_partition_mmap_handle_t;
 
     static constexpr unsigned block_size = 256;
+    static constexpr unsigned block_mult = sector_size / block_size;
     static constexpr auto npos = (uint16_t) -1;
 
     static_assert(block_size < sector_size && sector_size % block_size == 0);
@@ -75,13 +76,20 @@ struct nvs_allocator_base : nvs::partition
         {
             struct
             {
-                uint16_t size_in_blocks;
-                uint16_t id : 14;    // 0 = control table, -1 = empty
+                uint16_t size_in_blocks : 10;
+
+                // this helps us avoid rewrites, by specifying the same id
+                // multiple times but the newest generation wins
+                uint16_t generation : 6;
+
+                uint16_t id : 10;    // 0 = control table, -1 = empty
                 uint16_t free : 1;
                 uint16_t align : 1;
+                uint16_t null_ee : 1;      // whether block is 0xFF's
             }   __attribute__((packed));
 
-            uint32_t raw;
+            uint32_t raw{0xFFFF};
+
         }   __attribute__((packed));
 
         uint16_t size_in_bytes() const
@@ -95,12 +103,12 @@ struct nvs_allocator_base : nvs::partition
         }
 
         // array count = size_in_sectors
-        uint8_t write_counter[];
+        uint8_t erase_counter[];
 
         // DEBT: Perhaps add an aligned flag and align to 4 byte boundary
         void* payload()
         {
-            return this + (offsetof(header, write_counter) + size_in_sectors());
+            return this + (offsetof(header, erase_counter) + size_in_sectors());
         }
 
         // DEBT: Really, we want to do this based off id, but in the short term
@@ -239,6 +247,19 @@ struct nvs_allocator_base : nvs::partition
         //read(0, )
         return false;
     }
+
+
+    // copy_from gives us existing erase_count
+    // always writes first block only
+    esp_err_t format_block(uint16_t block_number, header* copy_from = nullptr, bool with_erase = true)
+    {
+        uint32_t offset = block_number * block_mult * sector_size;
+        
+        if(with_erase)  ESP_ERROR_CHECK(erase_range(0, sector_size));
+
+        return ESP_OK;
+    }
+
 
     // NOTE: Best if you only doing this really for a brand new fresh partition
     // an erase is better if we're already formatted
