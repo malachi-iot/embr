@@ -10,8 +10,7 @@
         ],
         "myDefaultIncludePath": [
             "${workspaceFolder}", 
-            "${workspaceFolder}/src", 
-            "${workspaceFolder}/ext/estdlib/src"
+            "${workspaceFolder}/src" 
         ],
         "myCompilerPathExample": "/usr/local/bin/gcc-7"
     },
