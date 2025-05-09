@@ -11,10 +11,4 @@ set(COMPONENT_REQUIRES nvs_flash embr esp_event esp_wifi)
 #    list(APPEND COMPONENT_SRCS led_strip.cpp)
 #endif()
 
-# 31DEC22 MB DEBT: Brute forcing this in, days are numbered for our own
-# ESP versioning though.  Only tested on esp-idf v5
-set(ROOT_DIR ${CMAKE_CURRENT_LIST_DIR}/../../../../..)
-get_filename_component(ROOT_DIR ${ROOT_DIR} ABSOLUTE)
-include(${ROOT_DIR}/ext/estdlib/tools/esp-idf/version_finder.cmake)
-
 register_component()
