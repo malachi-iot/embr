@@ -28,7 +28,7 @@ add_subdirectory(${ROOT_DIR}/test/unity unit-tests)
 add_subdirectory(../support support)
 
 # DEBT: This sneaks in our esp_log.h shim - viable, but confusing
-target_include_directories(unity-tests-lib PRIVATE ../udp-echo)
+target_include_directories(embr-unity-lib PRIVATE ../udp-echo)
 
 add_executable(${PROJECT_NAME}
     main.cpp
@@ -45,11 +45,11 @@ target_link_libraries(${PROJECT_NAME}
     support embr estd)
 
 # This line grants "lwipopts.h" visibiliy to unity-tests-lib
-target_link_libraries(unity-tests-lib support)
+target_link_libraries(embr-unity-lib support)
 
 if(PICO_BOARD STREQUAL pico_w)
     target_link_libraries(${PROJECT_NAME} ${PICO_CYW43_ARCH_LIB})
-    target_link_libraries(unity-tests-lib ${PICO_CYW43_ARCH_LIB})
+    target_link_libraries(embr-unity-lib ${PICO_CYW43_ARCH_LIB})
 endif()
 
 target_include_directories(${PROJECT_NAME} PRIVATE .)

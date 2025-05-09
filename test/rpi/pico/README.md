@@ -22,6 +22,26 @@ CMake Warning at /home/malachi/Projects/ext/rpi/pico-sdk/pico_sdk_init.cmake:53 
   languages added)
 ```
 
+## Journal
+
+### 09MAY25
+
+Scrubbing build in support of removing ext/estdlib.  However, nothing I do results in a successful compile.  In particular:
+
+```
+/home/malachi/Projects/iot/embr/test/rpi/pico/support/init.cpp:4:10: fatal error: pico/cyw43_arch.h: No such file or directory
+    4 | #include <pico/cyw43_arch.h>
+      |          ^~~~~~~~~~~~~~~~~~~
+```
+
+Hits us every time.  I've spent an hour on that, trying:
+
+- Linking in pico_cyw43_arch_none, pico_cyw43_driver
+- Diddling with ways in which `pico_sdk_init.cmake` is pulled in
+- Extra effort in subodule retrieval for SDK itself
+
+I give up.  I'm not using RPI Pico at the moment anyway
+
 ## Projects
 
 ### udp-echo
