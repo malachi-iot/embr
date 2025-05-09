@@ -10,4 +10,4 @@ files:
     - "CHANGELOG.md"
 dependencies:
   malachi-iot/estd:
-    version: ">=0.8.3"
+    version: "^0.8"
