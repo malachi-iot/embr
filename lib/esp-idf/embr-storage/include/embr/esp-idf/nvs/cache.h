@@ -1,5 +1,7 @@
 #pragma once
 
+#include <bitset>
+
 //#include <freertos/FreeRTOS.h>
 //#include <freertos/semphr.h>
 
@@ -79,10 +81,23 @@ struct nvs_allocator_base : nvs::partition
     {
         struct descriptor
         {
-            uint16_t legacy : 8;
-            uint16_t current : 8;
-        };
+            static constexpr unsigned current_sz = 8;
 
+            uint16_t legacy : 8;
+            uint16_t current : current_sz;
+
+            unsigned free_current() const
+            {
+                std::bitset<current_sz> b{current};
+
+                return b.count();
+            }
+
+            unsigned free_total() const
+            {
+                return legacy + free_current();
+            }
+        };
     };
 
 
@@ -285,13 +300,15 @@ struct nvs_allocator_base : nvs::partition
         return false;
     }
 
+    static constexpr uint32_t offset_from_block(uint16_t block_number)
+    {
+        return block_number * block_mult * sector_size;
+    }
 
     // copy_from gives us existing erase_count
     // always writes first block only of sector only
     esp_err_t format_block(uint16_t block_number, header* copy_from = nullptr, bool with_erase = true)
     {
-        uint32_t offset = block_number * block_mult * sector_size;
-        
         if(with_erase)  ESP_ERROR_CHECK(erase_range(0, sector_size));
 
         return ESP_OK;
@@ -300,6 +317,9 @@ struct nvs_allocator_base : nvs::partition
 
     // Format sector with a leading block
     esp_err_t format_sector(uint16_t sector, uint16_t id, uint32_t size_in_bytes, bool with_erase = true);
+
+    // Format control block, optionally copying 'legacy' counters from existing one
+    esp_err_t format_control(uint16_t block_number, header* copy_from = nullptr, bool with_erase = true);
 
     // NOTE: Best if you only doing this really for a brand new fresh partition
     // an erase is better if we're already formatted

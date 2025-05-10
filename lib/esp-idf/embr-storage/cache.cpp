@@ -25,4 +25,36 @@ exit:
     return ret;
 }
 
+
+esp_err_t nvs_allocator_base::format_control(uint16_t block_number, header* copy_from, bool with_erase)
+{
+    esp_err_t ret = ESP_OK;
+
+    const uint32_t offset = offset_from_block(block_number);
+
+    if(copy_from)
+    {
+        mmap(offset);
+        munmap();
+    }
+    else
+    {
+        // NOTE: Doesn't work with FEATURE_ERASE_COUNTER
+
+        unsigned count = size_in_sectors();
+
+        // TODO: Of course we need to heed count
+
+        for(uint32_t o = offset + offsetof(header, descriptors);
+         ; o += sizeof(control::descriptor))
+        {
+            control::descriptor d{0, 0xFF};
+
+            ret = write(o, &d, sizeof(d));
+        }
+    }
+
+    return ret;
+}
+
 }
