@@ -53,13 +53,20 @@ struct ObjectListControlPointBase
     {
         Opcodes opcode;
         ResultCodes result_code;
+        uint32 number_of_objects;
     });
 };
 
 PACK(struct ObjectListControlPoint : ObjectListControlPointBase
 {
     Opcodes opcode;
-    uint8_t parameter[6];
+    PACK(union
+    {
+        uint8_t parameter[6];
+        Response response;
+        uint48 goto_object_id;
+        ListSortOrders order;
+    });
 });
 
 template <>
@@ -70,7 +77,7 @@ struct characteristic_traits<ObjectListControlPoint>
         return "Object List Control Point";
     }
 
-    static constexpr v1::uuid::Characteristic16 uuid = v1::uuid::ObjectActionControlPoint;;
+    static constexpr v1::uuid::Characteristic16 uuid = v1::uuid::ObjectListControlPoint;;
 };
 
 

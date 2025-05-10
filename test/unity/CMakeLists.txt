@@ -6,8 +6,10 @@ include(${CMAKE_CURRENT_LIST_DIR}/../../tools/cmake/setvars.cmake)
 
 set(EMBR_DIR ${ROOT_DIR}/src)
 
+#CPMAddPackage("gh:ThrowTheSwitch/Unity@v2.6.1")
 Set(FETCHCONTENT_QUIET FALSE)
 
+# TODO: Use CPM here
 FetchContent_Declare(
     Unity
     GIT_REPOSITORY  https://github.com/ThrowTheSwitch/Unity
@@ -18,10 +20,6 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(Unity)
 
-# add_subdirectory embr brings in estd for the ride, but we add in our own anyway just
-# to test that the conditional add_subdirectory is behavior
-# just
-#add_subdirectory(${ESTDLIB_DIR}/src estd)
 if(NOT TARGET embr)
     add_subdirectory(${EMBR_DIR} embr)
 endif()

@@ -12,18 +12,16 @@ option(EMBR_EXP_AUTOSTART "Experimental autostart testing" OFF)
 
 add_definitions(-DUNIT_TESTING=1)
 
-include(../../tools/cmake/setvars.cmake)
+add_subdirectory(../../src embr)
 
 CPMAddPackage("gh:catchorg/Catch2@3.8.1")
-
-add_subdirectory(${ROOT_DIR}/src embr)
 
 set(EXTRA_FILES
     README.md
     doc/esp_helper/MenuConfig.md
 )
 
-list(TRANSFORM EXTRA_FILES PREPEND ${ROOT_DIR}/)
+list(TRANSFORM EXTRA_FILES PREPEND ${EMBR_ROOT_DIR}/)
 
 
 set(SOURCE_FILES
