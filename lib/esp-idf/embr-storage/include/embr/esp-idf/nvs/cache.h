@@ -3,9 +3,9 @@
 //#include <freertos/FreeRTOS.h>
 //#include <freertos/semphr.h>
 
-#include <spi_flash_mmap.h>
 #include <esp_partition.h>
 //#include <wear_levelling.h>
+#include <spi_flash_mmap.h>
 
 #include <estd/port/freertos/mutex.h>
 
@@ -14,6 +14,8 @@ namespace embr::esp_idf {
 #if SPI_FLASH_SEC_SIZE != 4096
 #error At this time we require a sector size of 4096
 #endif
+
+#define FEATURE_ERASE_COUNTER 0
 
 // https://docs.espressif.com/projects/esp-idf/en/v5.4.1/esp32/api-reference/storage/partition.html
 // https://docs.espressif.com/projects/esp-idf/en/v5.4.1/esp32/api-reference/storage/wear-levelling.html
@@ -47,6 +49,11 @@ struct partition
     {
         return esp_partition_read(partition_, offset, dst, size);
     }
+
+    constexpr uint32_t size_in_sectors() const
+    {
+        return partition_->size / sector_size;
+    }
 };
 
 }
@@ -67,6 +74,16 @@ struct nvs_allocator_base : nvs::partition
         uint16_t size_in_blocks;
 
     }   __attribute__((packed));    */
+
+    struct control
+    {
+        struct descriptor
+        {
+            uint16_t legacy : 8;
+            uint16_t current : 8;
+        };
+
+    };
 
 
     // A null header indicates it and the remainder of the sector are null
@@ -92,6 +109,16 @@ struct nvs_allocator_base : nvs::partition
 
         }   __attribute__((packed));
 
+        header() = default;
+        header(uint16_t size_in_blocks, uint16_t id, bool free) :
+            size_in_blocks{size_in_blocks},
+            generation{0},
+            id{id},
+            free{free},
+            align{false},
+            null_ee{false}
+        {}
+
         uint16_t size_in_bytes() const
         {
             return size_in_blocks * block_size;
@@ -102,6 +129,7 @@ struct nvs_allocator_base : nvs::partition
             return size_in_blocks * (sector_size / block_size);
         }
 
+#if FEATURE_ERASE_COUNTER
         // array count = size_in_sectors
         uint8_t erase_counter[];
 
@@ -110,6 +138,15 @@ struct nvs_allocator_base : nvs::partition
         {
             return this + (offsetof(header, erase_counter) + size_in_sectors());
         }
+#else
+        union
+        {
+            // will be size_in_sectors() big
+            control::descriptor descriptors[0];
+
+            char payload[0];
+        };
+#endif
 
         // DEBT: Really, we want to do this based off id, but in the short term
         // size_in_blocks will do
@@ -250,7 +287,7 @@ struct nvs_allocator_base : nvs::partition
 
 
     // copy_from gives us existing erase_count
-    // always writes first block only
+    // always writes first block only of sector only
     esp_err_t format_block(uint16_t block_number, header* copy_from = nullptr, bool with_erase = true)
     {
         uint32_t offset = block_number * block_mult * sector_size;
@@ -261,6 +298,9 @@ struct nvs_allocator_base : nvs::partition
     }
 
 
+    // Format sector with a leading block
+    esp_err_t format_sector(uint16_t sector, uint16_t id, uint32_t size_in_bytes, bool with_erase = true);
+
     // NOTE: Best if you only doing this really for a brand new fresh partition
     // an erase is better if we're already formatted
     esp_err_t format(bool with_erase = true)
@@ -269,13 +309,13 @@ struct nvs_allocator_base : nvs::partition
 
         esp_err_t err;
 
-        header h{1, 0, true, false};
+        header h{1, 0, true};
 
         err = write(0, &h, sizeof(h));
 
         if(err != ESP_OK)   return err;
 
-        h = {static_cast<uint16_t>(size_in_blocks() - 1), 1, false, false};
+        h = {static_cast<uint16_t>(size_in_blocks() - 1), 1, false};
 
         return write(sector_size, &h, sizeof(h));
     }

@@ -4,7 +4,7 @@
 #include <esp_log.h>
 
 #include <embr/platform/esp-idf/nvs.h>
-#include <embr/esp-idf/nvs/cache.h>
+#include <embr/esp-idf/nvs/cache.hpp>
 #include <embr/esp-idf/nvs/streambuf.h>
 
 using namespace embr;
