@@ -86,6 +86,14 @@ struct nvs_allocator_base : nvs::partition
             uint16_t legacy : 8;
             uint16_t current : current_sz;
 
+            // NOT on legacy means default flash erased counts as 0 counter
+            // and with some cleverness once in a while when counting we don't have to
+            // do an ERASE
+            constexpr unsigned free_legacy() const
+            {
+                return (~legacy) * current_sz;
+            }
+
             unsigned free_current() const
             {
                 std::bitset<current_sz> b{current};
@@ -93,9 +101,9 @@ struct nvs_allocator_base : nvs::partition
                 return b.count();
             }
 
-            unsigned free_total() const
+            constexpr unsigned erased_total() const
             {
-                return legacy + free_current();
+                return free_legacy() + free_current();
             }
         };
     };
@@ -130,8 +138,8 @@ struct nvs_allocator_base : nvs::partition
             generation{0},
             id{id},
             free{free},
-            align{false},
-            null_ee{false}
+            align{true},
+            null_ee{true}
         {}
 
         uint16_t size_in_bytes() const
@@ -161,6 +169,9 @@ struct nvs_allocator_base : nvs::partition
 
             char payload[0];
         };
+
+        unsigned find_candidate(uint16_t requested_size_in_blocks,
+            unsigned total_blocks) const;
 #endif
 
         // DEBT: Really, we want to do this based off id, but in the short term
@@ -171,6 +182,9 @@ struct nvs_allocator_base : nvs::partition
         }
 
     }   __attribute__((packed));
+
+    // Number of bytes available in the smallest block (header size subtracted)
+    static constexpr unsigned minimum_usable = block_size - sizeof(header);
 
     const void* data_ {};
     //wl_handle_t* wl_handle_;
@@ -305,15 +319,8 @@ struct nvs_allocator_base : nvs::partition
         return block_number * block_mult * sector_size;
     }
 
-    // copy_from gives us existing erase_count
-    // always writes first block only of sector only
-    esp_err_t format_block(uint16_t block_number, header* copy_from = nullptr, bool with_erase = true)
-    {
-        if(with_erase)  ESP_ERROR_CHECK(erase_range(0, sector_size));
-
-        return ESP_OK;
-    }
-
+    // Format a block in a sector
+    esp_err_t write_block(uint16_t block_number, uint16_t id, uint16_t size_in_blocks, bool with_erase);
 
     // Format sector with a leading block
     esp_err_t format_sector(uint16_t sector, uint16_t id, uint32_t size_in_bytes, bool with_erase = true);
@@ -325,19 +332,16 @@ struct nvs_allocator_base : nvs::partition
     // an erase is better if we're already formatted
     esp_err_t format(bool with_erase = true)
     {
-        if(with_erase)  ESP_ERROR_CHECK(erase_range(0, sector_size));
+        esp_err_t ret;
 
-        esp_err_t err;
+        ret = write_block(0, 0, 1, with_erase);
 
-        header h{1, 0, true};
+        if(ret != ESP_OK)   return ret;
 
-        err = write(0, &h, sizeof(h));
+        // Size of 0xFFFF can confortably be set later
+        ret = write_block(1, 1, 0xFFFF, false);
 
-        if(err != ESP_OK)   return err;
-
-        h = {static_cast<uint16_t>(size_in_blocks() - 1), 1, false};
-
-        return write(sector_size, &h, sizeof(h));
+        return ret;
     }
 
     // Deallocate everything except control block
