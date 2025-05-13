@@ -16,6 +16,8 @@ enum Characteristic16 : uint16_t
     AudioInputStatus = 0x2B7A,
     AudioInputType = 0x2B79,
     BatteryEnergyStatus = 0x2BF0,
+    BatteryHealthInformation = 0x2BEB,
+    BatteryHealthStatus = 0x2BEA,
     BatteryLevelStatus = 0x2BED,
     BatteryTimeStatus = 0x2BEE,
     GainSettingProperties = 0x2B78,
