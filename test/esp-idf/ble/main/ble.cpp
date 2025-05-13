@@ -1,5 +1,6 @@
 #include <embr/platform/ble/gap/beacon.h>
 #include <embr/platform/ble/gatt/aics.h>
+#include <embr/platform/ble/gatt/bas.h>
 #include <embr/platform/ble/gatt/ets.h>
 #include <embr/platform/ble/gatt/ots.h>
 #include <embr/platform/ble/gatt/vcs.h>
