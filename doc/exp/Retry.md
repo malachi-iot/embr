@@ -16,4 +16,7 @@ MIA
 
 ## v4
 
-2025-era new placeholder
+2025-era new attempt as of 17MAY25
+
+This flavor is 100% hands off the transport.
+Relies heavily on estd::unordered_map and estd::priority_queue
