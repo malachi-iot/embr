@@ -18,11 +18,13 @@ CPMAddPackage("gh:catchorg/Catch2@3.8.1")
 
 set(EXTRA_FILES
     README.md
+    doc/exp/Retry.md
     doc/esp_helper/MenuConfig.md
+    doc/JSON.md
+    doc/Observer.md
 )
 
 list(TRANSFORM EXTRA_FILES PREPEND ${EMBR_ROOT_DIR}/)
-
 
 set(SOURCE_FILES
     base64-test.cpp
@@ -47,6 +49,10 @@ set(SOURCE_FILES
     units-test.cpp
     word-test.cpp
     )
+
+if(EXISTS ${CMAKE_CURRENT_LIST_DIR}/sources.cmake)
+    include(sources.cmake)
+endif()
 
 if(EMBR_EXP_AUTOSTART)
     target_compile_definitions(${PROJECT_NAME} PRIVATE FEATURE_EMBR_EXP_AUTOSTART=1)
