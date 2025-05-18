@@ -35,21 +35,27 @@ TEST_CASE("Reusable retry", "[retry]")
         REQUIRE(item);
         //REQUIRE(item->last_attempt_ == 1);
 
-        //r = retry.is_ready(tp(500ms));
-        //REQUIRE(r == false);
+        r = retry.is_ready(tp(500ms));
+        REQUIRE(r == false);
 
-        r = retry.ack_received(2);
-        REQUIRE(r);
+        //r = retry.ack_received(2);
+        //REQUIRE(r);
         r = retry.ack_received(1);
         REQUIRE(r);
 
-        //r = retry.is_ready(tp(500ms));
-        //REQUIRE(r == false);
+        r = retry.is_ready(tp(500ms));
+        REQUIRE(r == false);
 
         r = retry.is_ready(tp(2s));
         REQUIRE(r);
 
+        // Still have endpoint #2 tracked
         r = retry.untrack();
-        REQUIRE(r);
+        REQUIRE(r == false);
+
+        REQUIRE(retry.size() == 1);
+
+        item = retry.top();
+        REQUIRE(item->first == 2);
     }
 }

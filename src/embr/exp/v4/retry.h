@@ -73,8 +73,8 @@ private:
     {
         constexpr bool operator()(const_pointer lhs, const_pointer rhs) const
         {
-            if(is_null(*lhs)) return true;
-            if(is_null(*rhs)) return false;
+            if(is_null(*lhs)) return true;      // lhs == null is ALWAYS less than rhs
+            if(is_null(*rhs)) return false;     // lhs != null is NEVER less than null rhs
 
             return lhs->second.next_attempt_ < rhs->second.next_attempt_;
         }
@@ -97,13 +97,14 @@ public:
 
     pointer top();
 
+    // gc as many 'top' items as we can
     void poll(time_point now);
 
     // If 'top' item has just been retried and now it's time to requeue for another,
     // call this guy
     void retrack(time_point next_attempt);
 
-    // If 'top' item can be GC'd, do it via this method
+    // If 'top' item can be GC'd, do it via this method - needs better name
     bool untrack();
 
     // for 'top':
@@ -114,11 +115,19 @@ public:
     // One-shot gc sweep through all of priority_queue
     void gc_sweep();
 
-    bool is_ready(time_point now) const
+    /// is there an active retry ready to go now?
+    /// @param now
+    /// @return
+    // DEBT: side effect gc's along the way
+    bool is_ready(time_point now)
     {
+        poll(now);
+
         if(next_.empty()) return false;
 
-        return now >= next_.top()->second.next_attempt_;
+        pointer i = next_.top();
+
+        return now >= i->second.next_attempt_;
     }
 };
 
@@ -137,6 +146,8 @@ auto Retry<Impl>::track(const endpoint_type& endpoint, time_point next_attempt, 
     if(!r.second) return nullptr;
 
     pointer i = r.first.value();
+
+    i->second.next_attempt_ = next_attempt;
 
     next_.push(i);
 
