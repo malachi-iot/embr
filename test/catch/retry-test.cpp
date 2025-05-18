@@ -14,7 +14,7 @@ TEST_CASE("Reusable retry", "[retry]")
         using tp = retry_type::clock_type::time_point;
         retry_type retry;
         retry_type::tracked_type tracked1, tracked2;
-        retry_type::item_type* item;
+        retry_type::pointer item;
 
         bool r;
 
@@ -35,5 +35,7 @@ TEST_CASE("Reusable retry", "[retry]")
         REQUIRE(r);
         r = retry.ack_received(1);
         REQUIRE(r);
+
+        retry.untrack();
     }
 }

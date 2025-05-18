@@ -51,31 +51,37 @@ public:
     using container_type = estd::layer1::unordered_map<endpoint_type, item_type, count>;
     using size_type = typename container_type::size_type;
 
-private:
     using iterator = typename container_type::iterator;
     using pointer = typename container_type::pointer;
+    using const_pointer = typename container_type::const_pointer;
+
+private:
+    using control_pointer = typename container_type::control_pointer;
 
     struct item_less
     {
-        constexpr bool operator()(const item_type* lhs, const item_type* rhs) const
+        constexpr bool operator()(const_pointer lhs, const_pointer rhs) const
         {
-            return lhs->next_attempt_ < rhs->next_attempt_;
+            return lhs->second.next_attempt_ < rhs->second.next_attempt_;
         }
     };
 
     container_type tracked_;
-    estd::layer1::priority_queue<item_type*, count, item_less> next_;
+
+    // NOTE: Might be nice to track by just endpoint, but things like session IDs
+    // which more comfortably live in tracked_type must be considered also
+    estd::layer1::priority_queue<pointer, count, item_less> next_;
 
 public:
     void track(const endpoint_type& endpoint, const tracked_type& tracked);
 
     template <class ...Args>
-    item_type* track(const endpoint_type& endpoint, time_point sent, Args&&... args);
+    pointer track(const endpoint_type& endpoint, time_point sent, Args&&... args);
     bool ack_received(const endpoint_type&);
 
     constexpr size_type size() const { return tracked_.size(); }
 
-    item_type* top();
+    pointer top();
 
     void poll(time_point now);
 
@@ -85,6 +91,11 @@ public:
 
     // If 'top' item can be GC'd, do it via this method
     void untrack();
+
+    // for 'top':
+    // 1. gc (move active tracked item/pointer location)
+    // 2. pop off priority_queue
+    pointer gc_pop();
 };
 
 template <class Impl>
@@ -95,17 +106,17 @@ void Retry<Impl>::track(const endpoint_type& endpoint, const tracked_type& track
 
 template <class Impl>
 template <class ...Args>
-auto Retry<Impl>::track(const endpoint_type& endpoint, time_point next_attempt, Args&&... args) -> item_type*
+auto Retry<Impl>::track(const endpoint_type& endpoint, time_point next_attempt, Args&&... args) -> pointer
 {
     estd::pair<iterator, bool> r = tracked_.try_emplace(endpoint, std::forward<Args>(args)...);
 
     if(!r.second) return nullptr;
 
-    item_type& item = r.first->second;
-    //item.next_attempt_ = next_attempt;
-    next_.push(&item);
+    pointer i = r.first.value();
 
-    return &item;
+    next_.push(i);
+
+    return i;
 }
 
 template <class Impl>
@@ -116,7 +127,7 @@ bool Retry<Impl>::ack_received(const endpoint_type& endpoint)
     if(found == tracked_.cend())    return false;
 
     // unordered_map has a clever pseudo GC in it.  This means 'found' will linger
-    // a bit longer
+    // a bit longer.  Be advised this nulls out the endpoint/key also
     tracked_.erase(found);
 
     // TODO: gc only once priority queue has let this guy go, OR, somehow splice
@@ -127,7 +138,22 @@ bool Retry<Impl>::ack_received(const endpoint_type& endpoint)
 
 
 template <class Impl>
-auto Retry<Impl>::top() -> item_type*
+auto Retry<Impl>::gc_pop() -> pointer
+{
+    iterator it{&tracked_, next_.top()};
+    //auto item = reinterpret_cast<control_pointer>(next_.top());
+
+    //item = tracked_.gc_active_ll(item);
+
+    // TODO: Make a gc_active which takes a direct pointer too
+    it = tracked_.gc_active(it);
+    next_.pop();
+
+    return it.value();
+}
+
+template <class Impl>
+auto Retry<Impl>::top() -> pointer
 {
     if(next_.empty()) return nullptr;
 
@@ -143,18 +169,33 @@ void Retry<Impl>::poll(time_point now)
 template <class Impl>
 void Retry<Impl>::retrack(time_point next_attempt)
 {
-    item_type* item = next_.top();
+    //pointer item = next_.top();
 
-    next_.pop();
-    ++item->retry_count_;
-    item->next_attempt_ = next_attempt;
+    //next_.pop();
+    pointer item = gc_pop();
+
+    ++item->second.retry_count_;
+    item->second.next_attempt_ = next_attempt;
     next_.push(item);
 }
 
 template <class Impl>
 void Retry<Impl>::untrack()
 {
+    // DEBT: our clever traditional_accessor creates friction here
+    pointer item = next_.top();
+    auto control = reinterpret_cast<control_pointer>(item);
 
+    // can't do erase_and_gc_ll because that guy likes to move
+    // others around.  A little too low level for comfort here.
+    // what this does is indicate to tracked_ that this slot truly
+    // is null.  That presumes this WAS marked_for_gc, which presumes
+    // a 'destroy' (i.e. erase) was previously called
+    // https://github.com/malachi-iot/estdlib/issues/113
+    //if(tracked_.is_null_or_sparse(*control))
+    {
+        control->second.marked_for_gc = 0;
+    }
 }
 
 }}}
