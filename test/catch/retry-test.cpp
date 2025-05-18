@@ -6,6 +6,9 @@ using namespace embr;
 
 TEST_CASE("Reusable retry", "[retry]")
 {
+    // TODO: test against nulled-out entries in the middle of priority queue how that impacts
+    // pushes AND pops
+
     SECTION("v4")
     {
         using namespace std::chrono;
@@ -35,6 +38,8 @@ TEST_CASE("Reusable retry", "[retry]")
         REQUIRE(r);
         r = retry.ack_received(1);
         REQUIRE(r);
+
+        //retry.is_ready(tp(seconds(2)));
 
         r = retry.untrack();
         REQUIRE(r);

@@ -114,6 +114,13 @@ public:
 
     // One-shot gc sweep through all of priority_queue
     void gc_sweep();
+
+    bool is_ready(time_point now) const
+    {
+        if(next_.empty()) return false;
+
+        return now >= next_.top()->second.next_attempt_;
+    }
 };
 
 template <class Impl>
@@ -146,6 +153,9 @@ bool Retry<Impl>::ack_received(const endpoint_type& endpoint)
 
     // unordered_map has a clever pseudo GC in it.  This means 'found' will linger
     // a bit longer.  Be advised this nulls out the endpoint/key also
+    // NOTE: this nulling out might corrupt priority_queue, since 'null' entries
+    // are less than non-null entries but still sitting in the middle.  Pushes
+    // might get confused
     tracked_.erase(found);
 
     // gc is a combination of gc_sparse_ll and gc_active
@@ -171,7 +181,8 @@ auto Retry<Impl>::gc_pop() -> pointer
 
     //item = tracked_.gc_active_ll(item);
 
-    // TODO: Make a gc_active which takes a direct pointer too
+    // TODO: Make a estd gc_active which takes a direct pointer too, or perhaps
+    // expose above ll flavor
     it = tracked_.gc_active(it);
     next_.pop();
 
@@ -190,6 +201,16 @@ auto Retry<Impl>::top() -> pointer
 template <class Impl>
 void Retry<Impl>::poll(time_point now)
 {
+    if(next_.empty())   return;
+
+    pointer item = top();
+
+    for(; is_null(*item); item = next_.top())
+    {
+        // do gc
+        next_.pop();
+        if(next_.empty()) return;
+    }
 }
 
 template <class Impl>
