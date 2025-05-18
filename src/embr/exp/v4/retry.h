@@ -27,9 +27,11 @@ struct RetryItem : Impl::tracked_type
     using time_point = typename clock_type::time_point;
 
     // See https://github.com/malachi-iot/estdlib/issues/110
-    //time_point last_attempt_;
-    unsigned count_{};
-    unsigned last_attempt_{};
+    //time_point next_attempt_;
+
+    // Not counting original send
+    unsigned retry_count_{};
+    unsigned next_attempt_{};
 
     ESTD_CPP_FORWARDING_CTOR(RetryItem)
 };
@@ -51,12 +53,13 @@ public:
 
 private:
     using iterator = typename container_type::iterator;
+    using pointer = typename container_type::pointer;
 
     struct item_less
     {
         constexpr bool operator()(const item_type* lhs, const item_type* rhs) const
         {
-            return lhs->last_attempt_ < rhs->last_attempt_;
+            return lhs->next_attempt_ < rhs->next_attempt_;
         }
     };
 
@@ -67,10 +70,21 @@ public:
     void track(const endpoint_type& endpoint, const tracked_type& tracked);
 
     template <class ...Args>
-    bool track(const endpoint_type& endpoint, Args&&... args);
+    item_type* track(const endpoint_type& endpoint, time_point sent, Args&&... args);
     bool ack_received(const endpoint_type&);
 
     constexpr size_type size() const { return tracked_.size(); }
+
+    item_type* top();
+
+    void poll(time_point now);
+
+    // If 'top' item has just been retried and now it's time to requeue for another,
+    // call this guy
+    void retrack(time_point next_attempt);
+
+    // If 'top' item can be GC'd, do it via this method
+    void untrack();
 };
 
 template <class Impl>
@@ -81,16 +95,17 @@ void Retry<Impl>::track(const endpoint_type& endpoint, const tracked_type& track
 
 template <class Impl>
 template <class ...Args>
-bool Retry<Impl>::track(const endpoint_type& endpoint, Args&&... args)
+auto Retry<Impl>::track(const endpoint_type& endpoint, time_point next_attempt, Args&&... args) -> item_type*
 {
     estd::pair<iterator, bool> r = tracked_.try_emplace(endpoint, std::forward<Args>(args)...);
 
-    if(!r.second) return false;
+    if(!r.second) return nullptr;
 
     item_type& item = r.first->second;
+    //item.next_attempt_ = next_attempt;
     next_.push(&item);
 
-    return true;
+    return &item;
 }
 
 template <class Impl>
@@ -100,11 +115,47 @@ bool Retry<Impl>::ack_received(const endpoint_type& endpoint)
 
     if(found == tracked_.cend())    return false;
 
-    // TODO: unordered_map has a clever psuedo GC in it useful for just this scenario
+    // unordered_map has a clever pseudo GC in it.  This means 'found' will linger
+    // a bit longer
+    tracked_.erase(found);
+
+    // TODO: gc only once priority queue has let this guy go, OR, somehow splice
+    // in a null to that priority queue entry
 
     return true;
 }
 
+
+template <class Impl>
+auto Retry<Impl>::top() -> item_type*
+{
+    if(next_.empty()) return nullptr;
+
+    return next_.top();
+}
+
+
+template <class Impl>
+void Retry<Impl>::poll(time_point now)
+{
+}
+
+template <class Impl>
+void Retry<Impl>::retrack(time_point next_attempt)
+{
+    item_type* item = next_.top();
+
+    next_.pop();
+    ++item->retry_count_;
+    item->next_attempt_ = next_attempt;
+    next_.push(item);
+}
+
+template <class Impl>
+void Retry<Impl>::untrack()
+{
+
+}
 
 }}}
 
