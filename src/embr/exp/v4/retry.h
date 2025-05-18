@@ -111,6 +111,9 @@ public:
     // 1. gc (move active tracked item/pointer location)
     // 2. pop off priority_queue
     pointer gc_pop();
+
+    // One-shot gc sweep through all of priority_queue
+    void gc_sweep();
 };
 
 template <class Impl>
@@ -145,10 +148,18 @@ bool Retry<Impl>::ack_received(const endpoint_type& endpoint)
     // a bit longer.  Be advised this nulls out the endpoint/key also
     tracked_.erase(found);
 
-    // TODO: gc only once priority queue has let this guy go, OR, somehow splice
-    // in a null to that priority queue entry
+    // gc is a combination of gc_sparse_ll and gc_active
+    // gc_sparse_ll truly frees us from sparse -> null item
+    // gc_active effectively reallocs on top of freed null spots
 
     return true;
+}
+
+
+template <class Impl>
+void Retry<Impl>::gc_sweep()
+{
+
 }
 
 
