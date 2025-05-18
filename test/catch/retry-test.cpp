@@ -1,5 +1,7 @@
 #include <catch2/catch_all.hpp>
 
+#include <estd/string.h>
+
 #include <embr/exp/v4/retry.h>
 
 using namespace embr;
@@ -14,7 +16,8 @@ TEST_CASE("Reusable retry", "[retry]")
         using namespace std::chrono;
         using namespace std::chrono_literals;
         using namespace experimental;
-        using retry_type = v4::Retry<v4::RetryImpl<5, int>>;
+        using tracked_type = v4::ReferenceTracked<128>;
+        using retry_type = v4::Retry<v4::RetryImpl<5, int, tracked_type>>;
         using tp = retry_type::clock_type::time_point;
         retry_type retry;
         retry_type::tracked_type tracked1, tracked2;
@@ -24,10 +27,12 @@ TEST_CASE("Reusable retry", "[retry]")
 
         item = retry.track(2, tp(1s), std::move(tracked1));
         REQUIRE(item);
+        item->second.as_string() = "hello #2";
         // FIX: Unexpected behavior, 0 doesn't register
         // registered https://github.com/malachi-iot/estdlib/issues/111
         //REQUIRE(retry.size() == 1);
         item = retry.track(1, tp(2s), std::move(tracked2));
+        item->second.as_string() = "hello #1";
         REQUIRE(item);
         REQUIRE(retry.size() == 2);
 
@@ -57,5 +62,6 @@ TEST_CASE("Reusable retry", "[retry]")
 
         item = retry.top();
         REQUIRE(item->first == 2);
+        REQUIRE(item->second.as_string() == "hello #2");
     }
 }

@@ -9,7 +9,7 @@
 namespace embr { namespace experimental { inline namespace v4 {
 
 // DEBT: Consider some kind of consolidation of unordered_map type here
-template <unsigned N, class Endpoint, class Tracked = ReferenceTracked<>, class Clock = estd::chrono::steady_clock>
+template <unsigned N, class Endpoint, class Tracked, class Clock = estd::chrono::steady_clock>
 struct RetryImpl
 {
     using endpoint_type = Endpoint;
@@ -19,6 +19,9 @@ struct RetryImpl
 };
 
 
+#define FEATURE_EMBR_RETRY_V4_ACK_IS_GC 1
+
+
 template <class Impl>
 struct RetryItem : Impl::tracked_type
 {
@@ -26,11 +29,12 @@ struct RetryItem : Impl::tracked_type
     using clock_type = typename Impl::clock_type;
     using time_point = typename clock_type::time_point;
 
-    // See https://github.com/malachi-iot/estdlib/issues/110
     time_point next_attempt_;
 
     // Not counting original send
     unsigned retry_count_{};
+    // Ignored when FEATURE_EMBR_RETRY_V4_ACK_IS_GC is true
+    bool ack_received_{};
 
     ESTD_CPP_FORWARDING_CTOR(RetryItem)
 };
@@ -90,7 +94,7 @@ public:
     void track(const endpoint_type& endpoint, const tracked_type& tracked);
 
     template <class ...Args>
-    pointer track(const endpoint_type& endpoint, time_point sent, Args&&... args);
+    pointer track(const endpoint_type& endpoint, time_point next_attempt, Args&&... args);
     bool ack_received(const endpoint_type&);
 
     constexpr size_type size() const { return tracked_.size(); }
@@ -110,6 +114,7 @@ public:
     // for 'top':
     // 1. gc (move active tracked item/pointer location)
     // 2. pop off priority_queue
+    // 3. return newly moved pointer
     pointer gc_pop();
 
     // One-shot gc sweep through all of priority_queue
@@ -161,12 +166,18 @@ bool Retry<Impl>::ack_received(const endpoint_type& endpoint)
 
     if(found == tracked_.cend())    return false;
 
+    found->second.ack_received_ = true;
+
+#if FEATURE_EMBR_RETRY_V4_ACK_IS_GC
     // unordered_map has a clever pseudo GC in it.  This means 'found' will linger
     // a bit longer.  Be advised this nulls out the endpoint/key also
     // NOTE: this nulling out might corrupt priority_queue, since 'null' entries
     // are less than non-null entries but still sitting in the middle.  Pushes
     // might get confused
     tracked_.erase(found);
+#else
+    found->second.ack_received_ = true;
+#endif
 
     // gc is a combination of gc_sparse_ll and gc_active
     // gc_sparse_ll truly frees us from sparse -> null item
@@ -215,12 +226,27 @@ void Retry<Impl>::poll(time_point now)
 
     pointer item = top();
 
+#if FEATURE_EMBR_RETRY_V4_ACK_IS_GC
     for(; is_null(*item); item = next_.top())
     {
         // do gc
+        tracked_.gc_sparse_ll(item);
+
         next_.pop();
         if(next_.empty()) return;
     }
+#else
+    for(; item->second.ack_received_; item = next_.top())
+    {
+        iterator it{&tracked_, item};
+        //auto cp = reinterpret_cast<control_pointer>(item);
+        tracked_.erase(it);
+        tracked_.gc_sparse_ll(item);
+
+        next_.pop();
+        if(next_.empty()) return;
+    }
+#endif
 }
 
 template <class Impl>
@@ -229,6 +255,8 @@ void Retry<Impl>::retrack(time_point next_attempt)
     //pointer item = next_.top();
 
     //next_.pop();
+    // FIX: This is bad - technically works but we are gonna be memcpy'ing inline buffers
+    // around too much
     pointer item = gc_pop();
 
     ++item->second.retry_count_;
