@@ -36,6 +36,7 @@ TEST_CASE("Reusable retry", "[retry]")
         r = retry.ack_received(1);
         REQUIRE(r);
 
-        retry.untrack();
+        r = retry.untrack();
+        REQUIRE(r);
     }
 }

@@ -52,16 +52,31 @@ public:
     using size_type = typename container_type::size_type;
 
     using iterator = typename container_type::iterator;
+    using value_type = typename container_type::value_type;
     using pointer = typename container_type::pointer;
     using const_pointer = typename container_type::const_pointer;
 
 private:
+    using control_type = typename container_type::control_type;
     using control_pointer = typename container_type::control_pointer;
+    //using container_traits = typename container_type::traits;
+    //using nullable = typename container_traits::nullable;
+    using nullable = typename container_type::nullable;
+
+
+    // DEBT: Because is_null_or_sparse/container::traits isn't exposed
+    constexpr static bool is_null(const value_type& c)
+    {
+        return nullable::is_null(c.first);
+    }
 
     struct item_less
     {
         constexpr bool operator()(const_pointer lhs, const_pointer rhs) const
         {
+            if(is_null(*lhs)) return true;
+            if(is_null(*rhs)) return false;
+
             return lhs->second.next_attempt_ < rhs->second.next_attempt_;
         }
     };
@@ -90,7 +105,7 @@ public:
     void retrack(time_point next_attempt);
 
     // If 'top' item can be GC'd, do it via this method
-    void untrack();
+    bool untrack();
 
     // for 'top':
     // 1. gc (move active tracked item/pointer location)
@@ -180,11 +195,11 @@ void Retry<Impl>::retrack(time_point next_attempt)
 }
 
 template <class Impl>
-void Retry<Impl>::untrack()
+bool Retry<Impl>::untrack()
 {
-    // DEBT: our clever traditional_accessor creates friction here
     pointer item = next_.top();
-    auto control = reinterpret_cast<control_pointer>(item);
+    // DEBT: our clever traditional_accessor creates friction here
+    //auto control = reinterpret_cast<control_pointer>(item);
 
     // can't do erase_and_gc_ll because that guy likes to move
     // others around.  A little too low level for comfort here.
@@ -193,9 +208,11 @@ void Retry<Impl>::untrack()
     // a 'destroy' (i.e. erase) was previously called
     // https://github.com/malachi-iot/estdlib/issues/113
     //if(tracked_.is_null_or_sparse(*control))
-    {
-        control->second.marked_for_gc = 0;
-    }
+    if(!is_null(*item)) return false;
+
+    tracked_.gc_sparse_ll(item);
+    //control->second.marked_for_gc = 0;
+    return true;
 }
 
 }}}
