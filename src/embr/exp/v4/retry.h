@@ -27,11 +27,10 @@ struct RetryItem : Impl::tracked_type
     using time_point = typename clock_type::time_point;
 
     // See https://github.com/malachi-iot/estdlib/issues/110
-    //time_point next_attempt_;
+    time_point next_attempt_;
 
     // Not counting original send
     unsigned retry_count_{};
-    unsigned next_attempt_{};
 
     ESTD_CPP_FORWARDING_CTOR(RetryItem)
 };

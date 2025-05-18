@@ -114,7 +114,7 @@ public:
         const char_type* start = s;
         const char_type* end = s + count;
 
-        if constexpr(has_epptr)
+        ESTD_CPP_IF_CONSTEXPR(has_epptr)
         {
             char_type* pptr = wrapped_.pptr();
             char_type* epptr = wrapped_.epptr();
