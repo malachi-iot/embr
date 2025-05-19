@@ -90,6 +90,8 @@ private:
     // which more comfortably live in tracked_type must be considered also
     estd::layer1::priority_queue<pointer, count, item_less> next_;
 
+    pointer pop();
+
 public:
     void track(const endpoint_type& endpoint, const tracked_type& tracked);
 
@@ -97,6 +99,7 @@ public:
     pointer track(const endpoint_type& endpoint, time_point next_attempt, Args&&... args);
     bool ack_received(const endpoint_type&);
 
+    // Does not exclude ack'd ones
     constexpr size_type size() const { return tracked_.size(); }
 
     pointer top();
@@ -105,11 +108,22 @@ public:
     void gc();
 
     // Dormant
-    void poll(time_point now);
+    template <class F>
+    void poll(time_point now, F&& f)
+    {
+        pointer r = ready(now);
+
+        if(r == nullptr) return;
+
+        if(f(r))
+            retrack(r->second.next_attempt_);
+        else
+            untrack();
+    }
 
     // If 'top' item has just been retried and now it's time to requeue for another,
     // call this guy
-    void retrack(time_point next_attempt);
+    void retrack(time_point next_attempt, bool gc = false);
 
     // If 'top' item can be GC'd, do it via this method - needs better name
     bool untrack();
@@ -127,16 +141,7 @@ public:
     /// @param now
     /// @return
     // DEBT: side effect gc's along the way
-    bool is_ready(time_point now)
-    {
-        gc();
-
-        if(next_.empty()) return false;
-
-        pointer i = next_.top();
-
-        return now >= i->second.next_attempt_;
-    }
+    pointer ready(time_point now);
 };
 
 template <class Impl>
@@ -198,6 +203,14 @@ void Retry<Impl>::gc_sweep()
 
 
 template <class Impl>
+auto Retry<Impl>::pop() -> pointer
+{
+    pointer item = next_.top();
+    next_.pop();
+    return item;
+}
+
+template <class Impl>
 auto Retry<Impl>::gc_pop() -> pointer
 {
     iterator it{&tracked_, next_.top()};
@@ -254,14 +267,13 @@ void Retry<Impl>::gc()
 }
 
 template <class Impl>
-void Retry<Impl>::retrack(time_point next_attempt)
+void Retry<Impl>::retrack(time_point next_attempt, bool gc)
 {
     //pointer item = next_.top();
 
-    //next_.pop();
-    // FIX: This is bad - technically works but we are gonna be memcpy'ing inline buffers
-    // around too much
-    pointer item = gc_pop();
+    // Remember, gc_pop is gonna deep-copy swap, so only do gc with smaller
+    // item_type
+    pointer item = gc ? gc_pop() : pop();
 
     ++item->second.retry_count_;
     item->second.next_attempt_ = next_attempt;
@@ -288,6 +300,19 @@ bool Retry<Impl>::untrack()
     //control->second.marked_for_gc = 0;
     return true;
 }
+
+template <class Impl>
+auto Retry<Impl>::ready(time_point now) -> pointer
+{
+    gc();
+
+    if(next_.empty()) return nullptr;
+
+    pointer i = next_.top();
+
+    return now >= i->second.next_attempt_ ? i : nullptr;
+}
+
 
 }}}
 
