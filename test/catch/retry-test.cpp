@@ -69,7 +69,7 @@ TEST_CASE("Reusable retry", "[retry]")
             REQUIRE(item->first == 2);
             REQUIRE(item->second.as_string() == "hello #2");
         }
-        SECTION("send 2 ack 2")
+        SECTION("send 2 ack 1")
         {
             using pointer = retry_type::pointer;
             auto poller = [](pointer p)
@@ -101,11 +101,16 @@ TEST_CASE("Reusable retry", "[retry]")
             REQUIRE(item1->second.retry_count_ == 2);
             REQUIRE(item2->second.retry_count_ == 0);
             retry.poll_one(tp(1000ms), poller);
-            retry.poll_one(tp(1000ms), poller);
+            retry.poll_one(tp(1000ms), poller);     // #1 expires
             REQUIRE(retry.size() == 1);
             REQUIRE(item1->second.retry_count_ == 2);
             REQUIRE(item2->second.retry_count_ == 1);
-            retry.poll_one(tp(1001ms), poller);
+            retry.ack_received(2);
+#if FEATURE_EMBR_RETRY_V4_ACK_IS_GC == 0
+            REQUIRE(retry.size() == 1);
+#endif
+            retry.poll_one(tp(1250ms), poller);
+            REQUIRE(retry.size() == 0);
         }
         SECTION("automated")
         {

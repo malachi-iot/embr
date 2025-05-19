@@ -159,18 +159,13 @@ bool Retry<Impl>::untrack(bool force)
     tracked_.gc_sparse_ll(item);
     //control->second.marked_for_gc = 0;
 #else
-    //using find_result = container_type::find_result<control_pointer>;
-
-    // At the moment, we can only untrack after an ACK is received
+    // Only untrack after an ACK is received unless forced to do otherwise
     if(!force && !item->second.ack_received_) return false;
-
-    // DEBT: our clever traditional_accessor creates friction here
-    //auto control = reinterpret_cast<control_pointer>(item);
 
     iterator it(&tracked_, item);
 
     tracked_.erase(it);
-    gc(item);
+    next_.pop();
 #endif
 
     return true;

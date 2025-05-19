@@ -111,7 +111,7 @@ public:
     pointer track(const endpoint_type& endpoint, time_point next_attempt, Args&&... args);
     bool ack_received(const endpoint_type&);
 
-    // Does not exclude ack'd ones
+    // Does not exclude ack'd ones when FEATURE_EMBR_RETRY_V4_ACK_IS_GC == 0
     constexpr size_type size() const { return tracked_.size(); }
 
     pointer top();
