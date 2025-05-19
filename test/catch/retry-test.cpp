@@ -4,6 +4,9 @@
 
 #include <embr/exp/v4/retry.h>
 
+#include "retry-test.h"
+#include "test-data.h"
+
 using namespace embr;
 
 TEST_CASE("Reusable retry", "[retry]")
