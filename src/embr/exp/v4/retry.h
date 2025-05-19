@@ -19,7 +19,7 @@ struct RetryImpl
 };
 
 
-#define FEATURE_EMBR_RETRY_V4_ACK_IS_GC 1
+#define FEATURE_EMBR_RETRY_V4_ACK_IS_GC 0
 
 
 template <class Impl>
@@ -102,6 +102,9 @@ public:
     pointer top();
 
     // gc as many 'top' items as we can
+    void gc();
+
+    // Dormant
     void poll(time_point now);
 
     // If 'top' item has just been retried and now it's time to requeue for another,
@@ -126,7 +129,7 @@ public:
     // DEBT: side effect gc's along the way
     bool is_ready(time_point now)
     {
-        poll(now);
+        gc();
 
         if(next_.empty()) return false;
 
@@ -220,7 +223,7 @@ auto Retry<Impl>::top() -> pointer
 
 
 template <class Impl>
-void Retry<Impl>::poll(time_point now)
+void Retry<Impl>::gc()
 {
     if(next_.empty())   return;
 
@@ -241,7 +244,8 @@ void Retry<Impl>::poll(time_point now)
         iterator it{&tracked_, item};
         //auto cp = reinterpret_cast<control_pointer>(item);
         tracked_.erase(it);
-        tracked_.gc_sparse_ll(item);
+        // Beware, this call asserts if erase fails
+        //tracked_.gc_sparse_ll(item);
 
         next_.pop();
         if(next_.empty()) return;
