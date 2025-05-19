@@ -63,7 +63,7 @@ TEST_CASE("Reusable retry", "[retry]")
             r = retry.untrack();
             REQUIRE(r == false);
 
-            REQUIRE(retry.size() == 1);
+            REQUIRE(retry.size() == 2);
 
             item = retry.top();
             REQUIRE(item->first == 2);
@@ -74,28 +74,38 @@ TEST_CASE("Reusable retry", "[retry]")
             using pointer = retry_type::pointer;
             auto poller = [](pointer p)
             {
-                if(++p->second.retry_count_ == 2) return false;
+                // 'retrack' auto increments retry count.  There might be edge cases where we want
+                // more control over that
+                if(p->second.retry_count_ == 2) return false;
 
                 p->second.next_attempt_ += 250ms;
 
                 return true;
             };
 
-            item = retry.track(1, tp(500ms));
+            pointer item1 = retry.track(1, tp(500ms));
             ready = retry.ready(tp(250ms));
             REQUIRE(!ready);
 
             // NOTE: Underlying mechanism doesn't kick back duplicates yet, so instead it silently fails
-            item = retry.track(2, tp(1000ms));
+            pointer item2 = retry.track(2, tp(1000ms));
             // FIX: Need to sort by greater, not less, on times
             ready = retry.ready(tp(500ms));
             REQUIRE(ready);
-            retry.poll(tp(500ms), poller);
+            retry.poll_one(tp(500ms), poller);
+            REQUIRE(item1->second.retry_count_ == 1);
             ready = retry.ready(tp(1000ms));
             REQUIRE(ready);
-            retry.poll(tp(750ms), poller);
-            retry.poll(tp(1000ms), poller);
-            retry.poll(tp(1001ms), poller);
+            REQUIRE(item1->second.retry_count_ == 1);
+            retry.poll_one(tp(750ms), poller);
+            REQUIRE(item1->second.retry_count_ == 2);
+            REQUIRE(item2->second.retry_count_ == 0);
+            retry.poll_one(tp(1000ms), poller);
+            retry.poll_one(tp(1000ms), poller);
+            REQUIRE(retry.size() == 1);
+            REQUIRE(item1->second.retry_count_ == 2);
+            REQUIRE(item2->second.retry_count_ == 1);
+            retry.poll_one(tp(1001ms), poller);
         }
         SECTION("automated")
         {

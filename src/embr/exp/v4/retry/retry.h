@@ -100,6 +100,10 @@ private:
 
     pointer pop();
 
+
+    // gc as many 'top' items as we can - 'item' must be first 'top'
+    void gc(pointer item);
+
 public:
     void track(const endpoint_type& endpoint, const tracked_type& tracked);
 
@@ -115,26 +119,22 @@ public:
     // gc as many 'top' items as we can
     void gc();
 
-    // Dormant
     template <class F>
-    void poll(time_point now, F&& f)
-    {
-        pointer r = ready(now);
+    void poll_one(time_point now, F&& f);
 
-        if(r == nullptr) return;
-
-        if(f(r))
-            retrack(r->second.next_attempt_);
-        else
-            untrack();
-    }
+    template <class F>
+    void poll(time_point now, F&& f);
 
     // If 'top' item has just been retried and now it's time to requeue for another,
     // call this guy
     void retrack(time_point next_attempt, bool gc = false);
 
-    // If 'top' item can be GC'd, do it via this method - needs better name
-    bool untrack();
+    ///
+    /// @brief untrack If 'top' is to be erased/GC'd, do it via this method - needs better name
+    /// @param force skip ACK check, untrack this no matter what
+    /// @return
+    ///
+    bool untrack(bool force = false);
 
     // for 'top':
     // 1. gc (move active tracked item/pointer location)

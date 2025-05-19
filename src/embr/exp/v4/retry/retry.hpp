@@ -91,12 +91,8 @@ auto Retry<Impl>::top() -> pointer
 
 
 template <class Impl>
-void Retry<Impl>::gc()
+void Retry<Impl>::gc(pointer item)
 {
-    if(next_.empty())   return;
-
-    pointer item = top();
-
 #if FEATURE_EMBR_RETRY_V4_ACK_IS_GC
     for(; is_null(*item); item = next_.top())
     {
@@ -122,6 +118,14 @@ void Retry<Impl>::gc()
 }
 
 template <class Impl>
+void Retry<Impl>::gc()
+{
+    if(next_.empty())   return;
+
+    gc(top());
+}
+
+template <class Impl>
 void Retry<Impl>::retrack(time_point next_attempt, bool gc)
 {
     //pointer item = next_.top();
@@ -136,7 +140,7 @@ void Retry<Impl>::retrack(time_point next_attempt, bool gc)
 }
 
 template <class Impl>
-bool Retry<Impl>::untrack()
+bool Retry<Impl>::untrack(bool force)
 {
     pointer item = next_.top();
     // DEBT: our clever traditional_accessor creates friction here
@@ -155,14 +159,18 @@ bool Retry<Impl>::untrack()
     tracked_.gc_sparse_ll(item);
     //control->second.marked_for_gc = 0;
 #else
+    //using find_result = container_type::find_result<control_pointer>;
+
     // At the moment, we can only untrack after an ACK is received
-    if(!item->second.ack_received_) return false;
+    if(!force && !item->second.ack_received_) return false;
 
     // DEBT: our clever traditional_accessor creates friction here
-    auto control = reinterpret_cast<control_pointer>(item);
+    //auto control = reinterpret_cast<control_pointer>(item);
 
-    //tracked_.erase_ll();
-    //next_.pop();
+    iterator it(&tracked_, item);
+
+    tracked_.erase(it);
+    gc(item);
 #endif
 
     return true;
@@ -179,6 +187,23 @@ auto Retry<Impl>::ready(time_point now) -> pointer
 
     return now >= i->second.next_attempt_ ? i : nullptr;
 }
+
+
+template <class Impl>
+template <class F>
+void Retry<Impl>::poll_one(time_point now, F&& f)
+{
+    pointer r = ready(now);
+
+    if(r == nullptr) return;
+
+    if(f(r))
+        retrack(r->second.next_attempt_);
+    else
+        // Force untrack if we're top and functor says we're done
+        untrack(true);
+}
+
 
 
 }}}
