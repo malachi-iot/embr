@@ -117,24 +117,40 @@ private:
     // gc as many 'top' items as we can - 'item' must be first 'top'
     void gc(pointer item);
 
+    // retrack or untrack
+    // MUST be 'top' item
+    template <class F>
+    void poll_one(pointer, F&&);
+
 public:
     void track(const endpoint_type& endpoint, const tracked_type& tracked);
 
     template <class ...Args>
     pointer track(const endpoint_type& endpoint, time_point next_attempt, Args&&... args);
+
     bool ack_received(const endpoint_type&);
 
     // Does not exclude ack'd ones when FEATURE_EMBR_RETRY_V4_ACK_IS_GC == 0
     constexpr size_type size() const { return tracked_.size(); }
 
+    // DEBT: Make const-only, since this isn't needed for primary retry operations
     pointer top();
 
     // gc as many 'top' items as we can
     void gc();
 
+    /// @brief poll_one investigate next ready, and if its time slot is up, call functor
+    /// @param now
+    /// @param f takes `pointer` parameter.  returns true if retrack is requested, false if done
+    /// @remarks
     template <class F>
     void poll_one(time_point now, F&& f);
 
+    ///
+    /// @brief poll acts on every item who is ready now
+    /// @param now
+    /// @param f
+    ///
     template <class F>
     void poll(time_point now, F&& f);
 

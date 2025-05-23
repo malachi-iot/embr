@@ -33,9 +33,8 @@ TEST_CASE("Reusable retry", "[retry]")
             item = retry.track(2, tp(1s), std::move(tracked1));
             REQUIRE(item);
             item->second.as_string() = "hello #2";
-            // FIX: Unexpected behavior, 0 doesn't register
-            // registered https://github.com/malachi-iot/estdlib/issues/111
-            //REQUIRE(retry.size() == 1);
+            // To register 0 we need: https://github.com/malachi-iot/estdlib/issues/111
+            REQUIRE(retry.size() == 1);
             item = retry.track(1, tp(2s), std::move(tracked2));
             item->second.as_string() = "hello #1";
             REQUIRE(item);
@@ -114,7 +113,7 @@ TEST_CASE("Reusable retry", "[retry]")
 #if FEATURE_EMBR_RETRY_V4_ACK_IS_GC == 0
             REQUIRE(retry.size() == 1);
 #endif
-            retry.poll_one(tp(1250ms), poller);
+            retry.poll(tp(1250ms), poller);
             REQUIRE(retry.size() == 0);
         }
         SECTION("automated")

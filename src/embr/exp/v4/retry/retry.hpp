@@ -118,7 +118,7 @@ void Retry<Impl>::gc()
 {
     if(next_.empty())   return;
 
-    gc(top());
+    gc(next_.top());
 }
 
 template <class Impl>
@@ -182,12 +182,8 @@ auto Retry<Impl>::ready(time_point now) -> pointer
 
 template <class Impl>
 template <class F>
-void Retry<Impl>::poll_one(time_point now, F&& f)
+void Retry<Impl>::poll_one(pointer r, F&& f)
 {
-    pointer r = ready(now);
-
-    if(r == nullptr) return;
-
     if(f(r))
         retrack(r->second.next_attempt_);
     else
@@ -195,6 +191,25 @@ void Retry<Impl>::poll_one(time_point now, F&& f)
         untrack(true);
 }
 
+template <class Impl>
+template <class F>
+void Retry<Impl>::poll_one(time_point now, F&& f)
+{
+    pointer r = ready(now);
+
+    if(r == nullptr) return;
+
+    poll_one(r, std::forward<F>(f));
+}
+
+
+template <class Impl>
+template <class F>
+void Retry<Impl>::poll(time_point now, F&& f)
+{
+    for(pointer r = ready(now); r != nullptr; r = ready(now))
+        poll_one(r, std::forward<F>(f));
+}
 
 
 }}}
