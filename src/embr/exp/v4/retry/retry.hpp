@@ -9,13 +9,11 @@ template <class Impl>
 template <class ...Args>
 auto Retry<Impl>::track(const endpoint_type& endpoint, time_point next_attempt, Args&&... args) -> pointer
 {
-    estd::pair<iterator, bool> r = tracked_.try_emplace(endpoint, std::forward<Args>(args)...);
+    estd::pair<iterator, bool> r = tracked_.try_emplace(endpoint, next_attempt, std::forward<Args>(args)...);
 
     if(!r.second) return nullptr;
 
     pointer i = r.first.value();
-
-    i->second.next_attempt_ = next_attempt;
 
     next_.push(i);
 
@@ -28,8 +26,6 @@ bool Retry<Impl>::ack_received(const endpoint_type& endpoint)
     iterator found = tracked_.find(endpoint);
 
     if(found == tracked_.cend())    return false;
-
-    found->second.ack_received_ = true;
 
 #if FEATURE_EMBR_RETRY_V4_ACK_IS_GC
     // unordered_map has a clever pseudo GC in it.  This means 'found' will linger
@@ -134,7 +130,7 @@ void Retry<Impl>::retrack(time_point next_attempt, bool gc)
     // item_type
     pointer item = gc ? gc_pop() : pop();
 
-    ++item->second.retry_count_;
+    ++item->second.attempt_count_;
     item->second.next_attempt_ = next_attempt;
     next_.push(item);
 }

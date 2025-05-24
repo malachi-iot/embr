@@ -20,7 +20,7 @@ TEST_CASE("Reusable retry", "[retry]")
         using namespace std::chrono_literals;
         using namespace experimental;
         using tracked_type = v4::ReferenceTracked<32>;
-        using retry_type = v4::Retry<v4::RetryImpl<5, int, tracked_type>>;
+        using retry_type = v4::Retry<v4::RetryImpl<5, estd::layer1::optional<int16_t, -1>, tracked_type>>;
         using tp = retry_type::clock_type::time_point;
         retry_type retry;
         retry_type::tracked_type tracked1, tracked2;
@@ -68,6 +68,9 @@ TEST_CASE("Reusable retry", "[retry]")
             item = retry.top();
             REQUIRE(item->first == 2);
             REQUIRE(item->second.as_string() == "hello #2");
+
+            retry.track(0, tp(3s));
+            REQUIRE(retry.size() == 3);
         }
         SECTION("send 2 ack 1")
         {
@@ -76,7 +79,7 @@ TEST_CASE("Reusable retry", "[retry]")
             {
                 // 'retrack' auto increments retry count.  There might be edge cases where we want
                 // more control over that
-                if(p->second.retry_count_ == 2) return false;
+                if(p->second.attempt_count_ == 2) return false;
 
                 p->second.next_attempt_ += 250ms;
 
@@ -89,22 +92,24 @@ TEST_CASE("Reusable retry", "[retry]")
 
             // NOTE: Underlying mechanism doesn't kick back duplicates yet, so instead it silently fails
             pointer item2 = retry.track(2, tp(1000ms));
-            // FIX: Need to sort by greater, not less, on times
+
             ready = retry.ready(tp(500ms));
             REQUIRE(ready);
+            REQUIRE(ready == item1);
             retry.poll_one(tp(500ms), poller);
-            REQUIRE(item1->second.retry_count_ == 1);
+            REQUIRE(item1->second.attempt_count_ == 1);
+            REQUIRE(item1->second.next_attempt_ == tp(750ms));
             ready = retry.ready(tp(1000ms));
-            REQUIRE(ready);
-            REQUIRE(item1->second.retry_count_ == 1);
+            REQUIRE(ready == item1);
+            REQUIRE(item1->second.attempt_count_ == 1);
             retry.poll_one(tp(750ms), poller);
-            REQUIRE(item1->second.retry_count_ == 2);
-            REQUIRE(item2->second.retry_count_ == 0);
+            REQUIRE(item1->second.attempt_count_ == 2);
+            REQUIRE(item2->second.attempt_count_ == 0);
             retry.poll_one(tp(1000ms), poller);
             retry.poll_one(tp(1000ms), poller);     // #1 expires
             REQUIRE(retry.size() == 1);
-            REQUIRE(item1->second.retry_count_ == 2);
-            REQUIRE(item2->second.retry_count_ == 1);
+            REQUIRE(item1->second.attempt_count_ == 2);
+            REQUIRE(item2->second.attempt_count_ == 1);
             retry.ack_received(2);
 #if FEATURE_EMBR_RETRY_V4_ACK_IS_GC == 0
             REQUIRE(retry.size() == 1);

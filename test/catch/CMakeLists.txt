@@ -41,6 +41,7 @@ set(SOURCE_FILES
     experimental-test.cpp
     objlist-test.cpp
     property-test.cpp
+    retry-test.cpp
     runtime-ratio-test.cpp
     scheduler-test.cpp
     service-test.cpp

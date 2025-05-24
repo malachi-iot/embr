@@ -1,7 +1,6 @@
 #pragma once
 
-#include <estd/chrono.h>
-#include <estd/internal/fwd/string.h>
+#include <estd/internal/layer2/string.h>
 
 #include "fwd.h"
 

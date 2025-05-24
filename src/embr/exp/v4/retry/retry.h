@@ -31,12 +31,23 @@ struct RetryItem : Impl::tracked_type
 
     time_point next_attempt_;
 
-    // Not counting original send
-    unsigned retry_count_{};
-    // Ignored when FEATURE_EMBR_RETRY_V4_ACK_IS_GC is true
-    bool ack_received_{};
+    struct
+    {
+        // May or may not count original send, depending on consuming logic
+        unsigned attempt_count_ : 4;
+        // Ignored when FEATURE_EMBR_RETRY_V4_ACK_IS_GC is true
+        unsigned ack_received_ : 1;
+    };
 
-    ESTD_CPP_FORWARDING_CTOR(RetryItem)
+    template <class ...Args>
+    constexpr RetryItem(time_point next_attempt, Args&&...args) :
+        base_type(std::forward<Args>(args)...),
+        next_attempt_{next_attempt},
+        attempt_count_{0},
+        ack_received_{false}
+    {
+
+    }
 };
 
 template <class Impl>
@@ -62,17 +73,15 @@ public:
 private:
     using control_type = typename container_type::control_type;
     using control_pointer = typename container_type::control_pointer;
-    //using container_traits = typename container_type::traits;
-    //using nullable = typename container_traits::nullable;
-    using nullable = typename container_type::nullable;
 
-
-    // DEBT: Because is_null_or_sparse/container::traits isn't exposed
+#if FEATURE_EMBR_RETRY_V4_ACK_IS_GC
     constexpr static bool is_null(const value_type& c)
     {
-        return nullable::is_null(c.first);
+        return container_type::is_empty(c);
     }
 
+    // FEATURE_EMBR_RETRY_V4_ACK_IS_GC doesn't need item_less, just keeping this around
+    // as example of null handling
     struct item_less
     {
         constexpr bool operator()(const_pointer lhs, const_pointer rhs) const
@@ -83,6 +92,7 @@ private:
             return lhs->second.next_attempt_ < rhs->second.next_attempt_;
         }
     };
+#endif
 
     struct item_greater
     {
