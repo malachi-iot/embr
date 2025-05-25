@@ -72,9 +72,6 @@ public:
     using const_pointer = typename container_type::const_pointer;
 
 private:
-    using control_type = typename container_type::control_type;
-    using control_pointer = typename container_type::control_pointer;
-
 #if FEATURE_EMBR_RETRY_V4_ACK_IS_GC
     constexpr static bool is_null(const value_type& c)
     {

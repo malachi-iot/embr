@@ -74,6 +74,13 @@ static void espnow_init()
     ESP_ERROR_CHECK(esp_now_add_peer(&peer));
 }
 
+using namespace embr::experimental;
+//using endpoint_type = estd::array<uint8_t, 8>;
+using endpoint_type = unsigned;
+using tracked_type = estd::array<uint8_t, 250>;
+using retry_type = v4::Retry<v4::RetryImpl<10, endpoint_type, tracked_type>>;
+
+retry_type retry;
 
 extern "C" void app_main(void)
 {
