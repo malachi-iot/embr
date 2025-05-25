@@ -7,6 +7,8 @@
 
 #include <embr/exp/v4/retry.h>
 
+#include "retry.h"
+
 // Lots of code lifted from
 // https://github.com/espressif/esp-idf/blob/v5.4.1/examples/wifi/espnow/
 
@@ -102,16 +104,30 @@ extern "C" void app_main(void)
 
     const endpoint_type ep = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
-    //retry.track(ep, clock_type::now() + 250ms);
+    pointer tracked = retry.track(ep, clock_type::now() + 250ms);
+    auto pkt = new (&tracked->second) packet;
+
+    pkt->seq = 123;
+    pkt->ack = 0;
+
+    ESP_ERROR_CHECK(esp_now_send(ep.data(), tracked->second.data(), sizeof(packet)));
 
     for(;;)
     {
         vTaskDelay(pdMS_TO_TICKS(250));
-        retry.poll(clock_type::now(), [](pointer p)
+        retry.poll_one(clock_type::now(), [&](pointer p)
         {
-            if(p->second.attempt_count_ > 5)    return false;
+            if(p->second.attempt_count_ > 5)
+            {
+                ESP_LOGI(TAG, "giving up");
+                return false;
+            }
 
-            p->second.next_attempt_ += (2 + p->second.attempt_count_) * 250ms;
+            p->second.next_attempt_ += (2 + p->second.attempt_count_) * 500ms;
+
+            ESP_LOGI(TAG, "retry polling");
+            ESP_LOG_BUFFER_HEX_LEVEL(TAG, p->first.data(), 6, ESP_LOG_INFO);
+            ESP_ERROR_CHECK(esp_now_send(ep.data(), p->second.data(), sizeof(packet)));
 
             return true;
         });
