@@ -67,6 +67,7 @@ static void recv_cb(const esp_now_recv_info_t *recv_info, const uint8_t *data, i
 
     if(p->announce)
     {
+        ESP_LOGI(TAG, "recv_cb: discovered");
         discoved = true;
         buddy = mac;
     }
@@ -77,6 +78,7 @@ static void recv_cb(const esp_now_recv_info_t *recv_info, const uint8_t *data, i
     }
     else
     {
+        ESP_LOGI(TAG, "recv_cb: data packet %d, sending ACK out", p->seq);
         pointer tracked = retry.track(mac, clock_type::now());
 
         if(tracked == nullptr)
@@ -89,7 +91,7 @@ static void recv_cb(const esp_now_recv_info_t *recv_info, const uint8_t *data, i
         
         p_reply->ack = 1;
 
-        ESP_ERROR_CHECK(esp_now_send(mac.data(), tracked->second.data(), sizeof(packet)));
+        send(mac, p_reply);
     }
 }
 
