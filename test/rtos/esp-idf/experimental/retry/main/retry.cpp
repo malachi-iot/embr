@@ -19,22 +19,64 @@ const char* TAG = "embr::test::retry";
 
 static uint8_t broadcast_mac[] { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 
+using namespace embr::experimental;
+using endpoint_type = estd::array<uint8_t, 6>;
+using hasher = estd::internal::container_hash<uint32_t>;
+using tracked_type = estd::array<uint8_t, 250>;
+using retry_type = v4::Retry<v4::RetryImpl<10, endpoint_type, tracked_type, hasher>>;
+using clock_type = retry_type::clock_type;
+using pointer = retry_type::pointer;
+
+retry_type retry;
+
 static void send_cb(const uint8_t *mac_addr, esp_now_send_status_t status)
 {
+    ESP_LOGD(TAG, "send_cb");
 
 }
 
 static void recv_cb(const esp_now_recv_info_t *recv_info, const uint8_t *data, int len)
 {
-    if(esp_now_is_peer_exist(recv_info->src_addr) == false)
+    ESP_LOGI(TAG, "recv_cb: len=%d", len);
+    const uint8_t* src_addr = recv_info->src_addr;
+    endpoint_type mac;
+    estd::copy_n(src_addr, 6, mac.begin());
+    ESP_LOG_BUFFER_HEX_LEVEL(TAG, src_addr, 6, ESP_LOG_INFO);
+
+    if(esp_now_is_peer_exist(src_addr) == false)
     {
+        ESP_LOGI(TAG, "recv_cb: adding peer");
         esp_now_peer_info_t peer{};
 
         peer.channel = CONFIG_ESPNOW_CHANNEL;
         peer.ifidx = (wifi_interface_t)ESPNOW_WIFI_IF;
         peer.encrypt = false;
-        memcpy(peer.peer_addr, recv_info->src_addr, ESP_NOW_ETH_ALEN);
+        memcpy(peer.peer_addr, src_addr, ESP_NOW_ETH_ALEN);
         ESP_ERROR_CHECK(esp_now_add_peer(&peer));
+    }
+
+    auto p = (packet*) data;
+
+    if(p->ack)
+    {
+        ESP_LOGI(TAG, "recv_cb: ACK received");
+        retry.ack_received(mac);
+    }
+    else
+    {
+        pointer tracked = retry.track(mac, clock_type::now());
+
+        if(tracked == nullptr)
+        {
+            ESP_LOGW(TAG, "couldn't track");
+            return;
+        }
+
+        auto p_reply = new (&tracked->second) packet(*p);
+        
+        p_reply->ack = 1;
+
+        ESP_ERROR_CHECK(esp_now_send(mac.data(), tracked->second.data(), sizeof(packet)));
     }
 }
 
@@ -76,16 +118,6 @@ static void espnow_init()
     ESP_ERROR_CHECK(esp_now_add_peer(&peer));
 }
 
-using namespace embr::experimental;
-using endpoint_type = estd::array<uint8_t, 6>;
-using hasher = estd::internal::container_hash<uint32_t>;
-using tracked_type = estd::array<uint8_t, 250>;
-using retry_type = v4::Retry<v4::RetryImpl<10, endpoint_type, tracked_type, hasher>>;
-using clock_type = retry_type::clock_type;
-using pointer = retry_type::pointer;
-
-retry_type retry;
-
 extern "C" void app_main(void)
 {
     using namespace std::chrono_literals;
@@ -112,10 +144,13 @@ extern "C" void app_main(void)
 
     ESP_ERROR_CHECK(esp_now_send(ep.data(), tracked->second.data(), sizeof(packet)));
 
+    // TODO: Need to wait until we discover buddy address, then send direct to him, not broadcast -
+    // because retry wants to sort out things based on that address
+
     for(;;)
     {
         vTaskDelay(pdMS_TO_TICKS(250));
-        retry.poll_one(clock_type::now(), [&](pointer p)
+        retry.poll(clock_type::now(), [&](pointer p)
         {
             if(p->second.attempt_count_ > 5)
             {
