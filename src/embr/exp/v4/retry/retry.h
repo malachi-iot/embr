@@ -1,5 +1,6 @@
 #pragma once
 
+#include <estd/chrono.h>
 #include <estd/queue.h>
 #include <estd/unordered_map.h>
 

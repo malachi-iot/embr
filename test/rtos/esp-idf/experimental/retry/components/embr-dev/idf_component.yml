@@ -1,0 +1,4 @@
+dependencies:
+  estd:
+    git: https://github.com/malachi-iot/estdlib
+    version: "alpha"
