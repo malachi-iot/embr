@@ -75,10 +75,12 @@ static void espnow_init()
 }
 
 using namespace embr::experimental;
-//using endpoint_type = estd::array<uint8_t, 8>;
-using endpoint_type = unsigned;
+using endpoint_type = estd::array<uint8_t, 8>;
+using hasher = estd::internal::container_hash<uint32_t>;
 using tracked_type = estd::array<uint8_t, 250>;
-using retry_type = v4::Retry<v4::RetryImpl<10, endpoint_type, tracked_type>>;
+using retry_type = v4::Retry<v4::RetryImpl<10, endpoint_type, tracked_type, hasher>>;
+using clock_type = retry_type::clock_type;
+using pointer = retry_type::pointer;
 
 retry_type retry;
 
@@ -95,4 +97,10 @@ extern "C" void app_main(void)
 
     wifi_init();
     espnow_init();
+
+    for(;;)
+    {
+        vTaskDelay(pdMS_TO_TICKS(250));
+        //retry.poll(clock_type::now(), [](pointer){ return false; });
+    }
 }

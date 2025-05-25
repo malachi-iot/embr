@@ -10,12 +10,15 @@
 namespace embr { namespace experimental { inline namespace v4 {
 
 // DEBT: Consider some kind of consolidation of unordered_map type here
-template <unsigned N, class Endpoint, class Tracked, class Clock = estd::chrono::steady_clock>
+template <
+    unsigned N, class Endpoint, class Tracked,
+    class Hash = estd::hash<Endpoint>, class Clock = estd::chrono::steady_clock>
 struct RetryImpl
 {
     using endpoint_type = Endpoint;
     using tracked_type = Tracked;
     using clock_type = Clock;
+    using hasher = Hash;
     static constexpr unsigned count = N;
 };
 
@@ -55,15 +58,17 @@ template <class Impl>
 class Retry : public Impl
 {
     using base_type = Impl;
+
 public:
     using typename base_type::endpoint_type;
     using typename base_type::tracked_type;
     using typename base_type::clock_type;
+    using typename base_type::hasher;
     using base_type::count;
 
     using time_point = typename clock_type::time_point;
     using item_type = RetryItem<Impl>;
-    using container_type = estd::layer1::unordered_map<endpoint_type, item_type, count>;
+    using container_type = estd::layer1::unordered_map<endpoint_type, item_type, count, hasher>;
     using size_type = typename container_type::size_type;
 
     using iterator = typename container_type::iterator;
