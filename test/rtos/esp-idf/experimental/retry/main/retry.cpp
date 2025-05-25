@@ -27,7 +27,15 @@ using retry_type = v4::Retry<v4::RetryImpl<10, endpoint_type, tracked_type, hash
 using clock_type = retry_type::clock_type;
 using pointer = retry_type::pointer;
 
+bool discoved = false;
 retry_type retry;
+endpoint_type buddy;
+
+static void send(const endpoint_type& ep, const packet* p)
+{
+    ESP_ERROR_CHECK(esp_now_send(ep.data(), (const uint8_t*)p, sizeof(packet)));
+}
+
 
 static void send_cb(const uint8_t *mac_addr, esp_now_send_status_t status)
 {
@@ -57,7 +65,12 @@ static void recv_cb(const esp_now_recv_info_t *recv_info, const uint8_t *data, i
 
     auto p = (packet*) data;
 
-    if(p->ack)
+    if(p->announce)
+    {
+        discoved = true;
+        buddy = mac;
+    }
+    else if(p->ack)
     {
         ESP_LOGI(TAG, "recv_cb: ACK received");
         retry.ack_received(mac);
@@ -136,21 +149,40 @@ extern "C" void app_main(void)
 
     const endpoint_type ep = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
-    pointer tracked = retry.track(ep, clock_type::now() + 250ms);
+    ESP_LOGI(TAG, "Looking for buddy...");
+
+    while(!discoved)
+    {
+        packet disco;
+
+        disco.announce = 1;
+
+        vTaskDelay(pdMS_TO_TICKS(2000));
+        send(ep, &disco);
+    }
+
+    ESP_LOGI(TAG, "Found my buddy!");
+
+    pointer tracked = retry.track(buddy, clock_type::now() + 250ms);
+
+    if(tracked == nullptr)
+    {
+        // Shouldn't happen, but does
+        ESP_LOGE(TAG, "main: track failed!");
+        return;
+    }
+
     auto pkt = new (&tracked->second) packet;
 
     pkt->seq = 123;
     pkt->ack = 0;
 
-    ESP_ERROR_CHECK(esp_now_send(ep.data(), tracked->second.data(), sizeof(packet)));
-
-    // TODO: Need to wait until we discover buddy address, then send direct to him, not broadcast -
-    // because retry wants to sort out things based on that address
+    send(buddy, pkt);
 
     for(;;)
     {
         vTaskDelay(pdMS_TO_TICKS(250));
-        retry.poll(clock_type::now(), [&](pointer p)
+        retry.poll(clock_type::now(), [](pointer p)
         {
             if(p->second.attempt_count_ > 5)
             {
@@ -162,7 +194,7 @@ extern "C" void app_main(void)
 
             ESP_LOGI(TAG, "retry polling");
             ESP_LOG_BUFFER_HEX_LEVEL(TAG, p->first.data(), 6, ESP_LOG_INFO);
-            ESP_ERROR_CHECK(esp_now_send(ep.data(), p->second.data(), sizeof(packet)));
+            ESP_ERROR_CHECK(esp_now_send(p->first.data(), p->second.data(), sizeof(packet)));
 
             return true;
         });
