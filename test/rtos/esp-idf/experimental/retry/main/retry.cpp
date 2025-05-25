@@ -75,7 +75,7 @@ static void espnow_init()
 }
 
 using namespace embr::experimental;
-using endpoint_type = estd::array<uint8_t, 8>;
+using endpoint_type = estd::array<uint8_t, 6>;
 using hasher = estd::internal::container_hash<uint32_t>;
 using tracked_type = estd::array<uint8_t, 250>;
 using retry_type = v4::Retry<v4::RetryImpl<10, endpoint_type, tracked_type, hasher>>;
@@ -86,6 +86,8 @@ retry_type retry;
 
 extern "C" void app_main(void)
 {
+    using namespace std::chrono_literals;
+
     // Initialize NVS
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
@@ -98,9 +100,20 @@ extern "C" void app_main(void)
     wifi_init();
     espnow_init();
 
+    const endpoint_type ep = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+
+    //retry.track(ep, clock_type::now() + 250ms);
+
     for(;;)
     {
         vTaskDelay(pdMS_TO_TICKS(250));
-        //retry.poll(clock_type::now(), [](pointer){ return false; });
+        retry.poll(clock_type::now(), [](pointer p)
+        {
+            if(p->second.attempt_count_ > 5)    return false;
+
+            p->second.next_attempt_ += (2 + p->second.attempt_count_) * 250ms;
+
+            return true;
+        });
     }
 }

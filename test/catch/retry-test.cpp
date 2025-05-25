@@ -120,5 +120,17 @@ TEST_CASE("Reusable retry", "[retry]")
         {
 
         }
+        SECTION("array key")
+        {
+            using mac = estd::array<uint8_t, 6>;
+            using hasher = estd::internal::container_hash<uint32_t>;
+            using retry_type = v4::Retry<v4::RetryImpl<5, mac, tracked_type, hasher>>;
+            retry_type retry;
+
+            mac broadcast{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+
+            // Some kind of failure with equal_to functor
+            //retry.track(broadcast, tp(500ms));
+        }
     }
 }
