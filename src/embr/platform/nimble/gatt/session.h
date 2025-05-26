@@ -1,3 +1,5 @@
+#pragma once
+
 extern "C" {
 #include <host/ble_gatt.h>
 }

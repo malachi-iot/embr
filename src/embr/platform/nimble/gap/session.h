@@ -1,3 +1,5 @@
+#pragma once
+
 #include <estd/cstdint.h>
 
 extern "C" {
