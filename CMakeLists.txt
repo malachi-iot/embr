@@ -1,5 +1,7 @@
 if(ESP_PLATFORM)
+    cmake_minimim_required(3.16)
     include(${CMAKE_CURRENT_LIST_DIR}/tools/esp-idf/component.cmake)
 else()
+    include(tools/cmake/setvars.cmake)
     add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/src embr)
 endif()

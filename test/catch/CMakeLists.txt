@@ -12,7 +12,7 @@ option(EMBR_EXP_AUTOSTART "Experimental autostart testing" OFF)
 
 add_definitions(-DUNIT_TESTING=1)
 
-add_subdirectory(../../src embr)
+add_subdirectory(../.. embr)
 
 CPMAddPackage("gh:catchorg/Catch2@3.8.1")
 
