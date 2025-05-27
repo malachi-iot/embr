@@ -32,10 +32,13 @@ struct endpoint_type
 
     constexpr bool operator==(const endpoint_type& other) const
     {
-        return mid == other.mid && mac == other.mac;
+        return mac == other.mac;
+        //return mid == other.mid && mac == other.mac;
     }
 
-}   __attribute__((packed));
+    // packed important so that hash behaves itself, not just a size thing
+//}   __attribute__((packed));
+};
 
 namespace estd {
 
@@ -46,8 +49,12 @@ struct hash<endpoint_type>
 {
     size_t operator()(const endpoint_type& v) const
     {
-        auto buf = reinterpret_cast<const uint8_t*>(&v);
-        return estd::internal::fnv_hash<uint32_t>::hash(buf, buf + sizeof(endpoint_type));
+        //auto buf = reinterpret_cast<const uint8_t*>(&v);
+        //return estd::internal::fnv_hash<uint32_t>::hash(buf, buf + sizeof(endpoint_type));
+
+        // Due to https://github.com/malachi-iot/estdlib/issues/116, only comparing mac
+        // (hash at risk of computing wrong)
+        return estd::internal::container_hash{}(v.mac);
     }
 };
 
