@@ -15,10 +15,46 @@
 const char* TAG = "embr::test::retry";
 
 using namespace embr::experimental;
-using endpoint_type = estd::array<uint8_t, 6>;
-using hasher = estd::internal::container_hash<uint32_t>;
+
+using mac_type = estd::array<uint8_t, 6>;
+
+struct endpoint_type
+{
+    uint16_t mid;       // CoAP style
+    mac_type mac;
+
+    constexpr endpoint_type() : mid{}, mac{} {}
+
+    constexpr endpoint_type(uint16_t mid, mac_type mac) :
+        mid{mid},
+        mac{mac}
+    {}
+
+    constexpr bool operator==(const endpoint_type& other) const
+    {
+        return mid == other.mid && mac == other.mac;
+    }
+
+}   __attribute__((packed));
+
+namespace estd {
+
+// TODO: Consdider a brute-force container_hash and/or a container_hash_tag for things like
+// endpoint_type to derive from
+template <>
+struct hash<endpoint_type>
+{
+    size_t operator()(const endpoint_type& v) const
+    {
+        auto buf = reinterpret_cast<const uint8_t*>(&v);
+        return estd::internal::fnv_hash<uint32_t>::hash(buf, buf + sizeof(endpoint_type));
+    }
+};
+
+}
+
 using tracked_type = estd::array<uint8_t, 250>;
-using retry_type = v4::Retry<v4::RetryImpl<10, endpoint_type, tracked_type, hasher>>;
+using retry_type = v4::Retry<v4::RetryImpl<10, endpoint_type, tracked_type>>;
 using clock_type = retry_type::clock_type;
 using pointer = retry_type::pointer;
 
@@ -28,7 +64,7 @@ endpoint_type buddy;
 
 static void send(const endpoint_type& ep, const packet* p)
 {
-    ESP_ERROR_CHECK(esp_now_send(ep.data(), (const uint8_t*)p, sizeof(packet)));
+    ESP_ERROR_CHECK(esp_now_send(ep.mac.data(), (const uint8_t*)p, sizeof(packet)));
 }
 
 
@@ -42,7 +78,7 @@ void recv_cb(const esp_now_recv_info_t *recv_info, const uint8_t *data, int len)
 {
     ESP_LOGI(TAG, "recv_cb: len=%d", len);
     const uint8_t* src_addr = recv_info->src_addr;
-    endpoint_type mac;
+    mac_type mac;
     estd::copy_n(src_addr, 6, mac.begin());
     ESP_LOG_BUFFER_HEX_LEVEL(TAG, src_addr, 6, ESP_LOG_INFO);
 
@@ -64,12 +100,14 @@ void recv_cb(const esp_now_recv_info_t *recv_info, const uint8_t *data, int len)
     {
         ESP_LOGI(TAG, "recv_cb: discovered");
         discoved = true;
-        buddy = mac;
+
+        buddy.mid = p->seq;
+        buddy.mac = mac;
     }
     else if(p->ack)
     {
         ESP_LOGI(TAG, "recv_cb: ACK received");
-        retry.ack_received(mac);
+        retry.ack_received(endpoint_type(p->seq, mac));
     }
     else
     {
@@ -79,7 +117,7 @@ void recv_cb(const esp_now_recv_info_t *recv_info, const uint8_t *data, int len)
         
         reply.ack = 1;
 
-        send(mac, &reply);
+        send(endpoint_type(p->seq, mac), &reply);
     }
 }
 
@@ -102,7 +140,7 @@ extern "C" void app_main()
     wifi_init();
     espnow_init();
 
-    const endpoint_type ep = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+    const endpoint_type ep = {0, {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}};
 
     ESP_LOGI(TAG, "Looking for buddy...");
 
@@ -148,8 +186,8 @@ extern "C" void app_main()
             p->second.next_attempt_ += (2 + p->second.attempt_count_) * 500ms;
 
             ESP_LOGI(TAG, "retry polling");
-            ESP_LOG_BUFFER_HEX_LEVEL(TAG, p->first.data(), 6, ESP_LOG_INFO);
-            ESP_ERROR_CHECK(esp_now_send(p->first.data(), p->second.data(), sizeof(packet)));
+            ESP_LOG_BUFFER_HEX_LEVEL(TAG, p->first.mac.data(), 6, ESP_LOG_INFO);
+            ESP_ERROR_CHECK(esp_now_send(p->first.mac.data(), p->second.data(), sizeof(packet)));
 
             return true;
         });
