@@ -125,12 +125,18 @@ TEST_CASE("Reusable retry", "[retry]")
             using mac = estd::array<uint8_t, 6>;
             using hasher = estd::internal::container_hash<uint32_t>;
             using retry_type = v4::Retry<v4::RetryImpl<5, mac, tracked_type, hasher>>;
+            using pointer = typename retry_type::pointer;
             retry_type retry;
 
             mac broadcast{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
-            // Some kind of failure with equal_to functor
-            //retry.track(broadcast, tp(500ms));
+            pointer tracked1 = retry.track(broadcast, tp(500ms));
+
+            REQUIRE(tracked1->first == broadcast);
+            REQUIRE(tracked1->second.as_string() == "");
+
+            pointer tracked2 = retry.track(broadcast, tp(600ms));
+            REQUIRE(tracked2 == nullptr);
         }
     }
 }

@@ -38,7 +38,6 @@ target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_11)
 target_link_libraries(${PROJECT_NAME} INTERFACE estd)
 target_link_libraries(embr_static PUBLIC estd)
 
-#target_include_directories(${PROJECT_NAME} PUBLIC .)
 target_include_directories(${PROJECT_NAME} INTERFACE .)
 target_include_directories(embr_static PUBLIC .)
 
