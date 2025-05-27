@@ -132,25 +132,15 @@ void recv_cb(const esp_now_recv_info_t *recv_info, const uint8_t *data, int len)
 void wifi_init();
 void espnow_init();
 
-extern "C" void app_main()
+static void loop()
 {
     using namespace std::chrono_literals;
-
-    // Initialize NVS
-    esp_err_t ret = nvs_flash_init();
-    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
-    {
-        ESP_ERROR_CHECK( nvs_flash_erase() );
-        ret = nvs_flash_init();
-    }
-    ESP_ERROR_CHECK( ret );
-
-    wifi_init();
-    espnow_init();
 
     const endpoint_type ep = {0, {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}};
 
     ESP_LOGI(TAG, "Looking for buddy...");
+
+    discoved = false;
 
     // TODO: Announce phase has issues when PM is active, probably because announce packets don't go through an ACK
     // procedure
@@ -181,7 +171,7 @@ extern "C" void app_main()
 
     send(buddy, pkt);
 
-    for(;;)
+    while(retry.size() > 0)
     {
         vTaskDelay(pdMS_TO_TICKS(250));
         retry.poll(clock_type::now(), [](pointer p)
@@ -202,4 +192,21 @@ extern "C" void app_main()
             return true;
         });
     }
+}
+
+extern "C" void app_main()
+{
+    // Initialize NVS
+    esp_err_t ret = nvs_flash_init();
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
+    {
+        ESP_ERROR_CHECK( nvs_flash_erase() );
+        ret = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK( ret );
+
+    wifi_init();
+    espnow_init();
+
+    for(;;) loop();
 }
