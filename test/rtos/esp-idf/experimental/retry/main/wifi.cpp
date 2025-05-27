@@ -33,7 +33,11 @@ void espnow_init()
     ESP_ERROR_CHECK( esp_now_init() );
     ESP_ERROR_CHECK( esp_now_register_send_cb(send_cb) );
     ESP_ERROR_CHECK( esp_now_register_recv_cb(recv_cb) );
-#if CONFIG_ESPNOW_ENABLE_POWER_SAVE
+#if CONFIG_ESPNOW_POWERSAVE
+// in MS, experimenting
+#define CONFIG_ESPNOW_WAKE_WINDOW 300
+#define CONFIG_ESPNOW_WAKE_INTERVAL 500
+    // Needs ESP_WIFI_STA_DISCONNECTED_PM_ENABLE
     ESP_ERROR_CHECK( esp_now_set_wake_window(CONFIG_ESPNOW_WAKE_WINDOW) );
     ESP_ERROR_CHECK( esp_wifi_connectionless_module_set_wake_interval(CONFIG_ESPNOW_WAKE_INTERVAL) );
 #endif

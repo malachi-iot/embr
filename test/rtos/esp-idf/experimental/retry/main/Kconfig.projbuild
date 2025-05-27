@@ -1,6 +1,6 @@
 menu "embr::retry"
 
-        config ESPNOW_PMK
+    config ESPNOW_PMK
         string "ESPNOW primary master key"
         default "pmk1234567890123"
         help
@@ -18,5 +18,12 @@ menu "embr::retry"
         range 0 14
         help
             The channel on which sending and receiving ESPNOW data.
+
+    config ESPNOW_POWERSAVE
+        bool "Do light sleep with wake intervals"
+        default n
+        help
+            Indirectly helpful for retry testing, we can predict this will increase packet loss since we're
+            asleep sometimes with no AP to queue the packet for us
             
 endmenu

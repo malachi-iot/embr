@@ -85,8 +85,6 @@ void recv_cb(const esp_now_recv_info_t *recv_info, const uint8_t *data, int len)
 {
     ESP_LOGI(TAG, "recv_cb: len=%d", len);
     const uint8_t* src_addr = recv_info->src_addr;
-    mac_type mac;
-    estd::copy_n(src_addr, 6, mac.begin());
     ESP_LOG_BUFFER_HEX_LEVEL(TAG, src_addr, 6, ESP_LOG_INFO);
 
     if(esp_now_is_peer_exist(src_addr) == false)
@@ -103,9 +101,12 @@ void recv_cb(const esp_now_recv_info_t *recv_info, const uint8_t *data, int len)
 
     auto p = (const packet*) data;
 
+    mac_type mac;
+    estd::copy_n(src_addr, 6, mac.begin());
+
     if(p->announce)
     {
-        ESP_LOGI(TAG, "recv_cb: discovered");
+        ESP_LOGI(TAG, "recv_cb: announce received");
         discoved = true;
 
         buddy.mid = p->seq;
@@ -151,6 +152,8 @@ extern "C" void app_main()
 
     ESP_LOGI(TAG, "Looking for buddy...");
 
+    // TODO: Announce phase has issues when PM is active, probably because announce packets don't go through an ACK
+    // procedure
     while(!discoved)
     {
         packet disco;
@@ -167,7 +170,6 @@ extern "C" void app_main()
 
     if(tracked == nullptr)
     {
-        // Shouldn't happen, but does
         ESP_LOGE(TAG, "main: track failed!");
         return;
     }
@@ -193,7 +195,8 @@ extern "C" void app_main()
             p->second.next_attempt_ += (2 + p->second.attempt_count_) * 500ms;
 
             ESP_LOGI(TAG, "retry polling");
-            ESP_LOG_BUFFER_HEX_LEVEL(TAG, p->first.mac.data(), 6, ESP_LOG_INFO);
+            //ESP_LOG_BUFFER_HEX_LEVEL(TAG, p->first.mac.data(), 6, ESP_LOG_INFO);
+            //send(p->first, &p->second);
             ESP_ERROR_CHECK(esp_now_send(p->first.mac.data(), p->second.data(), sizeof(packet)));
 
             return true;
