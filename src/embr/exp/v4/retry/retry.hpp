@@ -13,11 +13,11 @@ auto Retry<Impl>::track(const endpoint_type& endpoint, time_point next_attempt, 
 
     if(!r.second) return nullptr;
 
-    pointer i = r.first.value();
+    value_type& i = *r.first;
 
-    next_.push(i);
+    next_.push(&i);
 
-    return i;
+    return &i;
 }
 
 template <class Impl>
@@ -74,7 +74,7 @@ auto Retry<Impl>::gc_pop() -> pointer
     it = tracked_.gc_active(it);
     next_.pop();
 
-    return it.value();
+    return estd::addressof(*it);
 }
 
 template <class Impl>
