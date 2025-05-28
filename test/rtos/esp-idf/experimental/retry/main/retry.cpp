@@ -32,13 +32,11 @@ struct endpoint_type
 
     constexpr bool operator==(const endpoint_type& other) const
     {
-        return mac == other.mac;
-        //return mid == other.mid && mac == other.mac;
+        return mid == other.mid && mac == other.mac;
     }
 
     // packed important so that hash behaves itself, not just a size thing
-//}   __attribute__((packed));
-};
+}   __attribute__((packed));
 
 namespace estd {
 
@@ -49,12 +47,8 @@ struct hash<endpoint_type>
 {
     size_t operator()(const endpoint_type& v) const
     {
-        //auto buf = reinterpret_cast<const uint8_t*>(&v);
-        //return estd::internal::fnv_hash<uint32_t>::hash(buf, buf + sizeof(endpoint_type));
-
-        // Due to https://github.com/malachi-iot/estdlib/issues/116, only comparing mac
-        // (hash at risk of computing wrong)
-        return estd::internal::container_hash{}(v.mac);
+        auto buf = reinterpret_cast<const uint8_t*>(&v);
+        return estd::internal::fnv_hash<uint32_t>::hash(buf, buf + sizeof(endpoint_type));
     }
 };
 
@@ -83,7 +77,9 @@ void send_cb(const uint8_t *mac_addr, esp_now_send_status_t status)
 
 void recv_cb(const esp_now_recv_info_t *recv_info, const uint8_t *data, int len)
 {
-    ESP_LOGI(TAG, "recv_cb: len=%d", len);
+    auto p = (const packet*) data;
+
+    ESP_LOGI(TAG, "recv_cb: len=%d, seq=%d", len, p->seq);
     const uint8_t* src_addr = recv_info->src_addr;
     ESP_LOG_BUFFER_HEX_LEVEL(TAG, src_addr, 6, ESP_LOG_INFO);
 
@@ -99,10 +95,7 @@ void recv_cb(const esp_now_recv_info_t *recv_info, const uint8_t *data, int len)
         ESP_ERROR_CHECK(esp_now_add_peer(&peer));
     }
 
-    auto p = (const packet*) data;
-
-    mac_type mac;
-    estd::copy_n(src_addr, 6, mac.begin());
+    const mac_type& mac = *(mac_type*)src_addr;
 
     if(p->announce)
     {
@@ -114,8 +107,8 @@ void recv_cb(const esp_now_recv_info_t *recv_info, const uint8_t *data, int len)
     }
     else if(p->ack)
     {
-        ESP_LOGI(TAG, "recv_cb: ACK received");
-        retry.ack_received(endpoint_type(p->seq, mac));
+        bool matched = retry.ack_received(endpoint_type(p->seq, mac));
+        ESP_LOGI(TAG, "recv_cb: ACK received (matched=%u)", matched);
     }
     else
     {
@@ -148,6 +141,7 @@ static void loop()
     {
         packet disco;
 
+        disco.seq = 123;
         disco.announce = 1;
 
         vTaskDelay(pdMS_TO_TICKS(2000));
