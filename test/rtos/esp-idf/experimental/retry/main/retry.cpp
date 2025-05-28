@@ -168,7 +168,7 @@ static void loop()
     {
         vTaskDelay(pdMS_TO_TICKS(250));
         
-        //if(retry[buddy]->ack_received_)     ESP_LOGI(TAG, "app_main: ACK detected");
+        if(retry[buddy]->ack_received_)     ESP_LOGI(TAG, "app_main: ACK detected");
 
         retry.poll(clock_type::now(), [](pointer p)
         {

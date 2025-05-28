@@ -182,14 +182,15 @@ public:
     // DEBT: side effect gc's along the way
     pointer ready(time_point now);
 
-    constexpr const_pointer operator[](const endpoint_type& e) const
+    constexpr const item_type* operator[](const endpoint_type& e) const
     {
         const_iterator found = tracked_.find(e);
 
         if(found == tracked_.cend()) return nullptr;
 
-        // FIX: Somehow we're falling into non-const operator->
-        return &found->second;
+        const value_type& p = *found;
+
+        return &p.second;
     }
 };
 
