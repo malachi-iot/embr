@@ -8,7 +8,7 @@ struct packet
     unsigned ack : 1;
     unsigned announce : 1;
 
-    packet() : seq{0}, ack{0}, announce{0}  {}
+    packet(unsigned seq = 0) : seq{seq}, ack{0}, announce{0}  {}
 };
 
 

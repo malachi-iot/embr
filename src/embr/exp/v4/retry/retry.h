@@ -72,6 +72,7 @@ public:
     using size_type = typename container_type::size_type;
 
     using iterator = typename container_type::iterator;
+    using const_iterator = typename container_type::const_iterator;
     using value_type = typename container_type::value_type;
     using pointer = typename container_type::pointer;
     using const_pointer = typename container_type::const_pointer;
@@ -132,6 +133,7 @@ public:
 
     // Does not exclude ack'd ones when FEATURE_EMBR_RETRY_V4_ACK_IS_GC == 0
     constexpr size_type size() const { return tracked_.size(); }
+    constexpr bool empty() const { return next_.empty(); }
 
     // DEBT: Make const-only, since this isn't needed for primary retry operations
     pointer top();
@@ -179,6 +181,16 @@ public:
     /// @return
     // DEBT: side effect gc's along the way
     pointer ready(time_point now);
+
+    constexpr const_pointer operator[](const endpoint_type& e) const
+    {
+        const_iterator found = tracked_.find(e);
+
+        if(found == tracked_.cend()) return nullptr;
+
+        // FIX: Somehow we're falling into non-const operator->
+        return &found->second;
+    }
 };
 
 template <class Impl>

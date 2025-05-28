@@ -81,10 +81,10 @@ void recv_cb(const esp_now_recv_info_t *recv_info, const uint8_t *data, int len)
 
     ESP_LOGI(TAG, "recv_cb: len=%d, seq=%d", len, p->seq);
     const uint8_t* src_addr = recv_info->src_addr;
-    ESP_LOG_BUFFER_HEX_LEVEL(TAG, src_addr, 6, ESP_LOG_INFO);
 
     if(esp_now_is_peer_exist(src_addr) == false)
     {
+        ESP_LOG_BUFFER_HEX_LEVEL(TAG, src_addr, 6, ESP_LOG_INFO);
         ESP_LOGI(TAG, "recv_cb: adding peer");
         esp_now_peer_info_t peer{};
 
@@ -94,15 +94,16 @@ void recv_cb(const esp_now_recv_info_t *recv_info, const uint8_t *data, int len)
         memcpy(peer.peer_addr, src_addr, ESP_NOW_ETH_ALEN);
         ESP_ERROR_CHECK(esp_now_add_peer(&peer));
     }
+    else
+        ESP_LOG_BUFFER_HEX_LEVEL(TAG, src_addr, 6, ESP_LOG_DEBUG);
 
     const mac_type& mac = *(mac_type*)src_addr;
 
     if(p->announce)
     {
-        ESP_LOGI(TAG, "recv_cb: announce received");
+        ESP_LOGD(TAG, "recv_cb: announce received");
         discoved = true;
 
-        buddy.mid = p->seq;
         buddy.mac = mac;
     }
     else if(p->ack)
@@ -129,7 +130,7 @@ static void loop()
 {
     using namespace std::chrono_literals;
 
-    const endpoint_type ep = {0, {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}};
+    constexpr endpoint_type ep = {0, {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}};
 
     ESP_LOGI(TAG, "Looking for buddy...");
 
@@ -141,15 +142,15 @@ static void loop()
     {
         packet disco;
 
-        disco.seq = 123;
         disco.announce = 1;
 
-        vTaskDelay(pdMS_TO_TICKS(2000));
         send(ep, &disco);
+        vTaskDelay(pdMS_TO_TICKS(1000));
     }
 
     ESP_LOGI(TAG, "Found my buddy!");
 
+    buddy.mid++;
     pointer tracked = retry.track(buddy, clock_type::now() + 250ms);
 
     if(tracked == nullptr)
@@ -158,16 +159,17 @@ static void loop()
         return;
     }
 
-    auto pkt = new (&tracked->second) packet;
-
-    pkt->seq = 123;
-    pkt->ack = 0;
+    auto pkt = new (&tracked->second) packet(buddy.mid);
 
     send(buddy, pkt);
 
-    while(retry.size() > 0)
+    // Q: Race condition with ack_received?  Maybe.  Let's be sure
+    while(!retry.empty())
     {
         vTaskDelay(pdMS_TO_TICKS(250));
+        
+        //if(retry[buddy]->ack_received_)     ESP_LOGI(TAG, "app_main: ACK detected");
+
         retry.poll(clock_type::now(), [](pointer p)
         {
             if(p->second.attempt_count_ > 5)
@@ -186,6 +188,8 @@ static void loop()
             return true;
         });
     }
+
+    vTaskDelay(pdMS_TO_TICKS(2000));
 }
 
 extern "C" void app_main()
