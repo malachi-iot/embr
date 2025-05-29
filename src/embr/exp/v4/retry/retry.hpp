@@ -9,12 +9,14 @@ template <class Impl>
 template <class ...Args>
 auto Retry<Impl>::track(const endpoint_type& endpoint, time_point next_attempt, Args&&... args) -> pointer
 {
+    // attempt to place endpoint as tracked
     estd::pair<iterator, bool> r = tracked_.try_emplace(endpoint, next_attempt, std::forward<Args>(args)...);
 
     if(!r.second) return nullptr;
 
     value_type& i = *r.first;
 
+    // on success, also push to priority queue so that next-up item is immediately available
     next_.push(&i);
 
     return &i;
@@ -23,6 +25,10 @@ auto Retry<Impl>::track(const endpoint_type& endpoint, time_point next_attempt, 
 template <class Impl>
 bool Retry<Impl>::ack_received(const endpoint_type& endpoint)
 {
+#if FEATURE_EMBR_V4_RETRY_STRICT
+    if(tracked_.empty()) return false;
+#endif
+
     iterator found = tracked_.find(endpoint);
 
     if(found == tracked_.cend())    return false;
@@ -56,6 +62,10 @@ void Retry<Impl>::gc_sweep()
 template <class Impl>
 auto Retry<Impl>::pop() -> pointer
 {
+#if FEATURE_EMBR_V4_RETRY_STRICT
+    assert(next_.empty() == false);
+#endif
+
     pointer item = next_.top();
     next_.pop();
     return item;
@@ -64,6 +74,10 @@ auto Retry<Impl>::pop() -> pointer
 template <class Impl>
 auto Retry<Impl>::gc_pop() -> pointer
 {
+#if FEATURE_EMBR_V4_RETRY_STRICT
+    assert(next_.empty() == false);
+#endif
+
     iterator it{&tracked_, next_.top()};
     //auto item = reinterpret_cast<control_pointer>(next_.top());
 
@@ -78,7 +92,7 @@ auto Retry<Impl>::gc_pop() -> pointer
 }
 
 template <class Impl>
-auto Retry<Impl>::top() -> pointer
+auto Retry<Impl>::top() const -> pointer
 {
     if(next_.empty()) return nullptr;
 
@@ -138,6 +152,10 @@ void Retry<Impl>::retrack(time_point next_attempt, bool gc)
 template <class Impl>
 bool Retry<Impl>::untrack(bool force)
 {
+#if FEATURE_EMBR_V4_RETRY_STRICT
+    if(next_.empty()) return false;
+#endif
+
     pointer item = next_.top();
     // DEBT: our clever traditional_accessor creates friction here
     //auto control = reinterpret_cast<control_pointer>(item);

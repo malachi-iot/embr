@@ -114,7 +114,6 @@ private:
 
     pointer pop();
 
-
     // gc as many 'top' items as we can - 'item' must be first 'top'
     void gc(pointer item);
 
@@ -124,11 +123,13 @@ private:
     void poll_one(pointer, F&&);
 
 public:
+    // NOT ACTIVE
     void track(const endpoint_type& endpoint, const tracked_type& tracked);
 
     template <class ...Args>
     pointer track(const endpoint_type& endpoint, time_point next_attempt, Args&&... args);
 
+    // when transport receives an actual ACK, call this to remove him from retry tracking
     bool ack_received(const endpoint_type&);
 
     // Does not exclude ack'd ones when FEATURE_EMBR_RETRY_V4_ACK_IS_GC == 0
@@ -136,7 +137,7 @@ public:
     constexpr bool empty() const { return next_.empty(); }
 
     // DEBT: Make const-only, since this isn't needed for primary retry operations
-    pointer top();
+    pointer top() const;
 
     // gc as many 'top' items as we can
     void gc();
@@ -161,10 +162,10 @@ public:
     void retrack(time_point next_attempt, bool gc = false);
 
     ///
-    /// @brief untrack If 'top' is to be erased/GC'd, do it via this method - needs better name
+    /// @brief Erase/GC 'top' (current) item if ACK was received
     /// @param force skip ACK check, untrack this no matter what
-    /// @return
-    ///
+    /// @return true if we actually erased item, false otherwise
+    /// @remarks consider naming 'untrack_top'
     bool untrack(bool force = false);
 
     // for 'top':
