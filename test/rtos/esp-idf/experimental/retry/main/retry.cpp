@@ -212,21 +212,36 @@ static void loop()
         clock_type::time_point next = top->second.next_attempt();
         auto interval = std::chrono::duration_cast<std::chrono::milliseconds>(next - clock_type::now());
         //vTaskDelay(pdMS_TO_TICKS(250));
-        uint32_t notify_from_ack = 0;
+        bool ack_received;
+        BaseType_t r = false;
 
         // It's possible we missed our timer, so double check that
         if(interval.count() > 0)
         {
-            BaseType_t r = xTaskNotifyWaitIndexed(0, 0, 1, &notify_from_ack,
+            uint32_t notify_from_ack = 0;
+            r = xTaskNotifyWaitIndexed(0, 0, 1, &notify_from_ack,
                 // + 1 more or less rounds up, + 1 again for fudge factor
                 pdMS_TO_TICKS(interval.count()) + 2);
 
             if(r == pdFALSE)
+            {
                 ESP_LOGD(TAG, "Natural timeout waiting for ACK (none received)");
+            }
+            else
+            {
+                if(notify_from_ack)                 ESP_LOGI(TAG, "app_main: ACK detected (notify)");
+                ack_received = notify_from_ack;
+            }
+        }
+
+        // If task notify wait timed out or never happened
+        if(r == pdFALSE)
+        {
+            if((ack_received = top->second.ack_received()))
+                ESP_LOGI(TAG, "app_main: ACK detected");
         }
         
-        if(notify_from_ack)                 ESP_LOGI(TAG, "app_main: ACK notify detected");
-        if(retry[buddy]->ack_received_)     ESP_LOGI(TAG, "app_main: ACK detected");
+        //if(retry[buddy]->ack_received())     ESP_LOGI(TAG, "app_main: ACK detected");
 
         int processed = retry.poll(clock_type::now(), [](pointer p)
         {
@@ -247,7 +262,7 @@ static void loop()
 
         // NOTE: Minor race condition, notify_from_ack edge case exists
         // where we receive ack without him getting set a couple of different ways
-        if(processed == 0 && notify_from_ack == 0)
+        if(processed == 0 && !ack_received)
             ESP_LOGW(TAG, "Always expect one item to process here (interval=%ums)",
                 (unsigned)interval.count());
     }

@@ -33,6 +33,9 @@ struct RetryItem : Impl::tracked_type
     using clock_type = typename Impl::clock_type;
     using time_point = typename clock_type::time_point;
 
+//private:
+    friend class Retry<Impl>;
+
     time_point next_attempt_;
 
     struct
@@ -53,8 +56,10 @@ struct RetryItem : Impl::tracked_type
 
     }
 
+//public:
     constexpr const time_point& next_attempt() const { return next_attempt_; }
     constexpr unsigned attempt_count() const { return attempt_count_; }
+    constexpr bool ack_received() const { return ack_received_; }
 };
 
 template <class Impl>
