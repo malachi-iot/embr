@@ -25,5 +25,13 @@ menu "embr::retry"
         help
             Indirectly helpful for retry testing, we can predict this will increase packet loss since we're
             asleep sometimes with no AP to queue the packet for us
-            
+
+    config RETRY_SEND_LOSSINESS
+        int "Percentage of send packets to synthetically drop"
+        default 0
+
+    config RETRY_ACK_LOSSINESS
+        int "Percentage of ACK packets to synthetically drop"
+        default 0
+
 endmenu

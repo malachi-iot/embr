@@ -52,6 +52,8 @@ struct RetryItem : Impl::tracked_type
     {
 
     }
+
+    constexpr const time_point& next_attempt() const { return next_attempt_; }
 };
 
 template <class Impl>

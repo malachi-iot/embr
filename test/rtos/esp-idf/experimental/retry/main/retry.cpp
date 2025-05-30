@@ -1,3 +1,5 @@
+#include <random>
+
 #include <esp_log.h>
 #include <esp_mac.h>
 #include <esp_netif.h>
@@ -62,11 +64,30 @@ using pointer = retry_type::pointer;
 bool discoved = false;
 retry_type retry;
 endpoint_type buddy;
+TaskHandle_t self_task;
+
+std::random_device r;
+ 
+std::default_random_engine e1(r());
+std::uniform_int_distribution<unsigned> uniform_dist(0, 100);
+constexpr unsigned send_loss_thresh = 100 - CONFIG_RETRY_SEND_LOSSINESS;
+constexpr unsigned ack_loss_thresh = 100 - CONFIG_RETRY_ACK_LOSSINESS;
 
 static void send(const endpoint_type& ep, const packet* p)
 {
     ESP_ERROR_CHECK(esp_now_send(ep.mac.data(), (const uint8_t*)p, sizeof(packet)));
 }
+
+static void send_ack(const endpoint_type& ep, const packet* p)
+{
+
+}
+
+static void send_msg(const endpoint_type& ep, const packet* p)
+{
+
+}
+
 
 
 void send_cb(const uint8_t *mac_addr, esp_now_send_status_t status)
@@ -79,7 +100,7 @@ void recv_cb(const esp_now_recv_info_t *recv_info, const uint8_t *data, int len)
 {
     auto p = (const packet*) data;
 
-    ESP_LOGI(TAG, "recv_cb: len=%d, seq=%d", len, p->seq);
+    ESP_LOGD(TAG, "recv_cb: len=%d, seq=%d", len, p->seq);
     const uint8_t* src_addr = recv_info->src_addr;
 
     if(esp_now_is_peer_exist(src_addr) == false)
@@ -101,25 +122,38 @@ void recv_cb(const esp_now_recv_info_t *recv_info, const uint8_t *data, int len)
 
     if(p->announce)
     {
-        ESP_LOGD(TAG, "recv_cb: announce received");
+        if(!discoved) 
+            ESP_LOGI(TAG, "recv_cb: announce received (discovered)");
+        else
+            ESP_LOGD(TAG, "recv_cb: announce received");
+
         discoved = true;
 
         buddy.mac = mac;
     }
     else if(p->ack)
     {
-        bool matched = retry.ack_received(endpoint_type(p->seq, mac));
-        ESP_LOGI(TAG, "recv_cb: ACK received (matched=%u)", matched);
+        bool matched_tracked = retry.ack_received(endpoint_type(p->seq, mac));
+        ESP_LOGI(TAG, "recv_cb: ACK received (matched=%u)", matched_tracked);
+
+        // NOTE: In a full application, notify only when ack_received matches with 'top' (tracking multiple
+        // sends).  We only do one send, so it doesn't matter at the moment.
+        xTaskNotifyIndexed(self_task, 0, 1, eSetBits);
     }
     else
     {
+        unsigned rndnum;
+
         ESP_LOGI(TAG, "recv_cb: data packet %d, sending ACK out", p->seq);
 
         packet reply = *p;
         
         reply.ack = 1;
 
-        send(endpoint_type(p->seq, mac), &reply);
+        if((rndnum = uniform_dist(e1)) <= ack_loss_thresh)
+            send(endpoint_type(p->seq, mac), &reply);
+        else
+            ESP_LOGW(TAG, "recv_cb: synthetically dropping ACK packet (rnd=%u)", rndnum);
     }
 }
 
@@ -135,6 +169,7 @@ static void loop()
     ESP_LOGI(TAG, "Looking for buddy...");
 
     discoved = false;
+    unsigned rndnum;
 
     // TODO: Announce phase has issues when PM is active, probably because announce packets don't go through an ACK
     // procedure
@@ -161,17 +196,28 @@ static void loop()
 
     auto pkt = new (&tracked->second) packet(buddy.mid);
 
-    send(buddy, pkt);
+    if((rndnum = uniform_dist(e1)) <= send_loss_thresh)
+        send(buddy, pkt);
+    else
+        ESP_LOGW(TAG, "synthetic dropping first send (rnd=%u)", rndnum);
 
     // Q: Race condition with ack_received?  Maybe.  Let's be sure
     while(!retry.empty())
     {
-        vTaskDelay(pdMS_TO_TICKS(250));
+        pointer top = retry.top();
+        clock_type::time_point next = top->second.next_attempt();
+        auto interval = std::chrono::duration_cast<std::chrono::milliseconds>(next - clock_type::now());
+        //vTaskDelay(pdMS_TO_TICKS(250));
+        uint32_t notify_from_ack = 0;
+        xTaskNotifyWaitIndexed(0, 0, 1, &notify_from_ack, pdMS_TO_TICKS(interval.count()));
         
+        if(notify_from_ack)                 ESP_LOGI(TAG, "app_main: ACK notify detected");
         if(retry[buddy]->ack_received_)     ESP_LOGI(TAG, "app_main: ACK detected");
 
         retry.poll(clock_type::now(), [](pointer p)
         {
+            unsigned rndnum;
+
             if(p->second.attempt_count_ > 5)
             {
                 ESP_LOGI(TAG, "giving up");
@@ -183,13 +229,17 @@ static void loop()
             ESP_LOGI(TAG, "retry polling");
             //ESP_LOG_BUFFER_HEX_LEVEL(TAG, p->first.mac.data(), 6, ESP_LOG_INFO);
             //send(p->first, &p->second);
-            ESP_ERROR_CHECK(esp_now_send(p->first.mac.data(), p->second.data(), sizeof(packet)));
+            if((rndnum = uniform_dist(e1)) <= send_loss_thresh)
+                ESP_ERROR_CHECK(esp_now_send(p->first.mac.data(), p->second.data(), sizeof(packet)));
+            else
+                ESP_LOGW(TAG, "synthetically dropping retry (rnd=%u)", rndnum);
 
             return true;
         });
     }
 
-    vTaskDelay(pdMS_TO_TICKS(2000));
+    ESP_LOGI(TAG, "Delay ----");
+    vTaskDelay(pdMS_TO_TICKS(15000));
 }
 
 extern "C" void app_main()
@@ -202,6 +252,8 @@ extern "C" void app_main()
         ret = nvs_flash_init();
     }
     ESP_ERROR_CHECK( ret );
+
+    self_task = xTaskGetCurrentTaskHandle();
 
     wifi_init();
     espnow_init();
