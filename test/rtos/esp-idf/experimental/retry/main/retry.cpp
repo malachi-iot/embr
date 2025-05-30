@@ -205,7 +205,6 @@ static void loop()
 
     send_msg(buddy, pkt);
 
-    // Q: Race condition with ack_received?  Maybe.  Let's be sure
     while(!retry.empty())
     {
         pointer top = retry.top();
@@ -225,6 +224,9 @@ static void loop()
         else if(ack_received)
             ESP_LOGI(TAG, "app_main: ACK detected");
 
+        // NOTE: Minor race condition with ack_received, if ACK happens -now-:
+        // - gc may miss a sweep, possibly sending a spurious retry
+        // it's not quite atomic since it's not mutexed AND it's a bitfield
         int processed = retry.poll(clock_type::now(), [](pointer p)
         {
             if(p->second.attempt_count() > 5)

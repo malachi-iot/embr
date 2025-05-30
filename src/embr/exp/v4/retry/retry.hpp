@@ -206,6 +206,7 @@ void Retry<Impl>::poll_one(pointer r, F&& f)
         retrack(r->second.next_attempt_);
     else
         // Force untrack if we're top and functor says we're done
+        // (remove regardless of ACK status)
         untrack(true);
 }
 
