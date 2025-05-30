@@ -26,12 +26,16 @@ struct RetryImpl
 #define FEATURE_EMBR_RETRY_V4_ACK_IS_GC 0
 
 
+// TODO: Really we want tracked_type to be tracked_ or similar in here.  Reasons are:
+// - reduced possibility for name collision
+// - increased friendliness to packing
 template <class Impl>
 struct RetryItem : Impl::tracked_type
 {
     using base_type = typename Impl::tracked_type;
     using clock_type = typename Impl::clock_type;
     using time_point = typename clock_type::time_point;
+    using tracked_type = typename Impl::tracked_type;
 
 //private:
     friend class Retry<Impl>;
@@ -60,6 +64,7 @@ struct RetryItem : Impl::tracked_type
     constexpr const time_point& next_attempt() const { return next_attempt_; }
     constexpr unsigned attempt_count() const { return attempt_count_; }
     constexpr bool ack_received() const { return ack_received_; }
+    tracked_type& tracked() { return *this; }
 };
 
 template <class Impl>
