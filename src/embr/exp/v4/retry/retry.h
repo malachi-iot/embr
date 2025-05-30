@@ -54,6 +54,7 @@ struct RetryItem : Impl::tracked_type
     }
 
     constexpr const time_point& next_attempt() const { return next_attempt_; }
+    constexpr unsigned attempt_count() const { return attempt_count_; }
 };
 
 template <class Impl>
@@ -147,17 +148,18 @@ public:
     /// @brief poll_one investigate next ready, and if its time slot is up, call functor
     /// @param now
     /// @param f takes `pointer` parameter.  returns true if retrack is requested, false if done
+    /// @return whether a ready item was processed
     /// @remarks
     template <class F>
-    void poll_one(time_point now, F&& f);
+    bool poll_one(time_point now, F&& f);
 
     ///
     /// @brief poll acts on every item who is ready now
     /// @param now
     /// @param f
-    ///
+    /// @return number of ready items processed
     template <class F>
-    void poll(time_point now, F&& f);
+    int poll(time_point now, F&& f);
 
     // If 'top' item has just been retried and now it's time to requeue for another,
     // call this guy

@@ -70,22 +70,35 @@ std::random_device r;
  
 std::default_random_engine e1(r());
 std::uniform_int_distribution<unsigned> uniform_dist(0, 100);
-constexpr unsigned send_loss_thresh = 100 - CONFIG_RETRY_SEND_LOSSINESS;
+constexpr unsigned msg_loss_thresh = 100 - CONFIG_RETRY_SEND_LOSSINESS;
 constexpr unsigned ack_loss_thresh = 100 - CONFIG_RETRY_ACK_LOSSINESS;
 
-static void send(const endpoint_type& ep, const packet* p)
+static bool send(const endpoint_type& ep, const packet* p,
+    unsigned loss_thresh = 100, const char* desc = "generic")
 {
-    ESP_ERROR_CHECK(esp_now_send(ep.mac.data(), (const uint8_t*)p, sizeof(packet)));
+    unsigned rnd;
+
+    if((rnd = uniform_dist(e1)) <= loss_thresh)
+    {
+        ESP_ERROR_CHECK(esp_now_send(ep.mac.data(), (const uint8_t*)p, sizeof(packet)));
+        return true;
+    }
+    else
+    {
+        ESP_LOGW(TAG, "send: synthetic drop %s (rnd=%u)", desc, rnd);
+    }
+
+    return false;
 }
 
 static void send_ack(const endpoint_type& ep, const packet* p)
 {
-
+    send(ep, p, ack_loss_thresh, "ACK");
 }
 
 static void send_msg(const endpoint_type& ep, const packet* p)
 {
-
+    send(ep, p, msg_loss_thresh, "message");
 }
 
 
@@ -142,18 +155,13 @@ void recv_cb(const esp_now_recv_info_t *recv_info, const uint8_t *data, int len)
     }
     else
     {
-        unsigned rndnum;
-
         ESP_LOGI(TAG, "recv_cb: data packet %d, sending ACK out", p->seq);
 
         packet reply = *p;
         
         reply.ack = 1;
 
-        if((rndnum = uniform_dist(e1)) <= ack_loss_thresh)
-            send(endpoint_type(p->seq, mac), &reply);
-        else
-            ESP_LOGW(TAG, "recv_cb: synthetically dropping ACK packet (rnd=%u)", rndnum);
+        send_ack(endpoint_type(p->seq, mac), &reply);
     }
 }
 
@@ -169,7 +177,6 @@ static void loop()
     ESP_LOGI(TAG, "Looking for buddy...");
 
     discoved = false;
-    unsigned rndnum;
 
     // TODO: Announce phase has issues when PM is active, probably because announce packets don't go through an ACK
     // procedure
@@ -183,7 +190,7 @@ static void loop()
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
 
-    ESP_LOGI(TAG, "Found my buddy!");
+    ESP_LOGI(TAG, "Found my buddy! Sending a packet");
 
     buddy.mid++;
     pointer tracked = retry.track(buddy, clock_type::now() + 250ms);
@@ -196,10 +203,7 @@ static void loop()
 
     auto pkt = new (&tracked->second) packet(buddy.mid);
 
-    if((rndnum = uniform_dist(e1)) <= send_loss_thresh)
-        send(buddy, pkt);
-    else
-        ESP_LOGW(TAG, "synthetic dropping first send (rnd=%u)", rndnum);
+    send_msg(buddy, pkt);
 
     // Q: Race condition with ack_received?  Maybe.  Let's be sure
     while(!retry.empty())
@@ -214,28 +218,28 @@ static void loop()
         if(notify_from_ack)                 ESP_LOGI(TAG, "app_main: ACK notify detected");
         if(retry[buddy]->ack_received_)     ESP_LOGI(TAG, "app_main: ACK detected");
 
-        retry.poll(clock_type::now(), [](pointer p)
+        bool processed = retry.poll(clock_type::now(), [](pointer p)
         {
-            unsigned rndnum;
-
-            if(p->second.attempt_count_ > 5)
+            if(p->second.attempt_count() > 5)
             {
                 ESP_LOGI(TAG, "giving up");
                 return false;
             }
 
-            p->second.next_attempt_ += (2 + p->second.attempt_count_) * 500ms;
+            p->second.next_attempt_ += (2 + p->second.attempt_count()) * 500ms;
 
             ESP_LOGI(TAG, "retry polling");
             //ESP_LOG_BUFFER_HEX_LEVEL(TAG, p->first.mac.data(), 6, ESP_LOG_INFO);
-            //send(p->first, &p->second);
-            if((rndnum = uniform_dist(e1)) <= send_loss_thresh)
-                ESP_ERROR_CHECK(esp_now_send(p->first.mac.data(), p->second.data(), sizeof(packet)));
-            else
-                ESP_LOGW(TAG, "synthetically dropping retry (rnd=%u)", rndnum);
+            send_msg(p->first, (const packet*)&p->second);
 
             return true;
         });
+
+        // FIX: This aggravates a timing glitch.
+        /*
+        if(!processed)
+            ESP_LOGW(TAG, "Always expect one item to process here (interval=%ums)",
+                (unsigned)interval.count());    */
     }
 
     ESP_LOGI(TAG, "Delay ----");

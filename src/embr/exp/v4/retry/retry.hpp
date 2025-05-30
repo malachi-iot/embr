@@ -211,22 +211,27 @@ void Retry<Impl>::poll_one(pointer r, F&& f)
 
 template <class Impl>
 template <class F>
-void Retry<Impl>::poll_one(time_point now, F&& f)
+bool Retry<Impl>::poll_one(time_point now, F&& f)
 {
     pointer r = ready(now);
 
-    if(r == nullptr) return;
+    if(r == nullptr) return false;
 
     poll_one(r, std::forward<F>(f));
+    return true;
 }
 
 
 template <class Impl>
 template <class F>
-void Retry<Impl>::poll(time_point now, F&& f)
+int Retry<Impl>::poll(time_point now, F&& f)
 {
-    for(pointer r = ready(now); r != nullptr; r = ready(now))
+    int counter = 0;
+
+    for(pointer r = ready(now); r != nullptr; r = ready(now), ++counter)
         poll_one(r, std::forward<F>(f));
+
+    return counter;
 }
 
 
