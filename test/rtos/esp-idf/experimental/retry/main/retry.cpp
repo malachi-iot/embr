@@ -155,7 +155,7 @@ void recv_cb(const esp_now_recv_info_t *recv_info, const uint8_t *data, int len)
     }
     else
     {
-        ESP_LOGI(TAG, "recv_cb: data packet %d, sending ACK out", p->seq);
+        ESP_LOGI(TAG, "recv_cb: data packet seq=%d, sending ACK out", p->seq);
 
         packet reply = *p;
         
@@ -213,12 +213,22 @@ static void loop()
         auto interval = std::chrono::duration_cast<std::chrono::milliseconds>(next - clock_type::now());
         //vTaskDelay(pdMS_TO_TICKS(250));
         uint32_t notify_from_ack = 0;
-        xTaskNotifyWaitIndexed(0, 0, 1, &notify_from_ack, pdMS_TO_TICKS(interval.count()));
+
+        // It's possible we missed our timer, so double check that
+        if(interval.count() > 0)
+        {
+            BaseType_t r = xTaskNotifyWaitIndexed(0, 0, 1, &notify_from_ack,
+                // + 1 more or less rounds up, + 1 again for fudge factor
+                pdMS_TO_TICKS(interval.count()) + 2);
+
+            if(r == pdFALSE)
+                ESP_LOGD(TAG, "Natural timeout waiting for ACK (none received)");
+        }
         
         if(notify_from_ack)                 ESP_LOGI(TAG, "app_main: ACK notify detected");
         if(retry[buddy]->ack_received_)     ESP_LOGI(TAG, "app_main: ACK detected");
 
-        bool processed = retry.poll(clock_type::now(), [](pointer p)
+        int processed = retry.poll(clock_type::now(), [](pointer p)
         {
             if(p->second.attempt_count() > 5)
             {
@@ -235,11 +245,11 @@ static void loop()
             return true;
         });
 
-        // FIX: This aggravates a timing glitch.
-        /*
-        if(!processed)
+        // NOTE: Minor race condition, notify_from_ack edge case exists
+        // where we receive ack without him getting set a couple of different ways
+        if(processed == 0 && notify_from_ack == 0)
             ESP_LOGW(TAG, "Always expect one item to process here (interval=%ums)",
-                (unsigned)interval.count());    */
+                (unsigned)interval.count());
     }
 
     ESP_LOGI(TAG, "Delay ----");
