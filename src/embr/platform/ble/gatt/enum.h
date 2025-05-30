@@ -4,7 +4,7 @@
 
 namespace embr { namespace ble { namespace gatt { inline namespace v1 {
 
-namespace service { namespace uuid {
+namespace uuid {
 
 enum Services16 : uint16_t
 {
@@ -12,6 +12,13 @@ enum Services16 : uint16_t
     ObjectTransfer = 0x1825,
     VolumeControlService = 0x1844
 };
+
+}
+
+namespace service { namespace uuid {
+
+// OBSOLETE, use gatt::v1::uuid flavor instead
+using Services16 = gatt::v1::uuid::Services16;
 
 }}
 

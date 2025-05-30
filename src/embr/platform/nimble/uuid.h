@@ -5,6 +5,7 @@
 #include <nimble/ble.h>
 
 #include "../ble/gatt/char/enum.h"
+#include "../ble/gatt/enum.h"
 
 namespace embr { namespace nimble { inline namespace v1 {
 
@@ -40,6 +41,12 @@ struct make_uuid<uuid> : estd::integral_constant<const ble_uuid_t*, &make_uuid16
 
 template <ble::gatt::v1::uuid::Characteristic16 uuid>
 struct make_uuid<uuid> : estd::integral_constant<const ble_uuid_t*, &make_uuid16<uuid>().u> {};
+
+template <ble::gatt::v1::service::uuid::Services16 uuid>
+struct make_uuid<uuid> : estd::integral_constant<const ble_uuid_t*, &make_uuid16<uuid>().u> {};
+
+template <auto v>
+constexpr const ble_uuid_t* uuid = embr::nimble::v1::make_uuid<v>::value;
 #endif
 
 
