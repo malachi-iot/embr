@@ -30,11 +30,15 @@ struct RetryImpl
 // b) if tracked_type is empty struct do a value_evaporator style thing here
 // In other words, we never really want only to extend from Impl::tracked_type
 template <class Impl>
-struct RetryItemBase : Impl::tracked_type
+struct RetryItemBase : protected Impl::tracked_type
 {
     using base_type = typename Impl::tracked_type;
+    using tracked_type = typename Impl::tracked_type;
 
     ESTD_CPP_FORWARDING_CTOR(RetryItemBase)
+
+    tracked_type& tracked() { return *this; }
+    constexpr const tracked_type& tracked() const { return *this; }
 };
 
 // TODO: Really we want tracked_type to be tracked_ or similar in here.  Reasons are:
@@ -44,23 +48,30 @@ template <class Impl>
 struct RetryItem : RetryItemBase<Impl>
 {
     using base_type = RetryItemBase<Impl>;
+    using this_type = RetryItem;
     using clock_type = typename Impl::clock_type;
     using time_point = typename clock_type::time_point;
     using tracked_type = typename Impl::tracked_type;
 
-//private:
+private:
     friend class Retry<Impl>;
 
     time_point next_attempt_;
 
+    static constexpr unsigned user_width = sizeof(unsigned) * 8 - 5;
+
     struct
     {
+        // user-defined data, using up otherwise wasted padded bits
+        unsigned user_ : user_width;
+
         // May or may not count original send, depending on consuming logic
         unsigned attempt_count_ : 4;
         // Ignored when FEATURE_EMBR_RETRY_V4_ACK_IS_GC is true
         unsigned ack_received_ : 1;
     };
 
+public:
     template <class ...Args>
     constexpr RetryItem(time_point next_attempt, Args&&...args) :
         base_type(std::forward<Args>(args)...),
@@ -71,11 +82,13 @@ struct RetryItem : RetryItemBase<Impl>
 
     }
 
-//public:
+    // DEBT: This is unclear and error prone, returning reference like this.
+    // Considering instead a different functor signature which takes a time_point*, similar to scheduler
+    time_point& next_attempt() { return next_attempt_; }
     constexpr const time_point& next_attempt() const { return next_attempt_; }
+
     constexpr unsigned attempt_count() const { return attempt_count_; }
     constexpr bool ack_received() const { return ack_received_; }
-    tracked_type& tracked() { return *this; }
 };
 
 template <class Impl>
