@@ -25,14 +25,25 @@ struct RetryImpl
 
 #define FEATURE_EMBR_RETRY_V4_ACK_IS_GC 0
 
+// DEBT: Bring in and upgrade ebo helpers from embr::gl/embr::audio.  We want either:
+// a) regular value here as tracked_ instance variable
+// b) if tracked_type is empty struct do a value_evaporator style thing here
+// In other words, we never really want only to extend from Impl::tracked_type
+template <class Impl>
+struct RetryItemBase : Impl::tracked_type
+{
+    using base_type = typename Impl::tracked_type;
+
+    ESTD_CPP_FORWARDING_CTOR(RetryItemBase)
+};
 
 // TODO: Really we want tracked_type to be tracked_ or similar in here.  Reasons are:
 // - reduced possibility for name collision
 // - increased friendliness to packing
 template <class Impl>
-struct RetryItem : Impl::tracked_type
+struct RetryItem : RetryItemBase<Impl>
 {
-    using base_type = typename Impl::tracked_type;
+    using base_type = RetryItemBase<Impl>;
     using clock_type = typename Impl::clock_type;
     using time_point = typename clock_type::time_point;
     using tracked_type = typename Impl::tracked_type;

@@ -20,7 +20,8 @@ TEST_CASE("Reusable retry", "[retry]")
         using namespace std::chrono_literals;
         using namespace experimental;
         using tracked_type = v4::ReferenceTracked<32>;
-        using retry_type = v4::Retry<v4::RetryImpl<5, estd::layer1::optional<int16_t, -1>, tracked_type>>;
+        using key_type = estd::layer1::optional<int16_t, -1>;
+        using retry_type = v4::Retry<v4::RetryImpl<5, key_type, tracked_type>>;
         using tp = retry_type::clock_type::time_point;
         retry_type retry;
         retry_type::tracked_type tracked1, tracked2;
@@ -137,6 +138,19 @@ TEST_CASE("Reusable retry", "[retry]")
 
             pointer tracked2 = retry.track(broadcast, tp(600ms));
             REQUIRE(tracked2 == nullptr);
+        }
+        SECTION("edge cases")
+        {
+            SECTION("unusual tracked types")
+            {
+                using key_type = int;
+                using tracked_type = char[64];
+                using retry_type = v4::Retry<v4::RetryImpl<5, key_type, tracked_type>>;
+
+                //retry_type retry;
+
+                //retry.track(1, { 0, 1, 2 });
+            }
         }
     }
 }
