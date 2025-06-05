@@ -20,6 +20,7 @@ static void test_ots_oacp_checksum()
 
 static void test_ots_oacp_response()
 {
+    [[maybe_unused]]
     oacp_type oacp
     {
         .opcode = oacp_type::RESPONSE_CODE,

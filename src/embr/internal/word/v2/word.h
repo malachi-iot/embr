@@ -334,7 +334,7 @@ struct word_base
         uint8_t[traits::info::size],
         value_type>;
 
-    using pack = internal::packer<value_type, traits::info::size, traits::endian>;
+    using pack = embr::internal::packer<value_type, traits::info::size, traits::endian>;
 
 protected:
     template <size_t... I>
