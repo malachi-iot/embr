@@ -18,8 +18,8 @@ configure_file(
     ${WORKING_DIR}/idf_component.in.yml
     ${ROOT_DIR}/tools/esp-idf/components/embr/idf_component.yml)
 
-# esp-idf: For general use - works, just not needed yet
-#configure_file(
-#    ${WORKING_DIR}/idf_component.in.yml
-#    ${ROOT_DIR}/idf_component.yml)
+# esp-idf: For general use
+configure_file(
+    ${WORKING_DIR}/idf_component.in.yml
+    ${ROOT_DIR}/idf_component.yml)
 	
