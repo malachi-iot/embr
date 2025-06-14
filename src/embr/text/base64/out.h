@@ -114,7 +114,10 @@ public:
         const char_type* start = s;
         const char_type* end = s + count;
 
-        ESTD_CPP_IF_CONSTEXPR(has_epptr)
+#if __cplusplus >= 201703L
+        // DEBT: Would like c++11 friendly version of this, and maybe if we really care
+        // a internal chunked version to be one step almost as good as pptr/epptr
+        if constexpr(has_epptr)
         {
             char_type* pptr = wrapped_.pptr();
             char_type* epptr = wrapped_.epptr();
@@ -135,6 +138,7 @@ public:
             }
         }
         else
+#endif
         {
             while(s < end)
             {

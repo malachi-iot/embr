@@ -3,9 +3,9 @@
 #include "config.h"
 #include "enum.h"
 
-namespace embr { namespace dsp { inline namespace v1 {
+namespace embr { namespace dsp {
 
-namespace detail {
+namespace detail { inline namespace v1 {
 
 #if FEATURE_EMBR_DSP_PRECALC_TABLE_STATIC
 extern float sin_table[EMBR_DSP_PRECALC_TABLE_SZ];
@@ -16,6 +16,6 @@ extern float* sin_table;
 template <precalc_modes>
 struct precalc;
 
-}
-    
-}}}
+}}
+
+}}

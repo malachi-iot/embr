@@ -2,8 +2,7 @@
 
 #include <estd/iosfwd.h>
 
-// DEBT: Really ought to be FEATURE_STD_STRING_VIEW
-#if FEATURE_STD_STRING
+#if __cpp_lib_string_view
 #include <string_view>
 #endif
 
@@ -175,7 +174,7 @@ public:
 
     // DEBT: Make a string_helper or similar since there are a bunch of different ways
     // for a string to get in here
-#if FEATURE_STD_STRING
+#if __cpp_lib_string_view
     template <class Streambuf, class Base>
     void raw(estd::detail::basic_ostream<Streambuf, Base>& out, std::string_view value)
     {

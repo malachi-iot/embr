@@ -1,16 +1,18 @@
 #include "embr/dsp/precalc/sin.h"
 
-namespace embr { namespace dsp { inline namespace v1 {
+namespace embr { namespace dsp {
 
 #if FEATURE_EMBR_DSP_PRECALC_TABLE
-namespace detail {
+namespace detail { inline namespace v1 {
 #if FEATURE_EMBR_DSP_PRECALC_TABLE_STATIC
 float sin_table[EMBR_DSP_PRECALC_TABLE_SZ];
 #else
 float* sin_table;
 #endif
 //float cos_table[EMBR_DSP_PRECALC_TABLE_SZ];
-}
+}}
+
+inline namespace v1 {
 
 static void init_sin_table_(float* table)
 {
