@@ -2,7 +2,7 @@
 
 namespace embr {
 
-inline namespace service { namespace v2 {
+namespace service { namespace v2 {
 
 }}
 

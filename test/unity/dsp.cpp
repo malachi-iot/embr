@@ -31,7 +31,7 @@ static void test_sinf()
 {
 #if FEATURE_EMBR_DSP_PRECALC_TABLE
     static constexpr std::size_t sz = EMBR_DSP_PRECALC_TABLE_SZ;
-    test_sin_table<dsp::v1::PRECALC_HALF, sz>(dsp::v1::detail::sin_table);
+    test_sin_table<dsp::v1::PRECALC_HALF, sz>(dsp::detail::v1::sin_table);
 #else
 #endif
 }

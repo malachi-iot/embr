@@ -1,11 +1,12 @@
 #pragma once
 
+#include <estd/internal/platform.h>
+
 #include "fwd.h"
 
-namespace embr {
+namespace embr { namespace service { namespace v2 {
 
-inline namespace service { namespace v2 {
-
+// DEBT: Refactor to be embr::service::detail::v2
 namespace detail {
 
 struct service
@@ -19,6 +20,9 @@ struct service
 
         STATES_MAX
     };
+
+    // DEBT: Refactor to (optionally) use a packed struct or similar so that a user area
+    // is available out of the unused bits of substate_
 
     // yields 32 possible substates per category, allowing us to stay well within 8 bits
     static constexpr unsigned separator = 5;
@@ -74,17 +78,17 @@ protected:
 #endif
     substates substate_ = Unstarted;
 
-    void substate(substates s)
+    ESTD_CPP_CONSTEXPR(17) void substate(substates s)
     {
         substate_ = s;
     };
 
-    void state(substates s)
+    ESTD_CPP_CONSTEXPR(17) void state(substates s)
     {
         substate_ = s;
     }
 
-    void state(states s)
+    ESTD_CPP_CONSTEXPR(17) void state(states s)
     {
         substate_ = static_cast<substates>(s << separator);
     }
@@ -94,7 +98,5 @@ protected:
 
 using service = detail::service;
 
-}}
-
-}
+}}}
 
