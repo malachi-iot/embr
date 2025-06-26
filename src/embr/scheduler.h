@@ -15,10 +15,10 @@ namespace internal {
 
 /**
  *
- * @tparam TContainer raw container for priority_queue usage.  Its value_type must be
+ * @tparam Container raw container for priority_queue usage.  Its value_type must be
  * copyable as indeed priority_queue stores each of these entries by value
- * @tparam TImpl
- * @tparam TSubject optional observer which can listen for schedule and remove events
+ * @tparam Impl
+ * @tparam Subject optional observer which can listen for schedule and remove events
  */
 template <class Container,
     class Impl,
@@ -235,17 +235,18 @@ private:
     bool process_one(time_point current_time, context_type<TContext>& context);
 
 public:
-    Scheduler() = default;
+    constexpr Scheduler() = default;
     //Scheduler(TSubject subject) : subject_provider(subject) {}
-    Scheduler(const Subject& subject) : subject_provider(subject) {}
-    Scheduler(Subject&& subject) : subject_provider(std::move(subject))
+    constexpr explicit Scheduler(const Subject& subject) : subject_provider(subject) {}
+    constexpr explicit Scheduler(Subject&& subject) : subject_provider(std::move(subject))
     {
 
     }
     // impl-initializing version
-    // DEBT: impl_params_tag necessary to disambiguate from TSubject initializers above
+    // DEBT: impl_params_tag necessary to disambiguate from TSubject initializers above.  Use
+    // in_place_args instead
     template <typename ...Args>
-    constexpr Scheduler(scheduler::impl_params_tag, Args&&...args) :
+    constexpr explicit Scheduler(scheduler::impl_params_tag, Args&&...args) :
         impl_type(std::forward<Args>(args)...)
     {
 
