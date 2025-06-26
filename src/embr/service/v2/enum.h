@@ -21,9 +21,6 @@ struct service
         STATES_MAX
     };
 
-    // DEBT: Refactor to (optionally) use a packed struct or similar so that a user area
-    // is available out of the unused bits of substate_
-
     // yields 32 possible substates per category, allowing us to stay well within 8 bits
     static constexpr unsigned separator = 5;
 
@@ -66,6 +63,18 @@ struct service
 
         SUBSTATES_MAX
     };
+};
+
+// Our convention is upper bits = major state and lower bits = transition state
+template <class Impl>
+class state_machine : public Impl
+{
+    using base_type = Impl;
+    using base_type::separator;
+
+public:
+    using typename base_type::states;
+    using typename base_type::substates;
 
     [[nodiscard]] constexpr substates substate() const { return substate_; }
     [[nodiscard]] constexpr states state() const
@@ -73,15 +82,22 @@ struct service
         return static_cast<states>(substate_ >> separator);
     }
 
+    constexpr state_machine(substates substate = {}) :
+        substate_{substate}
+    {}
+
 #ifndef UNIT_TESTING
 protected:
 #endif
-    substates substate_ = Unstarted;
+    // DEBT: Refactor to (optionally) use a packed struct or similar so that a user area
+    // is available out of the unused bits of substate_
+
+    substates substate_;
 
     ESTD_CPP_CONSTEXPR(17) void substate(substates s)
     {
         substate_ = s;
-    };
+    }
 
     ESTD_CPP_CONSTEXPR(17) void state(substates s)
     {
@@ -96,7 +112,7 @@ protected:
 
 }
 
-using service = detail::service;
+using service = detail::state_machine<detail::service>;
 
 }}}
 
