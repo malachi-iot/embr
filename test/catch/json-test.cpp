@@ -17,11 +17,11 @@ struct single_quoted : v1::options::lean
 
 TEST_CASE("json tests", "[json]")
 {
-    estd::detail::basic_ostream<estd::layer1::basic_out_stringbuf<char, 128> > out;
-    auto& str = out.rdbuf()->str();
-
-    SECTION("v1")
+    SECTION("encoder v1")
     {
+        estd::layer1::ostringstream<128> out;
+        const estd::layer1::string<128>& str = out.rdbuf()->str();
+
         v1::encoder<single_quoted> e;
 
         SECTION("encoder")
@@ -85,5 +85,14 @@ TEST_CASE("json tests", "[json]")
                 REQUIRE(str == "'str':10");
             }
         }
+    }
+    SECTION("decoder v1")
+    {
+        internal::decoder decoder;
+
+        // DEBT: Both correct and clumsy requiring const here
+        estd::layer2::basic_istringstream<const char> in("");
+
+        decoder.decode(in, [] {});
     }
 }
