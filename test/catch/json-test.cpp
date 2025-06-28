@@ -97,7 +97,7 @@ TEST_CASE("json tests", "[json]")
         // DEBT: Both correct and clumsy requiring const here
         estd::layer2::basic_istringstream<const char> in(json1);
 
-        decoder.decode(in, [](const decoder_type& d)
+        decoder.decode(in, [](const internal::decoder_state& d)
         {
         });
     }

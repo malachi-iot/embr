@@ -9,11 +9,8 @@ namespace embr { namespace json {
 namespace internal {
 
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
-void decoder::decode_string(Streambuf& sb, F&& f)
+void decoder::worker<Streambuf, F>::decode_string(Streambuf& sb, F&& f)
 {
-    using traits = typename Streambuf::traits_type;
-    using char_type = typename traits::char_type;
-    using int_type = typename traits::int_type;
     using pointer = const char_type*;
     // Hmm, istringbuf why don't you have this?
     //pointer data = sb.gptr();
@@ -34,11 +31,8 @@ void decoder::decode_string(Streambuf& sb, F&& f)
 }
 
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
-void decoder::decode_token(Streambuf& sb, F&& f)
+void decoder::worker<Streambuf, F>::decode_token(Streambuf& sb, F&& f)
 {
-    using traits = typename Streambuf::traits_type;
-    using char_type = typename traits::char_type;
-
     const char_type c = sb.sgetc();
 
     switch(item_)
@@ -62,11 +56,8 @@ void decoder::decode_token(Streambuf& sb, F&& f)
 }
 
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
-void decoder::decode_idle(Streambuf& sb, F&& f)
+void decoder::worker<Streambuf, F>::decode_idle(Streambuf& sb, F&& f)
 {
-    using traits = typename Streambuf::traits_type;
-    using int_type = typename traits::int_type;
-
     const int_type c = sb.sbumpc();
 
     switch(c)
@@ -75,13 +66,8 @@ void decoder::decode_idle(Streambuf& sb, F&& f)
         {
             item_ = ARRAY;
             state_ = TOKEN_START;
-            decoder child(this);
+            worker child(this);
             child.decode_rdbuf(sb, std::forward<F>(f));
-            break;
-        }
-
-        case ']':
-        {
             break;
         }
 
@@ -89,7 +75,7 @@ void decoder::decode_idle(Streambuf& sb, F&& f)
         {
             item_ = OBJECT;
             state_ = TOKEN_START;
-            decoder child(this);
+            worker child(this);
             child.decode_rdbuf(sb, std::forward<F>(f));
             break;
         }
@@ -115,7 +101,7 @@ void decoder::decode_idle(Streambuf& sb, F&& f)
 }
 
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
-void decoder::decode_rdbuf(Streambuf& sb, F&& f)
+void decoder::worker<Streambuf, F>::decode_rdbuf(Streambuf& sb, F&& f)
 {
     for(;;)
     {
@@ -140,9 +126,9 @@ void decoder::decode_rdbuf(Streambuf& sb, F&& f)
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class Base, class F>
 void decoder::decode(estd::detail::basic_istream<Streambuf, Base>& in, F&& f)
 {
-    //using in_type = estd::detail::basic_istream<InImpl, Base>;
+    worker<Streambuf, F> w;
 
-    decode_rdbuf(*in.rdbuf(), std::forward<F>(f));
+    w.decode_rdbuf(*in.rdbuf(), std::forward<F>(f));
 }
 
 }
