@@ -9,6 +9,9 @@ using namespace embr::json;
 
 #include "test-data.h"
 
+static const char* json1 =
+    R"=({"hi2u"})=";
+
 struct single_quoted : v1::options::lean
 {
     static constexpr bool use_doublequotes() { return false; }
@@ -88,11 +91,14 @@ TEST_CASE("json tests", "[json]")
     }
     SECTION("decoder v1")
     {
-        internal::decoder decoder;
+        using decoder_type = internal::decoder;
+        decoder_type decoder;
 
         // DEBT: Both correct and clumsy requiring const here
-        estd::layer2::basic_istringstream<const char> in("");
+        estd::layer2::basic_istringstream<const char> in(json1);
 
-        decoder.decode(in, [] {});
+        decoder.decode(in, [](const decoder_type& d)
+        {
+        });
     }
 }
