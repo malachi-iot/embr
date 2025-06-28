@@ -93,12 +93,40 @@ TEST_CASE("json tests", "[json]")
     {
         using decoder_type = internal::decoder;
         decoder_type decoder;
+        int counter = 0;
 
         // DEBT: Both correct and clumsy requiring const here
-        estd::layer2::basic_istringstream<const char> in(json1);
+        // https://github.com/malachi-iot/estdlib/issues/124
+        estd::layer2::basic_istringstream<char> in((char*)json1);
 
-        decoder.decode(in, [](const internal::decoder_state& d)
+        decoder.decode(in, [&](
+            const internal::decoder_state& d,
+            const decoder_type::descriptor& i)
         {
+            char temp[32];
+
+            if(d.item() == decoder_type::STRING)
+            {
+                in.read(temp, i.len);
+
+                temp[i.len] = 0;
+
+                REQUIRE(estd::layer2::const_string(temp) == "hi2u");
+                ++counter;
+            }
+            else if(d.item() == decoder_type::NUMBER)
+            {
+                int val{-1};
+                in.read(temp, i.len);
+
+                temp[i.len] = 0;
+
+                estd::from_chars(temp, temp + i.len, val);
+                REQUIRE(val == 5);
+                ++counter;
+            }
         });
+
+        REQUIRE(counter == 1);
     }
 }

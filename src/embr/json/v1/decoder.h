@@ -28,7 +28,14 @@ public:
         ARRAY,
         NUMBER,
         STRING,
-        BOOL
+        LITERAL,    // true, false or null
+    };
+
+    enum literals
+    {
+        TRUE,
+        FALSE,
+        NULL_,
     };
 
 protected:
@@ -38,6 +45,24 @@ protected:
 
 public:
     decoder_state(const decoder_state* parent = nullptr) : parent_{parent}    {}
+
+    constexpr states state() const { return state_; }
+    constexpr items item() const { return item_; }
+
+    struct descriptor
+    {
+        union
+        {
+            int len;
+            literals literal;
+            float number;
+        };
+    };
+
+    struct context
+    {
+        char temp[32];
+    };
 };
 
 class decoder : public decoder_state
@@ -48,20 +73,23 @@ class decoder : public decoder_state
         using traits = typename Streambuf::traits_type;
         using char_type = typename traits::char_type;
         using int_type = typename traits::int_type;
+        using pos_type = typename traits::pos_type;
+        using item = decoder::descriptor;
+
+        // If true, don't assume gptr is available.
+        static constexpr bool is_locking = true;
 
         void decode_rdbuf(Streambuf& sb, F&& f);
-
         void decode_idle(Streambuf& sb, F&& f);
-
-        void decode_token(Streambuf& sb, F&& f);
-
+        void decode_literal(Streambuf& sb, F&& f);
+        void decode_number(Streambuf& sb, F&& f);
         void decode_string(Streambuf& sb, F&& f);
+        void decode_token(Streambuf& sb, F&& f);
 
         worker(const worker* parent = nullptr) : decoder_state(parent)    {}
     };
 
 public:
-
     template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class Base, class F>
     void decode(estd::detail::basic_istream<Streambuf, Base>& in, F&& f);
 };

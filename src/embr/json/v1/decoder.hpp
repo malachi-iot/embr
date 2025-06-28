@@ -12,23 +12,51 @@ template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
 void decoder::worker<Streambuf, F>::decode_string(Streambuf& sb, F&& f)
 {
     using pointer = const char_type*;
-    // Hmm, istringbuf why don't you have this?
-    //pointer data = sb.gptr();
 
-    // DEBT: Can't just toss a big temporary like this around
-    char temp[64];
     int idx = 0;
     int_type c;
 
     while((c = sb.sbumpc()) != '"')
     {
-        temp[idx++] = c;
+        ++idx;
     }
 
-    temp[idx] = 0;
-    f(*this);
+    // DEBT: Due to https://github.com/malachi-iot/estdlib/issues/124
+    // we can't use pubseekoff as desired, so call non-standard pos()
+    // directly
+    int pos = sb.pos();
+    sb.pubseekoff(-(idx + 1), estd::ios_base::cur);     // skip closing '"'
+    f(*this, item { idx });
+    sb.pubseekoff(pos, estd::ios_base::beg);
+    // FIX: seekpos calls end up as ambiguous
+    //sb.pubseekpos(pos + idx);
     state_ = TOKEN_END;
 }
+
+
+template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
+void decoder::worker<Streambuf, F>::decode_literal(Streambuf& sb, F&& f)
+{
+
+}
+
+
+template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
+void decoder::worker<Streambuf, F>::decode_number(Streambuf& sb, F&& f)
+{
+    int_type c;
+    int idx = 0;
+
+    while((c = sb.sbumpc()) == '.' || estd::isdigit(c)) ++idx;
+
+    int pos = sb.pos();
+    sb.pubseekoff(-(idx + 1), estd::ios_base::cur);
+    f(*this, item { idx });
+    sb.pubseekoff(pos, estd::ios_base::beg);
+
+    state_ = TOKEN_END;
+}
+
 
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
 void decoder::worker<Streambuf, F>::decode_token(Streambuf& sb, F&& f)
@@ -39,6 +67,14 @@ void decoder::worker<Streambuf, F>::decode_token(Streambuf& sb, F&& f)
     {
         case STRING:
             decode_string(sb, std::forward<F>(f));
+            break;
+
+        case NUMBER:
+            decode_number(sb, std::forward<F>(f));
+            break;
+
+        case LITERAL:
+            decode_literal(sb, std::forward<F>(f));
             break;
 
         case OBJECT:
