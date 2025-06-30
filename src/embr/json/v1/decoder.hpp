@@ -50,7 +50,7 @@ void decoder::worker<Streambuf, F>::decode_literal(Streambuf& sb, F&& f)
 {
     embr::internal::searcher searcher{json::internal::literals};
 
-    while(searcher.search(sb.sbumpc(), -1) == searcher.SEARCHING)   {}
+    while(searcher.search(sb.sbumpc(), [](auto){ return true; }) == searcher.SEARCHING)   {}
 
     const int idx = searcher.pos;
 }

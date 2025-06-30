@@ -18,20 +18,29 @@ struct breadcrumb
     }
 };
 
+template <class T>
+struct breadcrumb_traits
+{
+    static constexpr const char* name(const T& v) { return v.name; }
+};
+
 // For character by character affairs
 // DEBT: This can be a template <class T, class Traits = searcher_traits> kind of thing
-struct searcher
+template <class T, class Traits = breadcrumb_traits<T>>
+struct basic_searcher
 {
-    using pointer = const breadcrumb*;
+    using pointer = const T*;
+    using traits = Traits;
 
     // Be sure to start crumb right after desired parent
     pointer crumbs_;
-    int pos;
+    int pos = 0;
     pointer marker_ = nullptr;
 
     bool match(char c)
     {
-        if(crumbs_->name[pos] == c)
+        const char* name = traits::name(*crumbs_);
+        if(name[pos] == c)
         {
             if(marker_ == nullptr)
             {
@@ -52,22 +61,18 @@ struct searcher
     };
 
     // Pass in null termination also
-    results search(char c, int parent_id)
+    template <class Predicate>
+    results search(char c, Predicate&& predicate)
     {
         if(match(c))
         {
             ++pos;
-            if(c == 0)
-            {
-                return MATCHED;
-            }
-
-            return SEARCHING;
+            return c == 0 ? MATCHED : SEARCHING;
         }
         else
         {
             ++crumbs_;
-            if(parent_id != crumbs_->parent)
+            if(predicate(*crumbs_) == false)
             {
                 return NO_MATCH;
             }
@@ -76,7 +81,7 @@ struct searcher
                 // If we had no semblance of a match so far, plunge forward
 
                 // DEBT: Don't really want to do recursion, just convenient
-                return search(c, parent_id);
+                return search(c, std::forward<Predicate>(predicate));
             }
             else if(std::memcmp(crumbs_->name, marker_->name, pos) == 0)
             {
@@ -92,7 +97,7 @@ struct searcher
                 marker_ = nullptr;
 
                 // DEBT: Don't really want to do recursion, just convenient
-                return search(c, parent_id);
+                return search(c, std::forward<Predicate>(predicate));
             }
 
             // If movement to the next crumb doesn't match marker, then match
@@ -101,20 +106,35 @@ struct searcher
 
         return NO_MATCH;
     }
-
-    results search(const char* s)
-    {
-        const int parent_id = crumbs_->parent;
-
-        while(*s != 0)
-        {
-            results r = search(*s++, parent_id);
-            if(r != SEARCHING) return r;
-        }
-
-        return search(*s, parent_id);
-    }
 };
+
+using searcher = basic_searcher<breadcrumb>;
+
+inline const breadcrumb* search2(const breadcrumb* crumbs, const char* s)
+{
+    const int parent_id = crumbs->parent;
+
+    searcher srch{crumbs};
+
+    do
+    {
+        const searcher::results r = srch.search(*s, [parent_id](const breadcrumb& c)
+        {
+            return c.parent == parent_id;
+        });
+        switch(r)
+        {
+            case searcher::NO_MATCH: return nullptr;
+            case searcher::MATCHED: return srch.marker_;
+            default: break;
+        }
+    }
+    while(*s++ != 0);
+
+    // Get here when crumbs has a longer match than us.  Be sure to put shorter matchers
+    // first as part of hand-sort
+    return nullptr;
+}
 
 template <class Impl>
 const breadcrumb* search(const breadcrumb* crumbs,

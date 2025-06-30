@@ -16,6 +16,7 @@ enum nav_ids
     id_top,
     id_lvl1_0,
     id_lvl1_1,
+    id_lvl2,
     id_lvl2_0,
     id_lvl2_1,
 };
@@ -25,6 +26,7 @@ static constexpr bc nav[]
     { "top",    id_top },
     { "lvl1.0", id_lvl1_0,  id_top },
     { "lvl1.1", id_lvl1_1,  id_top },
+    { "lvl2",   id_lvl2,    id_top },
     { "lvl2.0", id_lvl2_0,  id_top },
     { "lvl2.1", id_lvl2_1,  id_top },
     { nullptr }
@@ -167,21 +169,21 @@ TEST_CASE("json tests", "[json]")
         }
         SECTION("stateful")
         {
-            embr::internal::searcher searcher{nav + 1};
+            using searcher = embr::internal::searcher;
 
             SECTION("lvl1.1")
             {
-                embr::internal::searcher::results r = searcher.search("lvl1.1");
+                const embr::internal::breadcrumb* r = search2(nav + 1, "lvl1.1");
 
-                REQUIRE(r == searcher.MATCHED);
-                REQUIRE(searcher.marker_->id == id_lvl1_1);
+                REQUIRE(r);
+                REQUIRE(r->id == id_lvl1_1);
             }
             SECTION("lvl2.0")
             {
-                embr::internal::searcher::results r = searcher.search("lvl2.0");
+                const embr::internal::breadcrumb* r = search2(nav + 1, "lvl2.0");
 
-                REQUIRE(r == searcher.MATCHED);
-                REQUIRE(searcher.marker_->id == id_lvl2_0);
+                REQUIRE(r);
+                REQUIRE(r->id == id_lvl2_0);
             }
         }
     }
