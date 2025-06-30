@@ -21,15 +21,9 @@ void decoder::worker<Streambuf, F>::decode_string(Streambuf& sb, F&& f)
         ++idx;
     }
 
-    // DEBT: Due to https://github.com/malachi-iot/estdlib/issues/124
-    // we can't use pubseekoff as desired, so call non-standard pos()
-    // directly
-    int pos = sb.pos();
-    sb.pubseekoff(-(idx + 1), estd::ios_base::cur);     // skip closing '"'
+    int pos = sb.pubseekoff(-(idx + 1), estd::ios_base::cur, estd::ios_base::in);     // skip closing '"'
     f(*this, item { idx });
-    sb.pubseekoff(pos, estd::ios_base::beg);
-    // FIX: seekpos calls end up as ambiguous
-    //sb.pubseekpos(pos + idx);
+    sb.pubseekpos(pos + idx + 1, estd::ios_base::in);
     state_ = TOKEN_END;
 }
 
@@ -49,10 +43,9 @@ void decoder::worker<Streambuf, F>::decode_number(Streambuf& sb, F&& f)
 
     while((c = sb.sbumpc()) == '.' || estd::isdigit(c)) ++idx;
 
-    int pos = sb.pos();
-    sb.pubseekoff(-(idx + 1), estd::ios_base::cur);
+    int pos = sb.pubseekoff(-(idx + 1), estd::ios_base::cur, estd::ios_base::in);
     f(*this, item { idx });
-    sb.pubseekoff(pos, estd::ios_base::beg);
+    sb.pubseekpos(pos + idx + 1, estd::ios_base::in);
 
     state_ = TOKEN_END;
 }

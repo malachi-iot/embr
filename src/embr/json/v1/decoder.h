@@ -79,6 +79,9 @@ class decoder : public decoder_state
         // If true, don't assume gptr is available.
         static constexpr bool is_locking = true;
 
+        // DEBT: Break these down into decode_one so that we can completely
+        // avoid blocking
+
         void decode_rdbuf(Streambuf& sb, F&& f);
         void decode_idle(Streambuf& sb, F&& f);
         void decode_literal(Streambuf& sb, F&& f);
