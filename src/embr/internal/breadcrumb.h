@@ -24,19 +24,19 @@ struct searcher
 {
     using pointer = const breadcrumb*;
 
-    // Be sure to position with desired 'parent'
-    pointer crumbs;
+    // Be sure to start crumb right after desired parent
+    pointer crumbs_;
     int pos;
-    pointer marker = nullptr;
+    pointer marker_ = nullptr;
 
     bool match(char c)
     {
-        if(crumbs->name[pos] == c)
+        if(crumbs_->name[pos] == c)
         {
-            if(marker == nullptr)
+            if(marker_ == nullptr)
             {
                 // hi2u side effect
-                marker = crumbs;
+                marker_ = crumbs_;
             }
             return true;
         }
@@ -52,19 +52,33 @@ struct searcher
     };
 
     // Pass in null termination also
-    results search(char c)
+    results search(char c, int parent_id)
     {
         if(match(c))
         {
+            ++pos;
             if(c == 0)
             {
                 return MATCHED;
             }
+
+            return SEARCHING;
         }
         else
         {
-            ++crumbs;
-            if(std::memcmp(crumbs->name, marker->name, pos) == 0)
+            ++crumbs_;
+            if(parent_id != crumbs_->parent)
+            {
+                return NO_MATCH;
+            }
+            else if(marker_ == nullptr)
+            {
+                // If we had no semblance of a match so far, plunge forward
+
+                // DEBT: Don't really want to do recursion, just convenient
+                return search(c, parent_id);
+            }
+            else if(std::memcmp(crumbs_->name, marker_->name, pos) == 0)
             {
                 // If next crumb begins with same characters as last crumb,
                 // then we're still in the game for searching. i.e:
@@ -72,12 +86,33 @@ struct searcher
                 // 2. crumbs are: 'hi' and 'hi2u'
                 // In that case marker has 'hi' in it and pos is 2
 
-                // TODO: A limited while loop makes sense here to blast
-                // through all near matches
+                // A limited while loop makes sense here to blast
+                // through all near matches.  Clear out marker because we've
+                // established him as a match, open up door for new marker
+                marker_ = nullptr;
+
+                // DEBT: Don't really want to do recursion, just convenient
+                return search(c, parent_id);
             }
+
+            // If movement to the next crumb doesn't match marker, then match
+            // overall fails... fall through to NO_MATCH
         }
 
         return NO_MATCH;
+    }
+
+    results search(const char* s)
+    {
+        const int parent_id = crumbs_->parent;
+
+        while(*s != 0)
+        {
+            results r = search(*s++, parent_id);
+            if(r != SEARCHING) return r;
+        }
+
+        return search(*s, parent_id);
     }
 };
 

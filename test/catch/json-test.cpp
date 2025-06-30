@@ -15,7 +15,9 @@ enum nav_ids
 {
     id_top,
     id_lvl1_0,
-    id_lvl1_1
+    id_lvl1_1,
+    id_lvl2_0,
+    id_lvl2_1,
 };
 
 static constexpr bc nav[]
@@ -23,6 +25,8 @@ static constexpr bc nav[]
     { "top",    id_top },
     { "lvl1.0", id_lvl1_0,  id_top },
     { "lvl1.1", id_lvl1_1,  id_top },
+    { "lvl2.0", id_lvl2_0,  id_top },
+    { "lvl2.1", id_lvl2_1,  id_top },
     { nullptr }
 };
 
@@ -149,14 +153,36 @@ TEST_CASE("json tests", "[json]")
     // DEBT: Test belongs elsewhere
     SECTION("breadcrumbs")
     {
-        const bc* found = embr::internal::search(nav, "top");
+        SECTION("plain search")
+        {
+            const bc* found = embr::internal::search(nav, "top");
 
-        REQUIRE(found->id == id_top);
+            REQUIRE(found->id == id_top);
 
-        found = embr::internal::search(found + 1, "top");
+            found = embr::internal::search(found + 1, "top");
 
-        // Early days for breadcrumb search.  This flavor searches until we leave
-        // a parent domain, which starts as -1
-        REQUIRE(found->parent != -1);
+            // Early days for breadcrumb search.  This flavor searches until we leave
+            // a parent domain, which starts as -1
+            REQUIRE(found->parent != -1);
+        }
+        SECTION("stateful")
+        {
+            embr::internal::searcher searcher{nav + 1};
+
+            SECTION("lvl1.1")
+            {
+                embr::internal::searcher::results r = searcher.search("lvl1.1");
+
+                REQUIRE(r == searcher.MATCHED);
+                REQUIRE(searcher.marker_->id == id_lvl1_1);
+            }
+            SECTION("lvl2.0")
+            {
+                embr::internal::searcher::results r = searcher.search("lvl2.0");
+
+                REQUIRE(r == searcher.MATCHED);
+                REQUIRE(searcher.marker_->id == id_lvl2_0);
+            }
+        }
     }
 }
