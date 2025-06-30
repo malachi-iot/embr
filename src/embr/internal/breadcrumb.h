@@ -60,7 +60,17 @@ struct basic_searcher
         NO_MATCH,
     };
 
+    enum pred_result
+    {
+        OK,
+        FAST_FORWARD,
+        DONE
+    };
+
     // Pass in null termination also
+    // DEBT: Need to upgrade predicate to return pass, fail or fast-forward.
+    // Fast-forward is needed when the children being iterated over themselves have
+    // children (want to fast forward over grandchildren etc)
     template <class Predicate>
     results search(char c, Predicate&& predicate)
     {

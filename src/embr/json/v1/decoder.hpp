@@ -9,8 +9,8 @@ namespace embr { namespace json {
 
 namespace internal {
 
-// Breadcrumbs want to be sorted per name per parent.  These all shame the same
-// top level parent.  ID is not sorted here.
+// Breadcrumbs want to be sorted per parent ID per name.  These all shame the same
+// top level parent.  child ID is not sorted.
 constexpr embr::internal::breadcrumb literals[]
 {
     { "false",  ID_FALSE },

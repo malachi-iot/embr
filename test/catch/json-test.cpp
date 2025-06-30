@@ -121,9 +121,7 @@ TEST_CASE("json tests", "[json]")
         decoder_type decoder;
         int counter = 0;
 
-        // DEBT: Both correct and clumsy requiring const here
-        // https://github.com/malachi-iot/estdlib/issues/124
-        estd::layer2::basic_istringstream<char> in((char*)json1);
+        estd::layer2::basic_istringstream<const char> in(json1);
 
         decoder.decode(in, [&](
             const internal::decoder_state& d,
