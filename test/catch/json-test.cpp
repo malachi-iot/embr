@@ -9,6 +9,23 @@ using namespace embr::json;
 
 #include "test-data.h"
 
+using bc = embr::internal::breadcrumb;
+
+enum nav_ids
+{
+    id_top,
+    id_lvl1_0,
+    id_lvl1_1
+};
+
+static constexpr bc nav[]
+{
+    { "top",    id_top },
+    { "lvl1.0", id_lvl1_0,  id_top },
+    { "lvl1.1", id_lvl1_1,  id_top },
+    { nullptr }
+};
+
 static const char* json1 =
     R"=({"hi2u"})=";
 
@@ -128,5 +145,18 @@ TEST_CASE("json tests", "[json]")
         });
 
         REQUIRE(counter == 1);
+    }
+    // DEBT: Test belongs elsewhere
+    SECTION("breadcrumbs")
+    {
+        const bc* found = embr::internal::search(nav, "top");
+
+        REQUIRE(found->id == id_top);
+
+        found = embr::internal::search(found + 1, "top");
+
+        // Early days for breadcrumb search.  This flavor searches until we leave
+        // a parent domain, which starts as -1
+        REQUIRE(found->parent != -1);
     }
 }
