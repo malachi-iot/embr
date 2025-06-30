@@ -9,13 +9,6 @@ namespace embr { namespace json {
 
 namespace internal {
 
-enum literal_ids
-{
-    ID_TRUE,
-    ID_FALSE,
-    ID_NULL
-};
-
 // Breadcrumbs want to be sorted per name per parent.  These all shame the same
 // top level parent.  ID is not sorted here.
 constexpr embr::internal::breadcrumb literals[]
@@ -48,11 +41,21 @@ void decoder::worker<Streambuf, F>::decode_string(Streambuf& sb, F&& f)
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
 void decoder::worker<Streambuf, F>::decode_literal(Streambuf& sb, F&& f)
 {
+    embr::internal::searcher::results r;
     embr::internal::searcher searcher{json::internal::literals};
 
-    while(searcher.search(sb.sbumpc(), [](auto){ return true; }) == searcher.SEARCHING)   {}
+    while((r = searcher.search(sb.sbumpc(), [](auto){ return true; })) == searcher.SEARCHING)
+    {
 
-    const int idx = searcher.pos;
+    }
+
+    if(r == searcher.MATCHED)
+    {
+        const int idx = searcher.pos;
+        auto id = static_cast<literal_ids>(searcher.marker_->id);
+
+        f(*this, item { id });
+    }
 }
 
 

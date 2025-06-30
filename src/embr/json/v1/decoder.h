@@ -10,6 +10,14 @@ inline namespace v1 {
 
 namespace internal {
 
+enum literal_ids
+{
+    ID_TRUE,
+    ID_FALSE,
+    ID_NULL
+};
+
+
 class decoder_state
 {
 public:
@@ -31,6 +39,7 @@ public:
         LITERAL,    // true, false or null
     };
 
+    // DEBT: Displaced by literal_ids - consolidate ... ?
     enum literals
     {
         TRUE,
@@ -54,7 +63,7 @@ public:
         union
         {
             int len;
-            literals literal;
+            literal_ids literal;
             float number;
         };
     };

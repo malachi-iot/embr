@@ -35,6 +35,9 @@ static constexpr bc nav[]
 static const char* json1 =
     R"=({"hi2u"})=";
 
+static const char* json2 =
+    R"=({"hi2u": true})=";
+
 struct single_quoted : v1::options::lean
 {
     static constexpr bool use_doublequotes() { return false; }
