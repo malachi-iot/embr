@@ -10,6 +10,7 @@ inline namespace v1 {
 
 namespace internal {
 
+// https://datatracker.ietf.org/doc/html/rfc8259#section-3
 enum literal_ids
 {
     ID_TRUE,
@@ -22,18 +23,21 @@ class decoder_state
 {
 public:
     // DEBT: Paradigm collision with something like minij::modes
+    // "Token" as defined byhttps://datatracker.ietf.org/doc/html/rfc8259#section-2
+    // "characters, strings, numbers, and three literal names"
     enum states
     {
         IDLE,
         TOKEN_START,
         TOKEN_END,
+        ERROR
     };
 
-    // https://datatracker.ietf.org/doc/html/rfc8259#section-3
     enum items
     {
         OBJECT,
         ARRAY,
+        NAME,       ///< aka object key
         NUMBER,
         STRING,
         LITERAL,    // true, false or null
@@ -76,7 +80,8 @@ public:
 
 class decoder : public decoder_state
 {
-    template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
+    template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf,
+        class F>
     struct worker : decoder_state
     {
         using traits = typename Streambuf::traits_type;
@@ -91,7 +96,8 @@ class decoder : public decoder_state
         // DEBT: Break these down into decode_one so that we can completely
         // avoid blocking
 
-        void decode_rdbuf(Streambuf& sb, F&& f);
+        void decode(Streambuf& sb, F&& f);
+
         void decode_idle(Streambuf& sb, F&& f);
         void decode_literal(Streambuf& sb, F&& f);
         void decode_number(Streambuf& sb, F&& f);

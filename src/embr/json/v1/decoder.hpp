@@ -82,6 +82,7 @@ void decoder::worker<Streambuf, F>::decode_token(Streambuf& sb, F&& f)
 
     switch(item_)
     {
+        case NAME:
         case STRING:
             decode_string(sb, std::forward<F>(f));
             break;
@@ -120,7 +121,7 @@ void decoder::worker<Streambuf, F>::decode_idle(Streambuf& sb, F&& f)
             item_ = ARRAY;
             state_ = TOKEN_START;
             worker child(this);
-            child.decode_rdbuf(sb, std::forward<F>(f));
+            child.decode(sb, std::forward<F>(f));
             break;
         }
 
@@ -129,7 +130,7 @@ void decoder::worker<Streambuf, F>::decode_idle(Streambuf& sb, F&& f)
             item_ = OBJECT;
             state_ = TOKEN_START;
             worker child(this);
-            child.decode_rdbuf(sb, std::forward<F>(f));
+            child.decode(sb, std::forward<F>(f));
             break;
         }
 
@@ -137,15 +138,35 @@ void decoder::worker<Streambuf, F>::decode_idle(Streambuf& sb, F&& f)
             state_ = TOKEN_END;
             break;
 
+        case ':':
+            if(item_ != NAME)
+                state_ = ERROR;
+            break;
+
         case '"':
-            item_ = STRING;
+        {
+            if(parent_ != nullptr && parent_->item() == OBJECT)
+            {
+                // OBJECT needs NAME then STRING.  Presume NAME mode and
+                // toggle to STRING only if NAME mode precedes it
+                item_ = item_ == NAME ? STRING : NAME;
+            }
+            else
+                item_ = STRING;
+
+            item_ = parent_ == nullptr ? STRING :
+                parent_->item() == OBJECT ? NAME : STRING;
             state_ = TOKEN_START;
             //f(*this);
             break;
+        }
 
         case ' ': break;
 
         default:
+            // Presume a literal
+            state_ = TOKEN_START;
+            item_ = LITERAL;
             break;
 
         case traits::eof():
@@ -154,7 +175,7 @@ void decoder::worker<Streambuf, F>::decode_idle(Streambuf& sb, F&& f)
 }
 
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
-void decoder::worker<Streambuf, F>::decode_rdbuf(Streambuf& sb, F&& f)
+void decoder::worker<Streambuf, F>::decode(Streambuf& sb, F&& f)
 {
     for(;;)
     {
@@ -169,6 +190,7 @@ void decoder::worker<Streambuf, F>::decode_rdbuf(Streambuf& sb, F&& f)
                 break;
 
             case TOKEN_END:
+            case ERROR:
                 return;
 
             default:    break;
@@ -181,7 +203,7 @@ void decoder::decode(estd::detail::basic_istream<Streambuf, Base>& in, F&& f)
 {
     worker<Streambuf, F> w;
 
-    w.decode_rdbuf(*in.rdbuf(), std::forward<F>(f));
+    w.decode(*in.rdbuf(), std::forward<F>(f));
 }
 
 }

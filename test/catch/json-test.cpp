@@ -129,7 +129,7 @@ TEST_CASE("json tests", "[json]")
         {
             char temp[32];
 
-            if(d.item() == decoder_type::STRING)
+            if(d.item() == decoder_type::NAME)
             {
                 in.read(temp, i.len);
 
@@ -137,6 +137,10 @@ TEST_CASE("json tests", "[json]")
 
                 REQUIRE(estd::layer2::const_string(temp) == "hi2u");
                 ++counter;
+            }
+            else if(d.item() == decoder_type::LITERAL)
+            {
+
             }
             else if(d.item() == decoder_type::NUMBER)
             {
