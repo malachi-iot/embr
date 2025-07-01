@@ -23,7 +23,7 @@ add_library(embr::embr_interface ALIAS ${PROJECT_NAME})
 
 #CPMAddPackage("gh:malachi-iot/estdlib@0.8.7")
 # Temporary while building out json decoder which needs pre 0.8.8 things
-CPMAddPackage("gh:malachi-iot/estdlib#941d40ae8d3e415ddb01290da95129451b302c50")
+CPMAddPackage("gh:malachi-iot/estdlib#ae6b32ca4daab0c88e4426bd2392e9f9183318fb")
 
 # DEBT: Was done for macOS, but it doesn't pick it up.  Once that is resolved,
 # bring these in

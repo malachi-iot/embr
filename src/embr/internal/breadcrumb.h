@@ -62,9 +62,9 @@ struct basic_searcher
 
     enum pred_result
     {
-        OK,
-        FAST_FORWARD,
-        DONE
+        DONE,
+        PROCEED,
+        FAST_FORWARD,   ///<! Grandchildren discovered, skip by these
     };
 
     // Pass in null termination also
@@ -82,11 +82,14 @@ struct basic_searcher
         else
         {
             ++crumbs_;
-            if(predicate(*crumbs_) == false)
+            const int r = predicate(*crumbs_);
+            // NOTE: Through the magic of implicit conversion, simpler scenarios may return a bool
+            // in which case: true == proceed, false == complete
+            if(r == DONE)
             {
                 return NO_MATCH;
             }
-            else if(marker_ == nullptr)
+            else if(marker_ == nullptr || r == FAST_FORWARD)
             {
                 // If we had no semblance of a match so far, plunge forward
 
@@ -123,14 +126,18 @@ using searcher = basic_searcher<breadcrumb>;
 inline const breadcrumb* search2(const breadcrumb* crumbs, const char* s)
 {
     const int parent_id = crumbs->parent;
+    int in_child = -1;
 
     searcher srch{crumbs};
 
     do
     {
-        const searcher::results r = srch.search(*s, [parent_id](const breadcrumb& c)
+        const searcher::results r = srch.search(*s, [&](const breadcrumb& c)
         {
-            return c.parent == parent_id;
+            // TODO: Identify when we drop into grandchild mode and do things different there
+
+            const auto direct_child = static_cast<searcher::pred_result>(c.parent == parent_id);
+            return in_child == -1 ? direct_child : searcher::FAST_FORWARD;
         });
         switch(r)
         {
