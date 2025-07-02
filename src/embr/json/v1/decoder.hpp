@@ -38,9 +38,14 @@ void decoder::worker<Streambuf, F>::decode_string(context& ctx, F&& f)
     sb.pubseekpos(pos + idx + 1, estd::ios_base::in);
     state_ = TOKEN_END;
 }
+template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
+void decoder::worker<Streambuf, F>::decode_number_one(context& ctx, char_type c)
+{
+
+}
 
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
-void decoder::worker<Streambuf, F>::decode_literal(context& ctx, char_type c)
+void decoder::worker<Streambuf, F>::decode_literal_one(context& ctx, char_type c)
 {
     // We're pretty strict about literals.  No match = parse error
 
@@ -70,7 +75,7 @@ void decoder::worker<Streambuf, F>::decode_literal(context& ctx, char_type c)
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
 void decoder::worker<Streambuf, F>::decode_literal(context& ctx, F&& f)
 {
-    while(state_ == TOKEN_START)    decode_literal(ctx, ctx.sb.sbumpc());
+    while(state_ == TOKEN_START)    decode_literal_one(ctx, ctx.sb.sbumpc());
 
     if(state_ == TOKEN_END)
     {
@@ -201,7 +206,7 @@ void decoder::worker<Streambuf, F>::decode_idle(context& ctx, F&& f)
             state_ = TOKEN_START;
             item_ = LITERAL;
             new (&ctx.literal_searcher) searcher_type{json::internal::literals};
-            decode_literal(ctx, c);
+            decode_literal_one(ctx, c);
             break;
 
         case traits::eof():
