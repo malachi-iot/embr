@@ -20,8 +20,9 @@ constexpr embr::internal::breadcrumb literals[]
 };
 
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
-void decoder::worker<Streambuf, F>::decode_string(Streambuf& sb, F&& f)
+void decoder::worker<Streambuf, F>::decode_string(context& ctx, F&& f)
 {
+    streambuf_type& sb = ctx.sb;
     using pointer = const char_type*;
 
     int idx = 0;
@@ -40,8 +41,9 @@ void decoder::worker<Streambuf, F>::decode_string(Streambuf& sb, F&& f)
 
 
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
-void decoder::worker<Streambuf, F>::decode_literal(Streambuf& sb, F&& f)
+void decoder::worker<Streambuf, F>::decode_literal(context& ctx, F&& f)
 {
+    streambuf_type& sb = ctx.sb;
     return;
 
     // Nearly works, but since incoming sb doesn't provide \0 termination, searcher gets confused
@@ -65,8 +67,9 @@ void decoder::worker<Streambuf, F>::decode_literal(Streambuf& sb, F&& f)
 
 
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
-void decoder::worker<Streambuf, F>::decode_number(Streambuf& sb, F&& f)
+void decoder::worker<Streambuf, F>::decode_number(context& ctx, F&& f)
 {
+    streambuf_type& sb = ctx.sb;
     int_type c;
     int idx = 0;
 
@@ -81,23 +84,24 @@ void decoder::worker<Streambuf, F>::decode_number(Streambuf& sb, F&& f)
 
 
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
-void decoder::worker<Streambuf, F>::decode_token(Streambuf& sb, F&& f)
+void decoder::worker<Streambuf, F>::decode_token(context& ctx, F&& f)
 {
     estd::remove_const_t<char_type> c;
+    streambuf_type& sb = ctx.sb;
 
     switch(item_)
     {
         case NAME:
         case STRING:
-            decode_string(sb, std::forward<F>(f));
+            decode_string(ctx, std::forward<F>(f));
             break;
 
         case NUMBER:
-            decode_number(sb, std::forward<F>(f));
+            decode_number(ctx, std::forward<F>(f));
             break;
 
         case LITERAL:
-            decode_literal(sb, std::forward<F>(f));
+            decode_literal(ctx, std::forward<F>(f));
             break;
 
         case OBJECT:
@@ -105,7 +109,7 @@ void decoder::worker<Streambuf, F>::decode_token(Streambuf& sb, F&& f)
             if(c == ':')
             {
                 worker child(this);
-                child.decode(sb, std::forward<F>(f));
+                child.decode(ctx, std::forward<F>(f));
             }
             if(c == '}') state_ = TOKEN_END;
             break;
@@ -124,9 +128,9 @@ void decoder::worker<Streambuf, F>::decode_token(Streambuf& sb, F&& f)
 }
 
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
-void decoder::worker<Streambuf, F>::decode_idle(Streambuf& sb, F&& f)
+void decoder::worker<Streambuf, F>::decode_idle(context& ctx, F&& f)
 {
-    const int_type c = sb.sbumpc();
+    const int_type c = ctx.sb.sbumpc();
 
     switch(c)
     {
@@ -135,7 +139,7 @@ void decoder::worker<Streambuf, F>::decode_idle(Streambuf& sb, F&& f)
             item_ = ARRAY;
             state_ = TOKEN_START;
             worker child(this);
-            child.decode(sb, std::forward<F>(f));
+            child.decode(ctx, std::forward<F>(f));
             break;
         }
 
@@ -144,7 +148,7 @@ void decoder::worker<Streambuf, F>::decode_idle(Streambuf& sb, F&& f)
             item_ = OBJECT;
             state_ = TOKEN_START;
             worker child(this);
-            child.decode(sb, std::forward<F>(f));
+            child.decode(ctx, std::forward<F>(f));
             break;
         }
 
@@ -182,7 +186,7 @@ void decoder::worker<Streambuf, F>::decode_idle(Streambuf& sb, F&& f)
             state_ = TOKEN_START;
             item_ = LITERAL;
             // DEBT: Sloppy, calls again for more character-by-character oriented decode_token
-            sb.pubseekoff(-1, ios_base::cur, ios_base::in);
+            ctx.sb.pubseekoff(-1, ios_base::cur, ios_base::in);
             break;
 
         case traits::eof():
@@ -191,18 +195,18 @@ void decoder::worker<Streambuf, F>::decode_idle(Streambuf& sb, F&& f)
 }
 
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
-void decoder::worker<Streambuf, F>::decode(Streambuf& sb, F&& f)
+void decoder::worker<Streambuf, F>::decode(context& ctx, F&& f)
 {
     for(;;)
     {
         switch(state_)
         {
             case IDLE:
-                decode_idle(sb, std::forward<F>(f));
+                decode_idle(ctx, std::forward<F>(f));
                 break;
 
             case TOKEN_START:
-                decode_token(sb, std::forward<F>(f));
+                decode_token(ctx, std::forward<F>(f));
                 break;
 
             case TOKEN_END:
@@ -217,9 +221,11 @@ void decoder::worker<Streambuf, F>::decode(Streambuf& sb, F&& f)
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class Base, class F>
 void decoder::decode(estd::detail::basic_istream<Streambuf, Base>& in, F&& f)
 {
-    worker<Streambuf, F> w;
+    using worker_type = worker<Streambuf, F>;
+    worker_type w;
+    typename worker_type::context ctx{*in.rdbuf()};
 
-    w.decode(*in.rdbuf(), std::forward<F>(f));
+    w.decode(ctx, std::forward<F>(f));
 }
 
 }

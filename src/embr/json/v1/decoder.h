@@ -1,6 +1,7 @@
 #pragma once
 
 #include <estd/iosfwd.h>
+#include "../../internal/breadcrumb.h"
 
 namespace embr { namespace json {
 
@@ -86,11 +87,22 @@ class decoder : public decoder_state
         class F>
     struct worker : decoder_state
     {
-        using traits = typename Streambuf::traits_type;
+        using streambuf_type = Streambuf;
+        using traits = typename streambuf_type::traits_type;
         using char_type = typename traits::char_type;
         using int_type = typename traits::int_type;
         using pos_type = typename traits::pos_type;
         using item = decoder::descriptor;
+
+        struct context
+        {
+            Streambuf& sb;
+
+            union
+            {
+                embr::internal::searcher literal_searcher;
+            };
+        };
 
         // If true, don't assume gptr is available.
         static constexpr bool is_locking = true;
@@ -98,15 +110,19 @@ class decoder : public decoder_state
         // DEBT: Break these down into decode_one so that we can completely
         // avoid blocking
 
-        void decode(Streambuf& sb, F&& f);
+        //void decode_literal(context& sb, char_type c, F&& f);
 
-        void decode_idle(Streambuf& sb, F&& f);
-        void decode_literal(Streambuf& sb, F&& f);
-        void decode_number(Streambuf& sb, F&& f);
-        void decode_string(Streambuf& sb, F&& f);
-        void decode_token(Streambuf& sb, F&& f);
+        void decode(context& sb, F&& f);
 
-        worker(const worker* parent = nullptr) : decoder_state(parent)    {}
+        void decode_idle(context& sb, F&& f);
+        void decode_literal(context& sb, F&& f);
+        void decode_number(context& sb, F&& f);
+        void decode_string(context& sb, F&& f);
+        void decode_token(context& sb, F&& f);
+
+        constexpr explicit worker(const worker* parent = nullptr) :
+            decoder_state(parent)
+        {}
     };
 
 public:
