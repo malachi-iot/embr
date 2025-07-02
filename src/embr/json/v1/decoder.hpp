@@ -39,6 +39,27 @@ void decoder::worker<Streambuf, F>::decode_string(context& ctx, F&& f)
     state_ = TOKEN_END;
 }
 
+template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
+void decoder::worker<Streambuf, F>::decode_literal(context& ctx, char_type c, F&& f)
+{
+    switch(c)
+    {
+        case ',':
+        case ' ':
+            break;
+
+        default:
+        {
+            const searcher_type::results r = ctx.literal_searcher.search(c,
+                [](auto) { return true; });
+            if(r == searcher_type::SEARCHING)
+            {
+                
+            }
+            break;
+        }
+    }
+}
 
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
 void decoder::worker<Streambuf, F>::decode_literal(context& ctx, F&& f)

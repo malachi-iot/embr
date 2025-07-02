@@ -94,13 +94,15 @@ class decoder : public decoder_state
         using pos_type = typename traits::pos_type;
         using item = decoder::descriptor;
 
+        using searcher_type = embr::internal::searcher;
+
         struct context
         {
             Streambuf& sb;
 
             union
             {
-                embr::internal::searcher literal_searcher;
+                searcher_type literal_searcher;
             };
         };
 
@@ -110,7 +112,7 @@ class decoder : public decoder_state
         // DEBT: Break these down into decode_one so that we can completely
         // avoid blocking
 
-        //void decode_literal(context& sb, char_type c, F&& f);
+        void decode_literal(context& sb, char_type c, F&& f);
 
         void decode(context& sb, F&& f);
 
