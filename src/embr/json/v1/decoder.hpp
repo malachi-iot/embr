@@ -16,6 +16,7 @@ constexpr embr::internal::breadcrumb literals[]
     { "false",  ID_FALSE },
     { "null",   ID_NULL },
     { "true",   ID_TRUE },
+    { },
 };
 
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
@@ -41,6 +42,10 @@ void decoder::worker<Streambuf, F>::decode_string(Streambuf& sb, F&& f)
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
 void decoder::worker<Streambuf, F>::decode_literal(Streambuf& sb, F&& f)
 {
+    return;
+
+    // Nearly works, but since incoming sb doesn't provide \0 termination, searcher gets confused
+    // Also searcher seems to get TOO confused and segfaults when searching at thes end
     embr::internal::searcher::results r;
     embr::internal::searcher searcher{json::internal::literals};
 
@@ -78,7 +83,7 @@ void decoder::worker<Streambuf, F>::decode_number(Streambuf& sb, F&& f)
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
 void decoder::worker<Streambuf, F>::decode_token(Streambuf& sb, F&& f)
 {
-    const char_type c = sb.sgetc();
+    estd::remove_const_t<char_type> c;
 
     switch(item_)
     {
@@ -96,14 +101,23 @@ void decoder::worker<Streambuf, F>::decode_token(Streambuf& sb, F&& f)
             break;
 
         case OBJECT:
+            c = sb.sbumpc();
+            if(c == ':')
+            {
+                worker child(this);
+                child.decode(sb, std::forward<F>(f));
+            }
             if(c == '}') state_ = TOKEN_END;
             break;
 
         case ARRAY:
+            c = sb.sbumpc();
             if(c == ']') state_ = TOKEN_END;
             break;
 
+        // Eats whitespace also
         default:
+            c = sb.sbumpc();
             if(c == ',') state_ = TOKEN_END;
             break;
     }
@@ -167,6 +181,8 @@ void decoder::worker<Streambuf, F>::decode_idle(Streambuf& sb, F&& f)
             // Presume a literal
             state_ = TOKEN_START;
             item_ = LITERAL;
+            // DEBT: Sloppy, calls again for more character-by-character oriented decode_token
+            sb.pubseekoff(-1, ios_base::cur, ios_base::in);
             break;
 
         case traits::eof():

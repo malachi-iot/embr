@@ -56,6 +56,8 @@ protected:
     const decoder_state* const parent_;
     items item_;
 
+    using ios_base = estd::ios_base;
+
 public:
     decoder_state(const decoder_state* parent = nullptr) : parent_{parent}    {}
 
