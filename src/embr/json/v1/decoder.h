@@ -112,7 +112,7 @@ class decoder : public decoder_state
         // DEBT: Break these down into decode_one so that we can completely
         // avoid blocking
 
-        void decode_literal(context& sb, char_type c, F&& f);
+        void decode_literal(context& sb, char_type c);
 
         void decode(context& sb, F&& f);
 

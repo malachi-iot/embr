@@ -31,13 +31,14 @@ struct basic_searcher
 {
     using pointer = const T*;
     using traits = Traits;
+    using char_type = const char;
 
     // Be sure to start crumb right after desired parent
     pointer crumbs_;
     int pos = 0;
     pointer marker_ = nullptr;
 
-    bool match(char c)
+    bool match(char_type c)
     {
         const char* name = traits::name(*crumbs_);
         if(name[pos] == c)
@@ -72,7 +73,7 @@ struct basic_searcher
     // Fast-forward is needed when the children being iterated over themselves have
     // children (want to fast forward over grandchildren etc)
     template <class Predicate>
-    results search(char c, Predicate&& predicate)
+    results search(char_type c, Predicate&& predicate)
     {
         if(match(c))
         {
@@ -118,6 +119,11 @@ struct basic_searcher
         }
 
         return NO_MATCH;
+    }
+
+    results search(char_type c)
+    {
+        return search(c, [](auto){ return PROCEED; });
     }
 };
 

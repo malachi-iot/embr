@@ -40,22 +40,28 @@ void decoder::worker<Streambuf, F>::decode_string(context& ctx, F&& f)
 }
 
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
-void decoder::worker<Streambuf, F>::decode_literal(context& ctx, char_type c, F&& f)
+void decoder::worker<Streambuf, F>::decode_literal(context& ctx, char_type c)
 {
+    // We're pretty strict about literals.  No match = parse error
+
     switch(c)
     {
         case ',':
         case ' ':
+        {
+            // These map to delimiters, so force-feed a delimiter into breadcrumb
+            // searcher
+            const searcher_type::results r = ctx.literal_searcher.search(0);
+
+            state_ = r == searcher_type::MATCHED ? TOKEN_END : ERROR;
             break;
+        }
 
         default:
         {
-            const searcher_type::results r = ctx.literal_searcher.search(c,
-                [](auto) { return true; });
-            if(r == searcher_type::SEARCHING)
-            {
-                
-            }
+            const searcher_type::results r = ctx.literal_searcher.search(c);
+            if(r != searcher_type::SEARCHING)
+                state_ = ERROR;
             break;
         }
     }
@@ -64,23 +70,11 @@ void decoder::worker<Streambuf, F>::decode_literal(context& ctx, char_type c, F&
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
 void decoder::worker<Streambuf, F>::decode_literal(context& ctx, F&& f)
 {
-    streambuf_type& sb = ctx.sb;
-    return;
+    while(state_ == TOKEN_START)    decode_literal(ctx, ctx.sb.sbumpc());
 
-    // Nearly works, but since incoming sb doesn't provide \0 termination, searcher gets confused
-    // Also searcher seems to get TOO confused and segfaults when searching at thes end
-    embr::internal::searcher::results r;
-    embr::internal::searcher searcher{json::internal::literals};
-
-    while((r = searcher.search(sb.sbumpc(), [](auto){ return true; })) == searcher.SEARCHING)
+    if(state_ == TOKEN_END)
     {
-
-    }
-
-    if(r == searcher.MATCHED)
-    {
-        const int idx = searcher.pos;
-        auto id = static_cast<literal_ids>(searcher.marker_->id);
+        auto id = static_cast<literal_ids>(ctx.literal_searcher.marker_->id);
 
         f(*this, item { id });
     }
@@ -206,8 +200,8 @@ void decoder::worker<Streambuf, F>::decode_idle(context& ctx, F&& f)
             // Presume a literal
             state_ = TOKEN_START;
             item_ = LITERAL;
-            // DEBT: Sloppy, calls again for more character-by-character oriented decode_token
-            ctx.sb.pubseekoff(-1, ios_base::cur, ios_base::in);
+            new (&ctx.literal_searcher) searcher_type{json::internal::literals};
+            decode_literal(ctx, c);
             break;
 
         case traits::eof():
