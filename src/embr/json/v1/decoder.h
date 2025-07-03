@@ -72,7 +72,7 @@ public:
         {
             int len;
             literal_ids literal;
-            float number;
+            double number;
         };
     };
 };
@@ -102,7 +102,11 @@ class decoder : public decoder_state
             union
             {
                 searcher_type literal_searcher;
-                num_get_type num_get;
+                struct
+                {
+                    num_get_type get;
+                    double value;
+                }   num;
             };
         };
 
@@ -114,7 +118,7 @@ class decoder : public decoder_state
 
         // Since F confuses with char_type, don't overload the names
         void decode_literal_one(context&, char_type c);
-        void decode_number_one(context&, char_type c, double&);
+        void decode_number_one(context&, char_type c);
 
         void decode(context&, F&& f);
 

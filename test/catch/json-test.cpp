@@ -117,7 +117,45 @@ TEST_CASE("json tests", "[json]")
     }
     SECTION("decoder v1: bits")
     {
+        using decoder_type = internal::decoder;
+        using state_type = const internal::decoder_state&;
+        decoder_type decoder;
+        unsigned counter = 0;
 
+        using iss = estd::layer2::basic_istringstream<const char>;
+
+        // FIX: These don't account for EOF yet
+
+        SECTION("number")
+        {
+            iss in("123.4");
+
+            decoder.decode(in, [&](state_type state, const decoder_type::descriptor& d)
+            {
+                if(state.item() == decoder_type::NUMBER)
+                {
+                    REQUIRE(d.number == 123.4);
+                    ++counter;
+                }
+            });
+
+            REQUIRE(counter == 1);
+        }
+        SECTION("literal")
+        {
+            iss in("null");
+
+            decoder.decode(in, [&](state_type state, const decoder_type::descriptor& d)
+            {
+                if (state.item () == decoder_type::LITERAL)
+                {
+                    REQUIRE(d.literal == internal::ID_NULL);
+                    ++counter;
+                }
+            });
+
+            //REQUIRE(counter == 1);
+        }
     }
     SECTION("decoder v1: holistic")
     {

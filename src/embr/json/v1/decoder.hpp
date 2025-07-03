@@ -39,10 +39,10 @@ void decoder::worker<Streambuf, F>::decode_string(context& ctx, F&& f)
     state_ = TOKEN_END;
 }
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
-void decoder::worker<Streambuf, F>::decode_number_one(context& ctx, char_type c, double& v)
+void decoder::worker<Streambuf, F>::decode_number_one(context& ctx, char_type c)
 {
     ios_base::iostate err;
-    ctx.num_get.get(c, err, v);
+    ctx.num.get.get(c, err, ctx.num.value);
 }
 
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
@@ -93,20 +93,26 @@ void decoder::worker<Streambuf, F>::decode_number(context& ctx, F&& f)
     streambuf_type& sb = ctx.sb;
     int_type c;
     int idx = 0;
-    double v = 0;
 
     // DEBT: A 'reset' in num_get wouldn't kill us
-    new (&ctx.num_get) num_get_type;
+    //new (&ctx.num_get) num_get_type;
+    // DEBT: Init done elsewhere in state machine, but not obvious
 
     while((c = sb.sbumpc()) == '.' || estd::isdigit(c))
     {
-        decode_number_one(ctx, c, v);
+        decode_number_one(ctx, c);
         ++idx;
     }
 
-    int pos = sb.pubseekoff(-(idx + 1), estd::ios_base::cur, estd::ios_base::in);
-    f(*this, item { idx });
-    sb.pubseekpos(pos + idx + 1, estd::ios_base::in);
+    // DEBT: Be advised kind of a crummy decimal place adjuster going on here
+    // DEBT: Too low-level, false_type means floating point
+    ctx.num.get.finalize(ctx.num.value, estd::false_type{});
+
+    // DEBT: Inconsistency sometimes literals sometimes strings.  However, state machine
+    // is kind of a no-brainer.  Perhaps have a flag indicating which (or both) to emit
+    //int pos = sb.pubseekoff(-(idx + 1), estd::ios_base::cur, estd::ios_base::in);
+    f(*this, item { .number = ctx.num.value });
+    //sb.pubseekpos(pos + idx + 1, estd::ios_base::in);
 
     state_ = TOKEN_END;
 }
@@ -211,11 +217,22 @@ void decoder::worker<Streambuf, F>::decode_idle(context& ctx, F&& f)
         case ' ': break;
 
         default:
-            // Presume a literal
+            // Presume a literal or number
             state_ = TOKEN_START;
-            item_ = LITERAL;
-            new (&ctx.literal_searcher) searcher_type{json::internal::literals};
-            decode_literal_one(ctx, c);
+
+            if(isdigit(c))
+            {
+                item_ = NUMBER;
+                ctx.num.value = 0;
+                new (&ctx.num.get) num_get_type;
+                decode_number_one(ctx, c);
+            }
+            else
+            {
+                item_ = LITERAL;
+                new (&ctx.literal_searcher) searcher_type{json::internal::literals};
+                decode_literal_one(ctx, c);
+            }
             break;
 
         case traits::eof():
