@@ -1,5 +1,6 @@
 #pragma once
 
+#include <estd/internal/locale/num_get.h>
 #include <estd/iosfwd.h>
 #include "../../internal/breadcrumb.h"
 
@@ -74,11 +75,6 @@ public:
             float number;
         };
     };
-
-    struct context
-    {
-        char temp[32];
-    };
 };
 
 class decoder : public decoder_state
@@ -96,6 +92,9 @@ class decoder : public decoder_state
 
         using searcher_type = embr::internal::searcher;
 
+        using locale_type = estd::internal::default_locale;
+        using num_get_type = estd::iterated::num_get<10, char_type, locale_type>;
+
         struct context
         {
             Streambuf& sb;
@@ -103,6 +102,7 @@ class decoder : public decoder_state
             union
             {
                 searcher_type literal_searcher;
+                num_get_type num_get;
             };
         };
 
@@ -114,15 +114,15 @@ class decoder : public decoder_state
 
         // Since F confuses with char_type, don't overload the names
         void decode_literal_one(context&, char_type c);
-        void decode_number_one(context&, char_type c);
+        void decode_number_one(context&, char_type c, double&);
 
-        void decode(context& sb, F&& f);
+        void decode(context&, F&& f);
 
-        void decode_idle(context& sb, F&& f);
-        void decode_literal(context& sb, F&& f);
-        void decode_number(context& sb, F&& f);
-        void decode_string(context& sb, F&& f);
-        void decode_token(context& sb, F&& f);
+        void decode_idle(context&, F&& f);
+        void decode_literal(context&, F&& f);
+        void decode_number(context&, F&& f);
+        void decode_string(context&, F&& f);
+        void decode_token(context&, F&& f);
 
         constexpr explicit worker(const worker* parent = nullptr) :
             decoder_state(parent)

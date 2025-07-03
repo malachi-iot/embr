@@ -39,9 +39,10 @@ void decoder::worker<Streambuf, F>::decode_string(context& ctx, F&& f)
     state_ = TOKEN_END;
 }
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
-void decoder::worker<Streambuf, F>::decode_number_one(context& ctx, char_type c)
+void decoder::worker<Streambuf, F>::decode_number_one(context& ctx, char_type c, double& v)
 {
-
+    ios_base::iostate err;
+    ctx.num_get.get(c, err, v);
 }
 
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
@@ -92,8 +93,16 @@ void decoder::worker<Streambuf, F>::decode_number(context& ctx, F&& f)
     streambuf_type& sb = ctx.sb;
     int_type c;
     int idx = 0;
+    double v = 0;
 
-    while((c = sb.sbumpc()) == '.' || estd::isdigit(c)) ++idx;
+    // DEBT: A 'reset' in num_get wouldn't kill us
+    new (&ctx.num_get) num_get_type;
+
+    while((c = sb.sbumpc()) == '.' || estd::isdigit(c))
+    {
+        decode_number_one(ctx, c, v);
+        ++idx;
+    }
 
     int pos = sb.pubseekoff(-(idx + 1), estd::ios_base::cur, estd::ios_base::in);
     f(*this, item { idx });

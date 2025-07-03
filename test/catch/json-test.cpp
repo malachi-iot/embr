@@ -115,7 +115,11 @@ TEST_CASE("json tests", "[json]")
             }
         }
     }
-    SECTION("decoder v1")
+    SECTION("decoder v1: bits")
+    {
+
+    }
+    SECTION("decoder v1: holistic")
     {
         using decoder_type = internal::decoder;
         decoder_type decoder;
