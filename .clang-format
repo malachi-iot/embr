@@ -1,1 +1,7 @@
+# https://clang.llvm.org/docs/ClangFormatStyleOptions.html
+# CLion is losing its mind here.  Trying to be more explicit, doesn't seem to help
+
+Language: Cpp
+BasedOnStyle: LLVM
 NamespaceIndentation: None
+TabWidth: 4
