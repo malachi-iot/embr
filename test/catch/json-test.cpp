@@ -124,8 +124,6 @@ TEST_CASE("json tests", "[json]")
 
         using iss = estd::layer2::basic_istringstream<const char>;
 
-        // FIX: These don't account for EOF yet
-
         SECTION("number")
         {
             iss in("123.4");
@@ -154,7 +152,7 @@ TEST_CASE("json tests", "[json]")
                 }
             });
 
-            //REQUIRE(counter == 1);
+            REQUIRE(counter == 1);
         }
     }
     SECTION("decoder v1: holistic")

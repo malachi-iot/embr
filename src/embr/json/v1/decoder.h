@@ -117,8 +117,8 @@ class decoder : public decoder_state
         // avoid blocking
 
         // Since F confuses with char_type, don't overload the names
-        void decode_literal_one(context&, char_type c);
-        void decode_number_one(context&, char_type c);
+        void decode_literal_one(context&, int_type c);
+        void decode_number_one(context&, int_type c);
 
         void decode(context&, F&& f);
 

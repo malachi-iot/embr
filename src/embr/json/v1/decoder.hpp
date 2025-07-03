@@ -39,14 +39,33 @@ void decoder::worker<Streambuf, F>::decode_string(context& ctx, F&& f)
     state_ = TOKEN_END;
 }
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
-void decoder::worker<Streambuf, F>::decode_number_one(context& ctx, char_type c)
+void decoder::worker<Streambuf, F>::decode_number_one(context& ctx, int_type c)
 {
-    ios_base::iostate err;
-    ctx.num.get.get(c, err, ctx.num.value);
+    switch(c)
+    {
+        case ',':
+        case ' ':
+        case traits::eof():
+            // DEBT: Be advised kind of a crummy decimal place adjuster going on here
+            // DEBT: Too low-level, false_type means floating point
+            ctx.num.get.finalize(ctx.num.value, estd::false_type{});
+            state_ = TOKEN_END;
+            break;
+
+        default:
+        {
+            ios_base::iostate err = ios_base::goodbit;
+            ctx.num.get.get(c, err, ctx.num.value);
+
+            if(err != ios_base::goodbit)
+                state_ = ERROR;
+            break;
+        }
+    }
 }
 
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
-void decoder::worker<Streambuf, F>::decode_literal_one(context& ctx, char_type c)
+void decoder::worker<Streambuf, F>::decode_literal_one(context& ctx, int_type c)
 {
     // We're pretty strict about literals.  No match = parse error
 
@@ -54,6 +73,7 @@ void decoder::worker<Streambuf, F>::decode_literal_one(context& ctx, char_type c
     {
         case ',':
         case ' ':
+        case traits::eof():
         {
             // These map to delimiters, so force-feed a delimiter into breadcrumb
             // searcher
@@ -90,31 +110,24 @@ void decoder::worker<Streambuf, F>::decode_literal(context& ctx, F&& f)
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
 void decoder::worker<Streambuf, F>::decode_number(context& ctx, F&& f)
 {
-    streambuf_type& sb = ctx.sb;
-    int_type c;
-    int idx = 0;
+    //streambuf_type& sb = ctx.sb;
+    //int_type c;
+    //int idx = 0;
 
     // DEBT: A 'reset' in num_get wouldn't kill us
     //new (&ctx.num_get) num_get_type;
     // DEBT: Init done elsewhere in state machine, but not obvious
 
-    while((c = sb.sbumpc()) == '.' || estd::isdigit(c))
+    while(state_ == TOKEN_START)    decode_number_one(ctx, ctx.sb.sbumpc());
+
+    if(state_ == TOKEN_END)
     {
-        decode_number_one(ctx, c);
-        ++idx;
+        // DEBT: Inconsistency sometimes literals sometimes strings.  However, state machine
+        // is kind of a no-brainer.  Perhaps have a flag indicating which (or both) to emit
+        //int pos = sb.pubseekoff(-(idx + 1), estd::ios_base::cur, estd::ios_base::in);
+        f(*this, item{.number = ctx.num.value});
+        //sb.pubseekpos(pos + idx + 1, estd::ios_base::in);
     }
-
-    // DEBT: Be advised kind of a crummy decimal place adjuster going on here
-    // DEBT: Too low-level, false_type means floating point
-    ctx.num.get.finalize(ctx.num.value, estd::false_type{});
-
-    // DEBT: Inconsistency sometimes literals sometimes strings.  However, state machine
-    // is kind of a no-brainer.  Perhaps have a flag indicating which (or both) to emit
-    //int pos = sb.pubseekoff(-(idx + 1), estd::ios_base::cur, estd::ios_base::in);
-    f(*this, item { .number = ctx.num.value });
-    //sb.pubseekpos(pos + idx + 1, estd::ios_base::in);
-
-    state_ = TOKEN_END;
 }
 
 
