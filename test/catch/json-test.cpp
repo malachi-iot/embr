@@ -173,9 +173,12 @@ TEST_CASE("json tests", "[json]")
 
             if(d.item() == decoder_type::NAME)
             {
-                in.read(temp, i.len);
+                i.str_op(*in.rdbuf(), [&]
+                {
+                    in.read(temp, i.len);
 
-                temp[i.len] = 0;
+                    temp[i.len] = 0;
+                });
 
                 REQUIRE(estd::layer2::const_string(temp) == "hi2u");
                 ++counter;

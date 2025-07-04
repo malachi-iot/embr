@@ -9,6 +9,16 @@ namespace embr { namespace json {
 
 namespace internal {
 
+template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
+inline void decoder_state::descriptor::str_op(Streambuf& sb, F&& f) const
+{
+    const int pos = sb.pubseekoff(-(len + 1), estd::ios_base::cur, estd::ios_base::in);     // skip closing '"'
+
+    f();
+
+    sb.pubseekpos(pos + len + 1, estd::ios_base::in);
+}
+
 // Breadcrumbs want to be sorted per parent ID per name.  These all shame the same
 // top level parent.  child ID is not sorted.
 constexpr embr::internal::breadcrumb literals[]
@@ -37,10 +47,7 @@ void decoder::worker<Streambuf, F>::decode_string(context& ctx, F&& f)
 
     state_ = TOKEN_END;
 
-    // DEBT: Move this out to consumer
-    int pos = sb.pubseekoff(-(idx + 1), estd::ios_base::cur, estd::ios_base::in);     // skip closing '"'
     f(*this, item { .len = idx });
-    sb.pubseekpos(pos + idx + 1, estd::ios_base::in);
 }
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
 void decoder::worker<Streambuf, F>::decode_number_one(context& ctx, int_type c)

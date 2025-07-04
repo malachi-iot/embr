@@ -75,6 +75,9 @@ public:
             double number;
             int ch;
         };
+
+        template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
+        void str_op(Streambuf& sb, F&& f) const;
     };
 };
 
