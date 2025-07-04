@@ -1,5 +1,5 @@
 # https://clang.llvm.org/docs/ClangFormatStyleOptions.html
-# CLion is losing its mind here.  Trying to be more explicit, doesn't seem to help
+# CLion is losing its mind here.  Trying to be more explicit, helps a bit
 
 Language: Cpp
 BasedOnStyle: GNU
@@ -11,3 +11,8 @@ BraceWrapping:
     AfterCaseLabel: true
     AfterControlStatement: true
     IndentBraces: false
+SpaceBeforeParens: SBPO_Custom
+    AfterControlStatements: false
+    AfterFunctionDefinitionName: false
+    AfterFunctionDeclarationName: false
+    AfterIfMacros: false

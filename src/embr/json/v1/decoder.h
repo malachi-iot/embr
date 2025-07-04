@@ -73,9 +73,19 @@ public:
             int len;
             literal_ids literal;
             double number;
+            int ch;
         };
     };
 };
+
+enum decoder_options
+{
+    /// Emit character-by-character functor calls when observing strings
+    DECODER_EMIT_CHAR       = 0x01,
+    DECODER_DEFAULT         = DECODER_EMIT_CHAR,
+};
+
+ESTD_FLAGS(decoder_options)
 
 class decoder : public decoder_state
 {
@@ -94,6 +104,8 @@ class decoder : public decoder_state
 
         using locale_type = estd::internal::default_locale;
         using num_get_type = estd::iterated::num_get<10, char_type, locale_type>;
+
+        static constexpr decoder_options options = DECODER_DEFAULT;
 
         struct context
         {

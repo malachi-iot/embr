@@ -169,6 +169,8 @@ TEST_CASE("json tests", "[json]")
         {
             char temp[32];
 
+            if(d.state() != decoder_type::TOKEN_END) return;
+
             if(d.item() == decoder_type::NAME)
             {
                 in.read(temp, i.len);

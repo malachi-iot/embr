@@ -30,13 +30,17 @@ void decoder::worker<Streambuf, F>::decode_string(context& ctx, F&& f)
 
     while((c = sb.sbumpc()) != '"')
     {
+        if ESTD_CPP_CONSTEXPR(17) (options & DECODER_EMIT_CHAR)
+            f(*this, item {.ch = static_cast<int>(c)});
         ++idx;
     }
 
-    int pos = sb.pubseekoff(-(idx + 1), estd::ios_base::cur, estd::ios_base::in);     // skip closing '"'
-    f(*this, item { idx });
-    sb.pubseekpos(pos + idx + 1, estd::ios_base::in);
     state_ = TOKEN_END;
+
+    // DEBT: Move this out to consumer
+    int pos = sb.pubseekoff(-(idx + 1), estd::ios_base::cur, estd::ios_base::in);     // skip closing '"'
+    f(*this, item { .len = idx });
+    sb.pubseekpos(pos + idx + 1, estd::ios_base::in);
 }
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
 void decoder::worker<Streambuf, F>::decode_number_one(context& ctx, int_type c)
@@ -46,9 +50,9 @@ void decoder::worker<Streambuf, F>::decode_number_one(context& ctx, int_type c)
         case ',':
         case ' ':
         case traits::eof():
-            // DEBT: Be advised kind of a crummy decimal place adjuster going on here
-            // DEBT: Too low-level, false_type means floating point
-            ctx.num.get.finalize(ctx.num.value, estd::false_type{});
+            // DEBT: Be advised kind of a crummy decimal place adjuster going on here, though
+            // it's getting better
+            ctx.num.get.finalize(ctx.num.value);
             state_ = TOKEN_END;
             break;
 
@@ -100,9 +104,9 @@ void decoder::worker<Streambuf, F>::decode_literal(context& ctx, F&& f)
 
     if(state_ == TOKEN_END)
     {
-        auto id = static_cast<literal_ids>(ctx.literal_searcher.marker_->id);
+        const auto id = static_cast<literal_ids>(ctx.literal_searcher.marker_->id);
 
-        f(*this, item { id });
+        f(*this, item { .literal = id });
     }
 }
 
@@ -122,11 +126,7 @@ void decoder::worker<Streambuf, F>::decode_number(context& ctx, F&& f)
 
     if(state_ == TOKEN_END)
     {
-        // DEBT: Inconsistency sometimes literals sometimes strings.  However, state machine
-        // is kind of a no-brainer.  Perhaps have a flag indicating which (or both) to emit
-        //int pos = sb.pubseekoff(-(idx + 1), estd::ios_base::cur, estd::ios_base::in);
         f(*this, item{.number = ctx.num.value});
-        //sb.pubseekpos(pos + idx + 1, estd::ios_base::in);
     }
 }
 
