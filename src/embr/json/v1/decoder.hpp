@@ -62,6 +62,9 @@ void decoder::worker<Streambuf, F>::decode_array(context& ctx, F&& f)
     {
         default:
         {
+            // DEBT: Really we ought to emit an array index here
+            f(*this, item {});
+
             // Decode value portion
             worker child(this);
             child.decode(ctx, std::forward<F>(f));
@@ -255,6 +258,7 @@ void decoder::worker<Streambuf, F>::decode_token(context& ctx, F&& f)
     }
 }
 
+// IDLE is when no token has yet been identified
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
 void decoder::worker<Streambuf, F>::decode_idle(context& ctx, F&& f)
 {
@@ -283,17 +287,6 @@ void decoder::worker<Streambuf, F>::decode_idle(context& ctx, F&& f)
             // Then cascade out and remainder of OBJECT state machine decodes value portion
             break;
         }
-
-        // FIX: This ought to be picked up by decode_array and decode_object, not here
-        case ']':
-        case '}':
-            state_ = TOKEN_END;
-            break;
-
-        case ':':
-            if(item_ != NAME)
-                state_ = ERROR;
-            break;
 
         case '"':
         {
