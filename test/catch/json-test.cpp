@@ -4,6 +4,7 @@
 #include <embr/json/encoder.hpp>
 
 #include <estd/sstream.h>
+#include <estd/string_view.h>
 
 using namespace embr::json;
 
@@ -173,15 +174,12 @@ TEST_CASE("json tests", "[json]")
 
             if(d.item() == decoder_type::NAME)
             {
-                i.str_op(*in.rdbuf(), [&]
-                {
-                    in.read(temp, i.len);
-
-                    temp[i.len] = 0;
-                });
+                i.str(in, temp);
 
                 REQUIRE(estd::layer2::const_string(temp) == "hi2u");
                 ++counter;
+
+                REQUIRE(i.str(in) == "hi2u");
             }
             else if(d.item() == decoder_type::LITERAL)
             {

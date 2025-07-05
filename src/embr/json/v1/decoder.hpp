@@ -19,6 +19,31 @@ inline void decoder_state::descriptor::str_op(Streambuf& sb, F&& f) const
     sb.pubseekpos(pos + len + 1, estd::ios_base::in);
 }
 
+template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf>
+inline estd::basic_string_view<typename Streambuf::char_type> decoder_state::descriptor::str(Streambuf& sb) const
+{
+    typename Streambuf::char_type* r;
+
+    str_op(sb, [&] { r = sb.gptr(); });
+
+    return { r, (unsigned)len };
+}
+
+template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class Char>
+inline int decoder_state::descriptor::str(Streambuf& sb, Char* s) const
+{
+    sb.pubseekoff(-(len + 1), estd::ios_base::cur, estd::ios_base::in);     // skip closing '"'
+    sb.sgetn(s, len);
+    s[len] = 0;
+    sb.sbumpc();
+    return len;
+    /*
+    int len;
+    str_op(sb, [&] { len = sb.sgetn(s, this->len); });
+    s[len] = 0;
+    return len; */
+}
+
 // Breadcrumbs want to be sorted per parent ID per name.  These all shame the same
 // top level parent.  child ID is not sorted.
 constexpr embr::internal::breadcrumb literals[]

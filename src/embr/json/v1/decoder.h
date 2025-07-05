@@ -78,6 +78,26 @@ public:
 
         template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
         void str_op(Streambuf& sb, F&& f) const;
+
+        template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf>
+        estd::basic_string_view<typename Streambuf::char_type> str(Streambuf& sb) const;
+
+        template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class Char>
+        int str(Streambuf& sb, Char*) const;
+
+        template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class Base>
+        constexpr estd::basic_string_view<typename Streambuf::char_type> str(
+            estd::detail::basic_istream<Streambuf, Base>& in) const
+        {
+            return str(*in.rdbuf());
+        }
+
+        template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class Base, typename Char>
+        int str(
+            estd::detail::basic_istream<Streambuf, Base>& in, Char* s) const
+        {
+            return str(*in.rdbuf(), s);
+        }
     };
 };
 
