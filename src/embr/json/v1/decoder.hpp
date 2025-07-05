@@ -58,8 +58,29 @@ constexpr embr::internal::breadcrumb literals[]
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
 void decoder::worker<Streambuf, F>::decode_array(context& ctx, F&& f)
 {
-    int_type c = ctx.sb.sbumpc();
-    if(c == ']') state_ = TOKEN_END;
+    switch(ctx.ch)
+    {
+        default:
+        {
+            // Decode value portion
+            worker child(this);
+            child.decode(ctx, std::forward<F>(f));
+            break;
+        }
+
+        case ']':
+            state_ = TOKEN_END;
+            break;
+
+        case ' ':
+            ctx.ch = ctx.sb.sbumpc();
+            break;
+
+        case ',':
+            // Keeping separate I get the feeling we'll need special treatment here
+            ctx.ch = ctx.sb.sbumpc();
+            break;
+    }
 }
 
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
@@ -81,7 +102,13 @@ void decoder::worker<Streambuf, F>::decode_string(context& ctx, F&& f)
     state_ = TOKEN_END;
 
     f(*this, item { .len = idx });
+
+    // Strings are a special case where its delimiter is only relevant to this string, vs encountering
+    // a }, ], etc.  Therefore, move right and prep next character
+    ctx.ch = sb.sbumpc();
 }
+
+
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
 void decoder::worker<Streambuf, F>::decode_number_one(context& ctx, int_type c)
 {
@@ -178,12 +205,11 @@ void decoder::worker<Streambuf, F>::decode_number(context& ctx, F&& f)
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
 void decoder::worker<Streambuf, F>::decode_object(context& ctx, F&& f)
 {
-    streambuf_type& sb = ctx.sb;
-    int_type c = sb.sbumpc();
-    switch(c)
+    switch(ctx.ch)
     {
         case ':':
         {
+            // Decode value portion
             worker child(this);
             child.decode(ctx, std::forward<F>(f));
             break;
@@ -192,9 +218,9 @@ void decoder::worker<Streambuf, F>::decode_object(context& ctx, F&& f)
         case traits::eof():
         case '}':
             state_ = TOKEN_END;
-            break;
 
         case ' ':
+            ctx.ch = ctx.sb.sbumpc();
             break;
 
     }
@@ -232,9 +258,7 @@ void decoder::worker<Streambuf, F>::decode_token(context& ctx, F&& f)
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
 void decoder::worker<Streambuf, F>::decode_idle(context& ctx, F&& f)
 {
-    const int_type c = ctx.sb.sbumpc();
-
-    ctx.ch = c;
+    const int_type c = ctx.ch;
 
     switch(c)
     {
@@ -251,11 +275,17 @@ void decoder::worker<Streambuf, F>::decode_idle(context& ctx, F&& f)
         {
             item_ = OBJECT;
             state_ = TOKEN_START;
+
+            // Decode key portion
             worker child(this);
             child.decode(ctx, std::forward<F>(f));
+
+            // Then cascade out and remainder of OBJECT state machine decodes value portion
             break;
         }
 
+        // FIX: This ought to be picked up by decode_array and decode_object, not here
+        case ']':
         case '}':
             state_ = TOKEN_END;
             break;
@@ -305,6 +335,8 @@ void decoder::worker<Streambuf, F>::decode_idle(context& ctx, F&& f)
             break;
 
         case traits::eof():
+            // This means we reached here without discovering or closing out a token
+            state_ = ERROR;
             break;
     }
 }
@@ -317,6 +349,7 @@ void decoder::worker<Streambuf, F>::decode(context& ctx, F&& f)
         switch(state_)
         {
             case IDLE:
+                ctx.ch = ctx.sb.sbumpc();
                 decode_idle(ctx, std::forward<F>(f));
                 break;
 
