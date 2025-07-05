@@ -60,6 +60,14 @@ void decoder::worker<Streambuf, F>::decode_array(context& ctx, F&& f)
 {
     switch(ctx.ch)
     {
+        case ',':
+            // Keeping separate I get the feeling we'll need special treatment here
+            // DEBT: Clumsy, above IDLE child consumes this
+            //ctx.ch = ctx.sb.sbumpc();
+            //break;
+        // Array element, wide open for token parse here
+            ESTD_CPP_ATTR_FALLTHROUGH;
+
         default:
         {
             // DEBT: Really we ought to emit an array index here
@@ -75,14 +83,12 @@ void decoder::worker<Streambuf, F>::decode_array(context& ctx, F&& f)
             state_ = TOKEN_END;
             break;
 
-        case ' ':
-            ctx.ch = ctx.sb.sbumpc();
-            break;
+            //ESTD_CPP_ATTR_FALLTHROUGH;
 
-        case ',':
-            // Keeping separate I get the feeling we'll need special treatment here
-            ctx.ch = ctx.sb.sbumpc();
-            break;
+        // DEBT: Clumsy, above IDLE child consumes this
+        //case ' ':
+        //    ctx.ch = ctx.sb.sbumpc();
+        //    break;
     }
 }
 
@@ -174,6 +180,8 @@ void decoder::worker<Streambuf, F>::decode_literal_one(context& ctx, int_type c)
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
 void decoder::worker<Streambuf, F>::decode_literal(context& ctx, F&& f)
 {
+    decode_literal_one(ctx, ctx.ch);
+
     while(state_ == TOKEN_START)    decode_literal_one(ctx, ctx.ch = ctx.sb.sbumpc());
 
     if(state_ == TOKEN_END)
@@ -195,6 +203,8 @@ void decoder::worker<Streambuf, F>::decode_number(context& ctx, F&& f)
     // DEBT: A 'reset' in num_get wouldn't kill us
     //new (&ctx.num_get) num_get_type;
     // DEBT: Init done elsewhere in state machine, but not obvious
+
+    decode_number_one(ctx, ctx.ch);
 
     while(state_ == TOKEN_START)    decode_number_one(ctx, ctx.ch = ctx.sb.sbumpc());
 
@@ -226,6 +236,9 @@ void decoder::worker<Streambuf, F>::decode_object(context& ctx, F&& f)
             ctx.ch = ctx.sb.sbumpc();
             break;
 
+        default:
+            state_ = ERROR;
+            break;
     }
 }
 
@@ -262,16 +275,14 @@ void decoder::worker<Streambuf, F>::decode_token(context& ctx, F&& f)
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
 void decoder::worker<Streambuf, F>::decode_idle(context& ctx, F&& f)
 {
-    const int_type c = ctx.ch;
+    ctx.ch = ctx.sb.sbumpc();
 
-    switch(c)
+    switch(ctx.ch)
     {
         case '[':
         {
             item_ = ARRAY;
             state_ = TOKEN_START;
-            worker child(this);
-            child.decode(ctx, std::forward<F>(f));
             break;
         }
 
@@ -306,24 +317,23 @@ void decoder::worker<Streambuf, F>::decode_idle(context& ctx, F&& f)
             break;
         }
 
-        case ' ': break;
+        case ' ':
+            break;
 
         default:
             // Presume a literal or number
             state_ = TOKEN_START;
 
-            if(isdigit(c))
+            if(isdigit(ctx.ch))
             {
                 item_ = NUMBER;
                 ctx.num.value = 0;
                 new (&ctx.num.get) num_get_type;
-                decode_number_one(ctx, c);
             }
             else
             {
                 item_ = LITERAL;
                 new (&ctx.literal_searcher) searcher_type{json::internal::literals};
-                decode_literal_one(ctx, c);
             }
             break;
 
@@ -342,7 +352,6 @@ void decoder::worker<Streambuf, F>::decode(context& ctx, F&& f)
         switch(state_)
         {
             case IDLE:
-                ctx.ch = ctx.sb.sbumpc();
                 decode_idle(ctx, std::forward<F>(f));
                 break;
 

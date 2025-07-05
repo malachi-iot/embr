@@ -42,6 +42,9 @@ static const char* json2 =
 static const char* json3 =
     R"=({"hi2u": 123.45})=";
 
+static const char* json_array =
+    R"=({"hi2u": [1, 2, 3, 4 ] })=";
+
 struct single_quoted : v1::options::lean
 {
     static constexpr bool use_doublequotes() { return false; }
@@ -162,41 +165,72 @@ TEST_CASE("json tests", "[json]")
     SECTION("decoder v1: holistic")
     {
         using decoder_type = internal::decoder;
+        using istream_type = estd::layer2::basic_istringstream<const char>;
+
         decoder_type decoder;
         int counter = 0;
+        char temp[32];
 
-        estd::layer2::basic_istringstream<const char> in(json3);
-
-        decoder.decode(in, [&](
-            const internal::decoder_state& d,
-            const decoder_type::descriptor& i)
+        SECTION("minimal")
         {
-            char temp[32];
+            istream_type in(json1);
 
-            if(d.state() != decoder_type::TOKEN_END) return;
-
-            if(d.item() == decoder_type::NAME)
+            decoder.decode(in, [&](const internal::decoder_state& d, const decoder_type::descriptor& i)
             {
-                i.str(in, temp);
+                if(d.state() != decoder_type::TOKEN_END) return;
 
-                REQUIRE(estd::layer2::const_string(temp) == "hi2u");
-                ++counter;
+                if(d.item() == decoder_type::NAME)
+                {
+                    i.str(in, temp);
 
-                REQUIRE(i.str(in) == "hi2u");
-            }
-            else if(d.item() == decoder_type::LITERAL)
+                    REQUIRE(estd::layer2::const_string(temp) == "hi2u");
+                    ++counter;
+
+                    REQUIRE(i.str(in) == "hi2u");
+                }
+            });
+        }
+        SECTION("number")
+        {
+            istream_type in(json3);
+
+            decoder.decode(in, [&](
+                const internal::decoder_state& d,
+                const decoder_type::descriptor& i)
             {
-                REQUIRE(i.literal == internal::ID_TRUE);
-                ++counter;
-            }
-            else if(d.item() == decoder_type::NUMBER)
-            {
-                REQUIRE_THAT(i.number, Catch::Matchers::WithinAbsMatcher(123.45, 0.00001));
-                ++counter;
-            }
-        });
+                if(d.state() != decoder_type::TOKEN_END) return;
 
-        REQUIRE(counter == 2);
+                if(d.item() == decoder_type::NAME)
+                {
+                    REQUIRE(i.str(in) == "hi2u");
+                    ++counter;
+                }
+                else if(d.item() == decoder_type::NUMBER)
+                {
+                    REQUIRE_THAT(i.number, Catch::Matchers::WithinAbsMatcher(123.45, 0.00001));
+                    ++counter;
+                }
+            });
+
+            REQUIRE(counter == 2);
+        }
+        SECTION("array")
+        {
+            istream_type in(json_array);
+
+            decoder.decode(in, [&](
+                const internal::decoder_state& d,
+                const decoder_type::descriptor& i)
+            {
+                if(d.item() == decoder_type::NUMBER && d.parent() != nullptr && d.parent()->item() == decoder_type::ARRAY)
+                {
+                    counter += i.number;
+                }
+            });
+
+            REQUIRE(counter == 1 + 2 + 3 + 4);
+
+        }
     }
     // DEBT: Test belongs elsewhere
     SECTION("breadcrumbs")

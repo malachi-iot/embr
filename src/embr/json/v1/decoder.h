@@ -53,6 +53,8 @@ public:
         NULL_,
     };
 
+    using this_type = decoder_state;
+
 protected:
     states state_{};
     const decoder_state* const parent_;
@@ -65,6 +67,7 @@ public:
 
     constexpr states state() const { return state_; }
     constexpr items item() const { return item_; }
+    constexpr const this_type* parent() const { return parent_; }
 
     struct descriptor
     {
