@@ -223,10 +223,21 @@ TEST_CASE("json tests", "[json]")
                 const internal::decoder_state& d,
                 const decoder_type::descriptor& i)
             {
-                if(d.state() != decoder_type::TOKEN_END) return;
-
                 if(d.has_parent() && d.parent()->item() == decoder_type::ARRAY)
                 {
+                    if(d.state() != decoder_type::TOKEN_END)
+                    {
+                        // DEBT: Clumsiness because TOKEN_START means char by char for strings,
+                        // but announcement of upcoming OBJECT
+                        if(d.item() == decoder_type::OBJECT)
+                        {
+                            ++array_count;
+
+                            //++counter;
+                        }
+                        return;
+                    }
+
                     ++array_count;
 
                     if(d.item() == decoder_type::NUMBER)
@@ -238,15 +249,10 @@ TEST_CASE("json tests", "[json]")
                         REQUIRE(i.str(in) == "hi");
                         ++counter;
                     }
-                    else if(d.item() == decoder_type::OBJECT)
-                    {
-                        // FIX: Doesn't get here just yet
-                        //++counter;
-                    }
                 }
             });
 
-            //REQUIRE(array_count == 6);
+            REQUIRE(array_count == 6);
             REQUIRE(counter == 1 + 2 + 3 + 4 + 1);
         }
     }

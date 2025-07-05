@@ -60,15 +60,12 @@ void decoder::worker<Streambuf, F>::decode_array(context& ctx, F&& f)
 {
     switch(ctx.ch)
     {
+        // DEBT: Slightly redundant to re-parse '[' here.  Not too consequential
         case '[':
         case ',':
-            // Keeping separate I get the feeling we'll need special treatment here
-
-            ESTD_CPP_ATTR_FALLTHROUGH;
-
-        // Array element, wide open for token parse here
-        default:
         {
+            // Array element, wide open for token parse here
+
             // DEBT: Consider emit an array index here
             f(*this, item {});
 
@@ -85,7 +82,7 @@ void decoder::worker<Streambuf, F>::decode_array(context& ctx, F&& f)
 
         // Consume whitespace without fanfare
         case ' ':
-            ctx.ch = ctx.sb.sbumpc();
+            ctx.bump();
             break;
     }
 }
@@ -288,6 +285,8 @@ void decoder::worker<Streambuf, F>::decode_idle(context& ctx, F&& f)
         {
             item_ = OBJECT;
             state_ = TOKEN_START;
+
+            f(*this, item{});
 
             // Decode key portion
             worker child(this);
