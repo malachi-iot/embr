@@ -110,6 +110,8 @@ enum decoder_options
     DECODER_NONE            = 0x00,
     /// Emit character-by-character functor calls when observing strings
     DECODER_EMIT_CHAR       = 0x01,
+    /// Favor sgetc over sbumpc (NOT READY)
+    DECODER_SGETC           = 0x02,
     DECODER_DEFAULT         = DECODER_EMIT_CHAR,
 };
 
@@ -139,6 +141,8 @@ class decoder : public decoder_state
         {
             Streambuf& sb;
             int_type ch;
+
+            void bump() { ch = sb.sbumpc(); }
 
             union
             {

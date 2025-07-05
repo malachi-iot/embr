@@ -217,6 +217,7 @@ TEST_CASE("json tests", "[json]")
         SECTION("array")
         {
             istream_type in(json_array);
+            int array_count = 0;
 
             decoder.decode(in, [&](
                 const internal::decoder_state& d,
@@ -226,6 +227,8 @@ TEST_CASE("json tests", "[json]")
 
                 if(d.has_parent() && d.parent()->item() == decoder_type::ARRAY)
                 {
+                    ++array_count;
+
                     if(d.item() == decoder_type::NUMBER)
                     {
                         counter += i.number;
@@ -243,8 +246,8 @@ TEST_CASE("json tests", "[json]")
                 }
             });
 
+            //REQUIRE(array_count == 6);
             REQUIRE(counter == 1 + 2 + 3 + 4 + 1);
-
         }
     }
     // DEBT: Test belongs elsewhere

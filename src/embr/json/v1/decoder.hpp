@@ -60,9 +60,9 @@ void decoder::worker<Streambuf, F>::decode_array(context& ctx, F&& f)
 {
     switch(ctx.ch)
     {
+        case '[':
         case ',':
             // Keeping separate I get the feeling we'll need special treatment here
-            ctx.ch = ctx.sb.sbumpc();
 
             ESTD_CPP_ATTR_FALLTHROUGH;
 
@@ -71,6 +71,8 @@ void decoder::worker<Streambuf, F>::decode_array(context& ctx, F&& f)
         {
             // DEBT: Really we ought to emit an array index here
             f(*this, item {});
+
+            ctx.ch = ctx.sb.sbumpc();
 
             // Decode value portion
             worker child(this);
@@ -222,6 +224,7 @@ void decoder::worker<Streambuf, F>::decode_object(context& ctx, F&& f)
         {
             // Decode value portion
             worker child(this);
+            ctx.ch = ctx.sb.sbumpc();
             child.decode(ctx, std::forward<F>(f));
             break;
         }
@@ -273,8 +276,6 @@ void decoder::worker<Streambuf, F>::decode_token(context& ctx, F&& f)
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
 void decoder::worker<Streambuf, F>::decode_idle(context& ctx, F&& f)
 {
-    ctx.ch = ctx.sb.sbumpc();
-
     switch(ctx.ch)
     {
         case '[':
@@ -288,6 +289,8 @@ void decoder::worker<Streambuf, F>::decode_idle(context& ctx, F&& f)
         {
             item_ = OBJECT;
             state_ = TOKEN_START;
+
+            ctx.ch = ctx.sb.sbumpc();
 
             // Decode key portion
             worker child(this);
@@ -316,6 +319,7 @@ void decoder::worker<Streambuf, F>::decode_idle(context& ctx, F&& f)
         }
 
         case ' ':
+            ctx.bump();
             break;
 
         default:
@@ -372,6 +376,8 @@ void decoder::decode(estd::detail::basic_istream<Streambuf, Base>& in, F&& f)
     using worker_type = worker<Streambuf, F>;
     worker_type w;
     typename worker_type::context ctx{*in.rdbuf()};
+
+    ctx.ch = ctx.sb.sbumpc();
 
     w.decode(ctx, std::forward<F>(f));
 }
