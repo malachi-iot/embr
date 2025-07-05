@@ -22,6 +22,7 @@ template <class T>
 struct breadcrumb_traits
 {
     static constexpr const char* name(const T& v) { return v.name; }
+    static constexpr bool is_null(const T& v) { return v.name == nullptr; }
 };
 
 // For character by character affairs
@@ -29,7 +30,9 @@ struct breadcrumb_traits
 template <class T, class Traits = breadcrumb_traits<T>>
 struct basic_searcher
 {
+    using reference = const T&;
     using pointer = const T*;
+
     using traits = Traits;
     using char_type = const char;
 
@@ -123,7 +126,7 @@ struct basic_searcher
 
     results search(char_type c)
     {
-        return search(c, [](auto){ return PROCEED; });
+        return search(c, [](reference v){ return traits::is_null(v) ? DONE : PROCEED; });
     }
 };
 

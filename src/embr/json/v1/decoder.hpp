@@ -54,6 +54,14 @@ constexpr embr::internal::breadcrumb literals[]
     { },
 };
 
+
+template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
+void decoder::worker<Streambuf, F>::decode_array(context& ctx, F&& f)
+{
+    int_type c = ctx.sb.sbumpc();
+    if(c == ']') state_ = TOKEN_END;
+}
+
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
 void decoder::worker<Streambuf, F>::decode_string(context& ctx, F&& f)
 {
@@ -79,6 +87,8 @@ void decoder::worker<Streambuf, F>::decode_number_one(context& ctx, int_type c)
 {
     switch(c)
     {
+        case '}':
+        case ']':
         case ',':
         case ' ':
         case traits::eof():
@@ -107,6 +117,8 @@ void decoder::worker<Streambuf, F>::decode_literal_one(context& ctx, int_type c)
 
     switch(c)
     {
+        case '}':
+        case ']':
         case ',':
         case ' ':
         case traits::eof():
@@ -132,7 +144,7 @@ void decoder::worker<Streambuf, F>::decode_literal_one(context& ctx, int_type c)
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
 void decoder::worker<Streambuf, F>::decode_literal(context& ctx, F&& f)
 {
-    while(state_ == TOKEN_START)    decode_literal_one(ctx, ctx.sb.sbumpc());
+    while(state_ == TOKEN_START)    decode_literal_one(ctx, ctx.ch = ctx.sb.sbumpc());
 
     if(state_ == TOKEN_END)
     {
@@ -154,7 +166,7 @@ void decoder::worker<Streambuf, F>::decode_number(context& ctx, F&& f)
     //new (&ctx.num_get) num_get_type;
     // DEBT: Init done elsewhere in state machine, but not obvious
 
-    while(state_ == TOKEN_START)    decode_number_one(ctx, ctx.sb.sbumpc());
+    while(state_ == TOKEN_START)    decode_number_one(ctx, ctx.ch = ctx.sb.sbumpc());
 
     if(state_ == TOKEN_END)
     {
@@ -164,11 +176,34 @@ void decoder::worker<Streambuf, F>::decode_number(context& ctx, F&& f)
 
 
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
+void decoder::worker<Streambuf, F>::decode_object(context& ctx, F&& f)
+{
+    streambuf_type& sb = ctx.sb;
+    int_type c = sb.sbumpc();
+    switch(c)
+    {
+        case ':':
+        {
+            worker child(this);
+            child.decode(ctx, std::forward<F>(f));
+            break;
+        }
+
+        case traits::eof():
+        case '}':
+            state_ = TOKEN_END;
+            break;
+
+        case ' ':
+            break;
+
+    }
+}
+
+
+template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
 void decoder::worker<Streambuf, F>::decode_token(context& ctx, F&& f)
 {
-    estd::remove_const_t<char_type> c;
-    streambuf_type& sb = ctx.sb;
-
     switch(item_)
     {
         case NAME:
@@ -185,24 +220,11 @@ void decoder::worker<Streambuf, F>::decode_token(context& ctx, F&& f)
             break;
 
         case OBJECT:
-            c = sb.sbumpc();
-            if(c == ':')
-            {
-                worker child(this);
-                child.decode(ctx, std::forward<F>(f));
-            }
-            if(c == '}') state_ = TOKEN_END;
+            decode_object(ctx, std::forward<F>(f));
             break;
 
         case ARRAY:
-            c = sb.sbumpc();
-            if(c == ']') state_ = TOKEN_END;
-            break;
-
-        // Eats whitespace also
-        default:
-            c = sb.sbumpc();
-            if(c == ',') state_ = TOKEN_END;
+            decode_array(ctx, std::forward<F>(f));
             break;
     }
 }
@@ -211,6 +233,8 @@ template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
 void decoder::worker<Streambuf, F>::decode_idle(context& ctx, F&& f)
 {
     const int_type c = ctx.sb.sbumpc();
+
+    ctx.ch = c;
 
     switch(c)
     {

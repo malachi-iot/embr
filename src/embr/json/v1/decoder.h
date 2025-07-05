@@ -133,6 +133,7 @@ class decoder : public decoder_state
         struct context
         {
             Streambuf& sb;
+            int_type ch;
 
             union
             {
@@ -157,9 +158,11 @@ class decoder : public decoder_state
 
         void decode(context&, F&& f);
 
+        void decode_array(context&, F&& f);
         void decode_idle(context&, F&& f);
         void decode_literal(context&, F&& f);
         void decode_number(context&, F&& f);
+        void decode_object(context&, F&& f);
         void decode_string(context&, F&& f);
         void decode_token(context&, F&& f);
 
