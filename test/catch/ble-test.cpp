@@ -1,5 +1,6 @@
 #include <catch2/catch_all.hpp>
 
+#include <embr/platform/ble/gatt/bas.h>
 #include <embr/platform/ble/gatt/ets.h>
 #include <embr/platform/ble/gatt/char/date-time.h>
 #include <embr/platform/ble/gatt/ots.h>
@@ -10,10 +11,14 @@ TEST_CASE("BLE")
 {
     using namespace embr::ble;
 
+    SECTION("Battery Service")
+    {
+        gatt::v1::BatteryEnergyStatus bes;
+    }
     SECTION("Elapsed Time Service")
     {
-        using et_type = embr::ble::gatt::ElapsedTime;
-        embr::ble::gatt::ElapsedTime et;
+        using et_type = gatt::v1::ElapsedTime;
+        gatt::v1::ElapsedTime et;
 
         REQUIRE(sizeof(et) == 9);
 
