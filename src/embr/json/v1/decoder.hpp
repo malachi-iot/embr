@@ -62,12 +62,11 @@ void decoder::worker<Streambuf, F>::decode_array(context& ctx, F&& f)
     {
         case ',':
             // Keeping separate I get the feeling we'll need special treatment here
-            // DEBT: Clumsy, above IDLE child consumes this
-            //ctx.ch = ctx.sb.sbumpc();
-            //break;
-        // Array element, wide open for token parse here
+            ctx.ch = ctx.sb.sbumpc();
+
             ESTD_CPP_ATTR_FALLTHROUGH;
 
+        // Array element, wide open for token parse here
         default:
         {
             // DEBT: Really we ought to emit an array index here
@@ -81,14 +80,13 @@ void decoder::worker<Streambuf, F>::decode_array(context& ctx, F&& f)
 
         case ']':
             state_ = TOKEN_END;
+
+            ESTD_CPP_ATTR_FALLTHROUGH;
+
+        // Consume whitespace without fanfare
+        case ' ':
+            ctx.ch = ctx.sb.sbumpc();
             break;
-
-            //ESTD_CPP_ATTR_FALLTHROUGH;
-
-        // DEBT: Clumsy, above IDLE child consumes this
-        //case ' ':
-        //    ctx.ch = ctx.sb.sbumpc();
-        //    break;
     }
 }
 
@@ -368,7 +366,7 @@ void decoder::worker<Streambuf, F>::decode(context& ctx, F&& f)
     }
 }
 
-template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class Base, class F>
+template <decoder_options o, ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class Base, class F>
 void decoder::decode(estd::detail::basic_istream<Streambuf, Base>& in, F&& f)
 {
     using worker_type = worker<Streambuf, F>;

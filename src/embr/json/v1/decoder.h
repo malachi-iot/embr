@@ -68,6 +68,7 @@ public:
     constexpr states state() const { return state_; }
     constexpr items item() const { return item_; }
     constexpr const this_type* parent() const { return parent_; }
+    constexpr bool has_parent() const { return parent_ != nullptr; }
 
     struct descriptor
     {
@@ -106,6 +107,7 @@ public:
 
 enum decoder_options
 {
+    DECODER_NONE            = 0x00,
     /// Emit character-by-character functor calls when observing strings
     DECODER_EMIT_CHAR       = 0x01,
     DECODER_DEFAULT         = DECODER_EMIT_CHAR,
@@ -175,7 +177,7 @@ class decoder : public decoder_state
     };
 
 public:
-    template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class Base, class F>
+    template <decoder_options o = DECODER_DEFAULT, ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class Base, class F>
     void decode(estd::detail::basic_istream<Streambuf, Base>& in, F&& f);
 };
 

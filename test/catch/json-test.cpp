@@ -43,7 +43,7 @@ static const char* json3 =
     R"=({"hi2u": 123.45})=";
 
 static const char* json_array =
-    R"=({"hi2u": [1, 2, 3, 4 ] })=";
+    R"=({"hi2u": [1, 2, 3, 4, "hi", { "el1": 5 } ] })=";
 
 struct single_quoted : v1::options::lean
 {
@@ -222,13 +222,28 @@ TEST_CASE("json tests", "[json]")
                 const internal::decoder_state& d,
                 const decoder_type::descriptor& i)
             {
-                if(d.item() == decoder_type::NUMBER && d.parent() != nullptr && d.parent()->item() == decoder_type::ARRAY)
+                if(d.state() != decoder_type::TOKEN_END) return;
+
+                if(d.has_parent() && d.parent()->item() == decoder_type::ARRAY)
                 {
-                    counter += i.number;
+                    if(d.item() == decoder_type::NUMBER)
+                    {
+                        counter += i.number;
+                    }
+                    else if(d.item() == decoder_type::STRING)
+                    {
+                        REQUIRE(i.str(in) == "hi");
+                        ++counter;
+                    }
+                    else if(d.item() == decoder_type::OBJECT)
+                    {
+                        // FIX: Doesn't get here just yet
+                        //++counter;
+                    }
                 }
             });
 
-            REQUIRE(counter == 1 + 2 + 3 + 4);
+            REQUIRE(counter == 1 + 2 + 3 + 4 + 1);
 
         }
     }
