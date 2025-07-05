@@ -16,6 +16,9 @@ add_definitions(-DUNIT_TESTING=1)
 add_subdirectory(../../src embr)
 
 CPMAddPackage("gh:catchorg/Catch2@3.8.1")
+CPMAddPackage("gh:vector-of-bool/cmrc#2.0.1")
+
+cmrc_add_resource_library(TESTRC resources/playlist.json ALIAS testrc)
 
 set(EXTRA_FILES
     README.md
@@ -68,4 +71,5 @@ target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_11)
 target_compile_definitions(${PROJECT_NAME} PRIVATE UNIT_TESTING=1)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE embr::embr)
-target_link_libraries(${PROJECT_NAME} PRIVATE malachi-iot::estd Catch2::Catch2WithMain)
+target_link_libraries(${PROJECT_NAME} PRIVATE malachi-iot::estd)
+target_link_libraries(${PROJECT_NAME} PRIVATE testrc Catch2::Catch2WithMain)

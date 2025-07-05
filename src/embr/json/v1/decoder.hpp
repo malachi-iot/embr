@@ -229,6 +229,8 @@ void decoder::worker<Streambuf, F>::decode_object(context& ctx, F&& f)
         case '}':
             state_ = TOKEN_END;
 
+        case '\r':
+        case '\n':
         case ' ':
             ctx.ch = ctx.sb.sbumpc();
             break;
@@ -314,6 +316,8 @@ void decoder::worker<Streambuf, F>::decode_idle(context& ctx, F&& f)
             break;
         }
 
+        case '\r':
+        case '\n':
         case ' ':
             ctx.bump();
             break;

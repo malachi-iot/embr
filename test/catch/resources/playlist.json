@@ -1,0 +1,33 @@
+{
+    "version": "1",
+    "entries": [
+        {
+            "filename": "FILE0.WAV",
+        },
+        {
+            "filename": "FILE1.WAV",
+            "sleep_vol": 0
+        },
+        {
+            "filename": "FILE2.WAV",
+            "sleep_vol": 0.1
+        },
+        {
+            "filename": "FILE3.WAV",
+            "sleep_freq": 528,
+            "sleep_vol": 0.1
+        },
+        {
+            "filename": "FILE4.WAV"
+        },
+        {
+            "filename": "FILE5.WAV"
+        },
+        {
+            "filename": "FILE6.WAV"
+        },
+        {
+            "filename": "FILE7.WAV"
+        }
+    ]
+}

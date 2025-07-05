@@ -1,5 +1,7 @@
 #include <catch2/catch_all.hpp>
 
+#include <cmrc/cmrc.hpp>
+
 #include <embr/json/decoder.h>
 #include <embr/json/encoder.hpp>
 
@@ -44,6 +46,9 @@ static const char* json3 =
 
 static const char* json_array =
     R"=({"hi2u": [1, 2, 3, 4, "hi", { "el1": 5 } ] })=";
+
+CMRC_DECLARE(TESTRC);
+
 
 struct single_quoted : v1::options::lean
 {
@@ -254,6 +259,42 @@ TEST_CASE("json tests", "[json]")
 
             REQUIRE(array_count == 6);
             REQUIRE(counter == 1 + 2 + 3 + 4 + 1);
+        }
+        SECTION("playlist")
+        {
+            auto fs = cmrc::TESTRC::get_filesystem();
+            cmrc::file f1 = fs.open("resources/playlist.json");
+
+            REQUIRE(f1.size() > 0);
+
+            estd::span<const char> span(f1.begin(), f1.end());
+            // DEBT: Would be nice if spanstream could take begin/end directly
+            // https://github.com/malachi-iot/estdlib/issues/131
+            estd::detail::basic_ispanstream<const char> in(span);
+
+            decoder.decode(in, [&](
+                const internal::decoder_state& d,
+                const decoder_type::descriptor& i)
+            {
+                if(d.state() == decoder_type::TOKEN_END)
+                {
+                    if(d.item() == decoder_type::NAME)
+                    {
+                        // No seek available yet
+                        // https://github.com/malachi-iot/estdlib/issues/131
+                        /*
+                        if(counter == 0)
+                            REQUIRE(i.str(in) == "version");
+                        else if(counter == 1)
+                            REQUIRE(i.str(in) == "entries");
+                        */
+
+                        ++counter;
+                    }
+                }
+            });
+
+            REQUIRE(counter == 2);
         }
     }
     // DEBT: Test belongs elsewhere

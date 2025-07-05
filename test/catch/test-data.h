@@ -9,6 +9,8 @@
  */
 #pragma once
 
+#include <catch2/catch_all.hpp>
+
 #include <estd/cstdint.h>
 
 // eec1 examples are from [1]
@@ -50,6 +52,5 @@ inline void compare(const uint8_t lhs[], const uint8_t rhs[], size_t count)
 
 static const char* json_user = "{'user':{'age':30,'name':'Fred'}}";
 static const char* json_prefs = "{'prefs':[1,2,3,'hi2u']}";
-
 
 }
