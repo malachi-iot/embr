@@ -3,6 +3,7 @@
 #include <estd/utility.h>
 
 #include <nimble/ble.h>
+#include <host/ble_uuid.h>
 
 #include "../ble/gatt/char/enum.h"
 #include "../ble/gatt/enum.h"
