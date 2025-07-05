@@ -35,6 +35,13 @@ public:
         ERROR
     };
 
+    enum object_states
+    {
+        OBJECT_START,
+        OBJECT_NAME,
+        OBJECT_VALUE
+    };
+
     enum items
     {
         OBJECT,
@@ -155,8 +162,12 @@ class decoder : public decoder_state
             };
         };
 
-        // If true, don't assume gptr is available.
-        static constexpr bool is_locking = true;
+        // Dormant
+        union state
+        {
+            int array_index;
+            object_states object_state;
+        };
 
         // DEBT: Break these down into decode_one so that we can completely
         // avoid blocking

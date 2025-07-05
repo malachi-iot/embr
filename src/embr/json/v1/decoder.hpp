@@ -69,10 +69,8 @@ void decoder::worker<Streambuf, F>::decode_array(context& ctx, F&& f)
         // Array element, wide open for token parse here
         default:
         {
-            // DEBT: Really we ought to emit an array index here
+            // DEBT: Consider emit an array index here
             f(*this, item {});
-
-            ctx.ch = ctx.sb.sbumpc();
 
             // Decode value portion
             worker child(this);
@@ -224,11 +222,12 @@ void decoder::worker<Streambuf, F>::decode_object(context& ctx, F&& f)
         {
             // Decode value portion
             worker child(this);
-            ctx.ch = ctx.sb.sbumpc();
             child.decode(ctx, std::forward<F>(f));
             break;
         }
 
+        // NOTE: It's possible to hit this guy before above ':' meaning that our OBJECT
+        // could be populated only by NAME.  Technically incorrect behavior
         case traits::eof():
         case '}':
             state_ = TOKEN_END;
@@ -290,8 +289,6 @@ void decoder::worker<Streambuf, F>::decode_idle(context& ctx, F&& f)
             item_ = OBJECT;
             state_ = TOKEN_START;
 
-            ctx.ch = ctx.sb.sbumpc();
-
             // Decode key portion
             worker child(this);
             child.decode(ctx, std::forward<F>(f));
@@ -349,6 +346,9 @@ void decoder::worker<Streambuf, F>::decode_idle(context& ctx, F&& f)
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
 void decoder::worker<Streambuf, F>::decode(context& ctx, F&& f)
 {
+    // DEBT: Only place which presumes to bump forward.  Feels clumsy and side-effecty
+    ctx.ch = ctx.sb.sbumpc();
+
     for(;;)
     {
         switch(state_)
@@ -376,8 +376,6 @@ void decoder::decode(estd::detail::basic_istream<Streambuf, Base>& in, F&& f)
     using worker_type = worker<Streambuf, F>;
     worker_type w;
     typename worker_type::context ctx{*in.rdbuf()};
-
-    ctx.ch = ctx.sb.sbumpc();
 
     w.decode(ctx, std::forward<F>(f));
 }
