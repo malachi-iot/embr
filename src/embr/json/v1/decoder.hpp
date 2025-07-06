@@ -129,7 +129,7 @@ void decoder::worker<Streambuf, F>::decode_string(context& ctx, F&& f)
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
 void decoder::worker<Streambuf, F>::decode_number_one(context& ctx, int_type c)
 {
-    // TODO: Rework to use ctype::isspace
+    // DEBT: Rework to use ctype::isspace, though num_get resiliency obviates that for the moment
 
     switch(c)
     {
@@ -146,6 +146,8 @@ void decoder::worker<Streambuf, F>::decode_number_one(context& ctx, int_type c)
 
         default:
         {
+            // Iterated num_get has some baked in resiliency to incorrect characters, though it's
+            // a little debatable whether it should
             ios_base::iostate err = ios_base::goodbit;
             ctx.num.get.get(c, err, ctx.num.value);
 
@@ -161,7 +163,7 @@ void decoder::worker<Streambuf, F>::decode_literal_one(context& ctx, int_type c)
 {
     // We're pretty strict about literals.  No match = parse error
 
-    // TODO: Rework to use ctype::isspace
+    // DEBT: Rework to use ctype::isspace
 
     switch(c)
     {
@@ -169,6 +171,8 @@ void decoder::worker<Streambuf, F>::decode_literal_one(context& ctx, int_type c)
         case ']':
         case ',':
         case ' ':
+        case 10:
+        case 13:
         case traits::eof():
         {
             // These map to delimiters, so force-feed a delimiter into breadcrumb
