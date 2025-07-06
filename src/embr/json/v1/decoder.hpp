@@ -54,6 +54,21 @@ constexpr embr::internal::breadcrumb literals[]
     { },
 };
 
+template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
+void decoder::worker<Streambuf, F>::decode_whitespace(context& ctx)
+{
+    // ctype pissed off here, needs work
+    //if(ctype::isspace(ctx.ch))
+    if(estd::isspace(ctx.ch))
+    {
+        ctx.bump();
+    }
+    else
+    {
+        state_ = ERROR;
+    }
+}
+
 
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
 void decoder::worker<Streambuf, F>::decode_array(context& ctx, F&& f)
@@ -81,8 +96,8 @@ void decoder::worker<Streambuf, F>::decode_array(context& ctx, F&& f)
             ESTD_CPP_ATTR_FALLTHROUGH;
 
         // Consume whitespace without fanfare
-        case ' ':
-            ctx.bump();
+        default:
+            decode_whitespace(ctx);
             break;
     }
 }
@@ -223,19 +238,24 @@ void decoder::worker<Streambuf, F>::decode_object(context& ctx, F&& f)
             break;
         }
 
+        case ',':
+        {
+            // DEBT: Abuse of state machine to proclaim "START" again
+            state_ = TOKEN_START;
+            // Decode key portion
+            worker child(this);
+            child.decode(ctx, std::forward<F>(f));
+            break;
+        }
+
         // NOTE: It's possible to hit this guy before above ':' meaning that our OBJECT
         // could be populated only by NAME.  Technically incorrect behavior
         case traits::eof():
         case '}':
             state_ = TOKEN_END;
 
-        case '\r':
-        case '\n':
-        case ' ':
-            ctx.ch = ctx.sb.sbumpc();
-            break;
-
         default:
+            decode_whitespace(ctx);
             state_ = ERROR;
             break;
     }
@@ -294,6 +314,8 @@ void decoder::worker<Streambuf, F>::decode_idle(context& ctx, F&& f)
             worker child(this);
             child.decode(ctx, std::forward<F>(f));
 
+            state_ = TOKEN_MIDDLE;
+
             // Then cascade out and remainder of OBJECT state machine decodes value portion
             break;
         }
@@ -301,16 +323,10 @@ void decoder::worker<Streambuf, F>::decode_idle(context& ctx, F&& f)
         case '"':
         {
             if(parent_ != nullptr && parent_->item() == OBJECT)
-            {
-                // OBJECT needs NAME then STRING.  Presume NAME mode and
-                // toggle to STRING only if NAME mode precedes it
-                item_ = item_ == NAME ? STRING : NAME;
-            }
+                item_ = parent_->state() == TOKEN_START ? NAME : STRING;
             else
                 item_ = STRING;
 
-            item_ = parent_ == nullptr ? STRING :
-                parent_->item() == OBJECT ? NAME : STRING;
             state_ = TOKEN_START;
             //f(*this);
             break;
@@ -361,6 +377,7 @@ void decoder::worker<Streambuf, F>::decode(context& ctx, F&& f)
                 break;
 
             case TOKEN_START:
+            case TOKEN_MIDDLE:
                 decode_token(ctx, std::forward<F>(f));
                 break;
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <estd/internal/locale/ctype.h>
 #include <estd/internal/locale/num_get.h>
 #include <estd/iosfwd.h>
 #include "../../internal/breadcrumb.h"
@@ -31,6 +32,7 @@ public:
     {
         IDLE,
         TOKEN_START,
+        TOKEN_MIDDLE,
         TOKEN_END,
         ERROR
     };
@@ -63,14 +65,17 @@ public:
     using this_type = decoder_state;
 
 protected:
-    states state_{};
+    states state_ : 8;
+    items item_ : 8;
     const decoder_state* const parent_;
-    items item_;
 
     using ios_base = estd::ios_base;
 
 public:
-    decoder_state(const decoder_state* parent = nullptr) : parent_{parent}    {}
+    decoder_state(const decoder_state* parent = nullptr) :
+        state_{IDLE},
+        parent_{parent}
+    {}
 
     constexpr states state() const { return state_; }
     constexpr items item() const { return item_; }
@@ -141,6 +146,7 @@ class decoder : public decoder_state
 
         using locale_type = estd::internal::default_locale;
         using num_get_type = estd::iterated::num_get<10, char_type, locale_type>;
+        using ctype = estd::ctype<char_type, locale_type>;
 
         static constexpr decoder_options options = DECODER_DEFAULT;
 
@@ -171,6 +177,8 @@ class decoder : public decoder_state
 
         // DEBT: Break these down into decode_one so that we can completely
         // avoid blocking
+
+        void decode_whitespace(context&);
 
         // Since F confuses with char_type, don't overload the names
         void decode_literal_one(context&, int_type c);

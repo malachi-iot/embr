@@ -279,20 +279,25 @@ TEST_CASE("json tests", "[json]")
                     {
                         if(counter == 0)
                             REQUIRE(i.str(in) == "version");
-                        /*
-                        else if(counter == 1)
-                            REQUIRE(i.str(in) == "entries"); */
+                        else if(counter == 2)
+                            REQUIRE(i.str(in) == "entries");
+                        else if(counter == 3)
+                            REQUIRE(i.str(in) == "filename");
 
                         ++counter;
                     }
                     else if(d.item() == decoder_type::STRING)
                     {
-                        
+                        if (counter == 1)       // version
+                            REQUIRE(i.str(in) == "1");
+                        if (counter == 4)
+                            REQUIRE(i.str(in) == "FILE0.WAV");
+                        ++counter;
                     }
                 }
             });
 
-            REQUIRE(counter == 2);
+            REQUIRE(counter == 5);
         }
     }
     // DEBT: Test belongs elsewhere
