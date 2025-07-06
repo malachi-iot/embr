@@ -11,49 +11,9 @@
 
 namespace embr { namespace nimble { inline namespace v1 {
 
-#if __cplusplus >= 201703L
-template <auto uuid>
-struct make_uuid;
+template <const ble_uuid_t* uuid>
+using uuid_constant = estd::integral_constant<const ble_uuid_t*, uuid>;
 
-template <auto v>
-constexpr const ble_uuid_t* uuid = embr::nimble::v1::make_uuid<v>::value;
-
-
-#if __cplusplus >= 202002L
-template <uint16_t uuid>
-constexpr const ble_uuid16_t& make_uuid16()
-{
-    static constexpr ble_uuid16_t v{BLE_UUID_TYPE_16, uuid};
-    return v;
-}
-
-template <uint32_t uuid>
-constexpr const ble_uuid32_t& make_uuid32()
-{
-    static constexpr ble_uuid32_t v{BLE_UUID_TYPE_32, uuid};
-    return v;
-}
-
-// EXPERIMENTAL
-template <const char (&uuid)[16]>
-constexpr const ble_uuid128_t& make_uuid128()
-{
-    static constexpr ble_uuid128_t v{BLE_UUID_TYPE_128, uuid};
-    return v;
-}
-
-
-template <uint16_t uuid>
-struct make_uuid<uuid> : estd::integral_constant<const ble_uuid_t*, &make_uuid16<uuid>().u> {};
-
-template <ble::gatt::v1::uuid::Characteristic16 uuid>
-struct make_uuid<uuid> : estd::integral_constant<const ble_uuid_t*, &make_uuid16<uuid>().u> {};
-
-template <ble::gatt::v1::service::uuid::Services16 uuid>
-struct make_uuid<uuid> : estd::integral_constant<const ble_uuid_t*, &make_uuid16<uuid>().u> {};
-
-#else
-// c++17 mode
 template <uint16_t uuid>
 struct make_uuid16
 {
@@ -61,6 +21,59 @@ struct make_uuid16
     static constexpr const ble_uuid_t* u = &v.u;
 };
 
+template <uint32_t uuid>
+struct make_uuid32
+{
+    static constexpr ble_uuid32_t v{BLE_UUID_TYPE_32, uuid};
+    static constexpr const ble_uuid_t* u = &v.u;
+};
+
+// EXPERIMENTAL
+template <const uint8_t (&uuid)[16]>
+struct make_uuid128
+{
+    static constexpr ble_uuid128_t v{BLE_UUID_TYPE_128, uuid};
+    static constexpr const ble_uuid_t* u = &v.u;
+};
+
+
+#if __cplusplus >= 201703L
+template <auto uuid>
+struct make_uuid;
+
+template <auto v>
+constexpr const ble_uuid_t* uuid = embr::nimble::v1::make_uuid<v>::value;
+
+// EXPERIMENTAL
+template <const uint8_t (&uuid)[16]>
+struct make_uuid<uuid>
+{
+    static constexpr const ble_uuid_t* value = make_uuid128<uuid>::u;
+};
+
+
+#if __cplusplus >= 202002L
+// EXPERIMENTAL
+/*
+template <const char (&uuid)[16]>
+constexpr const ble_uuid128_t& make_uuid128()
+{
+    static constexpr ble_uuid128_t v{BLE_UUID_TYPE_128, uuid};
+    return v;
+}   */
+
+
+template <uint16_t uuid>
+struct make_uuid<uuid> : uuid_constant<make_uuid16<uuid>::u> {};
+
+template <ble::gatt::v1::uuid::Characteristic16 uuid>
+struct make_uuid<uuid> : uuid_constant<make_uuid16<uuid>::u> {};
+
+template <ble::gatt::v1::service::uuid::Services16 uuid>
+struct make_uuid<uuid> : uuid_constant<make_uuid16<uuid>::u> {};
+
+#else
+// c++17 mode
 template <ble::gatt::v1::uuid::Characteristic16 uuid>
 struct make_uuid<uuid>
 {
@@ -72,7 +85,6 @@ struct make_uuid<uuid>
 {
     static constexpr const ble_uuid_t* value = make_uuid16<uuid>::u;
 };
-
 
 template <uint16_t uuid>
 struct make_uuid<uuid>
