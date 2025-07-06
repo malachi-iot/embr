@@ -267,6 +267,8 @@ TEST_CASE("json tests", "[json]")
 
             REQUIRE(f1.size() > 0);
 
+            unsigned name_counter = 0;
+
             estd::detail::basic_ispanstream<const char> in(f1.begin(), f1.end());
 
             decoder.decode(in, [&](
@@ -275,29 +277,54 @@ TEST_CASE("json tests", "[json]")
             {
                 if(d.state() == decoder_type::TOKEN_END)
                 {
-                    if(d.item() == decoder_type::NAME)
+                    if(d.item() == decoder_type::NUMBER)
                     {
-                        if(counter == 0)
-                            REQUIRE(i.str(in) == "version");
-                        else if(counter == 2)
-                            REQUIRE(i.str(in) == "entries");
-                        else if(counter == 3)
-                            REQUIRE(i.str(in) == "filename");
+                        if(name_counter == 4)
+                            REQUIRE(i.number == 0);
+                        else if(name_counter == 9)
+                            REQUIRE(i.number == 528);
 
                         ++counter;
                     }
+                    else if(d.item() == decoder_type::NAME)
+                    {
+                        CAPTURE(name_counter);
+
+                        ++name_counter;
+
+                        if(name_counter == 1)
+                            REQUIRE(i.str(in) == "version");
+                        else if(name_counter == 2)
+                            REQUIRE(i.str(in) == "entries");
+                        else if(name_counter == 3 || name_counter == 4 || name_counter == 6 ||
+                            name_counter == 11 || name_counter == 12)
+                            REQUIRE(i.str(in) == "filename");
+                        else if(name_counter == 5 || name_counter == 7 || name_counter == 10)
+                            REQUIRE(i.str(in) == "sleep_vol");
+                        else if(name_counter == 9)
+                            REQUIRE(i.str(in) == "sleep_freq");
+                    }
                     else if(d.item() == decoder_type::STRING)
                     {
-                        if (counter == 1)       // version
+                        if (counter == 0)       // version
                             REQUIRE(i.str(in) == "1");
-                        if (counter == 4)
+                        if (counter == 1)
                             REQUIRE(i.str(in) == "FILE0.WAV");
+                        if (counter == 2)
+                            REQUIRE(i.str(in) == "FILE1.WAV");
+                        if (counter == 4)
+                            REQUIRE(i.str(in) == "FILE2.WAV");
+                        if (counter == 6)
+                            REQUIRE(i.str(in) == "FILE3.WAV");
+                        if (counter == 9)
+                            REQUIRE(i.str(in) == "FILE4.WAV");
                         ++counter;
                     }
                 }
             });
 
-            REQUIRE(counter == 5);
+            REQUIRE(name_counter == 14);
+            REQUIRE(counter == 13);
         }
     }
     // DEBT: Test belongs elsewhere

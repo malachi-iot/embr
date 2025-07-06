@@ -33,6 +33,11 @@ public:
         IDLE,
         TOKEN_START,
         TOKEN_MIDDLE,
+
+        // UNUSED - prep to clean DEBT from OBJECT parse
+        TOKEN_PHASE1 = TOKEN_MIDDLE,
+        TOKEN_PHASE2,
+
         TOKEN_END,
         ERROR
     };
@@ -141,12 +146,15 @@ class decoder : public decoder_state
         using int_type = typename traits::int_type;
         using pos_type = typename traits::pos_type;
         using item = decoder::descriptor;
+        using nonconst_char_type = estd::remove_const_t<char_type>;
 
         using searcher_type = embr::internal::searcher;
 
         using locale_type = estd::internal::default_locale;
         using num_get_type = estd::iterated::num_get<10, char_type, locale_type>;
-        using ctype = estd::ctype<char_type, locale_type>;
+
+        // DEBT: https://github.com/malachi-iot/estdlib/issues/132
+        using ctype = estd::ctype<nonconst_char_type, locale_type>;
 
         static constexpr decoder_options options = DECODER_DEFAULT;
 

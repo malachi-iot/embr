@@ -57,9 +57,7 @@ constexpr embr::internal::breadcrumb literals[]
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
 void decoder::worker<Streambuf, F>::decode_whitespace(context& ctx)
 {
-    // ctype pissed off here, needs work
-    //if(ctype::isspace(ctx.ch))
-    if(estd::isspace(ctx.ch))
+    if(ctype::isspace(ctx.ch))
     {
         ctx.bump();
     }
@@ -92,8 +90,8 @@ void decoder::worker<Streambuf, F>::decode_array(context& ctx, F&& f)
 
         case ']':
             state_ = TOKEN_END;
-
-            ESTD_CPP_ATTR_FALLTHROUGH;
+            ctx.bump();
+            break;
 
         // Consume whitespace without fanfare
         default:
@@ -131,6 +129,8 @@ void decoder::worker<Streambuf, F>::decode_string(context& ctx, F&& f)
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
 void decoder::worker<Streambuf, F>::decode_number_one(context& ctx, int_type c)
 {
+    // TODO: Rework to use ctype::isspace
+
     switch(c)
     {
         case '}':
@@ -160,6 +160,8 @@ template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
 void decoder::worker<Streambuf, F>::decode_literal_one(context& ctx, int_type c)
 {
     // We're pretty strict about literals.  No match = parse error
+
+    // TODO: Rework to use ctype::isspace
 
     switch(c)
     {
@@ -253,10 +255,11 @@ void decoder::worker<Streambuf, F>::decode_object(context& ctx, F&& f)
         case traits::eof():
         case '}':
             state_ = TOKEN_END;
+            ctx.bump();
+            break;
 
         default:
             decode_whitespace(ctx);
-            state_ = ERROR;
             break;
     }
 }
