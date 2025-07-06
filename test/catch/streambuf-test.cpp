@@ -1,5 +1,6 @@
 #include <catch2/catch_all.hpp>
 
+#include <estd/istream.h>
 #include <estd/sstream.h>
 
 #include <embr/streambuf.h>
@@ -61,14 +62,12 @@ TEST_CASE("streambuf test", "[streambuf]")
     {
         char buf[128];
         estd::span<char> test((char*)"hello", 5);
-        typedef estd::internal::impl::in_span_streambuf<char> streambuf_impl;
-        typedef estd::internal::streambuf<streambuf_impl> streambuf_base;
 
         test_streambuf_observer<char> o;
 
         auto subject = embr::layer1::make_subject(o);
 
-        typedef subject_streambuf<streambuf_base, decltype(subject)> streambuf_type;
+        typedef subject_streambuf<estd::ispanbuf, decltype(subject)> streambuf_type;
         streambuf_type sb(subject, test);
 
         int ch = sb.sbumpc();

@@ -267,10 +267,7 @@ TEST_CASE("json tests", "[json]")
 
             REQUIRE(f1.size() > 0);
 
-            estd::span<const char> span(f1.begin(), f1.end());
-            // DEBT: Would be nice if spanstream could take begin/end directly
-            // https://github.com/malachi-iot/estdlib/issues/131
-            estd::detail::basic_ispanstream<const char> in(span);
+            estd::detail::basic_ispanstream<const char> in(f1.begin(), f1.end());
 
             decoder.decode(in, [&](
                 const internal::decoder_state& d,
@@ -280,16 +277,17 @@ TEST_CASE("json tests", "[json]")
                 {
                     if(d.item() == decoder_type::NAME)
                     {
-                        // No seek available yet
-                        // https://github.com/malachi-iot/estdlib/issues/131
-                        /*
                         if(counter == 0)
                             REQUIRE(i.str(in) == "version");
+                        /*
                         else if(counter == 1)
-                            REQUIRE(i.str(in) == "entries");
-                        */
+                            REQUIRE(i.str(in) == "entries"); */
 
                         ++counter;
+                    }
+                    else if(d.item() == decoder_type::STRING)
+                    {
+                        
                     }
                 }
             });
