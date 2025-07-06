@@ -22,4 +22,7 @@ void do_uuid()
     // Not quite
     //[[maybe_unused]]
     //constexpr const ble_uuid_t* uuid5 = nimble::make_uuid<uuid_object_transfer>::value;
+
+    [[maybe_unused]]
+    constexpr const ble_uuid_t* uuid6 = nimble::uuid16_v<0x1234>;
 }

@@ -20,6 +20,8 @@ enum Characteristic16 : uint16_t
     BatteryHealthStatus = 0x2BEA,
     BatteryLevelStatus = 0x2BED,
     BatteryTimeStatus = 0x2BEE,
+    CurrentElapsedTime = 0x2BF2,
+    CurrentTime = 0x2A2B,
     GainSettingProperties = 0x2B78,
     ObjectActionControlPoint = 0x2AC5,
     ObjectFirstCreated = 0x2AC1,

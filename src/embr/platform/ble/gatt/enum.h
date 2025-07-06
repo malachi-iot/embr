@@ -9,6 +9,9 @@ namespace uuid {
 enum Services16 : uint16_t
 {
     AudioInputControl = 0x1843,
+    BatteryService = 0x180F,
+    CommonAudioService = 0x1853,
+    ElapsedTimeService = 0x183F,
     ObjectTransfer = 0x1825,
     VolumeControlService = 0x1844
 };

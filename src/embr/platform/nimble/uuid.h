@@ -21,12 +21,18 @@ struct make_uuid16
     static constexpr const ble_uuid_t* u = &v.u;
 };
 
+template <uint16_t uuid>
+constexpr const ble_uuid_t* uuid16_v = make_uuid16<uuid>::u;
+
 template <uint32_t uuid>
 struct make_uuid32
 {
     static constexpr ble_uuid32_t v{BLE_UUID_TYPE_32, uuid};
     static constexpr const ble_uuid_t* u = &v.u;
 };
+
+template <uint32_t uuid>
+constexpr const ble_uuid_t* uuid32_v = make_uuid32<uuid>::u;
 
 // EXPERIMENTAL
 template <const uint8_t (&uuid)[16]>

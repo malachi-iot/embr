@@ -31,9 +31,21 @@ PACK(struct CurrentElapsedTime : internal::CurrentElapsedTimeBase    // NOLINT
     ClockCapabilities capabilities;
 });
 
+template <>
+struct characteristic_traits<CurrentElapsedTime>
+{
+    static constexpr const char* description()
+    {
+        return "Current Elapsed Time";
+    }
+
+    static constexpr v1::uuid::Characteristic16 uuid = v1::uuid::CurrentElapsedTime;
+};
+
 struct ElapsedTimeService
 {
-    static constexpr uint16_t uuid = 0x183F;
+    // DEBT: This ought to go into a service_traits
+    static constexpr v1::uuid::Services16 uuid = gatt::v1::uuid::ElapsedTimeService;
 };
 
 }}}}
