@@ -50,6 +50,24 @@ static const char* json_array =
 CMRC_DECLARE(TESTRC);
 
 
+class breadcrumb_decode
+{
+public:
+    template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class Base, class F>
+    void decode(estd::detail::basic_istream<Streambuf, Base>& in, F&& f)
+    {
+        using decoder_type = internal::decoder;
+
+        decoder_type d;
+
+        d.decode(in, [&](const embr::json::internal::decoder_state& d, const decoder_type::descriptor& i)
+        {
+
+        });
+    }
+};
+
+
 struct single_quoted : v1::options::lean
 {
     static constexpr bool use_doublequotes() { return false; }
@@ -361,5 +379,20 @@ TEST_CASE("json tests", "[json]")
                 REQUIRE(r->id == id_lvl2_0);
             }
         }
+    }
+    SECTION("v1 decoder + breadcrumbs")
+    {
+        auto fs = cmrc::TESTRC::get_filesystem();
+        cmrc::file f1 = fs.open("resources/playlist.json");
+
+        estd::detail::basic_ispanstream<const char> in(f1.begin(), f1.end());
+
+        breadcrumb_decode d;
+
+        d.decode(in, []
+        {
+
+        });
+
     }
 }
