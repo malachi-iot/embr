@@ -38,6 +38,7 @@ set(SOURCE_FILES
     bits-test.cpp
     bitset-test.cpp
     ble-test.cpp
+    breadcrumb-test.cpp
     debounce-test.cpp
     delegate-queue-test.cpp
     dsp-test.cpp
