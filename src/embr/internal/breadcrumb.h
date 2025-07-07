@@ -138,6 +138,27 @@ struct basic_searcher
 
 using searcher = basic_searcher<breadcrumb>;
 
+struct breadcrumb_functor
+{
+    const breadcrumb* const parent;
+    bool in_child = false;
+
+    searcher::pred_result operator()(const breadcrumb& c)
+    {
+        if(in_child)
+        {
+            // When here, parent doesn't have to match.
+            // Unknown what to do to detect that we've exited the grandchild situation reliably
+        }
+        else
+        {
+
+        }
+
+        return {};
+    }
+};
+
 inline const breadcrumb* search2(const breadcrumb* crumbs, const char* s)
 {
     const int parent_id = crumbs->parent;

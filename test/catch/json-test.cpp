@@ -21,17 +21,21 @@ enum nav_ids
     id_lvl1_1,
     id_lvl2,
     id_lvl2_0,
+    id_lvl2_0_0,
     id_lvl2_1,
+    id_side1,
 };
 
 static constexpr bc nav[]
 {
-    { "top",    id_top },
-    { "lvl1.0", id_lvl1_0,  id_top },
-    { "lvl1.1", id_lvl1_1,  id_top },
-    { "lvl2",   id_lvl2,    id_top },
-    { "lvl2.0", id_lvl2_0,  id_top },
-    { "lvl2.1", id_lvl2_1,  id_top },
+    { "top",        id_top },
+    { "lvl1.0",     id_lvl1_0,      id_top },
+    { "lvl1.1",     id_lvl1_1,      id_top },
+    { "lvl2",       id_lvl2,        id_top },
+    { "lvl2.0",     id_lvl2_0,      id_top },
+    { "lvl2.0.0",   id_lvl2_0_0,    id_lvl2_0 },
+    { "lvl2.1",     id_lvl2_1,      id_top },
+    { "side1",      id_side1 },
     { nullptr }
 };
 
