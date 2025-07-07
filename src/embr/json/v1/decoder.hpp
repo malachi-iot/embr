@@ -146,8 +146,8 @@ void decoder::worker<Streambuf, F>::decode_number_one(context& ctx, int_type c)
 
         default:
         {
-            // Iterated num_get has some baked in resiliency to incorrect characters, though it's
-            // a little debatable whether it should
+            // Iterated num_get has some baked in resiliency to incorrect characters, so that delimiters
+            // don't freak it out
             ios_base::iostate err = ios_base::goodbit;
             ctx.num.get.get(c, err, ctx.num.value);
 

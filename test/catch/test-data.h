@@ -53,4 +53,18 @@ inline void compare(const uint8_t lhs[], const uint8_t rhs[], size_t count)
 static const char* json_user = "{'user':{'age':30,'name':'Fred'}}";
 static const char* json_prefs = "{'prefs':[1,2,3,'hi2u']}";
 
+// For playlist.json decode test
+namespace playlist {
+
+enum nav_ids
+{
+    id_version,
+    id_entries,
+    id_filename,
+    id_sleep_vol,
+    id_sleep_freq,
+};
+
+}
+
 }

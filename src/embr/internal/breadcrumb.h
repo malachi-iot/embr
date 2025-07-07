@@ -38,13 +38,13 @@ struct basic_searcher
 
     // Be sure to start crumb right after desired parent
     pointer crumbs_;
-    int pos = 0;
+    int pos_ = 0;
     pointer marker_ = nullptr;
 
     bool match(char_type c)
     {
         const char* name = traits::name(*crumbs_);
-        if(name[pos] == c)
+        if(name[pos_] == c)
         {
             if(marker_ == nullptr)
             {
@@ -80,7 +80,7 @@ struct basic_searcher
     {
         if(match(c))
         {
-            ++pos;
+            ++pos_;
             return c == 0 ? MATCHED : SEARCHING;
         }
         else
@@ -100,7 +100,7 @@ struct basic_searcher
                 // DEBT: Don't really want to do recursion, just convenient
                 return search(c, std::forward<Predicate>(predicate));
             }
-            else if(std::memcmp(crumbs_->name, marker_->name, pos) == 0)
+            else if(std::memcmp(crumbs_->name, marker_->name, pos_) == 0)
             {
                 // If next crumb begins with same characters as last crumb,
                 // then we're still in the game for searching. i.e:
@@ -127,6 +127,12 @@ struct basic_searcher
     results search(char_type c)
     {
         return search(c, [](reference v){ return traits::is_null(v) ? DONE : PROCEED; });
+    }
+
+    void reset()
+    {
+        marker_ = nullptr;
+        pos_ = 0;
     }
 };
 

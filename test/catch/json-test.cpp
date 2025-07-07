@@ -35,6 +35,19 @@ static constexpr bc nav[]
     { nullptr }
 };
 
+namespace test::playlist {
+
+static constexpr bc nav[]
+{
+    { "version",    id_version },
+    { "entries",    id_entries },
+    { "filename",   id_filename,    id_entries },
+    { "sleep_vol",  id_sleep_vol,   id_entries },
+    { "sleep_freq", id_sleep_freq,  id_entries },
+};
+
+}
+
 static const char* json1 =
     R"=({"hi2u"})=";
 
@@ -53,16 +66,57 @@ CMRC_DECLARE(TESTRC);
 class breadcrumb_decode
 {
 public:
+    const bc* crumbs;
+
     template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class Base, class F>
     void decode(estd::detail::basic_istream<Streambuf, Base>& in, F&& f)
     {
         using decoder_type = internal::decoder;
+        using decoder_state = internal::decoder_state;
 
         decoder_type d;
+        const bc* node = nullptr;
+        const decoder_state* state = nullptr;
+        embr::internal::searcher searcher{crumbs};
 
-        d.decode(in, [&](const embr::json::internal::decoder_state& d, const decoder_type::descriptor& i)
+        d.decode(in, [&](const decoder_state& d, const decoder_type::descriptor& i)
         {
+            switch(d.item())
+            {
+                case decoder_state::OBJECT:
+                    break;
 
+                case decoder_state::NAME:
+                {
+                    if(d.state() == decoder_state::TOKEN_START)
+                    {
+                        //searcher.search(i.ch);
+                    }
+                    else
+                    {
+                        //searcher.search(0);
+                        node = searcher.marker_;
+
+                        searcher.pos_ = 0;
+                        //searcher.reset();
+
+                        if(state == &d)
+                        {
+
+                        }
+                        else
+                        {
+                            state = &d;
+                        }
+                    }
+                    break;
+                }
+
+                default:
+                    break;
+            }
+
+            f(node);
         });
     }
 };
@@ -389,7 +443,9 @@ TEST_CASE("json tests", "[json]")
 
         breadcrumb_decode d;
 
-        d.decode(in, []
+        d.crumbs = test::playlist::nav;
+
+        d.decode(in, [](const bc* node)
         {
 
         });
