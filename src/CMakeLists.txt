@@ -7,9 +7,7 @@ project(embr VERSION 0.4.2 LANGUAGES CXX
 
 include(../tools/cmake/setvars.cmake)
 
-# NOTE: SOURCE_FILES not picked up ever.  Below target_include_directories
-# INTERFACE effectively makes it a **/*.h header library.  So, source.cmake
-# is effectively a NOOP and we keep it around just for reference.
+# Grab SOURCE_FILES
 include(sources.cmake)
 include(${ROOT_DIR}/tools/cmake/version.cmake)
 
@@ -34,9 +32,7 @@ target_sources(${PROJECT_NAME} INTERFACE ${SOURCE_FILES} ${INCLUDE_FILES})
 
 target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_11)
 
-# This line is largely superflous.  No linking happens for an INTERFACE library.
-# estd itself does demand some linking.  I speculate this line will come in handy
-# for consuming CMake projects which don't make explicit reference to estd
+# DEBT: Dogfood embr_interface into embr_static
 target_link_libraries(${PROJECT_NAME} INTERFACE estd)
 target_link_libraries(embr_static PUBLIC estd)
 

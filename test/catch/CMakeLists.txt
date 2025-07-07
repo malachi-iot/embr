@@ -18,7 +18,9 @@ add_subdirectory(../../src embr)
 CPMAddPackage("gh:catchorg/Catch2@3.8.1")
 CPMAddPackage("gh:vector-of-bool/cmrc#2.0.1")
 
-cmrc_add_resource_library(TESTRC resources/playlist.json ALIAS testrc)
+set(RESOURCES resources/playlist.json)
+
+cmrc_add_resource_library(TESTRC ${RESOURCES} ALIAS testrc)
 
 set(EXTRA_FILES
     README.md
@@ -63,7 +65,7 @@ if(EMBR_EXP_AUTOSTART)
     target_compile_definitions(${PROJECT_NAME} PRIVATE FEATURE_EMBR_EXP_AUTOSTART=1)
 endif()
 
-add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${EXTRA_FILES})
+add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${EXTRA_FILES} ${RESOURCES})
 
 # necessary for Catch2
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_11)
