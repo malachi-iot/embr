@@ -44,8 +44,8 @@ inline int decoder_state::descriptor::str(Streambuf& sb, Char* s) const
     return len; */
 }
 
-// Breadcrumbs want to be sorted per parent ID per name.  These all shame the same
-// top level parent.  child ID is not sorted.
+// Breadcrumbs want to be sorted per parent ID per name.  These all share the same
+// top level parent (implicitly -1).  child ID is not sorted.
 constexpr embr::internal::breadcrumb literals[]
 {
     { "false",  ID_FALSE },
