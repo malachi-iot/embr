@@ -202,7 +202,7 @@ void decoder::worker<Streambuf, F>::decode_literal(context& ctx, F&& f)
 
     if(state_ == TOKEN_END)
     {
-        const auto id = static_cast<literal_ids>(ctx.literal_searcher.marker_->id);
+        const auto id = static_cast<literal_ids>(ctx.literal_searcher.marker()->id);
 
         f(*this, item { .literal = id });
     }

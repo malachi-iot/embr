@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstring>
 #include <estd/string.h>
 
 // Reinterpretation of embr::coap 'triple' / URI mapper
@@ -53,28 +54,31 @@ struct basic_searcher : basic_searcher_base
     using traits = Traits;
     using char_type = const char;
 
+private:
     // Be sure to start crumb right after desired parent
     pointer crumbs_;
     int pos_ = 0;
     pointer marker_ = nullptr;
 
-    explicit constexpr basic_searcher(pointer crumbs) : crumbs_{crumbs} {}
-
     bool match(char_type c)
     {
         const char* name = traits::name(*crumbs_);
-        if(name[pos_] == c)
+
+        if(name[pos_] != c) return false;
+
+        if(marker_ == nullptr)
         {
-            if(marker_ == nullptr)
-            {
-                // hi2u side effect
-                marker_ = crumbs_;
-            }
-            return true;
+            // hi2u side effect
+            marker_ = crumbs_;
         }
 
-        return false;
+        return true;
     }
+
+public:
+    constexpr pointer marker() const { return marker_; }
+
+    explicit constexpr basic_searcher(pointer crumbs) : crumbs_{crumbs} {}
 
     // Pass in null termination also
     // DEBT: Need to upgrade predicate to return pass, fail or fast-forward.
@@ -83,17 +87,11 @@ struct basic_searcher : basic_searcher_base
     template <class Predicate>
     results search(char_type c, Predicate&& predicate)
     {
-        if(match(c))
-        {
-            ++pos_;
-            return c == 0 ? MATCHED : SEARCHING;
-        }
-        else
+        while(!match(c))
         {
             ++crumbs_;
             const int r = predicate(*crumbs_);
-            // NOTE: Through the magic of implicit conversion, simpler scenarios may return a bool
-            // in which case: true == proceed, false == complete
+
             if(r == DONE)
             {
                 return NO_MATCH;
@@ -101,9 +99,6 @@ struct basic_searcher : basic_searcher_base
             else if(marker_ == nullptr || r == FAST_FORWARD)
             {
                 // If we had no semblance of a match so far, plunge forward
-
-                // DEBT: Don't really want to do recursion, just convenient
-                return search(c, std::forward<Predicate>(predicate));
             }
             else if(std::memcmp(crumbs_->name, marker_->name, pos_) == 0)
             {
@@ -117,16 +112,15 @@ struct basic_searcher : basic_searcher_base
                 // through all near matches.  Clear out marker because we've
                 // established him as a match, open up door for new marker
                 marker_ = nullptr;
-
-                // DEBT: Don't really want to do recursion, just convenient
-                return search(c, std::forward<Predicate>(predicate));
             }
-
-            // If movement to the next crumb doesn't match marker, then match
-            // overall fails... fall through to NO_MATCH
+            else
+                // If movement to the next crumb doesn't match marker, then match
+                // overall fails...
+                return NO_MATCH;
         }
 
-        return NO_MATCH;
+        ++pos_;
+        return c == 0 ? MATCHED : SEARCHING;
     }
 
     results search(char_type c)
@@ -203,7 +197,7 @@ inline const breadcrumb* search2(const breadcrumb* crumbs, const char* s)
         switch(r)
         {
             case searcher::NO_MATCH: return nullptr;
-            case searcher::MATCHED: return srch.marker_;
+            case searcher::MATCHED: return srch.marker();
             case searcher::SEARCHING: break;
         }
     }

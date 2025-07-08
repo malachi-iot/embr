@@ -80,7 +80,7 @@ public:
                     else
                     {
                         //embr::internal::searcher::results r = searcher.search(0, functor);
-                        node = searcher.marker_;
+                        node = searcher.marker();
 
                         functor.reset();
                         searcher.reset();
