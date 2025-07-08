@@ -57,27 +57,33 @@ public:
         const bc* node = nullptr;
         const decoder_state* state = nullptr;
         embr::internal::searcher searcher{crumbs};
+        embr::internal::breadcrumb_functor functor{crumbs};
 
         d.decode(in, [&](const decoder_state& d, const decoder_type::descriptor& i)
         {
             switch(d.item())
             {
                 case decoder_state::OBJECT:
+                    if(d.state() == decoder_state::TOKEN_END)
+                    {
+                        //searcher.crumbs_ = crumbs;
+
+                    }
                     break;
 
                 case decoder_state::NAME:
                 {
                     if(d.state() == decoder_state::TOKEN_START)
                     {
-                        //searcher.search(i.ch);
+                        //searcher.search(i.ch, functor);
                     }
                     else
                     {
-                        //searcher.search(0);
+                        //embr::internal::searcher::results r = searcher.search(0, functor);
                         node = searcher.marker_;
 
-                        searcher.pos_ = 0;
-                        //searcher.reset();
+                        functor.reset();
+                        searcher.reset();
 
                         if(state == &d)
                         {

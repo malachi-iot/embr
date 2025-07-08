@@ -155,6 +155,12 @@ struct breadcrumb_functor
     bool in_grandchild_ = false;
     const breadcrumb* last_ = nullptr;
 
+    void reset()
+    {
+        in_grandchild_ = false;
+        last_ = nullptr;
+    }
+
     searcher::pred_result operator()(const breadcrumb& c)
     {
         if(traits::is_null(c))  return basic_searcher_base::DONE;
@@ -172,46 +178,31 @@ struct breadcrumb_functor
 
         if(in_grandchild_)
             return basic_searcher_base::FAST_FORWARD;
-        if(last_ == nullptr || last_->id != c.parent)
-            // not a child or grandchild, and not a candidate to become a grandchild
-            return basic_searcher_base::DONE;
+        if(last_ != nullptr && last_->id == c.parent)
+        {
+            // If last encountered breadcrumb is parent of this one, we're in child mode
+            in_grandchild_ = true;
+            return basic_searcher_base::FAST_FORWARD;
+        }
 
-        // If last encountered breadcrumb is parent of this one, we're in child mode
-        in_grandchild_ = true;
-        return basic_searcher_base::FAST_FORWARD;
+        // not a child or grandchild, and not a candidate to become a grandchild
+        return basic_searcher_base::DONE;
     }
 };
 
-#define TEST1 1
-
 inline const breadcrumb* search2(const breadcrumb* crumbs, const char* s)
 {
-#if TEST1 == 0
-    const int parent_id = crumbs->parent;
-    int in_child = -1;
-#endif
-
     searcher srch{crumbs};
+    breadcrumb_functor functor{crumbs};
 
     do
     {
-#if TEST1
-        // DEBT: old way takes first entry, new way takes entry just before (parent)
-        const searcher::results r = srch.search(*s, breadcrumb_functor{crumbs - 1});
-#else
-        const searcher::results r = srch.search(*s, [&](const breadcrumb& c)
-        {
-            // TODO: Identify when we drop into grandchild mode and do things different there
-
-            const auto direct_child = static_cast<searcher::pred_result>(c.parent == parent_id);
-            return in_child == -1 ? direct_child : searcher::FAST_FORWARD;
-        });
-#endif
+        const searcher::results r = srch.search(*s, functor);
         switch(r)
         {
             case searcher::NO_MATCH: return nullptr;
             case searcher::MATCHED: return srch.marker_;
-            default: break;
+            case searcher::SEARCHING: break;
         }
     }
     while(*s++ != 0);
