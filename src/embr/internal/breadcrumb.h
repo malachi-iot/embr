@@ -25,10 +25,27 @@ struct breadcrumb_traits
     static constexpr bool is_null(const T& v) { return v.name == nullptr; }
 };
 
+struct basic_searcher_base
+{
+    enum results
+    {
+        SEARCHING,
+        MATCHED,        // 'crumbs' contains result
+        NO_MATCH,
+    };
+
+    enum pred_result
+    {
+        DONE,
+        PROCEED,
+        FAST_FORWARD,   ///<! Grandchildren discovered, skip by these
+    };
+};
+
 // For character by character affairs
 // DEBT: This can be a template <class T, class Traits = searcher_traits> kind of thing
 template <class T, class Traits = breadcrumb_traits<T>>
-struct basic_searcher
+struct basic_searcher : basic_searcher_base
 {
     using reference = const T&;
     using pointer = const T*;
@@ -40,6 +57,8 @@ struct basic_searcher
     pointer crumbs_;
     int pos_ = 0;
     pointer marker_ = nullptr;
+
+    explicit constexpr basic_searcher(pointer crumbs) : crumbs_{crumbs} {}
 
     bool match(char_type c)
     {
@@ -56,20 +75,6 @@ struct basic_searcher
 
         return false;
     }
-
-    enum results
-    {
-        SEARCHING,
-        MATCHED,        // 'crumbs' contains result
-        NO_MATCH,
-    };
-
-    enum pred_result
-    {
-        DONE,
-        PROCEED,
-        FAST_FORWARD,   ///<! Grandchildren discovered, skip by these
-    };
 
     // Pass in null termination also
     // DEBT: Need to upgrade predicate to return pass, fail or fast-forward.
@@ -138,36 +143,79 @@ struct basic_searcher
 
 using searcher = basic_searcher<breadcrumb>;
 
+// Run to evaluate suitability of provided breadcrumb for matching
+// DONE = specify no further searching
+// PROCEED = valid place to look
+// FAST_FORWARD = skip over this one
 struct breadcrumb_functor
 {
-    const breadcrumb* const parent;
-    bool in_child = false;
+    using traits = breadcrumb_traits<breadcrumb>;
+
+    const breadcrumb* const parent_;
+    bool in_grandchild_ = false;
+    const breadcrumb* last_ = nullptr;
 
     searcher::pred_result operator()(const breadcrumb& c)
     {
-        if(in_child)
+        if(traits::is_null(c))  return basic_searcher_base::DONE;
+
+        if(in_grandchild_)
         {
             // When here, parent doesn't have to match.
-            // Unknown what to do to detect that we've exited the grandchild situation reliably
+            // Keep going until we notice we're back to parent->id matching, or otherwise all the way to the end
+            // could be optimized, but hopefully slamming through all the remainders when no match is found isn't
+            // too expensive
+
+            // Sometimes we pop out back to sibling
+            if(c.parent == parent_->id)
+            {
+                last_ = &c;
+                in_grandchild_ = false;
+                return basic_searcher_base::PROCEED;
+            }
+
+            return basic_searcher_base::FAST_FORWARD;
         }
         else
         {
+            if(c.parent == parent_->id)
+            {
+                last_ = &c;
+                return basic_searcher_base::PROCEED;
+            }
 
+            // If last encountered breadcrumb is parent of this one, we're in child mode
+            if(last_ != nullptr && last_->id == c.parent)
+            {
+                in_grandchild_ = true;
+                return basic_searcher_base::FAST_FORWARD;
+            }
+            else
+                // not a child or grandchild
+                return basic_searcher_base::DONE;
         }
 
         return {};
     }
 };
 
+#define TEST1 1
+
 inline const breadcrumb* search2(const breadcrumb* crumbs, const char* s)
 {
+#if TEST1 == 0
     const int parent_id = crumbs->parent;
     int in_child = -1;
+#endif
 
     searcher srch{crumbs};
 
     do
     {
+#if TEST1
+        // DEBT: old way takes first entry, new way takes entry just before (parent)
+        const searcher::results r = srch.search(*s, breadcrumb_functor{crumbs - 1});
+#else
         const searcher::results r = srch.search(*s, [&](const breadcrumb& c)
         {
             // TODO: Identify when we drop into grandchild mode and do things different there
@@ -175,6 +223,7 @@ inline const breadcrumb* search2(const breadcrumb* crumbs, const char* s)
             const auto direct_child = static_cast<searcher::pred_result>(c.parent == parent_id);
             return in_child == -1 ? direct_child : searcher::FAST_FORWARD;
         });
+#endif
         switch(r)
         {
             case searcher::NO_MATCH: return nullptr;

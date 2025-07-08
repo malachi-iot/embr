@@ -16,6 +16,9 @@ enum nav_ids
     id_top,
     id_lvl1_0,
     id_lvl1_1,
+    id_lvl1_1_1,
+    id_lvl1_1_2,
+    id_lvl1_1_2_1,
     id_lvl2,
     id_lvl2_0,
     id_lvl2_0_0,
@@ -30,6 +33,9 @@ static constexpr bc nav[]
     { "top",        id_top },
     { "lvl1.0",     id_lvl1_0,      id_top },
     { "lvl1.1",     id_lvl1_1,      id_top },
+    { "lvl1.1.1",   id_lvl1_1_1,    id_lvl1_1 },
+    { "lvl1.1.2",   id_lvl1_1_2,    id_lvl1_1 },
+    { "lvl1.1.2.1", id_lvl1_1_2_1,  id_lvl1_1_2 },
     { "lvl2",       id_lvl2,        id_top },
     { "lvl2.0",     id_lvl2_0,      id_top },
     { "lvl2.0.0",   id_lvl2_0_0,    id_lvl2_0 },
@@ -64,6 +70,14 @@ TEST_CASE("breadcrumb tests", "[breadcrumb]")
             REQUIRE(r);
             REQUIRE(r->id == id_lvl1_1);
         }
+        SECTION("lvl1.1.2")
+        {
+            const embr::internal::breadcrumb* r = search2(nav + 3, "lvl1.1.2");
+
+            REQUIRE(r);
+            REQUIRE(r->id == id_lvl1_1_2);
+        }
+
         SECTION("lvl2.0")
         {
             const embr::internal::breadcrumb* r = search2(nav + 1, "lvl2.0");
