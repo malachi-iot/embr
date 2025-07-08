@@ -2,6 +2,7 @@
 
 #include <cstring>
 #include <estd/string.h>
+#include <estd/string_view.h>
 
 // Reinterpretation of embr::coap 'triple' / URI mapper
 
@@ -62,6 +63,8 @@ private:
 
     bool match(char_type c)
     {
+        // FIX: Need to account for string length also
+
         const char* name = traits::name(*crumbs_);
 
         if(name[pos_] != c) return false;
@@ -87,6 +90,8 @@ public:
     template <class Predicate>
     results search(char_type c, Predicate&& predicate)
     {
+        // FIX: Need to check predicate BEFORE match to know if we should fast foward past grandchildren
+
         while(!match(c))
         {
             ++crumbs_;
@@ -132,6 +137,12 @@ public:
     {
         marker_ = nullptr;
         pos_ = 0;
+    }
+
+    void reset(pointer crumbs)
+    {
+        crumbs_ = crumbs;
+        reset();
     }
 };
 

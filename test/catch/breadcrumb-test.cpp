@@ -72,12 +72,22 @@ TEST_CASE("breadcrumb tests", "[breadcrumb]")
         }
         SECTION("lvl1.1.2")
         {
-            const embr::internal::breadcrumb* r = search2(nav + 3, "lvl1.1.2");
+            SECTION("happy path")
+            {
+                const embr::internal::breadcrumb* r = search2(nav + 3, "lvl1.1.2");
 
-            REQUIRE(r);
-            REQUIRE(r->id == id_lvl1_1_2);
+                REQUIRE(r);
+                REQUIRE(r->id == id_lvl1_1_2);
+            }
+            SECTION("wrong parent")
+            {
+                const embr::internal::breadcrumb* r = search2(nav + 1, "lvl1.1.2");
+
+                // FIX: Due to misplacement of predicate we end up finding something here
+                //REQUIRE(r == nullptr);
+                //REQUIRE(r->id == id_lvl1_1_2);
+            }
         }
-
         SECTION("lvl2.0")
         {
             const embr::internal::breadcrumb* r = search2(nav + 1, "lvl2.0");

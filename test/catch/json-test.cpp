@@ -75,15 +75,15 @@ public:
                 {
                     if(d.state() == decoder_state::TOKEN_START)
                     {
-                        //searcher.search(i.ch, functor);
+                        searcher.search(i.ch, functor);
                     }
                     else
                     {
-                        //embr::internal::searcher::results r = searcher.search(0, functor);
+                        embr::internal::searcher::results r = searcher.search(0, functor);
                         node = searcher.marker();
 
                         functor.reset();
-                        searcher.reset();
+                        searcher.reset(crumbs);
 
                         if(state == &d)
                         {
