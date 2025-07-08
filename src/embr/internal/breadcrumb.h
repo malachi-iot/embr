@@ -10,7 +10,7 @@ namespace embr { namespace internal {
 
 struct breadcrumb
 {
-    const char* name;
+    const estd::string_view name;
     const int id = -1;
     const int parent = -1;
 
@@ -23,8 +23,8 @@ struct breadcrumb
 template <class T>
 struct breadcrumb_traits
 {
-    static constexpr const char* name(const T& v) { return v.name; }
-    static constexpr bool is_null(const T& v) { return v.name == nullptr; }
+    static constexpr const estd::string_view& name(const T& v) { return v.name; }
+    static constexpr bool is_null(const T& v) { return v.name.empty(); }
 };
 
 struct basic_searcher_base
@@ -63,9 +63,9 @@ private:
 
     bool match(char_type c)
     {
-        // FIX: Need to account for string length also
+        const estd::string_view& name = traits::name(*crumbs_);
 
-        const char* name = traits::name(*crumbs_);
+        if(pos_ >= name.length()) return pos_ == name.length() && c == 0;
 
         if(name[pos_] != c) return false;
 
@@ -105,7 +105,10 @@ public:
             {
                 // If we had no semblance of a match so far, plunge forward
             }
-            else if(std::memcmp(crumbs_->name, marker_->name, pos_) == 0)
+            else if(
+                // FIX: Needed, but causes glitches right now
+                //pos_ < crumbs_->name.length() && pos_ < marker_->name.length() &&
+                std::memcmp(crumbs_->name.data(), marker_->name.data(), pos_) == 0)
             {
                 // If next crumb begins with same characters as last crumb,
                 // then we're still in the game for searching. i.e:
@@ -224,7 +227,7 @@ const breadcrumb* search(const breadcrumb* crumbs,
     const estd::detail::basic_string<Impl>& name,
     int parent = -1)
 {
-    for(;crumbs->name != nullptr && crumbs->parent == parent; ++crumbs)
+    for(;!crumbs->name.empty() && crumbs->parent == parent; ++crumbs)
     {
         if(name == crumbs->name) return crumbs;
     }
