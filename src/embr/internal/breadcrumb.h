@@ -65,7 +65,7 @@ private:
     {
         const estd::string_view& name = traits::name(*crumbs_);
 
-        if(pos_ >= name.length()) return pos_ == name.length() && c == 0;
+        if(pos_ >= name.length()) return c == 0 && pos_ == name.length();
 
         if(name[pos_] != c) return false;
 
@@ -78,13 +78,22 @@ private:
         return true;
     }
 
+    // Probably we can do starts_with here.  Just being careful
+    static bool match_prefix(const estd::string_view& eval, const estd::string_view& matched, unsigned len)
+    {
+        // Doesn't quite play nice
+        //return eval.starts_with(matched);
+
+        return len <= eval.length() && len <= matched.length() &&
+            (std::memcmp(eval.data(), matched.data(), len) == 0);
+    }
+
 public:
     constexpr pointer marker() const { return marker_; }
 
     explicit constexpr basic_searcher(pointer crumbs) : crumbs_{crumbs} {}
 
     // Pass in null termination also
-    // DEBT: Need to upgrade predicate to return pass, fail or fast-forward.
     // Fast-forward is needed when the children being iterated over themselves have
     // children (want to fast forward over grandchildren etc)
     template <class Predicate>
@@ -105,19 +114,15 @@ public:
             {
                 // If we had no semblance of a match so far, plunge forward
             }
-            else if(
-                // FIX: Needed, but causes glitches right now
-                //pos_ < crumbs_->name.length() && pos_ < marker_->name.length() &&
-                std::memcmp(crumbs_->name.data(), marker_->name.data(), pos_) == 0)
+            else if(match_prefix(crumbs_->name, marker_->name, pos_))
             {
-                // If next crumb begins with same characters as last crumb,
+                // If next crumb begins with same characters as last crumb (up to pos_),
                 // then we're still in the game for searching. i.e:
                 // 1. incoming key is 'hi2u'
                 // 2. crumbs are: 'hi' and 'hi2u'
                 // In that case marker has 'hi' in it and pos is 2
 
-                // A limited while loop makes sense here to blast
-                // through all near matches.  Clear out marker because we've
+                // Clear out marker because we've
                 // established him as a match, open up door for new marker
                 marker_ = nullptr;
             }
