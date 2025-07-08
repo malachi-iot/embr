@@ -151,23 +151,25 @@ struct breadcrumb_functor
 {
     using traits = breadcrumb_traits<breadcrumb>;
 
-    const breadcrumb* const parent_;
+    // Not specifying 'parent' since that's awkward for root level nodes (parent is nullptr)
+    // This also better aligns with init of searcher itself
+    const breadcrumb* const first_;
     bool in_grandchild_ = false;
-    const breadcrumb* last_ = nullptr;
+    const breadcrumb* prev_ = nullptr;
 
     void reset()
     {
         in_grandchild_ = false;
-        last_ = nullptr;
+        prev_ = nullptr;
     }
 
     searcher::pred_result operator()(const breadcrumb& c)
     {
         if(traits::is_null(c))  return basic_searcher_base::DONE;
 
-        if(c.parent == parent_->id)
+        if(c.parent == first_->parent)
         {
-            last_ = &c;
+            prev_ = &c;
             in_grandchild_ = false;
             return basic_searcher_base::PROCEED;
         }
@@ -178,7 +180,7 @@ struct breadcrumb_functor
 
         if(in_grandchild_)
             return basic_searcher_base::FAST_FORWARD;
-        if(last_ != nullptr && last_->id == c.parent)
+        if(prev_ != nullptr && prev_->id == c.parent)
         {
             // If last encountered breadcrumb is parent of this one, we're in child mode
             in_grandchild_ = true;

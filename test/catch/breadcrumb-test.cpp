@@ -65,14 +65,14 @@ TEST_CASE("breadcrumb tests", "[breadcrumb]")
 
         SECTION("lvl1.1")
         {
-            const embr::internal::breadcrumb* r = search2(nav, "lvl1.1");
+            const embr::internal::breadcrumb* r = search2(nav + 1, "lvl1.1");
 
             REQUIRE(r);
             REQUIRE(r->id == id_lvl1_1);
         }
         SECTION("lvl1.1.2")
         {
-            const embr::internal::breadcrumb* r = search2(nav + 2, "lvl1.1.2");
+            const embr::internal::breadcrumb* r = search2(nav + 3, "lvl1.1.2");
 
             REQUIRE(r);
             REQUIRE(r->id == id_lvl1_1_2);
@@ -80,7 +80,7 @@ TEST_CASE("breadcrumb tests", "[breadcrumb]")
 
         SECTION("lvl2.0")
         {
-            const embr::internal::breadcrumb* r = search2(nav, "lvl2.0");
+            const embr::internal::breadcrumb* r = search2(nav + 1, "lvl2.0");
 
             REQUIRE(r);
             REQUIRE(r->id == id_lvl2_0);
