@@ -159,43 +159,26 @@ struct breadcrumb_functor
     {
         if(traits::is_null(c))  return basic_searcher_base::DONE;
 
+        if(c.parent == parent_->id)
+        {
+            last_ = &c;
+            in_grandchild_ = false;
+            return basic_searcher_base::PROCEED;
+        }
+
+        // Keep going until we notice we're back to parent->id matching, or otherwise all the way to the end
+        // could be optimized, but hopefully slamming through all the remainders when no match is found isn't
+        // too expensive
+
         if(in_grandchild_)
-        {
-            // When here, parent doesn't have to match.
-            // Keep going until we notice we're back to parent->id matching, or otherwise all the way to the end
-            // could be optimized, but hopefully slamming through all the remainders when no match is found isn't
-            // too expensive
-
-            // Sometimes we pop out back to sibling
-            if(c.parent == parent_->id)
-            {
-                last_ = &c;
-                in_grandchild_ = false;
-                return basic_searcher_base::PROCEED;
-            }
-
             return basic_searcher_base::FAST_FORWARD;
-        }
-        else
-        {
-            if(c.parent == parent_->id)
-            {
-                last_ = &c;
-                return basic_searcher_base::PROCEED;
-            }
+        if(last_ == nullptr || last_->id != c.parent)
+            // not a child or grandchild, and not a candidate to become a grandchild
+            return basic_searcher_base::DONE;
 
-            // If last encountered breadcrumb is parent of this one, we're in child mode
-            if(last_ != nullptr && last_->id == c.parent)
-            {
-                in_grandchild_ = true;
-                return basic_searcher_base::FAST_FORWARD;
-            }
-            else
-                // not a child or grandchild
-                return basic_searcher_base::DONE;
-        }
-
-        return {};
+        // If last encountered breadcrumb is parent of this one, we're in child mode
+        in_grandchild_ = true;
+        return basic_searcher_base::FAST_FORWARD;
     }
 };
 
