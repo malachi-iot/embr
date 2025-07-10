@@ -38,7 +38,7 @@ struct breadcrumb_searcher_base
 
     enum pred_result
     {
-        DONE,
+        DONE,           ///<! End of candidates reached
         PROCEED,
         FAST_FORWARD,   ///<! Grandchildren discovered, skip by these
     };
@@ -65,15 +65,13 @@ private:
     {
         const estd::string_view& name = traits::name(*crumbs_);
 
+        // If we're at the end, return true if null terminations match
         if(pos_ >= name.length()) return c == 0 && pos_ == name.length();
 
         if(name[pos_] != c) return false;
 
-        if(marker_ == nullptr)
-        {
-            // hi2u side effect
-            marker_ = crumbs_;
-        }
+        // If we're matching so far, mark our current best candidate
+        if(marker_ == nullptr)  marker_ = crumbs_;
 
         return true;
     }
@@ -90,9 +88,14 @@ public:
 
     explicit constexpr breadcrumb_searcher(pointer crumbs) : crumbs_{crumbs} {}
 
-    // Pass in null termination also
-    // Fast-forward is needed when the children being iterated over themselves have
-    // children (want to fast forward over grandchildren etc)
+    ///
+    /// Pass in null termination also
+    /// Fast-forward is needed when the children being iterated over themselves have
+    /// children (want to fast forward over grandchildren etc)
+    /// @param c
+    /// @param predicate signature of f(breadcrumb) -> pred_result
+    /// @return
+    ///
     template <class Predicate>
     results search(char_type c, Predicate&& predicate)
     {
