@@ -57,7 +57,7 @@ public:
         const bc* node = nullptr;
         const decoder_state* state = nullptr;
         embr::internal::searcher searcher{crumbs};
-        embr::internal::breadcrumb_functor functor{crumbs};
+        embr::internal::breadcrumb_functor functor{&searcher};
 
         d.decode(in, [&](const decoder_state& d, const decoder_type::descriptor& i)
         {

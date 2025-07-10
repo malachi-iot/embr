@@ -83,8 +83,7 @@ TEST_CASE("breadcrumb tests", "[breadcrumb]")
             {
                 const embr::internal::breadcrumb* r = search2(nav + 1, "lvl1.1.2");
 
-                // FIX: Due to misplacement of predicate we end up finding something here
-                //REQUIRE(r == nullptr);
+                REQUIRE(r == nullptr);
                 //REQUIRE(r->id == id_lvl1_1_2);
             }
         }

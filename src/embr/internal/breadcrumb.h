@@ -45,7 +45,6 @@ struct basic_searcher_base
 };
 
 // For character by character affairs
-// DEBT: This can be a template <class T, class Traits = searcher_traits> kind of thing
 template <class T, class Traits = breadcrumb_traits<T>>
 struct basic_searcher : basic_searcher_base
 {
@@ -56,11 +55,12 @@ struct basic_searcher : basic_searcher_base
     using char_type = const char;
 
 private:
-    // Be sure to start crumb right after desired parent
+    // Be sure to start crumb right after desired parent - i.e. at very start of candidate list
     pointer crumbs_;
-    int pos_ = 0;
+    int pos_ = 0;   // character position
     pointer marker_ = nullptr;
 
+    // Compare crumbs_.name[pos] == c
     bool match(char_type c)
     {
         const estd::string_view& name = traits::name(*crumbs_);
@@ -78,18 +78,15 @@ private:
         return true;
     }
 
-    // Probably we can do starts_with here.  Just being careful
     static bool match_prefix(const estd::string_view& eval, const estd::string_view& matched, unsigned len)
     {
-        // Doesn't quite play nice
-        //return eval.starts_with(matched);
-
         return len <= eval.length() && len <= matched.length() &&
             (std::memcmp(eval.data(), matched.data(), len) == 0);
     }
 
 public:
     constexpr pointer marker() const { return marker_; }
+    constexpr pointer crumbs() const { return crumbs_; }
 
     explicit constexpr basic_searcher(pointer crumbs) : crumbs_{crumbs} {}
 
@@ -99,18 +96,21 @@ public:
     template <class Predicate>
     results search(char_type c, Predicate&& predicate)
     {
-        // FIX: Need to check predicate BEFORE match to know if we should fast foward past grandchildren
-
         while(!match(c))
         {
-            ++crumbs_;
-            const int r = predicate(*crumbs_);
+            int r;
+
+            do
+            {
+                ++crumbs_;
+            }
+            while((r = predicate(*crumbs_)) == FAST_FORWARD);
 
             if(r == DONE)
             {
                 return NO_MATCH;
             }
-            else if(marker_ == nullptr || r == FAST_FORWARD)
+            else if(marker_ == nullptr)
             {
                 // If we had no semblance of a match so far, plunge forward
             }
@@ -170,6 +170,8 @@ struct breadcrumb_functor
     bool in_grandchild_ = false;
     const breadcrumb* prev_ = nullptr;
 
+    breadcrumb_functor(const searcher* parent) : first_{parent->crumbs()}   {}
+
     void reset()
     {
         in_grandchild_ = false;
@@ -208,7 +210,7 @@ struct breadcrumb_functor
 inline const breadcrumb* search2(const breadcrumb* crumbs, const char* s)
 {
     searcher srch{crumbs};
-    breadcrumb_functor functor{crumbs};
+    breadcrumb_functor functor{&srch};
 
     do
     {
