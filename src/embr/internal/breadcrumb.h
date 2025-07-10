@@ -27,7 +27,7 @@ struct breadcrumb_traits
     static constexpr bool is_null(const T& v) { return v.name.empty(); }
 };
 
-struct basic_searcher_base
+struct breadcrumb_searcher_base
 {
     enum results
     {
@@ -46,7 +46,7 @@ struct basic_searcher_base
 
 // For character by character affairs
 template <class T, class Traits = breadcrumb_traits<T>>
-struct basic_searcher : basic_searcher_base
+struct breadcrumb_searcher : breadcrumb_searcher_base
 {
     using reference = const T&;
     using pointer = const T*;
@@ -88,7 +88,7 @@ public:
     constexpr pointer marker() const { return marker_; }
     constexpr pointer crumbs() const { return crumbs_; }
 
-    explicit constexpr basic_searcher(pointer crumbs) : crumbs_{crumbs} {}
+    explicit constexpr breadcrumb_searcher(pointer crumbs) : crumbs_{crumbs} {}
 
     // Pass in null termination also
     // Fast-forward is needed when the children being iterated over themselves have
@@ -136,25 +136,19 @@ public:
         return c == 0 ? MATCHED : SEARCHING;
     }
 
+    // DEBT: A little too convenient perhaps put this elsewhere
     results search(char_type c)
     {
         return search(c, [](reference v){ return traits::is_null(v) ? DONE : PROCEED; });
     }
 
-    void reset()
-    {
-        marker_ = nullptr;
-        pos_ = 0;
-    }
-
     void reset(pointer crumbs)
     {
         crumbs_ = crumbs;
-        reset();
+        marker_ = nullptr;
+        pos_ = 0;
     }
 };
-
-using searcher = basic_searcher<breadcrumb>;
 
 // Run to evaluate suitability of provided breadcrumb for matching
 // DONE = specify no further searching
@@ -163,6 +157,7 @@ using searcher = basic_searcher<breadcrumb>;
 struct breadcrumb_functor
 {
     using traits = breadcrumb_traits<breadcrumb>;
+    using searcher = breadcrumb_searcher<breadcrumb>;
 
     // Not specifying 'parent' since that's awkward for root level nodes (parent is nullptr)
     // This also better aligns with init of searcher itself
@@ -170,7 +165,7 @@ struct breadcrumb_functor
     bool in_grandchild_ = false;
     const breadcrumb* prev_ = nullptr;
 
-    breadcrumb_functor(const searcher* parent) : first_{parent->crumbs()}   {}
+    constexpr explicit breadcrumb_functor(const searcher* parent) : first_{parent->crumbs()}   {}
 
     void reset()
     {
@@ -180,13 +175,13 @@ struct breadcrumb_functor
 
     searcher::pred_result operator()(const breadcrumb& c)
     {
-        if(traits::is_null(c))  return basic_searcher_base::DONE;
+        if(traits::is_null(c))  return searcher::DONE;
 
         if(c.parent == first_->parent)
         {
             prev_ = &c;
             in_grandchild_ = false;
-            return basic_searcher_base::PROCEED;
+            return searcher::PROCEED;
         }
 
         // Keep going until we notice we're back to parent->id matching, or otherwise all the way to the end
@@ -194,21 +189,22 @@ struct breadcrumb_functor
         // too expensive
 
         if(in_grandchild_)
-            return basic_searcher_base::FAST_FORWARD;
+            return searcher::FAST_FORWARD;
         if(prev_ != nullptr && prev_->id == c.parent)
         {
             // If last encountered breadcrumb is parent of this one, we're in child mode
             in_grandchild_ = true;
-            return basic_searcher_base::FAST_FORWARD;
+            return searcher::FAST_FORWARD;
         }
 
         // not a child or grandchild, and not a candidate to become a grandchild
-        return basic_searcher_base::DONE;
+        return searcher::DONE;
     }
 };
 
 inline const breadcrumb* search2(const breadcrumb* crumbs, const char* s)
 {
+    using searcher = breadcrumb_searcher<breadcrumb>;
     searcher srch{crumbs};
     breadcrumb_functor functor{&srch};
 
@@ -251,3 +247,11 @@ inline const breadcrumb* search(const breadcrumb* crumbs,
 
 
 }}
+
+namespace embr { namespace breadcrumb { inline namespace v1 {
+
+using breadcrumb = embr::internal::breadcrumb;
+using functor = embr::internal::breadcrumb_functor;
+using searcher = embr::internal::breadcrumb_searcher<breadcrumb>;
+
+}}}

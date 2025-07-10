@@ -56,8 +56,8 @@ public:
         decoder_type d;
         const bc* node = nullptr;
         const decoder_state* state = nullptr;
-        embr::internal::searcher searcher{crumbs};
-        embr::internal::breadcrumb_functor functor{&searcher};
+        embr::breadcrumb::searcher searcher{crumbs};
+        embr::breadcrumb::functor functor{&searcher};
 
         d.decode(in, [&](const decoder_state& d, const decoder_type::descriptor& i)
         {
@@ -79,7 +79,7 @@ public:
                     }
                     else
                     {
-                        embr::internal::searcher::results r = searcher.search(0, functor);
+                        embr::breadcrumb::searcher::results r = searcher.search(0, functor);
                         node = searcher.marker();
 
                         functor.reset();

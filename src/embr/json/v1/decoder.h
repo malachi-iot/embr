@@ -148,7 +148,7 @@ class decoder : public decoder_state
         using item = decoder::descriptor;
         using nonconst_char_type = estd::remove_const_t<char_type>;
 
-        using searcher_type = embr::internal::searcher;
+        using searcher_type = embr::breadcrumb::v1::searcher;
 
         using locale_type = estd::internal::default_locale;
         using num_get_type = estd::iterated::num_get<10, char_type, locale_type>;

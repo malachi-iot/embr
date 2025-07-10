@@ -61,7 +61,7 @@ TEST_CASE("breadcrumb tests", "[breadcrumb]")
     }
     SECTION("stateful")
     {
-        using searcher = embr::internal::searcher;
+        using searcher = embr::breadcrumb::searcher;
 
         SECTION("lvl1.1")
         {
