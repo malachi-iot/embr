@@ -77,7 +77,7 @@ protected:
     using ios_base = estd::ios_base;
 
 public:
-    decoder_state(const decoder_state* parent) :
+    explicit decoder_state(const decoder_state* parent) :
         state_{IDLE},
         parent_{parent}
     {}
@@ -156,8 +156,10 @@ class decoder : public decoder_state
         // DEBT: https://github.com/malachi-iot/estdlib/issues/132
         using ctype = estd::ctype<nonconst_char_type, locale_type>;
 
-        // FIX: Somehow in c++14 this flips out and kills the linker
         static constexpr decoder_options options = DECODER_DEFAULT;
+        // NOTE: Somehow c++14 w/ CLion gets mad if we don't do this
+        // intermediate constexpr.  Perhaps an artifact of ESTD_FLAGS behavior?
+        static constexpr bool option_emit_char = options & DECODER_EMIT_CHAR;
 
         struct context
         {

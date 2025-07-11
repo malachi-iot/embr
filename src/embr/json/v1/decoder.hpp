@@ -104,14 +104,13 @@ template <ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class F>
 void decoder::worker<Streambuf, F>::decode_string(context& ctx, F&& f)
 {
     streambuf_type& sb = ctx.sb;
-    using pointer = const char_type*;
 
     int idx = 0;
     int_type c;
 
     while((c = sb.sbumpc()) != '"')
     {
-        if ESTD_CPP_CONSTEXPR(17) (options & DECODER_EMIT_CHAR)
+        if ESTD_CPP_CONSTEXPR(17) (option_emit_char)
             f(*this, item {.ch = static_cast<int>(c)});
         ++idx;
     }
