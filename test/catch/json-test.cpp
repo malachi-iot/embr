@@ -97,8 +97,14 @@ public:
                         // End of object, move up one in breadcrumb taxonomy
                         //searcher.crumbs_ = crumbs;
 
-                        if(parent->id == -1)
+                        const int parent_id = parent->parent;
+
+                        if(parent_id == -1)
                             parent = nullptr;
+                        else while(parent >= crumbs && parent->id != parent_id)
+                        {
+                            parent--;
+                        }
                     }
                     break;
 
@@ -448,13 +454,10 @@ TEST_CASE("json tests", "[json]")
 
         estd::detail::basic_ispanstream<const char> in(f1.begin(), f1.end());
 
-        breadcrumb_decode d;
-
-        d.crumbs = test::playlist::nav;
+        breadcrumb_decode d{test::playlist::nav};
 
         //d.decode(in, [](const bc* node)
         //{
-
         //});
 
     }
