@@ -153,7 +153,7 @@ public:
     }
 };
 
-// Run to evaluate suitability of provided breadcrumb for matching
+// Run to evaluate suitability of provided breadcrumb for matching.  Does not do character/string matching
 // DONE = specify no further searching
 // PROCEED = valid place to look
 // FAST_FORWARD = skip over this one
@@ -164,7 +164,7 @@ struct breadcrumb_functor
 
     // Not specifying 'parent' since that's awkward for root level nodes (parent is nullptr)
     // This also better aligns with init of searcher itself
-    const breadcrumb* const first_;
+    const breadcrumb* first_;
     bool in_grandchild_ = false;
     const breadcrumb* prev_ = nullptr;
 
@@ -172,6 +172,13 @@ struct breadcrumb_functor
 
     void reset()
     {
+        in_grandchild_ = false;
+        prev_ = nullptr;
+    }
+
+    void reset(const breadcrumb* first)
+    {
+        first_ = first;
         in_grandchild_ = false;
         prev_ = nullptr;
     }

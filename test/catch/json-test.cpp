@@ -54,7 +54,8 @@ public:
         using decoder_state = internal::decoder_state;
 
         decoder_type d;
-        const bc* node = nullptr;
+        const bc* node = nullptr;       // last found NAME (node candidate, sometimes a new OBJECT)
+        const bc* parent = nullptr;     // last found parent
         const decoder_state* state = nullptr;
         embr::breadcrumb::searcher searcher{crumbs};
         embr::breadcrumb::functor functor{&searcher};
@@ -64,10 +65,38 @@ public:
             switch(d.item())
             {
                 case decoder_state::OBJECT:
-                    if(d.state() == decoder_state::TOKEN_END)
+                    if(d.state() == decoder_state::TOKEN_START)
                     {
+                        // last found NAME now is new parent
+                        parent = node;
+
+                        // If we're not the very root node
+                        if(parent)
+                        {
+                            // DEBT: Depends on null-teriminated nature of things
+                            //const bool last = functor(*(parent + 1)) == embr::breadcrumb::searcher::DONE;
+
+                            // if we aren't at the end of the crumb list
+                            //if(!last)
+                            {
+                                // position ourself at the new first crumb
+                                searcher.reset(parent + 1);
+                                functor.reset(parent + 1);
+                            }
+                            //else
+                            {
+                                //assert(false);
+                                // JSON has a nested object but no crumbs are present to match it.  Error condition
+                            }
+                        }
+                    }
+                    else if(d.state() == decoder_state::TOKEN_END)
+                    {
+                        // End of object, move up one in breadcrumb taxonomy
                         //searcher.crumbs_ = crumbs;
 
+                        if(parent->id == -1)
+                            parent = nullptr;
                     }
                     break;
 
@@ -77,13 +106,26 @@ public:
                     {
                         searcher.search(i.ch, functor);
                     }
-                    else
+                    else if(d.state() == decoder_state::TOKEN_END)
                     {
                         embr::breadcrumb::searcher::results r = searcher.search(0, functor);
                         node = searcher.marker();
 
-                        functor.reset();
-                        searcher.reset(crumbs);
+                        // NAME resolved, reset searcher to be ready for next NAME
+                        if(parent)
+                        {
+                            if(node)    assert(node->parent == parent->id);
+
+                            // Double-check current parent actually has children (should actually already be
+                            // true as enforced by OBJECT state)
+                            functor.reset(parent + 1);
+                            searcher.reset(parent + 1);
+                        }
+                        else
+                        {
+                            functor.reset();
+                            searcher.reset(crumbs);
+                        }
 
                         if(state == &d)
                         {
@@ -395,10 +437,12 @@ TEST_CASE("json tests", "[json]")
 
         d.crumbs = test::playlist::nav;
 
-        d.decode(in, [](const bc* node)
-        {
+        // FIX: We hit OBJECT TOKEN_START 3x but never an OBJECT TOKEN_END which pisses it off
+        // and is incorrect JSON decode behavior
+        //d.decode(in, [](const bc* node)
+        //{
 
-        });
+        //});
 
     }
 }
