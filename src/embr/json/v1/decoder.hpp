@@ -259,6 +259,10 @@ void decoder::worker<Streambuf, F>::decode_object(context& ctx, F&& f)
         case traits::eof():
         case '}':
             state_ = TOKEN_END;
+
+            // FIX: We need this, we're held back by a clumsiness with ARRAY
+            //f(*this, item{});
+
             ctx.bump();
             break;
 

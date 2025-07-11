@@ -342,16 +342,19 @@ TEST_CASE("json tests", "[json]")
                         return;
                     }
 
-                    ++array_count;
+                    if(d.state() == decoder_type::TOKEN_END)
+                    {
+                        ++array_count;
 
-                    if(d.item() == decoder_type::NUMBER)
-                    {
-                        counter += i.number;
-                    }
-                    else if(d.item() == decoder_type::STRING)
-                    {
-                        REQUIRE(i.str(in) == "hi");
-                        ++counter;
+                        if(d.item() == decoder_type::NUMBER)
+                        {
+                            counter += i.number;
+                        }
+                        else if(d.item() == decoder_type::STRING)
+                        {
+                            REQUIRE(i.str(in) == "hi");
+                            ++counter;
+                        }
                     }
                 }
             });
@@ -367,6 +370,7 @@ TEST_CASE("json tests", "[json]")
             REQUIRE(f1.size() > 0);
 
             unsigned name_counter = 0;
+            unsigned object_counter = 0;
 
             estd::detail::basic_ispanstream<const char> in(f1.begin(), f1.end());
 
@@ -376,7 +380,11 @@ TEST_CASE("json tests", "[json]")
             {
                 if(d.state() == decoder_type::TOKEN_END)
                 {
-                    if(d.item() == decoder_type::NUMBER)
+                    if(d.item() == decoder_type::OBJECT)
+                    {
+                        ++object_counter;
+                    }
+                    else if(d.item() == decoder_type::NUMBER)
                     {
                         if(name_counter == 4)
                             REQUIRE(i.number == 0);
@@ -424,6 +432,7 @@ TEST_CASE("json tests", "[json]")
 
             REQUIRE(name_counter == 14);
             REQUIRE(counter == 13);
+            //REQUIRE(object_counter == 9);
         }
     }
     SECTION("v1 decoder + breadcrumbs")
