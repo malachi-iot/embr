@@ -230,7 +230,7 @@ TEST_CASE("json tests", "[json]")
     {
         using decoder_type = internal::decoder;
         using state_type = const internal::decoder_state&;
-        decoder_type decoder;
+        decoder_type decoder{nullptr};
         unsigned counter = 0;
 
         using iss = estd::layer2::basic_istringstream<const char>;
@@ -271,7 +271,7 @@ TEST_CASE("json tests", "[json]")
         using decoder_type = internal::decoder;
         using istream_type = estd::layer2::basic_istringstream<const char>;
 
-        decoder_type decoder;
+        decoder_type decoder{nullptr};
         int counter = 0;
         char temp[32];
 
@@ -327,40 +327,44 @@ TEST_CASE("json tests", "[json]")
                 const internal::decoder_state& d,
                 const decoder_type::descriptor& i)
             {
-                if(d.has_parent() && d.parent()->item() == decoder_type::ARRAY)
+                if(d.has_parent())
                 {
-                    if(d.state() != decoder_type::TOKEN_END)
+                    if(d.parent()->item() == decoder_type::ARRAY)
                     {
-                        // DEBT: Clumsiness because TOKEN_START means char by char for strings,
-                        // but announcement of upcoming OBJECT
-                        if(d.item() == decoder_type::OBJECT)
+                        if(d.state() == decoder_type::TOKEN_END)
                         {
                             ++array_count;
 
-                            //++counter;
+                            if(d.item() == decoder_type::NUMBER)
+                            {
+                                counter += i.number;
+                            }
+                            else if(d.item() == decoder_type::STRING)
+                            {
+                                REQUIRE(i.str(in) == "hi");
+                                ++counter;
+                            }
                         }
-                        return;
                     }
-
-                    if(d.state() == decoder_type::TOKEN_END)
+                    else if(d.parent()->item() == decoder_type::OBJECT)
                     {
-                        ++array_count;
+                        // Recursively discovered OBJECT within array, so that's our parent here
+                        // FIX: This ought to work but doesn't
+                        //REQUIRE(d.parent()->parent()->item() == decoder_type::ARRAY);
 
-                        if(d.item() == decoder_type::NUMBER)
+                        if(d.state() == decoder_type::TOKEN_END)
                         {
-                            counter += i.number;
-                        }
-                        else if(d.item() == decoder_type::STRING)
-                        {
-                            REQUIRE(i.str(in) == "hi");
-                            ++counter;
+                            if(d.item() == decoder_type::NUMBER)
+                            {
+                                counter += i.number;
+                            }
                         }
                     }
                 }
             });
 
             REQUIRE(array_count == 6);
-            REQUIRE(counter == 1 + 2 + 3 + 4 + 1);
+            REQUIRE(counter == 1 + 2 + 3 + 4 + 5 + 1);
         }
         SECTION("playlist")
         {
@@ -432,7 +436,7 @@ TEST_CASE("json tests", "[json]")
 
             REQUIRE(name_counter == 14);
             REQUIRE(counter == 13);
-            //REQUIRE(object_counter == 9);
+            REQUIRE(object_counter == 9);
         }
     }
     SECTION("v1 decoder + breadcrumbs")
@@ -446,8 +450,6 @@ TEST_CASE("json tests", "[json]")
 
         d.crumbs = test::playlist::nav;
 
-        // FIX: We hit OBJECT TOKEN_START 3x but never an OBJECT TOKEN_END which pisses it off
-        // and is incorrect JSON decode behavior
         //d.decode(in, [](const bc* node)
         //{
 

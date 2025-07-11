@@ -77,7 +77,7 @@ protected:
     using ios_base = estd::ios_base;
 
 public:
-    decoder_state(const decoder_state* parent = nullptr) :
+    decoder_state(const decoder_state* parent) :
         state_{IDLE},
         parent_{parent}
     {}
@@ -209,7 +209,7 @@ class decoder : public decoder_state
 
 public:
     template <decoder_options o = DECODER_DEFAULT, ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class Base, class F>
-    void decode(estd::detail::basic_istream<Streambuf, Base>& in, F&& f);
+    static void decode(estd::detail::basic_istream<Streambuf, Base>& in, F&& f);
 };
 
 }
