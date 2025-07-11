@@ -156,6 +156,7 @@ class decoder : public decoder_state
         // DEBT: https://github.com/malachi-iot/estdlib/issues/132
         using ctype = estd::ctype<nonconst_char_type, locale_type>;
 
+        // FIX: Somehow in c++14 this flips out and kills the linker
         static constexpr decoder_options options = DECODER_DEFAULT;
 
         struct context
@@ -208,6 +209,8 @@ class decoder : public decoder_state
     };
 
 public:
+    explicit decoder() : decoder_state(nullptr)   {}
+
     template <decoder_options o = DECODER_DEFAULT, ESTD_CPP_CONCEPT(estd::concepts::v1::InStreambuf) Streambuf, class Base, class F>
     static void decode(estd::detail::basic_istream<Streambuf, Base>& in, F&& f);
 };

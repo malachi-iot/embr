@@ -28,7 +28,8 @@ enum nav_ids
 
 
 
-static constexpr bc nav[]
+// DEBT: Make constexpr after https://github.com/malachi-iot/estdlib/issues/133 is resolved
+static const bc nav[]
 {
     { "top",        id_top },
     { "lvl1.0",     id_lvl1_0,      id_top },
@@ -41,7 +42,7 @@ static constexpr bc nav[]
     { "lvl2.0.0",   id_lvl2_0_0,    id_lvl2_0 },
     { "lvl2.1",     id_lvl2_1,      id_top },
     { "side1",      id_side1 },
-    { {} }
+    bc::null()
 };
 
 

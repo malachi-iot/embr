@@ -16,7 +16,7 @@ struct breadcrumb
 
     static ESTD_CPP_CONSTEVAL breadcrumb null()
     {
-        return { nullptr };
+        return { {} };
     }
 };
 

@@ -16,13 +16,15 @@ using bc = embr::internal::breadcrumb;
 
 namespace test::playlist {
 
-static constexpr bc nav[]
+// DEBT: Make constexpr after https://github.com/malachi-iot/estdlib/issues/133 is resolved
+static const bc nav[]
 {
     { "version",    id_version },
     { "entries",    id_entries },
     { "filename",   id_filename,    id_entries },
     { "sleep_vol",  id_sleep_vol,   id_entries },
     { "sleep_freq", id_sleep_freq,  id_entries },
+    bc::null(),
 };
 
 }
@@ -230,7 +232,7 @@ TEST_CASE("json tests", "[json]")
     {
         using decoder_type = internal::decoder;
         using state_type = const internal::decoder_state&;
-        decoder_type decoder{nullptr};
+        decoder_type decoder;
         unsigned counter = 0;
 
         using iss = estd::layer2::basic_istringstream<const char>;
@@ -271,7 +273,7 @@ TEST_CASE("json tests", "[json]")
         using decoder_type = internal::decoder;
         using istream_type = estd::layer2::basic_istringstream<const char>;
 
-        decoder_type decoder{nullptr};
+        decoder_type decoder;
         int counter = 0;
         char temp[32];
 
