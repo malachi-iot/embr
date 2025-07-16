@@ -23,22 +23,22 @@ public:
     constexpr ledc(const ledc_channel_config_t& config) :
         config_(config) {}
 
-    esp_err_t set_duty(uint32_t duty)
+    esp_err_t set_duty(uint32_t duty) const
     {
         return ledc_set_duty(mode(), channel(), duty);
     }
 
-    esp_err_t update_duty()
+    esp_err_t update_duty() const
     {
         return ledc_update_duty(mode(), channel());
     }
 
-    esp_err_t set_duty_and_update(uint32_t duty, uint32_t hpoint)
+    esp_err_t set_duty_and_update(uint32_t duty, uint32_t hpoint) const
     {
         return ledc_set_duty_and_update(mode(), channel(), duty, hpoint);
     }
 
-    esp_err_t set_duty_and_update(uint32_t duty)
+    esp_err_t set_duty_and_update(uint32_t duty) const
     {
         return ledc_set_duty_and_update(mode(), channel(), duty, config_.hpoint);
     }
@@ -49,10 +49,15 @@ public:
     }
 
     esp_err_t set_fade(uint32_t duty, ledc_duty_direction_t fade_direction, uint32_t step_num,
-        uint32_t duty_cycle_num, uint32_t duty_scale)
+        uint32_t duty_cycle_num, uint32_t duty_scale) const
     {
         return ledc_set_fade(mode(), channel(), duty, 
             fade_direction, step_num, duty_cycle_num, duty_scale);
+    }
+
+    esp_err_t set_fade_with_step(uint32_t target_duty, uint32_t scale, uint32_t cycle_num) const
+    {
+        return ledc_set_fade_with_step(mode(), channel(), target_duty, scale, cycle_num);
     }
 
     esp_err_t set_fade_with_time(uint32_t target_duty, int max_fade_time_ms) const
@@ -68,7 +73,7 @@ public:
             target_duty, max_fade_time_ms, fade_mode);
     }
 
-    esp_err_t set_freq(uint32_t freq_hz)
+    esp_err_t set_freq(uint32_t freq_hz) const
     {
         return ledc_set_freq(mode(), config_.timer_sel, freq_hz);
     }
@@ -84,7 +89,7 @@ public:
         return config();
     }
 
-    esp_err_t stop(uint32_t idle_level)
+    esp_err_t stop(uint32_t idle_level) const
     {
         return ledc_stop(mode(), channel(), idle_level);
     }
