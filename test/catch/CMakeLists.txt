@@ -52,6 +52,7 @@ set(SOURCE_FILES
     runtime-ratio-test.cpp
     scheduler-test.cpp
     service-test.cpp
+    service-v2-test.cpp
     streambuf-test.cpp
     thunk-test.cpp
     units-test.cpp

@@ -94,17 +94,17 @@ protected:
 
     substates substate_;
 
-    ESTD_CPP_CONSTEXPR(17) void substate(substates s)
+    ESTD_CPP_CONSTEXPR(14) void substate(substates s)
     {
         substate_ = s;
     }
 
-    ESTD_CPP_CONSTEXPR(17) void state(substates s)
+    ESTD_CPP_CONSTEXPR(14) void state(substates s)
     {
         substate_ = s;
     }
 
-    ESTD_CPP_CONSTEXPR(17) void state(states s)
+    ESTD_CPP_CONSTEXPR(14) void state(states s)
     {
         substate_ = static_cast<substates>(s << separator);
     }

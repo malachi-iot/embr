@@ -8,8 +8,6 @@
 
 #include "property-test.h"
 
-#include <embr/service/v2/enum.h>
-
 using namespace embr;
 
 constexpr experimental::module_info module{"unit tests"};
@@ -826,21 +824,5 @@ TEST_CASE("Services", "[services]")
 
         auto& v = std::get<0>(t2);
 
-    }
-    SECTION("v2")
-    {
-        using service = v2::service;
-
-        service s{service::Running};
-
-        REQUIRE(s.state() == service::Started);
-
-        s.substate(service::ErrConfig);
-
-        REQUIRE(s.state() == service::Error);
-
-        s.substate(service::Sleeping);
-
-        REQUIRE(s.state() == service::Stopped);
     }
 }
