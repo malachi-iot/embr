@@ -29,7 +29,15 @@ public:
     using time_point = TimePoint;
 
     void process_one(time_point now);
+    void process(time_point now);
     void reschedule(pointer);
+
+    constexpr bool empty() const { return items_.empty(); }
+
+    constexpr time_point next() const
+    {
+        return items_.top()->next();
+    }
 };
 
 
@@ -39,14 +47,26 @@ void nexter<TimePoint, Item>::process_one(time_point now)
     if(items_.empty())  return;
 
     pointer t = items_.top();
-    items_.pop();
 
-    t->process();
-
-    if(t->next() > now)
+    // Are we actually at a next up situation?
+    if(now >= t->next())
     {
-        items_.push(t);
+        items_.pop();
+        t->process();
+
+        // Now that we've processed, next may have changed.  If we have something
+        // to reschedule, do so
+        if(t->next() > now)
+        {
+            items_.push(t);
+        }
     }
+}
+
+template <class TimePoint, class Item>
+void nexter<TimePoint, Item>::process(time_point now)
+{
+    process_one(now);
 }
 
 template <class TimePoint, class Item>

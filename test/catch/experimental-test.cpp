@@ -575,10 +575,22 @@ TEST_CASE("experimental test", "[experimental]")
     {
         using type = nexter<int, ref_nexter<int>>;
 
-        ref_nexter<int> rn1;
+        ref_nexter<int> rn1, rn2;
 
         type n;
 
         n.reschedule(&rn1);
+
+        n.process_one(0);
+
+        REQUIRE(rn1.next() == 4);
+
+        n.process_one(1);
+
+        REQUIRE(rn1.next() == 4);
+
+        n.process_one(4);
+
+        REQUIRE(rn1.next() == 8);
     }
 }
