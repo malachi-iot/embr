@@ -13,6 +13,7 @@
 #include <embr/bits/bits.hpp>
 
 #include <embr/platform/esp-idf/rebase.h>
+#include <embr/exp/nexter.h>
 
 #include "test-data.h"
 #include "rebase-test.h"
@@ -569,5 +570,15 @@ TEST_CASE("experimental test", "[experimental]")
 
             REQUIRE(item1->t.time_since_epoch() == s1);
         }
+    }
+    SECTION("nexter")
+    {
+        using type = nexter<int, ref_nexter<int>>;
+
+        ref_nexter<int> rn1;
+
+        type n;
+
+        n.reschedule(&rn1);
     }
 }
