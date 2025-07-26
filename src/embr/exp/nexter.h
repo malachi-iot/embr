@@ -15,6 +15,25 @@
 namespace embr { namespace experimental {
 
 #if __cpp_lib_concepts
+namespace concepts {
+
+template <class T>
+concept NexterItem = requires(T)
+{
+    T::time_point;
+};
+
+template <class T>
+concept NexterTraits = requires
+{
+    typename T::value_type;
+    typename T::const_reference;
+    typename T::time_point;
+    typename T::compare;
+    //typename T::time_point T::next(std::declval<typename T::value_type>());
+};
+
+}
 #endif
 
 // DEBT: Seems like time_point really ought to consolidate here too
@@ -32,9 +51,11 @@ struct nexter_item_traits
             return lhs->next() > rhs->next();
         }
     };
+
+    static constexpr time_point next(const_reference v) { return v.next(); }
 };
 
-template <class Traits>
+template <ESTD_CPP_CONCEPT(concepts::NexterTraits) Traits>
 class nexter
 {
     using traits = Traits;
@@ -59,26 +80,24 @@ public:
 
     constexpr time_point next() const
     {
-        return items_.top()->next();
+        return traits::next(*items_.top());
     }
 
-    // DEBT: More echoes and overlap with scheduler
+    // NOTE: More echoes and overlap with scheduler
     constexpr bool ready(time_point now) const
     {
-        if(items_.empty()) return false;
-
-        return now >= items_.top()->next();
+        return items_.empty() ? false : now >= next();
     }
 };
 
 
-template <class Traits>
+template <ESTD_CPP_CONCEPT(concepts::NexterTraits) Traits>
 bool nexter<Traits>::process_one(time_point now)
 {
     if(items_.empty())  return false;
 
     pointer t = items_.top();
-    const time_point next = t->next();
+    const time_point next = traits::next(*t);
 
     // Are we actually at a next up situation?
     if(now >= next)
@@ -89,7 +108,7 @@ bool nexter<Traits>::process_one(time_point now)
         // Now that we've processed, next may have changed.  If we have something
         // to reschedule, do so
         // NOTE: This is so far the only signal a reschedule is desired, a differing next.
-        if(t->next() != next)
+        if(traits::next(*t) != next)
         {
             items_.push(t);
             return true;
@@ -99,13 +118,13 @@ bool nexter<Traits>::process_one(time_point now)
     return false;
 }
 
-template <class Traits>
+template <ESTD_CPP_CONCEPT(concepts::NexterTraits) Traits>
 void nexter<Traits>::process(time_point now)
 {
     process_one(now);
 }
 
-template <class Traits>
+template <ESTD_CPP_CONCEPT(concepts::NexterTraits) Traits>
 bool nexter<Traits>::reschedule(pointer v)
 {
     bool erased = items_.erase_if([v](pointer item) { return v == item; });
@@ -113,7 +132,7 @@ bool nexter<Traits>::reschedule(pointer v)
     return erased;
 }
 
-template <class Item, class Traits = nexter_item_traits<Item>>
+template <class Item, ESTD_CPP_CONCEPT(concepts::NexterTraits) Traits = nexter_item_traits<Item>>
 using nexter2 = nexter<Traits>;
 
 
@@ -161,6 +180,10 @@ class nexter_processor :
     public Adapter
 {
 public:
+    // DEBT: What about you, Adapter?
+    template <class ...Args>
+    constexpr nexter_processor(Args&&...args) : Appointer(std::forward<Args>(args)...) {}
+
     void process()
     {
         Adapter::process(*this);
