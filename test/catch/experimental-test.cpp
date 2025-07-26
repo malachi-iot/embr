@@ -574,7 +574,7 @@ TEST_CASE("experimental test", "[experimental]")
     SECTION("nexter")
     {
         using processor = nexter_processor<ref_nexter<int>, ref_adapter>;
-        using type = nexter<int, processor>;
+        using type = nexter2<processor>;
 
         processor rn1(0), rn2(1);
         int now = 0;
@@ -628,8 +628,25 @@ TEST_CASE("experimental test", "[experimental]")
         // Semi-undefined behavior which of these two identical parties get sorted first
         REQUIRE(n.top().id() == 1);
 
-        // DEBT: Feels like these should be '1' by now
-        REQUIRE(rn1.counter_ == 0);
-        REQUIRE(rn2.counter_ == 0);
+        REQUIRE(rn1.counter_ == 1);
+        REQUIRE(rn2.counter_ == 1);
+
+        rn1.next(0);
+
+        // Special feature is we support rescheduling this way.  A little brute force, but worth it
+        n.reschedule(&rn1);
+
+        REQUIRE(n.ready(now));
+        REQUIRE(n.top().id() == 0);
+        REQUIRE(n.top().next() == 0);
+
+        REQUIRE(n.process_one(now));
+        REQUIRE(n.top().id() == 0);
+        REQUIRE(n.top().next() == 4);
+
+        REQUIRE(n.process_one(now));
+        // Semi-undefined behavior which of these two identical parties get sorted first
+        REQUIRE(n.top().id() == 1);
+        REQUIRE(n.top().next() == 8);
     }
 }

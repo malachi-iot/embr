@@ -17,9 +17,12 @@ namespace embr { namespace experimental {
 #if __cpp_lib_concepts
 #endif
 
-template <class TimePoint, class Item>
-class nexter
+// DEBT: Seems like time_point really ought to consolidate here too
+template <class Item>
+struct nexter_item_traits
 {
+    using time_point = typename Item::time_point;
+
     ESTD_CPP_STD_VALUE_TYPE(Item)
 
     struct compare
@@ -29,11 +32,19 @@ class nexter
             return lhs->next() > rhs->next();
         }
     };
+};
 
-    estd::layer1::priority_queue<pointer, 10, compare> items_;
+template <class Traits>
+class nexter
+{
+    using traits = Traits;
+
+    ESTD_CPP_STD_VALUE_TYPE(typename traits::value_type)
+
+    estd::layer1::priority_queue<pointer, 10, typename traits::compare> items_;
 
 public:
-    using time_point = TimePoint;
+    using time_point = typename traits::time_point;
 
     ///
     /// @param now
@@ -61,8 +72,8 @@ public:
 };
 
 
-template <class TimePoint, class Item>
-bool nexter<TimePoint, Item>::process_one(time_point now)
+template <class Traits>
+bool nexter<Traits>::process_one(time_point now)
 {
     if(items_.empty())  return false;
 
@@ -88,19 +99,23 @@ bool nexter<TimePoint, Item>::process_one(time_point now)
     return false;
 }
 
-template <class TimePoint, class Item>
-void nexter<TimePoint, Item>::process(time_point now)
+template <class Traits>
+void nexter<Traits>::process(time_point now)
 {
     process_one(now);
 }
 
-template <class TimePoint, class Item>
-bool nexter<TimePoint, Item>::reschedule(pointer v)
+template <class Traits>
+bool nexter<Traits>::reschedule(pointer v)
 {
     bool erased = items_.erase_if([v](pointer item) { return v == item; });
     items_.push(v);
     return erased;
 }
+
+template <class Item, class Traits = nexter_item_traits<Item>>
+using nexter2 = nexter<Traits>;
+
 
 template <class TimePoint>
 class ref_nexter
@@ -118,6 +133,9 @@ public:
     using time_point = TimePoint;
 
     constexpr const time_point& next() const { return next_; }
+    void next(time_point v) { next_ = v; }
+
+    // Feature of nexter - this is only called when 'now' >= next
     void process()
     {
         next_ += 4;
@@ -129,9 +147,6 @@ class ref_adapter
 {
 public:
     int counter_{};
-
-    template <class Appointer>
-    static void process(const Appointer&) {}
 
     template <class TimePoint>
     void process(const ref_nexter<TimePoint>& appointer)
