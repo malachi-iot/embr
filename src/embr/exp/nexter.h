@@ -107,11 +107,13 @@ class ref_nexter
 {
     int id_{};
     TimePoint next_{};
+    bool toggle_{};
 
 public:
     constexpr ref_nexter(int id) : id_(id) {}
 
     constexpr int id() const { return id_; }
+    constexpr bool toggle() const { return toggle_; }
 
     using time_point = TimePoint;
 
@@ -119,14 +121,23 @@ public:
     void process()
     {
         next_ += 4;
+        toggle_ = !toggle_;
     }
 };
 
 class ref_adapter
 {
 public:
+    int counter_{};
+
     template <class Appointer>
     static void process(const Appointer&) {}
+
+    template <class TimePoint>
+    void process(const ref_nexter<TimePoint>& appointer)
+    {
+        if(appointer.toggle()) counter_++;
+    }
 };
 
 template <class Appointer, class Adapter>

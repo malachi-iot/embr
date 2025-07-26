@@ -611,8 +611,25 @@ TEST_CASE("experimental test", "[experimental]")
 
         REQUIRE(n.top().id() == 1);
 
-        //REQUIRE(n.next() == 4);
+        REQUIRE(n.next() == 4);
+        REQUIRE(n.ready(now));
 
-        //REQUIRE(n.ready(now) == true);
+        n.process_one(now);
+
+        REQUIRE(n.ready(now) == false);
+
+        now += 4;
+
+        // Two of us at next_ == 8 now
+        REQUIRE(n.ready(now));
+        REQUIRE(n.process_one(now));
+
+        REQUIRE(n.ready(now));
+        // Semi-undefined behavior which of these two identical parties get sorted first
+        REQUIRE(n.top().id() == 1);
+
+        // DEBT: Feels like these should be '1' by now
+        REQUIRE(rn1.counter_ == 0);
+        REQUIRE(rn2.counter_ == 0);
     }
 }
