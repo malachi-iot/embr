@@ -573,24 +573,46 @@ TEST_CASE("experimental test", "[experimental]")
     }
     SECTION("nexter")
     {
-        using type = nexter<int, ref_nexter<int>>;
+        using processor = nexter_processor<ref_nexter<int>, ref_adapter>;
+        using type = nexter<int, processor>;
 
-        ref_nexter<int> rn1, rn2;
+        processor rn1(0), rn2(1);
+        int now = 0;
 
         type n;
 
         n.reschedule(&rn1);
 
-        n.process_one(0);
+        REQUIRE(n.ready(now));
+
+        n.process_one(now);
 
         REQUIRE(rn1.next() == 4);
 
-        n.process_one(1);
+        n.process_one(++now);
 
         REQUIRE(rn1.next() == 4);
 
-        n.process_one(4);
+        n.process_one(now = 4);
 
         REQUIRE(rn1.next() == 8);
+
+        REQUIRE(n.ready(now) == false);
+
+        n.reschedule(&rn2);
+
+        REQUIRE(n.top().id() == 1);
+        REQUIRE(n.ready(now) == true);
+
+        REQUIRE(rn1.next() == 8);
+        REQUIRE(rn2.next() == 0);
+
+        n.process_one(now);
+
+        REQUIRE(n.top().id() == 1);
+
+        //REQUIRE(n.next() == 4);
+
+        //REQUIRE(n.ready(now) == true);
     }
 }

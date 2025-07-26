@@ -2,6 +2,10 @@
 
 #include <estd/queue.h>
 
+#if __cpp_lib_concepts
+#include <concepts>
+#endif
+
 // DEBT: Lousy name on purpose.  Don't want to call 'scheduler' since that already is used.
 // This class identifies from a batch of next-aware children (possibly state machines)
 // who the next one up is.  Behavior overlaps with retry v4 behavior as well.
@@ -10,57 +14,78 @@
 
 namespace embr { namespace experimental {
 
+#if __cpp_lib_concepts
+#endif
+
 template <class TimePoint, class Item>
 class nexter
 {
     ESTD_CPP_STD_VALUE_TYPE(Item)
 
-    struct less
+    struct compare
     {
         constexpr bool operator()(const_pointer lhs, const_pointer rhs) const
         {
-            return lhs->next() < rhs->next();
+            return lhs->next() > rhs->next();
         }
     };
 
-    estd::layer1::priority_queue<pointer, 10, less> items_;
+    estd::layer1::priority_queue<pointer, 10, compare> items_;
 
 public:
     using time_point = TimePoint;
 
-    void process_one(time_point now);
+    ///
+    /// @param now
+    /// @return true if item was processed and rescheduled, false otherwise
+    bool process_one(time_point now);
     void process(time_point now);
-    void reschedule(pointer);
+    bool reschedule(pointer);
 
     constexpr bool empty() const { return items_.empty(); }
+
+    constexpr const_reference top() const { return *items_.top(); }
 
     constexpr time_point next() const
     {
         return items_.top()->next();
     }
+
+    // DEBT: More echoes and overlap with scheduler
+    constexpr bool ready(time_point now) const
+    {
+        if(items_.empty()) return false;
+
+        return now >= items_.top()->next();
+    }
 };
 
 
 template <class TimePoint, class Item>
-void nexter<TimePoint, Item>::process_one(time_point now)
+bool nexter<TimePoint, Item>::process_one(time_point now)
 {
-    if(items_.empty())  return;
+    if(items_.empty())  return false;
 
     pointer t = items_.top();
+    const time_point next = t->next();
 
     // Are we actually at a next up situation?
-    if(now >= t->next())
+    if(now >= next)
     {
         items_.pop();
         t->process();
 
         // Now that we've processed, next may have changed.  If we have something
         // to reschedule, do so
-        if(t->next() > now)
+        // NOTE: This is so far the only signal a reschedule is desired, a differing next.
+        if(t->next() != next)
         {
             items_.push(t);
+            return true;
         }
     }
+
+    return false;
 }
 
 template <class TimePoint, class Item>
@@ -70,24 +95,50 @@ void nexter<TimePoint, Item>::process(time_point now)
 }
 
 template <class TimePoint, class Item>
-void nexter<TimePoint, Item>::reschedule(pointer v)
+bool nexter<TimePoint, Item>::reschedule(pointer v)
 {
-    items_.erase_if([v](pointer item) { return v == item; });
+    bool erased = items_.erase_if([v](pointer item) { return v == item; });
     items_.push(v);
+    return erased;
 }
 
 template <class TimePoint>
 class ref_nexter
 {
+    int id_{};
     TimePoint next_{};
 
 public:
+    constexpr ref_nexter(int id) : id_(id) {}
+
+    constexpr int id() const { return id_; }
+
     using time_point = TimePoint;
 
     constexpr const time_point& next() const { return next_; }
     void process()
     {
         next_ += 4;
+    }
+};
+
+class ref_adapter
+{
+public:
+    template <class Appointer>
+    static void process(const Appointer&) {}
+};
+
+template <class Appointer, class Adapter>
+class nexter_processor :
+    public Appointer,
+    public Adapter
+{
+public:
+    void process()
+    {
+        Adapter::process(*this);
+        Appointer::process();
     }
 };
 
