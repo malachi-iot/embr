@@ -6,8 +6,8 @@ namespace embr { namespace scheduler { inline namespace v1 {
 
 namespace detail {
 
-template <ESTD_CPP_CONCEPT(concepts::Traits) Traits>
-bool scheduler<Traits>::process_one(time_point now)
+template <ESTD_CPP_CONCEPT(concepts::Traits) Traits, class Container>
+bool scheduler<Traits, Container>::process_one(time_point now)
 {
     if(items_.empty())  return false;
 
@@ -33,14 +33,14 @@ bool scheduler<Traits>::process_one(time_point now)
     return false;
 }
 
-template <ESTD_CPP_CONCEPT(concepts::Traits) Traits>
-void scheduler<Traits>::process(time_point now)
+template <ESTD_CPP_CONCEPT(concepts::Traits) Traits, class Container>
+void scheduler<Traits, Container>::process(time_point now)
 {
     process_one(now);
 }
 
-template <ESTD_CPP_CONCEPT(concepts::Traits) Traits>
-bool scheduler<Traits>::reschedule(pointer v)
+template <ESTD_CPP_CONCEPT(concepts::Traits) Traits, class Container>
+bool scheduler<Traits, Container>::reschedule(pointer v)
 {
     bool erased = items_.erase_if([v](pointer item) { return v == item; });
     items_.push(v);

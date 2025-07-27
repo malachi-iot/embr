@@ -13,9 +13,9 @@ namespace embr { namespace scheduler { inline namespace v1 {
 namespace concepts {
 
 template <class T>
-concept Item = requires(T)
+concept Item = requires(T t)
 {
-    T::time_point;
+    typename T::time_point;
 };
 
 template <class T>
@@ -33,7 +33,7 @@ concept Traits = requires
 
 // DEBT: Seems like time_point really ought to consolidate here too
 template <class Item>
-struct scheduler_item_traits
+struct item_traits
 {
     using time_point = typename Item::time_point;
 
@@ -53,14 +53,14 @@ struct scheduler_item_traits
 
 namespace detail {
 
-template <ESTD_CPP_CONCEPT(concepts::Traits) Traits>
+template <ESTD_CPP_CONCEPT(concepts::Traits) Traits, class Container>
 class scheduler
 {
     using traits = Traits;
 
     ESTD_CPP_STD_VALUE_TYPE(typename traits::value_type)
 
-    estd::layer1::priority_queue<pointer, 10, typename traits::compare> items_;
+    estd::priority_queue<pointer, Container, typename traits::compare> items_;
 
 public:
     using time_point = typename traits::time_point;
@@ -91,7 +91,12 @@ public:
 
 }
 
-template <class Item, ESTD_CPP_CONCEPT(concepts::Traits) Traits = scheduler_item_traits<Item>>
-using scheduler = detail::scheduler<Traits>;
+}}}
+
+namespace embr { namespace layer1 { inline namespace v1 {
+
+template <ESTD_CPP_CONCEPT(embr::scheduler::concepts::Item) Item, unsigned N,
+    ESTD_CPP_CONCEPT(embr::scheduler::concepts::Traits) Traits = embr::scheduler::item_traits<Item>>
+using scheduler = embr::scheduler::detail::scheduler<Traits, estd::layer1::vector<Item*, N>>;
 
 }}}

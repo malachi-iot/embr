@@ -12,7 +12,7 @@ TEST_CASE("Scheduler v2", "[scheduler-v2]")
     SECTION("basics")
     {
         using processor = nexter_processor<ref_nexter<int>, ref_adapter>;
-        using type = embr::scheduler::scheduler<processor>;
+        using type = embr::layer1::scheduler<processor, 10>;
 
         processor rn1(0), rn2(1);
         int now = 0;
@@ -86,5 +86,9 @@ TEST_CASE("Scheduler v2", "[scheduler-v2]")
         // Semi-undefined behavior which of these two identical parties get sorted first
         REQUIRE(n.top().id() == 1);
         REQUIRE(n.top().next() == 8);
+    }
+    SECTION("aggressive rescheduling")
+    {
+
     }
 }
