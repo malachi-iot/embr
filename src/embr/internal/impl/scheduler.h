@@ -5,28 +5,13 @@
 
 #include "fwd.h"
 #include "time_point.h"
+#include "../mutex.h"
 
 #include <estd/internal/macro/push.h>
 
 namespace embr { namespace internal {
 
 // DEBT: These need to live in 'internal/scheduler.h'
-struct MutexContext
-{
-    const bool use_mutex_ : 1;
-    const bool in_isr_ : 1;
-
-    constexpr bool use_mutex() const { return use_mutex_; }
-    constexpr bool in_isr() const { return in_isr_; }
-
-    constexpr MutexContext(bool in_isr, bool use_mutex = true) :
-        use_mutex_(use_mutex),
-        in_isr_(in_isr)
-    {
-
-    }
-};
-
 typedef MutexContext SchedulerContextFlags;
 
 template <class TScheduler>
@@ -87,13 +72,6 @@ struct SchedulerContext :
     }
 };
 
-
-struct noop_mutex
-{
-    static void lock(SchedulerContextFlags) {}
-
-    static void unlock(SchedulerContextFlags) {}
-};
 
 namespace scheduler { namespace impl {
 

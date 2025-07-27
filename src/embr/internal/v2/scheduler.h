@@ -2,6 +2,8 @@
 
 #include <estd/queue.h>
 
+#include "../mutex.h"
+
 #if __cpp_lib_concepts
 #include <concepts>
 #endif
@@ -56,6 +58,9 @@ namespace detail {
 template <ESTD_CPP_CONCEPT(concepts::Traits) Traits, class Container>
 class scheduler
 {
+    // DEBT: Deviating from original noop_mutex pattern in that we might consider baking
+    // mutex context into the passed in mutex (noop_mutex is 1/2 way like a traits right now)
+    using noop_mutex = internal::noop_mutex;
     using traits = Traits;
 
     ESTD_CPP_STD_VALUE_TYPE(typename traits::value_type)
@@ -68,9 +73,14 @@ public:
     ///
     /// @param now
     /// @return true if item was processed and rescheduled, false otherwise
-    bool process_one(time_point now);
+    template <class Mutex = noop_mutex>
+    bool process_one(time_point now, Mutex = {});
     void process(time_point now);
-    bool reschedule(pointer);
+
+    template <class Mutex = noop_mutex>
+    bool reschedule(pointer, Mutex = {});
+
+    // Not mutex protected below this line, be careful
 
     constexpr bool empty() const { return items_.empty(); }
 

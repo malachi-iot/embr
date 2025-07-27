@@ -10,7 +10,7 @@
 #include "../../internal/impl/scheduler.h"
 
 // TODO: Prep
-#include "../../internal/v2/scheduler.h"
+#include "v2/scheduler.h"
 
 #ifdef ESP_PLATFORM
 #include "esp_log.h"

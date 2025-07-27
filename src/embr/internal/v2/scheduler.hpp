@@ -7,9 +7,17 @@ namespace embr { namespace scheduler { inline namespace v1 {
 namespace detail {
 
 template <ESTD_CPP_CONCEPT(concepts::Traits) Traits, class Container>
-bool scheduler<Traits, Container>::process_one(time_point now)
+template <class Mutex>
+bool scheduler<Traits, Container>::process_one(time_point now, Mutex mutex)
 {
-    if(items_.empty())  return false;
+    mutex.lock();
+
+    if(items_.empty())
+    {
+        return false;
+
+        mutex.unlock();
+    }
 
     pointer t = items_.top();
     const time_point next = traits::next(*t);
@@ -18,6 +26,9 @@ bool scheduler<Traits, Container>::process_one(time_point now)
     if(now >= next)
     {
         items_.pop();
+
+        mutex.unlock();
+
         t->process();
 
         // Now that we've processed, next may have changed.  If we have something
@@ -25,7 +36,9 @@ bool scheduler<Traits, Container>::process_one(time_point now)
         // NOTE: This is so far the only signal a reschedule is desired, a differing next.
         if(traits::next(*t) != next)
         {
+            mutex.lock();
             items_.push(t);
+            mutex.unlock();
             return true;
         }
     }
@@ -40,10 +53,13 @@ void scheduler<Traits, Container>::process(time_point now)
 }
 
 template <ESTD_CPP_CONCEPT(concepts::Traits) Traits, class Container>
-bool scheduler<Traits, Container>::reschedule(pointer v)
+template <class Mutex>
+bool scheduler<Traits, Container>::reschedule(pointer v, Mutex mutex)
 {
+    mutex.lock();
     bool erased = items_.erase_if([v](pointer item) { return v == item; });
     items_.push(v);
+    mutex.unlock();
     return erased;
 }
 
