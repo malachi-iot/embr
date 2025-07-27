@@ -74,7 +74,7 @@ struct Item3ControlStructure1 : Item3Traits::control_structure
 {
     int counter = 0;
 
-    virtual bool process(time_point current_time)
+    bool process(time_point current_time) override
     {
         ++counter;
         // DEBT: Looks like estd::chrono doesn't have these overloads sorted yet
@@ -87,11 +87,68 @@ struct Item3ControlStructure2 : Item3Traits::control_structure
 {
     int counter = 0;
 
-    virtual bool process(time_point current_time)
+    bool process(time_point current_time) override
     {
         ++counter;
         //t += std::chrono::seconds(5);
         return false;
+    }
+};
+
+
+template <class TimePoint>
+class ref_nexter
+{
+    int id_{};
+    TimePoint next_{};
+    bool toggle_{};
+
+public:
+    constexpr explicit ref_nexter(int id) : id_(id) {}
+
+    constexpr int id() const { return id_; }
+    constexpr bool toggle() const { return toggle_; }
+
+    using time_point = TimePoint;
+
+    constexpr const time_point& next() const { return next_; }
+    void next(time_point v) { next_ = v; }
+
+    // Feature of nexter - this is only called when 'now' >= next
+    void process()
+    {
+        next_ += 4;
+        toggle_ = !toggle_;
+    }
+};
+
+
+class ref_adapter
+{
+public:
+    int counter_{};
+
+    template <class TimePoint>
+    void process(const ref_nexter<TimePoint>& appointer)
+    {
+        if(appointer.toggle()) counter_++;
+    }
+};
+
+template <class Appointer, class Adapter>
+class nexter_processor :
+    public Appointer,
+    public Adapter
+{
+public:
+    // DEBT: What about you, Adapter?
+    template <class ...Args>
+    constexpr nexter_processor(Args&&...args) : Appointer(std::forward<Args>(args)...) {}
+
+    void process()
+    {
+        Adapter::process(*this);
+        Appointer::process();
     }
 };
 
