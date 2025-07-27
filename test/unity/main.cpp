@@ -6,6 +6,7 @@ int main()
     test_bits();
     test_delegate_queue();
     test_observer();
+    test_scheduler();
     test_word();
     UNITY_END();
 

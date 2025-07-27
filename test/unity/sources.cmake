@@ -7,6 +7,7 @@ set(SOURCES
         misc.cpp
         objlist.cpp
         observer.cpp
+        scheduler.cpp
         setup.cpp
         word.cpp
         )
