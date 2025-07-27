@@ -144,7 +144,7 @@ class ref_nexter
     bool toggle_{};
 
 public:
-    constexpr ref_nexter(int id) : id_(id) {}
+    constexpr explicit ref_nexter(int id) : id_(id) {}
 
     constexpr int id() const { return id_; }
     constexpr bool toggle() const { return toggle_; }

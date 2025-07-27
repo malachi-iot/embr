@@ -51,6 +51,7 @@ set(SOURCE_FILES
     retry-test.cpp
     runtime-ratio-test.cpp
     scheduler-test.cpp
+    scheduler-v2-test.cpp
     service-test.cpp
     service-v2-test.cpp
     streambuf-test.cpp

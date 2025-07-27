@@ -8,6 +8,7 @@
 
 #include "observer.h"
 #include "internal/scheduler.h"
+#include "internal/v2/scheduler.h"
 
 namespace embr {
 
