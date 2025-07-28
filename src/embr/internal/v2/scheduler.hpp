@@ -29,7 +29,8 @@ bool scheduler<Traits, Container>::process_one(time_point now, Mutex mutex)
 
         mutex.unlock();
 
-        t->process();
+        // DEBT: Shouldn't we have an immediate-re-eval signal here?
+        t->process(now);
 
         // Now that we've processed, next may have changed.  If we have something
         // to reschedule, do so
@@ -42,6 +43,8 @@ bool scheduler<Traits, Container>::process_one(time_point now, Mutex mutex)
             return true;
         }
     }
+    else
+        mutex.unlock();
 
     return false;
 }

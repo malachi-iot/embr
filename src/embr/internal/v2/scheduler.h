@@ -55,8 +55,16 @@ struct item_traits
 
 namespace detail {
 
+struct scheduler_base
+{
+    enum process_result
+    {
+
+    };
+};
+
 template <ESTD_CPP_CONCEPT(concepts::Traits) Traits, class Container>
-class scheduler
+class scheduler : public scheduler_base
 {
     // DEBT: Deviating from original noop_mutex pattern in that we might consider baking
     // mutex context into the passed in mutex (noop_mutex is 1/2 way like a traits right now)
@@ -72,7 +80,7 @@ public:
 
     ///
     /// @param now
-    /// @return true if item was processed and rescheduled, false otherwise
+    /// @return true if item was processed and scheduled again, false otherwise
     template <class Mutex = noop_mutex>
     bool process_one(time_point now, Mutex = {});
     void process(time_point now);

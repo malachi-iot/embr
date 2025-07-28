@@ -115,7 +115,7 @@ public:
     void next(time_point v) { next_ = v; }
 
     // Feature of nexter - this is only called when 'now' >= next
-    void process()
+    void process(time_point now)
     {
         next_ += 4;
         toggle_ = !toggle_;
@@ -141,14 +141,16 @@ class nexter_processor :
     public Adapter
 {
 public:
+    using time_point = typename Appointer::time_point;
+
     // DEBT: What about you, Adapter?
     template <class ...Args>
     constexpr nexter_processor(Args&&...args) : Appointer(std::forward<Args>(args)...) {}
 
-    void process()
+    void process(time_point now)
     {
         Adapter::process(*this);
-        Appointer::process();
+        Appointer::process(now);
     }
 };
 
