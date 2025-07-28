@@ -69,10 +69,13 @@ class scheduler : public scheduler_base
     // DEBT: Deviating from original noop_mutex pattern in that we might consider baking
     // mutex context into the passed in mutex (noop_mutex is 1/2 way like a traits right now)
     using noop_mutex = internal::noop_mutex;
+
+public:
     using traits = Traits;
 
     ESTD_CPP_STD_VALUE_TYPE(typename traits::value_type)
 
+protected:
     estd::priority_queue<pointer, Container, typename traits::compare> items_;
 
 public:

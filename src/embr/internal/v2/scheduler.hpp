@@ -14,9 +14,9 @@ bool scheduler<Traits, Container>::process_one(time_point now, Mutex mutex)
 
     if(items_.empty())
     {
-        return false;
-
         mutex.unlock();
+
+        return false;
     }
 
     pointer t = items_.top();
