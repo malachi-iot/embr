@@ -287,7 +287,12 @@ struct Traditional<false> : TraditionalBase
 };
 
 
+#if ESTD_VERSION > ESTD_BUILD_SEMVER(0, 8, 8)
+// DEBT: Can't specify function_default due to https://github.com/malachi-iot/estdlib/issues/139
+template <typename TimePoint, template <class, estd::detail::impl::fn_options> class Impl = estd::detail::impl::function_fnptr2>
+#else
 template <typename TimePoint, template <class> class Impl = estd::detail::impl::function_default>
+#endif
 struct Function : ReferenceBase<TimePoint>,
     tag::Function
 {

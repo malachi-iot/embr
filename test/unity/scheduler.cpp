@@ -23,10 +23,11 @@ static void test_scheduler_with_notify()
     scheduler.reschedule(&i1);
     TEST_ASSERT_FALSE(scheduler.wait(0));
     i1.next(clock_type::now() + 50ms);
-    // FIX: Apparent glitch in estd priorty_queue erase_if stops us
-    // from doing this
-    //scheduler.reschedule(&i1);
-    //TEST_ASSERT_TRUE(scheduler.wait(0));
+    // priorty_queue had a glitch prohibiting this before 0.8.9
+#if ESTD_VERSION > ESTD_BUILD_SEMVER(0, 8, 8)
+    scheduler.reschedule(&i1);
+    TEST_ASSERT_TRUE(scheduler.wait(0));
+#endif
 }
 #endif
 
