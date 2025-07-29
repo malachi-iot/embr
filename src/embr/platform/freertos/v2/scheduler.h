@@ -2,6 +2,7 @@
 
 #include <estd/port/freertos/mutex.h>
 #include <estd/port/freertos/wrapper/task.h>
+#include <estd/port/freertos/chrono.h>
 
 #include "../../../internal/v2/scheduler.h"
 
@@ -15,7 +16,10 @@ class scheduler_base : public scheduler::v1::detail::scheduler<Traits, Container
     using base_type = scheduler::v1::detail::scheduler<Traits, Container>;
 
 public:
-    void wait(TickType_t);
+
+    using clock_type = estd::chrono::freertos_clock;
+    using time_point = typename clock_type::time_point;
+    using duration = typename clock_type::duration;
 };
 
 
@@ -25,6 +29,9 @@ class scheduler_with_notify : public scheduler_base<Traits, Container>
     using base_type = scheduler_base<Traits, Container>;
     using task_type = estd::freertos::wrapper::task;
     using mutex_type = estd::freertos::mutex<true>;
+
+    using typename base_type::duration;
+    using typename base_type::time_point;
 
     mutex_type mutex_;
     task_type task_;
@@ -46,6 +53,8 @@ public:
     {
         // TODO
     }
+
+    BaseType_t wait(TickType_t);
 };
 
 

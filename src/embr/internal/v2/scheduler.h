@@ -45,6 +45,9 @@ struct item_traits
     {
         constexpr bool operator()(const_pointer lhs, const_pointer rhs) const
         {
+            assert(lhs);
+            assert(rhs);
+
             return lhs->next() > rhs->next();
         }
     };

@@ -9,10 +9,24 @@
 
 using namespace embr::scheduler::freertos;
 using namespace test::scheduler;
+using clock_type = estd::chrono::freertos_clock;
 
 static void test_scheduler_with_notify()
 {
-    v1::layer1::scheduler_with_notify<ref_nexter<int>, 10> scheduler;
+    using namespace estd::chrono_literals;
+    using time_point = typename clock_type::time_point;
+    using item_type = ref_nexter<time_point>;
+
+    v1::layer1::scheduler_with_notify<item_type, 10> scheduler;
+    item_type i1(0);
+
+    scheduler.reschedule(&i1);
+    TEST_ASSERT_FALSE(scheduler.wait(0));
+    i1.next(clock_type::now() + 50ms);
+    // FIX: Apparent glitch in estd priorty_queue erase_if stops us
+    // from doing this
+    //scheduler.reschedule(&i1);
+    //TEST_ASSERT_TRUE(scheduler.wait(0));
 }
 #endif
 

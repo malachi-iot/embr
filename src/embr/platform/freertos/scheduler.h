@@ -9,8 +9,7 @@
 // elsewhere entirely
 #include "../../internal/impl/scheduler.h"
 
-// TODO: Prep
-#include "v2/scheduler.h"
+#include "v2/scheduler.hpp"
 
 #ifdef ESP_PLATFORM
 #include "esp_log.h"
