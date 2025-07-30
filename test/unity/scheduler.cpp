@@ -16,17 +16,20 @@ static void test_scheduler_with_notify()
     using namespace estd::chrono_literals;
     using time_point = typename clock_type::time_point;
     using item_type = ref_nexter<time_point>;
+    time_point now = clock_type::now();
 
     v1::layer1::scheduler_with_notify<item_type, 10> scheduler;
-    item_type i1(0);
+    item_type i1(1), i2(2);
 
     scheduler.reschedule(&i1);
     TEST_ASSERT_FALSE(scheduler.wait(0));
-    i1.next(clock_type::now() + 50ms);
+    i1.next(now + 50ms);
     // priorty_queue had a glitch prohibiting this before 0.8.9
 #if ESTD_VERSION > ESTD_BUILD_SEMVER(0, 8, 8)
     scheduler.reschedule(&i1);
     TEST_ASSERT_TRUE(scheduler.wait(0));
+#else
+#error estd >= 0.8.9 expected, but not found
 #endif
 }
 #endif
