@@ -17,9 +17,10 @@ class ledc
 
     constexpr ledc_mode_t mode() const { return config_.speed_mode; }
     constexpr ledc_channel_t channel() const { return config_.channel; }
+    constexpr ledc_timer_t timer() const { return config_.timer_sel; }
 
 public:
-    constexpr ledc() = default;
+    ledc() = default;
     constexpr ledc(const ledc_channel_config_t& config) :
         config_(config) {}
 
@@ -92,6 +93,16 @@ public:
     esp_err_t stop(uint32_t idle_level) const
     {
         return ledc_stop(mode(), channel(), idle_level);
+    }
+
+    esp_err_t timer_pause() const
+    {
+        return ledc_timer_pause(mode(), timer());
+    }
+
+    esp_err_t timer_resume() const
+    {
+        return ledc_timer_resume(mode(), timer());
     }
 
     esp_err_t cb_register(ledc_cbs_t* cbs, void* user_arg)
