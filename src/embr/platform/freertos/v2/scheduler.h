@@ -1,5 +1,6 @@
 #pragma once
 
+#include <estd/port/freertos/event_groups.h>
 #include <estd/port/freertos/mutex.h>
 #include <estd/port/freertos/wrapper/task.h>
 #include <estd/port/freertos/chrono.h>
@@ -9,6 +10,16 @@
 namespace embr { namespace scheduler { namespace freertos { inline namespace v1 {
 
 namespace detail {
+
+class scheduler_base2
+{
+protected:  
+#if configSUPPORT_STATIC_ALLOCATION
+    static constexpr bool static_alloc = true;
+#else
+    static constexpr bool static_alloc = false;
+#endif
+};
 
 template <ESTD_CPP_CONCEPT(concepts::Traits) Traits, class Container>
 class scheduler_base : public scheduler::v1::detail::scheduler<Traits, Container>
@@ -24,11 +35,12 @@ public:
 
 
 template <ESTD_CPP_CONCEPT(concepts::Traits) Traits, class Container>
-class scheduler_with_notify : public scheduler_base<Traits, Container>
+class scheduler_with_notify : public scheduler_base<Traits, Container>,
+    scheduler_base2
 {
     using base_type = scheduler_base<Traits, Container>;
     using task_type = estd::freertos::wrapper::task;
-    using mutex_type = estd::freertos::mutex<true>;
+    using mutex_type = estd::freertos::mutex<static_alloc>;
 
     using typename base_type::duration;
     using typename base_type::time_point;
@@ -54,16 +66,23 @@ public:
         // TODO
     }
 
-    BaseType_t wait(TickType_t);
+    BaseType_t wait(duration);
 };
 
 
 template <ESTD_CPP_CONCEPT(concepts::Traits) Traits, class Container>
-class scheduler_with_event : public scheduler::v1::detail::scheduler<Traits, Container>
+class scheduler_with_event : public scheduler_base<Traits, Container>,
+    scheduler_base2
 {
     using base_type = scheduler_base<Traits, Container>;
+    using event_group_type = estd::freertos::event_group<static_alloc>;
+
+    event_group_type event_group_;
 
 public:
+    using typename base_type::duration;
+    using typename base_type::time_point;
+
 };
 
 }
@@ -74,6 +93,11 @@ template <ESTD_CPP_CONCEPT(embr::scheduler::concepts::Item) Item, unsigned N,
     ESTD_CPP_CONCEPT(embr::scheduler::concepts::Traits) Traits = embr::scheduler::item_traits<Item>>
 using scheduler_with_notify =
     embr::scheduler::freertos::v1::detail::scheduler_with_notify<Traits, estd::layer1::vector<Item*, N>>;
+
+template <ESTD_CPP_CONCEPT(embr::scheduler::concepts::Item) Item, unsigned N,
+    ESTD_CPP_CONCEPT(embr::scheduler::concepts::Traits) Traits = embr::scheduler::item_traits<Item>>
+using scheduler_with_event =
+    embr::scheduler::freertos::v1::detail::scheduler_with_event<Traits, estd::layer1::vector<Item*, N>>;
 
 }
 
