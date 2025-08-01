@@ -14,7 +14,7 @@ TEST_CASE("Scheduler v2", "[scheduler-v2]")
         using processor = nexter_processor<ref_nexter<int>, ref_adapter>;
         using type = embr::layer1::scheduler<processor, 10>;
 
-        processor rn1(0), rn2(1);
+        processor rn1(0, 4), rn2(1, 4);
         int now = 0;
 
         type n;

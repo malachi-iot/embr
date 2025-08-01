@@ -28,6 +28,9 @@ class scheduler_base : public scheduler::v1::detail::scheduler<Traits, Container
 
 public:
 
+    // DEBT: This overrides time_point from base class
+    // DEBT: For now, time_point from Traits, base_type and here must all belong
+    // to freertos_clock
     using clock_type = estd::chrono::freertos_clock;
     using time_point = typename clock_type::time_point;
     using duration = typename clock_type::duration;
@@ -42,8 +45,10 @@ class scheduler_with_notify : public scheduler_base<Traits, Container>,
     using task_type = estd::freertos::wrapper::task;
     using mutex_type = estd::freertos::mutex<static_alloc>;
 
+    using typename base_type::clock_type;
     using typename base_type::duration;
     using typename base_type::time_point;
+    using typename base_type::const_reference;
 
     mutex_type mutex_;
     task_type task_;
@@ -66,7 +71,7 @@ public:
         // TODO
     }
 
-    BaseType_t wait(duration);
+    BaseType_t process_one(duration);
 };
 
 

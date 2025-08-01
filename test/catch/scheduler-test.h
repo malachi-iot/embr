@@ -96,15 +96,17 @@ struct Item3ControlStructure2 : Item3Traits::control_structure
 };
 
 
-template <class TimePoint>
+template <class TimePoint, class Duration = TimePoint>
 class ref_nexter
 {
     int id_{};
     TimePoint next_{};
+    Duration bump_{};
     bool toggle_{};
 
 public:
-    constexpr explicit ref_nexter(int id) : id_(id) {}
+    //constexpr explicit ref_nexter(int id) : id_(id) {}
+    constexpr explicit ref_nexter(int id, Duration bump) : id_(id), bump_{bump} {}
 
     constexpr int id() const { return id_; }
     constexpr bool toggle() const { return toggle_; }
@@ -117,7 +119,7 @@ public:
     // Feature of nexter - this is only called when 'now' >= next
     void process(time_point now)
     {
-        next_ += 4;
+        next_ += bump_;
         toggle_ = !toggle_;
     }
 };

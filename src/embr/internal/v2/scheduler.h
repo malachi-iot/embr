@@ -117,6 +117,7 @@ public:
 
 }}}
 
+// DEBT: Too-global v1 gonna have issues
 namespace embr { namespace layer1 { inline namespace v1 {
 
 template <ESTD_CPP_CONCEPT(embr::scheduler::concepts::Item) Item, unsigned N,
