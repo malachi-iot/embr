@@ -13,6 +13,7 @@ using namespace estd::chrono_literals;
 using clock_type = estd::chrono::freertos_clock;
 using time_point = typename clock_type::time_point;
 using item_type = ref_nexter<time_point, typename clock_type::duration>;
+using process_result = embr::scheduler::v1::detail::scheduler_base::process_result;
 
 static void test_scheduler_with_notify()
 {
@@ -22,12 +23,12 @@ static void test_scheduler_with_notify()
     item_type i1(1, 40ms), i2(2, 40ms);
 
     scheduler.reschedule(&i1);
-    TEST_ASSERT_FALSE(scheduler.process_one(0ms));
+    TEST_ASSERT_EQUAL(process_result::PROCESSED_AND_RESCHEDULED, scheduler.process_one(0ms));
     i1.next(now + 50ms);
     // priorty_queue had a glitch prohibiting this before 0.8.9
 #if ESTD_VERSION > ESTD_BUILD_SEMVER(0, 8, 8)
     scheduler.reschedule(&i1);
-    TEST_ASSERT_TRUE(scheduler.process_one(0ms));
+    TEST_ASSERT_EQUAL(process_result::UNPROCESSED, scheduler.process_one(0ms));
 #else
 #error estd >= 0.8.9 expected, but not found
 #endif

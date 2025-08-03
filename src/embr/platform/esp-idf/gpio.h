@@ -7,7 +7,6 @@
 
 namespace embr { namespace esp_idf {
 
-// DEBT: Other wrappers are capitalized
 class gpio
 {
     const gpio_num_t pin_;

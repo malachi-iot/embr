@@ -72,7 +72,7 @@ public:
         // TODO
     }
 
-    BaseType_t process_one(duration);
+    process_result process_one(duration);
 };
 
 

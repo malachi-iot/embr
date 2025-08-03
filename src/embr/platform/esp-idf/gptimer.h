@@ -4,22 +4,20 @@
 
 namespace embr { namespace esp_idf {
 
-inline namespace v5 {
-
-class Timer
+class gptimer
 {
     gptimer_handle_t h;
 
 public:
-    constexpr Timer() = default;
-    constexpr Timer(gptimer_handle_t h) : h{h} {}
+    gptimer() = default;
+    constexpr gptimer(gptimer_handle_t h) : h{h} {}
 
     esp_err_t init(const gptimer_config_t* config)
     {
         return gptimer_new_timer(config, &h);
     }
 
-    static esp_err_t new_timer(const gptimer_config_t* config, Timer* timer)
+    static esp_err_t new_timer(const gptimer_config_t* config, gptimer* timer)
     {
         return timer->init(config);
     }
@@ -73,6 +71,10 @@ public:
     constexpr operator gptimer_handle_t() const { return h; }
 };
 
+inline namespace v5 {
+
+// DEPRECATED
+using Timer = gptimer;
 
 }
 

@@ -1,12 +1,12 @@
-#include "features/debounce.h"
+#if defined(ESP_PLATFORM)
 
-#if defined(ESP_PLATFORM) && FEATURE_EMBR_ESP_TIMER_SCHEDULER
-
-#include "esp_log.h"
-
-#include "timer-scheduler.hpp"
+#include <esp_log.h>
 
 namespace embr { namespace esp_idf {
+
+#if FEATURE_EMBR_ESP_TIMER_SCHEDULER
+
+#include "timer-scheduler.hpp"
 
 void timer_scheduler_init(Timer& timer, uint32_t divider, timer_isr_t isr_handler, void* arg)
 {
@@ -34,6 +34,12 @@ void timer_scheduler_init(Timer& timer, uint32_t divider, timer_isr_t isr_handle
     timer.enable_intr();
 }
 
+#endif
+
 }}
+
+namespace embr { namespace scheduler { namespace esp_idf { inline namespace v1 {
+
+}}}}
 
 #endif

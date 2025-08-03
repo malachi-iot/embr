@@ -2,44 +2,42 @@
 
 #include "scheduler.h"
 
-// 03AUG25 MB DEBT: v1 namespace living in v2 folder
+// 03AUG25 MB DEBT: v1 namespace living in v2
 
 namespace embr { namespace scheduler { namespace freertos { inline namespace v1 {
 
 namespace detail {
 
 template <ESTD_CPP_CONCEPT(concepts::Traits) Traits, class Container>
-BaseType_t scheduler_with_notify<Traits, Container>::process_one(duration timeout)
+auto scheduler_with_notify<Traits, Container>::process_one(duration timeout) -> process_result
 {
-    mutex_.lock();
-    if(base_type::empty())
-    {
-        mutex_.unlock();
-        return pdFALSE;
-    }
+    const time_point now = clock_type::now();
+    process_result r1 = base_type::process_one(now, mutex_);
 
-    const_reference top = base_type::top();
+    if(r1 != process_result::UNPROCESSED)    return r1;
+
+    mutex_.lock();
+
+    duration interval = estd::min(timeout, base_type::next() - now);
 
     mutex_.unlock();
 
+    // It's possible for someone to sneak in and schedule something in this sliver of
+    // time.  In that event, notify has our back and queues up, thus shaking us out
+    // of wait immediately.  In this case, process_one MAY return UNPROCESSED
+
     uint32_t v;
-    const time_point now = clock_type::now();
 
-    if(now >= top.next())
-    {
-        // Pseudo-race condition possible: someone can slide in a scheduled item
-        // before this guy.  However, process_one handles that gracefully.
-        process_result r = base_type::process_one(now, mutex_);
-        return pdFALSE;
-    }
-
-    duration interval = estd::min(timeout, top.next() - now);
-
+    [[maybe_unused]]
     BaseType_t r = xTaskNotifyWaitIndexed(0, 0, 0, &v, interval.count());
 
-    base_type::process_one(now, mutex_);
+    // r = pdTRUE when scheduling interrupted this wait
+    // r = pdFALSE when full callee-specified timeout transpired
+    // DEBT: Would be good to heed 'r' and augment r1 with it
 
-    return r;
+    r1 = base_type::process_one(clock_type::now(), mutex_);
+
+    return r1;
 }
 
 
