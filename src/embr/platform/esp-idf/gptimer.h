@@ -32,38 +32,38 @@ public:
         return gptimer_set_raw_count(h, value);
     }
 
-    esp_err_t raw_count(uint64_t* value)
+    esp_err_t raw_count(uint64_t* value) const
     {
         return gptimer_get_raw_count(h, value);
     }
 
-    esp_err_t enable()
+    esp_err_t enable() const
     {
         return gptimer_enable(h);
     }
 
-    esp_err_t disable()
+    esp_err_t disable() const
     {
         return gptimer_disable(h);
     }
 
-    esp_err_t start()
+    esp_err_t start() const
     {
         return gptimer_start(h);
     }
 
-    esp_err_t stop()
+    esp_err_t stop() const
     {
         return gptimer_stop(h);
     }
 
-    esp_err_t set_alarm_action(const gptimer_alarm_config_t* config)
+    esp_err_t set_alarm_action(const gptimer_alarm_config_t* config) const
     {
         return gptimer_set_alarm_action(h, config);
     }
 
     // "User registered callbacks are expected to be runnable within ISR context" [3]
-    esp_err_t register_event_callbacks(const gptimer_event_callbacks_t* cbs, void* user_data = nullptr)
+    esp_err_t register_event_callbacks(const gptimer_event_callbacks_t* cbs, void* user_data = nullptr) const
     {
         return gptimer_register_event_callbacks(h, cbs, user_data);
     }
