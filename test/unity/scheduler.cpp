@@ -56,7 +56,7 @@ static void test_gptimer_scheduler()
     using item_type = ref_nexter<uint64_t>;
     embr::scheduler::esp_idf::v1::gptimer_scheduler<
         embr::scheduler::item_traits<item_type>,
-        estd::layer1::vector<item_type, 10>> s;
+        estd::layer1::vector<item_type*, 10>> s;
 
     s.init();
     s.deinit();
