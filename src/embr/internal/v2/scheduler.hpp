@@ -8,7 +8,7 @@ namespace detail {
 
 template <ESTD_CPP_CONCEPT(concepts::Traits) Traits, class Container>
 template <class Mutex>
-bool scheduler<Traits, Container>::process_one(time_point now, Mutex mutex)
+auto scheduler<Traits, Container>::process_one(time_point now, Mutex mutex) -> process_result
 {
     mutex.lock();
 
@@ -16,7 +16,7 @@ bool scheduler<Traits, Container>::process_one(time_point now, Mutex mutex)
     {
         mutex.unlock();
 
-        return false;
+        return UNPROCESSED;
     }
 
     pointer t = items_.top();
@@ -40,13 +40,15 @@ bool scheduler<Traits, Container>::process_one(time_point now, Mutex mutex)
             mutex.lock();
             items_.push(t);
             mutex.unlock();
-            return true;
+            return PROCESSED_AND_RESCHEDULED;
         }
+
+        return PROCESSED;
     }
     else
         mutex.unlock();
 
-    return false;
+    return UNPROCESSED;
 }
 
 template <ESTD_CPP_CONCEPT(concepts::Traits) Traits, class Container>

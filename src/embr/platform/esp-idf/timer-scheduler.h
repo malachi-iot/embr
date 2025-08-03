@@ -12,6 +12,9 @@
 #include "../../internal/runtime-ratio.h"
 #include "../../exp/platform/freertos/scheduler.h"
 
+// 03AUG25 MB Was an incredible and fruitful journey, and is now deprecated.
+// Preferred scheduler now appears in v1/scheduler.h
+
 namespace embr { namespace esp_idf {
 
 // DEBT: Wrap all this up in a templatized class

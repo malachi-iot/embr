@@ -2,6 +2,8 @@
 
 #include "scheduler.h"
 
+// 03AUG25 MB DEBT: v1 namespace living in v2 folder
+
 namespace embr { namespace scheduler { namespace freertos { inline namespace v1 {
 
 namespace detail {
@@ -27,7 +29,7 @@ BaseType_t scheduler_with_notify<Traits, Container>::process_one(duration timeou
     {
         // Pseudo-race condition possible: someone can slide in a scheduled item
         // before this guy.  However, process_one handles that gracefully.
-        base_type::process_one(now, mutex_);
+        process_result r = base_type::process_one(now, mutex_);
         return pdFALSE;
     }
 

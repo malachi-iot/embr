@@ -46,6 +46,14 @@ static void test_scheduler_with_event()
 #endif
 
 #ifdef ESP_IDF_TESTING
+#include <embr/platform/esp-idf/v1/scheduler.h>
+static void test_gptimer_scheduler()
+{
+
+}
+#endif
+
+#ifdef ESP_IDF_TESTING
 TEST_CASE("scheduler tests", "[scheduler]")
 #else
 void test_scheduler()
@@ -54,5 +62,8 @@ void test_scheduler()
 #if ESTD_OS_FREERTOS
     test_scheduler_with_event();
     test_scheduler_with_notify();
+#endif
+#ifdef ESP_IDF_TESTING
+    test_gptimer_scheduler();
 #endif
 }

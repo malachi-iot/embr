@@ -49,6 +49,7 @@ class scheduler_with_notify : public scheduler_base<Traits, Container>,
     using typename base_type::duration;
     using typename base_type::time_point;
     using typename base_type::const_reference;
+    using typename base_type::process_result;
 
     mutex_type mutex_;
     task_type task_;
