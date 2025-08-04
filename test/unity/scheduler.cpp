@@ -4,11 +4,14 @@
 
 #include "../catch/scheduler-test.h"
 
+using namespace test::scheduler;
+
 #if ESTD_OS_FREERTOS
 #include <embr/platform/freertos/scheduler.h>
 
+namespace freertos {
+
 using namespace embr::scheduler::freertos;
-using namespace test::scheduler;
 using namespace estd::chrono_literals;
 using clock_type = estd::chrono::freertos_clock;
 using time_point = typename clock_type::time_point;
@@ -44,6 +47,8 @@ static void test_scheduler_with_event()
     i1.next(now + 50ms);
 }
 
+}
+
 #endif
 
 #ifdef ESP_IDF_TESTING
@@ -58,7 +63,16 @@ static void test_gptimer_scheduler()
         embr::scheduler::item_traits<item_type>,
         estd::layer1::vector<item_type*, 10>> s;
 
-    s.init();
+    item_type i1(1, 4000), i2(2, 4000);
+
+    ESP_ERROR_CHECK(s.init());
+
+    s.reschedule(&i1);
+
+    ESP_ERROR_CHECK(s.start());
+    ESP_ERROR_CHECK(s.stop());
+
+    // FIX: del_timer fails ... odd
     s.deinit();
 }
 
@@ -71,8 +85,8 @@ void test_scheduler()
 #endif
 {
 #if ESTD_OS_FREERTOS
-    test_scheduler_with_event();
-    test_scheduler_with_notify();
+    freertos::test_scheduler_with_event();
+    freertos::test_scheduler_with_notify();
 #endif
 #ifdef ESP_IDF_TESTING
     test_gptimer_scheduler();

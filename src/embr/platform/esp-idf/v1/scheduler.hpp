@@ -1,6 +1,7 @@
 #pragma once
 
 #include <esp_check.h>
+#include <esp_log.h>
 
 #include "scheduler.h"
 
@@ -105,11 +106,17 @@ esp_err_t gptimer_scheduler<Traits, Container>::init()
 template <ESTD_CPP_CONCEPT(concepts::Traits) Traits, class Container>
 esp_err_t gptimer_scheduler<Traits, Container>::schedule()
 {
+    // Could be a possibility, but I anticipate wanting finer control over timings
+    //estd::lock_guard<mutex_type> lock(mutex_);
+
+    ESP_LOGV(TAG, "schedule: entry");
+
     mutex_.lock();
     if(base_type::empty())
     {
-        return ESP_OK;
         mutex_.unlock();
+        ESP_LOGV(TAG, "schedule: exit (empty)");
+        return ESP_OK;
     }
 
     const uint64_t next = base_type::next();
@@ -126,7 +133,19 @@ esp_err_t gptimer_scheduler<Traits, Container>::schedule()
         }
     };
 
+    ESP_LOGD(TAG, "schedule: phase 1");
+
     return timer_.set_alarm_action(&alarm_config);
+}
+
+
+template <ESTD_CPP_CONCEPT(concepts::Traits) Traits, class Container>
+esp_err_t gptimer_scheduler<Traits, Container>::reschedule(pointer item)
+{
+    [[maybe_unused]]
+    bool rescheduled = base_type::reschedule(item);
+
+    return schedule();
 }
 
 

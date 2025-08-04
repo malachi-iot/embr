@@ -2,6 +2,8 @@
 
 #include <esp_log.h>
 
+#include "v1/scheduler.hpp"
+
 namespace embr { namespace esp_idf {
 
 #if FEATURE_EMBR_ESP_TIMER_SCHEDULER
@@ -39,6 +41,24 @@ void timer_scheduler_init(Timer& timer, uint32_t divider, timer_isr_t isr_handle
 }}
 
 namespace embr { namespace scheduler { namespace esp_idf { inline namespace v1 {
+
+namespace detail {
+
+// DEBT: Consider using inline attribute to 100% ensure this gets inlined
+inline bool gptimer_context::alarm_cb(gptimer_handle_t timer,
+    const gptimer_alarm_event_data_t* edata)
+{
+    return {};
+}
+
+bool IRAM_ATTR gptimer_context::alarm_cb(gptimer_handle_t timer,
+    const gptimer_alarm_event_data_t* edata,
+    void* user_ctx)
+{
+    return ((gptimer_context*)user_ctx)->alarm_cb(timer, edata);
+}
+
+}
 
 }}}}
 

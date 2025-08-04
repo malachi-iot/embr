@@ -28,6 +28,7 @@ auto scheduler_with_notify<Traits, Container>::process_one(duration timeout) -> 
 
     uint32_t v;
 
+    // Wait on zero index, clear no bits on entry or exit, 
     [[maybe_unused]]
     BaseType_t r = xTaskNotifyWaitIndexed(0, 0, 0, &v, interval.count());
 
