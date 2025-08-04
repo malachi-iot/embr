@@ -43,6 +43,9 @@ class gptimer_scheduler : public scheduler::v1::detail::scheduler<Traits, Contai
     void callback();
     static void callback(void*);
 
+    // Troubles. See:
+    // https://bitbucket.org/malachib/playground.esp/issues/71/c-templated-method-in-iram
+    // https://github.com/espressif/esp-idf/issues/4542
     bool alarm_cb(const gptimer_alarm_event_data_t* edata);
     static bool alarm_cb(gptimer_handle_t timer,
         const gptimer_alarm_event_data_t* edata,
@@ -58,6 +61,7 @@ public:
     esp_err_t init();
     void deinit()
     {
+        timer_.disable();
         timer_.del_timer();
     }
 

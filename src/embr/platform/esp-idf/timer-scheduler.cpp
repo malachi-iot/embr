@@ -44,6 +44,13 @@ namespace embr { namespace scheduler { namespace esp_idf { inline namespace v1 {
 
 namespace detail {
 
+// FIX: We may have to inspect priority_queue to get proper next (aka next after next)
+// in which case templating is gonna be required.  (See PGESP-71 worries)
+// It's conceivable we lock down item type a bit i.e. make a gptimer_scheduler_item
+// as a virtual base.  This reduces the templating issue.  Since virtualization is already
+// not off the table for v2 scheduling, this could be viable.  That said, we still have the issue
+// of the container type itself.
+// Perhaps it's worth it to force quasi-specialize to something like a layer1 20-slot container.
 // DEBT: Consider using inline attribute to 100% ensure this gets inlined
 inline bool gptimer_context::alarm_cb(gptimer_handle_t timer,
     const gptimer_alarm_event_data_t* edata)
