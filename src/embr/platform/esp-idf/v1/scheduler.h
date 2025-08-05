@@ -10,6 +10,30 @@ namespace embr { namespace scheduler { namespace esp_idf { inline namespace v1 {
 
 namespace detail {
 
+// Pseudo std-compliant clock (instanced, making it non conformant)
+struct gptimer_clock
+{
+    using timer_type = embr::esp_idf::gptimer;
+    using duration = estd::chrono::duration<uint64_t, estd::micro>;
+    using time_point = estd::chrono::time_point<gptimer_clock, duration>;
+
+    timer_type timer_;
+
+    uint64_t raw_now() const
+    {
+        uint64_t now;
+
+        ESP_ERROR_CHECK(timer_.raw_count(&now));
+
+        return now;
+    }
+
+    time_point now() const
+    {
+        return time_point(duration(raw_now()));
+    }
+};
+
 struct gptimer_context : freertos::detail::scheduler_base2
 {
     using mutex_type = estd::freertos::mutex<static_alloc>;

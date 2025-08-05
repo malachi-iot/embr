@@ -155,10 +155,9 @@ esp_err_t gptimer_scheduler<Traits, Container>::reschedule(pointer item)
 template <ESTD_CPP_CONCEPT(concepts::Traits) Traits, class Container>
 auto gptimer_scheduler<Traits, Container>::process_one(duration timeout) -> process_result
 {
-    uint64_t now;
-    ESP_ERROR_CHECK(timer_.raw_count(&now));
+    const detail::gptimer_clock clock{timer_};
 
-    process_result r1 = base_type::process_one(now, mutex_);
+    process_result r1 = base_type::process_one(clock.raw_now(), mutex_);
 
     if(r1 != process_result::UNPROCESSED)    return r1;
 
@@ -167,9 +166,7 @@ auto gptimer_scheduler<Traits, Container>::process_one(duration timeout) -> proc
     [[maybe_unused]]
     BaseType_t r = xTaskNotifyWaitIndexed(0, 0, 0, &v, timeout.count());
 
-    ESP_ERROR_CHECK(timer_.raw_count(&now));
-
-    r1 = base_type::process_one(now, mutex_);
+    r1 = base_type::process_one(clock.raw_now(), mutex_);
 
     mutex_.lock();
 

@@ -77,8 +77,10 @@ static void test_gptimer_scheduler()
 
     item_type i1(1, increment), i2(2, increment);
 
+    i1.next(increment);
+    i2.next(increment);
+
     TEST_ASSERT_EQUAL(ESP_OK, s.init());
-    TEST_ASSERT_EQUAL(0, i1.next());
 
     s.reschedule(&i1);
     s.reschedule(&i2);
@@ -88,14 +90,14 @@ static void test_gptimer_scheduler()
     r1 = s.process_one(100ms);
 
     TEST_ASSERT_EQUAL(process_result::PROCESSED_AND_RESCHEDULED, r1);
-    TEST_ASSERT_EQUAL(increment, i1.next());
-    TEST_ASSERT_EQUAL(0, i2.next());
+    TEST_ASSERT_EQUAL(increment * 2, i1.next());
+    TEST_ASSERT_EQUAL(increment, i2.next());
 
     r1 = s.process_one(100ms);
 
     TEST_ASSERT_EQUAL(process_result::PROCESSED_AND_RESCHEDULED, r1);
 
-    TEST_ASSERT_EQUAL(increment, i2.next());
+    TEST_ASSERT_EQUAL(increment * 2, i2.next());
 
     ESP_ERROR_CHECK(s.stop());
 
