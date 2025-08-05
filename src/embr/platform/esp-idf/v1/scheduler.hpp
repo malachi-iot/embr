@@ -13,12 +13,15 @@ inline void gptimer_scheduler<Traits, Container>::callback()
 
 }
 
+// DORMANT
 template <ESTD_CPP_CONCEPT(concepts::Traits) Traits, class Container>
 void gptimer_scheduler<Traits, Container>::callback(void* arg)
 {
     ((gptimer_scheduler*)arg)->callback();
 }
 
+// DORMANT - actual alarm_cb located in timer-scheduler.cpp.  This is only
+// around for reference
 template <ESTD_CPP_CONCEPT(concepts::Traits) Traits, class Container>
 inline bool gptimer_scheduler<Traits, Container>::alarm_cb(const gptimer_alarm_event_data_t* edata)
 {

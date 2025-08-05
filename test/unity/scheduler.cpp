@@ -68,21 +68,40 @@ static void test_gptimer_scheduler()
         estd::layer1::vector<item_type*, 10>> s;
     process_result r1;
 
-    item_type i1(1, 4000), i2(2, 4000);
+#if INCLUDE_vTaskPrioritySet
+    const UBaseType_t prio = uxTaskPriorityGet(nullptr);
+    vTaskPrioritySet(nullptr, prio + 2);
+#endif
+
+    constexpr uint64_t increment = 40000;
+
+    item_type i1(1, increment), i2(2, increment);
 
     TEST_ASSERT_EQUAL(ESP_OK, s.init());
     TEST_ASSERT_EQUAL(0, i1.next());
 
     s.reschedule(&i1);
+    s.reschedule(&i2);
 
     TEST_ASSERT_EQUAL(ESP_OK, s.start());
 
     r1 = s.process_one(100ms);
 
     TEST_ASSERT_EQUAL(process_result::PROCESSED_AND_RESCHEDULED, r1);
-    TEST_ASSERT_EQUAL(4000, i1.next());
+    TEST_ASSERT_EQUAL(increment, i1.next());
+    TEST_ASSERT_EQUAL(0, i2.next());
+
+    r1 = s.process_one(100ms);
+
+    TEST_ASSERT_EQUAL(process_result::PROCESSED_AND_RESCHEDULED, r1);
+
+    TEST_ASSERT_EQUAL(increment, i2.next());
 
     ESP_ERROR_CHECK(s.stop());
+
+#if INCLUDE_vTaskPrioritySet
+    vTaskPrioritySet(nullptr, prio);
+#endif
 
     s.deinit();
 }
