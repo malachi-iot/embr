@@ -149,4 +149,46 @@ esp_err_t gptimer_scheduler<Traits, Container>::reschedule(pointer item)
 }
 
 
+template <ESTD_CPP_CONCEPT(concepts::Traits) Traits, class Container>
+auto gptimer_scheduler<Traits, Container>::process_one(duration timeout) -> process_result
+{
+    uint64_t now;
+    ESP_ERROR_CHECK(timer_.raw_count(&now));
+
+    process_result r1 = base_type::process_one(now, mutex_);
+
+    if(r1 != process_result::UNPROCESSED)    return r1;
+
+    uint32_t v;
+
+    [[maybe_unused]]
+    BaseType_t r = xTaskNotifyWaitIndexed(0, 0, 0, &v, timeout.count());
+
+    ESP_ERROR_CHECK(timer_.raw_count(&now));
+
+    r1 = base_type::process_one(now, mutex_);
+
+    mutex_.lock();
+
+    if(!base_type::empty())
+    {
+        const gptimer_alarm_config_t alarm_config
+        {
+            .alarm_count = base_type::next(),
+            .reload_count {},
+            .flags
+            {
+                .auto_reload_on_alarm = false
+            }
+        };
+
+        ESP_ERROR_CHECK(timer_.set_alarm_action(&alarm_config));
+    }
+
+    mutex_.unlock();
+
+    return r1;
+}
+
+
 }}}}

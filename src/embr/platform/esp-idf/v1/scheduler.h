@@ -37,6 +37,7 @@ class gptimer_scheduler : public scheduler::v1::detail::scheduler<Traits, Contai
     static constexpr const char* TAG = "gptimer_scheduler";
 
     using base_type = scheduler::v1::detail::scheduler<Traits, Container>;
+    using typename base_type::process_result;
     using timer_type = embr::esp_idf::gptimer;
 
     // ISR callback helpers
@@ -69,6 +70,8 @@ public:
     esp_err_t stop()    { return timer_.stop(); }
 
     esp_err_t reschedule(pointer);
+
+    process_result process_one(duration);
 };
 
 }}}}

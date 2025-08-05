@@ -1,3 +1,5 @@
+#include <estd/chrono.h>
+
 #include <embr/scheduler.h>
 
 #include "unit-test.h"
@@ -5,6 +7,9 @@
 #include "../catch/scheduler-test.h"
 
 using namespace test::scheduler;
+using namespace estd::chrono_literals;
+
+using process_result = embr::scheduler::v1::detail::scheduler_base::process_result;
 
 #if ESTD_OS_FREERTOS
 #include <embr/platform/freertos/scheduler.h>
@@ -12,11 +17,9 @@ using namespace test::scheduler;
 namespace freertos {
 
 using namespace embr::scheduler::freertos;
-using namespace estd::chrono_literals;
 using clock_type = estd::chrono::freertos_clock;
 using time_point = typename clock_type::time_point;
 using item_type = ref_nexter<time_point, typename clock_type::duration>;
-using process_result = embr::scheduler::v1::detail::scheduler_base::process_result;
 
 static void test_scheduler_with_notify()
 {
@@ -45,6 +48,7 @@ static void test_scheduler_with_event()
     item_type i1(1, 40ms), i2(2, 40ms);
 
     i1.next(now + 50ms);
+    scheduler.reschedule(&i1);
 }
 
 }
@@ -62,17 +66,24 @@ static void test_gptimer_scheduler()
     embr::scheduler::esp_idf::v1::gptimer_scheduler<
         embr::scheduler::item_traits<item_type>,
         estd::layer1::vector<item_type*, 10>> s;
+    process_result r1;
 
     item_type i1(1, 4000), i2(2, 4000);
 
-    ESP_ERROR_CHECK(s.init());
+    TEST_ASSERT_EQUAL(ESP_OK, s.init());
+    TEST_ASSERT_EQUAL(0, i1.next());
 
     s.reschedule(&i1);
 
-    ESP_ERROR_CHECK(s.start());
+    TEST_ASSERT_EQUAL(ESP_OK, s.start());
+
+    r1 = s.process_one(100ms);
+
+    TEST_ASSERT_EQUAL(process_result::PROCESSED_AND_RESCHEDULED, r1);
+    TEST_ASSERT_EQUAL(4000, i1.next());
+
     ESP_ERROR_CHECK(s.stop());
 
-    // FIX: del_timer fails ... odd
     s.deinit();
 }
 

@@ -55,7 +55,11 @@ namespace detail {
 inline bool gptimer_context::alarm_cb(gptimer_handle_t timer,
     const gptimer_alarm_event_data_t* edata)
 {
-    return {};
+    BaseType_t awake {};
+    // NOTE: My understanding is 100% of the time, this will set awake as true
+    // since our service task is presumed high priority
+    task_.notify_from_isr(0, eNoAction, &awake);
+    return awake;
 }
 
 bool IRAM_ATTR gptimer_context::alarm_cb(gptimer_handle_t timer,

@@ -19,6 +19,11 @@ protected:
 #else
     static constexpr bool static_alloc = false;
 #endif
+
+public:
+    using clock_type = estd::chrono::freertos_clock;
+    using time_point = typename clock_type::time_point;
+    using duration = typename clock_type::duration;
 };
 
 template <ESTD_CPP_CONCEPT(concepts::Traits) Traits, class Container>
