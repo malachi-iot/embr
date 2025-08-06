@@ -5,6 +5,10 @@
 
 #include "unit-test.h"
 
+#include <esp_log.h>
+
+static const char* TAG = "unity::word";
+
 template <unsigned N, typename TInt>
 static void test_word_basics()
 {
@@ -66,12 +70,18 @@ static void test_v2_word_16bit()
     using word_type = embr::v2::word<16>;
 #if CONFIG_SPIRAM
     auto p = (packer*)heap_caps_malloc(sizeof(packer), MALLOC_CAP_SPIRAM);
+    if(p == nullptr)
+    {
+        ESP_LOGD(TAG, "SPIRAM alloc failed, fallback to regular RAM");
+        p = (packer*)malloc(sizeof(packer));
+    }
     TEST_ASSERT_NOT_NULL(p);
 #else
     packer _p;
     packer* p = &_p;
 #endif
 
+    // FIX: We have a warning about address of a packet member
     word_type* words = p->words;
 
     // Alignment testing
