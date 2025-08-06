@@ -23,7 +23,7 @@ void gptimer_scheduler<Traits, Container>::callback(void* arg)
 // DORMANT - actual alarm_cb located in timer-scheduler.cpp.  This is only
 // around for reference
 template <ESTD_CPP_CONCEPT(concepts::Traits) Traits, class Container>
-inline bool gptimer_scheduler<Traits, Container>::alarm_cb(const gptimer_alarm_event_data_t* edata)
+inline bool gptimer_scheduler<Traits, Container>::alarm_cb_dormant(const gptimer_alarm_event_data_t* edata)
 {
     BaseType_t taskWake {};
 
@@ -62,13 +62,13 @@ inline bool gptimer_scheduler<Traits, Container>::alarm_cb(const gptimer_alarm_e
 }
 
 template <ESTD_CPP_CONCEPT(concepts::Traits) Traits, class Container>
-bool gptimer_scheduler<Traits, Container>::alarm_cb(gptimer_handle_t timer,
+bool gptimer_scheduler<Traits, Container>::alarm_cb_dormant(gptimer_handle_t timer,
     const gptimer_alarm_event_data_t* edata,
     void* user_ctx)
 {
     auto _this = (gptimer_scheduler*)user_ctx;
     assert(_this->timer_ == timer);
-    return _this->alarm_cb(edata);
+    return _this->alarm_cb_dormant(edata);
 }
 
 
@@ -96,7 +96,7 @@ esp_err_t gptimer_scheduler<Traits, Container>::init()
 
     constexpr gptimer_event_callbacks_t cbs
     {
-        .on_alarm = alarm_cb,
+        .on_alarm = context_type::alarm_cb,
     };
 
     ESP_RETURN_ON_ERROR(timer_.register_event_callbacks(&cbs, this), TAG, "Couldn't set callback");

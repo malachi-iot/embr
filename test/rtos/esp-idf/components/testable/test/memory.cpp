@@ -1,9 +1,13 @@
 #include <vector>
 #include <set>
 
+#include <esp_log.h>
+
 #include "unity.h"
 
 #include <embr/platform/esp-idf/allocator.h>
+
+static const char* TAG = "unity::memory";
 
 using namespace embr;
 
@@ -19,6 +23,16 @@ using allocator = esp_idf::allocator<T, MALLOC_CAP_INTERNAL>;
 
 TEST_CASE("caps allocator", "[allocator]")
 {
+    int* const litmus = allocator<int>::allocate(1);
+
+    if(litmus == nullptr)
+    {
+        ESP_LOGI(TAG, "Can't allocate from SPIRAM, not doing caps allocator test");
+        return;
+    }
+
+    allocator<int>::deallocate(litmus, 1);
+
     std::vector<int, allocator<int> > v;
     std::set<int, std::less<>, allocator<int> > s;
 

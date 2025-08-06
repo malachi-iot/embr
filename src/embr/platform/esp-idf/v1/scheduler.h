@@ -61,6 +61,7 @@ class gptimer_scheduler : public scheduler::v1::detail::scheduler<Traits, Contai
     static constexpr const char* TAG = "gptimer_scheduler";
 
     using base_type = scheduler::v1::detail::scheduler<Traits, Container>;
+    using context_type = detail::gptimer_context;
     using typename base_type::process_result;
     using timer_type = embr::esp_idf::gptimer;
 
@@ -71,8 +72,8 @@ class gptimer_scheduler : public scheduler::v1::detail::scheduler<Traits, Contai
     // Troubles. See:
     // https://bitbucket.org/malachib/playground.esp/issues/71/c-templated-method-in-iram
     // https://github.com/espressif/esp-idf/issues/4542
-    bool alarm_cb(const gptimer_alarm_event_data_t* edata);
-    static bool alarm_cb(gptimer_handle_t timer,
+    bool alarm_cb_dormant(const gptimer_alarm_event_data_t* edata);
+    static bool alarm_cb_dormant(gptimer_handle_t timer,
         const gptimer_alarm_event_data_t* edata,
         void* user_ctx);
 
