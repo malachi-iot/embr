@@ -15,8 +15,8 @@ add_definitions(-DUNIT_TESTING=1)
 # No longer dogfooding top level directly, since it makes CLion lose its mind
 add_subdirectory(../../src embr)
 
-CPMAddPackage("gh:catchorg/Catch2@3.8.1")
-CPMAddPackage("gh:vector-of-bool/cmrc#2.0.1")
+CPMAddPackage("gh:catchorg/Catch2@3.9.0")
+CPMAddPackage("gh:vector-of-bool/cmrc#952ffddba731fc110bd50409e8d2b8a06abbd237")
 
 set(RESOURCES resources/playlist.json)
 
