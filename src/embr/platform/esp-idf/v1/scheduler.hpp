@@ -85,8 +85,11 @@ esp_err_t gptimer_scheduler<Traits, Container>::init()
         .flags
         {
             .intr_shared = true,
+#if ESP_IDF_VERSION_VAL >= ESP_IDF_VERSION_VAL(5, 4, 0)
             .allow_pd = false,
+#else
             .backup_before_sleep = false,
+#endif
         }
     };
 
