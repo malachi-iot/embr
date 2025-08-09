@@ -76,6 +76,11 @@ bool gptimer_scheduler<Traits, Container>::alarm_cb_dormant(gptimer_handle_t tim
 template <ESTD_CPP_CONCEPT(concepts::Traits) Traits, class Container>
 esp_err_t gptimer_scheduler<Traits, Container>::init()
 {
+    task_ = task_type::current();
+
+    // DEBT: Just for diagnostic, really we ought to be able to use 'this' directly
+    detail::gptimer_context* context = this;
+
     constexpr gptimer_config_t config
     {
         .clk_src = GPTIMER_CLK_SRC_DEFAULT,
@@ -101,7 +106,7 @@ esp_err_t gptimer_scheduler<Traits, Container>::init()
         .on_alarm = context_type::alarm_cb,
     };
 
-    ESP_RETURN_ON_ERROR(timer_.register_event_callbacks(&cbs, this), TAG, "Couldn't set callback");
+    ESP_RETURN_ON_ERROR(timer_.register_event_callbacks(&cbs, context), TAG, "Couldn't set callback");
 
     ESP_RETURN_ON_ERROR(schedule(), TAG, "Couldn't schedule first item");
 
@@ -168,8 +173,13 @@ auto gptimer_scheduler<Traits, Container>::process_one(duration timeout) -> proc
 
     uint32_t v;
 
+    // wait on 0 index
+    // clear 0 bits on entry
+    // clear 0 bits on exit
     [[maybe_unused]]
     BaseType_t r = xTaskNotifyWaitIndexed(0, 0, 0, &v, timeout.count());
+    // clearing all bits on entry
+    //BaseType_t r = xTaskNotifyWaitIndexed(0, 0xFFFF, 0, &v, timeout.count());
 
     r1 = base_type::process_one(clock.raw_now(), mutex_);
 

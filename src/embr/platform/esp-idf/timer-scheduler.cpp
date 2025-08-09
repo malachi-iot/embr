@@ -59,6 +59,7 @@ inline bool gptimer_context::alarm_cb(gptimer_handle_t timer,
     // NOTE: My understanding is 100% of the time, this will set awake as true
     // since our service task is presumed high priority
     task_.notify_from_isr(0, eNoAction, &awake);
+    //task_.notify_from_isr(1, eSetBits, &awake);
     return awake;
 }
 

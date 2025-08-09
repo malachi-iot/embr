@@ -90,6 +90,15 @@ static void test_gptimer_scheduler()
     uint64_t marker = esp_timer_get_time();
     TEST_ASSERT_EQUAL(ESP_OK, s.start());
 
+#if ENABLED1
+    uint64_t counter = 0;
+
+    // FIX: Somehow doing this correlates with gptimer_context::alarm_cb crashing
+    ESP_ERROR_CHECK(s.timer().get_raw_count(&counter));
+
+    TEST_ASSERT_UINT_WITHIN(10, 500, counter);
+#endif
+
     r1 = s.process_one(100ms);
 
     TEST_ASSERT_EQUAL(process_result::PROCESSED_AND_RESCHEDULED, r1);

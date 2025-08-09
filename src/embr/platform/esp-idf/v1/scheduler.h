@@ -37,11 +37,12 @@ struct gptimer_clock
 struct gptimer_context : freertos::detail::scheduler_base2
 {
     using mutex_type = estd::freertos::mutex<static_alloc>;
+    using task_type = estd::freertos::wrapper::task;
 
     // Indicate a binary semaphore rather than a mutex, since FreeRTOS doesn't like
     // releasing mutex from ISR
     mutex_type mutex_{true};
-    estd::freertos::wrapper::task task_;
+    task_type task_;
 
     bool alarm_cb(gptimer_handle_t timer,
         const gptimer_alarm_event_data_t* edata);
@@ -83,6 +84,9 @@ class gptimer_scheduler : public scheduler::v1::detail::scheduler<Traits, Contai
 
 public:
     using typename base_type::pointer;
+
+    // DEBT: Only for unit tests, external parties ought not to see this
+    timer_type timer() { return timer_; }
 
     esp_err_t init();
     void deinit()
