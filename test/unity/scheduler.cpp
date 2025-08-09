@@ -62,6 +62,7 @@ static void test_scheduler_with_event()
 
 static void test_gptimer_scheduler()
 {
+    //using clock = estd::chrono::esp_clock;
     using item_type = ref_nexter<uint64_t>;
     embr::scheduler::esp_idf::v1::gptimer_scheduler<
         embr::scheduler::item_traits<item_type>,
@@ -79,12 +80,14 @@ static void test_gptimer_scheduler()
 
     i1.next(increment);
     i2.next(increment);
+    TEST_ASSERT_EQUAL(0, i1.last());
 
     TEST_ASSERT_EQUAL(ESP_OK, s.init());
 
     s.reschedule(&i1);
     s.reschedule(&i2);
 
+    uint64_t marker = esp_timer_get_time();
     TEST_ASSERT_EQUAL(ESP_OK, s.start());
 
     r1 = s.process_one(100ms);
@@ -92,6 +95,9 @@ static void test_gptimer_scheduler()
     TEST_ASSERT_EQUAL(process_result::PROCESSED_AND_RESCHEDULED, r1);
     TEST_ASSERT_EQUAL(increment * 2, i1.next());
     TEST_ASSERT_EQUAL(increment, i2.next());
+    TEST_ASSERT_UINT_WITHIN(10, increment, i1.last());
+
+    marker = esp_timer_get_time();
 
     r1 = s.process_one(100ms);
 

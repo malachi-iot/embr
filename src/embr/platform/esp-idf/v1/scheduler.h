@@ -23,7 +23,7 @@ struct gptimer_clock
     {
         uint64_t now;
 
-        ESP_ERROR_CHECK(timer_.raw_count(&now));
+        ESP_ERROR_CHECK(timer_.get_raw_count(&now));
 
         return now;
     }

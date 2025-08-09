@@ -105,6 +105,9 @@ esp_err_t gptimer_scheduler<Traits, Container>::init()
 
     ESP_RETURN_ON_ERROR(schedule(), TAG, "Couldn't schedule first item");
 
+    // Just for diagnostic, shouldn't be needed
+    //ESP_RETURN_ON_ERROR(timer_.set_raw_count(0), TAG, "Couldn't set counter");
+
     return timer_.enable();
 }
 

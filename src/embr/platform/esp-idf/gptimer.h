@@ -27,12 +27,12 @@ public:
         return gptimer_del_timer(h);
     }
 
-    esp_err_t raw_count(uint64_t value) const
+    esp_err_t set_raw_count(uint64_t value) const
     {
         return gptimer_set_raw_count(h, value);
     }
 
-    esp_err_t raw_count(uint64_t* value) const
+    esp_err_t get_raw_count(uint64_t* value) const
     {
         return gptimer_get_raw_count(h, value);
     }

@@ -101,6 +101,7 @@ class ref_nexter
 {
     int id_{};
     TimePoint next_{};
+    TimePoint last_{};
     Duration bump_{};
     bool toggle_{};
 
@@ -113,14 +114,17 @@ public:
 
     using time_point = TimePoint;
 
+    constexpr const time_point& last() const { return last_; }
+
     constexpr const time_point& next() const { return next_; }
     void next(time_point v) { next_ = v; }
 
-    // Feature of nexter - this is only called when 'now' >= next
+    // Feature of v2 scheduler - this is only called when 'now' >= next
     void process(time_point now)
     {
         next_ += bump_;
         toggle_ = !toggle_;
+        last_ = now;
     }
 };
 
