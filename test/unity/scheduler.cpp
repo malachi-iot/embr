@@ -57,17 +57,28 @@ static void test_scheduler_with_event()
 
 #ifdef ESP_IDF_TESTING
 
+#include <esp_log.h>
+
 #include <embr/platform/esp-idf/v1/scheduler.hpp>
 
+const char* TAG = "unity::scheduler";
+
+namespace idf {
+
+// DEBT: Making these static because if unit test fails, 's' doesn't go through
+// its regular deinitialization yet ISR keeps running looking for 's',
+// ending up with a crash.  Better way to do this is wrap with a ctor/dtor, but
+// keeping this global will at least inhibit crashes, though ISR will continue to run
+using item_type = ref_nexter<uint64_t>;
+static embr::scheduler::esp_idf::v1::gptimer_scheduler<
+    embr::scheduler::item_traits<item_type>,
+    estd::layer1::vector<item_type*, 10>> s;
 
 static void test_gptimer_scheduler()
 {
     //using clock = estd::chrono::esp_clock;
-    using item_type = ref_nexter<uint64_t>;
-    embr::scheduler::esp_idf::v1::gptimer_scheduler<
-        embr::scheduler::item_traits<item_type>,
-        estd::layer1::vector<item_type*, 10>> s;
     process_result r1;
+    BaseType_t notification_received = false;
 
 #if INCLUDE_vTaskPrioritySet
     const UBaseType_t prio = uxTaskPriorityGet(nullptr);
@@ -87,28 +98,40 @@ static void test_gptimer_scheduler()
     s.reschedule(&i1);
     s.reschedule(&i2);
 
+    ESP_LOGD(TAG, "test_gptimer_scheduler: phase 1");
+
     uint64_t marker = esp_timer_get_time();
     TEST_ASSERT_EQUAL(ESP_OK, s.start());
 
-#if ENABLED1
     uint64_t counter = 0;
 
-    // FIX: Somehow doing this correlates with gptimer_context::alarm_cb crashing
     ESP_ERROR_CHECK(s.timer().get_raw_count(&counter));
 
-    TEST_ASSERT_UINT_WITHIN(10, 500, counter);
-#endif
+    TEST_ASSERT_UINT_WITHIN(200, 300, counter);
 
-    r1 = s.process_one(100ms);
+    r1 = s.process_one(100ms, &notification_received);
+
+    TEST_ASSERT_TRUE(notification_received);
+
+    ESP_ERROR_CHECK(s.timer().get_raw_count(&counter));
+    // Clocks in at ~150000us despite receiving notification above.  Concerningly slow
+    TEST_ASSERT_UINT_WITHIN(500, increment, counter);
+
+    ESP_LOGD(TAG, "test_gptimer_scheduler: phase 2");
 
     TEST_ASSERT_EQUAL(process_result::PROCESSED_AND_RESCHEDULED, r1);
     TEST_ASSERT_EQUAL(increment * 2, i1.next());
     TEST_ASSERT_EQUAL(increment, i2.next());
-    TEST_ASSERT_UINT_WITHIN(10, increment, i1.last());
+    TEST_ASSERT_EQUAL(0, i2.last());
+    // Clocks in at > ~200000us despite above ~150000us.  Something badly wrong here,
+    // last() is supposed to be a fixed point in time
+    TEST_ASSERT_UINT_WITHIN(500, increment, i1.last());
 
     marker = esp_timer_get_time();
 
     r1 = s.process_one(100ms);
+
+    ESP_LOGD(TAG, "test_gptimer_scheduler: phase 3");
 
     TEST_ASSERT_EQUAL(process_result::PROCESSED_AND_RESCHEDULED, r1);
 
@@ -121,6 +144,10 @@ static void test_gptimer_scheduler()
 #endif
 
     s.deinit();
+
+    ESP_LOGD(TAG, "test_gptimer_scheduler: phase 4");
+}
+
 }
 
 #endif
@@ -136,6 +163,6 @@ void test_scheduler()
     freertos::test_scheduler_with_notify();
 #endif
 #ifdef ESP_IDF_TESTING
-    test_gptimer_scheduler();
+    idf::test_gptimer_scheduler();
 #endif
 }

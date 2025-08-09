@@ -163,7 +163,8 @@ esp_err_t gptimer_scheduler<Traits, Container>::reschedule(pointer item)
 
 
 template <ESTD_CPP_CONCEPT(concepts::Traits) Traits, class Container>
-auto gptimer_scheduler<Traits, Container>::process_one(duration timeout) -> process_result
+auto gptimer_scheduler<Traits, Container>::process_one(duration timeout,
+    BaseType_t* notification_received) -> process_result
 {
     const detail::gptimer_clock clock{timer_};
 
@@ -180,6 +181,7 @@ auto gptimer_scheduler<Traits, Container>::process_one(duration timeout) -> proc
     BaseType_t r = xTaskNotifyWaitIndexed(0, 0, 0, &v, timeout.count());
     // clearing all bits on entry
     //BaseType_t r = xTaskNotifyWaitIndexed(0, 0xFFFF, 0, &v, timeout.count());
+    if(notification_received)   *notification_received = r;
 
     r1 = base_type::process_one(clock.raw_now(), mutex_);
 

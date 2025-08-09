@@ -86,7 +86,7 @@ public:
     using typename base_type::pointer;
 
     // DEBT: Only for unit tests, external parties ought not to see this
-    timer_type timer() { return timer_; }
+    const timer_type& timer() { return timer_; }
 
     esp_err_t init();
     void deinit()
@@ -100,7 +100,7 @@ public:
 
     esp_err_t reschedule(pointer);
 
-    process_result process_one(duration);
+    process_result process_one(duration, BaseType_t* notification_received = nullptr);
 };
 
 }}}}
