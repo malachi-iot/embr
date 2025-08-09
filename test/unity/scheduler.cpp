@@ -107,25 +107,31 @@ static void test_gptimer_scheduler()
 
     ESP_ERROR_CHECK(s.timer().get_raw_count(&counter));
 
-    TEST_ASSERT_UINT_WITHIN(200, 300, counter);
+    // QEMU goes pretty slow here
+    TEST_ASSERT_UINT_WITHIN(250, 300, counter);
 
     r1 = s.process_one(100ms, &notification_received);
 
     TEST_ASSERT_TRUE(notification_received);
 
     ESP_ERROR_CHECK(s.timer().get_raw_count(&counter));
+
+    TEST_ASSERT_EQUAL(0, i2.last());
+
+    ESP_LOGD(TAG, "test_gptimer_scheduler: phase 2 counter=%" PRIu64 ", i1.last()=%" PRIu64,
+        counter, i1.last());
+
+    // QEMU
     // Clocks in at ~150000us despite receiving notification above.  Concerningly slow
     TEST_ASSERT_UINT_WITHIN(500, increment, counter);
-
-    ESP_LOGD(TAG, "test_gptimer_scheduler: phase 2");
 
     TEST_ASSERT_EQUAL(process_result::PROCESSED_AND_RESCHEDULED, r1);
     TEST_ASSERT_EQUAL(increment * 2, i1.next());
     TEST_ASSERT_EQUAL(increment, i2.next());
-    TEST_ASSERT_EQUAL(0, i2.last());
+    // QEMU
     // Clocks in at > ~200000us despite above ~150000us.  Something badly wrong here,
-    // last() is supposed to be a fixed point in time
-    TEST_ASSERT_UINT_WITHIN(500, increment, i1.last());
+    // last() is supposed to be a fixed point in time, even with slow-ass QEMU
+    TEST_ASSERT_UINT_WITHIN(250, increment, i1.last());
 
     marker = esp_timer_get_time();
 

@@ -3,6 +3,9 @@
 #include <estd/chrono.h>
 #include <embr/scheduler.h>
 
+// Thanks to estd fake esp-idf area, this is cross platform
+#include <esp_log.h>
+
 namespace test { namespace scheduler {
 
 struct Item

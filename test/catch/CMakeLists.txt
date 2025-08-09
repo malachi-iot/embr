@@ -70,6 +70,8 @@ endif()
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${EXTRA_FILES} ${RESOURCES})
 
+target_include_directories(${PROJECT_NAME} PUBLIC ${estd_SOURCE_DIR}/estd/port/esp-idf/fake)
+
 # necessary for Catch2
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_11)
 
