@@ -114,6 +114,7 @@ static void test_gptimer_scheduler()
 
     ESP_ERROR_CHECK(s.timer().get_raw_count(&counter));
 
+    // Tested with ESP32C6 Xiao
 #if CONFIG_IDF_TARGET_ARCH_RISCV
     TEST_ASSERT_UINT_WITHIN(20, 25, counter);
 #else

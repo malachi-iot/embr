@@ -117,7 +117,7 @@ esp_err_t gptimer_scheduler<Traits, Container>::init()
 }
 
 template <ESTD_CPP_CONCEPT(concepts::Traits) Traits, class Container>
-esp_err_t gptimer_scheduler<Traits, Container>::schedule()
+inline esp_err_t gptimer_scheduler<Traits, Container>::schedule()
 {
     // Could be a possibility, but I anticipate wanting finer control over timings
     //estd::lock_guard<mutex_type> lock(mutex_);
@@ -189,6 +189,8 @@ auto gptimer_scheduler<Traits, Container>::process_one(duration timeout,
 
     r1 = base_type::process_one(now_us, mutex_);
 
+    /*
+
     //ESP_LOGV(TAG, "process_one: phase 1 now_us=%" PRIu64, now_us);
 
     mutex_.lock();
@@ -221,7 +223,8 @@ auto gptimer_scheduler<Traits, Container>::process_one(duration timeout,
 
     //ESP_LOGD(TAG, "process_one: phase 2 now_us=%" PRIu64, now_us);
 
-    mutex_.unlock();
+    mutex_.unlock(); */
+    ESP_ERROR_CHECK(schedule());
 
     return r1;
 }
