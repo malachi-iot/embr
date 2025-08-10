@@ -105,6 +105,11 @@ static void test_gptimer_scheduler()
 
     TEST_ASSERT_EQUAL(ESP_OK, s.init());
 
+    uint64_t marker = esp_timer_get_time();
+    r1 = s.process_one(0ms);
+    const uint64_t p1_delta = esp_timer_get_time() - marker;
+    TEST_ASSERT_EQUAL(process_result::UNPROCESSED, r1);
+
     s.reschedule(&i1);
     s.reschedule(&i2);
 
@@ -118,7 +123,7 @@ static void test_gptimer_scheduler()
 
     // Tested with ESP32C6 Xiao
 #if CONFIG_IDF_TARGET_ARCH_RISCV
-    TEST_ASSERT_UINT_WITHIN(20, 25, counter);
+    TEST_ASSERT_UINT_WITHIN(18, 20, counter);
 #elif QEMU
     // QEMU goes pretty slow here
     TEST_ASSERT_UINT_WITHIN(250, 300, counter);
@@ -128,7 +133,7 @@ static void test_gptimer_scheduler()
 
     r1 = s.process_one(100ms, &notification_received);
 
-    uint64_t marker = esp_timer_get_time();
+    marker = esp_timer_get_time();
 
     TEST_ASSERT_TRUE(notification_received);
 
@@ -164,13 +169,10 @@ static void test_gptimer_scheduler()
     TEST_ASSERT_UINT_WITHIN(50, increment, i1.last());
 #endif
 
-    uint64_t marker2 = esp_timer_get_time();
-    uint64_t delta = 2 * (marker2 - marker);    // x2 to crudely overcome process_one overhead
-#else   // PHASE1_TIMING_TEST
-    // DEBT: What we really need is a crude startup profile of process_one overhead and use that
-    // as a measurement
-    uint64_t delta = 100;
 #endif  // PHASE1_TIMING_TEST
+
+    uint64_t marker2 = esp_timer_get_time();
+    uint64_t delta = p1_delta + (marker2 - marker);
 
     r1 = s.process_one(100ms);
 
