@@ -80,6 +80,8 @@ static embr::scheduler::esp_idf::v1::gptimer_scheduler<
 // Especially QEMU which appears to have an incomplete gptimer implementation (resets
 // counter more often than we'd like)
 
+#define PHASE1_TIMING_TEST  1
+
 static void test_gptimer_scheduler()
 {
     //using clock = estd::chrono::esp_clock;
@@ -106,7 +108,6 @@ static void test_gptimer_scheduler()
 
     ESP_LOGD(TAG, "test_gptimer_scheduler: phase 1");
 
-    uint64_t marker = esp_timer_get_time();
     TEST_ASSERT_EQUAL(ESP_OK, s.start());
 
     uint64_t counter = 0;
@@ -122,8 +123,11 @@ static void test_gptimer_scheduler()
 
     r1 = s.process_one(100ms, &notification_received);
 
+    uint64_t marker = esp_timer_get_time();
+
     TEST_ASSERT_TRUE(notification_received);
 
+#if PHASE1_TIMING_TEST
     ESP_ERROR_CHECK(s.timer().get_raw_count(&counter));
 
     TEST_ASSERT_EQUAL(0, i2.last());
@@ -152,14 +156,25 @@ static void test_gptimer_scheduler()
     TEST_ASSERT_UINT_WITHIN(250, increment, i1.last());
 #endif
 
-    marker = esp_timer_get_time();
+    uint64_t marker2 = esp_timer_get_time();
+    uint64_t delta = 2 * (marker2 - marker);    // x2 to crudely overcome process_one overhead
+#else   // PHASE1_TIMING_TEST
+    // DEBT: What we really need is a crude startup profile of process_one overhead and use that
+    // as a measurement
+    uint64_t delta = 100;
+#endif  // PHASE1_TIMING_TEST
 
     r1 = s.process_one(100ms);
 
-    ESP_LOGD(TAG, "test_gptimer_scheduler: phase 3");
+    ESP_LOGD(TAG, "test_gptimer_scheduler: phase 3 delta=%" PRIu64
+        ", clock.now()=%" PRIu64 ", i2.last()=%" PRIu64,
+        delta, s.clock().raw_now(), i2.last());
 
     TEST_ASSERT_EQUAL(process_result::PROCESSED_AND_RESCHEDULED, r1);
 
+#if CONFIG_IDF_TARGET_ARCH_RISCV
+    TEST_ASSERT_UINT_WITHIN(delta, increment, i2.last());
+#endif
     TEST_ASSERT_EQUAL(increment * 2, i2.next());
 
     ESP_ERROR_CHECK(s.stop());
