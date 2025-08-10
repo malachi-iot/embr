@@ -86,7 +86,8 @@ public:
     using typename base_type::pointer;
 
     // DEBT: Only for unit tests, external parties ought not to see this
-    const timer_type& timer() { return timer_; }
+    const timer_type& timer() const { return timer_; }
+    const detail::gptimer_clock clock() const { return { timer_ }; }
 
     esp_err_t init();
     void deinit()

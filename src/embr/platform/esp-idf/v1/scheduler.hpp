@@ -136,6 +136,8 @@ esp_err_t gptimer_scheduler<Traits, Container>::schedule()
 
     mutex_.unlock();
 
+    ESP_LOGV(TAG, "schedule: next=%" PRIu64, next);
+
     const gptimer_alarm_config_t alarm_config
     {
         .alarm_count = next,
@@ -146,7 +148,7 @@ esp_err_t gptimer_scheduler<Traits, Container>::schedule()
         }
     };
 
-    ESP_LOGD(TAG, "schedule: phase 1");
+    ESP_LOGV(TAG, "schedule: phase 1");
 
     return timer_.set_alarm_action(&alarm_config);
 }
@@ -183,15 +185,26 @@ auto gptimer_scheduler<Traits, Container>::process_one(duration timeout,
     //BaseType_t r = xTaskNotifyWaitIndexed(0, 0xFFFF, 0, &v, timeout.count());
     if(notification_received)   *notification_received = r;
 
-    r1 = base_type::process_one(clock.raw_now(), mutex_);
+    uint64_t now_us = clock.raw_now();
+
+    r1 = base_type::process_one(now_us, mutex_);
+
+    //ESP_LOGV(TAG, "process_one: phase 1 now_us=%" PRIu64, now_us);
 
     mutex_.lock();
 
     if(!base_type::empty())
     {
+        const uint64_t next = base_type::next();
+        //now_us = clock.raw_now();
+
+        //ESP_LOGV(TAG, "process_one: now_us=%" PRIu64 ", next=%" PRIu64, now_us, next);
+
+        // DEBT: Consolidate this with above 'schedule' code
+
         const gptimer_alarm_config_t alarm_config
         {
-            .alarm_count = base_type::next(),
+            .alarm_count = next,
             .reload_count {},
             .flags
             {
@@ -201,6 +214,12 @@ auto gptimer_scheduler<Traits, Container>::process_one(duration timeout,
 
         ESP_ERROR_CHECK(timer_.set_alarm_action(&alarm_config));
     }
+
+    // OK, looks like QEMU has sorta reset the counter when we get here which is technically
+    // incorrect behavior.
+    //now_us = clock.raw_now();
+
+    //ESP_LOGD(TAG, "process_one: phase 2 now_us=%" PRIu64, now_us);
 
     mutex_.unlock();
 

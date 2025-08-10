@@ -70,6 +70,8 @@ namespace idf {
 // ending up with a crash.  Better way to do this is wrap with a ctor/dtor, but
 // keeping this global will at least inhibit crashes, though ISR will continue to run
 using item_type = ref_nexter<uint64_t>;
+using gptimer_clock = embr::scheduler::esp_idf::v1::detail::gptimer_clock;
+
 static embr::scheduler::esp_idf::v1::gptimer_scheduler<
     embr::scheduler::item_traits<item_type>,
     estd::layer1::vector<item_type*, 10>> s;
@@ -118,8 +120,9 @@ static void test_gptimer_scheduler()
 
     TEST_ASSERT_EQUAL(0, i2.last());
 
-    ESP_LOGD(TAG, "test_gptimer_scheduler: phase 2 counter=%" PRIu64 ", i1.last()=%" PRIu64,
-        counter, i1.last());
+    ESP_LOGD(TAG, "test_gptimer_scheduler: phase 2 counter=%" PRIu64 ", clock.now()=%" PRIu64
+        ", i1.last()=%" PRIu64,
+        counter, s.clock().raw_now(), i1.last());
 
     // QEMU
     // Clocks in at ~150000us despite receiving notification above.  Concerningly slow
