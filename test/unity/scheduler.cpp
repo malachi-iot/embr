@@ -80,6 +80,8 @@ static embr::scheduler::esp_idf::v1::gptimer_scheduler<
 // Especially QEMU which appears to have an incomplete gptimer implementation (resets
 // counter more often than we'd like)
 
+// Couldn't find any ways of runtime detecting QEMU, so making a compile time flag here
+#define QEMU 0
 #define PHASE1_TIMING_TEST  1
 
 static void test_gptimer_scheduler()
@@ -117,9 +119,11 @@ static void test_gptimer_scheduler()
     // Tested with ESP32C6 Xiao
 #if CONFIG_IDF_TARGET_ARCH_RISCV
     TEST_ASSERT_UINT_WITHIN(20, 25, counter);
-#else
+#elif QEMU
     // QEMU goes pretty slow here
     TEST_ASSERT_UINT_WITHIN(250, 300, counter);
+#elif CONFIG_IDF_TARGET_ESP32S3
+    TEST_ASSERT_UINT_WITHIN(20, 25, counter);
 #endif
 
     r1 = s.process_one(100ms, &notification_received);
@@ -139,10 +143,11 @@ static void test_gptimer_scheduler()
 
 #if CONFIG_IDF_TARGET_ARCH_RISCV
     TEST_ASSERT_UINT_WITHIN(100, increment, counter);
-#else
-    // QEMU
-    // Clocks in at ~150000us despite receiving notification above.  Concerningly slow
+#elif QEMU
+    // Clocks in at ~150000us despite receiving notification above
     TEST_ASSERT_UINT_WITHIN(500, increment, counter);
+#elif CONFIG_IDF_TARGET_ESP32S3
+    TEST_ASSERT_UINT_WITHIN(200, increment, counter);
 #endif
 
     TEST_ASSERT_EQUAL(process_result::PROCESSED_AND_RESCHEDULED, r1);
@@ -150,11 +155,13 @@ static void test_gptimer_scheduler()
     TEST_ASSERT_EQUAL(increment, i2.next());
 #if CONFIG_IDF_TARGET_ARCH_RISCV
     TEST_ASSERT_UINT_WITHIN(20, increment, i1.last());
-#else
-    // QEMU
+#elif QEMU
     // Clocks in at > ~200000us despite above ~150000us.  Something badly wrong here,
-    // last() is supposed to be a fixed point in time, even with slow-ass QEMU
+    // last() is supposed to be a fixed point in time, even with slow-ass QEMU.  ChatGPT
+    // indicates that QEMU falsely restarts counter & that's why
     TEST_ASSERT_UINT_WITHIN(250, increment, i1.last());
+#elif CONFIG_IDF_TARGET_ESP32S3
+    TEST_ASSERT_UINT_WITHIN(50, increment, i1.last());
 #endif
 
     uint64_t marker2 = esp_timer_get_time();
@@ -173,7 +180,7 @@ static void test_gptimer_scheduler()
 
     TEST_ASSERT_EQUAL(process_result::PROCESSED_AND_RESCHEDULED, r1);
 
-#if CONFIG_IDF_TARGET_ARCH_RISCV
+#if CONFIG_IDF_TARGET_ARCH_RISCV || CONFIG_IDF_TARGET_ESP32S3
     TEST_ASSERT_UINT_WITHIN(delta, increment, i2.last());
 #endif
     TEST_ASSERT_EQUAL(increment * 2, i2.next());

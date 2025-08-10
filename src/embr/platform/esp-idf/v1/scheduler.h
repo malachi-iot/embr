@@ -73,7 +73,15 @@ class gptimer_scheduler : public scheduler::v1::detail::scheduler<Traits, Contai
     // 2nd process_one will happen quickly enough that you reach a 3rd process one.  That
     // one will wait for a notification which in theory may never come.  Consider adding
     // a counter as a safeguard.
+    // DEBT: If we can, heed system clock speed here
+    // DEBT: A bringup profiling/tuning phase would be nice
+#if CONFIG_IDF_TARGET_ARCH_RISCV
     static constexpr unsigned preload = 6;
+#elif CONFIG_IDF_TARGET_ESP32S3
+    static constexpr unsigned preload = 30;
+#else
+    static constexpr unsigned preload = 0;
+#endif
 
     // ISR callback helpers
     void callback();
