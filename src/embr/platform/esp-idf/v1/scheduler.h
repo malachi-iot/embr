@@ -66,6 +66,15 @@ class gptimer_scheduler : public scheduler::v1::detail::scheduler<Traits, Contai
     using typename base_type::process_result;
     using timer_type = embr::esp_idf::gptimer;
 
+    // Subtracts this from 'next', waking alarm up a little early.  This way by the time
+    // RTOS task schedules in (process_one) we're closer to the true 'next' time.
+    // NOTE: Be careful.  If we beat process_one, paradigm is to cycle to a 2nd process_one.
+    // Chances are high the 2nd process_one will catch it.  However, if preload is too high,
+    // 2nd process_one will happen quickly enough that you reach a 3rd process one.  That
+    // one will wait for a notification which in theory may never come.  Consider adding
+    // a counter as a safeguard.
+    static constexpr unsigned preload = 6;
+
     // ISR callback helpers
     void callback();
     static void callback(void*);

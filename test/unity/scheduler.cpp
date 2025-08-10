@@ -76,6 +76,10 @@ static embr::scheduler::esp_idf::v1::gptimer_scheduler<
     embr::scheduler::item_traits<item_type>,
     estd::layer1::vector<item_type*, 10>> s;
 
+// Different chips, USB loggings and QEMU or not affect timings.
+// Especially QEMU which appears to have an incomplete gptimer implementation (resets
+// counter more often than we'd like)
+
 static void test_gptimer_scheduler()
 {
     //using clock = estd::chrono::esp_clock;
@@ -109,8 +113,12 @@ static void test_gptimer_scheduler()
 
     ESP_ERROR_CHECK(s.timer().get_raw_count(&counter));
 
+#if CONFIG_IDF_TARGET_ARCH_RISCV
+    TEST_ASSERT_UINT_WITHIN(20, 25, counter);
+#else
     // QEMU goes pretty slow here
     TEST_ASSERT_UINT_WITHIN(250, 300, counter);
+#endif
 
     r1 = s.process_one(100ms, &notification_received);
 
@@ -124,17 +132,25 @@ static void test_gptimer_scheduler()
         ", i1.last()=%" PRIu64,
         counter, s.clock().raw_now(), i1.last());
 
+#if CONFIG_IDF_TARGET_ARCH_RISCV
+    TEST_ASSERT_UINT_WITHIN(100, increment, counter);
+#else
     // QEMU
     // Clocks in at ~150000us despite receiving notification above.  Concerningly slow
     TEST_ASSERT_UINT_WITHIN(500, increment, counter);
+#endif
 
     TEST_ASSERT_EQUAL(process_result::PROCESSED_AND_RESCHEDULED, r1);
     TEST_ASSERT_EQUAL(increment * 2, i1.next());
     TEST_ASSERT_EQUAL(increment, i2.next());
+#if CONFIG_IDF_TARGET_ARCH_RISCV
+    TEST_ASSERT_UINT_WITHIN(20, increment, i1.last());
+#else
     // QEMU
     // Clocks in at > ~200000us despite above ~150000us.  Something badly wrong here,
     // last() is supposed to be a fixed point in time, even with slow-ass QEMU
     TEST_ASSERT_UINT_WITHIN(250, increment, i1.last());
+#endif
 
     marker = esp_timer_get_time();
 

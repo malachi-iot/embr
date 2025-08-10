@@ -140,7 +140,7 @@ esp_err_t gptimer_scheduler<Traits, Container>::schedule()
 
     const gptimer_alarm_config_t alarm_config
     {
-        .alarm_count = next,
+        .alarm_count = next - preload,
         .reload_count {},
         .flags
         {
@@ -204,7 +204,7 @@ auto gptimer_scheduler<Traits, Container>::process_one(duration timeout,
 
         const gptimer_alarm_config_t alarm_config
         {
-            .alarm_count = next,
+            .alarm_count = next - preload,
             .reload_count {},
             .flags
             {
