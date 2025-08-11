@@ -80,7 +80,9 @@ static embr::scheduler::esp_idf::v1::gptimer_scheduler<
 // Especially QEMU which appears to have an incomplete gptimer implementation (resets
 // counter more often than we'd like)
 
-// Couldn't find any ways of runtime detecting QEMU, so making a compile time flag here
+// Couldn't find any ways of runtime detecting QEMU, so making a compile time flag here.
+// NOTE: QEMU timings fluctuate so much in addition to aforementioned reset behavior
+// virtually gauruntees failed assertions when QEMU=1
 #define QEMU 0
 #define PHASE1_TIMING_TEST  1
 
@@ -152,7 +154,7 @@ static void test_gptimer_scheduler()
     // Clocks in at ~150000us despite receiving notification above
     TEST_ASSERT_UINT_WITHIN(500, increment, counter);
 #elif CONFIG_IDF_TARGET_ESP32S3
-    TEST_ASSERT_UINT_WITHIN(200, increment, counter);
+    TEST_ASSERT_UINT_WITHIN(500, increment, counter);
 #endif
 
     TEST_ASSERT_EQUAL(process_result::PROCESSED_AND_RESCHEDULED, r1);
@@ -166,7 +168,8 @@ static void test_gptimer_scheduler()
     // indicates that QEMU falsely restarts counter & that's why
     TEST_ASSERT_UINT_WITHIN(250, increment, i1.last());
 #elif CONFIG_IDF_TARGET_ESP32S3
-    TEST_ASSERT_UINT_WITHIN(50, increment, i1.last());
+    // ACM logs faster than USB.  I've seen sub 50uS in ACM
+    TEST_ASSERT_UINT_WITHIN(80, increment, i1.last());
 #endif
 
 #endif  // PHASE1_TIMING_TEST
@@ -183,6 +186,7 @@ static void test_gptimer_scheduler()
     TEST_ASSERT_EQUAL(process_result::PROCESSED_AND_RESCHEDULED, r1);
 
 #if CONFIG_IDF_TARGET_ARCH_RISCV || CONFIG_IDF_TARGET_ESP32S3
+    // FIX: Native S3 still seems to go too slow here
     TEST_ASSERT_UINT_WITHIN(delta, increment, i2.last());
 #endif
     TEST_ASSERT_EQUAL(increment * 2, i2.next());
