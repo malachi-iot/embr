@@ -1,7 +1,9 @@
 #pragma once
 
-#include <cmath>
+// TODO: Once https://github.com/malachi-iot/estdlib/issues/141 comes online,
+// refactor std::sin, etc to estd::sin
 
+#include <estd/cmath.h>
 #include <estd/span.h>
 
 #include "config.h"
