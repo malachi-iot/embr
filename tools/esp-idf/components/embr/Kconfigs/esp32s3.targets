@@ -11,6 +11,11 @@ config BOARD_ESP32S3_ELECROW_CROWPANEL_2_13
 config BOARD_ESP32S3_LILYGO_TCAM_S3
     bool "LILYGO T-Camera S3"
 
+config BOARD_ESP32S3_LILYGO_T_CIRCLE_S3
+    bool "LILYGO T-Circle S3"
+    help
+        https://lilygo.cc/products/t-circle-s3
+
 config BOARD_ESP32S3_LILYGO_T_QT_PRO
     bool "LILYGO T-QT Pro"
 

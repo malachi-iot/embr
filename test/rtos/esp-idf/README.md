@@ -74,6 +74,7 @@ These tests are all for variants of Espressif ESP32
 | 05JAN25 | unity        | QEMU                 | ESP32          | v5.3.2   | Pass     | NOTE: LwIP loopback now flaky due to disabled WiFi init
 | 07MAR25 | unity        | QEMU                 | ESP32S3        | v5.3.2   | Pass     |
 | 16JUN25 | unity        | QEMU                 | ESP32          | v5.4.1   | Pass     |
+| 14SEP25 | unity        | QEMU                 | ESP32S3        | v5.5.1   | Pass*    | Scheduling test fails, which is anticipated w/ QEMU
 
 # References
 
