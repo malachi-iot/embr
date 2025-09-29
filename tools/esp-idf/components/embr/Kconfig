@@ -77,23 +77,7 @@ menu "Embr config"
         config BOARD_ESP32_UNSPECIFIED
             bool "Unspecified Target"
 
-        if IDF_TARGET_ESP32
-            rsource "Kconfigs/esp32.targets"
-        endif
-        if IDF_TARGET_ESP32C3
-            rsource "Kconfigs/esp32c3.targets"
-        endif
-        if IDF_TARGET_ESP32C5
-            rsource "Kconfigs/esp32c5.targets"
-        endif
-        if IDF_TARGET_ESP32C6
-            rsource "Kconfigs/esp32c6.targets"
-        endif
-        rsource "Kconfigs/esp32p4.targets"
-        if IDF_TARGET_ESP32S3
-            rsource "Kconfigs/esp32s3.targets"
-        endif
-
+        rsource "Kconfigs/targets"
     endchoice
 
     rsource "Kconfigs/twai"

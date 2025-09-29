@@ -1,0 +1,18 @@
+if IDF_TARGET_ESP32
+    rsource "esp32.targets"
+endif
+if IDF_TARGET_ESP32C3
+    rsource "esp32c3.targets"
+endif
+if IDF_TARGET_ESP32C5
+    rsource "esp32c5.targets"
+endif
+if IDF_TARGET_ESP32C6
+    rsource "esp32c6.targets"
+endif
+rsource "esp32p4.targets"
+if IDF_TARGET_ESP32S3
+    rsource "esp32s3.targets"
+endif
+
+rsource '$(EMBR_KCONFIG_DIR)Kconfig.embr.bsp'
