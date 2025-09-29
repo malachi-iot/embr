@@ -4,7 +4,7 @@
 
 #define EMBR_VER_MAJOR     0
 #define EMBR_VER_MINOR     4
-#define EMBR_VER_PATCH     2
+#define EMBR_VER_PATCH     3
 
-#define EMBR_VERSION  ESTD_BUILD_SEMVER(0, 4, 2)
-#define EMBR_VERSION_STR "0.4.2"
+#define EMBR_VERSION  ESTD_BUILD_SEMVER(0, 4, 3)
+#define EMBR_VERSION_STR "0.4.3"
