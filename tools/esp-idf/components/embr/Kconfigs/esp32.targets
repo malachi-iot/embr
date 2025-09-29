@@ -7,6 +7,16 @@ config BOARD_ESP32_CYD
 config BOARD_ESP32_LOPY
     bool "LoPy"
 
+config BOARD_ESP32_M5_BASIC_CORE_V2_6
+    bool "M5 Basic Core v2.6"
+    help
+        https://docs.m5stack.com/en/core/basic
+
+config BOARD_ESP32_M5_BASIC_CORE_V2_7
+    bool "M5 Basic Core v2.7"
+    help
+        https://docs.m5stack.com/en/core/basic_v2.7
+
 config BOARD_ESP32_M5_TIMER_CAMERA_X
     bool "M5 Timer Camera X"
 
