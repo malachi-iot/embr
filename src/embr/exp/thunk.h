@@ -53,7 +53,7 @@ class ThunkBase : protected Mutex
             return offsetof(Item, model) + sz;
         }
 
-        unsigned size() const
+        constexpr unsigned size() const
         {
             return size(sz);
         }
