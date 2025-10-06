@@ -8,6 +8,8 @@
 
 namespace embr { namespace experimental {
 
+// DEBT: It seems we might be able to considate this with ringbuffer's noop mutex.
+// If so, enforce it with a concept
 struct NoopMutex
 {
     static constexpr bool lock_push() { return {}; }
@@ -84,7 +86,7 @@ public:
 
     // DEBT: See if we can find clever way to oerload and handle no-parameter flavor of F too
     template <class F, class Mutex2>
-    bool enqueue(F&& f, Mutex2 mutex)
+    bool enqueue(F&& f, Mutex2&& mutex)
     {
         /*
         auto f2 = [f]
@@ -106,7 +108,11 @@ public:
         mutex.lock_push();
 
         // Make sure we have enough space
-        if(buf_.unused() < sizeof(model_type))  return false;
+        if(buf_.unused() < sizeof(model_type))
+        {
+            mutex.unlock_push();
+            return false;
+        }
 
         auto item = (Item*) buf_.offer_begin();
 
@@ -137,13 +143,13 @@ public:
         return buf_.used();
     }
 
-    bool empty() const
+    constexpr bool empty() const
     {
         return buf_.used() == 0;
     }
 
     template <class Mutex2>
-    bool invoke(Mutex2 mutex)
+    bool invoke(Mutex2&& mutex)
     {
         mutex.lock_pop();
         // NOTE: size(0) just a formality, producing minimum model size for us
@@ -187,6 +193,15 @@ namespace layer3 {
 template <class Mutex = NoopMutex>
 using Thunk = ThunkBase<estd::layer3::bipbuf, Mutex>;
 
+}
+
+
+template <class F, ESTD_CPP_CONCEPT(estd::concepts::v1::Bipbuf) Buf,
+    class Mutex>
+ThunkBase<Buf, Mutex>& operator<<(ThunkBase<Buf, Mutex>& thunk, F&& f)
+{
+    thunk.enqueue(std::forward<F>(f));
+    return thunk;
 }
 
 

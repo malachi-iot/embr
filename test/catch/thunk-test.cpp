@@ -8,6 +8,11 @@
 // DEBT: Instead of tracker/tracked use estd internal underpinnings for
 // shared_ptr
 
+// 05OCT25
+// This has large overlap with "delegate_queue" and was coming along well to displace it IIRC
+// IIRC I detoured to beef up estd functor behavior to better handle dtor operations here and never
+// resumed
+
 struct Tracker
 {
     // ref count
@@ -131,6 +136,19 @@ TEST_CASE("thunk")
             }
 
             REQUIRE(tracker.count == 1);
+        }
+        SECTION("operator <<")
+        {
+            int counter{};
+
+            t << [&]{ counter += 2; };
+            t << [&]{ counter <<= 1; };
+
+            REQUIRE(counter == 0);
+
+            t.invoke_all();
+
+            REQUIRE(counter == 4);
         }
     }
     SECTION("layer3::bipbuf")
