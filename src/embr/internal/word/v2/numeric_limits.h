@@ -3,6 +3,7 @@
 #include "fwd.h"
 
 #include <estd/limits.h>
+#include <estd/internal/macro/push.h>
 
 namespace estd {
 
@@ -33,3 +34,5 @@ struct numeric_limits<embr::v2::word<bits, o> > :
 
 
 }
+
+#include <estd/internal/macro/pop.h>
