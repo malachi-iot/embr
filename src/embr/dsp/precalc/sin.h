@@ -10,6 +10,9 @@
 #include "enum.h"
 #include "fwd.h"
 
+// FIX: Just for Arduino.  estd v0.8.10 proper does this by way of macro push/pop
+#undef round
+
 namespace embr { namespace dsp {
 
 namespace detail { inline namespace v1 {
@@ -25,7 +28,7 @@ struct precalc<PRECALC_FULL>
         for(int i = 0; i < N; i++, data++)
         {
             const auto v = i * 2 * M_PI / N;
-            *data = std::sin(v);
+            *data = estd::sin(v);
         }
     }
 
@@ -35,7 +38,7 @@ struct precalc<PRECALC_FULL>
         constexpr unsigned mask = N - 1;
         constexpr T2 multiplier = N / (2 * M_PI);
 
-        unsigned i = std::round(v * multiplier);
+        unsigned i = estd::round(v * multiplier);
 
         if(do_mask)     i &= mask;
 
@@ -53,7 +56,7 @@ struct precalc<PRECALC_HALF>
         for(int i = 0; i < N; i++, data++)
         {
             const auto v = i * M_PI / N;
-            *data = std::sin(v);
+            *data = estd::sin(v);
         }
     }
 
@@ -62,7 +65,7 @@ struct precalc<PRECALC_HALF>
     {
         constexpr unsigned mask = N * 2 - 1;
         constexpr T N_div_pi = N / M_PI;
-        unsigned i = (unsigned)std::round(v * N_div_pi);
+        unsigned i = (unsigned)estd::round(v * N_div_pi);
 
         if constexpr(do_mask)   i &= mask;
 
@@ -87,7 +90,7 @@ struct precalc<PRECALC_QUART>
         for(int i = 0; i < N; i++, data++)
         {
             const auto v = i * M_PI / (2.0 * N);
-            *data = std::sin(v);
+            *data = estd::sin(v);
         }
     }
 
@@ -96,7 +99,7 @@ struct precalc<PRECALC_QUART>
     {
         constexpr unsigned mask = N * 4 - 1;
 
-        int i = std::round(v * 2 * N / M_PI);
+        int i = estd::round(v * 2 * N / M_PI);
 
         i &= mask;
 
