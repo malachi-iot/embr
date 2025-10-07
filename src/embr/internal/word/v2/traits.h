@@ -1,6 +1,7 @@
 #pragma once
 
 #include "fwd.h"
+#include "../../../fwd/type_from_bits.h"
 
 namespace embr { namespace internal {
 
@@ -14,7 +15,7 @@ struct word_traits {
     static constexpr unsigned bits = bits_;
     static constexpr ot options = o;
 
-    using info = type_from_bits<bits, o & ot::is_signed>;
+    using info = type_from_bits<bits, is_set(o & ot::is_signed)>;
 
     static constexpr uint32_t pad = padding;
     static constexpr unsigned lhs_pad = padding & 0xFF00 >> 8;
@@ -22,7 +23,8 @@ struct word_traits {
 
     static constexpr estd::endian endian = map_to_endian<o>::value;
 
-    static constexpr bool is_array = (o & ot::raw) | (o & ot::packed && !info::matched);
+    static constexpr bool is_array = is_set(o & ot::raw) |
+        (is_set(o & ot::packed) && !info::matched);
 
     using int_type = typename info::type;
     using value_type = embr::detail::v2::word<this_type>;

@@ -9,7 +9,7 @@ template <dsp::v1::precalc_modes mode, std::size_t sz, typename T, class T2>
 static void compare(const estd::span<T, sz>& table, T2 v)
 {
     const T v1 = dsp::v1::sin_lookup<mode>(table, v);
-    const T v1_ = std::sin(v);
+    const T v1_ = estd::sin(v);
 
     // DEBT: Crude promotion of T to most precise.  May not work for things
     // like fixed point

@@ -25,7 +25,7 @@ struct precalc<PRECALC_FULL>
     void static init_sin(estd::span<T, N> table)
     {
         T* data = table.data();
-        for(int i = 0; i < N; i++, data++)
+        for(int i = 0; i < N; i++, ++data)
         {
             const auto v = i * 2 * M_PI / N;
             *data = estd::sin(v);
@@ -65,9 +65,9 @@ struct precalc<PRECALC_HALF>
     {
         constexpr unsigned mask = N * 2 - 1;
         constexpr T N_div_pi = N / M_PI;
-        unsigned i = (unsigned)estd::round(v * N_div_pi);
+        auto i = static_cast<unsigned>(estd::round(v * N_div_pi));
 
-        if constexpr(do_mask)   i &= mask;
+        ESTD_CPP_IF_CONSTEXPR(do_mask)   i &= mask;
 
         return i < N ? table[i] : -table[i - N];
     }
@@ -87,7 +87,7 @@ struct precalc<PRECALC_QUART>
     void static init_sin(estd::span<T, N> table)
     {
         T* data = table.data();
-        for(int i = 0; i < N; i++, data++)
+        for(int i = 0; i < N; i++, ++data)
         {
             const auto v = i * M_PI / (2.0 * N);
             *data = estd::sin(v);

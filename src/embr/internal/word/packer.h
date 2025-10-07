@@ -3,6 +3,8 @@
 #include <estd/algorithm.h>
 #include <estd/bit.h>
 
+#include <estd/internal/macro/push.h>
+
 namespace embr { namespace internal {
 // DEBT: 'platform' really feels like it out to be 'source'
 template <class T, size_t size, estd::endian target,
@@ -47,7 +49,7 @@ struct packer<uint32_t, 3, estd::endian::little, estd::endian::little>
         return in[0] << 16 | in[1] << 8 | in[2];
     }
 };
-#endif
+#endif  // UNUSED
 
 // Helper function to access the nth element of an array at compile time.
 template <size_t N, typename T, size_t Size>
@@ -282,3 +284,5 @@ struct packer<Integer, N, estd::endian::little, estd::endian::little>
 };
 
 }}
+
+#include <estd/internal/macro/pop.h>

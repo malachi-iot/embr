@@ -25,7 +25,7 @@ struct word_retriever;
 template <v2::word_options o>
 struct word_retriever<o,
     estd::enable_if_t<
-        !(o & v2::word_options::packed) &&
+        !is_set(o & v2::word_options::packed) &&
         is_native_endian<o>::value>>
 {
     template <class Numeric>
@@ -35,7 +35,7 @@ struct word_retriever<o,
 template <v2::word_options o>
 struct word_retriever<o,
     estd::enable_if_t<
-        o & v2::word_options::packed &&
+        is_set(o & v2::word_options::packed) &&
         is_native_endian<o>::value == true>>
 {
     template <class Numeric>
@@ -59,12 +59,12 @@ template <size_t bits, v2::word_options o>
 struct word_v2_base<bits, o,
     estd::enable_if_t<
         is_native_endian<o>::value &&
-        (!(o & v2::word_options::packed) ||
+        (!is_set(o & v2::word_options::packed) ||
             type_from_bits<bits, false>::matched)>>
 {
     using this_type = word_v2_base;
 
-    using type = type_from_bits_t<bits, o & v2::word_options::is_signed>;
+    using type = type_from_bits_t<bits, is_set(o & v2::word_options::is_signed)>;
 
     static constexpr estd::endian endian = estd::endian::native;
 
@@ -118,10 +118,10 @@ template <size_t bits, v2::word_options o>
 struct word_v2_base<bits, o,
     estd::enable_if_t<
         is_native_endian<o>::value == false &&
-        (!(o & v2::word_options::packed) ||
+        (!is_set(o & v2::word_options::packed) ||
             type_from_bits<bits, false>::matched)>>
 {
-    using type = type_from_bits_t<bits, o & v2::word_options::is_signed>;
+    using type = type_from_bits_t<bits, is_set(o & v2::word_options::is_signed)>;
 
     static constexpr estd::endian endian = map_to_endian<o>::value;
 
@@ -165,11 +165,12 @@ template <size_t bits, v2::word_options o>
 struct word_v2_base<bits, o,
     estd::enable_if_t<
         //is_native_endian<o>::value &&
-        o & v2::word_options::raw || (o & v2::word_options::packed &&
-        type_from_bits<bits, false>::matched == false)>> :
-    type_from_bits<bits, o & v2::word_options::is_signed>
+        is_set(o & v2::word_options::raw) ||
+            (is_set(o & v2::word_options::packed) &&
+            type_from_bits<bits, false>::matched == false)>> :
+    type_from_bits<bits, is_set(o & v2::word_options::is_signed)>
 {
-    using base_type = type_from_bits<bits, o & v2::word_options::is_signed>;
+    using base_type = type_from_bits<bits, is_set(o & v2::word_options::is_signed)>;
 
     // smallest primitive type which can fully represent this word
     using typename base_type::type;
@@ -289,7 +290,7 @@ struct word_v2_base<bits, o,
 */
 
 template <size_t bits, v2::word_options o>
-struct word_v2_layer<bits, o, estd::enable_if_t<o & v2::word_options::implicit>> :
+struct word_v2_layer<bits, o, estd::enable_if_t<is_set(o & v2::word_options::implicit)>> :
     word_v2_base<bits, o>
 {
     using base_type = word_v2_base<bits, o>;
@@ -307,7 +308,7 @@ struct word_v2_layer<bits, o, estd::enable_if_t<o & v2::word_options::implicit>>
 };
 
 template <size_t bits, v2::word_options o>
-struct word_v2_layer<bits, o, estd::enable_if_t<!(o & v2::word_options::implicit)>> :
+struct word_v2_layer<bits, o, estd::enable_if_t<!is_set(o & v2::word_options::implicit)>> :
     word_v2_base<bits, o>
 {
     using base_type = word_v2_base<bits, o>;

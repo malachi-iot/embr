@@ -21,7 +21,7 @@ struct is_castable<
     estd::enable_if_t<
         is_matching_endian<o, o2>::value &&
         // DEBT: With matching endianness and resolved type, a packed and non packed could in fact be castable
-        !((o ^ o2) & v2::word_options::packed)>> :
+        !is_set((o ^ o2) & v2::word_options::packed)>> :
     estd::bool_constant<true>
 {};
 
