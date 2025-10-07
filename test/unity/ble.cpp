@@ -20,6 +20,7 @@ static void test_ots_oacp_checksum()
 
 static void test_ots_oacp_response()
 {
+#if __cpp_designated_initializers
     [[maybe_unused]]
     oacp_type oacp
     {
@@ -32,6 +33,7 @@ static void test_ots_oacp_response()
             .parameter {}
         }
     };
+#endif
 }
 
 #ifdef ESP_IDF_TESTING

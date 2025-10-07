@@ -5,7 +5,11 @@
 
 #include "unit-test.h"
 
+#if ARDUINO
+#include <estd/port/esp-idf/fake/esp_log.h>
+#else
 #include <esp_log.h>
+#endif
 
 static const char* TAG = "unity::word";
 

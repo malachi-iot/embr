@@ -9,6 +9,8 @@ static void test_profiler()
 {
 #if ESP_PLATFORM
     using clock = estd::chrono::esp_clock;
+#elif ARDUINO
+    using clock = estd::chrono::arduino_clock;
 #else
     // DEBT: Use high resolution clock here
     using clock = estd::chrono::system_clock;

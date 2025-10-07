@@ -12,6 +12,9 @@
 #include "numeric_limits.h"
 #include "traits.h"
 
+// FIX: For Arduino.  Use macro push/pop helpers instead
+#undef word
+
 namespace embr { namespace internal {
 
 // Interesting, but XOR is probably way better

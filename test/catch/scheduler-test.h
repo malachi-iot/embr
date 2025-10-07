@@ -4,7 +4,11 @@
 #include <embr/scheduler.h>
 
 // Thanks to estd fake esp-idf area, this is cross platform
+#if ARDUINO
+#include <estd/port/esp-idf/fake/esp_log.h>
+#else
 #include <esp_log.h>
+#endif
 
 namespace test { namespace scheduler {
 
