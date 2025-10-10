@@ -2,10 +2,6 @@ cmake_minimum_required(VERSION 3.17)
 
 project(embr-unit-test VERSION 1.0.0)
 
-# DEBT: On macOS target_compile_features isn't working as expected, so brute
-# forcing here
-#set(CMAKE_CXX_STANDARD 11)
-
 # Sorta works, but generates a billion warnings.  PGGCC-36 attempts to
 # isolate why.  Disabing for that reason
 option(EMBR_EXP_AUTOSTART "Experimental autostart testing" OFF)
@@ -15,7 +11,7 @@ add_definitions(-DUNIT_TESTING=1)
 # No longer dogfooding top level directly, since it makes CLion lose its mind
 add_subdirectory(../../src embr)
 
-CPMAddPackage("gh:catchorg/Catch2@3.9.0")
+CPMAddPackage("gh:catchorg/Catch2@3.11.0")
 CPMAddPackage("gh:vector-of-bool/cmrc#952ffddba731fc110bd50409e8d2b8a06abbd237")
 
 set(RESOURCES resources/playlist.json)
@@ -72,7 +68,6 @@ add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${EXTRA_FILES} ${RESOURCES})
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${estd_SOURCE_DIR}/estd/port/esp-idf/fake)
 
-# necessary for Catch2
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_11)
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE UNIT_TESTING=1)
