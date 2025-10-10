@@ -15,7 +15,7 @@ include(${ROOT_DIR}/tools/cmake/version.cmake)
 # TODO: Bring this guy in
 add_library(${PROJECT_NAME} INTERFACE)
 add_library(malachi-iot::embr ALIAS ${PROJECT_NAME})
-add_library(embr_static STATIC ${SOURCE_FILES})
+add_library(embr_static STATIC)
 add_library(embr::embr ALIAS embr_static)
 add_library(embr::embr_interface ALIAS ${PROJECT_NAME})
 
@@ -32,10 +32,9 @@ target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_11)
 
 # DEBT: Dogfood embr_interface into embr_static
 target_link_libraries(${PROJECT_NAME} INTERFACE estd)
-target_link_libraries(embr_static PUBLIC estd)
+target_link_libraries(embr_static PUBLIC embr)
 
 target_include_directories(${PROJECT_NAME} INTERFACE .)
-target_include_directories(embr_static PUBLIC .)
 
 # Apparently interface libraries don't play well with LINKER_LANGUAGE.  Probably OK since
 # a header library doesn't need its own link phase.

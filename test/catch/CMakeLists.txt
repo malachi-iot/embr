@@ -6,8 +6,6 @@ project(embr-unit-test VERSION 1.0.0)
 # isolate why.  Disabing for that reason
 option(EMBR_EXP_AUTOSTART "Experimental autostart testing" OFF)
 
-add_definitions(-DUNIT_TESTING=1)
-
 # No longer dogfooding top level directly, since it makes CLion lose its mind
 add_subdirectory(../../src embr)
 
