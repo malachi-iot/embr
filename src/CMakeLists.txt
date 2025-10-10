@@ -7,17 +7,17 @@ project(embr VERSION 0.4.3 LANGUAGES CXX
 
 include(../tools/cmake/setvars.cmake)
 
+set(INTERFACE_NAME ${PROJECT_NAME}-interface)
+
 # Grab SOURCE_FILES
 include(sources.cmake)
 include(${ROOT_DIR}/tools/cmake/version.cmake)
 
-# https://stackoverflow.com/questions/5957134/how-do-i-set-up-cmake-to-generate-header-only-projects
-# TODO: Bring this guy in
-add_library(${PROJECT_NAME} INTERFACE)
-add_library(malachi-iot::embr ALIAS ${PROJECT_NAME})
-add_library(embr_static STATIC)
-add_library(embr::embr ALIAS embr_static)
-add_library(embr::embr_interface ALIAS ${PROJECT_NAME})
+add_library(${INTERFACE_NAME} INTERFACE)
+add_library(${PROJECT_NAME}-static STATIC)
+add_library(malachi-iot::embr ALIAS ${INTERFACE_NAME})
+add_library(embr::embr ALIAS ${PROJECT_NAME}-static)
+add_library(embr::interface ALIAS ${INTERFACE_NAME})
 
 CPMAddPackage("gh:malachi-iot/estdlib@0.8.10")
 
@@ -26,15 +26,14 @@ CPMAddPackage("gh:malachi-iot/estdlib@0.8.10")
 #target_compile_features(estd INTERFACE cxx_std_11)
 #target_compile_features(embr INTERFACE cxx_std_11)
 
-target_sources(${PROJECT_NAME} INTERFACE ${SOURCE_FILES} ${INCLUDE_FILES})
+target_sources(${INTERFACE_NAME} INTERFACE ${SOURCE_FILES} ${INCLUDE_FILES})
 
-target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_11)
+target_compile_features(${INTERFACE_NAME} INTERFACE cxx_std_11)
 
-# DEBT: Dogfood embr_interface into embr_static
-target_link_libraries(${PROJECT_NAME} INTERFACE estd)
-target_link_libraries(embr_static PUBLIC embr)
+target_link_libraries(${INTERFACE_NAME} INTERFACE estd)
+target_link_libraries(${PROJECT_NAME}-static PUBLIC embr::interface)
 
-target_include_directories(${PROJECT_NAME} INTERFACE .)
+target_include_directories(${INTERFACE_NAME} INTERFACE .)
 
 # Apparently interface libraries don't play well with LINKER_LANGUAGE.  Probably OK since
 # a header library doesn't need its own link phase.
