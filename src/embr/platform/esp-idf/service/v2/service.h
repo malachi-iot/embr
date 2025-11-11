@@ -29,19 +29,27 @@ ESP_EVENT_DECLARE_BASE(SERVICE_EVENTS);
 class service : public embr::service::v2::detail::service
 {
     using base_type = embr::service::v2::detail::service;
-    using typename base_type::states;
-    using typename base_type::substates;
-
-    detail::state_base<detail::state_base_traits<
-        substates, service>> state_;
 
 protected:
+    using typename base_type::states;
+    using typename base_type::substates;
+    using traits = detail::state_base_traits<substates, service>;
+
+    detail::state_base<traits> state_{Unstarted};
+
     void state(substates s, int32_t event_id = SERVICE_CHANGING_STATE)
     {
         state_.set(s, *this, SERVICE_EVENTS, event_id);
     }
 
 public:
+    using event_data = typename traits::event_data;
+
+    constexpr substates substate() const { return state_.get(); }
+    constexpr states state() const
+    {
+        return static_cast<states>(state_.get() >> separator);
+    }
 
 };
 

@@ -1,41 +1,6 @@
-#include <esp_event.h>
+#pragma once
 
-namespace embr::esp_idf::event {
-
-template <class Data>
-esp_err_t post(
-    esp_event_base_t event_base,
-    int32_t event_id,
-    Data* event_data,
-    TickType_t ticks_to_wait = portMAX_DELAY)
-{
-    return esp_event_post(
-        event_base,
-        event_id,
-        event_data,
-        sizeof(Data),
-        ticks_to_wait);
-}
-
-
-template <class Data>
-esp_err_t post_to(
-    esp_event_loop_handle_t el,
-    esp_event_base_t event_base,
-    int32_t event_id,
-    Data* event_data,
-    TickType_t ticks_to_wait = portMAX_DELAY)
-{
-    return esp_event_post_to(
-        el,
-        event_base,
-        event_id,
-        event_data,
-        sizeof(Data),
-        ticks_to_wait);
-}
-
-}
+#include "../../event.h"
 
 namespace embr::esp_idf::service::inline v2 {
 
@@ -49,6 +14,19 @@ struct state_base_traits
 
     //static constexpr esp_event_base_t event_base = eb;
     static constexpr origin_type* origin = o;
+
+    struct event_data
+    {
+        origin_type& origin;
+        state_type changing_state;
+        state_type changed_state;
+    };
+
+    static constexpr event_data make_event_data(
+        origin_type& origin, state_type changing_state, state_type changed_state)
+    {
+        return{origin, changing_state, changed_state};
+    }
 };
 
 template <class Traits>
@@ -61,12 +39,7 @@ class state_base
     state_type state_;
 
 public:
-    struct event_data
-    {
-        origin_type& origin;
-        state_type changing_state;
-        state_type changed_state;
-    };
+    using event_data = typename traits::event_data;
 
 private:
     //void post(esp_event_loop_handle_t el, esp_event_base_t event_base)
@@ -74,13 +47,31 @@ private:
     //}
 
 public:
+    constexpr state_base() = default;
+    constexpr state_base(const state_base&) = default;
+    constexpr explicit state_base(state_type initial_state) :
+        state_{initial_state} {}
+
     void set(state_type v, origin_type& origin, esp_event_base_t event_base, int32_t event_id)
     {
-        event_data e{origin, state_, v};
+        if(v == state_)     return;
+
+        event_data e = traits::make_event_data(origin, state_, v);
 
         event::post(event_base, event_id, &e);
         state_ = v;
         event::post(event_base, event_id + 1, &e);
+    }
+
+    void set(state_type v, origin_type& origin, esp_event_loop_handle_t event_loop, esp_event_base_t event_base, int32_t event_id)
+    {
+        if(v == state_)     return;
+
+        event_data e = traits::make_event_data(origin, state_, v);
+
+        event::post(event_loop, event_base, event_id, &e);
+        state_ = v;
+        event::post(event_loop, event_base, event_id + 1, &e);
     }
 
     constexpr state_type get() const
@@ -88,6 +79,7 @@ public:
         return state_;
     }
 
+    // EXPERIMENTAL
     state_base& operator =(state_type v)
     {
         static_assert(traits::o != nullptr, "Origin pointer must be provided in traits");
