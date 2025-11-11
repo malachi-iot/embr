@@ -18,10 +18,12 @@ set(SOURCE_FILES
     dsp.cpp
     embr/internal/general.cpp
     embr/service/service_v1.cpp
+    embr/service/service_v2.cpp
     )
 
 set(ESP_IDF_SOURCE_FILES ${SOURCE_FILES}
     embr/platform/esp-idf/debounce.cpp
+    embr/platform/esp-idf/service.cpp
     embr/platform/esp-idf/timer-scheduler.cpp
     )
 
