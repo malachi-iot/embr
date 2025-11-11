@@ -24,6 +24,7 @@ set(COMPONENT_SRCS
     memory.cpp
     nvs.cpp
     power.cpp
+    service.cpp
     "timer.cpp")
 
 set(COMPONENT_REQUIRES estd embr unity testable esp_helper esp_psram)
