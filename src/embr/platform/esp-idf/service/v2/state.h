@@ -47,6 +47,7 @@ struct state_base_traits
     using state_type = State;
     using origin_type = Origin;
 
+    //static constexpr esp_event_base_t event_base = eb;
     static constexpr origin_type* origin = o;
 };
 
@@ -68,11 +69,25 @@ public:
     };
 
 private:
-    void post(esp_event_loop_handle_t el, esp_event_base_t event_base)
-    {
-    }
+    //void post(esp_event_loop_handle_t el, esp_event_base_t event_base)
+    //{
+    //}
 
 public:
+    void set(state_type v, origin_type& origin, esp_event_base_t event_base, int32_t event_id)
+    {
+        event_data e{origin, state_, v};
+
+        event::post(event_base, event_id, &e);
+        state_ = v;
+        event::post(event_base, event_id + 1, &e);
+    }
+
+    constexpr state_type get() const
+    {
+        return state_;
+    }
+
     state_base& operator =(state_type v)
     {
         static_assert(traits::o != nullptr, "Origin pointer must be provided in traits");
