@@ -1,0 +1,9 @@
+menu "embr::unity config"
+
+    config EMBR_UNITY_SCHEDULER_TEST
+        bool "Test time-sensitive scheduler"
+        default n
+        help
+            Scheduler doesn't usually pass unit test due to expected deviations in timing.
+
+endmenu

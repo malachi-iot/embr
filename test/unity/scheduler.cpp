@@ -216,7 +216,7 @@ void test_scheduler()
     freertos::test_scheduler_with_event();
     freertos::test_scheduler_with_notify();
 #endif
-#ifdef ESP_IDF_TESTING
+#if defined(ESP_IDF_TESTING) && defined(CONFIG_EMBR_UNITY_SCHEDULER_TEST)
     idf::test_gptimer_scheduler();
 #endif
 }

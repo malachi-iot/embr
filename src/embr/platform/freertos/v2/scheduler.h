@@ -1,6 +1,6 @@
 #pragma once
 
-#include <estd/port/freertos/event_groups.h>
+#include <estd/port/freertos/event_group.h>
 #include <estd/port/freertos/mutex.h>
 #include <estd/port/freertos/wrapper/task.h>
 #include <estd/port/freertos/chrono.h>
