@@ -11,6 +11,17 @@ esp_err_t handler_register(esp_event_base_t event_base, int32_t event_id, esp_ev
 }
 
 // EXPERIMENTAL
+template <class F>
+esp_err_t handler_register_exp(esp_event_base_t event_base, int32_t event_id, F& f)
+{
+    return esp_event_handler_register(event_base, event_id,
+        [](void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data)
+        {
+            static_cast<F*>(arg)->operator()(event_base, event_id, event_data);
+        }, &f);
+}
+
+// EXPERIMENTAL
 esp_err_t handler_register_with(esp_event_loop_handle_t event_loop, esp_event_base_t event_base, int32_t event_id, esp_event_handler_t event_handler, void* event_handler_arg)
 {
     return esp_event_handler_register_with(event_loop, event_base, event_id, event_handler, event_handler_arg);
