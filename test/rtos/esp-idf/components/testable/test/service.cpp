@@ -62,9 +62,17 @@ EMBR_IDF_EVENT_TRAITS(SYNTHETIC_EVENTS2, SYNTHETIC2_EVENT_1, int);
 
 static constexpr const char* TEST1 = "SYNTHETIC_EVENTS";
 
+#define FEATURE_USER_EVENT_LOOP 1
+
+
 // DEBT: Put this test elsewhere
 TEST_CASE("event", "[esp_idf::event]")
 {
+    constexpr esp_event_loop_args_t loop_args
+    {
+        .queue_size = 5,
+    };
+
     // DEBT: Make our own event loop here, not the system one.  Race condition awaits
     // us since there's no gauruntee the post chain finishes in time
     ESP_ERROR_CHECK(esp_event_loop_create_default());
@@ -114,16 +122,13 @@ struct service1 : esp_idf::service::v2::service
 };
 
 
-#define FEATURE_USER_EVENT_LOOP 1
-
-
 TEST_CASE("service", "[service::v2]")
 {
     // DEBT: Make our own event loop here, not the system one.  Also we depend on
     // pseudo-side-effect of prior above test doing this.
     //ESP_ERROR_CHECK(esp_event_loop_create_default());
 
-    esp_event_loop_args_t loop_args
+    constexpr esp_event_loop_args_t loop_args
     {
         .queue_size = 5,
         .task_name = nullptr,
