@@ -22,6 +22,15 @@ enum SYNTHETIC_EVENTS
     SYNTHETIC_EVENT_2
 };
 
+using rescued = SYNTHETIC_EVENTS;
+
+PROPERTY_TRAITS(SYNTHETIC_EVENTS, SYNTHETIC_EVENT_1, int);
+
+// Associated SERVICE_EVENTS with substates
+PROPERTY_TRAITS(
+    esp_idf::service::rescued,
+    esp_idf::service::SERVICE_CHANGING_STATE, embr::service::v2::service::substates);
+
 // Cleverly, this overrides visiblity of above enum.  However, that interferes
 // with some of our template tricks.
 // TODO: We might try some tricks of our own and
@@ -88,7 +97,7 @@ TEST_CASE("service", "[service::v2]")
         v2::SERVICE_EVENTS, v2::SERVICE_CHANGING_STATE,
         [](void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data)
         {
-            auto& e = *static_cast<service1::event_data*>(event_data);
+            auto& e = *static_cast<service1::state_event_data*>(event_data);
 
             TEST_ASSERT_EQUAL_PTR(service1::property::state, e.name.data());
             TEST_ASSERT_EQUAL(esp_idf::service::v2::SERVICE_CHANGING_STATE, event_id);
@@ -98,12 +107,12 @@ TEST_CASE("service", "[service::v2]")
             started = true;
         });
 
-    auto f = [&](int32_t event_id, service1::event_data* event_data)
+    auto f = [&](int32_t event_id, service1::state_event_data* event_data)
     {
         ++counter;
     };
 
-    std::function f2([&](int32_t event_id, service1::event_data* event_data)
+    std::function f2([&](int32_t event_id, service1::state_event_data* event_data)
     {
         ++counter;
     });
@@ -113,7 +122,7 @@ TEST_CASE("service", "[service::v2]")
     ESP_ERROR_CHECK(svc1.handler_register(loop_handle, v2::SERVICE_CHANGING_STATE, f2));
 #else
     ESP_ERROR_CHECK(svc1.handler_register(v2::SERVICE_CHANGING_STATE, f));
-    ESP_ERROR_CHECK(svc1.handler_register(v2::SERVICE_CHANGING_STATE, f2));
+    ESP_ERROR_CHECK(svc1.on_state_changed(f2));
 #endif
 
 #if FEATURE_USER_EVENT_LOOP

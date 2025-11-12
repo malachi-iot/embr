@@ -4,7 +4,27 @@
 
 #include "../../event.h"
 
+template <class Tag, int32_t _id>
+struct embr_idf_property_traits
+{
+    static constexpr bool specialized = false;
+    static constexpr const char* id = "unspecified";
+    using type = void;
+};
+
+#define PROPERTY_TRAITS(tag, _id, _type) \
+template <> \
+struct embr_idf_property_traits<tag, _id> \
+{ \
+    static constexpr bool specialized = true; \
+    static constexpr const char* id = #_id; \
+    using type = _type; \
+};
+
 namespace embr::esp_idf::service::inline v2 {
+
+template <class Tag, int32_t id>
+using property_traits = embr_idf_property_traits<Tag, id>;
 
 namespace detail {
 
@@ -40,6 +60,17 @@ struct meta
     int32_t event_id;
     // property name
     std::string_view name;
+
+    template <class Event, class F>
+    esp_err_t handler_register(F& f)
+    {
+        using event_data = Event;
+        return esp_event_handler_register(event_base, event_id,
+            [](void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data2)
+            {
+                static_cast<F*>(arg)->operator()(event_id, static_cast<event_data*>(event_data2));
+            }, &f);
+    }
 };
 
 template <class Traits>
@@ -106,6 +137,27 @@ public:
     constexpr operator state_type() const
     {
         return state_;
+    }
+
+    template <class F>
+    static esp_err_t handler_register(esp_event_base_t event_base, int32_t event_id, F& f)
+    {
+        return esp_event_handler_register(event_base, event_id,
+            [](void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data2)
+            {
+                static_cast<F*>(arg)->operator()(event_id, static_cast<event_data*>(event_data2));
+            }, &f);
+    }
+
+    template <class F>
+    static esp_err_t handler_register(esp_event_loop_handle_t loop_handle,
+        esp_event_base_t event_base, int32_t event_id, F& f)
+    {
+        return esp_event_handler_register_with(loop_handle, event_base, event_id,
+            [](void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data2)
+            {
+                static_cast<F*>(arg)->operator()(event_id, static_cast<event_data*>(event_data2));
+            }, &f);
     }
 };
 

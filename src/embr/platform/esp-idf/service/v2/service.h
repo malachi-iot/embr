@@ -24,7 +24,19 @@ enum SERVICE_EVENTS
     USER1_CHANGED_STATE,
 };
 
+enum PROPERTY_EVENTS
+{
+    SERVICE_PROPERTY_CHANGED,
+    DRIVER_PROPERTY_CHANGED,
+    SUBSYSTEM_PROPERTY_CHANGED,
+    APP_PROPERTY_CHANGED,
+    USER1_PROPERTY_CHANGED,
+};
+
+using rescued = SERVICE_EVENTS;
+
 ESP_EVENT_DECLARE_BASE(SERVICE_EVENTS);
+ESP_EVENT_DECLARE_BASE(PROPERTY_EVENTS);
 
 class service : public embr::service::v2::detail::service
 {
@@ -39,9 +51,10 @@ public:
 protected:
     using typename base_type::states;
     using typename base_type::substates;
-    using traits = detail::state_base_traits<substates, service>;
+    using state_traits = detail::state_base_traits<substates, service>;
+    using state_base = detail::state_base<state_traits>;
 
-    detail::state_base<traits> state_{Unstarted};
+    state_base state_{Unstarted};
 
     void state(substates s, int32_t event_id = SERVICE_CHANGING_STATE)
     {
@@ -54,7 +67,7 @@ protected:
     }
 
 public:
-    using event_data = typename traits::event_data;
+    using state_event_data = typename state_traits::event_data;
 
     constexpr substates substate() const { return state_.get(); }
     constexpr states state() const
@@ -65,21 +78,19 @@ public:
     template <class F>
     static esp_err_t handler_register(int32_t event_id, F& f)
     {
-        return esp_event_handler_register(SERVICE_EVENTS, event_id,
-            [](void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data2)
-            {
-                static_cast<F*>(arg)->operator()(event_id, static_cast<event_data*>(event_data2));
-            }, &f);
+        return state_base::handler_register(SERVICE_EVENTS, event_id, f);
     }
 
     template <class F>
     static esp_err_t handler_register(esp_event_loop_handle_t loop_handle, int32_t event_id, F& f)
     {
-        return esp_event_handler_register_with(loop_handle, SERVICE_EVENTS, event_id,
-            [](void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data2)
-            {
-                static_cast<F*>(arg)->operator()(event_id, static_cast<event_data*>(event_data2));
-            }, &f);
+        return state_base::handler_register(loop_handle, SERVICE_EVENTS, event_id, f);
+    }
+
+    template <class F>
+    static esp_err_t on_state_changed(F& f)
+    {
+        return state_base::handler_register(SERVICE_EVENTS, SERVICE_CHANGED_STATE, f);
     }
 };
 
