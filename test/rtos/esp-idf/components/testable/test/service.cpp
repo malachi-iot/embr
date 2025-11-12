@@ -63,9 +63,22 @@ static constexpr const char* TEST1 = "SYNTHETIC_EVENTS";
 // DEBT: Put this test elsewhere
 TEST_CASE("event", "[esp_idf::event]")
 {
-    ESP_LOGI(TAG, "GOT HERE: %s", SYNTHETIC_EVENTS2);
-    //esp_idf::event::post(SYNTHETIC_EVENTS2, SYNTHETIC2_EVENT_1);
+    // DEBT: Make our own event loop here, not the system one.  Race condition awaits
+    // us since there's no gauruntee the post chain finishes in time
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
+    static int counter = 0;
+
+    ESP_LOGV(TAG, "GOT HERE: %s", SYNTHETIC_EVENTS2);
+
+    auto f = [](int* data)
+    {
+        ++counter;
+    };
+    esp_idf::event::handler_register_exp<SYNTHETIC_EVENTS2, SYNTHETIC2_EVENT_1>(f);
+
     esp_idf::event::post(SYNTHETIC_EVENTS2, SYNTHETIC2_EVENT_1);
+
+    TEST_ASSERT_EQUAL(1, counter);
 }
 
 TEST_CASE("state", "[service::state::v2]")
@@ -102,8 +115,9 @@ struct service1 : esp_idf::service::v2::service
 
 TEST_CASE("service", "[service::v2]")
 {
-    // DEBT: Make our own event loop here, not the system one
-    ESP_ERROR_CHECK(esp_event_loop_create_default());
+    // DEBT: Make our own event loop here, not the system one.  Also we depend on
+    // pseudo-side-effect of prior above test doing this.
+    //ESP_ERROR_CHECK(esp_event_loop_create_default());
 
     esp_event_loop_args_t loop_args
     {
