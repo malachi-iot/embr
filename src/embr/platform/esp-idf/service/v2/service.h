@@ -30,6 +30,12 @@ class service : public embr::service::v2::detail::service
 {
     using base_type = embr::service::v2::detail::service;
 
+public:
+    struct property
+    {
+        static constexpr const char* state = "service.state";
+    };
+
 protected:
     using typename base_type::states;
     using typename base_type::substates;
@@ -39,12 +45,12 @@ protected:
 
     void state(substates s, int32_t event_id = SERVICE_CHANGING_STATE)
     {
-        state_.set(s, *this, SERVICE_EVENTS, event_id);
+        state_.set(s, *this, SERVICE_EVENTS, event_id, property::state);
     }
 
     void state(substates s, esp_event_loop_handle_t loop_handle, int32_t event_id = SERVICE_CHANGING_STATE)
     {
-        state_.set(s, *this, loop_handle, SERVICE_EVENTS, event_id);
+        state_.set(s, *this, loop_handle, SERVICE_EVENTS, event_id, property::state);
     }
 
 public:

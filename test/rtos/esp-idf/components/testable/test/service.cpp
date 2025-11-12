@@ -90,6 +90,7 @@ TEST_CASE("service", "[service::v2]")
         {
             auto& e = *static_cast<service1::event_data*>(event_data);
 
+            TEST_ASSERT_EQUAL_PTR(service1::property::state, e.name.data());
             TEST_ASSERT_EQUAL(esp_idf::service::v2::SERVICE_CHANGING_STATE, event_id);
             TEST_ASSERT_EQUAL(service1::Unstarted, e.changing_state);
             TEST_ASSERT_EQUAL(service1::Starting, e.changed_state);

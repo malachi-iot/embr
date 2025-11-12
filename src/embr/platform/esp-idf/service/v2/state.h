@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string_view>
+
 #include "../../event.h"
 
 namespace embr::esp_idf::service::inline v2 {
@@ -20,13 +22,24 @@ struct state_base_traits
         origin_type& origin;
         state_type changing_state;
         state_type changed_state;
+        // property name
+        std::string_view name;
     };
 
     static constexpr event_data make_event_data(
-        origin_type& origin, state_type changing_state, state_type changed_state)
+        origin_type& origin, state_type changing_state,
+        state_type changed_state, std::string_view name = {})
     {
-        return{origin, changing_state, changed_state};
+        return{origin, changing_state, changed_state, name};
     }
+};
+
+struct meta
+{
+    esp_event_base_t event_base;
+    int32_t event_id;
+    // property name
+    std::string_view name;
 };
 
 template <class Traits>
@@ -52,22 +65,24 @@ public:
     constexpr explicit state_base(state_type initial_state) :
         state_{initial_state} {}
 
-    void set(state_type v, origin_type& origin, esp_event_base_t event_base, int32_t event_id)
+    void set(state_type v, origin_type& origin,
+        esp_event_base_t event_base, int32_t event_id, std::string_view name = {})
     {
         if(v == state_)     return;
 
-        event_data e = traits::make_event_data(origin, state_, v);
+        event_data e = traits::make_event_data(origin, state_, v, name);
 
         event::post(event_base, event_id, &e);
         state_ = v;
         event::post(event_base, event_id + 1, &e);
     }
 
-    void set(state_type v, origin_type& origin, esp_event_loop_handle_t event_loop, esp_event_base_t event_base, int32_t event_id)
+    void set(state_type v, origin_type& origin, esp_event_loop_handle_t event_loop,
+        esp_event_base_t event_base, int32_t event_id, std::string_view name = {})
     {
         if(v == state_)     return;
 
-        event_data e = traits::make_event_data(origin, state_, v);
+        event_data e = traits::make_event_data(origin, state_, v, name);
 
         event::post(event_loop, event_base, event_id, &e);
         state_ = v;
