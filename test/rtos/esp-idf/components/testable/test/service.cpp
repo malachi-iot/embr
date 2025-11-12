@@ -85,9 +85,11 @@ TEST_CASE("event", "[esp_idf::event]")
 
 TEST_CASE("state", "[service::state::v2]")
 {
-    using svc = embr::service::v2::service;
-    using traits = esp_idf::service::v2::detail::state_base_traits<
-        svc::substates, int>;
+    //using svc = embr::service::v2::service;
+    //using traits = esp_idf::service::v2::detail::state_base_traits<
+    //    svc::substates, int>;
+    using traits = esp_idf::event_traits<
+        esp_idf::service::SERVICE_EVENTS, esp_idf::service::SERVICE_CHANGED_STATE>;
 
     esp_idf::service::v2::detail::state_base<traits> state;
 }
@@ -112,7 +114,7 @@ struct service1 : esp_idf::service::v2::service
 };
 
 
-#define FEATURE_USER_EVENT_LOOP 0
+#define FEATURE_USER_EVENT_LOOP 1
 
 
 TEST_CASE("service", "[service::v2]")
@@ -133,20 +135,27 @@ TEST_CASE("service", "[service::v2]")
 
     namespace v2 = esp_idf::service::v2;
 
-    service1 svc1;
+    // NOTE: Only making static since this is a synthetic test.  You'd want to use arg
+    // for production code
+    static service1 svc1;
     static bool started = false;
     int counter = 0;
 
+    // DEBT: Bring back SERVICE_CHANGING_STATE ability
     esp_idf::event::handler_register(
-        v2::SERVICE_EVENTS, v2::SERVICE_CHANGING_STATE,
+#if FEATURE_USER_EVENT_LOOP
+        loop_handle,
+#endif
+        v2::SERVICE_EVENTS, v2::SERVICE_CHANGED_STATE,
         [](void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data)
         {
             auto& e = *static_cast<service1::state_event_data*>(event_data);
 
             TEST_ASSERT_EQUAL_PTR(service1::property::state, e.name.data());
-            TEST_ASSERT_EQUAL(esp_idf::service::v2::SERVICE_CHANGING_STATE, event_id);
+            TEST_ASSERT_EQUAL(esp_idf::service::v2::SERVICE_CHANGED_STATE, event_id);
             TEST_ASSERT_EQUAL(service1::Unstarted, e.changing_state);
             TEST_ASSERT_EQUAL(service1::Starting, e.changed_state);
+            TEST_ASSERT_EQUAL_PTR(&e.origin, &svc1);
 
             started = true;
         });
@@ -162,10 +171,11 @@ TEST_CASE("service", "[service::v2]")
     });
 
 #if FEATURE_USER_EVENT_LOOP
-    ESP_ERROR_CHECK(svc1.handler_register(loop_handle, v2::SERVICE_CHANGING_STATE, f));
-    ESP_ERROR_CHECK(svc1.handler_register(loop_handle, v2::SERVICE_CHANGING_STATE, f2));
+    // FIX: These are broken
+    ESP_ERROR_CHECK(svc1.on_state_changed(loop_handle, f));
+    ESP_ERROR_CHECK(svc1.on_state_changed(loop_handle, f2));
 #else
-    ESP_ERROR_CHECK(svc1.handler_register(v2::SERVICE_CHANGING_STATE, f));
+    ESP_ERROR_CHECK(svc1.on_state_changed(f));
     ESP_ERROR_CHECK(svc1.on_state_changed(f2));
 #endif
 
@@ -173,8 +183,8 @@ TEST_CASE("service", "[service::v2]")
     svc1.do_things(loop_handle);
 
     ESP_ERROR_CHECK(esp_event_loop_run(loop_handle, 50));
-    ESP_ERROR_CHECK(esp_event_loop_run(loop_handle, 50));
-    ESP_ERROR_CHECK(esp_event_loop_run(loop_handle, 50));
+    //ESP_ERROR_CHECK(esp_event_loop_run(loop_handle, 50));
+    //ESP_ERROR_CHECK(esp_event_loop_run(loop_handle, 50));
 #else
     svc1.do_things();
 #endif

@@ -5,6 +5,7 @@
 #include "../../event.h"
 #include "property.h"
 
+#if UNUSED
 // TODO: Rework to use embr_idf_event_traits, but augment it with
 // static constexpr bool property = true;
 template <esp_event_base_t event_base, int32_t _id>
@@ -25,11 +26,14 @@ struct embr_idf_property_traits<event_base, event_id> \
     static constexpr const char* base = event_base; \
     using type = _type; \
 };
+#endif
 
 namespace embr::esp_idf::service::inline v2 {
 
+#if UNUSED
 template <esp_event_base_t event_base, int32_t id>
 using property_traits = embr_idf_property_traits<event_base, id>;
+#endif
 
 namespace detail {
 
@@ -74,14 +78,22 @@ struct meta
 template <class Traits>
 class state_base
 {
+    static constexpr const char* TAG = "state_base";
+
     using traits = Traits;
-    using origin_type = typename traits::origin_type;
-    using state_type = typename traits::state_type;
+
+    static_assert(traits::is_property, "Traits don't describe a property.  Please use EMBR_IDF_PROP_TRAITS");
+
+    using origin_type = typename traits::type::origin_type;
+    using state_type = typename traits::type::state_type;
 
     state_type state_;
 
+    static constexpr esp_event_base_t event_base = traits::base;
+    static constexpr int32_t event_id = traits::id;
+
 public:
-    using event_data = typename traits::event_data;
+    using event_data = typename traits::type;
 
 private:
     //void post(esp_event_loop_handle_t el, esp_event_base_t event_base)
@@ -91,31 +103,36 @@ private:
 public:
     constexpr state_base() = default;
     constexpr state_base(const state_base&) = default;
-    constexpr explicit state_base(state_type initial_state) :
+    constexpr explicit state_base(const state_type& initial_state) :
         state_{initial_state} {}
 
     void set(state_type v, origin_type& origin,
-        esp_event_base_t event_base, int32_t event_id, std::string_view name = {})
+        std::string_view name = {})
     {
         if(v == state_)     return;
 
-        event_data e = traits::make_event_data(origin, state_, v, name);
+        ESP_LOGV(TAG, "state_base::set: %s:%d (%s)",
+            event_base, event_id, traits::id_name);
+    
+        event_data e(origin, state_, v, name);
 
-        event::post(event_base, event_id, &e);
+        //event::post(event_base, event_id, &e);
         state_ = v;
-        event::post(event_base, event_id + 1, &e);
+        //event::post(event_base, event_id + 1, &e);
+        event::post(event_base, event_id, &e);
     }
 
     void set(state_type v, origin_type& origin, esp_event_loop_handle_t event_loop,
-        esp_event_base_t event_base, int32_t event_id, std::string_view name = {})
+        std::string_view name = {})
     {
         if(v == state_)     return;
 
-        event_data e = traits::make_event_data(origin, state_, v, name);
+        event_data e(origin, state_, v, name);
 
-        event::post(event_loop, event_base, event_id, &e);
+        //event::post(event_loop, event_base, event_id, &e);
         state_ = v;
-        event::post(event_loop, event_base, event_id + 1, &e);
+        //event::post(event_loop, event_base, event_id + 1, &e);
+        event::post(event_loop, event_base, event_id, &e);
     }
 
     constexpr state_type get() const
@@ -139,7 +156,7 @@ public:
 
     // Does not support the wildcard event idea
     template <class F>
-    static esp_err_t handler_register(esp_event_base_t event_base, int32_t event_id, F& f)
+    static esp_err_t handler_register(F& f)
     {
         return esp_event_handler_register(event_base, event_id,
             [](void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data2)
@@ -149,8 +166,7 @@ public:
     }
 
     template <class F>
-    static esp_err_t handler_register(esp_event_loop_handle_t loop_handle,
-        esp_event_base_t event_base, int32_t event_id, F& f)
+    static esp_err_t handler_register(esp_event_loop_handle_t loop_handle, F& f)
     {
         return esp_event_handler_register_with(loop_handle, event_base, event_id,
             [](void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data2)

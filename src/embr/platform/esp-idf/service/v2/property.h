@@ -14,6 +14,7 @@ struct embr_idf_event_traits<event_base, event_id> \
     static constexpr const char* base = event_base; \
     using type = ::embr::esp_idf::service::property_event_data<_type, origin>; \
     static constexpr const char* type_name = "TBD"; \
+    /* experimental */ static constexpr int32_t changing_id = id + 10000; \
 };
 
 // DEBT: Use a different namespace, and so far the content of this namespace is not idf specific

@@ -6,7 +6,7 @@ template <esp_event_base_t event_base, int32_t event_id>
 struct embr_idf_event_traits
 {
     static constexpr bool specialized = false;
-    static constexpr bool property = false;
+    static constexpr bool is_property = false;
     static constexpr int32_t id = event_id;
     static constexpr const char* id_name = "unspecified";
     static constexpr const char* base = event_base;
@@ -20,7 +20,7 @@ template <> \
 struct embr_idf_event_traits<event_base, event_id> \
 { \
     static constexpr bool specialized = true; \
-    static constexpr bool property = false; \
+    static constexpr bool is_property = false; \
     static constexpr int32_t id = event_id; \
     static constexpr const char* id_name = #event_id; \
     static constexpr const char* base = event_base; \
@@ -54,7 +54,8 @@ esp_err_t handler_register_exp(esp_event_base_t event_base, int32_t event_id, F&
 }
 
 // EXPERIMENTAL
-esp_err_t handler_register_with(esp_event_loop_handle_t event_loop, esp_event_base_t event_base, int32_t event_id, esp_event_handler_t event_handler, void* event_handler_arg)
+esp_err_t handler_register(esp_event_loop_handle_t event_loop, esp_event_base_t event_base, int32_t event_id,
+    esp_event_handler_t event_handler, void* event_handler_arg = nullptr)
 {
     return esp_event_handler_register_with(event_loop, event_base, event_id, event_handler, event_handler_arg);
 }
