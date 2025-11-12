@@ -38,12 +38,14 @@ enum SYNTHETIC_EVENTS2
 
 using rescued = SYNTHETIC_EVENTS;
 
+/*
 EMBR_IDF_PROP_TRAITS(SYNTHETIC_EVENTS, SYNTHETIC_EVENT_1, int);
 
 // Associated SERVICE_EVENTS with substates
 EMBR_IDF_PROP_TRAITS(
     esp_idf::service::service_events,
     esp_idf::service::SERVICE_CHANGING_STATE, embr::service::v2::service::substates);
+*/
 
 // Cleverly, this overrides visiblity of above enum.  However, that interferes
 // with some of our template tricks.

@@ -3,8 +3,11 @@
 #include <string_view>
 
 #include "../../event.h"
+#include "property.h"
 
-template <class Tag, int32_t _id>
+// TODO: Rework to use embr_idf_event_traits, but augment it with
+// static constexpr bool property = true;
+template <esp_event_base_t event_base, int32_t _id>
 struct embr_idf_property_traits
 {
     static constexpr bool specialized = false;
@@ -12,23 +15,36 @@ struct embr_idf_property_traits
     using type = void;
 };
 
-#define EMBR_IDF_PROP_TRAITS(_enum, _id, _type) \
+#define EMBR_IDF_PROP_TRAITS_OLD(event_base, event_id, _type) \
 template <> \
-struct embr_idf_property_traits<_enum, _id> \
+struct embr_idf_property_traits<event_base, event_id> \
 { \
     static constexpr bool specialized = true; \
-    static constexpr int32_t id = _id; \
-    static constexpr const char* id_name = #_id; \
-    static constexpr const char* tag = #_enum; \
+    static constexpr int32_t id = event_id; \
+    static constexpr const char* id_name = #event_id; \
+    static constexpr const char* base = event_base; \
     using type = _type; \
 };
 
 namespace embr::esp_idf::service::inline v2 {
 
-template <class Tag, int32_t id>
-using property_traits = embr_idf_property_traits<Tag, id>;
+template <esp_event_base_t event_base, int32_t id>
+using property_traits = embr_idf_property_traits<event_base, id>;
 
 namespace detail {
+
+template <class State, class Origin>
+struct property_event_data
+{
+    using state_type = State;
+    using origin_type = Origin;
+
+    Origin& origin;
+    State changing_state;
+    State changed_state;
+    // property name
+    std::string_view name;
+};
 
 template <class State, class Origin, Origin* o = {}>
 struct state_base_traits

@@ -2,32 +2,37 @@
 
 #include <esp_event.h>
 
-template <esp_event_base_t EventBase, int32_t event_id>
+template <esp_event_base_t event_base, int32_t event_id>
 struct embr_idf_event_traits
 {
     static constexpr bool specialized = false;
+    static constexpr bool property = false;
     static constexpr int32_t id = event_id;
     static constexpr const char* id_name = "unspecified";
-    static constexpr const char* event_base = EventBase;
+    static constexpr const char* base = event_base;
     using type = void;
     static constexpr const char* type_name = id_name;
 };
 
 
-#define EMBR_IDF_EVENT_TRAITS(_enum, event_id, payload) \
+#define EMBR_IDF_EVENT_TRAITS(event_base, event_id, payload) \
 template <> \
-struct embr_idf_event_traits<_enum, event_id> \
+struct embr_idf_event_traits<event_base, event_id> \
 { \
     static constexpr bool specialized = true; \
+    static constexpr bool property = false; \
     static constexpr int32_t id = event_id; \
     static constexpr const char* id_name = #event_id; \
-    static constexpr const char* event_base = _enum; \
+    static constexpr const char* base = event_base; \
     using type = payload; \
     static constexpr const char* type_name = #payload; \
 };
 
 
 namespace embr::esp_idf::inline event {
+
+template <esp_event_base_t event_base, int32_t event_id>
+using event_traits = embr_idf_event_traits<event_base, event_id>;
 
 // EXPERIMENTAL
 esp_err_t handler_register(esp_event_base_t event_base, int32_t event_id, esp_event_handler_t event_handler, void* event_handler_arg = nullptr)
@@ -54,7 +59,7 @@ esp_err_t handler_register_with(esp_event_loop_handle_t event_loop, esp_event_ba
 
 // EXPERIMENTAL
 template <esp_event_base_t event_base, int32_t event_id,
-    class Data = typename embr_idf_event_traits<event_base, event_id>::type, class F>
+    class Data = typename event_traits<event_base, event_id>::type, class F>
 esp_err_t handler_register_exp(F& f)
 {
     return esp_event_handler_register(event_base, event_id,
