@@ -24,11 +24,11 @@ enum SYNTHETIC_EVENTS
 
 using rescued = SYNTHETIC_EVENTS;
 
-PROPERTY_TRAITS(SYNTHETIC_EVENTS, SYNTHETIC_EVENT_1, int);
+EMBR_IDF_PROP_TRAITS(SYNTHETIC_EVENTS, SYNTHETIC_EVENT_1, int);
 
 // Associated SERVICE_EVENTS with substates
-PROPERTY_TRAITS(
-    esp_idf::service::rescued,
+EMBR_IDF_PROP_TRAITS(
+    esp_idf::service::service_events,
     esp_idf::service::SERVICE_CHANGING_STATE, embr::service::v2::service::substates);
 
 // Cleverly, this overrides visiblity of above enum.  However, that interferes
@@ -107,12 +107,12 @@ TEST_CASE("service", "[service::v2]")
             started = true;
         });
 
-    auto f = [&](int32_t event_id, service1::state_event_data* event_data)
+    auto f = [&](service1::state_event_data* event_data)
     {
         ++counter;
     };
 
-    std::function f2([&](int32_t event_id, service1::state_event_data* event_data)
+    std::function f2([&](service1::state_event_data* event_data)
     {
         ++counter;
     });

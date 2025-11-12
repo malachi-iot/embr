@@ -8,16 +8,18 @@ template <class Tag, int32_t _id>
 struct embr_idf_property_traits
 {
     static constexpr bool specialized = false;
-    static constexpr const char* id = "unspecified";
+    static constexpr const char* id_name = "unspecified";
     using type = void;
 };
 
-#define PROPERTY_TRAITS(tag, _id, _type) \
+#define EMBR_IDF_PROP_TRAITS(_enum, _id, _type) \
 template <> \
-struct embr_idf_property_traits<tag, _id> \
+struct embr_idf_property_traits<_enum, _id> \
 { \
     static constexpr bool specialized = true; \
-    static constexpr const char* id = #_id; \
+    static constexpr int32_t id = _id; \
+    static constexpr const char* id_name = #_id; \
+    static constexpr const char* tag = #_enum; \
     using type = _type; \
 };
 
@@ -139,13 +141,14 @@ public:
         return state_;
     }
 
+    // Does not support the wildcard event idea
     template <class F>
     static esp_err_t handler_register(esp_event_base_t event_base, int32_t event_id, F& f)
     {
         return esp_event_handler_register(event_base, event_id,
             [](void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data2)
             {
-                static_cast<F*>(arg)->operator()(event_id, static_cast<event_data*>(event_data2));
+                static_cast<F*>(arg)->operator()(static_cast<event_data*>(event_data2));
             }, &f);
     }
 
@@ -156,7 +159,7 @@ public:
         return esp_event_handler_register_with(loop_handle, event_base, event_id,
             [](void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data2)
             {
-                static_cast<F*>(arg)->operator()(event_id, static_cast<event_data*>(event_data2));
+                static_cast<F*>(arg)->operator()(static_cast<event_data*>(event_data2));
             }, &f);
     }
 };

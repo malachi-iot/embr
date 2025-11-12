@@ -33,7 +33,16 @@ enum PROPERTY_EVENTS
     USER1_PROPERTY_CHANGED,
 };
 
-using rescued = SERVICE_EVENTS;
+}
+
+EMBR_IDF_PROP_TRAITS(
+    embr::esp_idf::service::SERVICE_EVENTS,
+    embr::esp_idf::service::SERVICE_CHANGED_STATE,
+    embr::service::v2::service::substates);
+
+namespace embr::esp_idf::service::inline v2 {
+
+using service_events = SERVICE_EVENTS;
 
 ESP_EVENT_DECLARE_BASE(SERVICE_EVENTS);
 ESP_EVENT_DECLARE_BASE(PROPERTY_EVENTS);
@@ -51,6 +60,7 @@ public:
 protected:
     using typename base_type::states;
     using typename base_type::substates;
+    using state_prop_traits = property_traits<service_events, SERVICE_CHANGED_STATE>;
     using state_traits = detail::state_base_traits<substates, service>;
     using state_base = detail::state_base<state_traits>;
 
