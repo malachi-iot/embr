@@ -8,4 +8,3 @@ namespace embr::esp_idf::service::inline v2 {
 
 }
 
-#define EMBR_ESP_EVENT_DECLARE_BASE(id) constexpr const char id[] = #id

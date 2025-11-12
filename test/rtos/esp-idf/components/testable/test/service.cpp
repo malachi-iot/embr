@@ -19,7 +19,7 @@ static const char* TAG = "embr::unity::service";
 namespace embr::esp_idf::service::inline v2 {
 
 // FIX: Horribly wrong.  Somehow linker can't pick up the one in embr/platform/esp-idf/service/v2/service.cpp
-ESP_EVENT_DEFINE_BASE(SERVICE_EVENTS);
+//ESP_EVENT_DEFINE_BASE(SERVICE_EVENTS);
 
 }
 
@@ -36,7 +36,7 @@ enum SYNTHETIC_EVENTS2
 };
 
 
-using rescued = SYNTHETIC_EVENTS;
+//using rescued = SYNTHETIC_EVENTS;
 
 /*
 EMBR_IDF_PROP_TRAITS(SYNTHETIC_EVENTS, SYNTHETIC_EVENT_1, int);

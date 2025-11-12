@@ -28,6 +28,8 @@ struct embr_idf_event_traits<event_base, event_id> \
     static constexpr const char* type_name = #payload; \
 };
 
+// DEBT: Inconsistent naming with above
+#define EMBR_ESP_EVENT_DECLARE_BASE(id) constexpr const char id[] = #id
 
 namespace embr::esp_idf::inline event {
 

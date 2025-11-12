@@ -16,3 +16,21 @@ struct embr_idf_event_traits<event_base, event_id> \
     static constexpr const char* type_name = "TBD"; \
 };
 
+// DEBT: Use a different namespace, and so far the content of this namespace is not idf specific
+namespace embr::esp_idf::service::inline v2 {
+
+template <class State, class Origin>
+struct property_event_data
+{
+    using state_type = State;
+    using origin_type = Origin;
+
+    Origin& origin;
+    State changing_state;
+    State changed_state;
+    // property name
+    std::string_view name;
+};
+
+
+}

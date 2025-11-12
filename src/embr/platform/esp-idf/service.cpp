@@ -4,6 +4,4 @@
 
 namespace embr::esp_idf::service::inline v2 {
 
-ESP_EVENT_DEFINE_BASE(SERVICE_EVENTS);
-
 }

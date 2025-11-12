@@ -43,9 +43,7 @@ EMBR_IDF_PROP_TRAITS(
 
 namespace embr::esp_idf::service::inline v2 {
 
-using service_events = SERVICE_EVENTS;
-
-ESP_EVENT_DECLARE_BASE(SERVICE_EVENTS);
+EMBR_ESP_EVENT_DECLARE_BASE(SERVICE_EVENTS);
 ESP_EVENT_DECLARE_BASE(PROPERTY_EVENTS);
 
 class service : public embr::service::v2::detail::service
@@ -61,7 +59,7 @@ public:
 protected:
     using typename base_type::states;
     using typename base_type::substates;
-    //using state_prop_traits = property_traits<service_events, SERVICE_CHANGED_STATE>;
+    using state_prop_traits = event_traits<SERVICE_EVENTS, SERVICE_CHANGED_STATE>;
     using state_traits = detail::state_base_traits<substates, service>;
     using state_base = detail::state_base<state_traits>;
 
