@@ -2,6 +2,29 @@
 
 #include <esp_event.h>
 
+template <esp_event_base_t EventBase, int32_t event_id>
+struct embr_idf_event_traits
+{
+    static constexpr bool specialized = false;
+    static constexpr int32_t id = event_id;
+    static constexpr const char* id_name = "unspecified";
+    static constexpr const char* event_base = EventBase;
+    using type = void;
+};
+
+
+#define EMBR_IDF_EVENT_TRAITS(_enum, event_id, payload) \
+template <> \
+struct embr_idf_event_traits<_enum, event_id> \
+{ \
+    static constexpr bool specialized = true; \
+    static constexpr int32_t id = event_id; \
+    static constexpr const char* id_name = #event_id; \
+    static constexpr const char* event_base = _enum; \
+    using type = payload; \
+};
+
+
 namespace embr::esp_idf::inline event {
 
 // EXPERIMENTAL
@@ -28,36 +51,34 @@ esp_err_t handler_register_with(esp_event_loop_handle_t event_loop, esp_event_ba
 }
 
 template <class Data>
-esp_err_t post(
-    esp_event_base_t event_base,
-    int32_t event_id,
-    Data* event_data,
+esp_err_t post(esp_event_base_t event_base, int32_t event_id, Data* event_data,
     TickType_t ticks_to_wait = portMAX_DELAY)
 {
-    return esp_event_post(
-        event_base,
-        event_id,
-        event_data,
-        sizeof(Data),
+    return esp_event_post(event_base, event_id, event_data, sizeof(Data),
         ticks_to_wait);
 }
 
 
-template <class Data>
-esp_err_t post(
-    esp_event_loop_handle_t el,
-    esp_event_base_t event_base,
-    int32_t event_id,
-    Data* event_data,
+esp_err_t post(esp_event_base_t event_base, int32_t event_id,
     TickType_t ticks_to_wait = portMAX_DELAY)
 {
-    return esp_event_post_to(
-        el,
-        event_base,
-        event_id,
-        event_data,
-        sizeof(Data),
-        ticks_to_wait);
+    return esp_event_post(event_base, event_id, nullptr, 0, ticks_to_wait);
+}
+
+template <class Data>
+esp_err_t post(esp_event_loop_handle_t el, esp_event_base_t event_base,
+    int32_t event_id, Data* event_data,
+    TickType_t ticks_to_wait = portMAX_DELAY)
+{
+    return esp_event_post_to(el, event_base, event_id,
+        event_data, sizeof(Data), ticks_to_wait);
+}
+
+esp_err_t post(esp_event_loop_handle_t el, esp_event_base_t event_base,
+    int32_t event_id, TickType_t ticks_to_wait = portMAX_DELAY)
+{
+    return esp_event_post_to(el, event_base, event_id,
+        nullptr, 0, ticks_to_wait);
 }
 
 }

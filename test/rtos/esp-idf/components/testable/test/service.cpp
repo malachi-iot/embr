@@ -1,13 +1,20 @@
 #include <functional>
 
+#include <esp_log.h>
+
 #include <unity.h>
 
 #include <estd/functional.h>
 
 #include <embr/service/v2/enum.h>
+#include <embr/platform/esp-idf/service/v2/fwd.h>
 #include <embr/platform/esp-idf/service/v2/service.h>
 
 using namespace embr;
+
+static const char* TAG = "embr::unity::service";
+
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 
 namespace embr::esp_idf::service::inline v2 {
 
@@ -21,6 +28,13 @@ enum SYNTHETIC_EVENTS
     SYNTHETIC_EVENT_1,
     SYNTHETIC_EVENT_2
 };
+
+enum SYNTHETIC_EVENTS2
+{
+    SYNTHETIC2_EVENT_1,
+    SYNTHETIC2_EVENT_2
+};
+
 
 using rescued = SYNTHETIC_EVENTS;
 
@@ -38,7 +52,21 @@ EMBR_IDF_PROP_TRAITS(
 ESP_EVENT_DECLARE_BASE(SYNTHETIC_EVENTS);
 ESP_EVENT_DEFINE_BASE(SYNTHETIC_EVENTS);
 
+EMBR_ESP_EVENT_DECLARE_BASE(SYNTHETIC_EVENTS2);
+
+//static constexpr esp_event_base_t TEST2 = SYNTHETIC_EVENTS2;
+
+EMBR_IDF_EVENT_TRAITS(SYNTHETIC_EVENTS2, SYNTHETIC2_EVENT_1, int);
+
 static constexpr const char* TEST1 = "SYNTHETIC_EVENTS";
+
+// DEBT: Put this test elsewhere
+TEST_CASE("event", "[esp_idf::event]")
+{
+    ESP_LOGI(TAG, "GOT HERE: %s", SYNTHETIC_EVENTS2);
+    //esp_idf::event::post(SYNTHETIC_EVENTS2, SYNTHETIC2_EVENT_1);
+    esp_idf::event::post(SYNTHETIC_EVENTS2, SYNTHETIC2_EVENT_1);
+}
 
 TEST_CASE("state", "[service::state::v2]")
 {
