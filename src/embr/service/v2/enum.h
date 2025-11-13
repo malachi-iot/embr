@@ -1,5 +1,6 @@
 #pragma once
 
+#include <estd/cstdint.h>
 #include <estd/internal/platform.h>
 
 #include "fwd.h"
@@ -24,7 +25,7 @@ struct service
     // yields 32 possible substates per category, allowing us to stay well within 8 bits
     static constexpr unsigned separator = 5;
 
-    enum substates
+    enum substates : uint8_t
     {
         // stopped states
         Unstarted,          ///< has never started
@@ -60,9 +61,16 @@ struct service
         ErrConfig,
         ErrMemory,         ///< service ran out of memory, or detected memory corruption
         ErrTimeout,
+        ErrAuth,
 
         SUBSTATES_MAX
     };
+
+    // Conversion helper
+    [[nodiscard]] constexpr static states state(substates s)
+    {
+        return static_cast<states>(s >> separator);
+    }
 };
 
 // Our convention is upper bits = major state and lower bits = transition state
@@ -79,7 +87,7 @@ public:
     [[nodiscard]] constexpr substates substate() const { return substate_; }
     [[nodiscard]] constexpr states state() const
     {
-        return static_cast<states>(substate_ >> separator);
+        return base_type::state(substate_);
     }
 
     constexpr state_machine(substates substate = {}) :
