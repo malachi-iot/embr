@@ -21,6 +21,7 @@ set(COMPONENT_SRCS
     ${COMPONENT_SRCS2}
     "dummy.cpp"
     "experimental.cpp"
+    event.cpp
     memory.cpp
     nvs.cpp
     power.cpp

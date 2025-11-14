@@ -3,6 +3,7 @@
 #include <esp_event.h>
 
 // At global namespace to simplify specialization
+// DEBT: Move this to event/v1/event.h
 
 template <esp_event_base_t event_base, int32_t event_id>
 struct embr_idf_event_traits
@@ -36,13 +37,13 @@ struct embr_idf_event_traits<event_base, event_id> \
 // DEBT: Inconsistent naming with above
 #define EMBR_ESP_EVENT_DECLARE_BASE(id) constexpr const char id[] = #id
 
-namespace embr::esp_idf::inline event {
+namespace embr::esp_idf::inline event::inline v1 {
 
 template <esp_event_base_t event_base, int32_t event_id>
 using event_traits = embr_idf_event_traits<event_base, event_id>;
 
 // EXPERIMENTAL
-esp_err_t handler_register(esp_event_base_t event_base, int32_t event_id,
+inline esp_err_t handler_register(esp_event_base_t event_base, int32_t event_id,
     esp_event_handler_t event_handler, void* event_handler_arg = nullptr,
     esp_event_handler_instance_t* instance = nullptr)
 {
@@ -62,7 +63,7 @@ esp_err_t handler_register_exp(esp_event_base_t event_base, int32_t event_id, F&
 }
 
 // EXPERIMENTAL
-esp_err_t handler_register(esp_event_loop_handle_t event_loop, esp_event_base_t event_base, int32_t event_id,
+inline esp_err_t handler_register(esp_event_loop_handle_t event_loop, esp_event_base_t event_base, int32_t event_id,
     esp_event_handler_t event_handler, void* event_handler_arg = nullptr)
 {
     return esp_event_handler_instance_register_with(
@@ -91,7 +92,7 @@ esp_err_t post(esp_event_base_t event_base, int32_t event_id, Data* event_data,
 }
 
 
-esp_err_t post(esp_event_base_t event_base, int32_t event_id,
+inline esp_err_t post(esp_event_base_t event_base, int32_t event_id,
     TickType_t ticks_to_wait = portMAX_DELAY)
 {
     return esp_event_post(event_base, event_id, nullptr, 0, ticks_to_wait);
@@ -106,7 +107,7 @@ esp_err_t post(esp_event_loop_handle_t el, esp_event_base_t event_base,
         event_data, sizeof(Data), ticks_to_wait);
 }
 
-esp_err_t post(esp_event_loop_handle_t el, esp_event_base_t event_base,
+inline esp_err_t post(esp_event_loop_handle_t el, esp_event_base_t event_base,
     int32_t event_id, TickType_t ticks_to_wait = portMAX_DELAY)
 {
     return esp_event_post_to(el, event_base, event_id,

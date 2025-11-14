@@ -1,8 +1,11 @@
 #pragma once
 
+#include <string_view>
+
 #include "../../event.h"
 
-// DEBT: Do consolidating EMBR_IDF_EVENT_TRAITS_BASE
+// DEBT: Move this to a non-service v2 area (../event/v1/property.h probably)
+
 #define EMBR_IDF_PROP_TRAITS(event_base, event_id, _type, origin) \
 template <> \
 struct embr_idf_event_traits<event_base, event_id> \
