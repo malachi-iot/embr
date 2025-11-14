@@ -38,26 +38,6 @@ using property_traits = embr_idf_property_traits<event_base, id>;
 
 namespace detail {
 
-// OBSOLETE
-template <class State, class Origin, Origin* o = {}>
-struct state_base_traits
-{
-    using state_type = State;
-    using origin_type = Origin;
-
-    //static constexpr esp_event_base_t event_base = eb;
-    static constexpr origin_type* origin = o;
-
-    using event_data = property_event_data<State, Origin>;
-
-    static constexpr event_data make_event_data(
-        origin_type& origin, state_type changing_state,
-        state_type changed_state, std::string_view name = {})
-    {
-        return{origin, changing_state, changed_state, name};
-    }
-};
-
 // EXPERIMENTAL
 struct meta
 {

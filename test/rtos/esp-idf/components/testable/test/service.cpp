@@ -93,9 +93,6 @@ TEST_CASE("event", "[esp_idf::event]")
 
 TEST_CASE("state", "[service::state::v2]")
 {
-    //using svc = embr::service::v2::service;
-    //using traits = esp_idf::service::v2::detail::state_base_traits<
-    //    svc::substates, int>;
     using traits = esp_idf::event_traits<
         esp_idf::service::SERVICE_EVENTS, esp_idf::service::SERVICE_CHANGED_STATE>;
 

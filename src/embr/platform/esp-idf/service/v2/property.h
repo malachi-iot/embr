@@ -12,7 +12,7 @@ struct embr_idf_event_traits<event_base, event_id> \
     static constexpr int32_t id = event_id; \
     static constexpr const char* id_name = #event_id; \
     static constexpr const char* base = event_base; \
-    using type = ::embr::esp_idf::service::property_event_data<_type, origin>; \
+    using type = ::embr::esp_idf::prop::property_event_data<_type, origin>; \
     static constexpr const char* type_name = "TBD"; \
     /* experimental */ static constexpr int32_t changing_id = id + 10000; \
     /* experimental */ static constexpr const char* property_name = #origin ".TBD"; \
@@ -39,7 +39,7 @@ EMBR_IDF_PROP_TRAITS(ns::event_base, ns::event_id, type, ns::origin)
 
 
 // DEBT: Use a different namespace, and so far the content of this namespace is not idf specific
-namespace embr::esp_idf::service::inline v2 {
+namespace embr::esp_idf::inline prop::inline v2 {
 
 template <class State, class Origin>
 struct property_event_data
