@@ -4,6 +4,7 @@
 
 #include "../../event.h"
 #include "property.h"
+#include "fwd.h"
 
 #if UNUSED
 // TODO: Rework to use embr_idf_event_traits, but augment it with
@@ -37,6 +38,7 @@ using property_traits = embr_idf_property_traits<event_base, id>;
 
 namespace detail {
 
+// OBSOLETE
 template <class State, class Origin, Origin* o = {}>
 struct state_base_traits
 {
@@ -56,6 +58,7 @@ struct state_base_traits
     }
 };
 
+// EXPERIMENTAL
 struct meta
 {
     esp_event_base_t event_base;
@@ -75,6 +78,7 @@ struct meta
     }
 };
 
+// DEBT: Rename & move, this is really property now and likely belongs under inline prop namespace
 template <class Traits>
 class state_base
 {

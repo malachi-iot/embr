@@ -18,11 +18,23 @@ class service;
 
 }
 
+/*
 EMBR_IDF_PROP_TRAITS(
     embr::esp_idf::service::SERVICE_EVENTS,
     embr::esp_idf::service::SERVICE_CHANGED_STATE,
     embr::service::v2::service::substates,
-    embr::esp_idf::service::v2::service);
+    embr::esp_idf::service::v2::service);   */
+
+// Nice try, but no banana:
+// 1. Placing above 'service' means we can't deduce event_base
+// 2. Placing below 'service' means state_base won't enjoy our specialization
+//EMBR_IDF_PROP_TRAITS2(embr::esp_idf::service::v2, service, SERVICE_CHANGED_STATE,
+//    embr::service::v2::service::substates);
+
+EMBR_IDF_PROP_TRAITS_NS(embr::esp_idf::service::v2,
+    SERVICE_EVENTS, SERVICE_CHANGED_STATE,
+    embr::service::v2::service::substates,
+    service);
 
 namespace embr::esp_idf::service::inline v2 {
 
@@ -36,12 +48,13 @@ public:
         static constexpr const char* state = "service.state";
     };
 
-    static constexpr esp_event_base_t event_base = SERVICE_EVENTS;
+    EMBR_IDF_PROP_PROVIDER(SERVICE_EVENTS, service);
+    EMBR_IDF_PROP_DECLARE(SERVICE_CHANGED_STATE, state);
 
 protected:
     using typename base_type::states;
     using typename base_type::substates;
-    using state_type = detail::state_base<event_traits<event_base, SERVICE_CHANGED_STATE>>;
+    //using state_type = detail::state_base<event_traits<event_base, SERVICE_CHANGED_STATE>>;
 
     state_type state_{Unstarted};
 
@@ -56,7 +69,6 @@ protected:
     }
 
 public:
-    using state_event_data = typename state_type::event_data;
 
     constexpr substates substate() const { return state_.get(); }
     constexpr states state() const
