@@ -2,7 +2,7 @@
 
 #include <string_view>
 
-#include "../../event.h"
+#include "../../event/v1/event.h"
 
 // DEBT: Move this to a non-service v2 area (../event/v1/property.h probably)
 

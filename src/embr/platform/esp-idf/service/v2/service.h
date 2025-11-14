@@ -3,6 +3,7 @@
 #include "../../../../service/v2/enum.h"
 
 #include "property.h"
+#include "../../property/v1/property.h"
 #include "state.h"
 
 namespace embr::esp_idf::service::inline v2 {
@@ -54,7 +55,6 @@ public:
 protected:
     using typename base_type::states;
     using typename base_type::substates;
-    //using state_type = detail::state_base<event_traits<event_base, SERVICE_CHANGED_STATE>>;
 
     state_type state_{Unstarted};
 
