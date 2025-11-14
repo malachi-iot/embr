@@ -7,7 +7,6 @@
 #include <estd/functional.h>
 
 #include <embr/service/v2/enum.h>
-#include <embr/platform/esp-idf/service/v2/fwd.h>
 #include <embr/platform/esp-idf/service/v2/service.h>
 
 using namespace embr;
@@ -58,7 +57,7 @@ TEST_CASE("state", "[service::state::v2]")
     using traits = esp_idf::event_traits<
         esp_idf::service::SERVICE_EVENTS, esp_idf::service::SERVICE_CHANGED_STATE>;
 
-    esp_idf::service::v2::detail::state_base<traits> state;
+    esp_idf::prop::v1::detail::state_base<traits> state;
 }
 
 
@@ -90,7 +89,6 @@ TEST_CASE("service", "[service::v2]")
     constexpr esp_event_loop_args_t loop_args
     {
         .queue_size = 5,
-        .task_name = nullptr,
     };
 
     esp_event_loop_handle_t loop_handle;
@@ -116,7 +114,7 @@ TEST_CASE("service", "[service::v2]")
             auto& e = *static_cast<service1::state_event_data*>(event_data);
 
             TEST_ASSERT_EQUAL_PTR(service1::property::state, e.name.data());
-            TEST_ASSERT_EQUAL(esp_idf::service::v2::SERVICE_CHANGED_STATE, event_id);
+            TEST_ASSERT_EQUAL(v2::SERVICE_CHANGED_STATE, event_id);
             TEST_ASSERT_EQUAL(service1::Unstarted, e.changing_state);
             TEST_ASSERT_EQUAL(service1::Starting, e.changed_state);
             TEST_ASSERT_EQUAL_PTR(&e.origin, &svc1);
@@ -147,8 +145,6 @@ TEST_CASE("service", "[service::v2]")
     svc1.do_things(loop_handle);
 
     ESP_ERROR_CHECK(esp_event_loop_run(loop_handle, 50));
-    //ESP_ERROR_CHECK(esp_event_loop_run(loop_handle, 50));
-    //ESP_ERROR_CHECK(esp_event_loop_run(loop_handle, 50));
 #else
     svc1.do_things();
 #endif

@@ -2,7 +2,7 @@
 
 #include <unity.h>
 
-#include <embr/platform/esp-idf/service/v2/property.h>
+#include <embr/platform/esp-idf/event/v1/event.h>
 
 using namespace embr;
 

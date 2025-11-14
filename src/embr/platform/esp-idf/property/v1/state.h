@@ -1,40 +1,14 @@
 #pragma once
 
+#include <esp_log.h>
+
 #include <string_view>
 
-#include "../../event.h"
+#include "../../event/v1/event.h"
 #include "property.h"
 #include "fwd.h"
 
-#if UNUSED
-// TODO: Rework to use embr_idf_event_traits, but augment it with
-// static constexpr bool property = true;
-template <esp_event_base_t event_base, int32_t _id>
-struct embr_idf_property_traits
-{
-    static constexpr bool specialized = false;
-    static constexpr const char* id_name = "unspecified";
-    using type = void;
-};
-
-#define EMBR_IDF_PROP_TRAITS_OLD(event_base, event_id, _type) \
-template <> \
-struct embr_idf_property_traits<event_base, event_id> \
-{ \
-    static constexpr bool specialized = true; \
-    static constexpr int32_t id = event_id; \
-    static constexpr const char* id_name = #event_id; \
-    static constexpr const char* base = event_base; \
-    using type = _type; \
-};
-#endif
-
-namespace embr::esp_idf::service::inline v2 {
-
-#if UNUSED
-template <esp_event_base_t event_base, int32_t id>
-using property_traits = embr_idf_property_traits<event_base, id>;
-#endif
+namespace embr::esp_idf::inline prop::inline v1 {
 
 namespace detail {
 
@@ -58,7 +32,6 @@ struct meta
     }
 };
 
-// DEBT: Rename & move, this is really property now and likely belongs under inline prop namespace
 template <class Traits>
 class state_base
 {

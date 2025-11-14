@@ -2,9 +2,7 @@
 
 #include "../../../../service/v2/enum.h"
 
-#include "property.h"
-#include "../../property/v1/property.h"
-#include "state.h"
+#include "../../property/v1/state.h"
 
 namespace embr::esp_idf::service::inline v2 {
 
