@@ -25,7 +25,7 @@ EMBR_IDF_EVENT_TRAITS(SYNTHETIC_EVENTS2, SYNTHETIC2_EVENT_1, int);
 
 
 
-TEST_CASE("event", "[esp_idf::event]")
+TEST_CASE("typed event", "[event]")
 {
     constexpr esp_event_loop_args_t loop_args
     {
@@ -36,17 +36,18 @@ TEST_CASE("event", "[esp_idf::event]")
     // us since there's no gauruntee the post chain finishes in time
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     static int counter = 0;
+    int counter2 = 10;
 
     ESP_LOGV(TAG, "GOT HERE: %s", SYNTHETIC_EVENTS2);
 
     auto f = [](int* data)
     {
-        ++counter;
+        counter += *data;
     };
     esp_idf::event::handler_register_exp<SYNTHETIC_EVENTS2, SYNTHETIC2_EVENT_1>(f);
 
-    esp_idf::event::post(SYNTHETIC_EVENTS2, SYNTHETIC2_EVENT_1);
+    esp_idf::event::post<SYNTHETIC_EVENTS2, SYNTHETIC2_EVENT_1>(&counter2);
 
-    TEST_ASSERT_EQUAL(1, counter);
+    TEST_ASSERT_EQUAL(10, counter);
 }
 

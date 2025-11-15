@@ -2,6 +2,7 @@
 
 #include <esp_event.h>
 
+#include "fwd.h"
 #include "traits.h"
 
 namespace embr::esp_idf::inline event::inline v1 {
@@ -50,6 +51,17 @@ esp_err_t handler_register_exp(F& f)
 }
 
 
+template <esp_event_base_t event_base, int32_t event_id, class Traits = event_traits<event_base, event_id>>
+esp_err_t post(typename Traits::type* event_data,
+    TickType_t ticks_to_wait = portMAX_DELAY)
+{
+    static_assert(Traits::is_specialized, "event_traits must be specialized");
+
+    return esp_event_post(event_base, event_id, event_data, sizeof(typename Traits::type),
+        ticks_to_wait);
+}
+
+#if FEATURE_EMBR_ESP_EVENT_UNSAFE
 template <class Data>
 esp_err_t post(esp_event_base_t event_base, int32_t event_id, Data* event_data,
     TickType_t ticks_to_wait = portMAX_DELAY)
@@ -57,6 +69,7 @@ esp_err_t post(esp_event_base_t event_base, int32_t event_id, Data* event_data,
     return esp_event_post(event_base, event_id, event_data, sizeof(Data),
         ticks_to_wait);
 }
+#endif
 
 
 inline esp_err_t post(esp_event_base_t event_base, int32_t event_id,
@@ -65,6 +78,20 @@ inline esp_err_t post(esp_event_base_t event_base, int32_t event_id,
     return esp_event_post(event_base, event_id, nullptr, 0, ticks_to_wait);
 }
 
+
+// FIX: This isn't working right.  If we try to use him from state_base.set, event_data gets corrupted
+template <esp_event_base_t event_base, int32_t event_id, class Traits = event_traits<event_base, event_id>>
+esp_err_t post(esp_event_loop_handle_t el,
+    typename Traits::type* event_data,
+    TickType_t ticks_to_wait = portMAX_DELAY)
+{
+    static_assert(Traits::is_specialized, "event_traits must be specialized");
+
+    return esp_event_post_to(el, event_base, event_id,
+        event_data, sizeof(sizeof(typename Traits::type)), ticks_to_wait);
+}
+
+#if FEATURE_EMBR_ESP_EVENT_UNSAFE
 template <class Data>
 esp_err_t post(esp_event_loop_handle_t el, esp_event_base_t event_base,
     int32_t event_id, Data* event_data,
@@ -73,6 +100,7 @@ esp_err_t post(esp_event_loop_handle_t el, esp_event_base_t event_base,
     return esp_event_post_to(el, event_base, event_id,
         event_data, sizeof(Data), ticks_to_wait);
 }
+#endif
 
 inline esp_err_t post(esp_event_loop_handle_t el, esp_event_base_t event_base,
     int32_t event_id, TickType_t ticks_to_wait = portMAX_DELAY)

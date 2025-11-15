@@ -89,7 +89,9 @@ public:
         //event::post(event_loop, event_base, event_id, &e);
         state_ = v;
         //event::post(event_loop, event_base, event_id + 1, &e);
+
         event::post(event_loop, event_base, event_id, &e);
+        //event::post<event_base, event_id>(event_loop, &e);
     }
 
     constexpr state_type get() const

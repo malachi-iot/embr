@@ -38,9 +38,10 @@ EMBR_IDF_PROP_TRAITS(ns::event_base, ns::event_id, type, ns::origin)
     static constexpr const char* origin_name = #origin;
 
 
-// DEBT: Use a different namespace, and so far the content of this namespace is not idf specific
 namespace embr::esp_idf::inline prop::inline v2 {
 
+// TODO: Make this RTTI aware.  In the event RTTI is on, we'd really like to
+// double-check this guy on handler firing
 template <class State, class Origin>
 struct property_event_data
 {

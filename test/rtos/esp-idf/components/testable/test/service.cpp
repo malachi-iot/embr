@@ -18,6 +18,7 @@ static const char* TAG = "embr::unity::service";
 namespace embr::esp_idf::service::inline v2 {
 
 // FIX: Horribly wrong.  Somehow linker can't pick up the one in embr/platform/esp-idf/service/v2/service.cpp
+// Fortunately, EMBR_ESP_EVENT_DECLARE_BASE constexpr trick seems to overcome it.
 //ESP_EVENT_DEFINE_BASE(SERVICE_EVENTS);
 
 }
@@ -27,8 +28,6 @@ enum SYNTHETIC_EVENTS
     SYNTHETIC_EVENT_1,
     SYNTHETIC_EVENT_2
 };
-
-//using rescued = SYNTHETIC_EVENTS;
 
 /*
 EMBR_IDF_PROP_TRAITS(SYNTHETIC_EVENTS, SYNTHETIC_EVENT_1, int);
@@ -113,6 +112,8 @@ TEST_CASE("service", "[service::v2]")
         {
             auto& e = *static_cast<service1::state_event_data*>(event_data);
 
+            ESP_LOGV(TAG, "e.name.data()=%s", e.name.data());
+
             TEST_ASSERT_EQUAL_PTR(service1::property::state, e.name.data());
             TEST_ASSERT_EQUAL(v2::SERVICE_CHANGED_STATE, event_id);
             TEST_ASSERT_EQUAL(service1::Unstarted, e.changing_state);
@@ -133,7 +134,6 @@ TEST_CASE("service", "[service::v2]")
     });
 
 #if FEATURE_USER_EVENT_LOOP
-    // FIX: These are broken
     ESP_ERROR_CHECK(svc1.on_state_changed(loop_handle, f));
     ESP_ERROR_CHECK(svc1.on_state_changed(loop_handle, f2));
 #else

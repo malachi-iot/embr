@@ -7,7 +7,7 @@
 template <esp_event_base_t event_base, int32_t event_id>
 struct embr_idf_event_traits
 {
-    static constexpr bool specialized = false;
+    static constexpr bool is_specialized = false;
     static constexpr bool is_property = false;
     static constexpr int32_t id = event_id;
     static constexpr const char* id_name = "unspecified";
@@ -17,7 +17,7 @@ struct embr_idf_event_traits
 };
 
 #define EMBR_IDF_EVENT_TRAITS_BODY(event_base, event_id) \
-    static constexpr bool specialized = true; \
+    static constexpr bool is_specialized = true; \
     static constexpr int32_t id = event_id; \
     static constexpr const char* id_name = #event_id; \
     static constexpr const char* base = event_base;
