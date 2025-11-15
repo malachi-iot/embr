@@ -118,7 +118,7 @@ TEST_CASE("service", "[service::v2]")
             TEST_ASSERT_EQUAL(v2::SERVICE_CHANGED_STATE, event_id);
             TEST_ASSERT_EQUAL(service1::Unstarted, e.changing_state);
             TEST_ASSERT_EQUAL(service1::Starting, e.changed_state);
-            TEST_ASSERT_EQUAL_PTR(&e.origin, &svc1);
+            TEST_ASSERT_EQUAL_PTR(e.origin, &svc1);
 
             started = true;
         });

@@ -42,28 +42,23 @@ class state_base
     static_assert(traits::is_property, "Traits don't describe a property.  Please use EMBR_IDF_PROP_TRAITS");
 
     using origin_type = typename traits::type::origin_type;
-    using state_type = typename traits::type::state_type;
+    using value_type = typename traits::type::value_type;
 
-    state_type state_;
+    value_type state_;
 
     static constexpr esp_event_base_t event_base = traits::base;
     static constexpr int32_t event_id = traits::id;
 
 public:
-    using event_data = typename traits::type;
-
-private:
-    //void post(esp_event_loop_handle_t el, esp_event_base_t event_base)
-    //{
-    //}
-
-public:
     constexpr state_base() = default;
     constexpr state_base(const state_base&) = default;
-    constexpr explicit state_base(const state_type& initial_state) :
+    constexpr state_base(state_base&&) = default;
+    constexpr explicit state_base(const value_type& initial_state) :
         state_{initial_state} {}
 
-    void set(state_type v, origin_type& origin,
+    using event_data = typename traits::type;
+
+    void set(value_type v, origin_type* origin,
         std::string_view name = {})
     {
         if(v == state_)     return;
@@ -79,7 +74,7 @@ public:
         event::post(event_base, event_id, &e);
     }
 
-    void set(state_type v, origin_type& origin, esp_event_loop_handle_t event_loop,
+    void set(value_type v, origin_type* origin, esp_event_loop_handle_t event_loop,
         std::string_view name = {})
     {
         if(v == state_)     return;
@@ -94,13 +89,13 @@ public:
         //event::post<event_base, event_id>(event_loop, &e);
     }
 
-    constexpr state_type get() const
+    constexpr value_type get() const
     {
         return state_;
     }
 
     // EXPERIMENTAL
-    state_base& operator =(state_type v)
+    state_base& operator =(value_type v)
     {
         static_assert(traits::o != nullptr, "Origin pointer must be provided in traits");
     
@@ -108,7 +103,7 @@ public:
         return *this;
     }
 
-    constexpr operator state_type() const
+    constexpr operator value_type() const
     {
         return state_;
     }

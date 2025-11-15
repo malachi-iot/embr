@@ -58,12 +58,12 @@ protected:
 
     void state(substates s)
     {
-        state_.set(s, *this, property::state);
+        state_.set(s, this, property::state);
     }
 
     void state(substates s, esp_event_loop_handle_t loop_handle)
     {
-        state_.set(s, *this, loop_handle, property::state);
+        state_.set(s, this, loop_handle, property::state);
     }
 
 public:

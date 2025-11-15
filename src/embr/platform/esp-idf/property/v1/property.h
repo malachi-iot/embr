@@ -2,7 +2,7 @@
 
 #include <string_view>
 
-#include "../../event/v1/event.h"
+#include "../../event/v1/traits.h"
 
 // DEBT: Move this to a non-service v2 area (../event/v1/property.h probably)
 
@@ -40,17 +40,22 @@ EMBR_IDF_PROP_TRAITS(ns::event_base, ns::event_id, type, ns::origin)
 
 namespace embr::esp_idf::inline prop::inline v2 {
 
-// TODO: Make this RTTI aware.  In the event RTTI is on, we'd really like to
-// double-check this guy on handler firing
-template <class State, class Origin>
+// DEBT: Consider moving this to a non-idf specific area
+template <class T, class Origin>
 struct property_event_data
 {
-    using state_type = State;
+#if __GXX_RTTI
+    // Make this RTTI aware.  In the event RTTI is on, we'd really like to
+    // double-check this guy on handler firing
+    virtual ~property_event_data() = default;
+#endif
+
+    using value_type = T;
     using origin_type = Origin;
 
-    Origin& origin;
-    State changing_state;
-    State changed_state;
+    Origin* const origin;
+    T changing_state;
+    T changed_state;
     // property name
     std::string_view name;
 };
