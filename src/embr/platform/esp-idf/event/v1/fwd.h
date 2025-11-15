@@ -1,5 +1,18 @@
 #pragma once
 
+#include <esp_event.h>
+
+template <esp_event_base_t event_base, int32_t event_id>
+struct embr_esp_event_traits;
+
+namespace embr::esp_idf::inline event::inline v1 {
+
+template <esp_event_base_t event_base, int32_t event_id>
+using event_traits = embr_esp_event_traits<event_base, event_id>;
+
+}
+
+
 // By default, our strongly typed event mechanism does some enforcement of
 // EMBR_IDF_EVENT_TRAITS usage.  This reduces that, allowing more use cases
 // and greater risk of incorrect casts.

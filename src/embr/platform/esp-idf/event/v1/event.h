@@ -7,9 +7,6 @@
 
 namespace embr::esp_idf::inline event::inline v1 {
 
-template <esp_event_base_t event_base, int32_t event_id>
-using event_traits = embr_idf_event_traits<event_base, event_id>;
-
 // EXPERIMENTAL
 inline esp_err_t handler_register(esp_event_base_t event_base, int32_t event_id,
     esp_event_handler_t event_handler, void* event_handler_arg = nullptr,

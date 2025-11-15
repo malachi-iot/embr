@@ -4,13 +4,14 @@
 
 #include "../../event/v1/traits.h"
 
-// DEBT: Move this to a non-service v2 area (../event/v1/property.h probably)
+// DEBT: Really I ought to change these to EMBR_ESP_PROP_TRAITS to match the event traits,
+// but I like how these look as IDF.
 
 #define EMBR_IDF_PROP_TRAITS(event_base, event_id, _type, origin) \
 template <> \
-struct embr_idf_event_traits<event_base, event_id> \
+struct embr_esp_event_traits<event_base, event_id> \
 { \
-    EMBR_IDF_EVENT_TRAITS_BODY(event_base, event_id) \
+    EMBR_ESP_EVENT_TRAITS_BODY(event_base, event_id) \
     static constexpr bool is_property = true; \
     using type = ::embr::esp_idf::prop::property_event_data<_type, origin>; \
     static constexpr const char* type_name = "property<_type, origin>"; \
@@ -45,7 +46,7 @@ template <class T, class Origin>
 struct property_event_data
 {
 #if __GXX_RTTI
-    // Make this RTTI aware.  In the event RTTI is on, we'd really like to
+    // In the event RTTI is on, we'd really like to
     // double-check this guy on handler firing
     virtual ~property_event_data() = default;
 #endif

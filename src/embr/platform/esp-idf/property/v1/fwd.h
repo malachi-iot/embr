@@ -15,6 +15,6 @@ class state_base;
 }
 
 template <esp_event_base_t event_base, int32_t _id>
-using property = detail::state_base<embr_idf_event_traits<event_base, _id>>;
+using property = detail::state_base<embr_esp_event_traits<event_base, _id>>;
     
 }
