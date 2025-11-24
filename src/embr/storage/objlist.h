@@ -33,6 +33,12 @@ class objlist : public objlist_base<objlist_element<Objstack::alignment_, oeo>> 
     Objstack stack_;
     char* base_;    // DEBT: Somehow linter freaks out about this guy
 
+#if FEATURE_EMBR_OBJLIST_ELEMENT_ID
+    // EXPERIMENTAL - used to identify (via walk) a particular element
+    // DEBT: Need walk and find earliest available # otherwise we'll probably run out
+    int id_max_ = 0;
+#endif
+
     using objstack_type = Objstack;
     static constexpr int alignment_ = Objstack::alignment_;
     using base_type = objlist_base<objlist_element<alignment_, oeo>>;
@@ -67,6 +73,42 @@ protected:
         }
     }
 
+    // There's no gauruntee that lhs and prev_of_rhs are of the same linked list.  Remember, funclist can
+    // maintain multiple independent lists in an objlist
+    ///
+    /// @brief compact
+    /// @param lhs
+    /// @param prev_of_rhs
+    /// @param move_to - do a C++ std::move from lhs to rhs *and* destroy (in-place) lhs
+    /// @param intermediate
+    /// @details
+    ///     EXPERIMENTAL
+    ///     DEBT: Everywhere I look, it's my virtual/GC memory system trying to materialize
+    template <class F>
+    void compact(pointer lhs, pointer prev_of_rhs, F&& move_to, bool intermediate = false)
+    {
+        // Given a gap after lhs and before rhs, move rhs over leftward
+        // If gap is smaller than rhs, intermediate should be used for complex types
+        pointer rhs = prev_of_rhs->next();
+
+        auto pos = (char*) lhs;
+
+        pos += lhs->total_size();
+        auto new_rhs = (pointer) pos;
+        const unsigned rhs_size = rhs->total_size();
+        const unsigned gap_size = pos - (char*) rhs;
+
+        if(gap_size < rhs_size && intermediate)
+        {
+            auto temp_rhs = (pointer)stack_.alloc(rhs_size);
+            move_to(rhs, temp_rhs);
+            move_to(temp_rhs, new_rhs);
+            stack_.dealloc(rhs_size);
+        }
+        else
+            move_to(rhs, new_rhs);
+    }
+
     const objstack_type& stack() const { return stack_; }
 
 public:
@@ -85,7 +127,11 @@ public:
 
         if(p == nullptr)    return nullptr;
 
-        new (p) value_type(sz, 0, true);
+        new (p) value_type(sz, 0, true
+#if FEATURE_EMBR_OBJLIST_ELEMENT_ID
+            , id_max_++
+#endif
+            );
 
         if(prev)    prev->next(p);
 

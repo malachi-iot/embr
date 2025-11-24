@@ -58,6 +58,11 @@ private:
             // It is convenient to have it here
             bool allocated_ : 1;
             bool extra_ : 1;      ///< First sizeof(intptr_t) bytes in data_ is a moveptr
+
+#if FEATURE_EMBR_OBJLIST_ELEMENT_ID
+            // EXPERIMENTAL, DEBT: Optimize this, right now this auto-grows us from 32-bit to 64-bit
+            int id_: 8;
+#endif
         };
 
         char raw[1 << alignment_];
@@ -76,11 +81,14 @@ private:
     }
 
 public:
-    constexpr objlist_element(unsigned size, int next, bool allocated) :
+    constexpr objlist_element(unsigned size, int next, bool allocated, int id = -1) :
         size_{size_shr(size)},
         next_{next},
         allocated_{allocated},
         extra_{false}
+#if FEATURE_EMBR_OBJLIST_ELEMENT_ID
+        , id_{id}
+#endif
     {
 
     }
@@ -222,6 +230,10 @@ public:
 
         return *c;
     }
+
+#if FEATURE_EMBR_OBJLIST_ELEMENT_ID
+    constexpr int id() const { return id_; }
+#endif
 };
 
 

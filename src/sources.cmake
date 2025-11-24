@@ -11,6 +11,11 @@ set(INCLUDE_FILES
 
     embr/exp/netbuf-alloc.h
     embr/exp/pbuf.h embr/exp/retry-v2.h embr/exp/dataport-v2.h
+    embr/exp/thunk.h
+
+    embr/storage/funclist.h
+    embr/storage/fwd.h
+    embr/storage/objlist.h
     )
 
 set(SOURCE_FILES

@@ -64,3 +64,10 @@ template <ESTD_CPP_CONCEPT(concepts::Objstack),
 class objlist;
 
 }}}
+
+// EXPERIMENTAL - a way to identify objlist elements even after memory compaction
+// Holding off because although ID works fine, compaction is non-trivial so I don't want
+// partial code confusing things
+#ifndef FEATURE_EMBR_OBJLIST_ELEMENT_ID
+#define FEATURE_EMBR_OBJLIST_ELEMENT_ID 0
+#endif

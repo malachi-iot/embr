@@ -48,6 +48,7 @@ public:
 
     // Remember, deallocs with objstack are particularly destructive!
 
+    // DEBT: Consider renaming this as 'dealloc_to'
     void dealloc(void* ptr)
     {
         current_ = (char*)ptr;

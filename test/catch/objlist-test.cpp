@@ -43,6 +43,12 @@ TEST_CASE("Object list, Object stack", "[objlist]")
     }
     SECTION("particulars")
     {
+#if FEATURE_EMBR_OBJLIST_ELEMENT_ID
+        static_assert(sizeof(element_type) == 8);
+#else
+        static_assert(sizeof(element_type) == 4);
+#endif
+
         element_type elem(0, -1, false);
         element_type elem2(0, 0, false);
 
@@ -113,6 +119,15 @@ TEST_CASE("Object list, Object stack", "[objlist]")
         objlist_type2::pointer p = objlist.emplace<int>(nullptr, 5);
 
         REQUIRE(p != nullptr);
+    }
+    SECTION("garbage collection")
+    {
+        objlist_type objlist;
+
+        pointer i1 = objlist.alloc(nullptr, 16);
+
+        // Not ready yet
+        //objlist.compact(i1, i1, [](pointer, pointer){});
     }
     SECTION("func factory")
     {
