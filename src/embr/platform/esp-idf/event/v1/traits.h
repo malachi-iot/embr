@@ -48,10 +48,7 @@ struct embr_esp_event_traits_exp :
 {
     static constexpr bool is_property = false;
     static constexpr decltype(event_id) id = event_id;
-    static constexpr const char* id_name = "unspecified";
-    static constexpr const char* base = "unspecified";
     using payload_type = void;
-    static constexpr const char* type_name = id_name;
 };
 
 
@@ -86,6 +83,22 @@ struct embr_esp_event_traits_exp<event_id> \
     static const char* base() { return event_base; } \
 };
 
+#define EMBR_ESP_EVENT_TRAITS_EXP2(event_id, payload) \
+template <> \
+struct embr_esp_event_traits_exp<event_id> \
+{ \
+    using type = decltype(event_id);   \
+    using base_traits = embr_esp_event_base_traits<type>; \
+    static constexpr bool is_specialized = true; \
+    static constexpr type id = event_id; \
+    static constexpr const char* id_name = #event_id; \
+    static constexpr bool is_property = false; \
+    using payload_type = payload; \
+    static constexpr const char* type_name = #payload; \
+    static const char* base() { return base_traits::name(); } \
+};
+
+
 #define EMBR_ESP_EVENT_BASE_TRAITS(event_base) \
 template <> \
 struct embr_esp_event_base_traits<event_base ## _preserved> \
@@ -97,3 +110,9 @@ struct embr_esp_event_base_traits<event_base ## _preserved> \
 
 // FIX: Trouble in TU paradise
 #define EMBR_ESP_EVENT_DECLARE_BASE(id) constexpr const char id[] = #id
+
+// FIX: Works OK except not inside a namespace due to specialization
+#define EMBR_ESP_EVENT_DECLARE_BASE_EXP(id) \
+using id ## _preserved = id; \
+ESP_EVENT_DECLARE_BASE(id); \
+EMBR_ESP_EVENT_BASE_TRAITS(id);
