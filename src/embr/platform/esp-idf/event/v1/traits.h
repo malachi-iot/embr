@@ -12,6 +12,17 @@
 // Also, try testing hop-TU in unit test if we can (synthetic lib maybe? UNIT_TEST flag
 // to put into main lib?)
 
+namespace embr::internal {
+
+template <class T = void, bool specialized = true>
+struct specialized_type
+{
+    static constexpr bool is_specialized = specialized;
+    using type = T;
+};
+
+}
+
 template <esp_event_base_t event_base, int32_t event_id>
 struct embr_esp_event_traits
 {
@@ -24,16 +35,22 @@ struct embr_esp_event_traits
     static constexpr const char* type_name = id_name;
 };
 
-template <auto event_id>
-struct embr_esp_event_traits_exp
+template <class EventBase>
+struct embr_esp_event_base_traits :
+    embr::internal::specialized_type<EventBase, false>
 {
-    static constexpr bool is_specialized = false;
+};
+
+
+template <auto event_id>
+struct embr_esp_event_traits_exp :
+    embr::internal::specialized_type<decltype(event_id)>
+{
     static constexpr bool is_property = false;
-    using enum_type = decltype(event_id);
-    static constexpr int32_t id = event_id;
+    static constexpr decltype(event_id) id = event_id;
     static constexpr const char* id_name = "unspecified";
     static constexpr const char* base = "unspecified";
-    using type = void;
+    using payload_type = void;
     static constexpr const char* type_name = id_name;
 };
 
@@ -59,15 +76,24 @@ struct embr_esp_event_traits<event_base, event_id> \
 template <> \
 struct embr_esp_event_traits_exp<event_id> \
 { \
-    using enum_type = decltype(event_id);   \
+    using type = decltype(event_id);   \
     static constexpr bool is_specialized = true; \
-    static constexpr enum_type id = event_id; \
+    static constexpr type id = event_id; \
     static constexpr const char* id_name = #event_id; \
     static constexpr bool is_property = false; \
-    using type = payload; \
+    using payload_type = payload; \
     static constexpr const char* type_name = #payload; \
     static const char* base() { return event_base; } \
 };
 
+#define EMBR_ESP_EVENT_BASE_TRAITS(event_base) \
+template <> \
+struct embr_esp_event_base_traits<event_base ## _preserved> \
+{ \
+    static constexpr bool is_specialized = true; \
+    using type = event_base ## _preserved; \
+    static esp_event_base_t name() { return event_base; } \
+};
 
+// FIX: Trouble in TU paradise
 #define EMBR_ESP_EVENT_DECLARE_BASE(id) constexpr const char id[] = #id

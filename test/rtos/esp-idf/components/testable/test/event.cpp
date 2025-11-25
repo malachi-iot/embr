@@ -22,7 +22,7 @@ enum SYNTHETIC_EVENTS3
     SYNTHETIC3_EVENT_2
 };
 
-using rescue = SYNTHETIC_EVENTS3;
+using SYNTHETIC_EVENTS3_preserved = SYNTHETIC_EVENTS3;
 
 // FIX: Trouble in TU paradise
 EMBR_ESP_EVENT_DECLARE_BASE(SYNTHETIC_EVENTS2);
@@ -50,7 +50,7 @@ TEST_CASE("event experimentation", "[event-exp]")
 
     using type = embr_esp_event_traits_exp<SYNTHETIC3_EVENT_2>;
 
-    static_assert(std::is_same_v<type::enum_type, rescue>);
+    static_assert(std::is_same_v<type::type, SYNTHETIC_EVENTS3_preserved>);
 
     int v = 5;
     int counter = 0;
