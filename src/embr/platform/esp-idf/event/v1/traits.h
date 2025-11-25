@@ -99,20 +99,31 @@ struct embr_esp_event_traits_exp<event_id> \
 };
 
 
-#define EMBR_ESP_EVENT_BASE_TRAITS(event_base) \
+#define EMBR_ESP_EVENT_BASE_TRAITS(ns, event_base) \
 template <> \
-struct embr_esp_event_base_traits<event_base ## _preserved> \
+struct embr_esp_event_base_traits<ns::event_base ## _preserved> \
 { \
     static constexpr bool is_specialized = true; \
-    using type = event_base ## _preserved; \
-    static esp_event_base_t name() { return event_base; } \
+    using type = ns::event_base ## _preserved; \
+    static esp_event_base_t name() { return ns::event_base; } \
 };
 
 // FIX: Trouble in TU paradise
 #define EMBR_ESP_EVENT_DECLARE_BASE(id) constexpr const char id[] = #id
 
+//#define _GET_MACRO(_1, _2, NAME, ...) NAME
+
+//#define EMBR_ESP_EVENT_DECLARE_BASE_EXP_IMPL()
+
 // FIX: Works OK except not inside a namespace due to specialization
 #define EMBR_ESP_EVENT_DECLARE_BASE_EXP(id) \
 using id ## _preserved = id; \
 ESP_EVENT_DECLARE_BASE(id); \
-EMBR_ESP_EVENT_BASE_TRAITS(id);
+EMBR_ESP_EVENT_BASE_TRAITS(, id);
+
+#define EMBR_ESP_EVENT_DECLARE_BASE_EXP2(ns, id) \
+namespace ns { \
+using id ## _preserved = id; \
+ESP_EVENT_DECLARE_BASE(id); \
+} \
+EMBR_ESP_EVENT_BASE_TRAITS(ns, id);
