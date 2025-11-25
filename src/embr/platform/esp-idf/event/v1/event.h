@@ -47,6 +47,33 @@ esp_err_t handler_register_exp(F& f)
         }, &f, nullptr);
 }
 
+template <auto event_id,
+    class Data = typename embr_esp_event_traits_exp<event_id>::type, class F>
+esp_err_t handler_register_exp(esp_event_loop_handle_t loop, F& f)
+{
+    using traits = embr_esp_event_traits_exp<event_id>;
+
+    return esp_event_handler_instance_register_with(loop, traits::base(), event_id,
+        [](void* arg, esp_event_base_t, int32_t, void* event_data)
+        {
+            static_cast<F*>(arg)->operator()(static_cast<Data*>(event_data));
+        }, &f, nullptr);
+}
+
+
+
+template <auto event_id, class Traits = embr_esp_event_traits_exp<event_id>>
+esp_err_t post_exp(esp_event_loop_handle_t loop_handle,
+    typename Traits::type* event_data,
+    TickType_t ticks_to_wait = portMAX_DELAY)
+{
+    static_assert(Traits::is_specialized, "event_traits must be specialized");
+
+    const char* event_base = Traits::base();
+
+    return esp_event_post_to(loop_handle, event_base, event_id, event_data, sizeof(typename Traits::type),
+        ticks_to_wait);
+}
 
 template <esp_event_base_t event_base, int32_t event_id, class Traits = event_traits<event_base, event_id>>
 esp_err_t post(typename Traits::type* event_data,
