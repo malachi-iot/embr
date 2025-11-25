@@ -6,6 +6,12 @@
 
 // At global namespace to simplify specialization
 
+// FIX: specializing on esp_event_base_t is troubled.  constexpr char* doesn't
+// hop across TUs well it seems.  Try <auto event_id> and declspec out enum_type (if needed)
+// Keep event_base as part of the macro.
+// Also, try testing hop-TU in unit test if we can (synthetic lib maybe? UNIT_TEST flag
+// to put into main lib?)
+
 template <esp_event_base_t event_base, int32_t event_id>
 struct embr_esp_event_traits
 {
