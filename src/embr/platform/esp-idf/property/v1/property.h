@@ -100,6 +100,8 @@ struct property_event_data
     std::string_view name;
 };
 
+template <auto event_id>
+using event_data = const event::event_traits<event_id>::data_type;
 
 namespace detail {
 
@@ -141,7 +143,7 @@ public:
             event::post<id>(&e);
         }
 
-        return (event::post<id>(loop_handles, traits::base, traits::id, &e) + ... + 0);
+        return (event::post<id>(loop_handles, &e) + ... + 0);
     }
 };
 
