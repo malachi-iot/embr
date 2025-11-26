@@ -112,6 +112,8 @@ class property
     using value_type = typename event_type::value_type;
     using origin_type = typename event_type::origin_type;
 
+    static constexpr traits::type id = traits::id;
+
     value_type value_;
 
 public:
@@ -124,17 +126,22 @@ public:
         return value_;
     }
 
-    void set(const value_type& v, origin_type* origin)
+    // DEBT: Do concept here
+    template <class ...LoopHandles>
+    bool set(const value_type& v, origin_type* origin, LoopHandles... loop_handles)
     {
-        if(v == value_)     return;
+        if(v == value_)     return false;
 
         const event_type e{origin, value_, v, {}};
 
         value_ = v;
 
-        //event::post<traits::id>(&e);
+        if constexpr(send_to_default_loop || sizeof...(loop_handles) == 0)
+        {
+            event::post<id>(&e);
+        }
 
-        //(event::post(loop_handles, traits::base, traits::id, &e), ...);
+        return (event::post<id>(loop_handles, traits::base, traits::id, &e) + ... + 0);
     }
 };
 

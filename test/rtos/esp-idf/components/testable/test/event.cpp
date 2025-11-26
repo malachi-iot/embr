@@ -40,7 +40,7 @@ enum SYNTHETIC5_EVENTS
 
 
 EMBR_ESP_EVENT_DECLARE_BASE(test, SYNTHETIC4_EVENTS);
-EMBR_ESP_EVENT_TRAITS_EXP2(test::SYNTHETIC4_EVENT_2, int);
+EMBR_ESP_EVENT_TRAITS(test::SYNTHETIC4_EVENT_2, int);
 //EMBR_ESP_EVENT_DECLARE_BASE(, SYNTHETIC_EVENTS5);
 
 //using SYNTHETIC_EVENTS3_preserved = SYNTHETIC_EVENTS3;
@@ -57,7 +57,7 @@ ESP_EVENT_DEFINE_BASE(SYNTHETIC_EVENTS3);
 EMBR_ESP_EVENT_TRAITS_LEGACY(SYNTHETIC_EVENTS2, SYNTHETIC2_EVENT_1, int);
 
 EMBR_ESP_EVENT_TRAITS_EXP(SYNTHETIC_EVENTS3, SYNTHETIC3_EVENT_1, int);
-EMBR_ESP_EVENT_TRAITS_EXP2(SYNTHETIC3_EVENT_2, int);
+EMBR_ESP_EVENT_TRAITS(SYNTHETIC3_EVENT_2, int);
 
 TEST_CASE("event experimentation", "[event-exp]")
 {
@@ -82,9 +82,9 @@ TEST_CASE("event experimentation", "[event-exp]")
         counter += *val;
     };
 
-    esp_idf::event::handler_register_exp<SYNTHETIC3_EVENT_2>(loop_handle, f);
+    esp_idf::event::handler_register<SYNTHETIC3_EVENT_2>(loop_handle, f);
 
-    esp_idf::event::post_exp<SYNTHETIC3_EVENT_2>(loop_handle, &v);
+    esp_idf::event::post<SYNTHETIC3_EVENT_2>(loop_handle, &v);
 
     ESP_ERROR_CHECK(esp_event_loop_run(loop_handle, 20));
 

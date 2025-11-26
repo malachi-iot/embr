@@ -47,10 +47,25 @@ esp_err_t handler_register_exp(F& f)
         }, &f, nullptr);
 }
 
-// EXPERIMENTAL
+
 template <auto event_id,
     class Data = typename event_traits<event_id>::data_type, class F>
-esp_err_t handler_register_exp(esp_event_loop_handle_t loop, F& f)
+esp_err_t handler_register(F& f,
+    esp_event_handler_instance_t* instance = nullptr)
+{
+    using traits = event_traits<event_id>;
+
+    return esp_event_handler_instance_register(traits::base(), event_id,
+        [](void* arg, esp_event_base_t, int32_t, void* event_data)
+        {
+            static_cast<F*>(arg)->operator()(static_cast<Data*>(event_data));
+        }, &f, instance);
+}
+
+template <auto event_id,
+    class Data = typename event_traits<event_id>::data_type, class F>
+esp_err_t handler_register(esp_event_loop_handle_t loop, F& f,
+    esp_event_handler_instance_t* instance = nullptr)
 {
     using traits = event_traits<event_id>;
 
@@ -58,14 +73,27 @@ esp_err_t handler_register_exp(esp_event_loop_handle_t loop, F& f)
         [](void* arg, esp_event_base_t, int32_t, void* event_data)
         {
             static_cast<F*>(arg)->operator()(static_cast<Data*>(event_data));
-        }, &f, nullptr);
+        }, &f, instance);
 }
 
 
 
-template <auto event_id, class Traits = embr_esp_event_traits_exp<event_id>>
-esp_err_t post_exp(esp_event_loop_handle_t loop_handle,
-    typename Traits::data_type* event_data,
+template <auto event_id, class Traits = event_traits<event_id>>
+esp_err_t post(
+    const typename Traits::data_type* event_data,
+    TickType_t ticks_to_wait = portMAX_DELAY)
+{
+    static_assert(Traits::is_specialized, "event_traits must be specialized");
+
+    return esp_event_post(Traits::base(), event_id,
+        event_data, sizeof(typename Traits::data_type),
+        ticks_to_wait);
+}
+
+
+template <auto event_id, class Traits = event_traits<event_id>>
+esp_err_t post(esp_event_loop_handle_t loop_handle,
+    const typename Traits::data_type* event_data,
     TickType_t ticks_to_wait = portMAX_DELAY)
 {
     static_assert(Traits::is_specialized, "event_traits must be specialized");

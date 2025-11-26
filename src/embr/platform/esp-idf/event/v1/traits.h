@@ -95,7 +95,7 @@ struct embr_esp_event_traits_exp<event_id> \
     static const char* base() { return event_base; } \
 };
 
-#define EMBR_ESP_EVENT_TRAITS_EXP2(event_id, data) \
+#define EMBR_ESP_EVENT_TRAITS(event_id, data) \
 template <> \
 struct embr_esp_event_traits_exp<event_id> : ::embr::internal::event_traits_parent<event_id> \
 { \
