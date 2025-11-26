@@ -37,7 +37,7 @@ inline esp_err_t handler_register(esp_event_loop_handle_t event_loop, esp_event_
 
 // EXPERIMENTAL
 template <esp_event_base_t event_base, int32_t event_id,
-    class Data = typename event_traits<event_base, event_id>::type, class F>
+    class Data = typename event_traits_legacy<event_base, event_id>::type, class F>
 esp_err_t handler_register_exp(F& f)
 {
     return esp_event_handler_instance_register(event_base, event_id,
@@ -49,10 +49,10 @@ esp_err_t handler_register_exp(F& f)
 
 // EXPERIMENTAL
 template <auto event_id,
-    class Data = typename embr_esp_event_traits_exp<event_id>::data_type, class F>
+    class Data = typename event_traits<event_id>::data_type, class F>
 esp_err_t handler_register_exp(esp_event_loop_handle_t loop, F& f)
 {
-    using traits = embr_esp_event_traits_exp<event_id>;
+    using traits = event_traits<event_id>;
 
     return esp_event_handler_instance_register_with(loop, traits::base(), event_id,
         [](void* arg, esp_event_base_t, int32_t, void* event_data)
@@ -75,7 +75,7 @@ esp_err_t post_exp(esp_event_loop_handle_t loop_handle,
         ticks_to_wait);
 }
 
-template <esp_event_base_t event_base, int32_t event_id, class Traits = event_traits<event_base, event_id>>
+template <esp_event_base_t event_base, int32_t event_id, class Traits = event_traits_legacy<event_base, event_id>>
 esp_err_t post(typename Traits::type* event_data,
     TickType_t ticks_to_wait = portMAX_DELAY)
 {
@@ -104,7 +104,7 @@ inline esp_err_t post(esp_event_base_t event_base, int32_t event_id,
 
 
 // FIX: This isn't working right.  If we try to use him from state_base.set, event_data gets corrupted
-template <esp_event_base_t event_base, int32_t event_id, class Traits = event_traits<event_base, event_id>>
+template <esp_event_base_t event_base, int32_t event_id, class Traits = event_traits_legacy<event_base, event_id>>
 esp_err_t post(esp_event_loop_handle_t el,
     typename Traits::type* event_data,
     TickType_t ticks_to_wait = portMAX_DELAY)

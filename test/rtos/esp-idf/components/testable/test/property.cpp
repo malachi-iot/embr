@@ -30,9 +30,28 @@ EMBR_ESP_PROP_TRAITS(test::COLOR_CHANGED, std::string_view);
 using test1 = embr_esp_event_traits_exp<test::AGE_CHANGED>;
 
 static_assert(std::is_same_v<test1::data_type, prop::property_event_data<int, test::prop_provider>>);
-static_assert(std::is_same_v<test1::inner_type, int>);
+static_assert(std::is_same_v<test1::payload_type, int>);
 
 TEST_CASE("event-property", "[property]")
 {
     TEST_ASSERT_EQUAL_STRING("int", test1::payload_name);
+
+    constexpr esp_event_loop_args_t loop_args
+    {
+        .queue_size = 5,
+    };
+
+    esp_event_loop_handle_t loop_handle;
+
+    ESP_ERROR_CHECK(esp_event_loop_create(&loop_args, &loop_handle));
+
+    prop::v1::property<test::AGE_CHANGED> age(30);
+    prop::v1::property<test::COLOR_CHANGED> color("red");
+
+    age.set(31, nullptr);
+    color.set("blue", nullptr);
+
+    ESP_ERROR_CHECK(esp_event_loop_run(loop_handle, 20));
+
+    ESP_ERROR_CHECK(esp_event_loop_delete(loop_handle));
 }

@@ -53,7 +53,7 @@ static constexpr const char* TEST1 = "SYNTHETIC_EVENTS";
 // DEBT: Put this test elsewhere
 TEST_CASE("state", "[service::state::v2]")
 {
-    using traits = esp_idf::event_traits<
+    using traits = esp_idf::event_traits_legacy<
         esp_idf::service::SERVICE_EVENTS, esp_idf::service::SERVICE_CHANGED_STATE>;
 
     esp_idf::prop::v1::detail::state_base<traits> state;

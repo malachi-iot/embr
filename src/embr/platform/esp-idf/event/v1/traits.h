@@ -36,7 +36,7 @@ struct event_traits_parent
 }
 
 template <esp_event_base_t event_base, int32_t event_id>
-struct embr_esp_event_traits
+struct embr_esp_event_traits_legacy
 {
     static constexpr bool is_specialized = false;
     static constexpr bool is_property = false;
@@ -71,9 +71,9 @@ struct embr_esp_event_traits_exp :
     static constexpr const char* base = event_base;
 
 
-#define EMBR_ESP_EVENT_TRAITS(event_base, event_id, payload) \
+#define EMBR_ESP_EVENT_TRAITS_LEGACY(event_base, event_id, payload) \
 template <> \
-struct embr_esp_event_traits<event_base, event_id> \
+struct embr_esp_event_traits_legacy<event_base, event_id> \
 { \
     EMBR_ESP_EVENT_TRAITS_BODY(event_base, event_id) \
     static constexpr bool is_property = false; \
@@ -116,7 +116,7 @@ struct embr_esp_event_base_traits<ns::event_base ## _preserved> \
 };
 
 // FIX: Trouble in TU paradise
-#define EMBR_ESP_EVENT_DECLARE_BASE(id) constexpr const char id[] = #id
+#define EMBR_ESP_EVENT_DECLARE_BASE_LEGACY(id) constexpr const char id[] = #id
 
 #define _GET_MACRO(_1, _2, NAME, ...) NAME
 
@@ -133,4 +133,4 @@ ESP_EVENT_DECLARE_BASE(id); \
 } \
 EMBR_ESP_EVENT_BASE_TRAITS(ns, id);
 
-#define EMBR_ESP_EVENT_DECLARE_BASE_EXP2(...)  _GET_MACRO(__VA_ARGS__, EMBR_ESP_EVENT_DECLARE_BASE_NS, EMBR_ESP_EVENT_DECLARE_BASE_EXP)(__VA_ARGS__)
+#define EMBR_ESP_EVENT_DECLARE_BASE(...)  _GET_MACRO(__VA_ARGS__, EMBR_ESP_EVENT_DECLARE_BASE_NS, EMBR_ESP_EVENT_DECLARE_BASE_EXP)(__VA_ARGS__)
