@@ -19,6 +19,25 @@ struct embr_esp_event_traits<event_base, event_id> \
     /* experimental */ static constexpr const char* property_name = #origin ".TBD"; \
 };
 
+
+// TBD
+template <class Enum, class Provider>
+struct embr_esp_prop_provider_traits
+{
+    using enum_type = Enum;
+    using provider_type = Provider;
+};
+
+
+
+#define EMBR_ESP_EVENT_DECLARE_PROP_BASE_NS(ns, id, provider) \
+namespace ns { \
+using id ## _preserved = id; \
+ESP_EVENT_DECLARE_BASE(id); \
+} \
+EMBR_ESP_EVENT_BASE_TRAITS(ns, id);
+
+
 // EXPERIMENTAL, and not working (see service.h notes)
 #define EMBR_IDF_PROP_TRAITS2(ns, origin, event_id, type) \
 EMBR_IDF_PROP_TRAITS(ns::origin::event_base, \
