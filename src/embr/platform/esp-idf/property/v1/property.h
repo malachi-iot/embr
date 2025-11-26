@@ -80,24 +80,48 @@ EMBR_IDF_PROP_TRAITS(ns::event_base, ns::event_id, type, ns::origin)
 
 namespace embr::esp_idf::inline prop::inline v1 {
 
-// DEBT: Consider moving this to a non-idf specific area
-template <class T, class Origin>
-struct property_event_data
+template <class T>
+struct property_event_data_base
 {
 #if __GXX_RTTI
     // In the event RTTI is on, we'd really like to
     // double-check this guy on handler firing
-    virtual ~property_event_data() = default;
+    virtual ~property_event_data_base() = default;
 #endif
 
     using value_type = T;
+
+    value_type changing_state;
+    value_type changed_state;
+
+    constexpr property_event_data_base(
+        const T& changing_state_,
+        const T& changed_state_) :
+        changing_state(changing_state_),
+        changed_state(changed_state_)
+    {}
+};
+
+// DEBT: Consider moving this to a non-idf specific area
+template <class T, class Origin>
+struct property_event_data : property_event_data_base<T>
+{
+    using base_type = property_event_data_base<T>;
     using origin_type = Origin;
 
     Origin* const origin;
-    T changing_state;
-    T changed_state;
     // property name
     std::string_view name;
+
+    constexpr property_event_data(
+        Origin* origin_,
+        const T& changing_state_,
+        const T& changed_state_,
+        std::string_view name_) :
+        base_type(changing_state_, changed_state_),
+        origin(origin_),
+        name(name_)
+    {}
 };
 
 template <auto event_id>

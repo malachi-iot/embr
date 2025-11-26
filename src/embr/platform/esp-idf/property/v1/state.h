@@ -32,6 +32,7 @@ struct meta
     }
 };
 
+// DEPRECATED
 template <class Traits>
 class state_base
 {

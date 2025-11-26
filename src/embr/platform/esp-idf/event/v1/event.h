@@ -64,7 +64,7 @@ esp_err_t handler_register(F& f,
 
 
 template <auto event_id>
-esp_err_t handler_register_exp2(esp_event_loop_handle_t loop,
+esp_err_t handler_register(esp_event_loop_handle_t loop,
     esp_event_handler_t event_handler,
     void* event_handler_arg = nullptr,
     esp_event_handler_instance_t* instance = nullptr)
@@ -80,7 +80,7 @@ template <auto event_id,
     class Data = typename event_traits<event_id>::data_type,
     class Arg = void, class F>
 esp_err_t handler_register_exp(esp_event_loop_handle_t loop, F&& f,
-    Arg* event_handler_arg = nullptr,
+    Arg* event_handler_arg,
     esp_event_handler_instance_t* instance = nullptr)
 {
     using traits = event_traits<event_id>;
@@ -93,6 +93,26 @@ esp_err_t handler_register_exp(esp_event_loop_handle_t loop, F&& f,
         {
             F{}(static_cast<Arg*>(arg), static_cast<Data*>(event_data));
         }, event_handler_arg, instance);
+}
+
+
+// TODO: Disambiguate with is_invocable_v so that above can coeexist
+template <auto event_id,
+    class Data = typename event_traits<event_id>::data_type,
+    class F>
+esp_err_t handler_register_exp(esp_event_loop_handle_t loop, F&& f,
+    esp_event_handler_instance_t* instance = nullptr)
+{
+    using traits = event_traits<event_id>;
+
+    // DEBT: Crude and possibly UB
+    static_assert(sizeof(F) <= 1, "Only non-capturing lambdas are supported");
+
+    return esp_event_handler_instance_register_with(loop, traits::base(), event_id,
+        [](void* arg, esp_event_base_t, int32_t, void* event_data)
+        {
+            F{}(static_cast<Data*>(event_data));
+        }, nullptr, instance);
 }
 
 
