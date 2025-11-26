@@ -25,6 +25,7 @@ set(COMPONENT_SRCS
     memory.cpp
     nvs.cpp
     power.cpp
+    property.cpp
     service.cpp
     "timer.cpp")
 

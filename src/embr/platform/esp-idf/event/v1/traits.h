@@ -35,9 +35,9 @@ struct embr_esp_event_traits
     static constexpr const char* type_name = id_name;
 };
 
-template <class EventBase>
+template <class EventEnum>
 struct embr_esp_event_base_traits :
-    embr::internal::specialized_type<EventBase, false>
+    embr::internal::specialized_type<EventEnum, false>
 {
 };
 
@@ -83,19 +83,31 @@ struct embr_esp_event_traits_exp<event_id> \
     static const char* base() { return event_base; } \
 };
 
+namespace embr::esp_idf::inline event::inline v1 {
+
+// Normally I call a base class 'base' but in this case we'll call it parent
+// to disambiguate from event_base
+template <auto event_id>
+struct event_traits_parent
+{
+    using type = decltype(event_id);
+    using base_traits = embr_esp_event_base_traits<type>;
+    static const char* base() { return base_traits::name(); }
+    static constexpr bool is_property = false;
+    static constexpr type id = event_id;
+};
+
+}
+
+
 #define EMBR_ESP_EVENT_TRAITS_EXP2(event_id, payload) \
 template <> \
-struct embr_esp_event_traits_exp<event_id> \
+struct embr_esp_event_traits_exp<event_id> : ::embr::esp_idf::event::v1::event_traits_parent<event_id> \
 { \
-    using type = decltype(event_id);   \
-    using base_traits = embr_esp_event_base_traits<type>; \
     static constexpr bool is_specialized = true; \
-    static constexpr type id = event_id; \
     static constexpr const char* id_name = #event_id; \
-    static constexpr bool is_property = false; \
     using payload_type = payload; \
-    static constexpr const char* type_name = #payload; \
-    static const char* base() { return base_traits::name(); } \
+    static constexpr const char* payload_name = #payload; \
 };
 
 

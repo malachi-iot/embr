@@ -20,12 +20,11 @@ struct embr_esp_event_traits<event_base, event_id> \
 };
 
 
-// TBD
-template <class Enum, class Provider>
+template <class Enum>
 struct embr_esp_prop_provider_traits
 {
-    using enum_type = Enum;
-    using provider_type = Provider;
+    static constexpr bool is_specialized = false;
+    using type = void;
 };
 
 
@@ -35,7 +34,26 @@ namespace ns { \
 using id ## _preserved = id; \
 ESP_EVENT_DECLARE_BASE(id); \
 } \
+template <> struct embr_esp_prop_provider_traits<ns::id ## _preserved> \
+{ \
+    static constexpr bool is_specialized = true; \
+    using type = ns::provider; \
+}; \
 EMBR_ESP_EVENT_BASE_TRAITS(ns, id);
+
+#define EMBR_ESP_PROP_TRAITS(event_id, payload) \
+template <> \
+struct embr_esp_event_traits_exp<event_id> : ::embr::esp_idf::event::v1::event_traits_parent<event_id> \
+{ \
+    using provider_traits = embr_esp_prop_provider_traits<decltype(event_id)>; \
+    static constexpr bool is_specialized = true; \
+    static constexpr bool is_property = true; \
+    static constexpr const char* id_name = #event_id; \
+    using payload_type = ::embr::esp_idf::prop::property_event_data<payload, provider_traits::type>; \
+    static constexpr const char* payload_name = "property_event_data(" #payload ")"; \
+    using inner_type = payload; \
+    static constexpr const char* inner_type_name = #payload; \
+};
 
 
 // EXPERIMENTAL, and not working (see service.h notes)
