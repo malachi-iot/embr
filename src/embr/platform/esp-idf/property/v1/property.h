@@ -4,6 +4,7 @@
 
 #include "../../event/v1/traits.h"
 #include "concepts.h"
+#include "macro.h"
 #include "fwd.h"
 
 // DEBT: Really I ought to change these to EMBR_ESP_PROP_TRAITS to match the event traits,
@@ -21,49 +22,6 @@ struct embr_esp_event_traits_legacy<event_base, event_id> \
     /* experimental */ static constexpr const char* property_name = #origin ".TBD"; \
 };
 
-
-template <class Enum>
-struct embr_esp_prop_provider_traits
-{
-    static constexpr bool is_specialized = false;
-    using type = void;
-};
-
-
-
-#define EMBR_ESP_EVENT_DECLARE_PROP_BASE_NS(ns, id, provider) \
-namespace ns { \
-using id ## _preserved = id; \
-ESP_EVENT_DECLARE_BASE(id); \
-} \
-template <> struct embr_esp_prop_provider_traits<ns::id ## _preserved> \
-{ \
-    static constexpr bool is_specialized = true; \
-    using type = ns::provider; \
-}; \
-EMBR_ESP_EVENT_BASE_TRAITS(ns, id);
-
-#define EMBR_ESP_PROP_TRAITS(event_id, data) \
-template <> \
-struct embr_esp_event_traits_exp<event_id> : ::embr::internal::event_traits_parent<event_id> \
-{ \
-    using provider_traits = embr_esp_prop_provider_traits<decltype(event_id)>; \
-    static constexpr bool is_specialized = true; \
-    static constexpr bool is_property = true; \
-    static constexpr const char* id_name = #event_id; \
-    using data_type = ::embr::esp_idf::prop::property_event_data<data, provider_traits::type>; \
-    static constexpr const char* data_name = "property_event_data(" #data ")"; \
-    using payload_type = data; \
-    static constexpr const char* payload_name = #data; \
-};
-
-
-// EXPERIMENTAL, and not working (see service.h notes)
-#define EMBR_IDF_PROP_TRAITS2(ns, origin, event_id, type) \
-EMBR_IDF_PROP_TRAITS(ns::origin::event_base, \
-    ns::event_id,    \
-    decltype(std::declval<ns::origin>().accessor()), \
-    type)
 
 #define EMBR_IDF_PROP_TRAITS_NS(ns, event_base, event_id, type, origin) \
 EMBR_IDF_PROP_TRAITS(ns::event_base, ns::event_id, type, ns::origin)

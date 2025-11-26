@@ -12,11 +12,16 @@ enum SERVICE_EVENTS
     SERVICE_CHANGED_STATE,
 };
 
+// DEBT: As we transition to EMBR_ESP_EVENT_DECLARE_BASE
+using SERVICE_EVENTS_preserved = SERVICE_EVENTS;
+
 // FIX: Has serious problems
 EMBR_ESP_EVENT_DECLARE_BASE_LEGACY(SERVICE_EVENTS);
 class service;
 
 }
+
+EMBR_ESP_EVENT_BASE_TRAITS(embr::esp_idf::service::v2, SERVICE_EVENTS);
 
 /*
 EMBR_IDF_PROP_TRAITS(

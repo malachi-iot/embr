@@ -25,3 +25,11 @@ template <auto event_id, bool send_to_default_loop = true, class Traits = event:
 using property = detail::property<Traits, send_to_default_loop>;
     
 }
+
+
+template <class Enum>
+struct embr_esp_prop_provider_traits
+{
+    static constexpr bool is_specialized = false;
+    using type = void;
+};
