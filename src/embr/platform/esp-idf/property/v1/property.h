@@ -41,18 +41,18 @@ template <> struct embr_esp_prop_provider_traits<ns::id ## _preserved> \
 }; \
 EMBR_ESP_EVENT_BASE_TRAITS(ns, id);
 
-#define EMBR_ESP_PROP_TRAITS(event_id, payload) \
+#define EMBR_ESP_PROP_TRAITS(event_id, data) \
 template <> \
-struct embr_esp_event_traits_exp<event_id> : ::embr::esp_idf::event::v1::event_traits_parent<event_id> \
+struct embr_esp_event_traits_exp<event_id> : ::embr::internal::event_traits_parent<event_id> \
 { \
     using provider_traits = embr_esp_prop_provider_traits<decltype(event_id)>; \
     static constexpr bool is_specialized = true; \
     static constexpr bool is_property = true; \
     static constexpr const char* id_name = #event_id; \
-    using payload_type = ::embr::esp_idf::prop::property_event_data<payload, provider_traits::type>; \
-    static constexpr const char* payload_name = "property_event_data(" #payload ")"; \
-    using inner_type = payload; \
-    static constexpr const char* inner_type_name = #payload; \
+    using data_type = ::embr::esp_idf::prop::property_event_data<data, provider_traits::type>; \
+    static constexpr const char* data_name = "property_event_data(" #data ")"; \
+    using inner_type = data; \
+    static constexpr const char* payload_name = #data; \
 };
 
 

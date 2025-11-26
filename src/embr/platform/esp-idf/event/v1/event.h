@@ -49,7 +49,7 @@ esp_err_t handler_register_exp(F& f)
 
 // EXPERIMENTAL
 template <auto event_id,
-    class Data = typename embr_esp_event_traits_exp<event_id>::payload_type, class F>
+    class Data = typename embr_esp_event_traits_exp<event_id>::data_type, class F>
 esp_err_t handler_register_exp(esp_event_loop_handle_t loop, F& f)
 {
     using traits = embr_esp_event_traits_exp<event_id>;
@@ -65,14 +65,13 @@ esp_err_t handler_register_exp(esp_event_loop_handle_t loop, F& f)
 
 template <auto event_id, class Traits = embr_esp_event_traits_exp<event_id>>
 esp_err_t post_exp(esp_event_loop_handle_t loop_handle,
-    typename Traits::payload_type* event_data,
+    typename Traits::data_type* event_data,
     TickType_t ticks_to_wait = portMAX_DELAY)
 {
     static_assert(Traits::is_specialized, "event_traits must be specialized");
 
-    const char* event_base = Traits::base();
-
-    return esp_event_post_to(loop_handle, event_base, event_id, event_data, sizeof(typename Traits::type),
+    return esp_event_post_to(loop_handle, Traits::base(), event_id,
+        event_data, sizeof(typename Traits::data_type),
         ticks_to_wait);
 }
 

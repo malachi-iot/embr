@@ -5,6 +5,9 @@
 template <esp_event_base_t event_base, int32_t event_id>
 struct embr_esp_event_traits;
 
+template <class EventEnum>
+struct embr_esp_event_base_traits;
+
 namespace embr::esp_idf::inline event::inline v1 {
 
 template <esp_event_base_t event_base, int32_t event_id>

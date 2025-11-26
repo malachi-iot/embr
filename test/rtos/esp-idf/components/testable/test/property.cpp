@@ -29,7 +29,8 @@ EMBR_ESP_PROP_TRAITS(test::COLOR_CHANGED, std::string_view);
 
 using test1 = embr_esp_event_traits_exp<test::AGE_CHANGED>;
 
-static_assert(std::is_same_v<test1::payload_type, prop::property_event_data<int, test::prop_provider>>);
+static_assert(std::is_same_v<test1::data_type, prop::property_event_data<int, test::prop_provider>>);
+static_assert(std::is_same_v<test1::inner_type, int>);
 
 TEST_CASE("event-property", "[property]")
 {
