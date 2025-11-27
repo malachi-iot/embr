@@ -99,12 +99,3 @@ struct embr_esp_event_traits<event_id> \
 // FIX: Trouble in TU paradise
 #define EMBR_ESP_EVENT_DECLARE_BASE_LEGACY(id) constexpr const char id[] = #id
 
-#define _GET_MACRO(_1, _2, NAME, ...) NAME
-
-// FIX: Works OK except not inside a namespace due to specialization
-#define EMBR_ESP_EVENT_DECLARE_BASE_EXP(id) \
-using id ## _preserved = id; \
-ESP_EVENT_DECLARE_BASE(id); \
-EMBR_ESP_EVENT_BASE_TRAITS(, id);
-
-#define EMBR_ESP_EVENT_DECLARE_BASE(...)  _GET_MACRO(__VA_ARGS__, EMBR_ESP_EVENT_DECLARE_BASE_NS, EMBR_ESP_EVENT_DECLARE_BASE_EXP)(__VA_ARGS__)

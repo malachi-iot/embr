@@ -7,12 +7,21 @@ namespace ns { \
 using id ## _preserved = id; \
 ESP_EVENT_DECLARE_BASE(id); \
 } \
-template <> struct embr_esp_prop_provider_traits<ns::id ## _preserved> \
+template <> struct embr_esp_prop_provider_traits<ns::id ## _preserved> : \
+    embr::internal::specialized_type<ns::provider> {};  \
+EMBR_ESP_EVENT_BASE_TRAITS(ns, id);
+
+// Not ready yet
+#define EMBR_ESP_EVENT_DECLARE_PROP_BASE_NO_NS(id, provider) \
+using id ## _preserved = id; \
+ESP_EVENT_DECLARE_BASE(id); \
+template <> struct embr_esp_prop_provider_traits<id ## _preserved> \
 { \
     static constexpr bool is_specialized = true; \
-    using type = ns::provider; \
+    using type = provider; \
 }; \
-EMBR_ESP_EVENT_BASE_TRAITS(ns, id);
+EMBR_ESP_EVENT_BASE_TRAITS(id);
+
 
 #define EMBR_ESP_PROP_TRAITS(event_id, data) \
 template <> \
@@ -29,3 +38,8 @@ struct embr_esp_event_traits<event_id> : ::embr::internal::event_traits_parent<e
 };
 
 
+// Not ready yet
+#define EMBR_ESP_EVENT_DECLARE_PROP_BASE(...)  \
+_GET_MACRO(__VA_ARGS__, \
+    EMBR_ESP_EVENT_DECLARE_PROP_BASE_NS, \
+    EMBR_ESP_EVENT_DECLARE_PROP_BASE_NO_NS)(__VA_ARGS__)
