@@ -70,7 +70,7 @@ TEST_CASE("event experimentation", "[event-exp]")
 
     ESP_ERROR_CHECK(esp_event_loop_create(&loop_args, &loop_handle));
 
-    using type = embr_esp_event_traits_exp<SYNTHETIC3_EVENT_2>;
+    using type = embr_esp_event_traits<SYNTHETIC3_EVENT_2>;
 
     static_assert(std::is_same_v<type::type, SYNTHETIC_EVENTS3_preserved>);
 

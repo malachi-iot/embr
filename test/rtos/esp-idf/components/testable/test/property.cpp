@@ -70,7 +70,7 @@ void prop_consumer::attach(esp_event_loop_handle_t loop_handle)
 
 ESP_EVENT_DEFINE_BASE(test::PROPERTY_EVENTS);
 
-using test1 = embr_esp_event_traits_exp<test::AGE_CHANGED>;
+using test1 = embr_esp_event_traits<test::AGE_CHANGED>;
 
 static_assert(std::is_same_v<test1::data_type, prop::property_event_data<int, test::prop_provider>>);
 static_assert(std::is_same_v<test1::payload_type, int>);

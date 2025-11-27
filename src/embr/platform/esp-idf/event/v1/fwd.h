@@ -9,12 +9,12 @@ template <class EventEnum>
 struct embr_esp_event_base_traits;
 
 template <auto event_id>
-struct embr_esp_event_traits_exp;
+struct embr_esp_event_traits;
 
 namespace embr::esp_idf::inline event::inline v1 {
 
 template <auto event_id>
-using event_traits = embr_esp_event_traits_exp<event_id>;
+using event_traits = embr_esp_event_traits<event_id>;
 
 template <esp_event_base_t event_base, int32_t event_id>
 using event_traits_legacy = embr_esp_event_traits_legacy<event_base, event_id>;

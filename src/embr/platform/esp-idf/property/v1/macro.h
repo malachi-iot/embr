@@ -16,7 +16,7 @@ EMBR_ESP_EVENT_BASE_TRAITS(ns, id);
 
 #define EMBR_ESP_PROP_TRAITS(event_id, data) \
 template <> \
-struct embr_esp_event_traits_exp<event_id> : ::embr::internal::event_traits_parent<event_id> \
+struct embr_esp_event_traits<event_id> : ::embr::internal::event_traits_parent<event_id> \
 { \
     using provider_traits = embr_esp_prop_provider_traits<decltype(event_id)>; \
     static constexpr bool is_specialized = true; \

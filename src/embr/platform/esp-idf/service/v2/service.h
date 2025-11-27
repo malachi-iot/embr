@@ -61,18 +61,9 @@ public:
         return static_cast<states>(state_.get() >> separator);
     }
 
-    // DEBT: I don't think I like these in here anymore
-    template <class F>
-    static esp_err_t on_state_changed(F& f)
-    {
-        return state_type::handler_register(f);
-    }
-
-    template <class F>
-    static esp_err_t on_state_changed(esp_event_loop_handle_t loop_handle, F& f)
-    {
-        return state_type::handler_register(loop_handle, f);
-    }
+    // NOTE: Don't want this, it doesn't help with 'this' comparison
+    // and otherwise maps to handler_register directly
+    //static esp_err_t on_state_changed(F& f)
 };
 
 }

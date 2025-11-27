@@ -2,6 +2,8 @@
 
 #include <string_view>
 
+#include <esp_check.h>
+
 #include "../../event/v1/traits.h"
 #include "../../event/v1/event.h"
 #include "concepts.h"
@@ -56,11 +58,12 @@ struct property_event_data : property_event_data_base<T>
 
 namespace detail {
 
-// DEBT: Put this elsewhere, or above macros elsewhere
 template <class Traits, bool send_to_default_loop>
 class property
 {
     using traits = Traits;
+    static constexpr const char* TAG = traits::id_name;
+
 public:
     using event_type = typename traits::data_type;
     using value_type = typename event_type::value_type;
@@ -70,6 +73,20 @@ private:
     static constexpr traits::type id = traits::id;
 
     value_type value_;
+
+    esp_err_t post(esp_event_loop_handle_t loop_handle, const event_type* e, esp_err_t* ret)
+    {
+        esp_err_t r = event::post<id>(loop_handle, e);
+
+        if(r != ESP_OK)
+        {
+            ESP_LOGE(TAG, "Could not post to loop: %p", loop_handle);
+            // Update ret only on error, so that subsequent successes don't make us forget
+            *ret = r;
+        }
+
+        return r;
+    }
 
 public:
     template <class ...Args>
@@ -88,31 +105,27 @@ public:
 
     // DEBT: Do concept here
     template <class ...LoopHandles>
-    bool set(const value_type& v, origin_type* origin, LoopHandles... loop_handles)
+    esp_err_t set(const value_type& v, origin_type* origin, LoopHandles... loop_handles)
     {
-        if(v == value_)     return false;
+        if(v == value_)     return ESP_OK;
 
         const event_type e{origin, value_, v, {}};
 
         value_ = v;
 
+        esp_err_t ret = ESP_OK;
+
         if constexpr(send_to_default_loop || sizeof...(loop_handles) == 0)
         {
-            event::post<id>(&e);
+            ESP_RETURN_ON_ERROR(event::post<id>(&e), TAG,
+                "post to default loop failed");
         }
 
-        return (event::post<id>(loop_handles, &e) + ... + 0);
-    }
+        //[[maybe_unused]] int dummy =
+        //(event::post<id>(loop_handles, &e) + ... + 0);
+        (void)(post(loop_handles, &e, &ret), ...);
 
-    // DEBT: Stop-gap, I don't think I want these here
-    static esp_err_t handler_register(auto& f)
-    {
-        return event::handler_register<id>(f);
-    }
-
-    static esp_err_t handler_register(esp_event_loop_handle_t loop_handle, auto& f)
-    {
-        return event::handler_register<id>(loop_handle, f);
+        return ret;
     }
 };
 
