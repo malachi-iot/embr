@@ -39,8 +39,9 @@ struct embr_esp_event_traits<event_id> : ::embr::internal::event_traits_parent<e
 
 
 // Not ready yet
-/*
+#if UNUSED
 #define EMBR_ESP_EVENT_DECLARE_PROP_BASE(...)  \
 _GET_MACRO(__VA_ARGS__, \
     EMBR_ESP_EVENT_DECLARE_PROP_BASE_NS, \
-    EMBR_ESP_EVENT_DECLARE_PROP_BASE_NO_NS)(__VA_ARGS__)    */
+    EMBR_ESP_EVENT_DECLARE_PROP_BASE_NO_NS)(__VA_ARGS__)
+#endif
