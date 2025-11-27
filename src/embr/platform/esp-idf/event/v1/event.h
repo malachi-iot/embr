@@ -1,5 +1,7 @@
 #pragma once
 
+#include <type_traits>
+
 #include <esp_event.h>
 
 #include "fwd.h"
