@@ -79,6 +79,7 @@ esp_err_t handler_register(esp_event_loop_handle_t loop,
 template <auto event_id,
     class Data = typename event_traits<event_id>::data_type,
     class Arg = void, class F>
+    requires(!std::is_same_v<F, esp_event_handler_t>)
 esp_err_t handler_register_exp(esp_event_loop_handle_t loop, F&& f,
     Arg* event_handler_arg,
     esp_event_handler_instance_t* instance = nullptr)
@@ -100,6 +101,7 @@ esp_err_t handler_register_exp(esp_event_loop_handle_t loop, F&& f,
 template <auto event_id,
     class Data = typename event_traits<event_id>::data_type,
     class F>
+    requires(!std::is_same_v<F, esp_event_handler_t>)
 esp_err_t handler_register_exp(esp_event_loop_handle_t loop, F&& f,
     esp_event_handler_instance_t* instance = nullptr)
 {
@@ -118,6 +120,7 @@ esp_err_t handler_register_exp(esp_event_loop_handle_t loop, F&& f,
 
 template <auto event_id,
     class Data = typename event_traits<event_id>::data_type, class F>
+    requires(!std::is_same_v<F, esp_event_handler_t>)
 esp_err_t handler_register(esp_event_loop_handle_t loop, F& f,
     esp_event_handler_instance_t* instance = nullptr)
 {

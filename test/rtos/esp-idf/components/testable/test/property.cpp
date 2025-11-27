@@ -17,23 +17,26 @@ class prop_provider;
 
 enum PROPERTY_EVENTS
 {
-    AGE_CHANGED,
-    COLOR_CHANGED,
+    AGE,
+    AGE_CHANGED = AGE,
+    AGE_CHANGING,   // TBD
+    COLOR,
+    COLOR_CHANGED = COLOR,
     DOB_CHANGED,
 };
 
 }
 
 EMBR_ESP_EVENT_DECLARE_PROP_BASE_NS(test, PROPERTY_EVENTS, prop_provider);
-EMBR_ESP_PROP_TRAITS(test::AGE_CHANGED, int);
-EMBR_ESP_PROP_TRAITS(test::COLOR_CHANGED, std::string_view);
+EMBR_ESP_PROP_TRAITS(test::AGE, int);
+EMBR_ESP_PROP_TRAITS(test::COLOR, std::string_view);
 EMBR_ESP_PROP_TRAITS(test::DOB_CHANGED, std::string_view);
 
 namespace test {
 
 class prop_provider
 {
-    prop::v1::property<test::AGE_CHANGED> age_;
+    prop::v1::property<test::AGE> age_;
 
 public:
     prop_provider() : age_(0) {}
@@ -96,12 +99,12 @@ TEST_CASE("event-property", "[property]")
 
     consumer.attach(loop_handle);
 
-    prop::v1::property<test::AGE_CHANGED> age(30);
-    prop::v1::property<test::COLOR_CHANGED> color("red");
+    prop::v1::property<test::AGE> age(30);
+    prop::v1::property<test::COLOR> color("red");
     prop::v1::property<test::DOB_CHANGED> dob("07/04/1776");
 
     esp_idf::event::handler_register_exp<test::AGE_CHANGED>(loop_handle,
-        [](event::event_data<test::AGE_CHANGED>* e)
+        [](event::event_data<test::AGE>* e)
     {
         if(e->origin == nullptr)    updated_age = e->changed_state;
     });
@@ -109,7 +112,7 @@ TEST_CASE("event-property", "[property]")
     esp_idf::handler_register<test::COLOR_CHANGED>(loop_handle,
         [](void* arg, esp_event_base_t, int32_t, void* event_data)
     {
-        auto prop_data = static_cast<event::event_data<test::COLOR_CHANGED>*>(event_data);
+        auto prop_data = static_cast<event::event_data<test::COLOR>*>(event_data);
         updated_color = prop_data->changed_state;
     });
 
