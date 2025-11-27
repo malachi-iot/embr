@@ -102,9 +102,9 @@ TEST_CASE("service", "[service::v2]")
         {
             auto& e = *static_cast<service1::state_event_data*>(event_data);
 
-            ESP_LOGV(TAG, "e.name.data()=%s", e.name.data());
+            //ESP_LOGV(TAG, "e.name.data()=%s", e.name.data());
 
-            TEST_ASSERT_EQUAL_PTR(service1::property::state, e.name.data());
+            //TEST_ASSERT_EQUAL_PTR(service1::property::state, e.name.data());
             TEST_ASSERT_EQUAL(v2::SERVICE_CHANGED_STATE, event_id);
             TEST_ASSERT_EQUAL(service1::Unstarted, e.changing_state);
             TEST_ASSERT_EQUAL(service1::Starting, e.changed_state);
@@ -115,17 +115,24 @@ TEST_CASE("service", "[service::v2]")
 
     auto f = [&](service1::state_event_data* event_data)
     {
+        TEST_ASSERT_EQUAL(service1::Unstarted, event_data->changing_state);
+        TEST_ASSERT_EQUAL(service1::Starting, event_data->changed_state);
+        TEST_ASSERT_EQUAL_PTR(event_data->origin, &svc1);
+
         ++counter;
     };
 
     std::function f2([&](service1::state_event_data* event_data)
     {
+        TEST_ASSERT_EQUAL(service1::Unstarted, event_data->changing_state);
         ++counter;
     });
 
 #if FEATURE_USER_EVENT_LOOP
-    ESP_ERROR_CHECK(svc1.on_state_changed(loop_handle, f));
-    ESP_ERROR_CHECK(svc1.on_state_changed(loop_handle, f2));
+    ESP_ERROR_CHECK(esp_idf::event::handler_register<v2::SERVICE_CHANGED_STATE>(loop_handle, f));
+    ESP_ERROR_CHECK(esp_idf::event::handler_register<v2::SERVICE_CHANGED_STATE>(loop_handle, f2));
+    //ESP_ERROR_CHECK(svc1.on_state_changed(loop_handle, f));
+    //ESP_ERROR_CHECK(svc1.on_state_changed(loop_handle, f2));
 #else
     ESP_ERROR_CHECK(svc1.on_state_changed(f));
     ESP_ERROR_CHECK(svc1.on_state_changed(f2));

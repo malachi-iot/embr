@@ -19,6 +19,9 @@ using event_traits = embr_esp_event_traits_exp<event_id>;
 template <esp_event_base_t event_base, int32_t event_id>
 using event_traits_legacy = embr_esp_event_traits_legacy<event_base, event_id>;
 
+template <auto event_id>
+using event_data = const event_traits<event_id>::data_type;
+
 }
 
 

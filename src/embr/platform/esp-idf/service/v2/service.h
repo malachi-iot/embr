@@ -2,7 +2,7 @@
 
 #include "../../../../service/v2/enum.h"
 
-#include "../../property/v1/state.h"
+#include "../../property/v1/property.h"
 
 namespace embr::esp_idf::service::inline v2 {
 
@@ -12,34 +12,14 @@ enum SERVICE_EVENTS
     SERVICE_CHANGED_STATE,
 };
 
-// DEBT: As we transition to EMBR_ESP_EVENT_DECLARE_BASE
-using SERVICE_EVENTS_preserved = SERVICE_EVENTS;
-
-// FIX: Has serious problems
-EMBR_ESP_EVENT_DECLARE_BASE_LEGACY(SERVICE_EVENTS);
 class service;
 
 }
 
-EMBR_ESP_EVENT_BASE_TRAITS(embr::esp_idf::service::v2, SERVICE_EVENTS);
-
-/*
-EMBR_IDF_PROP_TRAITS(
-    embr::esp_idf::service::SERVICE_EVENTS,
-    embr::esp_idf::service::SERVICE_CHANGED_STATE,
-    embr::service::v2::service::substates,
-    embr::esp_idf::service::v2::service);   */
-
-// Nice try, but no banana:
-// 1. Placing above 'service' means we can't deduce event_base
-// 2. Placing below 'service' means state_base won't enjoy our specialization
-//EMBR_IDF_PROP_TRAITS2(embr::esp_idf::service::v2, service, SERVICE_CHANGED_STATE,
-//    embr::service::v2::service::substates);
-
-EMBR_IDF_PROP_TRAITS_NS(embr::esp_idf::service::v2,
-    SERVICE_EVENTS, SERVICE_CHANGED_STATE,
-    embr::service::v2::service::substates,
-    service);
+EMBR_ESP_EVENT_DECLARE_PROP_BASE_NS(embr::esp_idf::service::v2, SERVICE_EVENTS, service);
+EMBR_ESP_PROP_TRAITS(
+    embr::esp_idf::service::v2::SERVICE_CHANGED_STATE,
+    embr::service::v2::detail::service::substates);
 
 namespace embr::esp_idf::service::inline v2 {
 
@@ -48,13 +28,14 @@ class service : public embr::service::v2::detail::service
     using base_type = embr::service::v2::detail::service;
 
 public:
+    // DEBT: Defunct
     struct property
     {
         static constexpr const char* state = "service.state";
     };
 
-    EMBR_IDF_PROP_PROVIDER(SERVICE_EVENTS, service);
-    EMBR_IDF_PROP_DECLARE(SERVICE_CHANGED_STATE, state);
+    using state_type = prop::v1::property<SERVICE_CHANGED_STATE>;
+    using state_event_data = typename state_type::event_type;
 
 protected:
     using typename base_type::states;
@@ -64,12 +45,12 @@ protected:
 
     void state(substates s)
     {
-        state_.set(s, this, property::state);
+        state_.set(s, this);
     }
 
     void state(substates s, esp_event_loop_handle_t loop_handle)
     {
-        state_.set(s, this, loop_handle, property::state);
+        state_.set(s, this, loop_handle);
     }
 
 public:
@@ -80,6 +61,7 @@ public:
         return static_cast<states>(state_.get() >> separator);
     }
 
+    // DEBT: I don't think I like these in here anymore
     template <class F>
     static esp_err_t on_state_changed(F& f)
     {
