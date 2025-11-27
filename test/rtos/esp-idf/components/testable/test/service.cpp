@@ -129,13 +129,11 @@ TEST_CASE("service", "[service::v2]")
     });
 
 #if FEATURE_USER_EVENT_LOOP
-    ESP_ERROR_CHECK(esp_idf::event::handler_register<v2::SERVICE_CHANGED_STATE>(loop_handle, f));
-    ESP_ERROR_CHECK(esp_idf::event::handler_register<v2::SERVICE_CHANGED_STATE>(loop_handle, f2));
-    //ESP_ERROR_CHECK(svc1.on_state_changed(loop_handle, f));
-    //ESP_ERROR_CHECK(svc1.on_state_changed(loop_handle, f2));
+    ESP_ERROR_CHECK(esp_idf::handler_register<v2::SERVICE_CHANGED_STATE>(loop_handle, f));
+    ESP_ERROR_CHECK(esp_idf::handler_register<v2::SERVICE_CHANGED_STATE>(loop_handle, f2));
 #else
-    ESP_ERROR_CHECK(svc1.on_state_changed(f));
-    ESP_ERROR_CHECK(svc1.on_state_changed(f2));
+    ESP_ERROR_CHECK(esp_idf::handler_register<v2::SERVICE_CHANGED_STATE>(f));
+    ESP_ERROR_CHECK(esp_idf::handler_register<v2::SERVICE_CHANGED_STATE>(f2));
 #endif
 
 #if FEATURE_USER_EVENT_LOOP
