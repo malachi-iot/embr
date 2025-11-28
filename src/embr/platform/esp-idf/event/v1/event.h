@@ -4,10 +4,13 @@
 
 #include <esp_event.h>
 
+#include "concepts.h"
 #include "fwd.h"
 #include "traits.h"
 
 namespace embr::esp_idf::inline event::inline v1 {
+
+
 
 // EXPERIMENTAL
 inline esp_err_t handler_register(esp_event_base_t event_base, int32_t event_id,
@@ -19,7 +22,7 @@ inline esp_err_t handler_register(esp_event_base_t event_base, int32_t event_id,
 }
 
 // EXPERIMENTAL
-template <class F>
+template <Functor F>
 esp_err_t handler_register_exp(esp_event_base_t event_base, int32_t event_id, F& f)
 {
     return esp_event_handler_register(event_base, event_id,
@@ -57,7 +60,7 @@ esp_err_t handler_register_legacy(F& f)
 
 
 template <auto event_id,
-    class Data = event_data<event_id>, class F>
+    class Data = event_data<event_id>, Functor F>
     requires(std::is_invocable_v<F, Data*>)
 esp_err_t handler_register(F& f,
     esp_event_handler_instance_t* instance = nullptr)
@@ -86,7 +89,7 @@ esp_err_t handler_register(esp_event_loop_handle_t loop,
 
 template <auto event_id,
     class Data = event_data<event_id>,
-    class Arg = void, class F>
+    class Arg = void, EmptyFunctor F>
     requires(std::is_invocable_v<F, Arg*, Data*> &&
         !std::is_same_v<F, esp_event_handler_t>)
 esp_err_t handler_register(F&& f,
@@ -94,9 +97,6 @@ esp_err_t handler_register(F&& f,
     esp_event_handler_instance_t* instance = nullptr)
 {
     using traits = event_traits<event_id>;
-
-    // DEBT: Crude and possibly UB
-    static_assert(sizeof(F) <= 1, "Only non-capturing lambdas are supported");
 
     return esp_event_handler_instance_register(traits::base(), event_id,
         [](void* arg, esp_event_base_t, int32_t, void* event_data)
@@ -108,17 +108,13 @@ esp_err_t handler_register(F&& f,
 
 template <auto event_id,
     class Data = event_data<event_id>,
-    class Arg = void, class F>
-    requires(std::is_invocable_v<F, Arg*, Data*> &&
-        !std::is_same_v<F, esp_event_handler_t>)
+    class Arg = void, EmptyFunctor F>
+    requires(std::is_invocable_v<F, Arg*, Data*> && !LoopHandle<F>)
 esp_err_t handler_register(esp_event_loop_handle_t loop, F&& f,
     Arg* event_handler_arg,
     esp_event_handler_instance_t* instance = nullptr)
 {
     using traits = event_traits<event_id>;
-
-    // DEBT: Crude and possibly UB
-    static_assert(sizeof(F) <= 1, "Only non-capturing lambdas are supported");
 
     return esp_event_handler_instance_register_with(loop, traits::base(), event_id,
         [](void* arg, esp_event_base_t, int32_t, void* event_data)
@@ -130,16 +126,13 @@ esp_err_t handler_register(esp_event_loop_handle_t loop, F&& f,
 
 template <auto event_id,
     class Data = event_data<event_id>,
-    class F>
+    EmptyFunctor F>
     requires(std::is_invocable_v<F, Data*> &&
         !std::is_same_v<F, esp_event_handler_t>)
 esp_err_t handler_register(esp_event_loop_handle_t loop, F&& f,
     esp_event_handler_instance_t* instance = nullptr)
 {
     using traits = event_traits<event_id>;
-
-    // DEBT: Crude and possibly UB
-    static_assert(sizeof(F) <= 1, "Only non-capturing lambdas are supported");
 
     return esp_event_handler_instance_register_with(loop, traits::base(), event_id,
         [](void* arg, esp_event_base_t, int32_t, void* event_data)
@@ -150,9 +143,8 @@ esp_err_t handler_register(esp_event_loop_handle_t loop, F&& f,
 
 
 template <auto event_id,
-    class Data = event_data<event_id>, class F>
-    requires(std::is_invocable_v<F, Data*> &&
-        !std::is_same_v<F, esp_event_handler_t>)
+    class Data = event_data<event_id>, Functor F>
+    requires(std::is_invocable_v<F, Data*>)
 esp_err_t handler_register(esp_event_loop_handle_t loop, F& f,
     esp_event_handler_instance_t* instance = nullptr)
 {

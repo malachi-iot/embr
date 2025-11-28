@@ -4,6 +4,7 @@
 
 #include <esp_check.h>
 
+#include "../../event/v1/concepts.h"
 #include "../../event/v1/traits.h"
 #include "../../event/v1/event.h"
 #include "concepts.h"
@@ -21,6 +22,8 @@ struct property_event_data_base
     virtual ~property_event_data_base() = default;
 #endif
 
+    std::string_view name;
+
     using value_type = T;
 
     value_type changing_state;
@@ -28,7 +31,9 @@ struct property_event_data_base
 
     constexpr property_event_data_base(
         const T& changing_state_,
-        const T& changed_state_) :
+        const T& changed_state_,
+        std::string_view name_) :
+        name(name_),
         changing_state(changing_state_),
         changed_state(changed_state_)
     {}
@@ -42,17 +47,14 @@ struct property_event_data : property_event_data_base<T>
     using origin_type = Origin;
 
     Origin* const origin;
-    // property name
-    std::string_view name;
 
     constexpr property_event_data(
         Origin* origin_,
-        const T& changing_state_,
-        const T& changed_state_,
-        std::string_view name_) :
-        base_type(changing_state_, changed_state_),
-        origin(origin_),
-        name(name_)
+        const T& changing_state,
+        const T& changed_state,
+        std::string_view name) :
+        base_type(changing_state, changed_state, name),
+        origin(origin_)
     {}
 };
 
@@ -66,8 +68,10 @@ class property
 
 public:
     using event_type = typename traits::data_type;
-    using value_type = typename event_type::value_type;
     using origin_type = typename event_type::origin_type;
+
+    using value_type = typename event_type::value_type;
+    using const_reference = const value_type&;
 
 private:
     static constexpr traits::type id = traits::id;
@@ -93,29 +97,30 @@ public:
     constexpr explicit property(Args&&... args) :
         value_(std::forward<Args>(args)...) {}
 
-    constexpr operator const value_type&() const
+    constexpr operator const_reference() const
     {
         return value_;
     }
 
-    constexpr const value_type& get() const
+    constexpr const_reference get() const
     {
         return value_;
     }
 
-    // DEBT: Do concept here
-    template <class ...LoopHandles>
-    esp_err_t set(const value_type& v, origin_type* origin, LoopHandles... loop_handles)
+    template <bool send_override = send_to_default_loop, LoopHandle ...LoopHandles>
+    esp_err_t set(
+        const_reference v, origin_type* origin,
+        TickType_t ticks_to_wait, LoopHandles... loop_handles)
     {
         if(v == value_)     return ESP_OK;
 
-        const event_type e{origin, value_, v, {}};
+        const event_type e{origin, value_, v, TAG};
 
         value_ = v;
 
         esp_err_t ret = ESP_OK;
 
-        if constexpr(send_to_default_loop || sizeof...(loop_handles) == 0)
+        if constexpr(send_override || sizeof...(loop_handles) == 0)
         {
             ESP_RETURN_ON_ERROR(event::post<id>(&e), TAG,
                 "post to default loop failed");
@@ -127,6 +132,13 @@ public:
 
         return ret;
     }
+
+    template <bool send_override = send_to_default_loop, LoopHandle ...LoopHandles>
+    esp_err_t set(const_reference v, origin_type* origin, LoopHandles... loop_handles)
+    {
+        return set<send_override>(v, origin, portMAX_DELAY, loop_handles...);
+    }
+
 };
 
 }
