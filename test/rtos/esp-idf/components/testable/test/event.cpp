@@ -77,7 +77,7 @@ TEST_CASE("event experimentation", "[event-exp]")
     int v = 5;
     int counter = 0;
 
-    auto f = [&](int* val)
+    auto f = [&](const int* val)
     {
         counter += *val;
     };
@@ -112,7 +112,9 @@ TEST_CASE("typed event", "[event]")
     {
         counter += *data;
     };
-    esp_idf::event::handler_register_exp<SYNTHETIC_EVENTS2, SYNTHETIC2_EVENT_1>(f);
+
+    // OBSOLETE
+    esp_idf::event::handler_register_legacy<SYNTHETIC_EVENTS2, SYNTHETIC2_EVENT_1>(f);
 
     esp_idf::event::post<SYNTHETIC_EVENTS2, SYNTHETIC2_EVENT_1>(&counter2);
 

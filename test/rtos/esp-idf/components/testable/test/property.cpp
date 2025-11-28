@@ -59,7 +59,7 @@ public:
 
 void prop_consumer::attach(esp_event_loop_handle_t loop_handle)
 {
-    esp_idf::event::handler_register_exp<test::AGE_CHANGED>(loop_handle,
+    esp_idf::event::handler_register<test::AGE_CHANGED>(loop_handle,
         [](prop_consumer* self, event::event_data<test::AGE_CHANGED>* e)
     {
         if(e->origin == self->provider)
@@ -103,7 +103,7 @@ TEST_CASE("event-property", "[property]")
     prop::v1::property<test::COLOR> color("red");
     prop::v1::property<test::DOB_CHANGED> dob("07/04/1776");
 
-    esp_idf::event::handler_register_exp<test::AGE_CHANGED>(loop_handle,
+    esp_idf::event::handler_register<test::AGE_CHANGED>(loop_handle,
         [](event::event_data<test::AGE>* e)
     {
         if(e->origin == nullptr)    updated_age = e->changed_state;
@@ -116,7 +116,7 @@ TEST_CASE("event-property", "[property]")
         updated_color = prop_data->changed_state;
     });
 
-    esp_idf::event::handler_register_exp<test::DOB_CHANGED>(loop_handle,
+    esp_idf::event::handler_register<test::DOB_CHANGED>(loop_handle,
         [](std::string_view* update, event::event_data<test::DOB_CHANGED>* e)
     {
         *update = e->changed_state;

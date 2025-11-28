@@ -25,11 +25,17 @@ esp_err_t handler_register_exp(esp_event_base_t event_base, int32_t event_id, F&
     return esp_event_handler_register(event_base, event_id,
         [](void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data)
         {
-            static_cast<F*>(arg)->operator()(event_base, event_id, event_data);
+            F& functor = *static_cast<F*>(arg);
+
+            if constexpr(std::is_invocable_v<int32_t, void*>)
+                functor(event_id, event_data);
+            else if constexpr(std::is_invocable_v<esp_event_base_t, int32_t, void*>)
+                functor(event_base, event_id, event_data);
+            else
+                static_assert(false, "Unsupported signature for F");
         }, &f);
 }
 
-// EXPERIMENTAL
 inline esp_err_t handler_register(esp_event_loop_handle_t event_loop, esp_event_base_t event_base, int32_t event_id,
     esp_event_handler_t event_handler, void* event_handler_arg = nullptr)
 {
@@ -37,10 +43,10 @@ inline esp_err_t handler_register(esp_event_loop_handle_t event_loop, esp_event_
         event_loop, event_base, event_id, event_handler, event_handler_arg, nullptr);
 }
 
-// EXPERIMENTAL
+// OBSOLETE
 template <esp_event_base_t event_base, int32_t event_id,
     class Data = typename event_traits_legacy<event_base, event_id>::type, class F>
-esp_err_t handler_register_exp(F& f)
+esp_err_t handler_register_legacy(F& f)
 {
     return esp_event_handler_instance_register(event_base, event_id,
         [](void* arg, esp_event_base_t, int32_t, void* event_data)
@@ -51,7 +57,8 @@ esp_err_t handler_register_exp(F& f)
 
 
 template <auto event_id,
-    class Data = typename event_traits<event_id>::data_type, class F>
+    class Data = event_data<event_id>, class F>
+    requires(std::is_invocable_v<F, Data*>)
 esp_err_t handler_register(F& f,
     esp_event_handler_instance_t* instance = nullptr)
 {
@@ -77,12 +84,34 @@ esp_err_t handler_register(esp_event_loop_handle_t loop,
         loop, traits::base(), event_id, event_handler, event_handler_arg, instance);
 }
 
-// TODO: Disambiguate with is_invocable_v so that above can coeexist
 template <auto event_id,
-    class Data = typename event_traits<event_id>::data_type,
+    class Data = event_data<event_id>,
     class Arg = void, class F>
-    requires(!std::is_same_v<F, esp_event_handler_t>)
-esp_err_t handler_register_exp(esp_event_loop_handle_t loop, F&& f,
+    requires(std::is_invocable_v<F, Arg*, Data*> &&
+        !std::is_same_v<F, esp_event_handler_t>)
+esp_err_t handler_register(F&& f,
+    Arg* event_handler_arg,
+    esp_event_handler_instance_t* instance = nullptr)
+{
+    using traits = event_traits<event_id>;
+
+    // DEBT: Crude and possibly UB
+    static_assert(sizeof(F) <= 1, "Only non-capturing lambdas are supported");
+
+    return esp_event_handler_instance_register(traits::base(), event_id,
+        [](void* arg, esp_event_base_t, int32_t, void* event_data)
+        {
+            F{}(static_cast<Arg*>(arg), static_cast<Data*>(event_data));
+        }, event_handler_arg, instance);
+}
+
+
+template <auto event_id,
+    class Data = event_data<event_id>,
+    class Arg = void, class F>
+    requires(std::is_invocable_v<F, Arg*, Data*> &&
+        !std::is_same_v<F, esp_event_handler_t>)
+esp_err_t handler_register(esp_event_loop_handle_t loop, F&& f,
     Arg* event_handler_arg,
     esp_event_handler_instance_t* instance = nullptr)
 {
@@ -99,12 +128,12 @@ esp_err_t handler_register_exp(esp_event_loop_handle_t loop, F&& f,
 }
 
 
-// TODO: Disambiguate with is_invocable_v so that above can coeexist
 template <auto event_id,
-    class Data = typename event_traits<event_id>::data_type,
+    class Data = event_data<event_id>,
     class F>
-    requires(!std::is_same_v<F, esp_event_handler_t>)
-esp_err_t handler_register_exp(esp_event_loop_handle_t loop, F&& f,
+    requires(std::is_invocable_v<F, Data*> &&
+        !std::is_same_v<F, esp_event_handler_t>)
+esp_err_t handler_register(esp_event_loop_handle_t loop, F&& f,
     esp_event_handler_instance_t* instance = nullptr)
 {
     using traits = event_traits<event_id>;
@@ -121,8 +150,9 @@ esp_err_t handler_register_exp(esp_event_loop_handle_t loop, F&& f,
 
 
 template <auto event_id,
-    class Data = typename event_traits<event_id>::data_type, class F>
-    requires(!std::is_same_v<F, esp_event_handler_t>)
+    class Data = event_data<event_id>, class F>
+    requires(std::is_invocable_v<F, Data*> &&
+        !std::is_same_v<F, esp_event_handler_t>)
 esp_err_t handler_register(esp_event_loop_handle_t loop, F& f,
     esp_event_handler_instance_t* instance = nullptr)
 {

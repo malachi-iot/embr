@@ -35,7 +35,7 @@ public:
     };
 
     using state_type = prop::v1::property<SERVICE_CHANGED_STATE>;
-    using state_event_data = typename state_type::event_type;
+    using state_event_data = const state_type::event_type;
 
 protected:
     using typename base_type::states;
