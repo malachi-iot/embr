@@ -1,3 +1,5 @@
+#pragma once
+
 #include <estd/algorithm.h>
 #include <estd/flags.h>
 #include <estd/type_traits.h>
