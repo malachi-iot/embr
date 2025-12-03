@@ -8,6 +8,8 @@
 #include "fwd.h"
 #include "packed.h"
 
+#include <estd/internal/macro/push.h>
+
 namespace embr { namespace dsp { inline namespace v1 {
 
 // Guidance from:
@@ -22,12 +24,12 @@ namespace embr { namespace dsp { inline namespace v1 {
 // DEBT: Not sure why we have to specify 'packed' here but if we don't kern table code complains about fp12_4
 template <unsigned exponent_, unsigned mantissa_, fixed_point_options o>
 struct __attribute__ ((packed)) fixed_point<exponent_, mantissa_, o, estd::endian::native> :
-    detail::packed_word_base<(o & FP_SIGNED) ? PACKED_WORD_SIGNED : PACKED_WORD_DEFAULT, estd::integer_sequence<unsigned, exponent_, mantissa_>>
+    packed_word<(o & FP_SIGNED) ? PACKED_WORD_SIGNED : PACKED_WORD_DEFAULT, exponent_, mantissa_>
 {
     static constexpr unsigned exponent = exponent_;
     static constexpr unsigned mantissa = mantissa_;
 
-    using base_type = detail::packed_word_base<(o & FP_SIGNED) ? PACKED_WORD_SIGNED : PACKED_WORD_DEFAULT, estd::integer_sequence<unsigned, exponent, mantissa>>;
+    using base_type = packed_word<(o & FP_SIGNED) ? PACKED_WORD_SIGNED : PACKED_WORD_DEFAULT, exponent_, mantissa_>;
     using base_type::channel;
     using base_type::v_;
     using typename base_type::signed_type;
@@ -272,3 +274,5 @@ struct common_type<
 };
 
 }
+
+#include <estd/internal/macro/pop.h>

@@ -5,24 +5,9 @@
 #include <embr/internal/type_from_bits.h>
 #include <estd/flags.h>
 
-// FIX: Do not keep under embr::dsp
+// DEBT: Strong overlap with embr bits, word, material areas.  Consolidate.
 
-namespace embr::dsp { inline namespace v1 {
-
-// NOTE: Don't pursue these strongly without considering embr::bits functionality overlap
-enum packed_word_options
-{
-    PACKED_WORD_DEFAULT     =   0,              ///< msb, unswapped
-    PACKED_WORD_NONE        =   0,
-    PACKED_WORD_MSB         =   0x01,           ///< Hi order bit = msb
-    PACKED_WORD_LSB         =   0x02,           ///< Hi order bit = lsb
-    PACKED_WORD_SWAP        =   0x04,
-    PACKED_WORD_SIGNED      =   0x08            ///< Implicitly treat ch0 as signed (whole value_type is signed)
-};
-
-ESTD_FLAGS(packed_word_options)
-
-}
+namespace embr { namespace dsp {
 
 // channel order starts with msb. i.e. 16-bit uint
 // high order 4 bits would be channel 0, next 12 bits would be channel 1
@@ -30,9 +15,6 @@ ESTD_FLAGS(packed_word_options)
 //struct packed_word;
 
 namespace detail { inline namespace v1 {
-
-template <packed_word_options o, typename BitsSequence, typename Enabled = void>
-class packed_word_base;
 
 template <packed_word_options o, unsigned ch0_bits, unsigned ch1_bits>
 class packed_word_base<
@@ -249,10 +231,5 @@ public:
 };
 
 }}
-
-inline namespace v1 {
-
-template <unsigned ...channel_bits>
-using packed_word = detail::packed_word_base<PACKED_WORD_DEFAULT, estd::integer_sequence<unsigned, channel_bits...>>;
 
 }}

@@ -62,9 +62,17 @@ TEST_CASE("dsp")
         using namespace dsp;
 
         detail::packed_word_base<PACKED_WORD_DEFAULT, estd::integer_sequence<unsigned, 4, 4>> pw1(1, 2);
-        detail::packed_word_base<PACKED_WORD_DEFAULT, estd::integer_sequence<unsigned, 5, 6, 5>> pw2;
+        packed_word_default<5, 6, 5> pw2(1, 2, 3);
         detail::packed_word_base<PACKED_WORD_SWAP, estd::integer_sequence<unsigned, 5, 6, 5>> pw3(1, 2, 3);
-        detail::packed_word_base<PACKED_WORD_SWAP, estd::integer_sequence<unsigned, 5, 6, 5>> pw4(10, 15, 11);
+        packed_word<PACKED_WORD_SWAP, 5, 6, 5> pw4(10, 15, 11);
+
+        // TODO: Not ready yet
+        //pw2 = pw3;
+        //pw2 == pw3;
+
+        REQUIRE(pw2.channel<0>() == 1);
+        REQUIRE(pw2.channel<1>() == 2);
+        REQUIRE(pw2.channel<2>() == 3);
 
         REQUIRE(pw3.channel<0>() == 1);
         REQUIRE(pw3.channel<1>() == 2);
