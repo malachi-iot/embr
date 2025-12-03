@@ -1,6 +1,7 @@
 #include <catch2/catch_all.hpp>
 
 #include <embr/dsp/precalc.h>
+#include <embr/dsp/v1/fp.h>
 #include <embr/dsp/v1/phase.h>
 
 using namespace embr;
@@ -55,5 +56,111 @@ TEST_CASE("dsp")
         REQUIRE(gen2.incr() < 0.16);
         ++gen2;
         REQUIRE(gen2.incr() == gen2.phase());
+    }
+    SECTION("packed word")
+    {
+        using namespace dsp;
+
+        detail::packed_word_base<PACKED_WORD_DEFAULT, estd::integer_sequence<unsigned, 4, 4>> pw1(1, 2);
+        detail::packed_word_base<PACKED_WORD_DEFAULT, estd::integer_sequence<unsigned, 5, 6, 5>> pw2;
+        detail::packed_word_base<PACKED_WORD_SWAP, estd::integer_sequence<unsigned, 5, 6, 5>> pw3(1, 2, 3);
+        detail::packed_word_base<PACKED_WORD_SWAP, estd::integer_sequence<unsigned, 5, 6, 5>> pw4(10, 15, 11);
+
+        REQUIRE(pw3.channel<0>() == 1);
+        REQUIRE(pw3.channel<1>() == 2);
+        REQUIRE(pw3.channel<2>() == 3);
+
+        REQUIRE(pw4.channel<0>() == 10);
+        REQUIRE(pw4.channel<1>() == 15);
+        REQUIRE(pw4.channel<2>() == 11);
+    }
+    SECTION("fixed point")
+    {
+        using fp8_24 = dsp::v1::fixed_point<8, 24>;
+        using fp8 = dsp::v1::fixed_point<8, 8>;
+        using fp16 = dsp::v1::fixed_point<16, 16>;
+
+        // Actual font support is in embr::gl - this is just fp verifications
+        SECTION("lv font related")
+        {
+            using fp12_4 = dsp::v1::fixed_point<12, 4>;
+            using fp12i_4 = dsp::v1::fixed_point<12, 4, dsp::v1::FP_SIGNED>;
+            using fp4_4 = dsp::v1::fixed_point<4, 4, dsp::v1::FP_SIGNED>;
+
+            static_assert(sizeof(fp4_4) == 1);
+            static_assert(estd::is_same_v<fp12_4::value_type, uint16_t>, "");
+            static_assert(estd::is_same_v<fp12_4::promoted_type, uint32_t>, "");
+
+            static_assert(sizeof(fp12_4::value_type) == 2, "");
+            static_assert(sizeof(fp12_4::promoted_type) == 4, "");
+
+            fp12_4 v1{0x15};
+
+            REQUIRE(v1.exp() == 1);
+            REQUIRE(v1.man() == 5);
+            REQUIRE(v1.as<float>() == 1.3125F);
+
+            fp4_4 v2{char(0x94)};
+
+            REQUIRE(v2.man() == 4);
+            REQUIRE(int(v2.exp_u()) == 9);
+            REQUIRE(v2.as<float>() == -6.75);
+            // DEBT: Presumes 2's complement
+            REQUIRE(int(v2.exp()) == -7);
+
+            // TODO: Not ready
+            //lv::fp12_4 v3 = v1 * v2;
+
+            fp12_4 v3(v1);
+
+            v3 *= v1;
+
+            // Close as resolution will allow us to 1.3125F^2
+            REQUIRE(v3.as<float>() == 1.6875f);
+
+            v1 -= v2;
+
+            REQUIRE(v1.as<float>() == 8.0625f);
+
+            //REQUIRE(v3.num_s() == -7);
+
+            v3 /= v1;
+
+            REQUIRE(v3.as<float>() == 0.1875f);
+        }
+        SECTION("general")
+        {
+            static_assert(std::is_same_v<fp8_24::value_type, uint32_t>, "");
+            static_assert(std::is_same_v<fp8_24::promoted_type, uint64_t>, "");
+
+            fp8_24 v1{0x1800000};
+            fp8 v2{0x0180};
+
+            REQUIRE(v1.as<float>() == 1.5f);
+            REQUIRE(v2.as<float>() == 1.5f);
+
+            // Mixed precision not quite ready yet
+            /*
+            v1 *= v2;
+
+            REQUIRE(v1.as<float>() == 2.25f);
+
+            v2 *= v1;
+
+            REQUIRE(v2.as<float>() == 3.375f);  */
+
+            auto v3 = fp16::from(1.5F);
+            static constexpr auto v4 = fp16::from(1.5);
+
+            REQUIRE(v3.exp() == 1);
+            REQUIRE(v3.man() == 0x8000);
+        }
+        SECTION("common_type")
+        {
+            using ct1 = estd::common_type_t<fp8, fp16>;
+
+            static_assert(ct1::exponent == 16, "");
+            static_assert(ct1::mantissa == 16, "");
+        }
     }
 }

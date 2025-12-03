@@ -1,4 +1,5 @@
 #include <embr/profiler.h>
+#include <embr/dsp/v1/fp.h>
 #include <embr/dsp/precalc.h>
 
 #include "unit-test.h"
