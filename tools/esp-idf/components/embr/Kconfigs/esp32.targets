@@ -11,6 +11,7 @@ config BOARD_ESP32_M5_BASIC_CORE_V2_6
     bool "M5 Basic Core v2.6"
     help
         https://docs.m5stack.com/en/core/basic
+        https://docs.m5stack.com/en/core/BASIC%20v2.6
 
 config BOARD_ESP32_M5_BASIC_CORE_V2_7
     bool "M5 Basic Core v2.7"

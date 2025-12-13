@@ -22,6 +22,17 @@ config BOARD_ESP32S3_LILYGO_T_QT_PRO
 config BOARD_ESP32S3_LILYGO_T5_EINK_2_3
     bool "LILYGO T5 4.7in E-Ink v2.3"
 
+config BOARD_ESP32S3_M5_CORES3
+    bool "M5 CoreS3"
+    help
+        https://docs.m5stack.com/en/core/basic
+
+config BOARD_ESP32S3_M5_CORES3_SE
+    bool "M5 CoreS3-SE"
+    help
+        https://docs.m5stack.com/en/core/M5CoreS3%20SE
+
+
 config BOARD_ESP32S3_REJSACAN_V3_1
     bool "Magnus Thome's RejsaCAN v3.1"
 

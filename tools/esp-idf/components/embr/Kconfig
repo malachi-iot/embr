@@ -100,4 +100,10 @@ menu "Embr config"
         default 1 if BOARD_ESP32C6_SPARKFUN_THINGPLUS
         default 0
 
+    config FORM_FACTOR_M5_STACK
+        int
+        default 1 if BOARD_ESP32_M5_BASIC_CORE_V2_6 || BOARD_ESP32_M5_BASIC_CORE_V2_7
+        default 1 if BOARD_ESP32S3_M5_CORES3 || BOARD_ESP32S3_M5_CORES3_SE
+        default 0
+
 endmenu
