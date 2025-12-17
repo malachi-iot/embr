@@ -3,7 +3,6 @@
 #include <estd/cstdint.h>
 #include <estd/internal/macro/c++/ctor.h>
 #include <estd/limits.h>
-#include <estd/internal/units/base.h>
 // DEBT: Make a span fwd
 #include <estd/span.h>
 #include <estd/utility.h>
@@ -96,28 +95,6 @@ public:
         for(value_type& v : container_) traits::reset(v);
     }
 };
-
-
-struct page_tag {};
-
-template <class Rep, class Ratio>
-struct page
-{
-    using rep = Rep;
-    using unit_type = estd::internal::units::unit_base<Rep, Ratio, page_tag>;
-
-    static constexpr rep null = estd::numeric_limits<rep>::max();
-
-    constexpr bool is_null() const { return pos_ == null; }
-    void reset() { pos_ = null; }
-
-    constexpr unit_type pos() const { return { pos_ }; }
-    void pos(unit_type v) { pos_ = v.count(); }
-
-private:
-    rep pos_;
-};
-
 
 }}
 

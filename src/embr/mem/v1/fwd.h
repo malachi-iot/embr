@@ -8,11 +8,18 @@ namespace embr { namespace mem {
 
 namespace detail { inline namespace v1 {
 
+class block;
+
+class small_block;
+
 template <class Container>
 struct handles_traits;
 
 template <class Traits>
 class handles;
+
+template <class Rep, class Ratio>
+struct page;
 
 template <class Container, class Traits = void>
 class pool;

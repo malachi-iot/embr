@@ -5,7 +5,9 @@
 #include <estd/utility.h>
 
 #include "fwd.h"
+#include "block.h"
 #include "handles.h"
+#include "page.h"
 
 namespace embr { namespace mem {
 

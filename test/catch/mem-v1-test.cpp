@@ -11,7 +11,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
     {
         SECTION("handles: layer1")
         {
-            using page = detail::v1::page<uint16_t, estd::ratio<1>>;
+            using page = detail::v1::page<uint16_t, estd::ratio<sizeof(void*)>>;
             using unit_type = page::unit_type;
             using type = detail::v1::handles<detail::v1::handles_traits<page[20]>>;
 
@@ -22,12 +22,12 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
             handles.alloc(
                 [](page& v)
                 {
-                    v.pos(unit_type(0));
+                    v.pos(unit_type(1));
                 });
         }
         SECTION("handles: layer2")
         {
-            using page = detail::v1::page<uint16_t, estd::ratio<1>>;
+            using page = detail::v1::page<uint16_t, estd::ratio<sizeof(void*)>>;
             using unit_type = page::unit_type;
             using type = detail::v1::handles<detail::v1::handles_traits<estd::span<page, 20>>>;
 
