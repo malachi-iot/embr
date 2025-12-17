@@ -5,30 +5,43 @@
 #include <estd/limits.h>
 // DEBT: Make a span fwd
 #include <estd/span.h>
+#include <estd/system_error.h>
 #include <estd/utility.h>
 
+
+#include "bundle.h"
 #include "fwd.h"
+
 
 // 17DEC25 MB - boilerplate for incoming playground.memory mem-11 formalization
 
 namespace embr { namespace mem {
 
+// DEBT: container_traits looking pretty useful.  Consider putting him up at estd level
 template <class T, int N>
 struct container_traits<T[N]>
 {
     static constexpr bool constexpr_size = true;
 
     static constexpr int size() { return N; }
+
+    using container_type = T[N];
     using value_type = T;
+
+    T* data(container_type& c) { return c; }
 };
 
-template <class T, int N>
+template <class T, estd::size_t N>
 struct container_traits<estd::span<T, N>>
 {
     static constexpr bool constexpr_size = N != -1;
 
     static constexpr int size() { return N; }
+
+    using container_type = estd::span<T, N>;
     using value_type = T;
+
+    T* data(container_type& c) { return c.data(); }
 };
 
 namespace detail { inline namespace v1 {
@@ -40,12 +53,17 @@ struct handles_traits : container_traits<Container>
     using typename base_type::value_type;
 
     using size_type = uint8_t;
-    using container_type = Container;
 
     static constexpr size_type unavailable = estd::numeric_limits<size_type>::max();
 
     static constexpr bool is_null(const value_type& v) { return v.is_null(); }
     static void reset(value_type& v) { v.reset(); }
+
+    struct bundle
+    {
+        value_type* value;
+        size_type handle;
+    };
 };
 
 
@@ -66,14 +84,14 @@ protected:
 public:
     ESTD_CPP_FORWARDING_CTOR_MEMBER(handles, container_)
 
-    template <class F>
-    size_type alloc(F&& on_alloc)
+    template <class P, class F>
+    size_type alloc(P&& predicate, F&& on_alloc)
     {
         for(size_type i = 0; i < size(); ++i)
         {
             value_type& v = container_[i];
 
-            if(traits::is_null(v))
+            if(traits::is_null(v) && predicate(i, v))
             {
                 on_alloc(v);
                 return i;
@@ -83,11 +101,13 @@ public:
         return traits::unavailable;
     }
 
-    void dealloc(size_type handle)
+    estd::errc dealloc(size_type handle)
     {
-        assert(handle < size());
+        if(handle >= size()) return estd::errc::bad_address;
 
         traits::reset(container_[handle]);
+
+        return {};
     }
 
     void reset()

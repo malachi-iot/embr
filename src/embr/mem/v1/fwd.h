@@ -21,7 +21,10 @@ class handles;
 template <class Rep, class Ratio>
 struct page;
 
-template <class Container, class Traits = void>
+template <class Container>
+struct pool_traits;
+
+template <class Traits>
 class pool;
 
 template <class Pool, Pool* pool>

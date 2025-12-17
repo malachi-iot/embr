@@ -14,27 +14,52 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
             using page = detail::v1::page<uint16_t, estd::ratio<sizeof(void*)>>;
             using unit_type = page::unit_type;
             using type = detail::v1::handles<detail::v1::handles_traits<page[20]>>;
+            using handle_type = unsigned;
 
             static_assert(sizeof(type) == 20 * 2);
 
             type handles;
 
-            handles.alloc(
+            // DEBT: Explicit reset here rather than auto-zero on construction feels a little off
+            handles.reset();
+
+            handle_type h0 = handles.alloc(
+                [](int i, const page&) { return true; },
                 [](page& v)
                 {
                     v.pos(unit_type(1));
                 });
+
+            REQUIRE(h0 == 0);
+
+            //detail::v1::bundle bundle{nullptr, nullptr, h0};
+
+            // DEBT: https://github.com/malachi-iot/estdlib/issues/159
+            REQUIRE(handles.dealloc(h0) == estd::errc::values{});
         }
         SECTION("handles: layer2")
         {
             using page = detail::v1::page<uint16_t, estd::ratio<sizeof(void*)>>;
             using unit_type = page::unit_type;
             using type = detail::v1::handles<detail::v1::handles_traits<estd::span<page, 20>>>;
+            page backing[20];
 
+            static_assert(sizeof(type) == sizeof(page*));
+
+            type handles(backing);
+
+            handles.reset();
         }
         SECTION("pool: layer1")
         {
+            using page = detail::v1::page<uint16_t, estd::ratio<sizeof(void*)>>;
+            using handles_type = detail::v1::handles<detail::v1::handles_traits<page[20]>>;
+            using pool_type = detail::v1::pool<detail::v1::pool_traits<char[2048]>>;
 
+            handles_type handles;
+            pool_type pool;
+
+            pool.alloc(handles, 32, 8);
         }
     }
 }

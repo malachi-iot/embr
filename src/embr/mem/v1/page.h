@@ -31,7 +31,7 @@ struct page
     constexpr bool is_null() const { return pos_ == null; }
     void reset() { pos_ = null; }
 
-    constexpr unit_type pos() const { return { pos_ }; }
+    constexpr unit_type pos() const { return unit_type{ pos_ }; }
     void pos(unit_type v) { pos_ = v.count(); }
 
 private:
