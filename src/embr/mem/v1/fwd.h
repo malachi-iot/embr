@@ -8,7 +8,10 @@ namespace embr { namespace mem {
 
 namespace detail { inline namespace v1 {
 
-template <class Container, class Traits = void>
+template <class Container>
+struct handles_traits;
+
+template <class Traits>
 class handles;
 
 template <class Container, class Traits = void>
@@ -32,6 +35,9 @@ inline namespace v1 {
 
 template <class T, class Pool, Pool* pool = {}>
 class shared_handle;
+
+template <class Container>
+struct container_traits;
 
 
 }

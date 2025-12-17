@@ -1,9 +1,11 @@
 #pragma once
 
+#include <estd/cstdint.h>
 #include <estd/internal/macro/c++/ctor.h>
 #include <estd/utility.h>
 
 #include "fwd.h"
+#include "handles.h"
 
 namespace embr { namespace mem {
 
