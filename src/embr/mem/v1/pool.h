@@ -18,7 +18,9 @@ namespace detail { inline namespace v1 {
 template <class Container>
 struct pool_traits : container_traits<Container>
 {
-
+    // DEBT: My gut tells me page_type/pos_type has a better home than this traits
+    using page_type = page<uint16_t>;
+    using pos_type = page_type::unit_type;
 };
 
 template <class Traits>
@@ -29,6 +31,8 @@ class pool : public Traits
 public:
     using traits = Traits;
     using typename traits::container_type;
+    using typename traits::page_type;
+    using typename traits::pos_type;
     using traits::data;
 
 protected:
@@ -46,23 +50,28 @@ protected:
         return reinterpret_cast<v1::block*>(data(pool_) + page_unit_type(page.pos()).count());
     }
 
-    v1::bundle bundle(v1::bundle::page_type& page, unsigned handle)
+    v1::bundle bundle(page_type& page, unsigned handle)
     {
         return { block(page), &page, handle };
     }
 
     template <class HandlesTraits>
-    struct ops : HandlesTraits
+    struct ops //: HandlesTraits    // FIX: We ought to be able to do this, what's stopping us?
     {
         using traits = HandlesTraits;
         using handle_type = typename traits::size_type;
 
+        static constexpr unsigned aliasing = pos_type::period::num;
+
         this_type& self_;
         handles<traits>& handles_;
 
-        //handle_type alloc()
-    };
+        v1::bundle next(const v1::block*);
+        unsigned phys_size(const v1::bundle&);
 
+        handle_type alloc(unsigned phys_sz);
+        void dealloc(handle_type);
+    };
 
 public:
     ESTD_CPP_FORWARDING_CTOR_MEMBER(pool, pool_)
@@ -70,10 +79,16 @@ public:
     using handle_type = int;
 
     template <class Traits2>
-    typename Traits2::size_type alloc(handles<Traits2>&, unsigned logical_sz, unsigned block_sz);
+    typename Traits2::size_type alloc(handles<Traits2>& h, unsigned logical_sz, unsigned block_sz)
+    {
+        return ops<Traits2>{*this, h}.alloc(logical_sz + block_sz);
+    }
 
     template <class Traits2>
-    void dealloc(handles<Traits2>&, typename Traits2::size_type);
+    void dealloc(v1::handles<Traits2>& handles, typename Traits2::size_type h)
+    {
+        return ops<Traits2>{*this, handles}.dealloc(h);
+    }
 };
 
 }}

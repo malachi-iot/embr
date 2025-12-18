@@ -21,6 +21,8 @@ class block : block_mode_base
     char data_[];
 
 public:
+
+    constexpr unsigned next() const { return next_; }
 };
 
 

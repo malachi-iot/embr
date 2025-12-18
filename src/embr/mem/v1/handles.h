@@ -28,7 +28,7 @@ struct container_traits<T[N]>
     using container_type = T[N];
     using value_type = T;
 
-    T* data(container_type& c) { return c; }
+    static T* data(container_type& c) { return c; }
 };
 
 template <class T, estd::size_t N>
@@ -41,7 +41,7 @@ struct container_traits<estd::span<T, N>>
     using container_type = estd::span<T, N>;
     using value_type = T;
 
-    T* data(container_type& c) { return c.data(); }
+    static T* data(container_type& c) { return c.data(); }
 };
 
 namespace detail { inline namespace v1 {
@@ -84,6 +84,8 @@ protected:
     container_type container_;
 
 public:
+    value_type& operator[](int i) { return container_[i]; }
+
     ESTD_CPP_FORWARDING_CTOR_MEMBER(handles, container_)
 
     template <class P, class F>
