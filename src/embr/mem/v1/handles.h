@@ -70,6 +70,8 @@ struct handles_traits : container_traits<Container>
 template <class Traits>
 class handles : public Traits
 {
+    using this_type = handles;
+
 public:
     using traits = Traits;
     using typename traits::size_type;

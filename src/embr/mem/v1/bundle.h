@@ -11,7 +11,7 @@ struct bundle
 {
     // DEBT: need wider-scope default page/handle type
     using handle_type = uint8_t;
-    using page_type = v1::page<handle_type, estd::ratio<sizeof(void*)>>;
+    using page_type = v1::page<handle_type>;
 
     v1::block* block;
     page_type* page;

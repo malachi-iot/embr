@@ -1,8 +1,13 @@
 #pragma once
 
+#include <estd/internal/units/base.h>
+
 #if __cpp_concepts
 #include <concepts>
 #endif
+
+// See https://github.com/malachi-iot/estdlib/issues/160
+#define PAGE_ALIAS 0
 
 namespace embr { namespace mem {
 
@@ -18,8 +23,16 @@ struct handles_traits;
 template <class Traits>
 class handles;
 
-template <class Rep, class Ratio>
+struct page_tag {};
+
+#if PAGE_ALIAS
+// NOTE: Not possible because internal::units::unit_base has a protected default constructor
+template <class Rep, unsigned alias = sizeof(void*)>
+using page = estd::internal::units::unit_base<Rep, estd::ratio<alias>, page_tag>;
+#else
+template <class Rep, class Ratio = estd::ratio<sizeof(void*)>>
 struct page;
+#endif
 
 template <class Container>
 struct pool_traits;

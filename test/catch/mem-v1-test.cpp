@@ -11,8 +11,12 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
     {
         SECTION("handles: layer1")
         {
-            using page = detail::v1::page<uint16_t, estd::ratio<sizeof(void*)>>;
+            using page = detail::v1::page<uint16_t>;
+#if PAGE_ALIAS
+            using unit_type = page;
+#else
             using unit_type = page::unit_type;
+#endif
             using type = detail::v1::handles<detail::v1::handles_traits<page[20]>>;
             using handle_type = unsigned;
 

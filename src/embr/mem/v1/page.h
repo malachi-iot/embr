@@ -11,13 +11,11 @@ namespace embr { namespace mem {
 
 namespace detail { inline namespace v1 {
 
-
-struct page_tag {};
-
 using page_unit_type = estd::internal::units::unit_base<unsigned, estd::ratio<1>, page_tag>;
 
 // TODO: Do unit_traits for human-readable descriptions
 
+#if PAGE_ALIAS == 0
 template <class Rep, class Ratio>
 struct page
 {
@@ -37,7 +35,7 @@ struct page
 private:
     rep pos_;
 };
-
+#endif
 
 
 }}

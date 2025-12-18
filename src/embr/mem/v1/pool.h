@@ -24,6 +24,8 @@ struct pool_traits : container_traits<Container>
 template <class Traits>
 class pool : public Traits
 {
+    using this_type = pool;
+
 public:
     using traits = Traits;
     using typename traits::container_type;
@@ -33,8 +35,13 @@ protected:
 
     container_type pool_;
 
+#if PAGE_ALIAS
+    template <class Rep, unsigned alias>
+    v1::block* block(const v1::page<Rep, alias>& page)
+#else
     template <class Rep, class Ratio>
     v1::block* block(const v1::page<Rep, Ratio>& page)
+#endif
     {
         return reinterpret_cast<v1::block*>(data(pool_) + page_unit_type(page.pos()).count());
     }
@@ -43,6 +50,19 @@ protected:
     {
         return { block(page), &page, handle };
     }
+
+    template <class HandlesTraits>
+    struct ops : HandlesTraits
+    {
+        using traits = HandlesTraits;
+        using handle_type = typename traits::size_type;
+
+        this_type& self_;
+        handles<traits>& handles_;
+
+        //handle_type alloc()
+    };
+
 
 public:
     ESTD_CPP_FORWARDING_CTOR_MEMBER(pool, pool_)
