@@ -66,8 +66,10 @@ protected:
         this_type& self_;
         handles<traits>& handles_;
 
-        v1::bundle next(const v1::block*);
-        unsigned phys_size(const v1::bundle&);
+        v1::bundle next(const v1::block*) const;
+        v1::bundle next(const v1::bundle& bn) const { return next(bn.block); }
+
+        pos_type phys_size(const v1::bundle&) const;
 
         handle_type alloc(unsigned phys_sz);
         void dealloc(handle_type);
