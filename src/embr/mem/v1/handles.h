@@ -19,12 +19,14 @@
 namespace embr { namespace mem {
 
 // DEBT: container_traits looking pretty useful.  Consider putting him up at estd level
+// Backing off of this - std::data() and std::size() seem to do the job here (though
+// the STD_VALUE_TYPE is still nice)
 template <class T, int N>
 struct container_traits<T[N]>
 {
     static constexpr bool constexpr_size = true;
 
-    static constexpr int size() { return N; }
+    //static constexpr int size() { return N; }
 
     using container_type = T[N];
 
@@ -32,7 +34,7 @@ struct container_traits<T[N]>
 
     using iterator = pointer;
 
-    static T* data(container_type& c) { return c; }
+    //static T* data(container_type& c) { return c; }
 };
 
 template <class T, estd::size_t N>
@@ -40,7 +42,7 @@ struct container_traits<estd::span<T, N>>
 {
     static constexpr bool constexpr_size = N != -1;
 
-    static constexpr int size() { return N; }
+    //static constexpr int size() { return N; }
 
     using container_type = estd::span<T, N>;
 
@@ -48,7 +50,7 @@ struct container_traits<estd::span<T, N>>
 
     using iterator = pointer;
 
-    static pointer data(container_type& c) { return c.data(); }
+    //static pointer data(container_type& c) { return c.data(); }
 };
 
 namespace detail { inline namespace v1 {
@@ -86,7 +88,7 @@ public:
     using typename traits::pointer;
     using reference = value_type&;
     using const_reference = const value_type&;
-    using traits::size;
+    //using traits::size;
 
 protected:
 
@@ -112,7 +114,7 @@ public:
     template <class P, class F>
     size_type alloc(P&& predicate, F&& on_alloc)
     {
-        for(size_type i = 0; i < size(); ++i)
+        for(size_type i = 0; i < std::size(container_); ++i)
         {
             reference v = container_[i];
 
@@ -135,7 +137,7 @@ public:
 
     estd::errc dealloc(size_type handle)
     {
-        if(handle >= size()) return estd::errc::bad_address;
+        if(handle >= std::size(container_)) return estd::errc::bad_address;
 
         traits::reset(container_[handle]);
 

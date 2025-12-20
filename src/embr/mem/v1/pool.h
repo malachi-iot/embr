@@ -33,7 +33,7 @@ public:
     using typename traits::container_type;
     using typename traits::page_type;
     using typename traits::pos_type;
-    using traits::data;
+    //using traits::data;
 
 protected:
 
@@ -47,7 +47,7 @@ protected:
     v1::block* block(const v1::page<Rep, Ratio>& page)
 #endif
     {
-        return reinterpret_cast<v1::block*>(data(pool_) + page_unit_type(page.pos()).count());
+        return reinterpret_cast<v1::block*>(std::data(pool_) + page_unit_type(page.pos()).count());
     }
 
     v1::bundle bundle(page_type& page, unsigned handle)
