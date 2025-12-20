@@ -26,6 +26,12 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
 {
     SECTION("detail")
     {
+        SECTION("page")
+        {
+            using page = detail::v1::page<uint16_t>;
+
+            REQUIRE(page::null == 0xFFFF);
+        }
         SECTION("handles: layer1")
         {
             using page = detail::v1::page<uint16_t>;
@@ -73,12 +79,15 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
         }
         SECTION("pool: layer1")
         {
-            using page = detail::v1::page<uint16_t, estd::ratio<sizeof(void*)>>;
+            using page = detail::v1::page<uint16_t>;
             using handles_type = detail::v1::handles<detail::v1::handles_traits<page[20]>>;
             using pool_type = detail::v1::pool<detail::v1::pool_traits<char[2048]>>;
 
             handles_type handles;
             pool_type pool;
+
+            // DEBT: Need to make this automatic
+            pool.reset(handles);
 
             SECTION("ops")
             {
@@ -92,6 +101,8 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
             {
                 int counter = 0;
                 int h = pool.construct<SideEffector>(handles, &counter);
+
+                //REQUIRE(counter == 1);
             }
         }
     }

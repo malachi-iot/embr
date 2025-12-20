@@ -23,7 +23,13 @@ template <class T, class ...Args>
 block::block(estd::in_place_index_t<Rtto>, estd::in_place_type_t<T>, Args&&...args) :
     mode_{Rtto}
 {
-    //using proxy = estd::internal::rtto<T>::
+    using rt = rtto<T>;
+    using proxy = typename rt::template proxy<>;
+    auto data = (proxy*)data_;
+
+    new (data) proxy(rt::utility);
+    // DEBT: consider a proxy::emplace and/or an in_place_t emplace constructor
+    new (data->storage()) T(std::forward<Args>(args)...);
 }
 
 

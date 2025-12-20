@@ -82,6 +82,8 @@ protected:
         handle_type construct(v1::bundle*, Args&&...);
 
         void dealloc(handle_type);
+
+        void reset();
     };
 
 public:
@@ -103,6 +105,12 @@ public:
     void dealloc(v1::handles<Traits2>& handles, typename Traits2::size_type h)
     {
         return ops<Traits2>{*this, handles}.dealloc(h);
+    }
+
+    template <class Traits2>
+    void reset(v1::handles<Traits2>& handles)
+    {
+        ops<Traits2>{*this, handles}.reset();
     }
 };
 

@@ -31,13 +31,27 @@ auto pool<Traits>::ops<HandleTraits>::phys_size(const v1::bundle& bn) const -> p
 
 template <class Traits>
 template <class HandleTraits>
+void pool<Traits>::ops<HandleTraits>::reset()
+{
+    using unit_type = typename page_type::unit_type;
+    handles_.reset();
+    handles_[0].pos(unit_type(0));
+    v1::bundle bn = self_.bundle(handles_[0], 0);
+
+    new (bn.block) v1::block(v1::block::Trivial, false);
+}
+
+template <class Traits>
+template <class HandleTraits>
 template <v1::block::modes mode>
 auto pool<Traits>::ops<HandleTraits>::alloc(unsigned phys_sz, v1::bundle* bn) -> handle_type
 {
     return handles_.alloc(
         [&](int h, page_type& page)
         {
+            if(page.is_null()) return false;
             *bn = self_.bundle(page, h);     // semi-side-effect
+            if(bn->block->allocated())  return false;
             unsigned candidate_phys_sz = phys_size(*bn).count() * aliasing;
             return candidate_phys_sz >= phys_sz;
         },
@@ -58,7 +72,9 @@ auto pool<Traits>::ops<HandleTraits>::construct(v1::bundle* bn, Args&&...args) -
     return handles_.alloc(
         [&](int h, page_type& page)
         {
+            if(page.is_null()) return false;
             *bn = self_.bundle(page, h);     // semi-side-effect
+            if(bn->block->allocated())  return false;
             unsigned candidate_phys_sz = phys_size(*bn).count() * aliasing;
             return candidate_phys_sz >= phys_sz;
         },

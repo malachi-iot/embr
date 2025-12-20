@@ -13,6 +13,9 @@ namespace detail { inline namespace v1 {
 
 class alignas(void*) block : public block_mode_base
 {
+    template <class T>
+    using rtto = estd::internal::rtto<T>;
+
 protected:
     struct alignas(void*)
     {

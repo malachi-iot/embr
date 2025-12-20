@@ -95,6 +95,7 @@ public:
         {
             value_type& v = container_[i];
 
+            // FIX: Need this as is_null == false, since that is NOT the same as allocated
             if(traits::is_null(v) && predicate(i, v))
             {
                 on_alloc(i, v);
