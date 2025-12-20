@@ -1,9 +1,12 @@
 #pragma once
 
+#include <estd/internal/rtto.h>
+#include <estd/new.h>
+
 // DEBT: https://github.com/malachi-iot/estdlib/issues/155
 #include <estd/internal/units/operators.hpp>
 
-#include "block.h"
+#include "block.hpp"
 #include "pool.h"
 
 namespace embr { namespace mem {
@@ -28,18 +31,62 @@ auto pool<Traits>::ops<HandleTraits>::phys_size(const v1::bundle& bn) const -> p
 
 template <class Traits>
 template <class HandleTraits>
-auto pool<Traits>::ops<HandleTraits>::alloc(unsigned phys_sz) -> handle_type
+template <v1::block::modes mode>
+auto pool<Traits>::ops<HandleTraits>::alloc(unsigned phys_sz, v1::bundle* bn) -> handle_type
 {
     return handles_.alloc(
         [&](int h, page_type& page)
         {
-            v1::bundle bn = self_.bundle(page, h);
-            unsigned candidate_phys_sz = phys_size(bn).count() * aliasing;
+            *bn = self_.bundle(page, h);     // semi-side-effect
+            unsigned candidate_phys_sz = phys_size(*bn).count() * aliasing;
             return candidate_phys_sz >= phys_sz;
         },
-        [&](auto& v)
+        [&](int, page_type&)
         {
+            new (bn->block) v1::block(mode, true);
         });
+}
+
+template <class Traits>
+template <class HandleTraits>
+template <v1::block::modes mode, class T, class ...Args>
+auto pool<Traits>::ops<HandleTraits>::construct(v1::bundle* bn, Args&&...args) -> handle_type
+{
+    constexpr unsigned block_sz = v1::block::header_size<mode>();
+    constexpr unsigned phys_sz = sizeof(T) + block_sz;
+
+    return handles_.alloc(
+        [&](int h, page_type& page)
+        {
+            *bn = self_.bundle(page, h);     // semi-side-effect
+            unsigned candidate_phys_sz = phys_size(*bn).count() * aliasing;
+            return candidate_phys_sz >= phys_sz;
+        },
+        [&](int, page_type&)
+        {
+            new (bn->block) v1::block(
+                estd::in_place_index_t<mode>{},
+                estd::in_place_type_t<T>{},
+                std::forward<Args>(args)...);
+        });
+}
+
+
+template <class Traits>
+template <class T, class Traits2, class ...Args>
+typename Traits2::size_type pool<Traits>::construct(handles<Traits2>& h, Args&&...args)
+{
+    using is_trivial = estd::is_trivially_constructible<T>;
+    using is_movable = estd::is_move_constructible<T>;
+    using is_rtto_base = estd::is_base_of<estd::internal::rtto_base::base, T>;
+    constexpr v1::block::modes mode =
+        is_trivial::value ? v1::block::Trivial :
+        !is_movable::value ? v1::block::Immobile :
+        is_rtto_base::value ? v1::block::RttoBase : v1::block::Rtto;
+
+    v1::bundle bn;
+    handle_type handle = ops<Traits2>{*this, h}.template construct<mode, T>(&bn, std::forward<Args>(args)...);
+    return handle;
 }
 
 

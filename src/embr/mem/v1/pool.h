@@ -70,8 +70,17 @@ protected:
         v1::bundle next(const v1::bundle& bn) const { return next(bn.block); }
 
         pos_type phys_size(const v1::bundle&) const;
+        pos_type phys_size(int h, page_type& p) const
+        {
+            return phys_size(self_.bundle(h, p));
+        }
 
-        handle_type alloc(unsigned phys_sz);
+        template <v1::block::modes mode>
+        handle_type alloc(unsigned phys_sz, v1::bundle*);
+
+        template <v1::block::modes mode, class T, class ...Args>
+        handle_type construct(v1::bundle*, Args&&...);
+
         void dealloc(handle_type);
     };
 
@@ -83,8 +92,12 @@ public:
     template <class Traits2>
     typename Traits2::size_type alloc(handles<Traits2>& h, unsigned logical_sz, unsigned block_sz)
     {
-        return ops<Traits2>{*this, h}.alloc(logical_sz + block_sz);
+        v1::bundle bn;
+        return ops<Traits2>{*this, h}.template alloc<v1::block::Trivial>(logical_sz + block_sz, &bn);
     }
+
+    template <class T, class Traits2, class ...Args>
+    typename Traits2::size_type construct(handles<Traits2>& h, Args&&...args);
 
     template <class Traits2>
     void dealloc(v1::handles<Traits2>& handles, typename Traits2::size_type h)

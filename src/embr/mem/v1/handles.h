@@ -97,7 +97,7 @@ public:
 
             if(traits::is_null(v) && predicate(i, v))
             {
-                on_alloc(v);
+                on_alloc(i, v);
                 return i;
             }
         }

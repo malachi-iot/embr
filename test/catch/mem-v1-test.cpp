@@ -3,6 +3,23 @@
 #include <embr/mem/v1/pool.hpp>
 #include <embr/mem/v1/shared-handle.h>
 
+
+// DEBT: See if we can scoop this from estd
+struct SideEffector
+{
+    int* counter_{};
+
+    SideEffector(int* counter) : counter_{counter}
+    {
+        ++*counter_;
+    }
+
+    ~SideEffector()
+    {
+        if(*counter_)   --*counter_;
+    }
+};
+
 using namespace embr::mem;
 
 TEST_CASE("gc mem v1 tests", "[memory][gc]")
@@ -29,7 +46,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
 
             handle_type h0 = handles.alloc(
                 [](int i, const page&) { return true; },
-                [](page& v)
+                [](int i, page& v)
                 {
                     v.pos(unit_type(1));
                 });
@@ -63,7 +80,19 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
             handles_type handles;
             pool_type pool;
 
-            pool.alloc(handles, 32, 8);
+            SECTION("ops")
+            {
+
+            }
+            SECTION("alloc")
+            {
+                pool.alloc(handles, 32, 8);
+            }
+            SECTION("construct")
+            {
+                int counter = 0;
+                int h = pool.construct<SideEffector>(handles, &counter);
+            }
         }
     }
 }
