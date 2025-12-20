@@ -24,6 +24,20 @@ using namespace embr::mem;
 
 TEST_CASE("gc mem v1 tests", "[memory][gc]")
 {
+    SECTION("filter_iterator")
+    {
+        constexpr int values[] { 0, 4, 7, 9, 3, 6 };
+
+        auto filter = [](int v) { return v > 5; };
+        using iterator = v1::filter_iterator<decltype(filter), const int*>;
+        iterator i{values};
+
+        REQUIRE(*i == 7);
+        ++i;
+        REQUIRE(*i == 9);
+        ++i;
+        REQUIRE(*i == 6);
+    }
     SECTION("detail")
     {
         SECTION("page")

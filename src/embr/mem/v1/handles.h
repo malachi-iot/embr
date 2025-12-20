@@ -10,6 +10,7 @@
 
 
 #include "bundle.h"
+#include "filter-iterator.h"
 #include "fwd.h"
 
 
@@ -26,7 +27,8 @@ struct container_traits<T[N]>
     static constexpr int size() { return N; }
 
     using container_type = T[N];
-    using value_type = T;
+
+    ESTD_CPP_STD_VALUE_TYPE(T)
 
     static T* data(container_type& c) { return c; }
 };
@@ -39,9 +41,10 @@ struct container_traits<estd::span<T, N>>
     static constexpr int size() { return N; }
 
     using container_type = estd::span<T, N>;
-    using value_type = T;
 
-    static T* data(container_type& c) { return c.data(); }
+    ESTD_CPP_STD_VALUE_TYPE(T)
+
+    static pointer data(container_type& c) { return c.data(); }
 };
 
 namespace detail { inline namespace v1 {
@@ -66,7 +69,6 @@ struct handles_traits : container_traits<Container>
     };
 };
 
-
 template <class Traits>
 class handles : public Traits
 {
@@ -77,6 +79,7 @@ public:
     using typename traits::size_type;
     using typename traits::container_type;
     using typename traits::value_type;
+    using typename traits::pointer;
     using traits::size;
 
 protected:
@@ -84,6 +87,14 @@ protected:
     container_type container_;
 
 public:
+    class iterator
+    {
+        pointer current_;
+
+    public:
+
+    };
+
     value_type& operator[](int i) { return container_[i]; }
 
     ESTD_CPP_FORWARDING_CTOR_MEMBER(handles, container_)
