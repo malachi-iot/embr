@@ -12,24 +12,41 @@ class iterator_ops
 public:
     Derived operator++(int)
     {
-        const Derived& self = static_cast<const Derived&>(*this);
+        auto& self = static_cast<Derived&>(*this);
         Derived copied(self);
 
-        copied.operator++();
+        self.operator++();
 
         return copied;
     }
 
     Derived operator--(int)
     {
-        const Derived& self = static_cast<const Derived&>(*this);
+        auto& self = static_cast<Derived&>(*this);
         Derived copied(self);
 
-        copied.operator--();
+        self.operator--();
 
         return copied;
     }
 };
+
+template <class Derived>
+struct iterator_base_ops
+{
+    constexpr bool operator==(const Derived& compare_to) const
+    {
+        auto& self = static_cast<const Derived&>(*this);
+        return self.base() == compare_to.base();
+    }
+
+    constexpr bool operator!=(const Derived& compare_to) const
+    {
+        auto& self = static_cast<const Derived&>(*this);
+        return self.base() != compare_to.base();
+    }
+};
+
 
 // Boost-style
 // DEBT: Consolidate with old estd::experimental::filter_iterator, use EBO and
@@ -37,8 +54,11 @@ public:
 template <class Pred, class It>
 class filter_iterator :
     public estd::internal::struct_evaporator<Pred>,
+    public iterator_base_ops<filter_iterator<Pred, It>>,
     public iterator_ops<filter_iterator<Pred, It>>
 {
+    using ops = iterator_ops<filter_iterator<Pred, It>>;
+    using base_ops = iterator_base_ops<filter_iterator<Pred, It>>;
     using base_type = estd::internal::struct_evaporator<Pred>;
 
     // DEBT: Add is_default_constructible to estd, and perhaps a
@@ -70,18 +90,27 @@ public:
     using pointer = typename traits::pointer;
     using const_reference = const value_type&;
 
+    using ops::operator ++;
+    using ops::operator --;
+    using base_ops::operator ==;
+    using base_ops::operator !=;
+
     constexpr filter_iterator(iterator it) : current_{it}
     {
-        while(predicate(current_) == false) ++current_;
+        int p;
+        while(p = predicate(current_) == false) ++current_;
     }
 
     this_type& operator++()
     {
+        int p;
+
+        // Increment until predicate is satisfied
         do
         {
             ++current_;
         }
-        while(predicate(current_) == false);
+        while(p = predicate(current_) == false);
 
         return *this;
     }
@@ -89,6 +118,19 @@ public:
     reference operator*() { return *current_; }
     constexpr const_reference operator*() const { return *current_; }
     pointer operator->() { return &(*current_); }
+
+    // Boost style
+    constexpr const iterator& base() const { return current_; }
+
+    constexpr bool operator==(const iterator& compare_to)
+    {
+        return current_ == compare_to;
+    }
+
+    constexpr bool operator!=(const iterator& compare_to)
+    {
+        return current_ != compare_to;
+    }
 };
 
 

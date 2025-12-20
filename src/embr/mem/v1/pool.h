@@ -55,16 +55,22 @@ protected:
         return { block(page), &page, handle };
     }
 
+#if UNIT_TESTING
+public:
+#endif
     template <class HandlesTraits>
     struct ops //: HandlesTraits    // FIX: We ought to be able to do this, what's stopping us?
     {
         using traits = HandlesTraits;
         using handle_type = typename traits::size_type;
+        using handles_type = handles<traits>;
 
         static constexpr unsigned aliasing = pos_type::period::num;
 
         this_type& self_;
-        handles<traits>& handles_;
+        handles_type& handles_;
+
+        v1::bundle first_free(pos_type phys_sz) const;
 
         v1::bundle next(const v1::block*) const;
         v1::bundle next(const v1::bundle& bn) const { return next(bn.block); }

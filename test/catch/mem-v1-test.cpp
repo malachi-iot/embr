@@ -26,17 +26,24 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
 {
     SECTION("filter_iterator")
     {
-        constexpr int values[] { 0, 4, 7, 9, 3, 6 };
+        static constexpr int values[] { 0, 4, 7, 9, 3, 6 };
 
-        auto filter = [](int v) { return v > 5; };
+        auto filter = [](const int& v)
+        {
+            // 'end' value is always included to avoid tumbling into undefined memory
+            if(&v == std::end(values)) return true;
+
+            return v > 5;
+        };
         using iterator = v1::filter_iterator<decltype(filter), const int*>;
         iterator i{values};
 
         REQUIRE(*i == 7);
         ++i;
-        REQUIRE(*i == 9);
-        ++i;
+        REQUIRE(*i++ == 9);
         REQUIRE(*i == 6);
+
+        REQUIRE(++i == std::end(values));
     }
     SECTION("detail")
     {
@@ -77,6 +84,8 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
 
             // DEBT: https://github.com/malachi-iot/estdlib/issues/159
             REQUIRE(handles.dealloc(h0) == estd::errc::values{});
+
+            type::iterator b = handles.begin();
         }
         SECTION("handles: layer2")
         {
@@ -94,8 +103,10 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
         SECTION("pool: layer1")
         {
             using page = detail::v1::page<uint16_t>;
-            using handles_type = detail::v1::handles<detail::v1::handles_traits<page[20]>>;
+            using handles_traits = detail::v1::handles_traits<page[20]>;
+            using handles_type = detail::v1::handles<handles_traits>;
             using pool_type = detail::v1::pool<detail::v1::pool_traits<char[2048]>>;
+            using pos_type = pool_type::pos_type;
 
             handles_type handles;
             pool_type pool;
@@ -105,6 +116,9 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
 
             SECTION("ops")
             {
+                pool_type::ops<handles_traits> op{pool, handles};
+
+                op.first_free(pos_type{8});
 
             }
             SECTION("alloc")

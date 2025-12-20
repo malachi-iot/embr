@@ -15,6 +15,33 @@ namespace detail { inline namespace v1 {
 
 template <class Traits>
 template <class HandleTraits>
+v1::bundle pool<Traits>::ops<HandleTraits>::first_free(pos_type phys_sz) const
+{
+    for(page_type& p : handles_)
+    {
+        int i = &p - &handles_[0];
+
+        v1::bundle bn = self_.bundle(p, i);
+
+        if(bn.block->allocated() == false)
+        {
+            pos_type candidate_sz = phys_size(bn);
+
+            if(candidate_sz >= phys_sz) return bn;
+        }
+
+        // Nifty, but needs this clumsy end check since 'end' doesn't work normally here
+        if(&p == handles_.end().base() - 1)
+        {
+            return {};
+        }
+    }
+
+    return {};
+}
+
+template <class Traits>
+template <class HandleTraits>
 v1::bundle pool<Traits>::ops<HandleTraits>::next(const v1::block* b) const
 {
     page_type& page = handles_[b->next()];

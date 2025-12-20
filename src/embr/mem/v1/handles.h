@@ -30,6 +30,8 @@ struct container_traits<T[N]>
 
     ESTD_CPP_STD_VALUE_TYPE(T)
 
+    using iterator = pointer;
+
     static T* data(container_type& c) { return c; }
 };
 
@@ -43,6 +45,8 @@ struct container_traits<estd::span<T, N>>
     using container_type = estd::span<T, N>;
 
     ESTD_CPP_STD_VALUE_TYPE(T)
+
+    using iterator = pointer;
 
     static pointer data(container_type& c) { return c.data(); }
 };
@@ -80,22 +84,28 @@ public:
     using typename traits::container_type;
     using typename traits::value_type;
     using typename traits::pointer;
+    using reference = value_type&;
+    using const_reference = const value_type&;
     using traits::size;
 
 protected:
 
     container_type container_;
 
-public:
-    class iterator
+    struct filter
     {
-        pointer current_;
-
-    public:
-
+        constexpr bool operator()(const_reference v) const
+        {
+            return traits::is_null(v) == false;
+        }
     };
 
-    value_type& operator[](int i) { return container_[i]; }
+public:
+    using iterator = filter_iterator<filter, pointer>;
+    using const_iterator = filter_iterator<filter, typename traits::const_pointer>;
+
+    reference operator[](int i) { return container_[i]; }
+    constexpr const_reference operator[](int i) const { return container_[i]; }
 
     ESTD_CPP_FORWARDING_CTOR_MEMBER(handles, container_)
 
@@ -104,7 +114,7 @@ public:
     {
         for(size_type i = 0; i < size(); ++i)
         {
-            value_type& v = container_[i];
+            reference v = container_[i];
 
             // FIX: Need this as is_null == false, since that is NOT the same as allocated
             if(traits::is_null(v) && predicate(i, v))
@@ -115,6 +125,12 @@ public:
         }
 
         return traits::unavailable;
+    }
+
+    template <class F>
+    size_type alloc(F&& on_alloc = [](int, reference) { return true; })
+    {
+        return alloc([] { return true; }, std::forward<F>(on_alloc));
     }
 
     estd::errc dealloc(size_type handle)
@@ -130,6 +146,11 @@ public:
     {
         for(value_type& v : container_) traits::reset(v);
     }
+
+    iterator begin() { return { &container_[0] }; }
+    constexpr const_iterator begin() const { return { &container_[0] }; }
+    iterator end() { return { &container_[std::size(container_)] }; }
+    constexpr const_iterator end() const { return { &container_[std::size(container_)] }; }
 };
 
 }}
