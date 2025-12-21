@@ -15,19 +15,23 @@ namespace detail { inline namespace v1 {
 
 template <class Traits>
 template <class HandleTraits>
-v1::bundle pool<Traits>::ops<HandleTraits>::first_free(pos_type phys_sz) const
+bundle pool<Traits>::ops<HandleTraits>::first_free(pos_type phys_sz, pos_type* found_size) const
 {
     for(page_type& p : handles_)
     {
         int i = &p - &handles_[0];
 
-        v1::bundle bn = self_.bundle(p, i);
+        bundle bn = self_.bundle(p, i);
 
         if(bn.block->allocated() == false)
         {
             pos_type candidate_sz = phys_size(bn);
 
-            if(candidate_sz >= phys_sz) return bn;
+            if(candidate_sz >= phys_sz)
+            {
+                *found_size = candidate_sz;
+                return bn;
+            }
         }
 
         // Nifty, but needs this clumsy end check since 'end' doesn't work normally here
@@ -51,9 +55,24 @@ v1::bundle pool<Traits>::ops<HandleTraits>::next(const v1::block* b) const
 
 template <class Traits>
 template <class HandleTraits>
-auto pool<Traits>::ops<HandleTraits>::phys_size(const v1::bundle& bn) const -> pos_type
+auto pool<Traits>::ops<HandleTraits>::phys_size(const bundle& bn) const -> pos_type
 {
     return next(bn).pos() - bn.pos();
+}
+
+template <class Traits>
+template <class HandleTraits>
+auto pool<Traits>::ops<HandleTraits>::split(bundle b, pos_type at) -> handle_type
+{
+    // Brand new handle needed for this
+    return handles_.alloc([&](handle_type h, page_type& page)
+    {
+        block* storage = self_.block(page);
+
+        new (storage) block(block::Trivial, false, b.handle, b.block->next());
+
+        b.block->next(h);
+    });
 }
 
 template <class Traits>
@@ -71,7 +90,7 @@ void pool<Traits>::ops<HandleTraits>::reset()
 template <class Traits>
 template <class HandleTraits>
 template <v1::block::modes mode>
-auto pool<Traits>::ops<HandleTraits>::alloc(unsigned phys_sz, v1::bundle* bn) -> handle_type
+auto pool<Traits>::ops<HandleTraits>::alloc_old(unsigned phys_sz, v1::bundle* bn) -> handle_type
 {
     return handles_.alloc(
         [&](int h, page_type& page)
@@ -86,6 +105,31 @@ auto pool<Traits>::ops<HandleTraits>::alloc(unsigned phys_sz, v1::bundle* bn) ->
         {
             new (bn->block) v1::block(mode, true);
         });
+}
+
+template <class Traits>
+template <class HandleTraits>
+template <block::modes mode>
+bundle pool<Traits>::ops<HandleTraits>::alloc_new(pos_type phys_sz)
+{
+    pos_type found_size(0);
+    bundle bn = first_free(phys_sz, &found_size);
+
+    if(bn.is_null() == false)
+    {
+        // If we're 3 blocks larger, go ahead and split
+        // NOTE: Will need tuning
+        constexpr pos_type split_threshold{3};
+
+        if(found_size - phys_sz >= split_threshold)
+        {
+            assert(split(bn, phys_sz) != handles_type::traits::null);
+        }
+
+        bn.block->reset(mode, true);
+    }
+
+    return bn;
 }
 
 template <class Traits>

@@ -19,6 +19,14 @@ struct bundle
     unsigned handle;
 
     constexpr pos_type pos() const { return page->pos(); }
+    constexpr bool is_null() const { return block == nullptr; }
+
+    constexpr bool invariant() const
+    {
+        if(is_null())   return true;
+
+        return page != nullptr && page->is_null() == false && handle != block::null;
+    }
 };
 
 

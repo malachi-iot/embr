@@ -63,7 +63,7 @@ struct handles_traits : container_traits<Container>
 
     using size_type = uint8_t;
 
-    static constexpr size_type unavailable = estd::numeric_limits<size_type>::max();
+    static constexpr size_type null = estd::numeric_limits<size_type>::max();
 
     static constexpr bool is_null(const value_type& v) { return v.is_null(); }
     static void reset(value_type& v) { v.reset(); }
@@ -126,13 +126,13 @@ public:
             }
         }
 
-        return traits::unavailable;
+        return traits::null;
     }
 
     template <class F>
     size_type alloc(F&& on_alloc = [](int, reference) { return true; })
     {
-        return alloc([] { return true; }, std::forward<F>(on_alloc));
+        return alloc([](auto, auto) { return true; }, std::forward<F>(on_alloc));
     }
 
     estd::errc dealloc(size_type handle)

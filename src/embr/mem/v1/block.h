@@ -28,8 +28,13 @@ protected:
     char data_[];
 
 public:
+    static constexpr unsigned null = 0xFF;
+
     block() = default;
-    explicit block(modes mode, bool allocated) :
+    explicit block(modes mode, bool allocated,
+        unsigned prev = null, unsigned next = null) :
+        prev_{prev},
+        next_{next},
         mode_{mode},
         allocated_{allocated}
     {}
@@ -49,8 +54,12 @@ public:
 
     block& operator=(const block&) = default;
 
+    constexpr unsigned prev() const { return prev_; }
     constexpr unsigned next() const { return next_; }
     constexpr bool allocated() const { return allocated_; }
+
+    // TBD
+    constexpr bool invariant() const { return true; }
 
     void* data() { return data_; }
 
@@ -58,6 +67,16 @@ public:
     static constexpr unsigned header_size()
     {
         return mode == Trivial ? sizeof(block) : (sizeof(block) + sizeof(estd::internal::rtto_base::base));
+    }
+
+    // DEBT: Protect this and make friend classes, or pull WriteableBlock child stunt
+    void next(unsigned v)       { next_ = v; }
+    void allocated(bool v)      { allocated_ = v; }
+    void mode(modes v)          { mode_ = v; }
+    void reset(modes mode, bool allocated)
+    {
+        mode_ = mode;
+        allocated_ = allocated;
     }
 };
 

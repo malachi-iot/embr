@@ -61,6 +61,8 @@ public:
     template <class HandlesTraits>
     struct ops //: HandlesTraits    // FIX: We ought to be able to do this, what's stopping us?
     {
+        using block = v1::block;
+        using bundle = v1::bundle;
         using traits = HandlesTraits;
         using handle_type = typename traits::size_type;
         using handles_type = handles<traits>;
@@ -70,22 +72,33 @@ public:
         this_type& self_;
         handles_type& handles_;
 
-        v1::bundle first_free(pos_type phys_sz) const;
+        /// Creates a new free block inside bundle, before next block
+        /// @param at
+        /// @details presumes bundle is big enough to split, no checks performed.
+        /// Does not notice if block following this bundle is already free
+        handle_type split(bundle, pos_type at);
 
-        v1::bundle next(const v1::block*) const;
-        v1::bundle next(const v1::bundle& bn) const { return next(bn.block); }
+        void merge(bundle current, bundle next);
+
+        bundle first_free(pos_type phys_sz, pos_type* found_size) const;
+
+        bundle next(const v1::block*) const;
+        bundle next(const v1::bundle& bn) const { return next(bn.block); }
 
         pos_type phys_size(const v1::bundle&) const;
         pos_type phys_size(int h, page_type& p) const
         {
-            return phys_size(self_.bundle(h, p));
+            return phys_size(self_.bundle(p, h));
         }
 
         template <v1::block::modes mode>
-        handle_type alloc(unsigned phys_sz, v1::bundle*);
+        handle_type alloc_old(unsigned phys_sz, v1::bundle*);
 
-        template <v1::block::modes mode, class T, class ...Args>
-        handle_type construct(v1::bundle*, Args&&...);
+        template <block::modes mode>
+        bundle alloc_new(pos_type phys_sz);
+
+        template <block::modes mode, class T, class ...Args>
+        handle_type construct(bundle*, Args&&...);
 
         void dealloc(handle_type);
 
@@ -101,7 +114,7 @@ public:
     typename Traits2::size_type alloc(handles<Traits2>& h, unsigned logical_sz, unsigned block_sz)
     {
         v1::bundle bn;
-        return ops<Traits2>{*this, h}.template alloc<v1::block::Trivial>(logical_sz + block_sz, &bn);
+        return ops<Traits2>{*this, h}.template alloc_old<v1::block::Trivial>(logical_sz + block_sz, &bn);
     }
 
     template <class T, class Traits2, class ...Args>
