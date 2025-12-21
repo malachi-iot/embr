@@ -134,12 +134,31 @@ bundle pool<Traits>::ops<HandleTraits>::alloc_new(pos_type phys_sz)
 
 template <class Traits>
 template <class HandleTraits>
-template <v1::block::modes mode, class T, class ...Args>
-auto pool<Traits>::ops<HandleTraits>::construct(v1::bundle* bn, Args&&...args) -> handle_type
+template <block::modes mode, class T, class ...Args>
+auto pool<Traits>::ops<HandleTraits>::construct(bundle* bn, Args&&...args) -> handle_type
 {
-    constexpr unsigned block_sz = v1::block::header_size<mode>();
+    // Rtto and Immobile use proxy
+    constexpr bool rtto_proxied = mode == block::Rtto || mode == block::Immobile;
+    // DEBT: Effective but error prone accounting for various block sizing.  Probably
+    // ought to move this plumbing into 'emplace'
+    constexpr unsigned block_sz = block::header_size<mode>();
     constexpr unsigned phys_sz = sizeof(T) + block_sz;
+    // DEBT: Crude way to get full phys_sz
+    constexpr pos_type phys_sz2((phys_sz + aliasing - 1) / aliasing);
 
+    *bn = alloc_new<mode>(phys_sz2);
+
+    if(bn->is_null())    return handles_type::traits::null;
+
+    // DEBT: May need this to be if constexpr (or equivalent) - keep an eye on this
+    if(rtto_proxied)
+        bn->block->emplace_rtto_proxied<T>(std::forward<Args>(args)...);
+    else
+        bn->block->emplace<T>(std::forward<Args>(args)...);
+
+    return bn->handle;
+
+    /*
     return handles_.alloc(
         [&](int h, page_type& page)
         {
@@ -155,7 +174,7 @@ auto pool<Traits>::ops<HandleTraits>::construct(v1::bundle* bn, Args&&...args) -
                 estd::in_place_index_t<mode>{},
                 estd::in_place_type_t<T>{},
                 std::forward<Args>(args)...);
-        });
+        }); */
 }
 
 

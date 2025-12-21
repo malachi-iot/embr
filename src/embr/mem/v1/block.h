@@ -40,6 +40,9 @@ public:
     {}
 
     // emplace constructors
+    // DEBT: Nifty idea, but unfortunately flawed.  By the time we reach a block to do this, it's
+    // already a free-block so technically performing a 2nd in-place construction is bad form.
+    // That's despite the fact that it's safe and functional.
     template <class T, class ...Args>
     explicit block(estd::in_place_index_t<modes::Immobile>, estd::in_place_type_t<T>, Args&&...args);
 
@@ -78,6 +81,12 @@ public:
         mode_ = mode;
         allocated_ = allocated;
     }
+
+    template <class T, class ...Args>
+    void emplace_rtto_proxied(Args&&...args);
+
+    template <class T, class ...Args>
+    void emplace(Args&&...args);
 };
 
 #if UNIT_TESTING
