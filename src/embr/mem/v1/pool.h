@@ -62,6 +62,7 @@ public:
     struct ops //: HandlesTraits    // FIX: We ought to be able to do this, what's stopping us?
     {
         using block = v1::block;
+        //using bundle = v1::bundle_base<HandlesTraits, page_type>;
         using bundle = v1::bundle;
         using traits = HandlesTraits;
         using handle_type = typename traits::size_type;
@@ -79,6 +80,8 @@ public:
         handle_type split(bundle, pos_type at);
 
         void merge(bundle current, bundle next);
+
+        void move(bundle from, bundle to);
 
         bundle first_free(pos_type phys_sz, pos_type* found_size) const;
 

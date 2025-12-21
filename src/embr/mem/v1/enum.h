@@ -9,10 +9,12 @@ struct block_mode_base
     enum modes
     {
         Trivial,
-        Rtto,
+        RttoProxy,
         RttoBase,
-        Immobile
+        Immobile    // RttoProxy with no move constructor.  RttoBase not yet supported here
     };
+
+    static constexpr unsigned null = 0xFF;
 };
 
 }}

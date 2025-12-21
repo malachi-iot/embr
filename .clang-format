@@ -3,8 +3,10 @@
 
 Language: Cpp
 BasedOnStyle: GNU
+BreakBeforeBraces: Allman
 NamespaceIndentation: None
 TabWidth: 4
+IndentCaseBlocks: false
 IndentCaseLabels: true
 IndentWidth: 4
 BraceWrapping:

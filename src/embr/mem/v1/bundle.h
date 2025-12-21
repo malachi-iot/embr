@@ -1,18 +1,21 @@
 #pragma once
 
+#include "enum.h"
 #include "fwd.h"
 #include "page.h"
+#include "traits.h"
 
 namespace embr { namespace mem {
 
 namespace detail { inline namespace v1 {
 
-struct bundle
+template <class HandlesTraits, class Page>
+struct bundle_base
 {
     // DEBT: need wider-scope default page/handle type
-    using handle_type = uint8_t;
-    using page_type = v1::page<uint16_t>;
-    using pos_type = page_type::unit_type;
+    using handle_type = typename HandlesTraits::size_type;
+    using page_type = Page;
+    using pos_type = typename page_type::unit_type;
 
     v1::block* block;
     page_type* page;
@@ -25,9 +28,11 @@ struct bundle
     {
         if(is_null())   return true;
 
-        return page != nullptr && page->is_null() == false && handle != block::null;
+        return page != nullptr && page->is_null() == false && handle != block_mode_base::null;
     }
 };
+
+using bundle = bundle_base<handles_traits_base, page<uint16_t>>;
 
 
 }}

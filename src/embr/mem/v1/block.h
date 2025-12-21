@@ -4,8 +4,6 @@
 
 #include "enum.h"
 #include "fwd.h"
-#include "page.h"
-
 
 namespace embr { namespace mem {
 
@@ -13,6 +11,10 @@ namespace detail { inline namespace v1 {
 
 class alignas(void*) block : public block_mode_base
 {
+    // DEBT: rtto base is WAY overloaded.  Needs attention
+    using rtto_base_type = estd::internal::rtto_base::base;
+    using rtto_proxy = estd::internal::rtto_base::rtto_base::proxy<>;
+
     template <class T>
     using rtto = estd::internal::rtto<T>;
 
@@ -28,8 +30,6 @@ protected:
     char data_[];
 
 public:
-    static constexpr unsigned null = 0xFF;
-
     block() = default;
     explicit block(modes mode, bool allocated,
         unsigned prev = null, unsigned next = null) :
@@ -50,13 +50,15 @@ public:
     explicit block(estd::in_place_index_t<modes::Trivial>, estd::in_place_type_t<T>, Args&&...args);
 
     template <class T, class ...Args>
-    explicit block(estd::in_place_index_t<modes::Rtto>, estd::in_place_type_t<T>, Args&&...args);
+    explicit block(estd::in_place_index_t<modes::RttoProxy>, estd::in_place_type_t<T>, Args&&...args);
 
     template <class T, class ...Args>
     explicit block(estd::in_place_index_t<modes::RttoBase>, estd::in_place_type_t<T>, Args&&...args);
 
     block& operator=(const block&) = default;
+    block& operator=(block&&);
 
+    constexpr modes mode() const { return mode_; }
     constexpr unsigned prev() const { return prev_; }
     constexpr unsigned next() const { return next_; }
     constexpr bool allocated() const { return allocated_; }
@@ -65,6 +67,8 @@ public:
     constexpr bool invariant() const { return true; }
 
     void* data() { return data_; }
+    rtto_proxy* proxy() { return (rtto_proxy*) data_; }
+    rtto_base_type* rtto_base() { return (rtto_base_type*) data_; }
 
     template <modes mode>
     static constexpr unsigned header_size()
@@ -87,6 +91,10 @@ public:
 
     template <class T, class ...Args>
     void emplace(Args&&...args);
+
+    void destroy();
+
+    void move_from(block* from, unsigned sz);
 };
 
 #if UNIT_TESTING

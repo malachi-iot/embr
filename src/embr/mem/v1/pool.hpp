@@ -15,7 +15,7 @@ namespace detail { inline namespace v1 {
 
 template <class Traits>
 template <class HandleTraits>
-bundle pool<Traits>::ops<HandleTraits>::first_free(pos_type phys_sz, pos_type* found_size) const
+auto pool<Traits>::ops<HandleTraits>::first_free(pos_type phys_sz, pos_type* found_size) const -> bundle
 {
     for(page_type& p : handles_)
     {
@@ -46,7 +46,7 @@ bundle pool<Traits>::ops<HandleTraits>::first_free(pos_type phys_sz, pos_type* f
 
 template <class Traits>
 template <class HandleTraits>
-v1::bundle pool<Traits>::ops<HandleTraits>::next(const v1::block* b) const
+auto pool<Traits>::ops<HandleTraits>::next(const v1::block* b) const -> bundle
 {
     page_type& page = handles_[b->next()];
     return { self_.block(page), &page, b->next() };
@@ -110,7 +110,7 @@ auto pool<Traits>::ops<HandleTraits>::alloc_old(unsigned phys_sz, v1::bundle* bn
 template <class Traits>
 template <class HandleTraits>
 template <block::modes mode>
-bundle pool<Traits>::ops<HandleTraits>::alloc_new(pos_type phys_sz)
+auto pool<Traits>::ops<HandleTraits>::alloc_new(pos_type phys_sz) -> bundle
 {
     pos_type found_size(0);
     bundle bn = first_free(phys_sz, &found_size);
@@ -138,7 +138,7 @@ template <block::modes mode, class T, class ...Args>
 auto pool<Traits>::ops<HandleTraits>::construct(bundle* bn, Args&&...args) -> handle_type
 {
     // Rtto and Immobile use proxy
-    constexpr bool rtto_proxied = mode == block::Rtto || mode == block::Immobile;
+    constexpr bool rtto_proxied = mode == block::RttoProxy || mode == block::Immobile;
     // DEBT: Effective but error prone accounting for various block sizing.  Probably
     // ought to move this plumbing into 'emplace'
     constexpr unsigned block_sz = block::header_size<mode>();
@@ -179,6 +179,17 @@ auto pool<Traits>::ops<HandleTraits>::construct(bundle* bn, Args&&...args) -> ha
 
 
 template <class Traits>
+template <class HandleTraits>
+void pool<Traits>::ops<HandleTraits>::move(bundle from, bundle to)
+{
+    pos_type sz = phys_size(from);
+
+    to.block->move_from(from.block, sz * aliasing);
+}
+
+
+
+template <class Traits>
 template <class T, class Traits2, class ...Args>
 typename Traits2::size_type pool<Traits>::construct(handles<Traits2>& h, Args&&...args)
 {
@@ -188,7 +199,7 @@ typename Traits2::size_type pool<Traits>::construct(handles<Traits2>& h, Args&&.
     constexpr v1::block::modes mode =
         is_trivial::value ? v1::block::Trivial :
         !is_movable::value ? v1::block::Immobile :
-        is_rtto_base::value ? v1::block::RttoBase : v1::block::Rtto;
+        is_rtto_base::value ? v1::block::RttoBase : v1::block::RttoProxy;
 
     v1::bundle bn;
     handle_type handle = ops<Traits2>{*this, h}.template construct<mode, T>(&bn, std::forward<Args>(args)...);

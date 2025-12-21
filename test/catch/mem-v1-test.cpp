@@ -9,6 +9,12 @@ struct SideEffector
 {
     int* counter_{};
 
+    SideEffector(SideEffector&& move_from) :
+        counter_{move_from.counter_}
+    {
+        move_from.counter_ = nullptr;
+    }
+
     explicit SideEffector(int* counter) : counter_{counter}
     {
         ++*counter_;
@@ -99,6 +105,38 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
             type handles(backing);
 
             handles.reset();
+        }
+        SECTION("block")
+        {
+            int counter{};
+            using block = detail::v1::block;
+            using proxy = estd::internal::rtto_base::base;
+
+            union
+            {
+                block b1;
+                char storage1[64];
+            };
+
+            union
+            {
+                block b2;
+                char storage2[64];
+            };
+
+            b1.mode(block::RttoProxy);
+            b1.emplace_rtto_proxied<SideEffector>(&counter);
+
+            REQUIRE(counter == 1);
+
+            b2.move_from(&b1, 0);
+
+            // FIX: above move_from doesn't yet move due to rtto::proxy needed work, so destroying
+            // primary one for now
+            b1.proxy()->destroy();
+            //b2.destroy();
+
+            REQUIRE(counter == 0);
         }
         SECTION("pool: layer1")
         {

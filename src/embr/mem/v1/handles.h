@@ -3,8 +3,6 @@
 #include <estd/cstdint.h>
 #include <estd/internal/macro/c++/ctor.h>
 #include <estd/limits.h>
-// DEBT: Make a span fwd
-#include <estd/span.h>
 #include <estd/system_error.h>
 #include <estd/utility.h>
 
@@ -12,68 +10,14 @@
 #include "bundle.h"
 #include "filter-iterator.h"
 #include "fwd.h"
+#include "traits.h"
 
 
 // 17DEC25 MB - boilerplate for incoming playground.memory mem-11 formalization
 
 namespace embr { namespace mem {
 
-// DEBT: container_traits looking pretty useful.  Consider putting him up at estd level
-// Backing off of this - std::data() and std::size() seem to do the job here (though
-// the STD_VALUE_TYPE is still nice)
-template <class T, int N>
-struct container_traits<T[N]>
-{
-    static constexpr bool constexpr_size = true;
-
-    //static constexpr int size() { return N; }
-
-    using container_type = T[N];
-
-    ESTD_CPP_STD_VALUE_TYPE(T)
-
-    using iterator = pointer;
-
-    //static T* data(container_type& c) { return c; }
-};
-
-template <class T, estd::size_t N>
-struct container_traits<estd::span<T, N>>
-{
-    static constexpr bool constexpr_size = N != -1;
-
-    //static constexpr int size() { return N; }
-
-    using container_type = estd::span<T, N>;
-
-    ESTD_CPP_STD_VALUE_TYPE(T)
-
-    using iterator = pointer;
-
-    //static pointer data(container_type& c) { return c.data(); }
-};
-
 namespace detail { inline namespace v1 {
-
-template <class Container>
-struct handles_traits : container_traits<Container>
-{
-    using base_type = container_traits<Container>;
-    using typename base_type::value_type;
-
-    using size_type = uint8_t;
-
-    static constexpr size_type null = estd::numeric_limits<size_type>::max();
-
-    static constexpr bool is_null(const value_type& v) { return v.is_null(); }
-    static void reset(value_type& v) { v.reset(); }
-
-    struct bundle
-    {
-        value_type* value;
-        size_type handle;
-    };
-};
 
 template <class Traits>
 class handles : public Traits
