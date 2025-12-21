@@ -9,7 +9,7 @@ struct SideEffector
 {
     int* counter_{};
 
-    SideEffector(int* counter) : counter_{counter}
+    explicit SideEffector(int* counter) : counter_{counter}
     {
         ++*counter_;
     }

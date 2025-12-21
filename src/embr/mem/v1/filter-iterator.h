@@ -80,7 +80,13 @@ class filter_iterator :
         // (or otherwise is_empty functor) we skip default construction, since that
         // is missing for a lambda.  It's conceivable an is_empty functor might actually
         // have a constructor, so we need to account for that
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnonnull"
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+
         return pred->operator()(*v);
+
+#pragma GCC diagnostic pop
     }
 
 public:
