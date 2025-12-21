@@ -44,11 +44,8 @@ void block::emplace_rtto_proxied(Args&&...args)
 {
     using rt = rtto<T>;
     using proxy = typename rt::template proxy<>;
-    auto data = (proxy*)data_;          // NOLINT
 
-    new (data) proxy(rt::utility);
-    // DEBT: consider a proxy::emplace and/or an in_place_t emplace constructor
-    new (data->storage()) T(std::forward<Args>(args)...);
+    new (data_) proxy(estd::in_place_type_t<T>{}, std::forward<Args>(args)...);
 }
 
 template <class T, class ...Args>
@@ -71,18 +68,13 @@ inline void block::move_from(block* from, unsigned sz)
     switch(from->mode_)
     {
         case block::Trivial:
-            std::memcpy(from->data(), data(), sz);
+            std::memcpy(data_, from->data_, sz);
             mode_ = block::Trivial;
             break;
 
         case block::RttoProxy:
         {
-            auto p = (rtto_proxy*) proxy();
-            // FIX: move constructor not yet present for rtto_proxy, but needed
-            // as it appears that's the best way to copy underlying u_ (no other means
-            // present yet).  Fools us into working because u_ itself gets copied, but
-            // move_to isn't called yet
-            new (p) rtto_proxy(std::move(*from->proxy()));
+            new (data_) rtto_proxy(std::move(*from->proxy()), sz);
             mode_ = block::RttoProxy;
             break;
         }

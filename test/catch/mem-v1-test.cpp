@@ -22,7 +22,7 @@ struct SideEffector
 
     ~SideEffector()
     {
-        if(*counter_)   --*counter_;
+        if(counter_)   --*counter_;
     }
 };
 
@@ -129,12 +129,10 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
 
             REQUIRE(counter == 1);
 
-            b2.move_from(&b1, 0);
+            b2.move_from(&b1, sizeof(SideEffector));
 
-            // FIX: above move_from doesn't yet move due to rtto::proxy needed work, so destroying
-            // primary one for now
             b1.proxy()->destroy();
-            //b2.destroy();
+            b2.proxy()->destroy();
 
             REQUIRE(counter == 0);
         }

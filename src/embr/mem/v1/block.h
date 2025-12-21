@@ -64,12 +64,17 @@ public:
     constexpr bool allocated() const { return allocated_; }
 
     // TBD
-    constexpr bool invariant() const { return true; }
+    constexpr bool invariant() const
+    {
+        // Circular linked list not allowed
+        return prev_ != next_;
+    }
 
     void* data() { return data_; }
     rtto_proxy* proxy() { return (rtto_proxy*) data_; }
     rtto_base_type* rtto_base() { return (rtto_base_type*) data_; }
 
+    // FIX: Probably not 100% right, because RttoBase mode includes size of rtto::u_ in the object itself
     template <modes mode>
     static constexpr unsigned header_size()
     {
@@ -92,6 +97,7 @@ public:
     template <class T, class ...Args>
     void emplace(Args&&...args);
 
+    // Destroy tracked object, not necessarily block itself
     void destroy();
 
     void move_from(block* from, unsigned sz);

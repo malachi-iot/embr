@@ -44,6 +44,16 @@ auto pool<Traits>::ops<HandleTraits>::first_free(pos_type phys_sz, pos_type* fou
     return {};
 }
 
+// FIX: These next/prev guys need bounds checking
+
+template <class Traits>
+template <class HandleTraits>
+auto pool<Traits>::ops<HandleTraits>::prev(const v1::block* b) const -> bundle
+{
+    page_type& page = handles_[b->prev()];
+    return { self_.block(page), &page, b->prev() };
+}
+
 template <class Traits>
 template <class HandleTraits>
 auto pool<Traits>::ops<HandleTraits>::next(const v1::block* b) const -> bundle
@@ -58,6 +68,15 @@ template <class HandleTraits>
 auto pool<Traits>::ops<HandleTraits>::phys_size(const bundle& bn) const -> pos_type
 {
     return next(bn).pos() - bn.pos();
+}
+
+template <class Traits>
+template <class HandleTraits>
+unsigned pool<Traits>::ops<HandleTraits>::logical_size(const bundle& bn) const
+{
+    // FIX: Needs more work
+    const unsigned tbd = bn.block->header_size<block::Trivial>();
+    return phys_size(bn).count() * aliasing - tbd;
 }
 
 template <class Traits>
@@ -180,11 +199,33 @@ auto pool<Traits>::ops<HandleTraits>::construct(bundle* bn, Args&&...args) -> ha
 
 template <class Traits>
 template <class HandleTraits>
-void pool<Traits>::ops<HandleTraits>::move(bundle from, bundle to)
+bool pool<Traits>::ops<HandleTraits>::merge(bundle current, bundle next)
 {
-    pos_type sz = phys_size(from);
+    if(next.block->allocated()) return false;
 
-    to.block->move_from(from.block, sz * aliasing);
+    // Remove this handle from the pool completely
+    handles_.dealloc(next.handle);
+
+    current.block->next(next.block->next());
+}
+
+template <class Traits>
+template <class HandleTraits>
+void pool<Traits>::ops<HandleTraits>::move(bundle from, bundle to, unsigned logical_sz)
+{
+    // DEBT: Deducing logical_sz for non-trivial is interesting too, but not critical
+    if(logical_sz == 0 && from.block->mode() == block::Trivial)
+    {
+        logical_sz = logical_size(from);
+    }
+
+    to.block->move_from(from.block, logical_sz);
+    from.block->reset(block::Trivial, false);
+
+    // Treat move as the dealloc it is, and do a merge evaluation
+    merge(from, next(from));
+    bundle p = prev(from);
+    if(p.block->allocated() == false)   merge(p, from);
 }
 
 

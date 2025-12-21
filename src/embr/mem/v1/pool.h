@@ -79,20 +79,29 @@ public:
         /// Does not notice if block following this bundle is already free
         handle_type split(bundle, pos_type at);
 
-        void merge(bundle current, bundle next);
+        ///
+        /// @brief merge
+        /// @param current
+        /// @param next MUST be a free block, returns false otherwise
+        /// @details
+        bool merge(bundle current, bundle next);
 
-        void move(bundle from, bundle to);
+        void move(bundle from, bundle to, unsigned logical_sz);
 
         bundle first_free(pos_type phys_sz, pos_type* found_size) const;
 
-        bundle next(const v1::block*) const;
-        bundle next(const v1::bundle& bn) const { return next(bn.block); }
+        bundle prev(const block*) const;
+        bundle prev(const bundle& bn) const { return prev(bn.block); }
+        bundle next(const block*) const;
+        bundle next(const bundle& bn) const { return next(bn.block); }
 
-        pos_type phys_size(const v1::bundle&) const;
+        pos_type phys_size(const bundle&) const;
         pos_type phys_size(int h, page_type& p) const
         {
             return phys_size(self_.bundle(p, h));
         }
+
+        unsigned logical_size(const bundle&) const;
 
         template <v1::block::modes mode>
         handle_type alloc_old(unsigned phys_sz, v1::bundle*);
