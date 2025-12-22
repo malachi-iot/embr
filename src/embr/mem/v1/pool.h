@@ -156,6 +156,17 @@ public:
 
 inline namespace v1 {
 
+namespace layer1 {
+
+template <std::size_t N, std::size_t H>
+class pool
+{
+    using page_type = detail::v1::page<uint16_t>;
+    detail::v1::pool<detail::v1::pool_traits<char[N]>> pool_;
+    detail::v1::handles<detail::v1::handles_traits<page_type[H]>> handles_;
+};
+
+}
 
 }
 
