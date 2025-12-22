@@ -67,7 +67,7 @@ public:
     constexpr bool invariant() const
     {
         // Circular linked list not allowed
-        return prev_ != next_;
+        return (prev_ == null && next_ == null) || prev_ != next_;
     }
 
     void* data() { return data_; }

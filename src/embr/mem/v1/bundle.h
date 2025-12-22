@@ -28,8 +28,13 @@ struct bundle_base
     {
         if(is_null())   return true;
 
-        return page != nullptr && page->is_null() == false && handle != block_mode_base::null;
+        return page != nullptr && page->is_null() == false &&
+            handle != block_mode_base::null &&
+            block->invariant();
     }
+
+    constexpr bool has_prev() const { return block->prev() != block::null; }
+    constexpr bool has_next() const { return block->next() != block::null; }
 };
 
 using bundle = bundle_base<handles_traits_base, page<uint16_t>>;

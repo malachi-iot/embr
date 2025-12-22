@@ -161,12 +161,17 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                     pos_type found_size(0);
                     bundle bn = op.first_free(pos_type{8}, &found_size);
 
-                    // Not even a free handle is set up yet
-                    //REQUIRE(bn.is_null() == false);
+                    REQUIRE(bn.invariant());
+                    REQUIRE(bn.is_null() == false);
+                    REQUIRE(bn.block->allocated() == false);
                 }
                 SECTION("alloc")
                 {
                     bundle bn = op.alloc_new<block::Trivial>(pos_type{8});
+
+                    REQUIRE(bn.invariant());
+                    REQUIRE(bn.is_null() == false);
+                    REQUIRE(bn.block->allocated());
                 }
             }
             SECTION("alloc")
@@ -178,7 +183,11 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                 int counter = 0;
                 int h = pool.construct<SideEffector>(handles, &counter);
 
-                //REQUIRE(counter == 1);
+                REQUIRE(counter == 1);
+
+                pool.dealloc(handles, h);
+
+                REQUIRE(counter == 0);
             }
         }
     }

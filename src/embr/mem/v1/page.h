@@ -11,6 +11,7 @@ namespace embr { namespace mem {
 
 namespace detail { inline namespace v1 {
 
+// DEBT: Rename this guy to reflect he's byte_count
 using page_unit_type = estd::internal::units::unit_base<unsigned, estd::ratio<1>, page_tag>;
 
 // TODO: Do unit_traits for human-readable descriptions

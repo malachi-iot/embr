@@ -39,6 +39,11 @@ protected:
 
     container_type pool_;
 
+    v1::block* block(pos_type at)
+    {
+        return reinterpret_cast<v1::block*>(std::data(pool_) + page_unit_type(at).count());
+    }
+
 #if PAGE_ALIAS
     template <class Rep, unsigned alias>
     v1::block* block(const v1::page<Rep, alias>& page)
@@ -47,7 +52,7 @@ protected:
     v1::block* block(const v1::page<Rep, Ratio>& page)
 #endif
     {
-        return reinterpret_cast<v1::block*>(std::data(pool_) + page_unit_type(page.pos()).count());
+        return block(page.pos());
     }
 
     v1::bundle bundle(page_type& page, unsigned handle)
@@ -72,6 +77,8 @@ public:
 
         this_type& self_;
         handles_type& handles_;
+
+        block* create_free_block(pos_type, handle_type prev, handle_type next);
 
         /// Creates a new free block inside bundle, before next block
         /// @param at
@@ -112,7 +119,7 @@ public:
         template <block::modes mode, class T, class ...Args>
         handle_type construct(bundle*, Args&&...);
 
-        void dealloc(handle_type);
+        void dealloc(bundle);
 
         void reset();
     };
@@ -135,7 +142,7 @@ public:
     template <class Traits2>
     void dealloc(v1::handles<Traits2>& handles, typename Traits2::size_type h)
     {
-        return ops<Traits2>{*this, handles}.dealloc(h);
+        return ops<Traits2>{*this, handles}.dealloc(bundle(handles[h], h));
     }
 
     template <class Traits2>

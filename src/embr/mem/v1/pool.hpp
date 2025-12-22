@@ -67,7 +67,12 @@ template <class Traits>
 template <class HandleTraits>
 auto pool<Traits>::ops<HandleTraits>::phys_size(const bundle& bn) const -> pos_type
 {
-    return next(bn).pos() - bn.pos();
+    pos_type next_pos = bn.block->next() == handles_type::null ?
+        pos_type(std::size(self_.pool_) / aliasing) :
+        next(bn).pos();
+
+    //return next(bn).pos() - bn.pos();
+    return next_pos - bn.pos();
 }
 
 template <class Traits>
@@ -81,14 +86,25 @@ unsigned pool<Traits>::ops<HandleTraits>::logical_size(const bundle& bn) const
 
 template <class Traits>
 template <class HandleTraits>
+auto pool<Traits>::ops<HandleTraits>::create_free_block(
+    pos_type pos,
+    handle_type prev, handle_type next) -> block*
+{
+    block* storage = self_.block(pos);
+
+    return new (storage) block(block::Trivial, false, prev, next);
+}
+
+template <class Traits>
+template <class HandleTraits>
 auto pool<Traits>::ops<HandleTraits>::split(bundle b, pos_type at) -> handle_type
 {
     // Brand new handle needed for this
     return handles_.alloc([&](handle_type h, page_type& page)
     {
-        block* storage = self_.block(page);
+        page.pos(at);
 
-        new (storage) block(block::Trivial, false, b.handle, b.block->next());
+        create_free_block(at, b.handle, b.block->next());
 
         b.block->next(h);
     });
@@ -101,9 +117,11 @@ void pool<Traits>::ops<HandleTraits>::reset()
     using unit_type = typename page_type::unit_type;
     handles_.reset();
     handles_[0].pos(unit_type(0));
-    v1::bundle bn = self_.bundle(handles_[0], 0);
+    //v1::bundle bn = self_.bundle(handles_[0], 0);
 
-    new (bn.block) v1::block(v1::block::Trivial, false);
+    create_free_block(pos_type(0), block::null, block::null);
+
+    //new (bn.block) v1::block(v1::block::Trivial, false);
 }
 
 template <class Traits>
@@ -207,6 +225,8 @@ bool pool<Traits>::ops<HandleTraits>::merge(bundle current, bundle next)
     handles_.dealloc(next.handle);
 
     current.block->next(next.block->next());
+
+    return true;
 }
 
 template <class Traits>
@@ -246,6 +266,20 @@ typename Traits2::size_type pool<Traits>::construct(handles<Traits2>& h, Args&&.
     handle_type handle = ops<Traits2>{*this, h}.template construct<mode, T>(&bn, std::forward<Args>(args)...);
     return handle;
 }
+
+template <class Traits>
+template <class HandleTraits>
+void pool<Traits>::ops<HandleTraits>::dealloc(bundle bn)
+{
+    // DEBT: Consolidate with other free operations
+    bn.block->destroy();
+
+    bn.block->allocated(false);
+
+    if(bn.has_prev())   merge(prev(bn), bn);
+    if(bn.has_next())   merge(bn, next(bn));
+}
+
 
 
 }}
