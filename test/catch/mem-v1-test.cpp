@@ -167,7 +167,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                 }
                 SECTION("alloc")
                 {
-                    bundle bn = op.alloc_new<block::Trivial>(pos_type{8});
+                    bundle bn = op.alloc<block::Trivial>(pos_type{8});
 
                     REQUIRE(bn.invariant());
                     REQUIRE(bn.is_null() == false);
@@ -176,7 +176,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
             }
             SECTION("alloc")
             {
-                pool.alloc(handles, 32, 8);
+                pool.alloc(handles, 32);
             }
             SECTION("construct")
             {
@@ -190,5 +190,13 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                 REQUIRE(counter == 0);
             }
         }
+    }
+    SECTION("layer1")
+    {
+
+    }
+    SECTION("layer2")
+    {
+
     }
 }

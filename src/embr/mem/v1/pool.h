@@ -55,10 +55,20 @@ protected:
         return block(page.pos());
     }
 
-    v1::bundle bundle(page_type& page, unsigned handle)
+    template <class Handle>
+    v1::bundle bundle(page_type& page, Handle handle)
     {
         return { block(page), &page, handle };
     }
+
+    static constexpr unsigned aliasing = pos_type::period::num;
+
+    // DEBT: Need better name
+    static constexpr pos_type do_alias(unsigned v)
+    {
+        return pos_type((v + aliasing - 1) / aliasing);
+    }
+
 
 #if UNIT_TESTING
 public:
@@ -110,14 +120,11 @@ public:
 
         unsigned logical_size(const bundle&) const;
 
-        template <v1::block::modes mode>
-        handle_type alloc_old(unsigned phys_sz, v1::bundle*);
-
         template <block::modes mode>
-        bundle alloc_new(pos_type phys_sz);
+        bundle alloc(pos_type phys_sz);
 
         template <block::modes mode, class T, class ...Args>
-        handle_type construct(bundle*, Args&&...);
+        bundle construct(Args&&...);
 
         void dealloc(bundle);
 
@@ -129,11 +136,11 @@ public:
 
     using handle_type = int;
 
-    template <class Traits2>
-    typename Traits2::size_type alloc(handles<Traits2>& h, unsigned logical_sz, unsigned block_sz)
+    template <v1::block::modes mode = v1::block::Trivial, class Traits2>
+    typename Traits2::size_type alloc(handles<Traits2>& h, unsigned logical_sz)
     {
-        v1::bundle bn;
-        return ops<Traits2>{*this, h}.template alloc_old<v1::block::Trivial>(logical_sz + block_sz, &bn);
+        constexpr unsigned block_sz = v1::block::header_size<mode>();
+        return ops<Traits2>{*this, h}.template alloc<mode>(do_alias(logical_sz + block_sz)).handle;
     }
 
     template <class T, class Traits2, class ...Args>

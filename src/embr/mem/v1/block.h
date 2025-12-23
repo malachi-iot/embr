@@ -4,10 +4,18 @@
 
 #include "enum.h"
 #include "fwd.h"
+#include "traits.h"
 
 namespace embr { namespace mem {
 
 namespace detail { inline namespace v1 {
+
+struct block_mode_base : block_mode_enum
+{
+    // DEBT: Do stricter check to make sure prev_/next_ are compatible
+    static constexpr unsigned null = handles_traits_base::null;
+    using handle_type = handles_traits_base::size_type;
+};
 
 class alignas(void*) block : public block_mode_base
 {
@@ -59,8 +67,8 @@ public:
     block& operator=(block&&);
 
     constexpr modes mode() const { return mode_; }
-    constexpr unsigned prev() const { return prev_; }
-    constexpr unsigned next() const { return next_; }
+    constexpr handle_type prev() const { return prev_; }
+    constexpr handle_type next() const { return next_; }
     constexpr bool allocated() const { return allocated_; }
 
     // TBD
