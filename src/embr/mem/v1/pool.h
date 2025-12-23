@@ -44,6 +44,7 @@ protected:
         return reinterpret_cast<v1::block*>(std::data(pool_) + page_unit_type(at).count());
     }
 
+/*
 #if PAGE_ALIAS
     template <class Rep, unsigned alias>
     v1::block* block(const v1::page<Rep, alias>& page)
@@ -53,13 +54,7 @@ protected:
 #endif
     {
         return block(page.pos());
-    }
-
-    template <class Handle>
-    v1::bundle bundle(page_type& page, Handle handle)
-    {
-        return { block(page), &page, handle };
-    }
+    } */
 
     static constexpr unsigned aliasing = pos_type::period::num;
 
@@ -82,11 +77,19 @@ public:
         using traits = HandlesTraits;
         using handle_type = typename traits::size_type;
         using handles_type = handles<traits>;
+        using page_type = typename traits::value_type;
 
         static constexpr unsigned aliasing = pos_type::period::num;
 
         this_type& self_;
         handles_type& handles_;
+
+        // Best to have this guy here and not in above pool so that we make no assumptions
+        // about page_type and handle_type
+        bundle get_bundle(page_type& page, handle_type handle) const
+        {
+            return { self_.block(page.pos()), &page, handle };
+        }
 
         block* create_free_block(pos_type, handle_type prev, handle_type next);
 
@@ -127,6 +130,7 @@ public:
         bundle construct(Args&&...);
 
         void dealloc(bundle);
+        void dealloc(handle_type h) { dealloc(get_bundle(handles_[h], h)); }
 
         void reset();
     };
@@ -149,13 +153,44 @@ public:
     template <class Traits2>
     void dealloc(v1::handles<Traits2>& handles, typename Traits2::size_type h)
     {
-        return ops<Traits2>{*this, handles}.dealloc(bundle(handles[h], h));
+        return ops<Traits2>{*this, handles}.dealloc(h);
     }
 
     template <class Traits2>
     void reset(v1::handles<Traits2>& handles)
     {
         ops<Traits2>{*this, handles}.reset();
+    }
+};
+
+// EXPERIMENTAL
+template <class HandlesContainer, class PoolContainer>
+class pool_aggregate
+{
+protected:
+    using handles_traits = v1::handles_traits<HandlesContainer>;
+    using page_type = typename handles_traits::value_type;
+    detail::v1::pool<detail::v1::pool_traits<PoolContainer>> pool_;
+    detail::v1::handles<handles_traits> handles_;
+};
+
+template <class Derived>
+class pool_crtp
+{
+    //using handle_type = typename Derived::handle_type;
+
+public:
+    void lock(int h)
+    {
+        auto self = static_cast<Derived*>(this);
+        //using handles_traits = typename Derived::handles_traits;
+        //typename Derived::template ops<handles_traits> ops{self->pool_, self->handles_};
+        self->ops();
+    }
+
+    void unlock(int h)
+    {
+        auto self = static_cast<Derived*>(this);
     }
 };
 
@@ -166,11 +201,31 @@ inline namespace v1 {
 namespace layer1 {
 
 template <std::size_t N, std::size_t H>
-class pool
+class pool : public detail::v1::pool_crtp<pool<N, H>>
 {
+    friend class detail::v1::pool_crtp<pool<N, H>>;
+
     using page_type = detail::v1::page<uint16_t>;
-    detail::v1::pool<detail::v1::pool_traits<char[N]>> pool_;
-    detail::v1::handles<detail::v1::handles_traits<page_type[H]>> handles_;
+    using handles_traits = detail::v1::handles_traits<page_type[H]>;
+    using pool_traits = detail::v1::pool_traits<char[N]>;
+    using ops_type = typename detail::v1::pool<pool_traits>::template ops<handles_traits>;
+    detail::v1::pool<pool_traits> pool_;
+    detail::v1::handles<handles_traits> handles_;
+
+    ops_type ops() { return {pool_, handles_}; }
+
+public:
+    using handle_type = typename handles_traits::size_type;
+
+    handle_type alloc(int logical_sz) { return pool_.alloc(handles_, logical_sz); }
+
+    template <class T, class ...Args>
+    handle_type construct(Args&&...args)
+    {
+        return pool_.template construct<T>(handles_, std::forward<Args>(args)...);
+    }
+
+    void dealloc(handle_type h) { pool_.dealloc(handles_, h); }
 };
 
 }

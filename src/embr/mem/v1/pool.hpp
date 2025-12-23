@@ -21,7 +21,7 @@ auto pool<Traits>::ops<HandleTraits>::first_free(pos_type phys_sz, pos_type* fou
     {
         handle_type i = &p - &handles_[0];
 
-        bundle bn = self_.bundle(p, i);
+        bundle bn = get_bundle(p, i);
 
         if(bn.block->allocated() == false)
         {
@@ -51,7 +51,7 @@ template <class HandleTraits>
 auto pool<Traits>::ops<HandleTraits>::prev(const v1::block* b) const -> bundle
 {
     page_type& page = handles_[b->prev()];
-    return { self_.block(page), &page, b->prev() };
+    return { self_.block(page.pos()), &page, b->prev() };
 }
 
 template <class Traits>
@@ -59,7 +59,7 @@ template <class HandleTraits>
 auto pool<Traits>::ops<HandleTraits>::next(const v1::block* b) const -> bundle
 {
     page_type& page = handles_[b->next()];
-    return { self_.block(page), &page, b->next() };
+    return { self_.block(page.pos()), &page, b->next() };
 }
 
 

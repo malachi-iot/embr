@@ -193,7 +193,15 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
     }
     SECTION("layer1")
     {
+        using pool_type = v1::layer1::pool<1024, 8>;
+        pool_type pool1;
 
+        pool1.alloc(10);
+        pool1.lock(0);
+
+        SECTION("shared_handle")
+        {
+        }
     }
     SECTION("layer2")
     {
