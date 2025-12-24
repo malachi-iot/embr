@@ -138,10 +138,11 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
         }
         SECTION("pool: layer1")
         {
+            constexpr unsigned pool_size = 2048;
             using page = detail::v1::page<uint16_t>;
             using handles_traits = detail::v1::handles_traits<page[20]>;
             using handles_type = detail::v1::handles<handles_traits>;
-            using pool_type = detail::v1::pool<detail::v1::pool_traits<char[2048]>>;
+            using pool_type = detail::v1::pool<detail::v1::pool_traits<char[pool_size]>>;
             using pos_type = pool_type::pos_type;
 
             handles_type handles;
@@ -154,12 +155,14 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
             {
                 using bundle = detail::v1::bundle;
                 using block = detail::v1::block;
-                pool_type::ops<handles_traits> op{pool, handles};
+                using ops_type = pool_type::ops<handles_traits>;
+                ops_type op{pool, handles};
+                constexpr pos_type phys_sz(8);
 
                 SECTION("first_free")
                 {
                     pos_type found_size(0);
-                    bundle bn = op.first_free(pos_type{8}, &found_size);
+                    bundle bn = op.first_free(phys_sz, &found_size);
 
                     REQUIRE(bn.invariant());
                     REQUIRE(bn.is_null() == false);
@@ -167,11 +170,19 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                 }
                 SECTION("alloc")
                 {
-                    bundle bn = op.alloc<block::Trivial>(pos_type{8});
+                    constexpr unsigned block_sz = block::header_size<block::Trivial>();
+                    bundle bn = op.alloc<block::Trivial>(phys_sz);
 
                     REQUIRE(bn.invariant());
                     REQUIRE(bn.is_null() == false);
                     REQUIRE(bn.block->allocated());
+
+                    constexpr unsigned phys_sz_bytes = ops_type::aliasing * phys_sz.count();
+                    constexpr unsigned logical_alloced_sz = phys_sz_bytes - block_sz;
+                    constexpr unsigned phys_alloced_sz = block_sz + phys_sz_bytes;
+
+                    REQUIRE(op.available() == pool_size - phys_alloced_sz);
+                    REQUIRE(op.alloced() == logical_alloced_sz);
                 }
             }
             SECTION("alloc")

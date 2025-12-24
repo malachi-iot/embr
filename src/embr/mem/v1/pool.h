@@ -91,6 +91,16 @@ public:
             return { self_.block(page.pos()), &page, handle };
         }
 
+        bundle get_bundle(handle_type h) const
+        {
+            return get_bundle(handles_[h], h);
+        }
+
+        bundle get_bundle(page_type& page) const
+        {
+            return get_bundle(page, &page - &handles_[0]);
+        }
+
         block* create_free_block(pos_type, handle_type prev, handle_type next);
 
         /// Creates a new free block inside bundle, before next block
@@ -133,6 +143,12 @@ public:
         void dealloc(handle_type h) { dealloc(get_bundle(handles_[h], h)); }
 
         void reset();
+
+        void* lock(handle_type h);
+        void unlock(handle_type h);
+
+        unsigned alloced() const;
+        unsigned available() const;
     };
 
 public:
@@ -174,25 +190,37 @@ protected:
     detail::v1::handles<handles_traits> handles_;
 };
 
+#pragma push_macro("THIS")
+#pragma push_macro("OPS")
+#undef THIS
+#undef OPS
+#define THIS static_cast<Derived*>(this)
+#define OPS THIS->ops()
+
 template <class Derived>
 class pool_crtp
 {
     //using handle_type = typename Derived::handle_type;
 
 public:
-    void lock(int h)
+    void* lock(int h)
     {
-        auto self = static_cast<Derived*>(this);
-        //using handles_traits = typename Derived::handles_traits;
-        //typename Derived::template ops<handles_traits> ops{self->pool_, self->handles_};
-        self->ops();
+        return OPS.lock(h);
     }
 
     void unlock(int h)
     {
-        auto self = static_cast<Derived*>(this);
+        OPS.unlock(h);
+    }
+
+    void dealloc(int h)
+    {
+        OPS.dealloc(h);
     }
 };
+
+#pragma pop_macro("OPS")
+#pragma pop_macro("THIS")
 
 }}
 
@@ -212,6 +240,10 @@ class pool : public detail::v1::pool_crtp<pool<N, H>>
     detail::v1::pool<pool_traits> pool_;
     detail::v1::handles<handles_traits> handles_;
 
+#if UNIT_TESTING
+public:
+#endif
+
     ops_type ops() { return {pool_, handles_}; }
 
 public:
@@ -224,8 +256,6 @@ public:
     {
         return pool_.template construct<T>(handles_, std::forward<Args>(args)...);
     }
-
-    void dealloc(handle_type h) { pool_.dealloc(handles_, h); }
 };
 
 }

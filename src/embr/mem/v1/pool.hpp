@@ -2,6 +2,7 @@
 
 #include <estd/internal/rtto.h>
 #include <estd/new.h>
+#include <estd/numeric.h>
 
 // DEBT: https://github.com/malachi-iot/estdlib/issues/155
 #include <estd/internal/units/operators.hpp>
@@ -238,6 +239,47 @@ void pool<Traits>::ops<HandleTraits>::dealloc(bundle bn)
     if(bn.has_next())   merge(bn, next(bn));
 }
 
+
+template <class Traits>
+template <class HandleTraits>
+void* pool<Traits>::ops<HandleTraits>::lock(handle_type h)
+{
+    return {};
+}
+
+
+template <class Traits>
+template <class HandleTraits>
+auto pool<Traits>::ops<HandleTraits>::available() const -> unsigned
+{
+    // If we permitted ourselves c++20 we could use ranges here.  Oh well !
+
+    unsigned count(0);
+
+    for(page_type& page : handles_)
+    {
+        bundle bn = get_bundle(page);
+
+        if(bn.block->allocated() == false)  count += logical_size(bn);
+    }
+
+    return count;
+}
+
+
+template <class Traits>
+template <class HandleTraits>
+auto pool<Traits>::ops<HandleTraits>::alloced() const -> unsigned
+{
+    // If we permitted ourselves c++20 we could use ranges here.  Oh well !
+
+    return estd::accumulate(handles_.begin(), handles_.end(), 0, [&](unsigned count, page_type& p)
+    {
+        bundle bn = get_bundle(p);
+
+        return count + (bn.block->allocated() ? logical_size(bn) : 0);
+    });
+}
 
 
 }}
