@@ -93,6 +93,8 @@ inline void block::move_from(block* from, unsigned sz)
 
 inline void block::destroy()
 {
+    assert(lock_count_ == 0);
+
     switch(mode_)
     {
         case Trivial:

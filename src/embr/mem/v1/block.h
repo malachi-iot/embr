@@ -104,6 +104,8 @@ public:
     {
         mode_ = mode;
         allocated_ = allocated;
+        lock_count_ = 0;
+        ref_count_ = 0;
     }
 
     template <class T, class ...Args>

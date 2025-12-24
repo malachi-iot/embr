@@ -213,6 +213,12 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
         // DEBT: This guy still being stupid
         pool1.ops().reset();
 
+        int counter = 0;
+
+        // FIX: All these shared_handle MAY want to participate in zero'ing lock counter
+        // too?  What happens if we call .destroy() on something that is locked?
+        // I think that ought to be a runtime error.
+
         SECTION("basic")
         {
             pool_type::handle_type h1 = pool1.alloc(10);
@@ -234,8 +240,6 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                 REQUIRE(pool1.ops().available() == pool_sz - block_sz * 3);
             }
 
-            int counter = 0;
-
             {
                 pool_type::handle_type h1 = pool1.construct<SideEffector>(&counter);
                 v1::shared_handle<SideEffector, pool_type> sh1(h1, &pool1);
@@ -243,6 +247,15 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                 SideEffector* se = sh1.lock();
 
                 REQUIRE(se->counter_ == &counter);
+
+                sh1.unlock();
+
+                REQUIRE(counter == 1);
+            }
+
+            {
+                v1::shared_handle<SideEffector, pool_type> sh1 =
+                    v1::make_shared<SideEffector>(pool1, &counter);
 
                 REQUIRE(counter == 1);
             }
@@ -263,6 +276,24 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                 REQUIRE(pool2.ops().available() == pool_sz - block_sz * 3);
             }
 
+            {
+                pool_type::handle_type h1 = pool2.construct<SideEffector>(&counter);
+                v1::shared_handle<SideEffector, pool_type, &pool2> sh1(h1);
+
+                static_assert(sizeof(sh1) == sizeof(pool_type::handle_type));
+
+                SideEffector* se = sh1.lock();
+
+                REQUIRE(se->counter_ == &counter);
+
+                sh1.unlock();
+
+                REQUIRE(counter == 1);
+            }
+
+            REQUIRE(counter == 0);
+
+            REQUIRE(pool2.ops().available() == pool_sz - block_sz);
         }
     }
     SECTION("layer2")

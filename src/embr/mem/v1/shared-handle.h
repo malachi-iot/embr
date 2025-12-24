@@ -65,6 +65,32 @@ public:
     }
 };
 
+// UNFINISHED, UNTESTED
+template <class T, class Pool, Pool* pool>
+class lock_guard
+{
+    using handle = lock_handle<Pool, pool>;
+
+    handle handle_;
+    T* data_;       // DEBT: Pull this direct from block
+
+public:
+    lock_guard(handle h) : handle_{h}
+    {
+        h.lock();
+    }
+
+    T* data() const
+    {
+        return data_;
+    }
+
+    ~lock_guard()
+    {
+        handle_.unlock();
+    }
+};
+
 template <class Pool, Pool* pool>
 class shared_handle : public lock_handle<Pool, pool>
 {
@@ -113,5 +139,13 @@ public:
 
     pointer lock() const { return static_cast<pointer>(base_type::lock()); }
 };
+
+
+// DEBT: Need to filter this more, otherwise ADL is gonna lose its mind
+template <class T, class Pool, class ...Args>
+shared_handle<T, Pool, nullptr> make_shared(Pool& pool, Args&&...args)
+{
+    return { pool.template construct<T>(std::forward<Args>(args)...), &pool };
+}
 
 }}}
