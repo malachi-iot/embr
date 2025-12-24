@@ -13,6 +13,9 @@ namespace embr { namespace mem {
 
 namespace detail { inline namespace v1 {
 
+template <class HandlesTraits, class Page>
+struct bundle_base;
+
 class block;
 
 class small_block;
@@ -40,7 +43,16 @@ struct pool_traits;
 template <class Traits>
 class pool;
 
-template <class Pool, Pool* pool>
+// Overlap with estd::experimental::global_provider
+
+template <class T, T* t, bool global = t != nullptr>
+struct global_provider;
+
+
+template <class Pool, Pool* pool = {}>
+class lock_handle;
+
+template <class Pool, Pool* pool = {}>
 class shared_handle;
 
 }}

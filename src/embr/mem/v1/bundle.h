@@ -10,7 +10,7 @@ namespace embr { namespace mem {
 
 namespace detail { inline namespace v1 {
 
-template <class HandlesTraits, class Page>
+template <class HandlesTraits, class Page = typename HandlesTraits::value_type>
 struct bundle_base
 {
     using handles_traits = HandlesTraits;
@@ -37,8 +37,22 @@ struct bundle_base
             block->invariant();
     }
 
+    void* data() const
+    {
+        return block->mode_ == block::RttoProxy ? block->proxy()->storage() : block->data();
+    }
+
     constexpr bool has_prev() const { return block->prev() != null; }
     constexpr bool has_next() const { return block->next() != null; }
+
+    // Bundle also serves as an accessor gateway, so that block can keep its data private otherwise
+
+    void lock_up()              { ++block->lock_count_; }
+    unsigned lock_down()        { return --block->lock_count_; }
+    void ref_up() const         { ++block->ref_count_; }
+    unsigned ref_down() const   { return --block->ref_count_; }
+
+    void next(handle_type v) const  { block->next_ = v; }
 };
 
 using bundle = bundle_base<handles_traits_base, page<uint16_t>>;

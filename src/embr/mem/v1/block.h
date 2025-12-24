@@ -26,13 +26,18 @@ class alignas(void*) block : public block_mode_base
     template <class T>
     using rtto = estd::internal::rtto<T>;
 
+    template <class HandlesTraits, class Page>
+    friend class bundle_base;
+
 protected:
     struct alignas(void*)
     {
         unsigned prev_ : 8;
         unsigned next_ : 8;
         modes mode_ : 2;
-        bool allocated_: 1;
+        bool allocated_ : 1;
+        unsigned lock_count_ : 4;
+        unsigned ref_count_ : 4;
     };
 
     char data_[];
@@ -44,7 +49,9 @@ public:
         prev_{prev},
         next_{next},
         mode_{mode},
-        allocated_{allocated}
+        allocated_{allocated},
+        lock_count_{0},
+        ref_count_{0}
     {}
 
     // emplace constructors
@@ -70,6 +77,7 @@ public:
     constexpr handle_type prev() const { return prev_; }
     constexpr handle_type next() const { return next_; }
     constexpr bool allocated() const { return allocated_; }
+    constexpr unsigned lock_count() const { return lock_count_; }
 
     // TBD
     constexpr bool invariant() const
@@ -90,7 +98,6 @@ public:
     }
 
     // DEBT: Protect this and make friend classes, or pull WriteableBlock child stunt
-    void next(unsigned v)       { next_ = v; }
     void allocated(bool v)      { allocated_ = v; }
     void mode(modes v)          { mode_ = v; }
     void reset(modes mode, bool allocated)
@@ -131,6 +138,7 @@ class alignas(void*) small_block : block_mode_base
         modes mode_ : 2;
         unsigned next_ : 6;
         bool allocated_: 1;
+        bool locked_ : 1;
     };
 public:
 };

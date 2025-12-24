@@ -107,7 +107,7 @@ auto pool<Traits>::ops<HandleTraits>::split(bundle b, pos_type at) -> handle_typ
 
         create_free_block(at, b.handle, b.block->next());
 
-        b.block->next(h);
+        b.next(h);
     });
 }
 
@@ -185,7 +185,7 @@ bool pool<Traits>::ops<HandleTraits>::merge(bundle current, bundle next)
     // Remove this handle from the pool completely
     handles_.dealloc(next.handle);
 
-    current.block->next(next.block->next());
+    current.next(next.block->next());
 
     return true;
 }
@@ -244,7 +244,42 @@ template <class Traits>
 template <class HandleTraits>
 void* pool<Traits>::ops<HandleTraits>::lock(handle_type h)
 {
-    return {};
+    bundle bn(get_bundle(h));
+
+    bn.lock_up();
+
+    return bn.data();
+}
+
+template <class Traits>
+template <class HandleTraits>
+void pool<Traits>::ops<HandleTraits>::unlock(handle_type h)
+{
+    bundle bn(get_bundle(h));
+
+    bn.lock_down();
+}
+
+template <class Traits>
+template <class HandleTraits>
+void pool<Traits>::ops<HandleTraits>::ref_up(handle_type h)
+{
+    bundle bn(get_bundle(h));
+
+    bn.ref_up();
+}
+
+
+template <class Traits>
+template <class HandleTraits>
+void pool<Traits>::ops<HandleTraits>::ref_down(handle_type h)
+{
+    bundle bn(get_bundle(h));
+
+    if(bn.ref_down() == 0)
+    {
+        dealloc(bn);
+    }
 }
 
 

@@ -147,12 +147,18 @@ public:
         void* lock(handle_type h);
         void unlock(handle_type h);
 
+        void ref_up(handle_type h);
+        void ref_down(handle_type h);
+
         unsigned alloced() const;
         unsigned available() const;
     };
 
 public:
     ESTD_CPP_FORWARDING_CTOR_MEMBER(pool, pool_)
+
+    // Just for diagnostics
+    const char* data() const { return std::data(pool_); }
 
     using handle_type = int;
 

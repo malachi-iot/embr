@@ -91,7 +91,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
             // DEBT: https://github.com/malachi-iot/estdlib/issues/159
             REQUIRE(handles.dealloc(h0) == estd::errc::values{});
 
-            type::iterator b = handles.begin();
+            //type::iterator b = handles.begin();
         }
         SECTION("handles: layer2")
         {
@@ -206,12 +206,48 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
     {
         using pool_type = v1::layer1::pool<1024, 8>;
         pool_type pool1;
+        using block = detail::v1::block;
+        constexpr unsigned block_sz = block::header_size<block::Trivial>();
 
-        pool1.alloc(10);
-        pool1.lock(0);
+        // DEBT: This guy still being stupid
+        pool1.ops().reset();
 
+        SECTION("basic")
+        {
+            pool_type::handle_type h1 = pool1.alloc(10);
+            REQUIRE((int)h1 == 0);
+            void* locked = pool1.lock(0);
+            // We allocate from very start of pool, and lock returns user/app data just past block header
+            REQUIRE(locked == pool1.ops().self_.data() + block_sz);
+            pool1.unlock(0);
+        }
         SECTION("shared_handle")
         {
+            REQUIRE(pool1.ops().available() == 1024 - block_sz);
+
+            // trivial
+            {
+                pool_type::handle_type h1 = pool1.alloc(block_sz);
+                detail::v1::shared_handle<pool_type, nullptr> sh1(h1, &pool1);
+
+                REQUIRE(pool1.ops().available() == 1024 - block_sz * 3);
+            }
+
+            int counter = 0;
+
+            {
+                pool_type::handle_type h1 = pool1.construct<SideEffector>(&counter);
+                v1::shared_handle<SideEffector, pool_type> sh1(h1, &pool1);
+
+                SideEffector* se = sh1.lock();
+
+                REQUIRE(se->counter_ == &counter);
+
+                REQUIRE(counter == 1);
+            }
+
+            REQUIRE(counter == 0);
+            REQUIRE(pool1.ops().available() == 1024 - block_sz);
         }
     }
     SECTION("layer2")
