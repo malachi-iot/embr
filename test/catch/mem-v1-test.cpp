@@ -204,7 +204,8 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
     }
     SECTION("layer1")
     {
-        using pool_type = v1::layer1::pool<1024, 8>;
+        constexpr unsigned pool_sz = 512;
+        using pool_type = v1::layer1::pool<pool_sz, 8>;
         pool_type pool1;
         using block = detail::v1::block;
         constexpr unsigned block_sz = block::header_size<block::Trivial>();
@@ -223,14 +224,14 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
         }
         SECTION("shared_handle")
         {
-            REQUIRE(pool1.ops().available() == 1024 - block_sz);
+            REQUIRE(pool1.ops().available() == pool_sz - block_sz);
 
             // trivial
             {
                 pool_type::handle_type h1 = pool1.alloc(block_sz);
                 detail::v1::shared_handle<pool_type, nullptr> sh1(h1, &pool1);
 
-                REQUIRE(pool1.ops().available() == 1024 - block_sz * 3);
+                REQUIRE(pool1.ops().available() == pool_sz - block_sz * 3);
             }
 
             int counter = 0;
@@ -247,7 +248,21 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
             }
 
             REQUIRE(counter == 0);
-            REQUIRE(pool1.ops().available() == 1024 - block_sz);
+            REQUIRE(pool1.ops().available() == pool_sz - block_sz);
+        }
+        SECTION("shared_handle (global)")
+        {
+            static pool_type pool2;
+
+            pool2.ops().reset();
+
+            // trivial
+            {
+                pool_type::handle_type h1 = pool2.alloc(block_sz);
+                detail::v1::shared_handle<pool_type, &pool2> sh1(h1);
+                REQUIRE(pool2.ops().available() == pool_sz - block_sz * 3);
+            }
+
         }
     }
     SECTION("layer2")

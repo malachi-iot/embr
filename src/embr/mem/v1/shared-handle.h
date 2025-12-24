@@ -35,6 +35,7 @@ protected:
     using base_type = global_provider<Pool, pool>;
     using base_type::value;
     using handle_type = typename Pool::handle_type;
+    constexpr static bool is_global = pool != nullptr;
 
     handle_type handle_;
 
@@ -44,6 +45,13 @@ public:
         base_type{p},
         handle_{handle}
     {
+    }
+
+    constexpr lock_handle(handle_type handle) :
+        base_type{nullptr},
+        handle_{handle}
+    {
+        static_assert(is_global);
     }
 
     void* lock() const
@@ -62,6 +70,7 @@ class shared_handle : public lock_handle<Pool, pool>
 {
     using base_type = lock_handle<Pool, pool>;
     using base_type::value;
+    using base_type::is_global;
     using base_type::handle_;
     using handle_type = typename Pool::handle_type;
 
@@ -69,6 +78,12 @@ public:
     // NOTE: Out of order - expect Pool, handle order in anticipation of nullptr p
     shared_handle(handle_type handle, Pool* p) :
         base_type(handle, p)
+    {
+        value()->ops().ref_up(handle_);
+    }
+
+    shared_handle(handle_type handle) :
+        base_type(handle)
     {
         value()->ops().ref_up(handle_);
     }
