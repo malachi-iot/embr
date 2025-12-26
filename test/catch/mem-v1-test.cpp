@@ -33,23 +33,33 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
     SECTION("filter_iterator")
     {
         static constexpr int values[] { 0, 4, 7, 9, 3, 6 };
+        static constexpr auto end = std::end(values);
 
-        auto filter = [](const int& v)
+        SECTION("lambda filter")
         {
-            // 'end' value is always included to avoid tumbling into undefined memory
-            if(&v == std::end(values)) return true;
+            auto filter = [](const int& v)
+            {
+                // 'end' value is always included to avoid tumbling into undefined memory
+                if(&v == end) return true;
 
-            return v > 5;
-        };
-        using iterator = v1::filter_iterator<decltype(filter), const int*>;
-        iterator i{values};
+                return v > 5;
+            };
+            using iterator = v1::filter_iterator<decltype(filter), const int*>;
+            iterator i{values};
 
-        REQUIRE(*i == 7);
-        ++i;
-        REQUIRE(*i++ == 9);
-        REQUIRE(*i == 6);
+            REQUIRE(*i == 7);
+            ++i;
+            REQUIRE(*i++ == 9);
+            REQUIRE(*i == 6);
 
-        REQUIRE(++i == std::end(values));
+            bool r = ++i == end;
+
+            REQUIRE(r);
+        }
+        SECTION("generic_end_predicate")
+        {
+
+        }
     }
     SECTION("detail")
     {
@@ -243,7 +253,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
 
                 REQUIRE(bn1.block->lock_count() == 0);
                 {
-                    detail::v1::lock_guard guard{sh1};
+                    lock_guard guard{sh1};
                     REQUIRE(bn1.block->lock_count() == 1);
                 }
                 REQUIRE(bn1.block->lock_count() == 0);

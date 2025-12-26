@@ -48,6 +48,22 @@ struct iterator_base_ops
 };
 
 
+// EXPERIMENTAL
+template <class Pred, class It>
+struct generic_end_predicate
+{
+    const It end_;
+
+    template <class T>
+    constexpr bool operator()(T v) const
+    {
+        if(v == end_)   return true;
+
+        return Pred{}(v);
+    }
+};
+
+
 // Boost-style
 // DEBT: Consolidate with old estd::experimental::filter_iterator, use EBO and
 // hopefully refine 'evaporator' a bit along the way

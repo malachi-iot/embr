@@ -45,6 +45,8 @@ protected:
         // TODO: Almost there, just need to compare end_ --
         constexpr bool operator()(const_reference v) const
         {
+            if(&v == end_) return true;
+
             return traits::is_null(v) == false;
         }
     };

@@ -181,7 +181,8 @@ class lock_guard : public detail::lock_guard<Pool, pool>
 public:
     ESTD_CPP_STD_VALUE_TYPE(T)
 
-    lock_guard(handle h) : base_type(h) {}
+    template <class ...Args>
+    lock_guard(Args&&...args) : base_type(std::forward<Args>(args)...) {}
 
     reference operator*() { return *(pointer)data_; }
     constexpr const_reference operator*() const { return *(pointer)data_; }
@@ -194,6 +195,9 @@ public:
 #if __cpp_deduction_guides
 template <class T, class Pool, Pool* pool>
 lock_guard(shared_handle<T, Pool, pool>) -> lock_guard<T, Pool, pool>;
+
+template <class Pool, Pool* pool>
+lock_guard(detail::v1::shared_handle<Pool, pool>) -> lock_guard<char, Pool, pool>;
 #endif
 
 
