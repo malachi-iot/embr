@@ -184,6 +184,7 @@ public:
     lock_guard(handle h) : base_type(h) {}
 
     reference operator*() { return *(pointer)data_; }
+    constexpr const_reference operator*() const { return *(pointer)data_; }
     pointer operator->() const { return (pointer)data_; }
 
     pointer data() const { return (pointer)data_; }

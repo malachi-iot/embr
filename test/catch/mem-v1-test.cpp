@@ -243,7 +243,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
 
                 REQUIRE(bn1.block->lock_count() == 0);
                 {
-                    auto guard = sh1.guard();
+                    detail::v1::lock_guard guard{sh1};
                     REQUIRE(bn1.block->lock_count() == 1);
                 }
                 REQUIRE(bn1.block->lock_count() == 0);
@@ -278,6 +278,16 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
 
                 {
                     lock_guard guard(sh1);
+                }
+
+                {
+                    ++*sh1.guard()->counter_;
+                }
+
+                REQUIRE(counter == 3);
+
+                {
+                    --*(*sh1.guard()).counter_;
                 }
 
                 REQUIRE(bn1.block->lock_count() == 0);
