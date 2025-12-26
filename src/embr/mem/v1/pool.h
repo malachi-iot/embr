@@ -239,16 +239,19 @@ class pool : public detail::v1::pool_crtp<pool<N, H>>
 {
     friend class detail::v1::pool_crtp<pool<N, H>>;
 
+public:
     using page_type = detail::v1::page<uint16_t>;
     using handles_traits = detail::v1::handles_traits<page_type[H]>;
     using pool_traits = detail::v1::pool_traits<char[N]>;
-    using ops_type = typename detail::v1::pool<pool_traits>::template ops<handles_traits>;
+
+private:
     detail::v1::pool<pool_traits> pool_;
     detail::v1::handles<handles_traits> handles_;
 
 #if UNIT_TESTING
 public:
 #endif
+    using ops_type = typename detail::v1::pool<pool_traits>::template ops<handles_traits>;
 
     ops_type ops() { return {pool_, handles_}; }
 

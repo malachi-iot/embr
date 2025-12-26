@@ -34,6 +34,7 @@ class lock_handle : public global_provider<Pool, pool>
 protected:
     using base_type = global_provider<Pool, pool>;
     using base_type::value;
+    using handles_traits = typename Pool::handles_traits;
     using handle_type = typename Pool::handle_type;
     constexpr static bool is_global = pool != nullptr;
 
@@ -63,33 +64,59 @@ public:
     {
         value()->unlock(handle_);
     }
+
+    // EXPERIMENTAL
+    void reset()
+    {
+        handle_ = handles_traits::null;
+    }
 };
 
-// UNFINISHED, UNTESTED
-template <class T, class Pool, Pool* pool>
+
+template <class Pool, Pool* pool>
 class lock_guard
 {
+protected:
     using handle = lock_handle<Pool, pool>;
 
     handle handle_;
-    T* data_;       // DEBT: Pull this direct from block
+    void* data_;       // DEBT: Pull this direct from block
 
 public:
-    lock_guard(handle h) : handle_{h}
+    lock_guard(handle h) : handle_{h},
+        data_{h.lock()}
     {
-        h.lock();
     }
 
-    T* data() const
+    lock_guard(const lock_guard& copy_from) :
+        handle_{copy_from.handle_},
+        data_{handle_.lock()}
     {
-        return data_;
     }
+
+    lock_guard(lock_guard&& move_from) :
+        handle_{move_from.handle_},
+        data_{move_from.data_}
+    {
+        move_from.data_ = nullptr;
+    }
+
+    void* data() const { return data_; }
 
     ~lock_guard()
     {
-        handle_.unlock();
+        // DEBT: Inspect & modify handle_ directly for this
+        if(data_)   handle_.unlock();
     }
 };
+
+#if __cpp_deduction_guides
+template <class Pool, Pool* pool>
+lock_guard(shared_handle<Pool, pool>) -> lock_guard<Pool, pool>;
+#endif
+
+
+
 
 template <class Pool, Pool* pool>
 class shared_handle : public lock_handle<Pool, pool>
@@ -116,6 +143,8 @@ public:
 
     static constexpr bool global = false;
 
+    lock_guard<Pool, pool> guard() { return { *this }; }
+
     ~shared_handle()
     {
         value()->ops().ref_down(handle_);
@@ -137,8 +166,34 @@ public:
 
     shared_handle(int handle, Pool* p = nullptr) : base_type(handle, p) {}
 
+    lock_guard<value_type, Pool, pool> guard() { return { *this }; }
+
     pointer lock() const { return static_cast<pointer>(base_type::lock()); }
 };
+
+template <class T, class Pool, Pool* pool>
+class lock_guard : public detail::lock_guard<Pool, pool>
+{
+    using base_type = detail::lock_guard<Pool, pool>;
+    using base_type::data_;
+    using typename base_type::handle;
+
+public:
+    ESTD_CPP_STD_VALUE_TYPE(T)
+
+    lock_guard(handle h) : base_type(h) {}
+
+    reference operator*() { return *(pointer)data_; }
+    pointer operator->() const { return (pointer)data_; }
+
+    pointer data() const { return (pointer)data_; }
+};
+
+
+#if __cpp_deduction_guides
+template <class T, class Pool, Pool* pool>
+lock_guard(shared_handle<T, Pool, pool>) -> lock_guard<T, Pool, pool>;
+#endif
 
 
 // DEBT: Need to filter this more, otherwise ADL is gonna lose its mind

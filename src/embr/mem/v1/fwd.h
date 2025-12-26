@@ -71,6 +71,9 @@ inline namespace v1 {
 template <class T, class Pool, Pool* pool = {}>
 class shared_handle;
 
+template <class T, class Pool, Pool* pool>
+class lock_guard;
+
 template <class Container>
 struct container_traits;
 

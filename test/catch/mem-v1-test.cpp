@@ -206,6 +206,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
     {
         constexpr unsigned pool_sz = 512;
         using pool_type = v1::layer1::pool<pool_sz, 8>;
+        using bundle = pool_type::ops_type::bundle;
         pool_type pool1;
         using block = detail::v1::block;
         constexpr unsigned block_sz = block::header_size<block::Trivial>();
@@ -235,13 +236,22 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
             // trivial
             {
                 pool_type::handle_type h1 = pool1.alloc(block_sz);
+                bundle bn1 = pool1.ops().get_bundle(h1);
                 detail::v1::shared_handle<pool_type, nullptr> sh1(h1, &pool1);
 
                 REQUIRE(pool1.ops().available() == pool_sz - block_sz * 3);
+
+                REQUIRE(bn1.block->lock_count() == 0);
+                {
+                    auto guard = sh1.guard();
+                    REQUIRE(bn1.block->lock_count() == 1);
+                }
+                REQUIRE(bn1.block->lock_count() == 0);
             }
 
             {
                 pool_type::handle_type h1 = pool1.construct<SideEffector>(&counter);
+                bundle bn1 = pool1.ops().get_bundle(h1);
                 v1::shared_handle<SideEffector, pool_type> sh1(h1, &pool1);
 
                 SideEffector* se = sh1.lock();
@@ -251,16 +261,38 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                 sh1.unlock();
 
                 REQUIRE(counter == 1);
+
+                REQUIRE(bn1.block->lock_count() == 0);
+
+                {
+                    auto guard = sh1.guard();
+
+                    ++*guard->counter_;
+
+                    REQUIRE(bn1.block->lock_count() == 1);
+                }
+
+                {
+                    lock_guard guard = sh1;
+                }
+
+                {
+                    lock_guard guard(sh1);
+                }
+
+                REQUIRE(bn1.block->lock_count() == 0);
+
+                REQUIRE(counter == 2);
             }
 
             {
                 v1::shared_handle<SideEffector, pool_type> sh1 =
                     v1::make_shared<SideEffector>(pool1, &counter);
 
-                REQUIRE(counter == 1);
+                REQUIRE(counter == 2);
             }
 
-            REQUIRE(counter == 0);
+            REQUIRE(counter == 1);
             REQUIRE(pool1.ops().available() == pool_sz - block_sz);
         }
         SECTION("shared_handle (global)")
