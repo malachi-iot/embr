@@ -64,7 +64,8 @@ class filter_iterator :
     // DEBT: Add is_default_constructible to estd, and perhaps a
     // functor_evaporator for all this
     using pred_constructible = std::is_default_constructible<Pred>;
-    static constexpr Pred* pred = nullptr;
+    static constexpr Pred* pred_null = nullptr;
+    using is_pred_empty = typename estd::is_empty<Pred>::type;
 
     It current_;
 
@@ -72,8 +73,12 @@ class filter_iterator :
     using iterator = It;
     using traits = estd::iterator_traits<iterator>;
 
-    // At the moment, 0-size functor is required
-    constexpr bool predicate(const iterator& v) const
+    constexpr bool predicate(const iterator& v, estd::false_type) const
+    {
+        return base_type::value()(*v);
+    }
+
+    constexpr bool predicate(const iterator& v, estd::true_type /* is_empty */) const
     {
         //return base_type::value()(*v);
         // NOTE: Total trick - in cases of a non-capturing lambda
@@ -84,7 +89,7 @@ class filter_iterator :
 #pragma GCC diagnostic ignored "-Wnonnull"
 #pragma GCC diagnostic ignored "-Wnull-dereference"
 
-        return pred->operator()(*v);
+        return pred_null->operator()(*v);
 
 #pragma GCC diagnostic pop
     }
@@ -104,7 +109,14 @@ public:
     constexpr filter_iterator(iterator it) : current_{it}
     {
         int p;
-        while(p = predicate(current_) == false) ++current_;
+        while(p = predicate(current_, is_pred_empty{}) == false) ++current_;
+    }
+
+    constexpr filter_iterator(Pred&& pred, iterator it) :
+        base_type(std::move(pred)),
+        current_{it}
+    {
+        while(predicate(current_, is_pred_empty{}) == false) ++current_;
     }
 
     this_type& operator++()
@@ -116,7 +128,7 @@ public:
         {
             ++current_;
         }
-        while(p = predicate(current_) == false);
+        while(p = predicate(current_, is_pred_empty{}) == false);
 
         return *this;
     }

@@ -13,7 +13,11 @@ namespace embr { namespace mem {
 
 namespace detail { inline namespace v1 {
 
-// 16DEC25 MB - boilerplate for incoming playground.memory mem-11 formalization
+
+struct fragmentation
+{
+
+};
 
 template <class Container>
 struct pool_traits : container_traits<Container>
@@ -152,6 +156,8 @@ public:
 
         unsigned alloced() const;
         unsigned available() const;
+
+        void assess(fragmentation*) const;
     };
 
 public:

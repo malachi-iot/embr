@@ -40,11 +40,16 @@ protected:
 
     struct filter
     {
+        const value_type* end_;
+
+        // TODO: Almost there, just need to compare end_ --
         constexpr bool operator()(const_reference v) const
         {
             return traits::is_null(v) == false;
         }
     };
+
+    constexpr filter pred() const { return { std::end(container_) }; }
 
 public:
     using iterator = filter_iterator<filter, pointer>;
@@ -93,10 +98,10 @@ public:
         for(value_type& v : container_) traits::reset(v);
     }
 
-    iterator begin() { return { &container_[0] }; }
-    constexpr const_iterator begin() const { return { &container_[0] }; }
-    iterator end() { return { &container_[std::size(container_)] }; }
-    constexpr const_iterator end() const { return { &container_[std::size(container_)] }; }
+    iterator begin() { return { pred(), &container_[0] }; }
+    constexpr const_iterator begin() const { return { pred(), &container_[0] }; }
+    iterator end() { return { pred(), &container_[std::size(container_)] }; }
+    constexpr const_iterator end() const { return { pred(), &container_[std::size(container_)] }; }
 };
 
 }}
