@@ -199,6 +199,8 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                     detail::fragmentation frag;
 
                     op.assess(&frag);
+
+                    //REQUIRE(frag.candidates[0].is_null() == false);
                 }
             }
             SECTION("alloc")

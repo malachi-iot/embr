@@ -136,9 +136,11 @@ public:
         void next(const block*, bundle_base<Traits2, Block, Page>* out) const;
 
         bundle next(const block*) const;
-        bundle next(const bundle& bn) const { return next(bn.block); }
+        template <class Traits2, class Block, class Page>
+        bundle next(const bundle_base<Traits2, Block, Page>& bn) const { return next(bn.block); }
 
-        pos_type phys_size(const bundle&) const;
+        template <class Traits2, class Block, class Page>
+        pos_type phys_size(const bundle_base<Traits2, Block, Page>&) const;
         pos_type phys_size(int h, page_type& p) const
         {
             return phys_size(self_.bundle(p, h));

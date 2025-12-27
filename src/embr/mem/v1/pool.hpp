@@ -76,7 +76,8 @@ auto pool<Traits>::ops<HandleTraits>::next(const v1::block* b) const -> bundle
 
 template <class Traits>
 template <class HandleTraits>
-auto pool<Traits>::ops<HandleTraits>::phys_size(const bundle& bn) const -> pos_type
+template <class Traits2, class Block, class Page>
+auto pool<Traits>::ops<HandleTraits>::phys_size(const bundle_base<Traits2, Block, Page>& bn) const -> pos_type
 {
     pos_type next_pos = bn.block->next() == handles_type::null ?
         pos_type(std::size(self_.pool_) / aliasing) :
@@ -332,30 +333,66 @@ template <class HandleTraits>
 void pool<Traits>::ops<HandleTraits>::assess(fragmentation* frag) const
 {
     const v1::block* b = self_.block(pos_type(0));
-    const_bundle bn{b, &handles_[0]}, bn_prev{}, bn_prev_prev{};
+    const_bundle cur{b, &handles_[0]}, prev{}, prev_prev{};
     int h = -1;
+    int last_sc = 0;
 
-    while(bn.handle != block::null)
+    frag->candidates[0] = {};
+    frag->candidates[1] = {};
+
+    auto score = [&](const_bundle prev, const_bundle cur, const_bundle next)
+    {
+        pos_type v(0);
+
+        // favor a triple with a small middle, since that's easier to move
+        // DEBT: See https://github.com/malachi-iot/estdlib/issues/155
+        v += pos_type(phys_size(prev).count() * 4);
+        v += phys_size(cur);
+        v += pos_type(phys_size(next).count() * 4);
+
+        return v.count();
+    };
+
+    while(cur.handle != block::null)
     {
         const_bundle bn_next;
 
-        next(bn.block, &bn_next);
+        next(cur.block, &bn_next);
 
         if(h == -1)
         {
-            bn.handle = bn_next.block->prev();
+            cur.handle = bn_next.block->prev();
         }
 
-        if(bn_prev.is_null() == false && bn_prev_prev.is_null() == false)
+        if(prev.is_null() == false && prev_prev.is_null() == false)
         {
-            // TODO: Do some real eval here
-            frag->candidates[0] = bn;
-            estd::swap(frag->candidates[0], frag->candidates[1]);
+            // F A F
+            if(!prev_prev.allocated() && prev.allocated() && !cur.allocated())
+            {
+                int sc = score(prev_prev, prev, cur);
+
+                if(sc > last_sc)
+                {
+                    estd::swap(frag->candidates[0], frag->candidates[1]);
+                    frag->candidates[0] = prev;
+                }
+            }
+            // A F A
+            else if(prev_prev.allocated() && !prev.allocated() && cur.allocated())
+            {
+                int sc = score(prev_prev, prev, cur);
+
+                if(sc > last_sc)
+                {
+                    estd::swap(frag->candidates[0], frag->candidates[1]);
+                    frag->candidates[0] = prev;
+                }
+            }
         }
 
-        bn_prev_prev = bn_prev;
-        bn_prev = bn;
-        bn = bn_next;
+        prev_prev = prev;
+        prev = cur;
+        cur = bn_next;
     }
 }
 

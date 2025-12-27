@@ -24,6 +24,8 @@ struct bundle_base
     page_type* page;
     handle_type handle{null};
 
+    constexpr bool allocated() const { return block->allocated(); }
+
     constexpr pos_type pos() const { return page->pos(); }
 
     // DEBT: Consider renaming to not collide with handle null
