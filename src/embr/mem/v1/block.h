@@ -26,7 +26,7 @@ class alignas(void*) block : public block_mode_base
     template <class T>
     using rtto = estd::internal::rtto<T>;
 
-    template <class HandlesTraits, class Page>
+    template <class HandlesTraits, class Block, class Page>
     friend class bundle_base;
 
 protected:

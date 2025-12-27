@@ -13,9 +13,6 @@ namespace embr { namespace mem {
 
 namespace detail { inline namespace v1 {
 
-template <class HandlesTraits, class Page>
-struct bundle_base;
-
 class block;
 
 class small_block;
@@ -36,6 +33,10 @@ using page = estd::internal::units::unit_base<Rep, estd::ratio<alias>, page_tag>
 template <class Rep, class Ratio = estd::ratio<sizeof(void*)>>
 struct page;
 #endif
+
+template <class HandlesTraits, class Block = block, class Page = typename HandlesTraits::value_type>
+struct bundle_base;
+
 
 template <class Container>
 struct pool_traits;

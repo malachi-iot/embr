@@ -10,7 +10,7 @@ namespace embr { namespace mem {
 
 namespace detail { inline namespace v1 {
 
-template <class HandlesTraits, class Page = typename HandlesTraits::value_type>
+template <class HandlesTraits, class Block, class Page>
 struct bundle_base
 {
     using handles_traits = HandlesTraits;
@@ -20,11 +20,13 @@ struct bundle_base
 
     static constexpr handle_type null = handles_traits::null;
 
-    v1::block* block;
+    Block* block;
     page_type* page;
     handle_type handle{null};
 
     constexpr pos_type pos() const { return page->pos(); }
+
+    // DEBT: Consider renaming to not collide with handle null
     constexpr bool is_null() const { return block == nullptr; }
 
     constexpr bool invariant() const
@@ -55,7 +57,8 @@ struct bundle_base
     void next(handle_type v) const  { block->next_ = v; }
 };
 
-using bundle = bundle_base<handles_traits_base, page<uint16_t>>;
+using bundle = bundle_base<handles_traits_base, v1::block, page<uint16_t>>;
+using const_bundle = bundle_base<handles_traits_base, const v1::block, const page<uint16_t>>;
 
 
 }}

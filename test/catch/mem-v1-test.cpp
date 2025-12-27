@@ -194,6 +194,12 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                     REQUIRE(op.available() == pool_size - phys_alloced_sz);
                     REQUIRE(op.alloced() == logical_alloced_sz);
                 }
+                SECTION("assess")
+                {
+                    detail::fragmentation frag;
+
+                    op.assess(&frag);
+                }
             }
             SECTION("alloc")
             {

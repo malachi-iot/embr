@@ -16,7 +16,7 @@ namespace detail { inline namespace v1 {
 
 struct fragmentation
 {
-
+    const_bundle candidates[2];
 };
 
 template <class Container>
@@ -46,6 +46,11 @@ protected:
     v1::block* block(pos_type at)
     {
         return reinterpret_cast<v1::block*>(std::data(pool_) + page_unit_type(at).count());
+    }
+
+    const v1::block* block(pos_type at) const
+    {
+        return reinterpret_cast<const v1::block*>(std::data(pool_) + page_unit_type(at).count());
     }
 
 /*
@@ -126,6 +131,10 @@ public:
 
         bundle prev(const block*) const;
         bundle prev(const bundle& bn) const { return prev(bn.block); }
+
+        template <class Traits2, class Block, class Page>
+        void next(const block*, bundle_base<Traits2, Block, Page>* out) const;
+
         bundle next(const block*) const;
         bundle next(const bundle& bn) const { return next(bn.block); }
 

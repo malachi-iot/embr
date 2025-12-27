@@ -57,6 +57,16 @@ auto pool<Traits>::ops<HandleTraits>::prev(const v1::block* b) const -> bundle
 
 template <class Traits>
 template <class HandleTraits>
+template <class Traits2, class Block, class Page>
+void pool<Traits>::ops<HandleTraits>::next(const v1::block* b, bundle_base<Traits2, Block, Page>* out) const
+{
+    page_type& page = handles_[b->next()];
+    new bundle_base<traits, Block, Page>{ self_.block(page.pos()), &page, b->next() };
+}
+
+
+template <class Traits>
+template <class HandleTraits>
 auto pool<Traits>::ops<HandleTraits>::next(const v1::block* b) const -> bundle
 {
     page_type& page = handles_[b->next()];
@@ -319,9 +329,34 @@ auto pool<Traits>::ops<HandleTraits>::alloced() const -> unsigned
 
 template <class Traits>
 template <class HandleTraits>
-void pool<Traits>::ops<HandleTraits>::assess(fragmentation*) const
+void pool<Traits>::ops<HandleTraits>::assess(fragmentation* frag) const
 {
+    const v1::block* b = self_.block(pos_type(0));
+    const_bundle bn{b, &handles_[0]}, bn_prev{}, bn_prev_prev{};
+    int h = -1;
 
+    while(bn.handle != block::null)
+    {
+        const_bundle bn_next;
+
+        next(bn.block, &bn_next);
+
+        if(h == -1)
+        {
+            bn.handle = bn_next.block->prev();
+        }
+
+        if(bn_prev.is_null() == false && bn_prev_prev.is_null() == false)
+        {
+            // TODO: Do some real eval here
+            frag->candidates[0] = bn;
+            estd::swap(frag->candidates[0], frag->candidates[1]);
+        }
+
+        bn_prev_prev = bn_prev;
+        bn_prev = bn;
+        bn = bn_next;
+    }
 }
 
 }}
