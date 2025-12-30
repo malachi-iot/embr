@@ -86,6 +86,8 @@ lock_guard(detail::v1::shared_handle<Pool, pool>) -> lock_guard<char, Pool, pool
 template <class Container>
 struct container_traits;
 
+template <class T, class Pool, Pool* pool = nullptr>
+class unique_handle;
 
 }
 

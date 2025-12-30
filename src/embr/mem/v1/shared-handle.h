@@ -32,7 +32,7 @@ public:
 
     static constexpr bool global = false;
 
-    lock_guard<Pool, pool> guard() { return { *this }; }
+    lock_guard<Pool, pool> operator()() { return { *this }; }
 
     ~shared_handle()
     {
@@ -56,7 +56,7 @@ public:
     constexpr explicit shared_handle(int handle, Pool* p = nullptr) :
         base_type(handle, p) {}
 
-    lock_guard<value_type, Pool, pool> guard() { return { *this }; }
+    lock_guard<value_type, Pool, pool> operator()() { return { *this }; }
 
     pointer lock() const { return static_cast<pointer>(base_type::lock()); }
 };

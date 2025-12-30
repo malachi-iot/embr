@@ -284,7 +284,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                 REQUIRE(bn1.block->lock_count() == 0);
 
                 {
-                    auto guard = sh1.guard();
+                    auto guard = sh1();
 
                     ++*guard->counter_;
 
@@ -300,13 +300,13 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                 }
 
                 {
-                    ++*sh1.guard()->counter_;
+                    ++*sh1()->counter_;
                 }
 
                 REQUIRE(counter == 3);
 
                 {
-                    --*(*sh1.guard()).counter_;
+                    --*(*sh1()).counter_;
                 }
 
                 REQUIRE(bn1.block->lock_count() == 0);
@@ -361,6 +361,15 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
             {
                 pool_type::handle_type h1 = pool1.construct<SideEffector>(&counter);
                 detail::v1::unique_handle<pool_type, nullptr> uh1(h1, &pool1);
+
+                REQUIRE(counter == 1);
+            }
+
+            REQUIRE(counter == 0);
+
+            {
+                pool_type::handle_type h1 = pool1.construct<SideEffector>(&counter);
+                unique_handle<SideEffector, pool_type> uh1(h1, &pool1);
 
                 REQUIRE(counter == 1);
             }
