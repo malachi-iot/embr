@@ -24,6 +24,7 @@ using namespace embr::units;
 TEST_CASE("units")
 {
     estd::layer1::ostringstream<256> out;
+    auto out2 = estd::internal::make_ostream_like(out);
     const auto& s = out.rdbuf()->str();
 
     SECTION("amps")
@@ -46,7 +47,7 @@ TEST_CASE("units")
 
             REQUIRE(a.count() == 3);
 
-            write(out, ma);
+            out << put_unit(ma, false);
 
             REQUIRE(s == "3600 milliamps");
         }
@@ -60,7 +61,7 @@ TEST_CASE("units")
         REQUIRE(c1.count() == -40);
         REQUIRE(c2.count() == -40);
 
-        write_abbrev(out, c1);
+        out << put_unit(c1);
 
         REQUIRE(out.rdbuf()->str() == "-40 deg C");
     }
@@ -68,7 +69,7 @@ TEST_CASE("units")
     {
         decibels<int> d1{5};
 
-        write_abbrev(out, d1);
+        write_abbrev(out2, d1);
 
         REQUIRE(s == "5dB");
     }
@@ -88,7 +89,7 @@ TEST_CASE("units")
 
             REQUIRE(m.count() == 32000);
 
-            write_abbrev(out, km);
+            out << put_unit(km);
 
             REQUIRE(s == "32km");
         }
@@ -100,7 +101,7 @@ TEST_CASE("units")
 
         REQUIRE(rpm2.count() == 10000);
 
-        write_abbrev(out, rpm1);
+        write_abbrev(out2, rpm1);
 
         REQUIRE(out.rdbuf()->str() == "5000rpm");
     }
@@ -127,7 +128,7 @@ TEST_CASE("units")
             REQUIRE(dv.count() == 36);
             REQUIRE(v.count() == 3);
 
-            write(out, dv);
+            write(out2, dv);
 
             REQUIRE(out.rdbuf()->str() == "36 decivolts");
 
@@ -135,7 +136,7 @@ TEST_CASE("units")
 
             out.rdbuf()->clear();
 
-            write(out, uv);
+            write(out2, uv);
 
             REQUIRE(out.rdbuf()->str() == "7200000 microvolts");
         }
@@ -144,7 +145,7 @@ TEST_CASE("units")
     {
         watts<uint16_t> w{1000};
 
-        write(out, w);
+        write(out2, w);
 
         REQUIRE(s == "1000 watts");
     }

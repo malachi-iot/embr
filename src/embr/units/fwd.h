@@ -19,14 +19,8 @@ using compound_tag = estd::internal::units::compound_tag<T1, T2>;
 
 namespace detail {
 
-template <typename Rep, class Period, class Tag, typename F = internal::passthrough<Rep> >
-using unit = estd::internal::units::unit_base<Rep, Period, Tag, F>;
-
-}
-
-inline namespace literals {
-
-using namespace estd::internal::units::literals;
+template <typename Rep, class Period, class Tag, typename F = estd::units::passthrough<Rep> >
+using unit = estd::units::v1::unit<Rep, Period, Tag, F>;
 
 }
 
