@@ -343,12 +343,16 @@ void pool<Traits>::ops<HandleTraits>::assess(fragmentation* frag) const
     auto score = [&](const_bundle prev, const_bundle cur, const_bundle next)
     {
         pos_type v(0);
+        constexpr uint16_t booster = 4;
 
         // favor a triple with a small middle, since that's easier to move
-        // DEBT: See https://github.com/malachi-iot/estdlib/issues/155
-        v += pos_type(phys_size(prev).count() * 4);
+        // DEBT: See https://github.com/malachi-iot/estdlib/issues/155 - specifically
+        // I'm considering a flag permit to precision loss, though I kind of like that
+        // it caught this and errored as it should have.  "booster" HAS to be uint16_t, but really
+        // multiplication implies a precision loss anyway
+        v += phys_size(prev) * booster;
         v += phys_size(cur);
-        v += pos_type(phys_size(next).count() * 4);
+        v += phys_size(next) * booster;
 
         return v.count();
     };
