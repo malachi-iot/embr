@@ -67,10 +67,9 @@ public:
     {
         for(size_type i = 0; i < std::size(container_); ++i)
         {
-            reference v = container_[i];
-
-            // FIX: Need this as is_null == false, since that is NOT the same as allocated
-            if(traits::is_null(v) && predicate(i, v))
+            // Remember, we are allocating handles, not pool entries - so evaluating
+            // is_null is correct for identifying unused handles
+            if(reference v = container_[i]; traits::is_null(v) && predicate(i, v))
             {
                 on_alloc(i, v);
                 return i;
@@ -88,6 +87,7 @@ public:
 
     estd::errc dealloc(size_type handle)
     {
+        // DEBT: https://github.com/malachi-iot/estdlib/issues/166
         if(handle >= std::size(container_)) return estd::errc::bad_address;
 
         traits::reset(container_[handle]);

@@ -2,6 +2,7 @@
 
 #include <embr/mem/v1/pool.hpp>
 #include <embr/mem/v1/shared-handle.h>
+#include <embr/mem/v1/unique-handle.h>
 
 
 // DEBT: See if we can scoop this from estd
