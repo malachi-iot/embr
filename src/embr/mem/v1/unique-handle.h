@@ -15,21 +15,30 @@ class unique_handle : public lock_handle<Pool, pool>
     using handle_type = typename Pool::handle_type;
 
 public:
-    constexpr unique_handle(handle_type handle, Pool* p) :
+    constexpr explicit unique_handle(handle_type handle, Pool* p = nullptr) :
         base_type(handle, p)
     {
-        value()->ops().ref_up(handle_);
-    }
-
-    constexpr unique_handle(unique_handle&& move_from) noexcept:
-        base_type(move_from)
-    {
-        move_from.reset();
     }
 
     unique_handle(const unique_handle&) = delete;
+
+    ~unique_handle()
+    {
+        if(*this)   value()->ops().dealloc(handle_);
+    }
 };
 
 }}
+
+template <class T, class Pool, Pool* pool>
+class unique_handle : public detail::unique_handle<Pool, pool>
+{
+    using base_type = detail::unique_handle<Pool, pool>;
+    using typename base_type::handle_type;
+
+public:
+    constexpr explicit unique_handle(handle_type handle, Pool* p = nullptr) :
+        base_type(handle, p) {}
+};
 
 }}

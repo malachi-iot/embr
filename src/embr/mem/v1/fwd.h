@@ -75,6 +75,14 @@ class shared_handle;
 template <class T, class Pool, Pool* pool>
 class lock_guard;
 
+#if __cpp_deduction_guides
+template <class T, class Pool, Pool* pool>
+lock_guard(shared_handle<T, Pool, pool>) -> lock_guard<T, Pool, pool>;
+
+template <class Pool, Pool* pool>
+lock_guard(detail::v1::shared_handle<Pool, pool>) -> lock_guard<char, Pool, pool>;
+#endif
+
 template <class Container>
 struct container_traits;
 

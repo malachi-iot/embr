@@ -356,6 +356,17 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
 
             REQUIRE(pool2.ops().available() == pool_sz - block_sz);
         }
+        SECTION("unique_handle")
+        {
+            {
+                pool_type::handle_type h1 = pool1.construct<SideEffector>(&counter);
+                detail::v1::unique_handle<pool_type, nullptr> uh1(h1, &pool1);
+
+                REQUIRE(counter == 1);
+            }
+
+            REQUIRE(counter == 0);
+        }
     }
     SECTION("layer2")
     {

@@ -26,6 +26,11 @@ struct global_provider<T, t, false>
     constexpr explicit global_provider(T* v) : t_{v}   {}
 };
 
+template <class Derived>
+class lock_handle_crtp
+{
+};
+
 template <class Pool, Pool* pool>
 class lock_handle : public global_provider<Pool, pool>
 {
@@ -54,6 +59,15 @@ public:
         static_assert(is_global);
     }
 
+    constexpr lock_handle(lock_handle&& move_from) noexcept :
+        base_type{move_from.value()},
+        handle_{move_from.handle_}
+    {
+        move_from.reset();
+    }
+
+    constexpr lock_handle(const lock_handle&) = default;
+
     void* lock() const
     {
         return value()->lock(handle_);
@@ -66,13 +80,11 @@ public:
 
     explicit constexpr operator bool() const { return handle_ != null; }
 
-    // EXPERIMENTAL
     void reset()
     {
         handle_ = null;
     }
 };
-
 
 template <class Pool, Pool* pool>
 class lock_guard
@@ -84,19 +96,19 @@ protected:
     void* data_;       // DEBT: Pull this direct from block
 
 public:
-    lock_guard(handle h) : handle_{h},
+    constexpr explicit lock_guard(handle h) : handle_{h},
         data_{h.lock()}
     {
     }
 
-    lock_guard(const lock_guard& copy_from) :
+    constexpr lock_guard(const lock_guard& copy_from) :
         handle_{copy_from.handle_},
         data_{handle_.lock()}
     {
     }
 
-    lock_guard(lock_guard&& move_from) :
-        handle_{move_from.handle_},
+    constexpr lock_guard(lock_guard&& move_from) noexcept :
+        handle_{std::move(move_from.handle_)},
         data_{move_from.data_}
     {
         move_from.data_ = nullptr;
@@ -117,5 +129,30 @@ lock_guard(shared_handle<Pool, pool>) -> lock_guard<Pool, pool>;
 #endif
 
 }}
+
+inline namespace v1 {
+
+template <class T, class Pool, Pool* pool>
+class lock_guard : public detail::lock_guard<Pool, pool>
+{
+    using base_type = detail::lock_guard<Pool, pool>;
+    using base_type::data_;
+    using typename base_type::handle;
+
+public:
+    ESTD_CPP_STD_VALUE_TYPE(T)
+
+    template <class ...Args>
+    constexpr lock_guard(Args&&...args) :
+        base_type(std::forward<Args>(args)...) {}
+
+    reference operator*() { return *(pointer)data_; }
+    constexpr const_reference operator*() const { return *(pointer)data_; }
+    pointer operator->() const { return (pointer)data_; }
+
+    pointer data() const { return (pointer)data_; }
+};
+
+}
 
 }}

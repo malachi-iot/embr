@@ -18,7 +18,7 @@ class shared_handle : public lock_handle<Pool, pool>
 
 public:
     // NOTE: Out of order - expect Pool, handle order in anticipation of nullptr p
-    constexpr shared_handle(handle_type handle, Pool* p) :
+    constexpr explicit shared_handle(handle_type handle, Pool* p) :
         base_type(handle, p)
     {
         value()->ops().ref_up(handle_);
@@ -36,7 +36,7 @@ public:
 
     ~shared_handle()
     {
-        value()->ops().ref_down(handle_);
+        if(*this)   value()->ops().ref_down(handle_);
     }
 };
 
@@ -61,34 +61,7 @@ public:
     pointer lock() const { return static_cast<pointer>(base_type::lock()); }
 };
 
-template <class T, class Pool, Pool* pool>
-class lock_guard : public detail::lock_guard<Pool, pool>
-{
-    using base_type = detail::lock_guard<Pool, pool>;
-    using base_type::data_;
-    using typename base_type::handle;
 
-public:
-    ESTD_CPP_STD_VALUE_TYPE(T)
-
-    template <class ...Args>
-    lock_guard(Args&&...args) : base_type(std::forward<Args>(args)...) {}
-
-    reference operator*() { return *(pointer)data_; }
-    constexpr const_reference operator*() const { return *(pointer)data_; }
-    pointer operator->() const { return (pointer)data_; }
-
-    pointer data() const { return (pointer)data_; }
-};
-
-
-#if __cpp_deduction_guides
-template <class T, class Pool, Pool* pool>
-lock_guard(shared_handle<T, Pool, pool>) -> lock_guard<T, Pool, pool>;
-
-template <class Pool, Pool* pool>
-lock_guard(detail::v1::shared_handle<Pool, pool>) -> lock_guard<char, Pool, pool>;
-#endif
 
 
 // DEBT: Need to filter this more, otherwise ADL is gonna lose its mind
