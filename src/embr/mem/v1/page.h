@@ -12,17 +12,16 @@ namespace embr { namespace mem {
 namespace detail { inline namespace v1 {
 
 
-// DEBT: Precision loss checker in estd += is not specific enough to notice traits and page_unit_traits
-// are compatible.
 template <typename Rep, typename Period>
-using page_unit_traits = estd::units::v1::detail::traits<Rep, Period, page_tag>;
-/*
 struct page_unit_traits : estd::units::detail::traits<Rep, Period, page_tag>
 {
-    // TODO: Put in init options
-};  */
+    static constexpr auto options = estd::units::detail::options::value_initialized;
+
+    constexpr static Rep default_value() { return estd::numeric_limits<Rep>::max(); }
+};
 
 // DEBT: Rename this guy to reflect he's byte_count
+// DEBT: default_value() is not gonna be accurate because of precision difference
 using page_unit_type = estd::units::v1::detail::unit<page_unit_traits<unsigned, estd::ratio<1>>>;
 
 // TODO: Do unit_traits for human-readable descriptions
@@ -32,11 +31,12 @@ template <class Rep, class Ratio>
 struct page
 {
     using rep = Rep;
-    using unit_type = estd::units::v1::detail::unit<page_unit_traits<Rep, Ratio>>;
+    using unit_traits = page_unit_traits<Rep, Ratio>;
+    using unit_type = estd::units::v1::detail::unit<unit_traits>;
 
     static constexpr int aliasing = Ratio::num;
     static_assert(aliasing % sizeof(void*) == 0, "Aliasing must fall on pointer size boundary");
-    static constexpr rep null = estd::numeric_limits<rep>::max();
+    static constexpr rep null = unit_traits::default_value();
 
     constexpr bool is_null() const { return pos_ == null; }
     void reset() { pos_ = null; }
@@ -45,7 +45,7 @@ struct page
     void pos(unit_type v) { pos_ = v.count(); }
 
 private:
-    rep pos_;
+    rep pos_{null};
 };
 #endif
 

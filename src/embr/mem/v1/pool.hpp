@@ -4,9 +4,6 @@
 #include <estd/new.h>
 #include <estd/numeric.h>
 
-// DEBT: https://github.com/malachi-iot/estdlib/issues/155
-#include <estd/internal/units/operators.hpp>
-
 #include "block.hpp"
 #include "pool.h"
 

@@ -85,8 +85,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
 
             type handles;
 
-            // DEBT: Explicit reset here rather than auto-zero on construction feels a little off
-            handles.reset();
+            REQUIRE(handles[0].is_null());
 
             handle_type h0 = handles.alloc(
                 [](int i, const page&) { return true; },
@@ -115,7 +114,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
 
             type handles(backing);
 
-            handles.reset();
+            REQUIRE(handles[0].is_null());
         }
         SECTION("block")
         {
