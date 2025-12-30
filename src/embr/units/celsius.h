@@ -7,7 +7,7 @@ namespace embr { namespace units {
 namespace internal { struct celsius_tag {}; }
 
 template <class Rep, class Period = estd::ratio<1>, typename F = internal::passthrough<Rep> >
-using celsius = detail::unit<Rep, Period, internal::celsius_tag, F>;
+using celsius = estd::units::v1::unit<Rep, Period, internal::celsius_tag, F>;
 
 template <class Rep, class Period = estd::ratio<1>, typename F = internal::passthrough<Rep> >
 using centigrade = celsius<Rep, Period, F>;

@@ -26,6 +26,7 @@ TEST_CASE("units")
     estd::layer1::ostringstream<256> out;
     auto out2 = estd::internal::make_ostream_like(out);
     const auto& s = out.rdbuf()->str();
+    out.precision(2);
 
     SECTION("amps")
     {
@@ -35,7 +36,7 @@ TEST_CASE("units")
             // to account for rounding error here
             units::amps<double> v(5.100000001);
 
-            out << estd::put_unit(v, false);
+            out << put_unit(v, false);
 
             REQUIRE(s == "5.10 amps");
         }
@@ -61,7 +62,8 @@ TEST_CASE("units")
         REQUIRE(c1.count() == -40);
         REQUIRE(c2.count() == -40);
 
-        out << put_unit(c1);
+        // DEBT: Why does ADL fail for this one guy
+        out << estd::units::put_unit(c1);
 
         REQUIRE(out.rdbuf()->str() == "-40 deg C");
     }
@@ -111,7 +113,7 @@ TEST_CASE("units")
         {
             units::volts<double> v(5);
 
-            out << estd::put_unit(v);
+            out << put_unit(v);
 
             REQUIRE(s == "5.00V");
 
@@ -128,7 +130,7 @@ TEST_CASE("units")
             REQUIRE(dv.count() == 36);
             REQUIRE(v.count() == 3);
 
-            write(out2, dv);
+            out << put_unit(dv, false);
 
             REQUIRE(out.rdbuf()->str() == "36 decivolts");
 
@@ -145,7 +147,7 @@ TEST_CASE("units")
     {
         watts<uint16_t> w{1000};
 
-        write(out2, w);
+        out << put_unit(w, false);
 
         REQUIRE(s == "1000 watts");
     }

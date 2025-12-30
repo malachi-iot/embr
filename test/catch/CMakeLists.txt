@@ -70,6 +70,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC ${estd_SOURCE_DIR}/estd/port/e
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_11)
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE UNIT_TESTING=1)
+target_compile_definitions(${PROJECT_NAME} PRIVATE FEATURE_ESTD_OSTREAM_FLOAT=1)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE embr::embr)
 target_link_libraries(${PROJECT_NAME} PRIVATE malachi-iot::estd)

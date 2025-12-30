@@ -15,7 +15,7 @@ struct volts_tag {};
 /// @tparam Period scaling ratio
 /// @tparam F final conversion.  defaults to passhtrough (noop)
 template <typename Rep, class Period = estd::ratio<1>, typename F = internal::passthrough<Rep> >
-using volts = detail::unit<Rep, Period, internal::volts_tag, F>;
+using volts = estd::units::v1::unit<Rep, Period, internal::volts_tag, F>;
 
 template <class Rep, typename F = internal::passthrough<Rep> >
 using kilovolts = volts<Rep, estd::kilo, F>;

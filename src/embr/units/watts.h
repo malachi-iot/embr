@@ -12,8 +12,8 @@ using watts_tag = estd::internal::units::compound_tag<volts_tag, amps_tag>;
 
 }
 
-template <typename Rep, class Period = estd::ratio<1>, typename F = internal::passthrough<Rep> >
-using watts = detail::unit<Rep, Period, internal::watts_tag, F>;
+template <typename Rep, class Period = estd::ratio<1>, typename F = estd::units::v1::passthrough<Rep> >
+using watts = estd::units::v1::unit<Rep, Period, internal::watts_tag, F>;
 
 template <typename Rep, typename F = internal::passthrough<Rep> >
 using kilowatts = watts<Rep, estd::kilo, F>;
