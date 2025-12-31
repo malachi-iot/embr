@@ -136,18 +136,15 @@ void pool<Traits>::ops<HandleTraits>::reset()
     using unit_type = typename page_type::unit_type;
     handles_.reset();
     handles_[0].pos(unit_type(0));
-    //v1::bundle bn = self_.bundle(handles_[0], 0);
 
     create_free_block(pos_type(0), block::null, block::null);
 
-    //new (bn.block) v1::block(v1::block::Trivial, false);
 }
 
 
 template <class Traits>
 template <class HandleTraits>
-template <block::modes mode>
-auto pool<Traits>::ops<HandleTraits>::alloc(pos_type phys_sz) -> bundle
+auto pool<Traits>::ops<HandleTraits>::alloc(pos_type phys_sz, block::modes mode) -> bundle
 {
     pos_type found_size(0);
     bundle bn = first_free(phys_sz, &found_size);
@@ -162,6 +159,8 @@ auto pool<Traits>::ops<HandleTraits>::alloc(pos_type phys_sz) -> bundle
         {
             pos_type at = bn.page->pos() + phys_sz;
 
+            // DEBT: An assert is a little too harsh here, but helpful enough to keep for the short term
+            // really we need an error code
             assert(split(bn, at) != handles_type::traits::null);
         }
 
@@ -182,7 +181,7 @@ auto pool<Traits>::ops<HandleTraits>::construct(Args&&...args) -> bundle
     // ought to move this plumbing into 'emplace'
     constexpr unsigned block_sz = block::header_size<mode>();
 
-    bundle bn = alloc<mode>(do_alias(sizeof(T) + block_sz));
+    bundle bn = alloc(do_alias(sizeof(T) + block_sz), mode);
 
     if(bn.is_null())    return {};
 

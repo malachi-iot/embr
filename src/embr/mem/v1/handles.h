@@ -38,11 +38,12 @@ protected:
 
     container_type container_;
 
+    // Filter by not-null elements and always include end element for consumer
+    // comparison
     struct filter
     {
         const value_type* end_;
 
-        // TODO: Almost there, just need to compare end_ --
         constexpr bool operator()(const_reference v) const
         {
             if(&v == end_) return true;
@@ -104,6 +105,8 @@ public:
     constexpr const_iterator begin() const { return { pred(), &container_[0] }; }
     iterator end() { return { pred(), &container_[std::size(container_)] }; }
     constexpr const_iterator end() const { return { pred(), &container_[std::size(container_)] }; }
+
+    constexpr unsigned size() const { return std::size(container_); }
 };
 
 }}

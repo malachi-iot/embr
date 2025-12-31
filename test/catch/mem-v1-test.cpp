@@ -1,5 +1,7 @@
 #include <catch2/catch_all.hpp>
 
+#include <random>
+
 #include <embr/mem/v1/pool.hpp>
 #include <embr/mem/v1/shared-handle.h>
 #include <embr/mem/v1/unique-handle.h>
@@ -28,6 +30,54 @@ struct SideEffector
 };
 
 using namespace embr::mem;
+
+
+template <class Traits, class HandlesTraits>
+static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& ops, int it, unsigned seed)
+{
+    using namespace detail;
+    std::mt19937 gen{seed}; // fixed seed: deterministic sequence
+
+    using pos_type = typename Traits::pos_type;
+    using bundle = detail::bundle;
+    using handle_type = typename HandlesTraits::size_type;
+    constexpr handle_type null = HandlesTraits::null;
+    fragmentation frag;
+
+    std::uniform_int_distribution distrib(1, 10);
+
+    int allocs_to_do = gen() % ops.handles_.size();
+    int frees_to_do = std::uniform_int_distribution(0, allocs_to_do)(gen);
+
+    CAPTURE(it, seed);
+
+    for(int i = 0; i < allocs_to_do; ++i)
+    {
+        pos_type phys_sz(distrib(gen));
+
+        CAPTURE(i, phys_sz.count());
+
+        bundle bn = ops.alloc(phys_sz, block::Trivial);
+
+        //REQUIRE((int)bn.handle != null);
+        // I don't want assertions number to balloon at the moment
+        assert(bn.handle != null);
+
+        /*
+        ops.dealloc(bn);
+
+        ops.assess(&frag);
+
+        if(frag.candidates[0].score > 0)
+        {
+            ops.defrag(frag.candidates[0]);
+        }   */
+    }
+
+    for(int i = 0; i < frees_to_do; ++i)
+    {
+    }
+}
 
 TEST_CASE("gc mem v1 tests", "[memory][gc]")
 {
@@ -134,7 +184,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                 char storage2[64];
             };
 
-            b1.mode(block::RttoProxy);
+            b1.reset(block::RttoProxy, false);
             b1.emplace_rtto_proxied<SideEffector>(&counter);
 
             REQUIRE(counter == 1);
@@ -182,7 +232,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                 SECTION("alloc")
                 {
                     constexpr unsigned block_sz = block::header_size<block::Trivial>();
-                    bundle bn = op.alloc<block::Trivial>(phys_sz);
+                    bundle bn = op.alloc(phys_sz, block::Trivial);
 
                     REQUIRE(bn.invariant());
                     REQUIRE(bn.is_null() == false);
@@ -203,7 +253,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                     REQUIRE(op.available() == pool_size - phys_alloced_sz);
                     REQUIRE(op.alloced() == logical_alloced_sz);
 
-                    bn = op.alloc<block::Trivial>(phys_sz);
+                    bn = op.alloc(phys_sz, block::Trivial);
                     REQUIRE(bn.handle == 1);
                     REQUIRE(bn.block->prev() == 0);
                     REQUIRE(bn.has_next());
@@ -230,8 +280,8 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                     // No allocations ever = no fragmentation
                     REQUIRE(frag0.bundle.is_null() == true);
 
-                    bundle bn = op.alloc<block::Trivial>(phys_sz);
-                    bn = op.alloc<block::Trivial>(phys_sz);
+                    bundle bn = op.alloc(phys_sz, block::Trivial);
+                    bn = op.alloc(phys_sz, block::Trivial);
                     op.dealloc(0);
 
                     memcpy(data = op.lock(bn), "Hello", 6);
@@ -452,5 +502,23 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
     SECTION("layer2")
     {
 
+    }
+    SECTION("batteries")
+    {
+        constexpr unsigned pool_sz = 512;
+        using pool_type = v1::layer1::pool<pool_sz, 8>;
+        using traits = pool_type::pool_traits;
+
+        std::mt19937 rng{12345}; // fixed seed: deterministic sequence
+
+        for(int i = 0; i < 100; ++i)
+        {
+            pool_type pool;
+            auto ops = pool.ops();
+
+            // DEBT: Still having to do this
+            ops.reset();
+            battery<traits>(ops, i, rng());
+        }
     }
 }

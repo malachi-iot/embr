@@ -65,6 +65,8 @@ private:
 
     void next(handle_type v) const  { block->next_ = v; }
     void allocated(bool v) const    { block->allocated_ = v; }
+
+    void mode(block::modes v)       { block->mode_ = v; }
 };
 
 using bundle = bundle_base<handles_traits_base, v1::block, page<uint16_t>>;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <estd/cstdint.h>
+#include <estd/expected.h>
 #include <estd/internal/macro/c++/ctor.h>
 #include <estd/utility.h>
 
@@ -21,6 +22,11 @@ struct fragmentation
         int score;
         const_bundle bundle;
         const_bundle move_to;
+
+        constexpr bool invariant() const
+        {
+            return move_to.allocated() == false && bundle.allocated();
+        }
     };
 
     candidate candidates[2];
@@ -159,8 +165,7 @@ public:
 
         unsigned logical_size(const bundle&) const;
 
-        template <block::modes mode>
-        bundle alloc(pos_type phys_sz);
+        bundle alloc(pos_type phys_sz, block::modes mode);
 
         template <block::modes mode, class T, class ...Args>
         bundle construct(Args&&...);
@@ -196,7 +201,7 @@ public:
     typename Traits2::size_type alloc(handles<Traits2>& h, unsigned logical_sz)
     {
         constexpr unsigned block_sz = v1::block::header_size<mode>();
-        return ops<Traits2>{*this, h}.template alloc<mode>(do_alias(logical_sz + block_sz)).handle;
+        return ops<Traits2>{*this, h}.alloc(do_alias(logical_sz + block_sz), mode).handle;
     }
 
     template <class T, class Traits2, class ...Args>
