@@ -339,6 +339,13 @@ auto pool<Traits>::ops<HandleTraits>::alloced() const -> unsigned
 
 template <class Traits>
 template <class HandleTraits>
+void pool<Traits>::ops<HandleTraits>::defrag(const fragmentation::candidate& c)
+{
+    move(c.bundle, c.move_to, 0);
+}
+
+template <class Traits>
+template <class HandleTraits>
 void pool<Traits>::ops<HandleTraits>::assess(fragmentation* frag) const
 {
     const v1::block* b = self_.block(pos_type(0));
@@ -353,10 +360,11 @@ void pool<Traits>::ops<HandleTraits>::assess(fragmentation* frag) const
     frag->candidates[0] = {};
     frag->candidates[1] = {};
 
+    static constexpr uint16_t booster = 4;
+
     auto score = [&](const_bundle prev, const_bundle cur, const_bundle next)
     {
         pos_type v(0);
-        constexpr uint16_t booster = 4;
 
         // favor a triple with a small middle, since that's easier to move
         // DEBT: See https://github.com/malachi-iot/estdlib/issues/155 - specifically
@@ -370,14 +378,38 @@ void pool<Traits>::ops<HandleTraits>::assess(fragmentation* frag) const
         return v.count();
     };
 
+    pos_type bn_cur_sz = phys_size(cur);
+
     while(cur.handle != block::null)
     {
         if(cur.is_null() == false && bn_prev.is_null() == false)
         {
+            pos_type bn_prev_sz = bn_cur_sz;
+            pos_type bn_next_sz = phys_size(bn_next);
+            bn_cur_sz = phys_size(cur);
+
             // F A F
             if(!bn_prev.allocated() && cur.allocated() && !bn_next.allocated())
             {
-                int sc = score(bn_prev, cur, bn_next);
+                //int sc = score(bn_prev, cur, bn_next);
+                pos_type v(0);
+
+                // favor trivial
+                // favor a triple with a small middle, since that's easier to move
+
+                if(cur.is_trivial())
+                {
+                    v += bn_prev_sz * booster;
+                    v += bn_cur_sz;
+                    v += bn_next_sz * booster;
+                }
+                else
+                {
+                    if(bn_cur_sz <= bn_prev_sz) v += bn_prev_sz;
+                    if(bn_cur_sz <= bn_next_sz) v += bn_next_sz;
+                }
+
+                int sc = v.count();
 
                 if(sc > last_sc)
                 {
@@ -389,12 +421,60 @@ void pool<Traits>::ops<HandleTraits>::assess(fragmentation* frag) const
             // A F A
             else if(bn_prev.allocated() && !cur.allocated() && bn_next.allocated())
             {
-                int sc = score(bn_prev, cur, bn_next);
+                // favor trivial
+                // favor one of A <= F, smaller is better, and demand it if non-trivial
+                // favor above F A F pattern over this one
+
+                pos_type v(0);
+                const_bundle* which = &bn_prev;     // Presume bn_prev is the more interesting candidate
+
+                // DEBT: Assess bn_next too inside this branch
+                if(bn_prev.is_trivial())
+                {
+                    v += bn_prev_sz;
+                    v += bn_cur_sz * booster;
+                    //v += bn_next_sz;
+
+                    // DEBT: For trivial, it matters a little less which allocated block we move.  Still though,
+                    // we'd like to choose the smaller of the two and not only presume bn_prev as above
+                }
+                else
+                {
+                    using signed_type = estd::units::v1::detail::unit<page_unit_traits<int, typename pos_type::period>>;
+                    static constexpr signed_type zero(0);
+                    signed_type prev_delta = bn_cur_sz - bn_prev_sz;
+                    signed_type next_delta = bn_cur_sz - bn_next_sz;
+
+
+                    if(prev_delta >= zero)
+                    {
+                        // DEBT: I'm actually surprised estd::units permits this addition of an int to a uint16_t
+                        v = prev_delta;
+                    }
+
+                    if(bn_next.is_trivial())
+                    {
+                        // DEBT: We do favor trivial, but shouldn't hard-select it
+                        which = &bn_next;
+                        //v += bn_prev_sz;
+                        v += bn_cur_sz * booster;
+                        v += bn_next_sz;
+                    }
+                    else if(next_delta >= zero)
+                    {
+                        // If 'prev' isn't viable OR next is smaller than prev, select 'next'
+                        if(prev_delta < zero || next_delta < prev_delta) which = &bn_next;
+
+                        v = next_delta;
+                    }
+                }
+
+                int sc = v.count();
 
                 if(sc > last_sc)
                 {
                     estd::swap(frag->candidates[0], frag->candidates[1]);
-                    frag->candidates[0] = cur;
+                    frag->candidates[0] = *which;
                     last_sc = sc;
                 }
             }

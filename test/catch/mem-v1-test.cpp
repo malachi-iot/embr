@@ -217,10 +217,12 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                 SECTION("assess")
                 {
                     detail::fragmentation frag{};
+                    auto& frag0 = frag.candidates[0];
+                    auto& frag1 = frag.candidates[1];
 
                     op.assess(&frag);
 
-                    REQUIRE(frag.candidates[0].is_null() == true);
+                    REQUIRE(frag0.is_null() == true);
 
                     bundle bn = op.alloc<block::Trivial>(phys_sz);
                     bn = op.alloc<block::Trivial>(phys_sz);
@@ -228,7 +230,8 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
 
                     op.assess(&frag);
 
-                    REQUIRE(frag.candidates[0].is_null() == false);
+                    REQUIRE(frag0.is_null() == false);
+                    REQUIRE(frag0.handle == 1);
                 }
             }
             SECTION("alloc")

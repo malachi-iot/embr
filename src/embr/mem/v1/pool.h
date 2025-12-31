@@ -16,6 +16,13 @@ namespace detail { inline namespace v1 {
 
 struct fragmentation
 {
+    struct candidate
+    {
+        int score;
+        const_bundle bundle;
+        const_bundle move_to;
+    };
+
     const_bundle candidates[2];
 };
 
@@ -173,6 +180,7 @@ public:
         unsigned available() const;
 
         void assess(fragmentation*) const;
+        void defrag(const fragmentation::candidate&);
     };
 
 public:

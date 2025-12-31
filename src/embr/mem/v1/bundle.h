@@ -31,6 +31,8 @@ struct bundle_base
     // DEBT: Consider renaming to not collide with handle null
     constexpr bool is_null() const { return block == nullptr; }
 
+    constexpr bool is_trivial() const { return block->mode() == v1::block::Trivial; }
+
     constexpr bool invariant() const
     {
         if(is_null())
