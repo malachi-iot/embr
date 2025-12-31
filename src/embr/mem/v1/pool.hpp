@@ -221,7 +221,7 @@ void pool<Traits>::ops<HandleTraits>::move(bundle from, bundle to, unsigned logi
     }
 
     to.block->move_from(from.block, logical_sz);
-    to.block->allocated(true);
+    to.allocated(true);
     from.block->reset(block::Trivial, false);
 
     // Treat move as the dealloc it is, and do a merge evaluation
@@ -254,7 +254,7 @@ void pool<Traits>::ops<HandleTraits>::dealloc(bundle bn)
     // DEBT: Consolidate with other free operations
     bn.block->destroy();
 
-    bn.block->allocated(false);
+    bn.allocated(false);
 
     if(bn.has_prev())   merge(prev(bn), bn);
     if(bn.has_next())   merge(bn, next(bn));

@@ -168,6 +168,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                 using ops_type = pool_type::ops<handles_traits>;
                 ops_type op{pool, handles};
                 constexpr pos_type phys_sz(8);
+                constexpr unsigned phys_sz_bytes = ops_type::aliasing * phys_sz.count();
 
                 SECTION("first_free")
                 {
@@ -176,7 +177,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
 
                     REQUIRE(bn.invariant());
                     REQUIRE(bn.is_null() == false);
-                    REQUIRE(bn.block->allocated() == false);
+                    REQUIRE(bn.allocated() == false);
                 }
                 SECTION("alloc")
                 {
@@ -196,7 +197,6 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                     REQUIRE(bn.block->prev() == 0);
                     REQUIRE(bn.has_next() == false);
 
-                    constexpr unsigned phys_sz_bytes = ops_type::aliasing * phys_sz.count();
                     constexpr unsigned logical_alloced_sz = phys_sz_bytes - block_sz;
                     constexpr unsigned phys_alloced_sz = block_sz + phys_sz_bytes;
 
@@ -208,6 +208,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                     REQUIRE(bn.block->prev() == 0);
                     REQUIRE(bn.has_next());
 
+                    // Trailing big free block
                     bn = op.next(bn);
                     REQUIRE(bn.allocated() == false);
                     REQUIRE(bn.handle == 2);
@@ -216,6 +217,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                 }
                 SECTION("assess")
                 {
+                    constexpr unsigned block_sz = block::header_size<block::Trivial>();
                     detail::fragmentation frag{};
                     auto& frag0 = frag.candidates[0];
                     auto& frag1 = frag.candidates[1];
@@ -252,11 +254,14 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                     // handle 1 now ought to be freed up, since above frag assessment indicated to move
                     // allocated 1 elsewhere
                     REQUIRE(bn.is_null() == false);
-                    //REQUIRE(bn.page->is_null());
+                    REQUIRE(bn.allocated() == false);
+                    // handle 1 merged with old handle 2, now claiming the throne as the big free block
+                    REQUIRE(bn.has_next() == false);
+                    REQUIRE(op.logical_size(bn) == pool_size - phys_sz_bytes - block_sz);
 
                     bn = op.get_bundle(0);
 
-                    // handle 0 was determined the move_to destination, which means he should not
+                    // handle 0 was determined the move_to destination, which means he should
                     // have the old handle 1 data
                     REQUIRE(bn.is_null() == false);
                     REQUIRE(data != op.lock(bn));

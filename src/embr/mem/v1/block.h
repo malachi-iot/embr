@@ -98,7 +98,6 @@ public:
     }
 
     // DEBT: Protect this and make friend classes, or pull WriteableBlock child stunt
-    void allocated(bool v)      { allocated_ = v; }
     void mode(modes v)          { mode_ = v; }
     void reset(modes mode, bool allocated)
     {

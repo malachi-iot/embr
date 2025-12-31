@@ -18,6 +18,9 @@ struct bundle_base
     using page_type = Page;
     using pos_type = typename page_type::unit_type;
 
+    template <class PoolTraits>
+    friend class pool;
+
     static constexpr handle_type null = handles_traits::null;
 
     Block* block;
@@ -51,7 +54,9 @@ struct bundle_base
     constexpr bool has_prev() const { return block->prev() != null; }
     constexpr bool has_next() const { return block->next() != null; }
 
+private:
     // Bundle also serves as an accessor gateway, so that block can keep its data private otherwise
+    // In turn, only 'pool' friend can access these
 
     void lock_up()              { ++block->lock_count_; }
     unsigned lock_down()        { return --block->lock_count_; }
@@ -59,6 +64,7 @@ struct bundle_base
     unsigned ref_down() const   { return --block->ref_count_; }
 
     void next(handle_type v) const  { block->next_ = v; }
+    void allocated(bool v) const    { block->allocated_ = v; }
 };
 
 using bundle = bundle_base<handles_traits_base, v1::block, page<uint16_t>>;
