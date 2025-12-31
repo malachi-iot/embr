@@ -221,6 +221,7 @@ void pool<Traits>::ops<HandleTraits>::move(bundle from, bundle to, unsigned logi
     }
 
     to.block->move_from(from.block, logical_sz);
+    to.block->allocated(true);
     from.block->reset(block::Trivial, false);
 
     // Treat move as the dealloc it is, and do a merge evaluation
@@ -262,10 +263,8 @@ void pool<Traits>::ops<HandleTraits>::dealloc(bundle bn)
 
 template <class Traits>
 template <class HandleTraits>
-void* pool<Traits>::ops<HandleTraits>::lock(handle_type h)
+void* pool<Traits>::ops<HandleTraits>::lock(bundle bn)
 {
-    bundle bn(get_bundle(h));
-
     bn.lock_up();
 
     return bn.data();
@@ -341,7 +340,8 @@ template <class Traits>
 template <class HandleTraits>
 void pool<Traits>::ops<HandleTraits>::defrag(const fragmentation::candidate& c)
 {
-    move(c.bundle, c.move_to, 0);
+    // DEBT: A bit sloppy converting bundles like this, but gets the job done
+    move(get_bundle(c.bundle.handle), get_bundle(c.move_to.handle), 0);
 }
 
 template <class Traits>
@@ -357,7 +357,8 @@ void pool<Traits>::ops<HandleTraits>::assess(fragmentation* frag) const
     prev(bn_next.block, &cur);
     int last_sc = 0;
 
-    frag->candidates[0] = {};
+    fragmentation::candidate& top = frag->candidates[0];
+    top = {};
     frag->candidates[1] = {};
 
     static constexpr uint16_t booster = 4;
@@ -414,7 +415,7 @@ void pool<Traits>::ops<HandleTraits>::assess(fragmentation* frag) const
                 if(sc > last_sc)
                 {
                     estd::swap(frag->candidates[0], frag->candidates[1]);
-                    frag->candidates[0] = cur;
+                    top = { sc, cur, bn_prev };
                     last_sc = sc;
                 }
             }
@@ -474,7 +475,7 @@ void pool<Traits>::ops<HandleTraits>::assess(fragmentation* frag) const
                 if(sc > last_sc)
                 {
                     estd::swap(frag->candidates[0], frag->candidates[1]);
-                    frag->candidates[0] = *which;
+                    top = { sc, *which, cur };
                     last_sc = sc;
                 }
             }

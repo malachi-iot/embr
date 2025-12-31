@@ -23,7 +23,7 @@ struct fragmentation
         const_bundle move_to;
     };
 
-    const_bundle candidates[2];
+    candidate candidates[2];
 };
 
 template <class Container>
@@ -170,7 +170,8 @@ public:
 
         void reset();
 
-        void* lock(handle_type h);
+        void* lock(bundle);
+        void* lock(handle_type h)   { return lock(get_bundle(h)); }
         void unlock(handle_type h);
 
         void ref_up(handle_type h);

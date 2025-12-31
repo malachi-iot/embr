@@ -219,19 +219,52 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                     detail::fragmentation frag{};
                     auto& frag0 = frag.candidates[0];
                     auto& frag1 = frag.candidates[1];
+                    void* data;
 
                     op.assess(&frag);
 
-                    REQUIRE(frag0.is_null() == true);
+                    // No allocations ever = no fragmentation
+                    REQUIRE(frag0.bundle.is_null() == true);
 
                     bundle bn = op.alloc<block::Trivial>(phys_sz);
                     bn = op.alloc<block::Trivial>(phys_sz);
                     op.dealloc(0);
 
+                    memcpy(data = op.lock(bn), "Hello", 6);
+                    op.unlock(bn.handle);
+
+                    // Now we have a F A F pattern
+
                     op.assess(&frag);
 
-                    REQUIRE(frag0.is_null() == false);
-                    REQUIRE(frag0.handle == 1);
+                    REQUIRE(frag0.bundle.allocated());
+                    REQUIRE(frag0.bundle.is_null() == false);
+                    REQUIRE(frag0.bundle.handle == 1);
+                    // DEBT: We strongly favor prev position at this time, which is not ideal or necessary.
+                    REQUIRE(frag0.move_to.handle == 0);
+
+                    // Since we correctly identified handle 1 is allocated and fragmented, as identified
+                    // by frag0, defrag (move it)
+                    op.defrag(frag0);
+
+                    bn = op.get_bundle(1);
+
+                    // handle 1 now ought to be freed up, since above frag assessment indicated to move
+                    // allocated 1 elsewhere
+                    REQUIRE(bn.is_null() == false);
+                    //REQUIRE(bn.page->is_null());
+
+                    bn = op.get_bundle(0);
+
+                    // handle 0 was determined the move_to destination, which means he should not
+                    // have the old handle 1 data
+                    REQUIRE(bn.is_null() == false);
+                    REQUIRE(data != op.lock(bn));
+                    REQUIRE(std::string_view((char*)op.lock(bn)) == "Hello");
+                    REQUIRE(bn.allocated());
+
+                    op.unlock(bn.handle);
+                    op.unlock(bn.handle);
                 }
             }
             SECTION("alloc")
