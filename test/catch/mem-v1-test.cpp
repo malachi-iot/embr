@@ -207,6 +207,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                     REQUIRE(bn.handle == 1);
                     REQUIRE(bn.block->prev() == 0);
                     REQUIRE(bn.has_next());
+                    REQUIRE(bn.invariant());
 
                     // Trailing big free block
                     bn = op.next(bn);
@@ -214,6 +215,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                     REQUIRE(bn.handle == 2);
                     REQUIRE(bn.block->prev() == 1);
                     REQUIRE(bn.has_next() == false);
+                    REQUIRE(bn.invariant());
                 }
                 SECTION("assess")
                 {
@@ -258,6 +260,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                     // handle 1 merged with old handle 2, now claiming the throne as the big free block
                     REQUIRE(bn.has_next() == false);
                     REQUIRE(op.logical_size(bn) == pool_size - phys_sz_bytes - block_sz);
+                    REQUIRE(bn.invariant());
 
                     bn = op.get_bundle(0);
 
@@ -267,6 +270,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                     REQUIRE(data != op.lock(bn));
                     REQUIRE(std::string_view((char*)op.lock(bn)) == "Hello");
                     REQUIRE(bn.allocated());
+                    REQUIRE(bn.invariant());
 
                     op.unlock(bn.handle);
                     op.unlock(bn.handle);
