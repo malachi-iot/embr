@@ -46,6 +46,16 @@ auto pool<Traits>::ops<HandleTraits>::first_free(pos_type phys_sz, pos_type* fou
 
 template <class Traits>
 template <class HandleTraits>
+template <class Traits2, class Block, class Page>
+void pool<Traits>::ops<HandleTraits>::prev(const v1::block* b, bundle_base<Traits2, Block, Page>* out) const
+{
+    page_type& page = handles_[b->prev()];
+    new (out) bundle_base<traits, Block, Page>{ self_.block(page.pos()), &page, b->prev() };
+}
+
+
+template <class Traits>
+template <class HandleTraits>
 auto pool<Traits>::ops<HandleTraits>::prev(const v1::block* b) const -> bundle
 {
     page_type& page = handles_[b->prev()];
@@ -58,7 +68,7 @@ template <class Traits2, class Block, class Page>
 void pool<Traits>::ops<HandleTraits>::next(const v1::block* b, bundle_base<Traits2, Block, Page>* out) const
 {
     page_type& page = handles_[b->next()];
-    new bundle_base<traits, Block, Page>{ self_.block(page.pos()), &page, b->next() };
+    new (out) bundle_base<traits, Block, Page>{ self_.block(page.pos()), &page, b->next() };
 }
 
 
@@ -150,7 +160,9 @@ auto pool<Traits>::ops<HandleTraits>::alloc(pos_type phys_sz) -> bundle
 
         if(found_size - phys_sz >= split_threshold)
         {
-            assert(split(bn, phys_sz) != handles_type::traits::null);
+            pos_type at = bn.page->pos() + phys_sz;
+
+            assert(split(bn, at) != handles_type::traits::null);
         }
 
         bn.block->reset(mode, true);
@@ -330,8 +342,12 @@ template <class HandleTraits>
 void pool<Traits>::ops<HandleTraits>::assess(fragmentation* frag) const
 {
     const v1::block* b = self_.block(pos_type(0));
-    const_bundle cur{b, &handles_[0]}, prev{}, prev_prev{};
-    int h = -1;
+
+    if(b->next() == v1::block::null)    return;
+
+    const_bundle bn_prev{}, bn_next, cur;
+    next(b, &bn_next);
+    prev(bn_next.block, &cur);
     int last_sc = 0;
 
     frag->candidates[0] = {};
@@ -356,44 +372,37 @@ void pool<Traits>::ops<HandleTraits>::assess(fragmentation* frag) const
 
     while(cur.handle != block::null)
     {
-        const_bundle bn_next;
-
-        next(cur.block, &bn_next);
-
-        if(h == -1)
-        {
-            cur.handle = bn_next.block->prev();
-        }
-
-        if(prev.is_null() == false && prev_prev.is_null() == false)
+        if(cur.is_null() == false && bn_prev.is_null() == false)
         {
             // F A F
-            if(!prev_prev.allocated() && prev.allocated() && !cur.allocated())
+            if(!bn_prev.allocated() && cur.allocated() && !bn_next.allocated())
             {
-                int sc = score(prev_prev, prev, cur);
+                int sc = score(bn_prev, cur, bn_next);
 
                 if(sc > last_sc)
                 {
                     estd::swap(frag->candidates[0], frag->candidates[1]);
-                    frag->candidates[0] = prev;
+                    frag->candidates[0] = cur;
+                    last_sc = sc;
                 }
             }
             // A F A
-            else if(prev_prev.allocated() && !prev.allocated() && cur.allocated())
+            else if(bn_prev.allocated() && !cur.allocated() && bn_next.allocated())
             {
-                int sc = score(prev_prev, prev, cur);
+                int sc = score(bn_prev, cur, bn_next);
 
                 if(sc > last_sc)
                 {
                     estd::swap(frag->candidates[0], frag->candidates[1]);
-                    frag->candidates[0] = prev;
+                    frag->candidates[0] = cur;
+                    last_sc = sc;
                 }
             }
         }
 
-        prev_prev = prev;
-        prev = cur;
+        bn_prev = cur;
         cur = bn_next;
+        next(cur.block, &bn_next);
     }
 }
 

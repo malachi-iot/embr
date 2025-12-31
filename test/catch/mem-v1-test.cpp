@@ -186,6 +186,15 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                     REQUIRE(bn.invariant());
                     REQUIRE(bn.is_null() == false);
                     REQUIRE(bn.block->allocated());
+                    REQUIRE(bn.handle == 0);
+                    REQUIRE(bn.block->next() == 1);
+                    REQUIRE(bn.has_prev() == false);
+
+                    bn = op.next(bn);
+                    REQUIRE(bn.allocated() == false);
+                    REQUIRE(bn.handle == 1);
+                    REQUIRE(bn.block->prev() == 0);
+                    REQUIRE(bn.has_next() == false);
 
                     constexpr unsigned phys_sz_bytes = ops_type::aliasing * phys_sz.count();
                     constexpr unsigned logical_alloced_sz = phys_sz_bytes - block_sz;
@@ -193,14 +202,33 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
 
                     REQUIRE(op.available() == pool_size - phys_alloced_sz);
                     REQUIRE(op.alloced() == logical_alloced_sz);
+
+                    bn = op.alloc<block::Trivial>(phys_sz);
+                    REQUIRE(bn.handle == 1);
+                    REQUIRE(bn.block->prev() == 0);
+                    REQUIRE(bn.has_next());
+
+                    bn = op.next(bn);
+                    REQUIRE(bn.allocated() == false);
+                    REQUIRE(bn.handle == 2);
+                    REQUIRE(bn.block->prev() == 1);
+                    REQUIRE(bn.has_next() == false);
                 }
                 SECTION("assess")
                 {
-                    detail::fragmentation frag;
+                    detail::fragmentation frag{};
 
                     op.assess(&frag);
 
-                    //REQUIRE(frag.candidates[0].is_null() == false);
+                    REQUIRE(frag.candidates[0].is_null() == true);
+
+                    bundle bn = op.alloc<block::Trivial>(phys_sz);
+                    bn = op.alloc<block::Trivial>(phys_sz);
+                    op.dealloc(0);
+
+                    op.assess(&frag);
+
+                    REQUIRE(frag.candidates[0].is_null() == false);
                 }
             }
             SECTION("alloc")

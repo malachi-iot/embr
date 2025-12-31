@@ -45,7 +45,8 @@ protected:
 
     v1::block* block(pos_type at)
     {
-        return reinterpret_cast<v1::block*>(std::data(pool_) + page_unit_type(at).count());
+        const unsigned offset = page_unit_type(at).count();
+        return reinterpret_cast<v1::block*>(std::data(pool_) + offset);
     }
 
     const v1::block* block(pos_type at) const
@@ -128,6 +129,9 @@ public:
         void move(bundle from, bundle to, unsigned logical_sz);
 
         bundle first_free(pos_type phys_sz, pos_type* found_size) const;
+
+        template <class Traits2, class Block, class Page>
+        void prev(const block*, bundle_base<Traits2, Block, Page>* out) const;
 
         bundle prev(const block*) const;
         bundle prev(const bundle& bn) const { return prev(bn.block); }
