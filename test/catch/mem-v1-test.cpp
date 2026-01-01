@@ -41,12 +41,14 @@ static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& 
     using pos_type = typename Traits::pos_type;
     using bundle = detail::bundle;
     using handle_type = typename HandlesTraits::size_type;
+    using page_type = typename Traits::page_type;
     constexpr handle_type null = HandlesTraits::null;
     fragmentation frag;
 
     std::uniform_int_distribution distrib(1, 10);
 
-    int allocs_to_do = gen() % ops.handles_.size();
+    //int allocs_to_do = gen() % ops.handles_.size();
+    int allocs_to_do = ops.handles_.size() - 1;     // 1 handle already used for big-free-block
     int frees_to_do = std::uniform_int_distribution(0, allocs_to_do)(gen);
 
     CAPTURE(it, seed);
@@ -76,6 +78,16 @@ static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& 
 
     for(int i = 0; i < frees_to_do; ++i)
     {
+        CAPTURE(i);
+
+        bundle bn = ops.get_bundle(gen() % ops.handles_.size());
+
+        // FIX: Having a lot of issues here.  Granted, bn isn't to be used on null
+        // handles and null pages, but it should work.  And also, dealloc itself dies
+        if(bn.page->is_null() == false && bn.is_null() == false && bn.allocated())
+        {
+            //ops.dealloc(bn);
+        }
     }
 }
 
