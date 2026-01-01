@@ -91,8 +91,8 @@ static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& 
         // handles and null pages, but it should work.  And also, dealloc itself dies
         if(bn.page->is_null() == false && bn.is_null() == false && bn.allocated())
         {
+            //ops.dealloc(bn);
             /*
-            ops.dealloc(bn);
             bn = ops.get_bundle(h);
             assert(bn.invariant()); */
         }
@@ -529,8 +529,8 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
         using pool_type = v1::layer1::pool<pool_sz, 8>;
         using traits = pool_type::pool_traits;
 
-        std::mt19937 rng{12345}; // fixed seed: deterministic sequence
-        //std::mt19937 rng{0}; // fixed seed: deterministic sequence
+        //std::mt19937 rng{12345}; // fixed seed: deterministic sequence
+        std::mt19937 rng{2}; // fixed seed: deterministic sequence
         //std::mt19937 rng{4}; // fixed seed: deterministic sequence
 
         for(int i = 0; i < 100; ++i)

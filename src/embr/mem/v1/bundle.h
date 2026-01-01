@@ -63,6 +63,7 @@ private:
     void ref_up() const         { ++block->ref_count_; }
     unsigned ref_down() const   { return --block->ref_count_; }
 
+    void prev(handle_type v) const  { block->prev_ = v; }
     void next(handle_type v) const  { block->next_ = v; }
     void allocated(bool v) const    { block->allocated_ = v; }
 

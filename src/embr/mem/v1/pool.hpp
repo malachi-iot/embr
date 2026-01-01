@@ -201,7 +201,12 @@ bool pool<Traits>::ops<HandleTraits>::merge(bundle current, bundle next)
 {
     if(next.allocated()) return false;
 
-    // Remove this handle from the pool completely
+    if(next.has_next())
+    {
+        this->next(next).prev(current.handle);
+    }
+
+    // Remove the 'next' handle from the pool completely
     handles_.dealloc(next.handle);
 
     current.next(next.block->next());
@@ -264,8 +269,10 @@ void pool<Traits>::ops<HandleTraits>::dealloc(bundle bn)
 
     bn.allocated(false);
 
-    if(bn.has_prev())   merge_free(prev(bn), bn);
-    if(bn.has_next())   merge_free(bn, next(bn));
+    if(bn.has_prev())
+        merge_free(prev(bn), bn);
+    if(bn.has_next())
+        merge_free(bn, next(bn));
 }
 
 
