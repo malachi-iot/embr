@@ -66,6 +66,8 @@ static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& 
         // I don't want assertions number to balloon at the moment
         assert(bn.handle != null);
 
+        assert(ops.invariant());
+
         /*
         ops.dealloc(bn);
 
@@ -96,6 +98,8 @@ static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& 
             bn = ops.get_bundle(h);
             assert(bn.invariant()); */
         }
+
+        assert(ops.invariant());
     }
 }
 
@@ -303,6 +307,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                     bundle bn = op.alloc(phys_sz, block::Trivial);
                     bn = op.alloc(phys_sz, block::Trivial);
                     op.dealloc(0);
+                    REQUIRE(op.invariant());
 
                     memcpy(data = op.lock(bn), "Hello", 6);
                     op.unlock(bn.handle);
@@ -320,6 +325,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                     // Since we correctly identified handle 1 is allocated and fragmented, as identified
                     // by frag0, defrag (move it)
                     op.defrag(frag0);
+                    REQUIRE(op.invariant());
 
                     bn = op.get_bundle(1);
 
@@ -341,6 +347,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                     REQUIRE(std::string_view((char*)op.lock(bn)) == "Hello");
                     REQUIRE(bn.allocated());
                     REQUIRE(bn.invariant());
+                    REQUIRE(op.invariant());
 
                     op.unlock(bn.handle);
                     op.unlock(bn.handle);

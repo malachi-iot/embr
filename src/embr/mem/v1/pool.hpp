@@ -508,8 +508,10 @@ void pool<Traits>::ops<HandleTraits>::assess(fragmentation* frag) const
 
 template <class Traits>
 template <class HandleTraits>
-bool pool<Traits>::ops<HandleTraits>::invariant() const
+invariant_result pool<Traits>::ops<HandleTraits>::invariant() const
 {
+    using result = invariant_result;
+    using violation = invariant_violation;
     //using iterator = typename handles_type::const_iterator;
     const page_type* first{};
     constexpr pos_type zero_pos = pos_type(0);
@@ -534,20 +536,71 @@ bool pool<Traits>::ops<HandleTraits>::invariant() const
     }
 
     // Minimum one handle MUST be allocated at all times (big free block)
-    if(first == nullptr)    return false;
+    if(first == nullptr)
+#if FEATURE_EMBR_MEM_INVARIANT_BOOL
+        return false;
+#else
+        return result(violation{"no handles", ""});
+#endif
 
     // Now, walk forward and check that 'next' is sane
     const_bundle bn = get_bundle(*first);
+    const_bundle bn_last{};
     pos_type size_tally{0};
 
     for(; bn.handle != null; next(bn.block, &bn), bn)
     {
+        // As we walk forward, if physical position moves backward, that's an error
+        if(!bn_last.is_null())
+            if(bn.pos() < bn_last.pos())
+#if FEATURE_EMBR_MEM_INVARIANT_BOOL
+                return false;
+#else
+                return result(violation{"position check failed", "during next check"});
+#endif
+
         size_tally += phys_size(bn);
+
+        bn_last = bn;
     }
 
-    if(size_tally != size)  return false;
+    if(size_tally != size)
+#if FEATURE_EMBR_MEM_INVARIANT_BOOL
+        return false;
+#else
+        return result(violation{"size tally failed", "during next check"});
+#endif
 
+    size_tally = zero_pos;
+
+    // Walk backward and check that 'prev' is sane
+    for(bn = bn_last; bn.handle != null; prev(bn.block, &bn), bn)
+    {
+        // As we walk backward, if physical position moves forward, that's an error
+        if(bn.pos() > bn_last.pos())
+#if FEATURE_EMBR_MEM_INVARIANT_BOOL
+            return false;
+#else
+            return result(violation{"position check failed", "during prev check"});
+#endif
+
+        size_tally += phys_size(bn);
+
+        bn_last = bn;
+    }
+
+    if(size_tally != size)
+#if FEATURE_EMBR_MEM_INVARIANT_BOOL
+        return false;
+#else
+        return result(violation{"size tally failed", "during prev check"});
+#endif
+
+#if FEATURE_EMBR_MEM_INVARIANT_BOOL
     return true;
+#else
+    return {};
+#endif
 }
 
 

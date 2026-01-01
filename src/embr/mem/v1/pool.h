@@ -3,6 +3,7 @@
 #include <estd/cstdint.h>
 #include <estd/expected.h>
 #include <estd/internal/macro/c++/ctor.h>
+#include <estd/string_view.h>
 #include <estd/utility.h>
 
 #include "fwd.h"
@@ -11,6 +12,20 @@
 #include "page.h"
 
 namespace embr { namespace mem {
+
+struct invariant_violation
+{
+    estd::string_view rule;
+    estd::string_view details;
+};
+
+// estd::expected still not playing nice here, so feature flagging result type
+#define FEATURE_EMBR_MEM_INVARIANT_BOOL 1
+#if FEATURE_EMBR_MEM_INVARIANT_BOOL
+using invariant_result = bool;
+#else
+using invariant_result = estd::expected<void, invariant_violation>;
+#endif
 
 namespace detail { inline namespace v1 {
 
@@ -207,7 +222,7 @@ public:
         void assess(fragmentation*) const;
         void defrag(const fragmentation::candidate&);
 
-        bool invariant() const;
+        invariant_result invariant() const;
 
         // Diagnostic dump of pool content
         void dump() const;
