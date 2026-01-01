@@ -199,7 +199,7 @@ template <class Traits>
 template <class HandleTraits>
 bool pool<Traits>::ops<HandleTraits>::merge(bundle current, bundle next)
 {
-    if(next.block->allocated()) return false;
+    if(next.allocated()) return false;
 
     // Remove this handle from the pool completely
     handles_.dealloc(next.handle);
@@ -207,6 +207,15 @@ bool pool<Traits>::ops<HandleTraits>::merge(bundle current, bundle next)
     current.next(next.block->next());
 
     return true;
+}
+
+template <class Traits>
+template <class HandleTraits>
+bool pool<Traits>::ops<HandleTraits>::merge_free(bundle current, bundle next)
+{
+    if(current.allocated()) return false;
+
+    return merge(current, next);
 }
 
 template <class Traits>
@@ -255,8 +264,8 @@ void pool<Traits>::ops<HandleTraits>::dealloc(bundle bn)
 
     bn.allocated(false);
 
-    if(bn.has_prev())   merge(prev(bn), bn);
-    if(bn.has_next())   merge(bn, next(bn));
+    if(bn.has_prev())   merge_free(prev(bn), bn);
+    if(bn.has_next())   merge_free(bn, next(bn));
 }
 
 

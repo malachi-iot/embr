@@ -140,6 +140,14 @@ public:
         /// @details
         bool merge(bundle current, bundle next);
 
+        /// Same as merge but 'current' must be free also
+        /// @brief merge_free
+        /// @param current
+        /// @param next
+        /// @return
+        ///
+        bool merge_free(bundle current, bundle next);
+
         void move(bundle from, bundle to, unsigned logical_sz);
 
         bundle first_free(pos_type phys_sz, pos_type* found_size) const;

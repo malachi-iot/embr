@@ -51,6 +51,7 @@ static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& 
     int allocs_to_do = ops.handles_.size() - 1;     // 1 handle already used for big-free-block
     int frees_to_do = std::uniform_int_distribution(0, allocs_to_do)(gen);
 
+    //INFO("Phase 1");
     CAPTURE(it, seed);
 
     for(int i = 0; i < allocs_to_do; ++i)
@@ -76,13 +77,15 @@ static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& 
         }   */
     }
 
+    INFO("Phase 2");
+
     for(int i = 0; i < frees_to_do; ++i)
     {
-        CAPTURE(i);
+        const handle_type handle = gen() % ops.handles_.size();
 
-        const handle_type h = gen() % ops.handles_.size();
+        CAPTURE(i, handle);
 
-        bundle bn = ops.get_bundle(h);
+        bundle bn = ops.get_bundle(handle);
 
         // FIX: Having a lot of issues here.  Granted, bn isn't to be used on null
         // handles and null pages, but it should work.  And also, dealloc itself dies
@@ -527,6 +530,8 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
         using traits = pool_type::pool_traits;
 
         std::mt19937 rng{12345}; // fixed seed: deterministic sequence
+        //std::mt19937 rng{0}; // fixed seed: deterministic sequence
+        //std::mt19937 rng{4}; // fixed seed: deterministic sequence
 
         for(int i = 0; i < 100; ++i)
         {
