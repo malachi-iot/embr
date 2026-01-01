@@ -510,7 +510,7 @@ template <class Traits>
 template <class HandleTraits>
 invariant_result pool<Traits>::ops<HandleTraits>::invariant() const
 {
-    using result = invariant_result;
+    using result = invariant_result::unexpected_type;
     using violation = invariant_violation;
     //using iterator = typename handles_type::const_iterator;
     const page_type* first{};
@@ -540,7 +540,7 @@ invariant_result pool<Traits>::ops<HandleTraits>::invariant() const
 #if FEATURE_EMBR_MEM_INVARIANT_BOOL
         return false;
 #else
-        return result(violation{"no handles", ""});
+        return result({"no handles", ""});
 #endif
 
     // Now, walk forward and check that 'next' is sane
@@ -556,8 +556,10 @@ invariant_result pool<Traits>::ops<HandleTraits>::invariant() const
 #if FEATURE_EMBR_MEM_INVARIANT_BOOL
                 return false;
 #else
-                return result(violation{"position check failed", "during next check"});
+                return result({"position check failed", "during next check"});
 #endif
+        if(bn.page->is_null())
+            return result({"null page encountered", "during next check"});
 
         size_tally += phys_size(bn);
 
@@ -568,7 +570,7 @@ invariant_result pool<Traits>::ops<HandleTraits>::invariant() const
 #if FEATURE_EMBR_MEM_INVARIANT_BOOL
         return false;
 #else
-        return result(violation{"size tally failed", "during next check"});
+        return result({"size tally failed", "during next check"});
 #endif
 
     size_tally = zero_pos;
@@ -581,7 +583,7 @@ invariant_result pool<Traits>::ops<HandleTraits>::invariant() const
 #if FEATURE_EMBR_MEM_INVARIANT_BOOL
             return false;
 #else
-            return result(violation{"position check failed", "during prev check"});
+            return result({"position check failed", "during prev check"});
 #endif
 
         size_tally += phys_size(bn);
@@ -593,7 +595,7 @@ invariant_result pool<Traits>::ops<HandleTraits>::invariant() const
 #if FEATURE_EMBR_MEM_INVARIANT_BOOL
         return false;
 #else
-        return result(violation{"size tally failed", "during prev check"});
+        return result({"size tally failed", "during prev check"});
 #endif
 
 #if FEATURE_EMBR_MEM_INVARIANT_BOOL
@@ -607,8 +609,47 @@ invariant_result pool<Traits>::ops<HandleTraits>::invariant() const
 #if FEATURE_STD_OSTREAM
 template <class Traits>
 template <class HandleTraits>
-void pool<Traits>::ops<HandleTraits>::dump() const
+void pool<Traits>::ops<HandleTraits>::dump(std::ostream& out) const
 {
+    using bytes_type = estd::units::v1::detail::unit<page_unit_traits<unsigned, estd::ratio<1>>>;
+    constexpr handle_type null = traits::null;
+    constexpr pos_type zero_pos = pos_type(0);
+    const page_type* first{};
+    // Scan for page representing position 0
+    for(const page_type& page : handles_)
+    {
+        if(page.pos() == zero_pos)
+        {
+            first = &page;
+            break;
+        }
+    }
+
+    if(first == nullptr)
+    {
+        out << "Couldn't find first page";
+        return;
+    }
+
+    for(const_bundle bn = get_bundle(*first); bn.handle != null; next(bn.block, &bn), bn)
+    {
+        out << "Bundle: handle=" << (int)bn.handle;
+        if(bn.page->is_null())
+        {
+            out << " null page - abort\n";
+            break;
+        }
+        bytes_type sz = phys_size(bn);
+        out << ", a=" << bn.allocated();
+        out << ", prev=" << (int)bn.block->prev();
+        out << ", next=" << (int)bn.block->next();
+        out << ", sz=" << sz.count() << "b";
+        out << ", pos=" << bytes_type(bn.pos()).count();
+        //out << ", block=" << bn.block;
+        out << '\n';
+    }
+
+    out.flush();
 }
 #endif
 

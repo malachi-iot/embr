@@ -60,6 +60,8 @@ static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& 
 
         CAPTURE(i, phys_sz.count());
 
+        // FIX: We never should alloc phys_sz of 1 since that's effectively a malloc(0).  Waiting
+        // to repair that until we solve below dealloc issues first
         bundle bn = ops.alloc(phys_sz, block::Trivial);
 
         //REQUIRE((int)bn.handle != null);
@@ -83,9 +85,13 @@ static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& 
 
     for(int i = 0; i < frees_to_do; ++i)
     {
+        std::ostringstream capout;
+
         const handle_type handle = gen() % ops.handles_.size();
 
-        CAPTURE(i, handle);
+        ops.dump(capout << "\n");
+
+        CAPTURE(capout.str(), i, handle);
 
         bundle bn = ops.get_bundle(handle);
 
@@ -99,7 +105,14 @@ static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& 
             assert(bn.invariant()); */
         }
 
-        assert(ops.invariant());
+        invariant_result r = ops.invariant();
+        if(!r)
+        {
+            const invariant_violation& err = r.error();
+            CAPTURE(err.rule, err.details);
+            ops.dump(std::clog);
+            //assert(false);
+        }
     }
 }
 

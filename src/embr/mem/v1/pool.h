@@ -11,16 +11,31 @@
 #include "handles.h"
 #include "page.h"
 
+#if FEATURE_STD_OSTREAM
+#include <iosfwd>
+#endif
+
+// DEBT: Really we need FEATURE_STD_STRING_VIEW, estd doesn't provide that yet
+#if FEATURE_STD_CHARCONV
+#include <string_view>
+#endif
+
 namespace embr { namespace mem {
 
 struct invariant_violation
 {
+#if FEATURE_STD_CHARCONV
+    // So that debugger can see these more easily
+    std::string_view rule;
+    std::string_view details;
+#else
     estd::string_view rule;
     estd::string_view details;
+#endif
 };
 
 // estd::expected still not playing nice here, so feature flagging result type
-#define FEATURE_EMBR_MEM_INVARIANT_BOOL 1
+#define FEATURE_EMBR_MEM_INVARIANT_BOOL 0
 #if FEATURE_EMBR_MEM_INVARIANT_BOOL
 using invariant_result = bool;
 #else
@@ -225,7 +240,7 @@ public:
         invariant_result invariant() const;
 
         // Diagnostic dump of pool content
-        void dump() const;
+        void dump(std::ostream& out) const;
     };
 
 public:
