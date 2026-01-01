@@ -80,13 +80,18 @@ static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& 
     {
         CAPTURE(i);
 
-        bundle bn = ops.get_bundle(gen() % ops.handles_.size());
+        const handle_type h = gen() % ops.handles_.size();
+
+        bundle bn = ops.get_bundle(h);
 
         // FIX: Having a lot of issues here.  Granted, bn isn't to be used on null
         // handles and null pages, but it should work.  And also, dealloc itself dies
         if(bn.page->is_null() == false && bn.is_null() == false && bn.allocated())
         {
-            //ops.dealloc(bn);
+            /*
+            ops.dealloc(bn);
+            bn = ops.get_bundle(h);
+            assert(bn.invariant()); */
         }
     }
 }

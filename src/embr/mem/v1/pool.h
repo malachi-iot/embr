@@ -58,6 +58,7 @@ protected:
 
     v1::block* block(pos_type at)
     {
+        //assert(at.count() != page_type::null);
         const unsigned offset = page_unit_type(at).count();
         return reinterpret_cast<v1::block*>(std::data(pool_) + offset);
     }
