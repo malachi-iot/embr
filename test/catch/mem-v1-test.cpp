@@ -465,6 +465,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
 
             REQUIRE(counter == 1);
             REQUIRE(pool1.ops().available() == pool_sz - block_sz);
+            REQUIRE(pool1.ops().invariant());
         }
         SECTION("shared_handle (global)")
         {

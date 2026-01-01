@@ -107,6 +107,8 @@ public:
     constexpr const_iterator end() const { return { pred(), &container_[std::size(container_)] }; }
 
     constexpr unsigned size() const { return std::size(container_); }
+
+    constexpr bool invariant() const;
 };
 
 }}

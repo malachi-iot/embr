@@ -115,12 +115,22 @@ public:
             return { self_.block(page.pos()), &page, handle };
         }
 
+        const_bundle get_bundle(const page_type& page, handle_type handle) const
+        {
+            return { self_.block(page.pos()), &page, handle };
+        }
+
         bundle get_bundle(handle_type h) const
         {
             return get_bundle(handles_[h], h);
         }
 
         bundle get_bundle(page_type& page) const
+        {
+            return get_bundle(page, &page - &handles_[0]);
+        }
+
+        const_bundle get_bundle(const page_type& page) const
         {
             return get_bundle(page, &page - &handles_[0]);
         }
@@ -196,6 +206,11 @@ public:
 
         void assess(fragmentation*) const;
         void defrag(const fragmentation::candidate&);
+
+        bool invariant() const;
+
+        // Diagnostic dump of pool content
+        void dump() const;
     };
 
 public:
