@@ -85,13 +85,13 @@ static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& 
 
     for(int i = 0; i < frees_to_do; ++i)
     {
-        std::ostringstream capout;
+        std::ostringstream before, after;
 
         const handle_type handle = gen() % ops.handles_.size();
 
-        ops.dump(capout << "\n");
+        ops.dump(before << "\n");
 
-        CAPTURE(capout.str(), i, handle);
+        CAPTURE(before.str(), i, handle);
 
         bundle bn = ops.get_bundle(handle);
 
@@ -99,19 +99,22 @@ static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& 
         // handles and null pages, but it should work.  And also, dealloc itself dies
         if(bn.page->is_null() == false && bn.is_null() == false && bn.allocated())
         {
-            //ops.dealloc(bn);
+            ops.dealloc(bn);
             /*
             bn = ops.get_bundle(h);
             assert(bn.invariant()); */
         }
+
+        ops.dump(after << "\n");
+
+        CAPTURE(after.str());
 
         invariant_result r = ops.invariant();
         if(!r)
         {
             const invariant_violation& err = r.error();
             CAPTURE(err.rule, err.details);
-            ops.dump(std::clog);
-            //assert(false);
+            assert(false);
         }
     }
 }

@@ -205,6 +205,7 @@ bool pool<Traits>::ops<HandleTraits>::merge(bundle current, bundle next)
 {
     if(next.allocated()) return false;
 
+    // Link next1->next2->prev to us, since next1 is going away
     if(next.has_next())
     {
         this->next(next).prev(current.handle);
@@ -274,7 +275,15 @@ void pool<Traits>::ops<HandleTraits>::dealloc(bundle bn)
     bn.allocated(false);
 
     if(bn.has_prev())
-        merge_free(prev(bn), bn);
+    {
+        bundle bn_prev = prev(bn);
+        // this potentially nulls out bn.handle and invalidates its block
+        if(merge_free(bn_prev, bn))
+            // if so, we've merged with previous, so make him the one
+            // we evaluate the following merge next against
+            bn = bn_prev;
+    }
+
     if(bn.has_next())
         merge_free(bn, next(bn));
 }
@@ -640,7 +649,7 @@ void pool<Traits>::ops<HandleTraits>::dump(std::ostream& out) const
             break;
         }
         bytes_type sz = phys_size(bn);
-        out << ", a=" << bn.allocated();
+        out << ", " << (bn.allocated() ? "A" : "F");
         out << ", prev=" << (int)bn.block->prev();
         out << ", next=" << (int)bn.block->next();
         out << ", sz=" << sz.count() << "b";
