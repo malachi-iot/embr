@@ -125,9 +125,10 @@ static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& 
 
         auto& frag0 = frag.candidates[0];
 
+        CAPTURE(frag0.score, frag0.bundle.handle, frag0.move_to.handle);
+
         if(frag0.score > 0)
         {
-            CAPTURE(frag0.score, frag0.bundle.handle, frag0.move_to.handle);
             assert(frag0.invariant());
             //ops.defrag(frag0);
         }
@@ -135,9 +136,12 @@ static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& 
         ops.dump(after << "\n");
 
         CAPTURE(after.str());
+        REQUIRE(ops.invariant());
 
-        last.str("");
-        last << "before:" << before.str() << "after:" << after.str();
+        //last.str("");
+        last << "before(" << i << "):" << before.str();
+        last << "frag0.handle=" << (int)frag0.bundle.handle << ", frag0.move_to=" << (int)frag0.move_to.handle << "\n";
+        last << "after:" << after.str();
     }
 }
 
@@ -579,6 +583,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
         std::mt19937 rng{2}; // fixed seed: deterministic sequence
         //std::mt19937 rng{4}; // fixed seed: deterministic sequence
 
+        // FIX: Next up is defrag move doesn't fully update next handle, creating a circular list
         for(int i = 0; i < 100; ++i)
         {
             pool_type pool;

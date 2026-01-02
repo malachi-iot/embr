@@ -2,6 +2,10 @@
 
 #include <estd/expected.h>
 
+#if FEATURE_STD_OSTREAM
+#include <ostream>
+#endif
+
 // DEBT: Really we need FEATURE_STD_STRING_VIEW, estd doesn't provide that yet
 #if FEATURE_STD_CHARCONV
 #include <string_view>
@@ -27,5 +31,15 @@ using invariant_result = estd::expected<void, invariant_violation>;
 
 #define EMBR_MEM_INVARIANT_ASSERT(v, rule, details)     \
 if((v) == false)    return invariant_result::unexpected_type({rule, details});
+
+#if FEATURE_STD_OSTREAM
+std::ostream& operator <<(std::ostream& out, const invariant_result& ir)
+{
+    if(ir)  return out << "Good";
+
+    return out << "Violation: " << ir.error().rule << ", " << ir.error().details;
+}
+
+#endif
 
 }}

@@ -378,8 +378,9 @@ template <class HandleTraits>
 void pool<Traits>::ops<HandleTraits>::assess(fragmentation* frag) const
 {
     const v1::block* b = self_.block(pos_type(0));
+    static constexpr handle_type null = v1::block::null;
 
-    if(b->next() == v1::block::null)    return;
+    if(b->next() == null)    return;
 
     const_bundle bn_prev{}, bn_next, cur;
     next(b, &bn_next);
@@ -392,27 +393,12 @@ void pool<Traits>::ops<HandleTraits>::assess(fragmentation* frag) const
 
     static constexpr uint16_t booster = 4;
 
-    auto score = [&](const_bundle prev, const_bundle cur, const_bundle next)
-    {
-        pos_type v(0);
-
-        // favor a triple with a small middle, since that's easier to move
-        // DEBT: See https://github.com/malachi-iot/estdlib/issues/155 - specifically
-        // I'm considering a flag permit to precision loss, though I kind of like that
-        // it caught this and errored as it should have.  "booster" HAS to be uint16_t, but really
-        // multiplication implies a precision loss anyway
-        v += phys_size(prev) * booster;
-        v += phys_size(cur);
-        v += phys_size(next) * booster;
-
-        return v.count();
-    };
-
     pos_type bn_cur_sz = phys_size(cur);
 
     while(cur.handle != block::null)
     {
-        if(cur.is_null() == false && bn_prev.is_null() == false)
+        if(cur.is_null() == false && bn_prev.is_null() == false &&
+            cur.block->next() != null)
         {
             pos_type bn_prev_sz = bn_cur_sz;
             pos_type bn_next_sz = phys_size(bn_next);
@@ -448,6 +434,10 @@ void pool<Traits>::ops<HandleTraits>::assess(fragmentation* frag) const
                     last_sc = sc;
                 }
             }
+
+// If this is actually A A F A or A F A A this can make fragmentation worse, so needs attention.  Also has
+// some other glitch which seems to cause data corruption.  Temporarily disabled
+#if UNUSED
             // A F A
             else if(bn_prev.allocated() && !cur.allocated() && bn_next.allocated())
             {
@@ -508,6 +498,7 @@ void pool<Traits>::ops<HandleTraits>::assess(fragmentation* frag) const
                     last_sc = sc;
                 }
             }
+#endif
         }
 
         bn_prev = cur;
@@ -531,6 +522,7 @@ invariant_result pool<Traits>::ops<HandleTraits>::invariant() const
     using bytes_type = estd::units::v1::detail::unit<page_unit_traits<unsigned, estd::ratio<1>>>;
     const bytes_type size(std::size(self_.pool_));
     constexpr handle_type null = traits::null;
+    const unsigned max_handles = handles_.size();
 
     // Scan for page representing position 0
     for(const page_type& page : handles_)
@@ -553,9 +545,12 @@ invariant_result pool<Traits>::ops<HandleTraits>::invariant() const
     const_bundle bn = get_bundle(*first);
     const_bundle bn_last{};
     pos_type size_tally{0};
+    unsigned handle_count = 0;
 
-    for(; bn.handle != null; next(bn.block, &bn), bn)
+    for(; bn.handle != null; ++handle_count, next(bn.block, &bn), bn)
     {
+        EMBR_MEM_INVARIANT_ASSERT(handle_count < max_handles, "circular list detected", "during next check");
+
         // As we walk forward, if physical position moves backward, that's an error
         if(!bn_last.is_null())
             if(bn.pos() < bn_last.pos())
@@ -614,6 +609,8 @@ void pool<Traits>::ops<HandleTraits>::dump(std::ostream& out) const
     constexpr handle_type null = traits::null;
     constexpr pos_type zero_pos = pos_type(0);
     const page_type* first{};
+    const unsigned handles_size = handles_.size();
+
     // Scan for page representing position 0
     for(const page_type& page : handles_)
     {
@@ -630,8 +627,16 @@ void pool<Traits>::ops<HandleTraits>::dump(std::ostream& out) const
         return;
     }
 
-    for(const_bundle bn = get_bundle(*first); bn.handle != null; next(bn.block, &bn), bn)
+    int counter = 0;
+
+    for(const_bundle bn = get_bundle(*first); bn.handle != null; ++counter, next(bn.block, &bn), bn)
     {
+        if(counter == handles_size)
+        {
+            out << "exceeded " << handles_size << " bundles, aborting\n";
+            return;
+        }
+
         out << "Bundle: handle=" << (int)bn.handle;
         if(bn.page->is_null())
         {
@@ -643,7 +648,7 @@ void pool<Traits>::ops<HandleTraits>::dump(std::ostream& out) const
         out << ", prev=" << (int)bn.block->prev();
         out << ", next=" << (int)bn.block->next();
         out << ", sz=" << sz.count() << "b";
-        out << ", pos=" << bytes_type(bn.pos()).count();
+        out << ", pos=" << bytes_type(bn.pos()).count() << "b";
         //out << ", block=" << bn.block;
         out << '\n';
     }
