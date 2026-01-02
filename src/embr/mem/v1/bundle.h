@@ -2,6 +2,7 @@
 
 #include "block.h"
 #include "enum.h"
+#include "error.h"
 #include "fwd.h"
 #include "page.h"
 #include "traits.h"

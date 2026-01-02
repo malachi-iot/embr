@@ -1,11 +1,11 @@
 #pragma once
 
 #include <estd/cstdint.h>
-#include <estd/expected.h>
 #include <estd/internal/macro/c++/ctor.h>
 #include <estd/string_view.h>
 #include <estd/utility.h>
 
+#include "error.h"
 #include "fwd.h"
 #include "block.h"
 #include "handles.h"
@@ -15,32 +15,7 @@
 #include <iosfwd>
 #endif
 
-// DEBT: Really we need FEATURE_STD_STRING_VIEW, estd doesn't provide that yet
-#if FEATURE_STD_CHARCONV
-#include <string_view>
-#endif
-
 namespace embr { namespace mem {
-
-struct invariant_violation
-{
-#if FEATURE_STD_CHARCONV
-    // So that debugger can see these more easily
-    std::string_view rule;
-    std::string_view details;
-#else
-    estd::string_view rule;
-    estd::string_view details;
-#endif
-};
-
-// estd::expected still not playing nice here, so feature flagging result type
-#define FEATURE_EMBR_MEM_INVARIANT_BOOL 0
-#if FEATURE_EMBR_MEM_INVARIANT_BOOL
-using invariant_result = bool;
-#else
-using invariant_result = estd::expected<void, invariant_violation>;
-#endif
 
 namespace detail { inline namespace v1 {
 
@@ -186,7 +161,7 @@ public:
         /// @param next
         /// @return
         ///
-        bool merge_free(bundle current, bundle next);
+        bool merge_if_free(bundle current, bundle next);
 
         void move(bundle from, bundle to, unsigned logical_sz);
 

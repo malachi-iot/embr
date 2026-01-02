@@ -221,7 +221,7 @@ bool pool<Traits>::ops<HandleTraits>::merge(bundle current, bundle next)
 
 template <class Traits>
 template <class HandleTraits>
-bool pool<Traits>::ops<HandleTraits>::merge_free(bundle current, bundle next)
+bool pool<Traits>::ops<HandleTraits>::merge_if_free(bundle current, bundle next)
 {
     if(current.allocated()) return false;
 
@@ -244,8 +244,7 @@ void pool<Traits>::ops<HandleTraits>::move(bundle from, bundle to, unsigned logi
 
     // Treat move as the dealloc it is, and do a merge evaluation
     merge(from, next(from));
-    bundle p = prev(from);
-    if(p.block->allocated() == false)   merge(p, from);
+    merge_if_free(prev(from), from);
 }
 
 
@@ -278,14 +277,16 @@ void pool<Traits>::ops<HandleTraits>::dealloc(bundle bn)
     {
         bundle bn_prev = prev(bn);
         // this potentially nulls out bn.handle and invalidates its block
-        if(merge_free(bn_prev, bn))
+        if(merge_if_free(bn_prev, bn))
             // if so, we've merged with previous, so make him the one
             // we evaluate the following merge next against
             bn = bn_prev;
     }
 
     if(bn.has_next())
-        merge_free(bn, next(bn));
+        merge_if_free(bn, next(bn));
+
+    assert(bn.invariant());
 }
 
 
@@ -546,11 +547,7 @@ invariant_result pool<Traits>::ops<HandleTraits>::invariant() const
 
     // Minimum one handle MUST be allocated at all times (big free block)
     if(first == nullptr)
-#if FEATURE_EMBR_MEM_INVARIANT_BOOL
-        return false;
-#else
         return result({"no handles", ""});
-#endif
 
     // Now, walk forward and check that 'next' is sane
     const_bundle bn = get_bundle(*first);
@@ -562,11 +559,8 @@ invariant_result pool<Traits>::ops<HandleTraits>::invariant() const
         // As we walk forward, if physical position moves backward, that's an error
         if(!bn_last.is_null())
             if(bn.pos() < bn_last.pos())
-#if FEATURE_EMBR_MEM_INVARIANT_BOOL
-                return false;
-#else
                 return result({"position check failed", "during next check"});
-#endif
+
         if(bn.page->is_null())
             return result({"null page encountered", "during next check"});
 
@@ -576,11 +570,7 @@ invariant_result pool<Traits>::ops<HandleTraits>::invariant() const
     }
 
     if(size_tally != size)
-#if FEATURE_EMBR_MEM_INVARIANT_BOOL
-        return false;
-#else
         return result({"size tally failed", "during next check"});
-#endif
 
     size_tally = zero_pos;
 
