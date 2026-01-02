@@ -3,6 +3,7 @@
 #include <estd/internal/rtto.h>
 
 #include "enum.h"
+#include "error.h"
 #include "fwd.h"
 #include "traits.h"
 
@@ -79,11 +80,12 @@ public:
     constexpr bool allocated() const { return allocated_; }
     constexpr unsigned lock_count() const { return lock_count_; }
 
-    // TBD
-    constexpr bool invariant() const
+    invariant_result invariant() const
     {
-        // Circular linked list not allowed
-        return (prev_ == null && next_ == null) || prev_ != next_;
+        EMBR_MEM_INVARIANT_ASSERT((prev_ == null && next_ == null) || prev_ != next_,
+            "Circular linked list not allowed", "");
+
+        return {};
     }
 
     void* data() { return data_; }

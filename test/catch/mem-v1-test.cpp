@@ -51,11 +51,14 @@ static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& 
     int allocs_to_do = ops.handles_.size() - 1;     // 1 handle already used for big-free-block
     int frees_to_do = std::uniform_int_distribution(0, allocs_to_do)(gen);
 
-    //INFO("Phase 1");
     CAPTURE(it, seed);
+
+    std::ostringstream last;
 
     for(int i = 0; i < allocs_to_do; ++i)
     {
+        INFO("Phase 1");
+
         pos_type phys_sz(distrib(gen));
 
         CAPTURE(i, phys_sz.count());
@@ -69,22 +72,12 @@ static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& 
         assert(bn.handle != null);
 
         assert(ops.invariant());
-
-        /*
-        ops.dealloc(bn);
-
-        ops.assess(&frag);
-
-        if(frag.candidates[0].score > 0)
-        {
-            ops.defrag(frag.candidates[0]);
-        }   */
     }
-
-    INFO("Phase 2");
 
     for(int i = 0; i < frees_to_do; ++i)
     {
+        INFO("Phase 2");
+
         std::ostringstream before, after;
 
         const handle_type handle = gen() % ops.handles_.size();
@@ -100,9 +93,8 @@ static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& 
         if(bn.page->is_null() == false && bn.is_null() == false && bn.allocated())
         {
             ops.dealloc(bn);
-            /*
-            bn = ops.get_bundle(h);
-            assert(bn.invariant()); */
+            bn = ops.get_bundle(handle);
+            assert(bn.invariant());
         }
 
         ops.dump(after << "\n");
@@ -116,6 +108,36 @@ static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& 
             CAPTURE(err.rule, err.details);
             assert(false);
         }
+    }
+
+    for(int i = 0; i < frees_to_do; ++i)
+    {
+        INFO("Phase 3");
+
+        std::ostringstream before, after;
+
+        ops.dump(before << "\n");
+
+        CAPTURE(last.str());
+        CAPTURE(before.str(), i);
+
+        ops.assess(&frag);
+
+        auto& frag0 = frag.candidates[0];
+
+        if(frag0.score > 0)
+        {
+            CAPTURE(frag0.score, frag0.bundle.handle, frag0.move_to.handle);
+            assert(frag0.invariant());
+            //ops.defrag(frag0);
+        }
+
+        ops.dump(after << "\n");
+
+        CAPTURE(after.str());
+
+        last.str("");
+        last << "before:" << before.str() << "after:" << after.str();
     }
 }
 

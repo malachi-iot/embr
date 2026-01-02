@@ -37,14 +37,23 @@ struct bundle_base
 
     constexpr bool is_trivial() const { return block->mode() == v1::block::Trivial; }
 
-    constexpr bool invariant() const
+    invariant_result invariant() const
     {
         if(is_null())
-            return page == nullptr && handle == null;
+            EMBR_MEM_INVARIANT_ASSERT(page && handle == null, "Block is null but page and handle are not", "");
 
-        return page != nullptr && page->is_null() == false &&
-            handle != block_mode_base::null &&
-            block->invariant();
+        // In fact, page CAN be null, we just rarely want it to be.  But it is a valid bundle technically
+        //EMBR_MEM_INVARIANT_ASSERT(page != nullptr && page->is_null() == false,
+        //    "Page cannot be null", "");
+
+        // Despite null page validity, null handle is not.  Don't call get_bundle if your handle is null.
+        // Only valid when entire bundle is nulled out
+        EMBR_MEM_INVARIANT_ASSERT(handle != block_mode_base::null || page != nullptr,
+            "Handle cannot be null unless page is also null", "");
+
+        if(page->is_null()) return {};
+
+        return block->invariant();
     }
 
     void* data() const

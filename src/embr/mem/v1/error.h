@@ -25,4 +25,7 @@ struct invariant_violation
 
 using invariant_result = estd::expected<void, invariant_violation>;
 
+#define EMBR_MEM_INVARIANT_ASSERT(v, rule, details)     \
+if((v) == false)    return invariant_result::unexpected_type({rule, details});
+
 }}
