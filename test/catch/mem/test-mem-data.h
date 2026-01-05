@@ -43,15 +43,18 @@ static const page pool1[]
     { 0, block{ block::Trivial, false } }
 };
 
+static constexpr bool A = true;
+static constexpr bool F = false;
+
 static const page pool2[]
 {
-    { 24, block{ block::Trivial, true } },
-    { 72, block{ block::Trivial, false} },
-    { 64, block{ block::Trivial, true } },
-    { 8 , block{ block::Trivial, false} },
-    { 48, block{ block::Trivial, true } },
-    { 40, block{ block::Trivial, true } },
-    { 0 , block{ block::Trivial, false} }
+    { 24, block{ block::Trivial, A } },
+    { 72, block{ block::Trivial, F } },
+    { 64, block{ block::Trivial, A } },
+    { 8 , block{ block::Trivial, F } },
+    { 48, block{ block::Trivial, A } },
+    { 40, block{ block::Trivial, A } },
+    { 0 , block{ block::Trivial, F } }
 };
 
 }}

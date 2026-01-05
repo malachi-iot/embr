@@ -7,7 +7,6 @@
 #include <estd/utility.h>
 
 
-#include "bundle.h"
 #include "filter-iterator.h"
 #include "fwd.h"
 #include "traits.h"

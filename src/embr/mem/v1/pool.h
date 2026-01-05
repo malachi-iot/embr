@@ -5,6 +5,7 @@
 #include <estd/string_view.h>
 #include <estd/utility.h>
 
+#include "bundle.h"
 #include "error.h"
 #include "fwd.h"
 #include "block.h"
@@ -217,7 +218,7 @@ public:
         invariant_result invariant() const;
 
         // Diagnostic dump of pool content
-        void dump(std::ostream& out) const;
+        std::ostream& dump(std::ostream& out) const;
     };
 
 public:

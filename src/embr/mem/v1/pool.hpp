@@ -650,7 +650,7 @@ invariant_result pool<Traits>::ops<HandleTraits>::invariant() const
 #if FEATURE_STD_OSTREAM
 template <class Traits>
 template <class HandleTraits>
-void pool<Traits>::ops<HandleTraits>::dump(std::ostream& out) const
+std::ostream& pool<Traits>::ops<HandleTraits>::dump(std::ostream& out) const
 {
     using bytes_type = estd::units::v1::detail::unit<page_unit_traits<unsigned, estd::ratio<1>>>;
     constexpr handle_type null = traits::null;
@@ -671,7 +671,7 @@ void pool<Traits>::ops<HandleTraits>::dump(std::ostream& out) const
     if(first == nullptr)
     {
         out << "Couldn't find first page";
-        return;
+        return out;
     }
 
     int counter = 0;
@@ -681,7 +681,7 @@ void pool<Traits>::ops<HandleTraits>::dump(std::ostream& out) const
         if(counter == handles_size)
         {
             out << "exceeded " << handles_size << " bundles, aborting\n";
-            return;
+            return out;
         }
 
         out << "Bundle: handle=" << (int)bn.handle;
@@ -702,6 +702,7 @@ void pool<Traits>::ops<HandleTraits>::dump(std::ostream& out) const
     }
 
     out.flush();
+    return out;
 }
 #endif
 

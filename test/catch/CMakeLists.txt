@@ -41,6 +41,7 @@ set(SOURCE_FILES
     observer-test.cpp
     experimental-test.cpp
     mem/mem-v1-test.cpp
+    mem/mem-v1-battery-test.cpp
     mem/mem-v1-ll-test.cpp
     objlist-test.cpp
     property-test.cpp

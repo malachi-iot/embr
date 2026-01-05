@@ -64,6 +64,16 @@ struct bundle_base
     constexpr bool has_prev() const { return block->prev() != null; }
     constexpr bool has_next() const { return block->next() != null; }
 
+    // DEBT: Sloppy way to convert between const and non-const bundles.
+    template <class Block2, class Page2>
+    bundle_base& convert_from(const bundle_base<handles_traits, Block2, Page2>& copy_from)
+    {
+        block = copy_from.block;
+        page = copy_from.page;
+        handle = copy_from.handle;
+        return *this;
+    }
+
 private:
     // Bundle also serves as an accessor gateway, so that block can keep its data private otherwise
     // In turn, only 'pool' friend can access these

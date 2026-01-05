@@ -39,119 +39,6 @@ static void assemble_pool(typename detail::pool<Traits>::template ops<HandlesTra
 }
 
 
-template <class Traits, class HandlesTraits>
-static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& ops, int it, unsigned seed)
-{
-    using namespace detail;
-    std::mt19937 gen{seed}; // fixed seed: deterministic sequence
-
-    using pos_type = typename Traits::pos_type;
-    using bundle = detail::bundle;
-    using handle_type = typename HandlesTraits::size_type;
-    using page_type = typename Traits::page_type;
-    constexpr handle_type null = HandlesTraits::null;
-    fragmentation frag;
-
-    std::uniform_int_distribution distrib(1, 10);
-
-    //int allocs_to_do = gen() % ops.handles_.size();
-    int allocs_to_do = ops.handles_.size() - 1;     // 1 handle already used for big-free-block
-    int frees_to_do = std::uniform_int_distribution(0, allocs_to_do)(gen);
-
-    CAPTURE(it, seed);
-
-    std::ostringstream last;
-
-    for(int i = 0; i < allocs_to_do; ++i)
-    {
-        INFO("Phase 1");
-
-        pos_type phys_sz(distrib(gen));
-
-        CAPTURE(i, phys_sz.count());
-
-        // FIX: We never should alloc phys_sz of 1 since that's effectively a malloc(0).  Waiting
-        // to repair that until we solve below dealloc issues first
-        bundle bn = ops.alloc(phys_sz, block::Trivial);
-
-        //REQUIRE((int)bn.handle != null);
-        // I don't want assertions number to balloon at the moment
-        assert(bn.handle != null);
-
-        assert(ops.invariant());
-    }
-
-    for(int i = 0; i < frees_to_do; ++i)
-    {
-        INFO("Phase 2");
-
-        std::ostringstream before, after;
-
-        const handle_type handle = gen() % ops.handles_.size();
-
-        ops.dump(before << "\n");
-
-        CAPTURE(before.str(), i, handle);
-
-        bundle bn = ops.get_bundle(handle);
-
-        // FIX: Having a lot of issues here.  Granted, bn isn't to be used on null
-        // handles and null pages, but it should work.  And also, dealloc itself dies
-        if(bn.page->is_null() == false && bn.is_null() == false && bn.allocated())
-        {
-            ops.dealloc(bn);
-            bn = ops.get_bundle(handle);
-            assert(bn.invariant());
-        }
-
-        ops.dump(after << "\n");
-
-        CAPTURE(after.str());
-
-        invariant_result r = ops.invariant();
-        if(!r)
-        {
-            const invariant_violation& err = r.error();
-            CAPTURE(err.rule, err.details);
-            assert(false);
-        }
-    }
-
-    for(int i = 0; i < frees_to_do; ++i)
-    {
-        INFO("Phase 3");
-
-        std::ostringstream before, after;
-
-        ops.dump(before << "\n");
-
-        CAPTURE(last.str());
-        CAPTURE(before.str(), i);
-
-        ops.assess(&frag);
-
-        auto& frag0 = frag.candidates[0];
-
-        CAPTURE(frag0.score, frag0.bundle.handle, frag0.move_to.handle);
-
-        if(frag0.score > 0)
-        {
-            assert(frag0.invariant());
-            ops.defrag(frag0);
-        }
-
-        ops.dump(after << "\n");
-
-        CAPTURE(after.str());
-        REQUIRE(ops.invariant());
-
-        //last.str("");
-        last << "before(" << i << "):" << before.str();
-        last << "frag0.handle=" << (int)frag0.bundle.handle << ", frag0.move_to=" << (int)frag0.move_to.handle << "\n";
-        last << "after:" << after.str();
-    }
-}
-
 TEST_CASE("gc mem v1 tests", "[memory][gc]")
 {
     SECTION("filter_iterator")
@@ -273,7 +160,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
         {
             constexpr unsigned pool_size = 2048;
             using page = detail::v1::page<uint16_t>;
-            using handles_traits = detail::v1::handles_traits<page[20]>;
+            using handles_traits = detail::v1::handles_traits<page[10]>;
             using handles_type = detail::v1::handles<handles_traits>;
             using pool_traits = detail::v1::pool_traits<char[pool_size]>;
             using pool_type = detail::v1::pool<pool_traits>;
@@ -403,6 +290,10 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                 }
                 SECTION("pool assembly/edge cases")
                 {
+                    std::ostringstream out;
+
+                    out << "\n";
+
                     SECTION("assemble_pool itself")
                     {
                         assemble_pool<pool_traits>(op, test::pool1);
@@ -415,6 +306,19 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                     {
                         // NOTE: Doesn't match defrag failure pool size (that one's 512)
                         assemble_pool<pool_traits>(op, test::pool2);
+                        detail::const_bundle from, to;
+
+                        from.convert_from(op.get_bundle(2));
+                        to.convert_from(op.get_bundle(3));
+
+                        detail::fragmentation::candidate frag0{48, from, to};
+
+                        op.defrag(frag0);
+
+                        op.dump(out);
+
+                        CAPTURE(out.str());
+                        //REQUIRE(op.invariant());
                     }
                 }
             }
@@ -595,26 +499,5 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
     SECTION("layer2")
     {
 
-    }
-    SECTION("batteries")
-    {
-        constexpr unsigned pool_sz = 512;
-        using pool_type = v1::layer1::pool<pool_sz, 8>;
-        using traits = pool_type::pool_traits;
-
-        //std::mt19937 rng{12345}; // fixed seed: deterministic sequence
-        std::mt19937 rng{2}; // fixed seed: deterministic sequence
-        //std::mt19937 rng{4}; // fixed seed: deterministic sequence
-
-        // FIX: Next up is defrag move doesn't fully update next handle, creating a circular list
-        for(int i = 0; i < 100; ++i)
-        {
-            pool_type pool;
-            auto ops = pool.ops();
-
-            // DEBT: Still having to do this
-            ops.reset();
-            battery<traits>(ops, i, rng());
-        }
     }
 }
