@@ -28,6 +28,8 @@ struct fragmentation
         int score;
         const_bundle bundle;
         const_bundle move_to;
+        bool overlap{true};
+        bool adjacent{true};
 
         constexpr bool invariant() const
         {
@@ -164,7 +166,7 @@ public:
         ///
         bool merge_if_free(bundle current, bundle next);
 
-        void move(bundle from, bundle to, unsigned logical_sz);
+        void move(bundle from, bundle to, unsigned logical_sz, bool is_overlapping = false);
 
         bundle first_free(pos_type phys_sz, pos_type* found_size) const;
 

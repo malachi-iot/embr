@@ -10,6 +10,8 @@
 
 #include "block.hpp"
 #include "pool.h"
+#include "pool/defrag.hpp"
+#include "pool/invariant.hpp"
 
 namespace embr { namespace mem {
 
@@ -243,14 +245,16 @@ v1::block* pool<Traits>::ops<HandleTraits>::resize(bundle bn, pos_type new_sz)
 
 template <class Traits>
 template <class HandleTraits>
-void pool<Traits>::ops<HandleTraits>::move(bundle from, bundle to, unsigned logical_sz)
+void pool<Traits>::ops<HandleTraits>::move(bundle from, bundle to, unsigned logical_sz,
+    bool is_overlapping)
 {
     const bool is_trivial = from.block->mode() == block::Trivial;
     pos_type to_block_phys_sz = phys_size(to);
     pos_type from_block_phys_sz = phys_size(from);
+    /*
     const bool is_overlapping =
         (to.pos() < from.pos() && to.pos() + from_block_phys_sz > from.pos()) ||
-        (to.pos() > from.pos() && from.pos() + from_block_phys_sz > to.pos());
+        (to.pos() > from.pos() && from.pos() + from_block_phys_sz > to.pos()); */
 
     // DEBT: Deducing logical_sz for non-trivial is interesting too, but not critical
     if(logical_sz == 0 && is_trivial)
@@ -258,10 +262,35 @@ void pool<Traits>::ops<HandleTraits>::move(bundle from, bundle to, unsigned logi
         logical_sz = logical_size(from);
     }
 
-    assert(is_trivial || !is_overlapping);
-
     if(is_overlapping)
     {
+        assert(is_trivial);
+
+        v1::block retained = *to.block;
+
+        if(from.pos() < to.pos())
+        {
+            // A ... F -> F ... A
+
+            // New 'from' location moves forward enough to make room for the new
+            // 'free' location who is swapped in before it
+            pos_type new_alloced_loc = from.pos() + to_block_phys_sz;
+            page_type* new_alloced_page = from.page;
+
+            new_alloced_page->pos(new_alloced_loc);
+            block* new_alloced_block = self_.block(new_alloced_loc);
+
+            // moving A forward in memory = regular unfancy forward copy
+            std::memcpy(new_alloced_block->data(), from.block->data(), logical_sz);
+        }
+        else
+        {
+            // F ... A -> A ... F
+
+            // moving A backward in memory = fancy reverse copy
+            std::memmove(to.block->data(), from.block->data(), logical_sz);
+        }
+
         // Not yet supported
         assert(false);
     }
@@ -275,11 +304,11 @@ void pool<Traits>::ops<HandleTraits>::move(bundle from, bundle to, unsigned logi
         to.allocated(true);
 
         dealloc(from);
-    }
 
-    // Resize 'to' to match old 'from'
-    if(to_block_phys_sz != from_block_phys_sz)
-        resize(to, from_block_phys_sz);
+        // Resize 'to' to match old 'from'
+        if(to_block_phys_sz != from_block_phys_sz)
+            resize(to, from_block_phys_sz);
+    }
 
     // Treat move as the dealloc it is, and do a merge evaluation
     //merge(from, next(from));
@@ -403,308 +432,6 @@ auto pool<Traits>::ops<HandleTraits>::alloced() const -> unsigned
     });
 }
 
-
-template <class Traits>
-template <class HandleTraits>
-void pool<Traits>::ops<HandleTraits>::defrag(const fragmentation::candidate& c)
-{
-    // DEBT: A bit sloppy converting bundles like this, but gets the job done
-    move(get_bundle(c.bundle.handle), get_bundle(c.move_to.handle), 0);
-}
-
-template <class Traits>
-template <class HandleTraits>
-void pool<Traits>::ops<HandleTraits>::assess(fragmentation* frag) const
-{
-    const v1::block* b = self_.block(pos_type(0));
-    static constexpr handle_type null = v1::block::null;
-
-    if(b->next() == null)    return;
-
-    const_bundle bn_prev{}, bn_next, cur;
-    next(b, &bn_next);
-    prev(bn_next.block, &cur);
-    int last_sc = 0;
-
-    fragmentation::candidate& top = frag->candidates[0];
-    top = {};
-    frag->candidates[1] = {};
-
-    static constexpr uint16_t booster = 4;
-
-    pos_type bn_cur_sz = phys_size(cur);
-
-    while(cur.handle != block::null)
-    {
-        if(cur.is_null() == false && bn_prev.is_null() == false &&
-            cur.block->next() != null)
-        {
-            pos_type bn_prev_sz = bn_cur_sz;
-            pos_type bn_next_sz = phys_size(bn_next);
-            bn_cur_sz = phys_size(cur);
-
-            // F A F
-            if(!bn_prev.allocated() && cur.allocated() && !bn_next.allocated())
-            {
-                //int sc = score(bn_prev, cur, bn_next);
-                pos_type v(0);
-                const_bundle* which = &bn_prev;
-
-                // favor trivial
-                // favor a triple with a small middle, since that's easier to move
-                // TODO: Eventually favor one which doesn't require an overlap, since less
-                // maintenance involved.  Not enabling yet because it's convenient to poke the bear
-                // and have more overlaps
-
-                if(cur.is_trivial())
-                {
-                    pos_type prev_boost = bn_prev_sz * booster;
-                    pos_type next_boost = bn_next_sz * booster;
-
-                    // Favor the smaller fitting F
-                    if(next_boost < prev_boost) which = &bn_next;
-
-                    v += prev_boost + bn_cur_sz + next_boost;
-                }
-                else
-                {
-                    if(bn_cur_sz <= bn_prev_sz) v += bn_prev_sz;
-                    if(bn_cur_sz <= bn_next_sz) v += bn_next_sz;
-                }
-
-                int sc = v.count();
-
-                if(sc > last_sc)
-                {
-                    estd::swap(frag->candidates[0], frag->candidates[1]);
-                    top = { sc, cur, *which };
-                    last_sc = sc;
-                }
-            }
-
-// If this is actually A A F A or A F A A this can make fragmentation worse, so needs attention.  Also has
-// some other glitch which seems to cause data corruption.  Temporarily disabled
-#if UNUSED
-            // A F A
-            else if(bn_prev.allocated() && !cur.allocated() && bn_next.allocated())
-            {
-                // favor trivial
-                // favor one of A <= F, smaller is better, and demand it if non-trivial
-                // favor above F A F pattern over this one
-
-                pos_type v(0);
-                const_bundle* which = &bn_prev;     // Presume bn_prev is the more interesting candidate
-
-                // DEBT: Assess bn_next too inside this branch
-                if(bn_prev.is_trivial())
-                {
-                    v += bn_prev_sz;
-                    v += bn_cur_sz * booster;
-                    //v += bn_next_sz;
-
-                    // DEBT: For trivial, it matters a little less which allocated block we move.  Still though,
-                    // we'd like to choose the smaller of the two and not only presume bn_prev as above
-                }
-                else
-                {
-                    using signed_type = estd::units::v1::detail::unit<page_unit_traits<int, typename pos_type::period>>;
-                    static constexpr signed_type zero(0);
-                    signed_type prev_delta = bn_cur_sz - bn_prev_sz;
-                    signed_type next_delta = bn_cur_sz - bn_next_sz;
-
-
-                    if(prev_delta >= zero)
-                    {
-                        // DEBT: I'm actually surprised estd::units permits this addition of an int to a uint16_t
-                        v = prev_delta;
-                    }
-
-                    if(bn_next.is_trivial())
-                    {
-                        // DEBT: We do favor trivial, but shouldn't hard-select it
-                        which = &bn_next;
-                        //v += bn_prev_sz;
-                        v += bn_cur_sz * booster;
-                        v += bn_next_sz;
-                    }
-                    else if(next_delta >= zero)
-                    {
-                        // If 'prev' isn't viable OR next is smaller than prev, select 'next'
-                        if(prev_delta < zero || next_delta < prev_delta) which = &bn_next;
-
-                        v = next_delta;
-                    }
-                }
-
-                int sc = v.count();
-
-                if(sc > last_sc)
-                {
-                    estd::swap(frag->candidates[0], frag->candidates[1]);
-                    top = { sc, *which, cur };
-                    last_sc = sc;
-                }
-            }
-#endif
-        }
-
-        bn_prev = cur;
-        cur = bn_next;
-        next(cur.block, &bn_next);
-    }
-}
-
-template <class Traits>
-template <class HandleTraits>
-invariant_result pool<Traits>::ops<HandleTraits>::invariant() const
-{
-    using result = invariant_result::unexpected_type;
-    using violation = invariant_violation;
-    //using iterator = typename handles_type::const_iterator;
-    const page_type* first{};
-    constexpr pos_type zero_pos = pos_type(0);
-    // TODO: Inspires a thought of convertible-to which embr/estd units explored before.  pos_type
-    // really is directly convertible to bytes - although in this case we could probably cheat and
-    // use bytes_tag type right from the get go
-    using bytes_type = estd::units::v1::detail::unit<page_unit_traits<unsigned, estd::ratio<1>>>;
-    const bytes_type size(std::size(self_.pool_));
-    constexpr handle_type null = traits::null;
-    const unsigned max_handles = handles_.size();
-
-    // Scan for page representing position 0
-    for(const page_type& page : handles_)
-    {
-        if(page.pos() == zero_pos)
-        {
-            first = &page;
-            break;
-        }
-
-        //const_bundle bn = get_bundle(page);
-        //if(bn.p)
-    }
-
-    // Minimum one handle MUST be allocated at all times (big free block)
-    if(first == nullptr)
-        return result({"no handles", ""});
-
-    // Now, walk forward and check that 'next' is sane
-    const_bundle bn = get_bundle(*first);
-    const_bundle bn_last{};
-    pos_type size_tally{0};
-    unsigned handle_count = 0;
-
-    for(; bn.handle != null; ++handle_count, next(bn.block, &bn), bn)
-    {
-        EMBR_MEM_INVARIANT_ASSERT(handle_count < max_handles, "circular list detected", "during next check");
-
-        // As we walk forward, if physical position moves backward, that's an error
-        if(!bn_last.is_null())
-            if(bn.pos() < bn_last.pos())
-                return result({"position check failed", "during next check"});
-
-        if(bn.page->is_null())
-            return result({"null page encountered", "during next check"});
-
-        size_tally += phys_size(bn);
-
-        bn_last = bn;
-    }
-
-    if(size_tally != size)
-        return result({"size tally failed", "during next check"});
-
-    size_tally = zero_pos;
-
-    // Walk backward and check that 'prev' is sane
-    for(bn = bn_last; bn.handle != null; prev(bn.block, &bn), bn)
-    {
-        // As we walk backward, if physical position moves forward, that's an error
-        if(bn.pos() > bn_last.pos())
-#if FEATURE_EMBR_MEM_INVARIANT_BOOL
-            return false;
-#else
-            return result({"position check failed", "during prev check"});
-#endif
-
-        size_tally += phys_size(bn);
-
-        bn_last = bn;
-    }
-
-    if(size_tally != size)
-#if FEATURE_EMBR_MEM_INVARIANT_BOOL
-        return false;
-#else
-        return result({"size tally failed", "during prev check"});
-#endif
-
-#if FEATURE_EMBR_MEM_INVARIANT_BOOL
-    return true;
-#else
-    return {};
-#endif
-}
-
-
-#if FEATURE_STD_OSTREAM
-template <class Traits>
-template <class HandleTraits>
-std::ostream& pool<Traits>::ops<HandleTraits>::dump(std::ostream& out) const
-{
-    using bytes_type = estd::units::v1::detail::unit<page_unit_traits<unsigned, estd::ratio<1>>>;
-    constexpr handle_type null = traits::null;
-    constexpr pos_type zero_pos = pos_type(0);
-    const page_type* first{};
-    const unsigned handles_size = handles_.size();
-
-    // Scan for page representing position 0
-    for(const page_type& page : handles_)
-    {
-        if(page.pos() == zero_pos)
-        {
-            first = &page;
-            break;
-        }
-    }
-
-    if(first == nullptr)
-    {
-        out << "Couldn't find first page";
-        return out;
-    }
-
-    int counter = 0;
-
-    for(const_bundle bn = get_bundle(*first); bn.handle != null; ++counter, next(bn.block, &bn), bn)
-    {
-        if(counter == handles_size)
-        {
-            out << "exceeded " << handles_size << " bundles, aborting\n";
-            return out;
-        }
-
-        out << "Bundle: handle=" << (int)bn.handle;
-        if(bn.page->is_null())
-        {
-            out << " null page - abort\n";
-            break;
-        }
-        bytes_type sz = phys_size(bn);
-        out << ", " << (bn.allocated() ? "A" : "F");
-        out << (bn.block->mode() == v1::block::Trivial ? 'T' : 'N');
-        out << ", prev=" << (int)bn.block->prev();
-        out << ", next=" << (int)bn.block->next();
-        out << ", sz=" << sz.count() << "b";
-        out << ", pos=" << bytes_type(bn.pos()).count() << "b";
-        //out << ", block=" << bn.block;
-        out << '\n';
-    }
-
-    out.flush();
-    return out;
-}
-#endif
 
 }}
 

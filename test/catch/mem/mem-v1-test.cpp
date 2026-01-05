@@ -253,6 +253,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
 
                     op.assess(&frag);
 
+                    REQUIRE(frag0.overlap == false);
                     REQUIRE(frag0.bundle.allocated());
                     REQUIRE(frag0.bundle.is_null() == false);
                     REQUIRE(frag0.bundle.handle == 1);
@@ -311,14 +312,14 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                         from.convert_from(op.get_bundle(2));
                         to.convert_from(op.get_bundle(3));
 
-                        detail::fragmentation::candidate frag0{48, from, to};
+                        detail::fragmentation::candidate frag0{48, from, to, true};
 
-                        op.defrag(frag0);
+                        //op.defrag(frag0);
 
                         op.dump(out);
 
                         CAPTURE(out.str());
-                        //REQUIRE(op.invariant());
+                        REQUIRE(op.invariant());
                     }
                 }
             }
