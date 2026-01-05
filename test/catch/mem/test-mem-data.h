@@ -2,6 +2,29 @@
 
 #include "embr/mem/v1/block.h"
 
+// DEBT: See if we can scoop this from estd
+struct SideEffector
+{
+    int* counter_{};
+
+    SideEffector(SideEffector&& move_from) :
+        counter_{move_from.counter_}
+    {
+        move_from.counter_ = nullptr;
+    }
+
+    explicit SideEffector(int* counter) : counter_{counter}
+    {
+        ++*counter_;
+    }
+
+    ~SideEffector()
+    {
+        if(counter_)   --*counter_;
+    }
+};
+
+
 namespace test { inline namespace mem {
 
 using namespace embr::mem::detail::v1;

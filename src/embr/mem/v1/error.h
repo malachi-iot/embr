@@ -33,7 +33,8 @@ using invariant_result = estd::expected<void, invariant_violation>;
 if((v) == false)    return invariant_result::unexpected_type({rule, details});
 
 #if FEATURE_STD_OSTREAM
-std::ostream& operator <<(std::ostream& out, const invariant_result& ir)
+template <class Char>
+std::basic_ostream<Char>& operator <<(std::basic_ostream<Char>& out, const invariant_result& ir)
 {
     if(ir)  return out << "Good";
 

@@ -40,7 +40,8 @@ set(SOURCE_FILES
     json-test.cpp
     observer-test.cpp
     experimental-test.cpp
-    mem-v1-test.cpp
+    mem/mem-v1-test.cpp
+    mem/mem-v1-ll-test.cpp
     objlist-test.cpp
     property-test.cpp
     retry-test.cpp

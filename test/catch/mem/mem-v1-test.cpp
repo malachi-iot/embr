@@ -9,28 +9,6 @@
 #include "test-mem-data.h"
 
 
-// DEBT: See if we can scoop this from estd
-struct SideEffector
-{
-    int* counter_{};
-
-    SideEffector(SideEffector&& move_from) :
-        counter_{move_from.counter_}
-    {
-        move_from.counter_ = nullptr;
-    }
-
-    explicit SideEffector(int* counter) : counter_{counter}
-    {
-        ++*counter_;
-    }
-
-    ~SideEffector()
-    {
-        if(counter_)   --*counter_;
-    }
-};
-
 using namespace embr::mem;
 
 
@@ -159,7 +137,7 @@ static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& 
         if(frag0.score > 0)
         {
             assert(frag0.invariant());
-            //ops.defrag(frag0);
+            ops.defrag(frag0);
         }
 
         ops.dump(after << "\n");
