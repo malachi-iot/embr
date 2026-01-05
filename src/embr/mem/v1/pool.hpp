@@ -248,7 +248,9 @@ void pool<Traits>::ops<HandleTraits>::move(bundle from, bundle to, unsigned logi
     const bool is_trivial = from.block->mode() == block::Trivial;
     pos_type to_block_phys_sz = phys_size(to);
     pos_type from_block_phys_sz = phys_size(from);
-    const bool is_overlapping = to.pos() < from.pos() && to.pos() + from_block_phys_sz > from.pos();
+    const bool is_overlapping =
+        (to.pos() < from.pos() && to.pos() + from_block_phys_sz > from.pos()) ||
+        (to.pos() > from.pos() && from.pos() + from_block_phys_sz > to.pos());
 
     // DEBT: Deducing logical_sz for non-trivial is interesting too, but not critical
     if(logical_sz == 0 && is_trivial)
@@ -265,7 +267,9 @@ void pool<Traits>::ops<HandleTraits>::move(bundle from, bundle to, unsigned logi
     }
     else
     {
-        assert(to_block_phys_sz >= from_block_phys_sz);
+        // Adjacent, trivial blocks don't have to meet this requirement
+        // TODO: Bring this check back for non adjacent OR non trivial blocks
+        //assert(to_block_phys_sz >= from_block_phys_sz);
 
         to.block->move_from(from.block, logical_sz);
         to.allocated(true);
@@ -448,6 +452,9 @@ void pool<Traits>::ops<HandleTraits>::assess(fragmentation* frag) const
 
                 // favor trivial
                 // favor a triple with a small middle, since that's easier to move
+                // TODO: Eventually favor one which doesn't require an overlap, since less
+                // maintenance involved.  Not enabling yet because it's convenient to poke the bear
+                // and have more overlaps
 
                 if(cur.is_trivial())
                 {

@@ -433,6 +433,11 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                         unsigned available = op.available();
                         REQUIRE(available == pool_size - (32 + 8));
                     }
+                    SECTION("defrag case 1")
+                    {
+                        // NOTE: Doesn't match defrag failure pool size (that one's 512)
+                        assemble_pool<pool_traits>(op, test::pool2);
+                    }
                 }
             }
             SECTION("alloc")
