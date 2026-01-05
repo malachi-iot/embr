@@ -189,6 +189,8 @@ public:
 
         unsigned logical_size(const bundle&) const;
 
+        v1::block* resize(bundle, pos_type new_sz);
+
         bundle alloc(pos_type phys_sz, block::modes mode);
 
         template <block::modes mode, class T, class ...Args>

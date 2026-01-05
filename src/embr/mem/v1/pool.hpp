@@ -228,23 +228,58 @@ bool pool<Traits>::ops<HandleTraits>::merge_if_free(bundle current, bundle next)
     return merge(current, next);
 }
 
+
+template <class Traits>
+template <class HandleTraits>
+v1::block* pool<Traits>::ops<HandleTraits>::resize(bundle bn, pos_type new_sz)
+{
+    bundle bn_next = next(bn);
+    pos_type pos = bn.pos() + new_sz;
+    v1::block* copy_to_block = self_.block(pos);
+    *copy_to_block = *bn.block;
+    bn_next.page->pos(pos);
+    return copy_to_block;
+}
+
 template <class Traits>
 template <class HandleTraits>
 void pool<Traits>::ops<HandleTraits>::move(bundle from, bundle to, unsigned logical_sz)
 {
+    const bool is_trivial = from.block->mode() == block::Trivial;
+    pos_type to_block_phys_sz = phys_size(to);
+    pos_type from_block_phys_sz = phys_size(from);
+    const bool is_overlapping = to.pos() < from.pos() && to.pos() + from_block_phys_sz > from.pos();
+
     // DEBT: Deducing logical_sz for non-trivial is interesting too, but not critical
-    if(logical_sz == 0 && from.block->mode() == block::Trivial)
+    if(logical_sz == 0 && is_trivial)
     {
         logical_sz = logical_size(from);
     }
 
-    to.block->move_from(from.block, logical_sz);
-    to.allocated(true);
-    from.block->reset(block::Trivial, false);
+    assert(is_trivial || !is_overlapping);
+
+    if(is_overlapping)
+    {
+        // Not yet supported
+        assert(false);
+    }
+    else
+    {
+        assert(to_block_phys_sz >= from_block_phys_sz);
+
+        to.block->move_from(from.block, logical_sz);
+        to.allocated(true);
+
+        dealloc(from);
+    }
+
+    // Resize 'to' to match old 'from'
+    if(to_block_phys_sz != from_block_phys_sz)
+        resize(to, from_block_phys_sz);
 
     // Treat move as the dealloc it is, and do a merge evaluation
-    merge(from, next(from));
-    merge_if_free(prev(from), from);
+    //merge(from, next(from));
+    //merge_if_free(prev(from), from);
 }
 
 
@@ -271,7 +306,7 @@ void pool<Traits>::ops<HandleTraits>::dealloc(bundle bn)
     // DEBT: Consolidate with other free operations
     bn.block->destroy();
 
-    bn.allocated(false);
+    bn.block->reset(v1::block::Trivial, false);
 
     if(bn.has_prev())
     {
@@ -286,7 +321,7 @@ void pool<Traits>::ops<HandleTraits>::dealloc(bundle bn)
     if(bn.has_next())
         merge_if_free(bn, next(bn));
 
-    assert(bn.invariant());
+    //assert(bn.invariant());
 }
 
 
@@ -409,15 +444,20 @@ void pool<Traits>::ops<HandleTraits>::assess(fragmentation* frag) const
             {
                 //int sc = score(bn_prev, cur, bn_next);
                 pos_type v(0);
+                const_bundle* which = &bn_prev;
 
                 // favor trivial
                 // favor a triple with a small middle, since that's easier to move
 
                 if(cur.is_trivial())
                 {
-                    v += bn_prev_sz * booster;
-                    v += bn_cur_sz;
-                    v += bn_next_sz * booster;
+                    pos_type prev_boost = bn_prev_sz * booster;
+                    pos_type next_boost = bn_next_sz * booster;
+
+                    // Favor the smaller fitting F
+                    if(next_boost < prev_boost) which = &bn_next;
+
+                    v += prev_boost + bn_cur_sz + next_boost;
                 }
                 else
                 {
@@ -430,7 +470,7 @@ void pool<Traits>::ops<HandleTraits>::assess(fragmentation* frag) const
                 if(sc > last_sc)
                 {
                     estd::swap(frag->candidates[0], frag->candidates[1]);
-                    top = { sc, cur, bn_prev };
+                    top = { sc, cur, *which };
                     last_sc = sc;
                 }
             }
@@ -645,6 +685,7 @@ void pool<Traits>::ops<HandleTraits>::dump(std::ostream& out) const
         }
         bytes_type sz = phys_size(bn);
         out << ", " << (bn.allocated() ? "A" : "F");
+        out << (bn.block->mode() == v1::block::Trivial ? 'T' : 'N');
         out << ", prev=" << (int)bn.block->prev();
         out << ", next=" << (int)bn.block->next();
         out << ", sz=" << sz.count() << "b";

@@ -361,7 +361,6 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                     REQUIRE(frag0.bundle.allocated());
                     REQUIRE(frag0.bundle.is_null() == false);
                     REQUIRE(frag0.bundle.handle == 1);
-                    // DEBT: We strongly favor prev position at this time, which is not ideal or necessary.
                     REQUIRE(frag0.move_to.handle == 0);
 
                     // Since we correctly identified handle 1 is allocated and fragmented, as identified

@@ -68,7 +68,7 @@ inline void block::move_from(block* from, unsigned sz)
     switch(from->mode_)
     {
         case block::Trivial:
-            std::memcpy(data_, from->data_, sz);
+            std::memmove(data_, from->data_, sz);
             mode_ = block::Trivial;
             break;
 

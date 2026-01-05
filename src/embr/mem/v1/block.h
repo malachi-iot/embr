@@ -71,6 +71,8 @@ public:
     template <class T, class ...Args>
     explicit block(estd::in_place_index_t<modes::RttoBase>, estd::in_place_type_t<T>, Args&&...args);
 
+    block(const block&) = default;
+
     block& operator=(const block&) = default;
     block& operator=(block&&);
 
