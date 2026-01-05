@@ -6,6 +6,8 @@
 #include <embr/mem/v1/shared-handle.h>
 #include <embr/mem/v1/unique-handle.h>
 
+#include "test-mem-data.h"
+
 
 // DEBT: See if we can scoop this from estd
 struct SideEffector
@@ -30,6 +32,33 @@ struct SideEffector
 };
 
 using namespace embr::mem;
+
+
+template <class Traits, class HandlesTraits, std::size_t N>
+static void assemble_pool(typename detail::pool<Traits>::template ops<HandlesTraits>& ops, const test::page (&pool)[N])
+{
+    using pos_type = typename Traits::pos_type;
+    const auto aliasing = ops.aliasing;
+    int prev = HandlesTraits::null;
+
+    pos_type tally(0);
+
+    for(int i = 0; i < N; ++i)
+    {
+        int next = i == N - 1 ? HandlesTraits::null : i + 1;
+
+        const test::page& page = pool[i];
+
+        ops.handles_[i].pos(tally);
+        detail::bundle b = ops.get_bundle(i);
+
+        *b.block = detail::block(page.blk.mode(), page.blk.allocated(), prev, next);
+
+        tally += pos_type(page.sz / aliasing);
+
+        prev = i;
+    }
+}
 
 
 template <class Traits, class HandlesTraits>
@@ -268,7 +297,8 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
             using page = detail::v1::page<uint16_t>;
             using handles_traits = detail::v1::handles_traits<page[20]>;
             using handles_type = detail::v1::handles<handles_traits>;
-            using pool_type = detail::v1::pool<detail::v1::pool_traits<char[pool_size]>>;
+            using pool_traits = detail::v1::pool_traits<char[pool_size]>;
+            using pool_type = detail::v1::pool<pool_traits>;
             using pos_type = pool_type::pos_type;
 
             handles_type handles;
@@ -392,6 +422,17 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
 
                     op.unlock(bn.handle);
                     op.unlock(bn.handle);
+                }
+                SECTION("pool assembly/edge cases")
+                {
+                    SECTION("assemble_pool itself")
+                    {
+                        assemble_pool<pool_traits>(op, test::pool1);
+
+                        REQUIRE(op.alloced() == 24);
+                        unsigned available = op.available();
+                        REQUIRE(available == pool_size - (32 + 8));
+                    }
                 }
             }
             SECTION("alloc")

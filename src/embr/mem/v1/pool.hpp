@@ -378,7 +378,7 @@ auto pool<Traits>::ops<HandleTraits>::available() const -> unsigned
     {
         bundle bn = get_bundle(page);
 
-        if(bn.block->allocated() == false)  count += logical_size(bn);
+        if(bn.allocated() == false)  count += logical_size(bn);
     }
 
     return count;

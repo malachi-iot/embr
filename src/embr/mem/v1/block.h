@@ -74,7 +74,7 @@ public:
     block(const block&) = default;
 
     block& operator=(const block&) = default;
-    block& operator=(block&&);
+    block& operator=(block&&) = default;
 
     constexpr modes mode() const { return mode_; }
     constexpr handle_type prev() const { return prev_; }
