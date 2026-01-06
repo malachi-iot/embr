@@ -32,7 +32,7 @@ static void assemble_pool(typename detail::pool<Traits>::template ops<HandlesTra
 
         *b.block = detail::block(page.blk.mode(), page.blk.allocated(), prev, next);
 
-        tally += pos_type(page.sz / aliasing);
+        tally += pos_type(page.phys_sz / aliasing);
 
         prev = i;
     }
@@ -314,12 +314,15 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
 
                         detail::fragmentation::candidate frag0{48, from, to, true};
 
-                        //op.defrag(frag0);
+                        op.defrag(frag0);
 
                         op.dump(out);
 
                         CAPTURE(out.str());
                         REQUIRE(op.invariant());
+
+                        unsigned alloced = op.alloced();
+                        REQUIRE(alloced == 16 + 56 + 40 + 32);
                     }
                 }
             }

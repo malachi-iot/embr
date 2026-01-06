@@ -31,7 +31,7 @@ using namespace embr::mem::detail::v1;
 
 struct page
 {
-    unsigned sz;
+    unsigned phys_sz;
     block blk;
 };
 
@@ -51,7 +51,7 @@ static const page pool2[]
     { /* 0 */ 24, block{ block::Trivial, A } },
     { /* 1 */ 72, block{ block::Trivial, F } },
     { /* 2 */ 64, block{ block::Trivial, A } },
-    { /* 3 */ 8 , block{ block::Trivial, F } },
+    { /* 3 */ 8 , block{ block::Trivial, F } },     // NOTE: This is an invalid block size
     { /* 4 */ 48, block{ block::Trivial, A } },
     { /* 5 */ 40, block{ block::Trivial, A } },
     { /* 6 */ 0 , block{ block::Trivial, F } }

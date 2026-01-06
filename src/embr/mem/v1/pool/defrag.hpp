@@ -9,6 +9,110 @@ namespace embr { namespace mem {
 
 namespace detail { inline namespace v1 {
 
+
+template <class Traits>
+template <class HandleTraits>
+void pool<Traits>::ops<HandleTraits>::move(bundle from, bundle to, unsigned logical_sz,
+    bool is_overlapping)
+{
+    const bool is_trivial = from.block->mode() == block::Trivial;
+    const pos_type to_block_phys_sz = phys_size(to);
+    pos_type from_block_phys_sz = phys_size(from);
+
+    const pos_type& free_block_phys_sz = to_block_phys_sz;
+    const pos_type& alloced_block_phys_sz = from_block_phys_sz;
+    /*
+    const bool is_overlapping =
+        (to.pos() < from.pos() && to.pos() + from_block_phys_sz > from.pos()) ||
+        (to.pos() > from.pos() && from.pos() + from_block_phys_sz > to.pos()); */
+
+    // DEBT: Deducing logical_sz for non-trivial is interesting too, but not critical
+    if(logical_sz == 0 && is_trivial)
+    {
+        logical_sz = logical_size(from);
+    }
+
+    if(is_overlapping)
+    {
+        assert(is_trivial);
+
+        // Overlapping blocks mean that free block is smaller than allocated block
+
+        if(from.pos() < to.pos())
+        {
+            // In this scenario we copy forwards.  Block 0 (starts as A)
+            // header is preserved, while block 1 is overwritten.
+
+            // A:0  ... F:1 -> F:0  .. A:1
+            // from ... to     from .. to
+
+            v1::block retained = *to.block;
+
+            // New 'to' location moves backward enough to shrink preceding
+            // 'from' block before it to match F size (keep F size consistent)
+            pos_type new_to_loc = from.pos() + free_block_phys_sz;
+            to.page->pos(new_to_loc);
+
+            block* new_to_block = self_.block(new_to_loc);
+
+            // moving A forward in memory = regular unfancy forward copy
+            std::memcpy(new_to_block->data(), from.block->data(), logical_sz);
+
+            *new_to_block = retained;
+            new_to_block->reset(block::Trivial, true);
+        }
+        else
+        {
+            // In this scenario, we copy backawrds.  Block 0 (starts as F) header is
+            // preserved, block 1 is overwritten
+
+            // F:0 .. A:1  -> A:0 ... F:1
+            // to  .. from    to  ... from
+
+            v1::block retained = *from.block;
+
+            // New 'from' location (1) moves forward to make room for expanding
+            // 'to' block
+            pos_type new_from_loc = from.pos() + alloced_block_phys_sz;
+            from.page->pos(new_from_loc);
+
+            block* new_from_block = self_.block(new_from_loc);
+
+            // moving A backward in memory = fancy reverse copy
+            std::memmove(to.block->data(), from.block->data(), logical_sz);
+
+            *new_from_block = retained;
+            new_from_block->reset(block::Trivial, false);
+        }
+
+        dealloc(from);
+
+        // Not yet supported
+        //assert(false);
+    }
+    else
+    {
+        // Adjacent, trivial blocks don't have to meet this requirement
+        // TODO: Bring this check back for non adjacent OR non trivial blocks
+        //assert(to_block_phys_sz >= from_block_phys_sz);
+
+        to.block->move_from(from.block, logical_sz);
+        to.allocated(true);
+
+        dealloc(from);
+
+        // Resize 'to' to match old 'from'
+        if(to_block_phys_sz != from_block_phys_sz)
+            resize(to, from_block_phys_sz);
+    }
+
+    // Treat move as the dealloc it is, and do a merge evaluation
+    //merge(from, next(from));
+    //merge_if_free(prev(from), from);
+}
+
+
+
 template <class Traits>
 template <class HandleTraits>
 void pool<Traits>::ops<HandleTraits>::defrag(const fragmentation::candidate& c)
