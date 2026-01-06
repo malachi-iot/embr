@@ -105,7 +105,7 @@ template <class HandleTraits>
 unsigned pool<Traits>::ops<HandleTraits>::logical_size(const bundle& bn) const
 {
     // FIX: Needs more work
-    const unsigned tbd = bn.block->header_size<block::Trivial>();
+    const unsigned tbd = bn.block->header_size(block::Trivial);
     return phys_size(bn).count() * aliasing - tbd;
 }
 
@@ -158,12 +158,19 @@ auto pool<Traits>::ops<HandleTraits>::alloc(pos_type phys_sz, block::modes mode)
     if(bn.is_null() == false)
     {
         // If we're 3 blocks larger, go ahead and split
-        // NOTE: Will need tuning
-        constexpr pos_type split_threshold{3};
+        // We start with min block size.  On 64-bit systems that is:
+        // 8 for header, 8 for free data portion.  We then fudge it
+        // and say that either:
+        // 1. Room for RttoProxy mode is interesting OR
+        // 2. Room for larger than the tiniest free block is interesting
+        // So we add +1
+        // NOTE: May need tuning
+        constexpr pos_type min_block_and_data_phys_sz(2);
+        constexpr pos_type split_threshold{min_block_and_data_phys_sz + pos_type(1)};
 
         if(found_size - phys_sz >= split_threshold)
         {
-            pos_type at = bn.page->pos() + phys_sz;
+            pos_type at = bn.pos() + phys_sz;
 
             // DEBT: An assert is a little too harsh here, but helpful enough to keep for the short term
             // really we need an error code
@@ -172,6 +179,8 @@ auto pool<Traits>::ops<HandleTraits>::alloc(pos_type phys_sz, block::modes mode)
 
         bn.block->reset(mode, true);
     }
+
+    //assert(phys_size(bn) >= pos_type(2));
 
     return bn;
 }
@@ -185,7 +194,7 @@ auto pool<Traits>::ops<HandleTraits>::construct(Args&&...args) -> bundle
     constexpr bool rtto_proxied = mode == block::RttoProxy || mode == block::Immobile;
     // DEBT: Effective but error prone accounting for various block sizing.  Probably
     // ought to move this plumbing into 'emplace'
-    constexpr unsigned block_sz = block::header_size<mode>();
+    constexpr unsigned block_sz = block::header_size(mode);
 
     bundle bn = alloc(do_alias(sizeof(T) + block_sz), mode);
 
@@ -281,6 +290,7 @@ void pool<Traits>::ops<HandleTraits>::dealloc(bundle bn)
     if(bn.has_next())
         merge_if_free(bn, next(bn));
 
+    //assert(phys_size(bn) >= pos_type(2));
     //assert(bn.invariant());
 }
 

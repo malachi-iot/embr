@@ -234,7 +234,7 @@ public:
     template <v1::block::modes mode = v1::block::Trivial, class Traits2>
     typename Traits2::size_type alloc(handles<Traits2>& h, unsigned logical_sz)
     {
-        constexpr unsigned block_sz = v1::block::header_size<mode>();
+        constexpr unsigned block_sz = v1::block::header_size(mode);
         return ops<Traits2>{*this, h}.alloc(do_alias(logical_sz + block_sz), mode).handle;
     }
 

@@ -192,7 +192,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                 }
                 SECTION("alloc")
                 {
-                    constexpr unsigned block_sz = block::header_size<block::Trivial>();
+                    constexpr unsigned block_sz = block::header_size(block::Trivial);
                     bundle bn = op.alloc(phys_sz, block::Trivial);
 
                     REQUIRE(bn.invariant());
@@ -230,7 +230,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                 }
                 SECTION("assess")
                 {
-                    constexpr unsigned block_sz = block::header_size<block::Trivial>();
+                    constexpr unsigned block_sz = block::header_size(block::Trivial);
                     detail::fragmentation frag{};
                     auto& frag0 = frag.candidates[0];
                     auto& frag1 = frag.candidates[1];
@@ -303,7 +303,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                         unsigned available = op.available();
                         REQUIRE(available == pool_size - (32 + 8));
                     }
-                    SECTION("defrag case 1")
+                    SECTION("defrag case 2: reverse overlapping trivial movement")
                     {
                         // NOTE: Doesn't match defrag failure pool size (that one's 512)
                         assemble_pool<pool_traits>(op, test::pool2);
@@ -323,6 +323,24 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
 
                         unsigned alloced = op.alloced();
                         REQUIRE(alloced == 16 + 56 + 40 + 32);
+                    }
+                    SECTION("defrag case 3:")
+                    {
+                        assemble_pool<pool_traits>(op, test::pool3);
+
+                        detail::const_bundle from, to;
+
+                        from.convert_from(op.get_bundle(4));
+                        to.convert_from(op.get_bundle(3));
+
+                        detail::fragmentation::candidate frag0{171, from, to, true};
+
+                        //op.defrag(frag0);
+
+                        op.dump(out);
+
+                        CAPTURE(out.str());
+                        REQUIRE(op.invariant());
                     }
                 }
             }
@@ -350,7 +368,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
         using bundle = pool_type::ops_type::bundle;
         pool_type pool1;
         using block = detail::v1::block;
-        constexpr unsigned block_sz = block::header_size<block::Trivial>();
+        constexpr unsigned block_sz = block::header_size(block::Trivial);
 
         // DEBT: This guy still being stupid
         pool1.ops().reset();

@@ -95,8 +95,7 @@ public:
     rtto_base_type* rtto_base() { return (rtto_base_type*) data_; }
 
     // FIX: Probably not 100% right, because RttoBase mode includes size of rtto::u_ in the object itself
-    template <modes mode>
-    static constexpr unsigned header_size()
+    static constexpr unsigned header_size(modes mode)
     {
         return mode == Trivial ? sizeof(block) : (sizeof(block) + sizeof(estd::internal::rtto_base::base));
     }

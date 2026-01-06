@@ -36,19 +36,27 @@ static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& 
 
     for(int i = 0; i < allocs_to_do; ++i)
     {
+        std::ostringstream before, after;
+
         INFO("Phase 1");
 
-        pos_type phys_sz(distrib(gen));
+        // DEBT: bring back 0-byte allocation requests as a bounds check.  Maybe ops itself shouldn't
+        // kick back, but higher level mode definitely would need to
+        pos_type phys_sz(distrib(gen) + 1);
 
-        CAPTURE(i, phys_sz.count());
+        ops.dump(before << "\n");
 
-        // FIX: We never should alloc phys_sz of 1 since that's effectively a malloc(0).  Waiting
-        // to repair that until we solve below dealloc issues first
+        const unsigned available = ops.available();
+
+        CAPTURE(before.str(), i, phys_sz.count(), available);
+
         bundle bn = ops.alloc(phys_sz, block::Trivial);
 
         //REQUIRE((int)bn.handle != null);
         // I don't want assertions number to balloon at the moment
-        assert(bn.handle != null);
+
+        // Either we have a real handle or we failed because OOM
+        assert(phys_sz.count() * ops.aliasing >= available || bn.handle != null);
 
         assert(ops.invariant());
     }
