@@ -291,6 +291,10 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                 }
                 SECTION("pool assembly/edge cases")
                 {
+                    std::ostringstream before;
+
+                    before << "\nbefore:\n";
+
                     std::ostringstream out;
 
                     out << "\n";
@@ -324,7 +328,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                         unsigned alloced = op.alloced();
                         REQUIRE(alloced == 16 + 56 + 40 + 32);
                     }
-                    SECTION("defrag case 3:")
+                    SECTION("defrag case 3: reverse overlapping trivial movement")
                     {
                         assemble_pool<pool_traits>(op, test::pool3);
 
@@ -335,12 +339,31 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
 
                         detail::fragmentation::candidate frag0{171, from, to, true};
 
+                        op.dump(before);
+
+                        op.defrag(frag0);
+
+                        op.dump(out);
+
+                        CAPTURE(before.str(), out.str());
+                        REQUIRE(op.invariant());
+                    }
+                    SECTION("defrag case 4:")
+                    {
+                        assemble_pool<pool_traits>(op, test::pool4);
+
+                        detail::const_bundle from, to;
+
+                        /*
+
+                        op.dump(before);
+
                         //op.defrag(frag0);
 
                         op.dump(out);
 
-                        CAPTURE(out.str());
-                        REQUIRE(op.invariant());
+                        CAPTURE(before.str(), out.str());
+                        REQUIRE(op.invariant());    */
                     }
                 }
             }

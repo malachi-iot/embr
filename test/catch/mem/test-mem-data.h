@@ -67,5 +67,17 @@ static const page pool3[]
     { /* 5 */ 0,  block{ block::Trivial, F } },
 };
 
+// Not ready yet - need a skip-handle signal for assemble_pool
+static const page pool4[]
+{
+    { /* 0 */ 24,  block{ block::Trivial, F } },
+    { /* 1 */ 80,  block{ block::Trivial, A } },
+    { /* 2 */ 160, block{ block::Trivial, F } },
+    { /* 3 */ 0,   {} },
+    { /* 4 */ 0,   {} },
+    { /* 5 */ 0,   {} },
+    { /* 6 */ 88,  block{ block::Trivial, A } },
+    { /* 7 */ 0 ,  block{ block::Trivial, F } }
+};
 
 }}

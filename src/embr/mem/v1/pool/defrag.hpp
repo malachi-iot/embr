@@ -73,7 +73,7 @@ void pool<Traits>::ops<HandleTraits>::move(bundle from, bundle to, unsigned logi
 
             // New 'from' location (1) moves forward to make room for expanding
             // 'to' block
-            pos_type new_from_loc = from.pos() + alloced_block_phys_sz;
+            pos_type new_from_loc = to.pos() + alloced_block_phys_sz;
             from.page->pos(new_from_loc);
 
             block* new_from_block = self_.block(new_from_loc);
@@ -82,7 +82,9 @@ void pool<Traits>::ops<HandleTraits>::move(bundle from, bundle to, unsigned logi
             std::memmove(to.block->data(), from.block->data(), logical_sz);
 
             *new_from_block = retained;
-            new_from_block->reset(block::Trivial, false);
+            to.block->reset(block::Trivial, true);
+
+            from.block = new_from_block;
         }
 
         dealloc(from);
