@@ -17,15 +17,17 @@ static void assemble_pool(typename detail::pool<Traits>::template ops<HandlesTra
 {
     using pos_type = typename Traits::pos_type;
     const auto aliasing = ops.aliasing;
-    int prev = HandlesTraits::null;
+    const auto null = HandlesTraits::null;
+    int prev = null;
 
     pos_type tally(0);
 
-    for(int i = 0; i < N; ++i)
+    for(unsigned i = 0, j = 0; j < N; ++j)
     {
-        int next = i == N - 1 ? HandlesTraits::null : i + 1;
+        const test::page& page = pool[j];
 
-        const test::page& page = pool[i];
+        int next = j == N - 1 ? null : page.blk.next() == null ?
+            i + 1 : page.blk.next();
 
         ops.handles_[i].pos(tally);
         detail::bundle b = ops.get_bundle(i);
@@ -35,6 +37,7 @@ static void assemble_pool(typename detail::pool<Traits>::template ops<HandlesTra
         tally += pos_type(page.phys_sz / aliasing);
 
         prev = i;
+        i = next;
     }
 }
 
@@ -348,22 +351,25 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                         CAPTURE(before.str(), out.str());
                         REQUIRE(op.invariant());
                     }
-                    SECTION("defrag case 4:")
+                    SECTION("defrag case 4: reverse non-overlapping trivial")
                     {
                         assemble_pool<pool_traits>(op, test::pool4);
 
                         detail::const_bundle from, to;
 
-                        /*
-
                         op.dump(before);
+
+                        from.convert_from(op.get_bundle(6));
+                        to.convert_from(op.get_bundle(2));
+
+                        detail::fragmentation::candidate frag0{171, from, to, false};
 
                         //op.defrag(frag0);
 
                         op.dump(out);
 
                         CAPTURE(before.str(), out.str());
-                        REQUIRE(op.invariant());    */
+                        REQUIRE(op.invariant());
                     }
                 }
             }
