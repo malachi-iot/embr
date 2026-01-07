@@ -169,17 +169,17 @@ void pool<Traits>::ops<HandleTraits>::assess(fragmentation* frag) const
 
                 if(cur.is_trivial())
                 {
-                    pos_type max = estd::max(bn_prev_sz, bn_next_sz);
+                    pos_type max = bn_prev_sz + bn_next_sz;
 
-                    pos_type prev_boost = bn_prev_sz * booster;
-                    pos_type next_boost = bn_next_sz * booster;
+                    pos_type prev_boost = (max - bn_prev_sz) * booster;
+                    pos_type next_boost = (max - bn_next_sz) * booster;
 
                     // If following F block is the would-be end big-free-block, greatly favor
                     // previous F block so that merge can create end big-free-block
-                    if(!bn_next.has_next()) prev_boost *= 4;
+                    if(!bn_next.has_next()) prev_boost *= booster * booster;
 
                     // Favor the smaller fitting F
-                    if(next_boost < prev_boost)
+                    if(next_boost > prev_boost)
                     {
                         overlap = bn_cur_sz > bn_next_sz;
                         which = &bn_next;

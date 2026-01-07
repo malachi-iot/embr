@@ -141,8 +141,8 @@ TEST_CASE("gc mem v1 battery", "[memory][gc][battery]")
         using pool_type = v1::layer1::pool<pool_sz, 8>;
         using traits = pool_type::pool_traits;
 
-        //std::mt19937 rng{12345}; // fixed seed: deterministic sequence
-        std::mt19937 rng{2}; // fixed seed: deterministic sequence
+        std::mt19937 rng{12345}; // fixed seed: deterministic sequence
+        //std::mt19937 rng{2}; // fixed seed: deterministic sequence
         //std::mt19937 rng{4}; // fixed seed: deterministic sequence
 
         // FIX: Next up is defrag move doesn't fully update next handle, creating a circular list

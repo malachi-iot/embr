@@ -374,7 +374,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                         CAPTURE(before.str(), out.str());
                         REQUIRE(op.invariant());
                     }
-                    SECTION("defrag case 5: ")
+                    SECTION("defrag case 5: big-free-block unselect")
                     {
                         constexpr unsigned pool_size = 512;
                         //using handles_traits = detail::v1::handles_traits<page[8]>;
@@ -389,20 +389,29 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
 
                         assemble_pool<pool_traits>(op, test::pool5);
 
-                        detail::const_bundle from, to;
-
                         op.dump(before);
 
                         op.assess(&frag);
 
-                        // NOTE: Battery yields 6 -> 7 move which is odd.  Our assess here
-                        // yields 6 -> 3 which is desired.  In the meantime though, there's a 2nd issue
-                        // where defrag dies in this condition.
+                        // Without tuning, assess will select last free block since it's smaller in this case.
+                        // However, we favor the last big-free-block paradigm.  Ensure that we move 6 -> 3
+                        // so that 6 and 7 can merge into big free block
+
+                        REQUIRE(frag0.bundle.handle == 6);
+                        REQUIRE(frag0.move_to.handle == 3);
 
                         op.defrag(frag0);
 
                         CAPTURE(before.str(), out.str());
                         REQUIRE(op.invariant());
+                    }
+                    SECTION("defrag case 6: ")
+                    {
+                        assemble_pool<pool_traits>(op, test::pool6);
+
+                        detail::const_bundle from, to;
+
+                        op.dump(before);
                     }
                 }
             }
