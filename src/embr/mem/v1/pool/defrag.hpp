@@ -104,7 +104,7 @@ void pool<Traits>::ops<HandleTraits>::move(bundle from, bundle to, unsigned logi
         dealloc(from);
 
         // Resize 'to' to match old 'from'
-        if(to_block_phys_sz != from_block_phys_sz)
+        if(to.has_next() && to_block_phys_sz != from_block_phys_sz)
             resize(to, from_block_phys_sz);
     }
 
@@ -147,8 +147,7 @@ void pool<Traits>::ops<HandleTraits>::assess(fragmentation* frag) const
 
     while(cur.handle != block::null)
     {
-        if(cur.is_null() == false && bn_prev.is_null() == false &&
-            cur.block->next() != null)
+        if(cur.is_null() == false && bn_prev.is_null() == false && cur.has_next())
         {
             pos_type bn_prev_sz = bn_cur_sz;
             pos_type bn_next_sz = phys_size(bn_next);
@@ -170,8 +169,14 @@ void pool<Traits>::ops<HandleTraits>::assess(fragmentation* frag) const
 
                 if(cur.is_trivial())
                 {
+                    pos_type max = estd::max(bn_prev_sz, bn_next_sz);
+
                     pos_type prev_boost = bn_prev_sz * booster;
                     pos_type next_boost = bn_next_sz * booster;
+
+                    // If following F block is the would-be end big-free-block, greatly favor
+                    // previous F block so that merge can create end big-free-block
+                    if(!bn_next.has_next()) prev_boost *= 4;
 
                     // Favor the smaller fitting F
                     if(next_boost < prev_boost)

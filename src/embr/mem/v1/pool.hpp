@@ -258,6 +258,7 @@ template <class Traits>
 template <class HandleTraits>
 v1::block* pool<Traits>::ops<HandleTraits>::resize(bundle bn, pos_type new_sz)
 {
+    assert(bn.has_next());
     bundle bn_next = next(bn);
     assert(bn_next.allocated() == false);
 

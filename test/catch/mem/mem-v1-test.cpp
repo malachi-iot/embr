@@ -295,6 +295,8 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                 SECTION("pool assembly/edge cases")
                 {
                     detail::fragmentation frag;
+                    detail::fragmentation::candidate& frag0 = frag.candidates[0];
+
                     std::ostringstream before;
 
                     before << "\nbefore:\n";
@@ -320,7 +322,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                         from.convert_from(op.get_bundle(2));
                         to.convert_from(op.get_bundle(3));
 
-                        detail::fragmentation::candidate frag0{48, from, to, true};
+                        frag0 = {48, from, to, true};
 
                         op.defrag(frag0);
 
@@ -363,7 +365,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                         from.convert_from(op.get_bundle(6));
                         to.convert_from(op.get_bundle(2));
 
-                        detail::fragmentation::candidate frag0{171, from, to, false};
+                        frag0 = {171, from, to, false};
 
                         op.defrag(frag0);
 
@@ -374,23 +376,33 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                     }
                     SECTION("defrag case 5: ")
                     {
+                        constexpr unsigned pool_size = 512;
+                        //using handles_traits = detail::v1::handles_traits<page[8]>;
+                        using handles_type = detail::v1::handles<handles_traits>;
+                        using pool_traits = detail::v1::pool_traits<char[pool_size]>;
+                        using pool_type = detail::v1::pool<pool_traits>;
+                        using ops_type = pool_type::ops<handles_traits>;
+
+                        pool_type pool;
+
+                        ops_type op{pool, handles};
+
                         assemble_pool<pool_traits>(op, test::pool5);
 
                         detail::const_bundle from, to;
 
                         op.dump(before);
 
-                        //from.convert_from(op.get_bundle(6));
-                        //to.convert_from(op.get_bundle(7));
-
-                        //detail::fragmentation::candidate frag0{135, from, to, false};
                         op.assess(&frag);
 
                         // NOTE: Battery yields 6 -> 7 move which is odd.  Our assess here
-                        // yields 6 -> 3 which is desired.
+                        // yields 6 -> 3 which is desired.  In the meantime though, there's a 2nd issue
+                        // where defrag dies in this condition.
+
+                        op.defrag(frag0);
 
                         CAPTURE(before.str(), out.str());
-
+                        REQUIRE(op.invariant());
                     }
                 }
             }
