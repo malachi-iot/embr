@@ -294,6 +294,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                 }
                 SECTION("pool assembly/edge cases")
                 {
+                    detail::fragmentation frag;
                     std::ostringstream before;
 
                     before << "\nbefore:\n";
@@ -364,12 +365,32 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
 
                         detail::fragmentation::candidate frag0{171, from, to, false};
 
-                        //op.defrag(frag0);
+                        op.defrag(frag0);
 
                         op.dump(out);
 
                         CAPTURE(before.str(), out.str());
                         REQUIRE(op.invariant());
+                    }
+                    SECTION("defrag case 5: ")
+                    {
+                        assemble_pool<pool_traits>(op, test::pool5);
+
+                        detail::const_bundle from, to;
+
+                        op.dump(before);
+
+                        //from.convert_from(op.get_bundle(6));
+                        //to.convert_from(op.get_bundle(7));
+
+                        //detail::fragmentation::candidate frag0{135, from, to, false};
+                        op.assess(&frag);
+
+                        // NOTE: Battery yields 6 -> 7 move which is odd.  Our assess here
+                        // yields 6 -> 3 which is desired.
+
+                        CAPTURE(before.str(), out.str());
+
                     }
                 }
             }

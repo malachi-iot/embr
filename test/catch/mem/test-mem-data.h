@@ -67,11 +67,22 @@ static const page pool3[]
     { /* 5 */ 0,  block{ block::Trivial, F } },
 };
 
+// tested: reverse non-overlapping trivial
 static const page pool4[]
 {
     { /* 0 */ 24,  block{ block::Trivial, F } },
     { /* 1 */ 80,  block{ block::Trivial, A } },
     { /* 2 */ 160, block{ block::Trivial, F, {}, 6 } },
+    { /* 6 */ 88,  block{ block::Trivial, A } },
+    { /* 7 */ 0 ,  block{ block::Trivial, F } }
+};
+
+static const page pool5[]
+{
+    { /* 0 */ 72,  block{ block::Trivial, A } },
+    { /* 1 */ 48,  block{ block::Trivial, A } },
+    { /* 2 */ 56,  block{ block::Trivial, A } },
+    { /* 3 */ 144, block{ block::Trivial, F, {}, 6 } },
     { /* 6 */ 88,  block{ block::Trivial, A } },
     { /* 7 */ 0 ,  block{ block::Trivial, F } }
 };

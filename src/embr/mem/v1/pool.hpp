@@ -242,14 +242,28 @@ bool pool<Traits>::ops<HandleTraits>::merge_if_free(bundle current, bundle next)
 
 template <class Traits>
 template <class HandleTraits>
+v1::block* pool<Traits>::ops<HandleTraits>::move_block(page_type& page, pos_type new_pos)
+{
+    block* from = self_.block(page.pos());
+    block* to = self_.block(new_pos);
+
+    page.pos(new_pos);
+
+    *to = *from;
+
+    return to;
+}
+
+template <class Traits>
+template <class HandleTraits>
 v1::block* pool<Traits>::ops<HandleTraits>::resize(bundle bn, pos_type new_sz)
 {
     bundle bn_next = next(bn);
-    pos_type pos = bn.pos() + new_sz;
-    v1::block* copy_to_block = self_.block(pos);
-    *copy_to_block = *bn.block;
-    bn_next.page->pos(pos);
-    return copy_to_block;
+    assert(bn_next.allocated() == false);
+
+    const pos_type pos = bn.pos() + new_sz;
+
+    return move_block(*bn_next.page, pos);
 }
 
 

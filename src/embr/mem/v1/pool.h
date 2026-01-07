@@ -192,6 +192,15 @@ public:
 
         unsigned logical_size(const bundle&) const;
 
+        /// Moves block itself to new location - does not consider payload data
+        /// Free blocks only is RECOMMENDED
+        block* move_block(page_type&, pos_type);
+
+        /// Resizes a bundle to new presented size.  next block MUST be a free block
+        /// with enough space
+        /// @brief resize
+        /// @param new_sz
+        /// @return
         v1::block* resize(bundle, pos_type new_sz);
 
         bundle alloc(pos_type phys_sz, block::modes mode);
