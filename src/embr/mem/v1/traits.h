@@ -8,7 +8,7 @@
 namespace embr { namespace mem {
 
 // DEBT: container_traits looking pretty useful.  Consider putting him up at estd level
-// Backing off of this - std::data() and std::size() seem to do the job here (though
+// 08JAN26 MB - Backing off of this - std::data() and std::size() seem to do the job here (though
 // the STD_VALUE_TYPE is still nice)
 template <class T, int N>
 struct container_traits<T[N]>
@@ -41,6 +41,25 @@ struct container_traits<estd::span<T, N>>
 
     //static pointer data(container_type& c) { return c.data(); }
 };
+
+
+/*
+// DEBT: Guard with #if STD SPAN availability
+template <class T, std::size_t N>
+struct container_traits<std::span<T, N>>
+{
+    static constexpr bool constexpr_size = N != -1;
+
+    //static constexpr int size() { return N; }
+
+    using container_type = std::span<T, N>;
+
+    ESTD_CPP_STD_VALUE_TYPE(T)
+
+    using iterator = pointer;
+
+    //static pointer data(container_type& c) { return c.data(); }
+};  */
 
 
 namespace detail { inline namespace v1 {

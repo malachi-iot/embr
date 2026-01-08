@@ -308,7 +308,9 @@ void pool<Traits>::ops<HandleTraits>::assess(fragmentation* frag) const
 
         bn_prev = cur;
         cur = bn_next;
-        next(cur.block, &bn_next);
+
+        // DEBT: A little sloppy
+        if(cur.handle != null)  next(cur.block, &bn_next);
     }
 }
 

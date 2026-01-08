@@ -11,6 +11,8 @@
 
 using namespace embr::mem;
 
+#define ENABLE_RANDOM_BATTERY 1
+
 template <class Traits, class HandlesTraits>
 static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& ops, int it, unsigned seed)
 {
@@ -136,7 +138,7 @@ static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& 
 
 TEST_CASE("gc mem v1 battery", "[memory][gc][battery]")
 {
-    SECTION("layer1")
+    SECTION("layer1: pseudo random")
     {
         constexpr unsigned pool_sz = 512;
         using pool_type = v1::layer1::pool<pool_sz, 8>;
@@ -146,7 +148,6 @@ TEST_CASE("gc mem v1 battery", "[memory][gc][battery]")
         //std::mt19937 rng{2}; // fixed seed: deterministic sequence
         //std::mt19937 rng{4}; // fixed seed: deterministic sequence
 
-        // FIX: Next up is defrag move doesn't fully update next handle, creating a circular list
         for(int i = 0; i < 100; ++i)
         {
             pool_type pool;
@@ -156,5 +157,68 @@ TEST_CASE("gc mem v1 battery", "[memory][gc][battery]")
             ops.reset();
             battery<traits>(ops, i, rng());
         }
+    }
+    SECTION("layer3")
+    {
+        using pool_type = v1::layer3::pool;
+        using traits = pool_type::pool_traits;
+
+        SECTION("pseudo-random")
+        {
+            auto raw_pages = new traits::page_type[10];
+            auto raw_pool = new char[512];
+
+            std::mt19937 rng{12345}; // fixed seed: deterministic sequence
+
+            for(int i = 0; i < 100; ++i)
+            {
+                pool_type pool({ raw_pages, 10 }, { raw_pool, 512 });
+
+                auto ops = pool.ops();
+
+                // DEBT: Still having to do this
+                ops.reset();
+                battery<traits>(ops, i, rng());
+            }
+
+            delete [] raw_pages;
+            delete [] raw_pool;
+        }
+#if ENABLE_RANDOM_BATTERY
+        SECTION("random")
+        {
+            std::random_device r;
+
+            std::mt19937 rng{r()};
+
+            // NOTE: We may want to revert to all asserts in battery so that assert count doesn't fluctuate a lot
+            for(int i = 0; i < 100; ++i)
+            {
+                // DEBT: Probably uniform dist is a better guy to ping for this
+                unsigned raw_pages_sz = rng() % 20;
+                unsigned raw_pool_sz = (rng() % 4096) / 8;
+
+                raw_pages_sz += 4;
+                raw_pool_sz += 4;
+                raw_pool_sz *= 8;
+
+                auto raw_pages = new traits::page_type[raw_pages_sz];
+                auto raw_pool = new char[raw_pool_sz];
+
+                pool_type pool({ raw_pages, raw_pages_sz }, { raw_pool, raw_pool_sz });
+
+                CAPTURE(raw_pages_sz, raw_pool_sz);
+
+                auto ops = pool.ops();
+
+                // DEBT: Still having to do this
+                ops.reset();
+                battery<traits>(ops, i, rng());
+
+                delete [] raw_pages;
+                delete [] raw_pool;
+            }
+        }
+#endif
     }
 }

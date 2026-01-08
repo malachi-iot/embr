@@ -349,6 +349,48 @@ public:
 
 }
 
+
+namespace layer3 {
+
+class pool : public detail::v1::pool_crtp<pool>
+{
+    friend class detail::v1::pool_crtp<pool>;
+
+public:
+    using page_type = detail::v1::page<uint16_t>;
+    using handles_traits = detail::v1::handles_traits<estd::span<page_type>>;
+    using pool_traits = detail::v1::pool_traits<estd::span<char>>;
+
+private:
+    detail::v1::pool<pool_traits> pool_;
+    detail::v1::handles<handles_traits> handles_;
+
+#if UNIT_TESTING
+public:
+#endif
+    using ops_type = typename detail::v1::pool<pool_traits>::template ops<handles_traits>;
+
+    ops_type ops() { return {pool_, handles_}; }
+
+public:
+    pool(estd::span<page_type> pages, estd::span<char> raw) :
+        pool_(raw),
+        handles_(pages)
+    {}
+
+    using handle_type = typename handles_traits::size_type;
+
+    handle_type alloc(int logical_sz) { return pool_.alloc(handles_, logical_sz); }
+
+    template <class T, class ...Args>
+    handle_type construct(Args&&...args)
+    {
+        return pool_.template construct<T>(handles_, std::forward<Args>(args)...);
+    }
+};
+
+}
+
 }
 
 }}
