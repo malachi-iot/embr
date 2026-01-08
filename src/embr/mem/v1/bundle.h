@@ -28,6 +28,20 @@ struct bundle_base
     page_type* page;
     handle_type handle{null};
 
+    bundle_base() = default;
+
+    // DEBT: Sloppy conversion from non-const to const.  Should enforce this more strictly
+    template <class Block2, class Page2>
+    bundle_base(const bundle_base<handles_traits, Block2, Page2>& convert_from) :
+        block(convert_from.block),
+        page(convert_from.page),
+        handle(convert_from.handle)
+    {}
+
+    constexpr bundle_base(Block* block, page_type* page, handle_type handle) :
+        block{block}, page{page}, handle{handle}
+    {}
+
     constexpr bool allocated() const { return block->allocated(); }
 
     constexpr pos_type pos() const { return page->pos(); }
@@ -66,7 +80,7 @@ struct bundle_base
 
     // DEBT: Sloppy way to convert between const and non-const bundles.
     template <class Block2, class Page2>
-    bundle_base& convert_from(const bundle_base<handles_traits, Block2, Page2>& copy_from)
+    bundle_base& operator =(const bundle_base<handles_traits, Block2, Page2>& copy_from)
     {
         block = copy_from.block;
         page = copy_from.page;

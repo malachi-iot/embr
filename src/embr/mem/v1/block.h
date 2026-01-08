@@ -91,6 +91,7 @@ public:
     }
 
     void* data() { return data_; }
+    constexpr const void* data() const { return data_; }
     rtto_proxy* proxy() { return (rtto_proxy*) data_; }
     rtto_base_type* rtto_base() { return (rtto_base_type*) data_; }
 

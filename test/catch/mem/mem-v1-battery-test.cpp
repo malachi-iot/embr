@@ -113,6 +113,7 @@ static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& 
         auto& frag0 = frag.candidates[0];
 
         CAPTURE(frag0.score, frag0.bundle.handle, frag0.move_to.handle);
+        CAPTURE(frag0.overlap, frag0.adjacent);
 
         if(frag0.score > 0)
         {

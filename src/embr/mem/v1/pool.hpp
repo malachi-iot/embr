@@ -256,17 +256,26 @@ v1::block* pool<Traits>::ops<HandleTraits>::move_block(page_type& page, pos_type
 
 template <class Traits>
 template <class HandleTraits>
-v1::block* pool<Traits>::ops<HandleTraits>::resize(bundle bn, pos_type new_sz)
+v1::block* pool<Traits>::ops<HandleTraits>::resize(bundle bn, bundle bn_next, pos_type new_sz)
 {
-    assert(bn.has_next());
-    bundle bn_next = next(bn);
-    assert(bn_next.allocated() == false);
-
     const pos_type pos = bn.pos() + new_sz;
 
     return move_block(*bn_next.page, pos);
 }
 
+template <class Traits>
+template <class HandleTraits>
+v1::block* pool<Traits>::ops<HandleTraits>::resize(bundle bn, pos_type new_sz)
+{
+    assert(bn.has_next());
+    bundle bn_next = next(bn);
+    assert(bn_next.allocated() == false);
+    const pos_type bn_sz = phys_size(bn);
+    const pos_type bn_next_sz = phys_size(bn_next);
+    assert(new_sz <= bn_sz + bn_next_sz);
+
+    return resize(bn, bn_next, new_sz);
+}
 
 template <class Traits>
 template <class T, class Traits2, class ...Args>

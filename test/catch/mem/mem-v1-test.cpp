@@ -319,8 +319,8 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                         assemble_pool<pool_traits>(op, test::pool2);
                         detail::const_bundle from, to;
 
-                        from.convert_from(op.get_bundle(2));
-                        to.convert_from(op.get_bundle(3));
+                        from = op.get_bundle(2);
+                        to = op.get_bundle(3);
 
                         frag0 = {48, from, to, true};
 
@@ -340,8 +340,8 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
 
                         detail::const_bundle from, to;
 
-                        from.convert_from(op.get_bundle(4));
-                        to.convert_from(op.get_bundle(3));
+                        from = (op.get_bundle(4));
+                        to = (op.get_bundle(3));
 
                         detail::fragmentation::candidate frag0{171, from, to, true};
 
@@ -362,8 +362,8 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
 
                         op.dump(before);
 
-                        from.convert_from(op.get_bundle(6));
-                        to.convert_from(op.get_bundle(2));
+                        from = (op.get_bundle(6));
+                        to = (op.get_bundle(2));
 
                         frag0 = {171, from, to, false};
 
@@ -405,13 +405,34 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                         CAPTURE(before.str(), out.str());
                         REQUIRE(op.invariant());
                     }
-                    SECTION("defrag case 6: ")
+                    SECTION("defrag case 6: allocated block trailing moved-to")
                     {
                         assemble_pool<pool_traits>(op, test::pool6);
 
-                        detail::const_bundle from, to;
+                        op.dump(before);
+
+                        frag0 = {67, op.get_bundle(1), op.get_bundle(2), false, true};
+
+                        CAPTURE(before.str());
+
+                        op.defrag(frag0);
+                    }
+                    SECTION("defrag case 7: ")
+                    {
+                        assemble_pool<pool_traits>(op, test::pool7);
 
                         op.dump(before);
+
+                        frag0 = {54, op.get_bundle(1), op.get_bundle(2), false, true};
+
+                        CAPTURE(before.str());
+
+                        //op.defrag(frag0);
+
+                        op.dump(out);
+
+                        CAPTURE(out.str());
+                        REQUIRE(op.invariant());
                     }
                 }
             }

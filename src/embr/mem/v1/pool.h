@@ -202,6 +202,7 @@ public:
         /// @param new_sz
         /// @return
         v1::block* resize(bundle, pos_type new_sz);
+        v1::block* resize(bundle bn, bundle bn_next, pos_type new_sz);
 
         bundle alloc(pos_type phys_sz, block::modes mode);
 

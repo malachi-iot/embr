@@ -105,7 +105,36 @@ void pool<Traits>::ops<HandleTraits>::move(bundle from, bundle to, unsigned logi
 
         // Resize 'to' to match old 'from'
         if(to.has_next() && to_block_phys_sz != from_block_phys_sz)
-            resize(to, from_block_phys_sz);
+        {
+            bundle to_next(next(to));
+
+            // We already fit neatly into 'to', so this is only to move following free block backward
+            if(to_next.allocated() == false)
+                resize(to, to_next, from_block_phys_sz);
+            else
+            {
+                // If following block is allocated, instead see if we can do a split to create a mini
+                // free block
+
+                // DEBT: Consolidate with the logic in alloc
+                constexpr pos_type split_threshold{3};
+                // We do not use existing calculated size because 'dealloc' may have changed free
+                // block landscape
+                const pos_type phys_sz = to_next.pos() - to.pos();
+                const pos_type delta = phys_sz - from_block_phys_sz;
+
+                // If wasted alloc space count is large enough to split, do so
+                if(delta >= split_threshold)
+                {
+                    split(to, to_block_phys_sz);
+                }
+                else
+                {
+                    // DEBT: If not, we have a secret fragmentation hiding in extra-allocated space here.
+                    // Some extra movements may be appropriate here, revisit
+                }
+            }
+        }
     }
 
     // Treat move as the dealloc it is, and do a merge evaluation
