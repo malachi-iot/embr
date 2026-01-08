@@ -6,6 +6,9 @@
 // FIX: ESP-IDF seems to treat 'y' here as a 1, but regular GCC doesn't.  This is too wide
 // a descrepency, I am not understanding something
 #define FEATURE_EMBR_DSP_PRECALC_TABLE CONFIG_EMBR_DSP_PRECALC_TABLE
+#endif
+
+#if ESP_PLATFORM && FEATURE_EMBR_DSP_PRECALC_TABLE
 #define FEATURE_EMBR_DSP_PRECALC_TABLE_STATIC CONFIG_EMBR_DSP_PRECALC_TABLE_STATIC
 #define EMBR_DSP_PRECALC_TABLE_SZ   CONFIG_EMBR_DSP_PRECALC_TABLE_SZ
 

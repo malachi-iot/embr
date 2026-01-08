@@ -24,7 +24,8 @@ void init_sin_table() { init_sin_table_(detail::sin_table); }
 #else
 void init_sin_table(float* table) { init_sin_table_(table); }
 #endif
+}
 
 #endif
 
-}}}
+}}
