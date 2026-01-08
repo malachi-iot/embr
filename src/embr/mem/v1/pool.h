@@ -146,10 +146,11 @@ public:
         block* create_free_block(pos_type, handle_type prev, handle_type next);
 
         /// Creates a new free block inside bundle, before next block
-        /// @param at
+        /// @param at particular location of split - NOT a size
         /// @details presumes bundle is big enough to split, no checks performed.
-        /// Does not notice if block following this bundle is already free
-        handle_type split(bundle, pos_type at);
+        /// Does not notice if block following this bundle is already free.  Renamed
+        /// from 'split' to disambiguate that we need absolute position, not relative size
+        handle_type split_at(bundle, pos_type at);
 
         ///
         /// @brief merge

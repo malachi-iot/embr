@@ -120,13 +120,19 @@ void pool<Traits>::ops<HandleTraits>::move(bundle from, bundle to, unsigned logi
                 constexpr pos_type split_threshold{3};
                 // We do not use existing calculated size because 'dealloc' may have changed free
                 // block landscape
+                // DEBT: Although probably not, since if to_next is allocated so far there are no use cases
+                // which would move to_next around before we get here
                 const pos_type phys_sz = to_next.pos() - to.pos();
                 const pos_type delta = phys_sz - from_block_phys_sz;
 
                 // If wasted alloc space count is large enough to split, do so
                 if(delta >= split_threshold)
                 {
-                    split(to, to_block_phys_sz);
+                    const pos_type new_pos1 = to_next.pos() - delta;
+                    //const pos_type new_pos2 = to.pos() + from_block_phys_sz;
+                    //assert(new_pos1 == new_pos2);
+                    // DEBT: Much like alloc, this is a bit harsh
+                    assert(split_at(to, new_pos1));
                 }
                 else
                 {

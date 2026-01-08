@@ -95,7 +95,7 @@ invariant_result pool<Traits>::ops<HandleTraits>::invariant() const
 #if FEATURE_EMBR_MEM_INVARIANT_BOOL
         return false;
 #else
-        return result({"size tally failed", "during prev check"});
+        return result({"size tally failed", "final check"});
 #endif
 
 #if FEATURE_EMBR_MEM_INVARIANT_BOOL

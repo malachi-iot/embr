@@ -417,7 +417,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
 
                         op.defrag(frag0);
                     }
-                    SECTION("defrag case 7: ")
+                    SECTION("defrag case 7: split")
                     {
                         assemble_pool<pool_traits>(op, test::pool7);
 

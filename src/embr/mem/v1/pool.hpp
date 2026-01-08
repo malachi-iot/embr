@@ -122,7 +122,7 @@ auto pool<Traits>::ops<HandleTraits>::create_free_block(
 
 template <class Traits>
 template <class HandleTraits>
-auto pool<Traits>::ops<HandleTraits>::split(bundle b, pos_type at) -> handle_type
+auto pool<Traits>::ops<HandleTraits>::split_at(bundle b, pos_type at) -> handle_type
 {
     // Brand new handle needed for this
     return handles_.alloc([&](handle_type h, page_type& page)
@@ -174,7 +174,7 @@ auto pool<Traits>::ops<HandleTraits>::alloc(pos_type phys_sz, block::modes mode)
 
             // DEBT: An assert is a little too harsh here, but helpful enough to keep for the short term
             // really we need an error code
-            assert(split(bn, at) != handles_type::traits::null);
+            assert(split_at(bn, at) != handles_type::traits::null);
         }
 
         bn.block->reset(mode, true);
