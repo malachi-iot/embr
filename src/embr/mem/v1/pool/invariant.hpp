@@ -65,6 +65,9 @@ invariant_result pool<Traits>::ops<HandleTraits>::invariant() const
         if(bn.page->is_null())
             return result({"null page encountered", "during next check"});
 
+        if(bn_last.handle != bn.block->prev())
+            return result({"prev link broken", "during next check"});
+
         size_tally += phys_size(bn);
 
         bn_last = bn;

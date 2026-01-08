@@ -131,6 +131,10 @@ auto pool<Traits>::ops<HandleTraits>::split_at(bundle b, pos_type at) -> handle_
 
         create_free_block(at, b.handle, b.block->next());
 
+        // if presented bundle b is followed by a block, splice in 'h'
+        // before b.next (traditional linked list insert)
+        if(b.has_next())    next(b).prev(h);
+
         b.next(h);
     });
 }

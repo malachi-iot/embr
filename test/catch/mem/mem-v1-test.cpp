@@ -427,7 +427,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
 
                         CAPTURE(before.str());
 
-                        //op.defrag(frag0);
+                        op.defrag(frag0);
 
                         op.dump(out);
 

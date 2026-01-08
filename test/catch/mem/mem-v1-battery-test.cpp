@@ -118,7 +118,7 @@ static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& 
         if(frag0.score > 0)
         {
             assert(frag0.invariant());
-            //ops.defrag(frag0);
+            ops.defrag(frag0);
         }
 
         ops.dump(after << "\n");
