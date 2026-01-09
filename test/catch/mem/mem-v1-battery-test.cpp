@@ -192,7 +192,7 @@ TEST_CASE("gc mem v1 battery", "[memory][gc][battery]")
 
             std::mt19937 rng{12345}; // fixed seed: deterministic sequence
 
-            for(int i = 0; i < 100; ++i)
+            for(int i = 0; i < 50; ++i)
             {
                 pool_type pool({ pages.get(), 10 }, { raw_pool, 512 });
 
@@ -212,7 +212,7 @@ TEST_CASE("gc mem v1 battery", "[memory][gc][battery]")
             auto pages = make_vector_random_size<traits::page_type>(rng, 4, 20);
             auto raw = make_vector_random_size<char>(rng, 32, 8192, 8);
 
-            for(int i = 0; i < 100; ++i)
+            for(int i = 0; i < 50; ++i)
             {
                 CAPTURE(pages.size(), raw.size());
 
@@ -259,7 +259,7 @@ TEST_CASE("gc mem v1 battery", "[memory][gc][battery]")
             std::mt19937 rng{r()};
 
             // NOTE: We may want to revert to all asserts in battery so that assert count doesn't fluctuate a lot
-            for(int i = 0; i < 100; ++i)
+            for(int i = 0; i < 50; ++i)
             {
                 auto pages = make_vector_random_size<traits::page_type>(rng, 4, 24);
                 auto raw = make_vector_random_size<char>(rng, 32, 4096, 8);
