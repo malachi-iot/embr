@@ -46,6 +46,8 @@ struct pool_traits : container_traits<Container>
     // DEBT: My gut tells me page_type/pos_type has a better home than this traits
     using page_type = page<uint16_t>;
     using pos_type = page_type::unit_type;
+
+    static_assert(sizeof(typename container_traits<Container>::value_type) == 1);
 };
 
 template <class Traits>
@@ -60,7 +62,11 @@ public:
     using typename traits::pos_type;
     //using traits::data;
 
+    // Doesn't work for span, see https://github.com/malachi-iot/estdlib/issues/167
+    using iterator_traits = estd::iterator_traits<container_type>;
+
 protected:
+    //static_assert(sizeof(typename iterator_traits::value_type) == 1);
 
     container_type pool_;
 
@@ -235,7 +241,12 @@ public:
     };
 
 public:
-    ESTD_CPP_FORWARDING_CTOR_MEMBER(pool, pool_)
+    template <class ...Args>
+    explicit constexpr pool(Args&&...args) :
+        pool_(std::forward<Args>(args)...)
+    {
+        assert(std::size(pool_) % aliasing == 0);
+    }
 
     // Just for diagnostics
     const char* data() const { return std::data(pool_); }
