@@ -19,10 +19,11 @@ static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& 
     using namespace detail;
     std::mt19937 gen{seed}; // fixed seed: deterministic sequence
 
-    using pos_type = typename Traits::pos_type;
+    using page_type = typename HandlesTraits::value_type;
+    using pos_type = typename page_type::unit_type;
     using bundle = detail::bundle;
     using handle_type = typename HandlesTraits::size_type;
-    using page_type = typename Traits::page_type;
+    using page_type = typename HandlesTraits::value_type;
     constexpr handle_type null = HandlesTraits::null;
     fragmentation frag;
 
@@ -184,13 +185,15 @@ TEST_CASE("gc mem v1 battery", "[memory][gc][battery]")
     {
         using pool_type = v1::layer3::pool;
         using traits = pool_type::pool_traits;
+        using handles_traits = pool_type::handles_traits;
+        using page_type = handles_traits::value_type;
 
         SECTION("pseudo-random: layer1 parity")
         {
-            auto pages = std::make_unique<traits::page_type[]>(10);
+            auto pages = std::make_unique<page_type[]>(10);
             auto raw_pool = new char[512];
 
-            std::mt19937 rng{12345}; // fixed seed: deterministic sequence
+            std::mt19937 rng{12345}; // NOLINT: fixed seed: deterministic sequence
 
             for(int i = 0; i < 50; ++i)
             {
@@ -207,9 +210,9 @@ TEST_CASE("gc mem v1 battery", "[memory][gc][battery]")
         }
         SECTION("pseudo-random")
         {
-            std::mt19937 rng{12345}; // fixed seed: deterministic sequence
+            std::mt19937 rng{12345}; // NOLINT: fixed seed: deterministic sequence
 
-            auto pages = make_vector_random_size<traits::page_type>(rng, 4, 20);
+            auto pages = make_vector_random_size<page_type>(rng, 4, 20);
             auto raw = make_vector_random_size<char>(rng, 32, 8192, 8);
 
             for(int i = 0; i < 50; ++i)
@@ -234,7 +237,7 @@ TEST_CASE("gc mem v1 battery", "[memory][gc][battery]")
                 unsigned raw_pool_sz = 32;
                 unsigned seed = 2524755352;
 
-                auto raw_pages = new traits::page_type[raw_pages_sz];
+                auto raw_pages = new page_type[raw_pages_sz];
                 auto raw_pool = new char[raw_pool_sz];
 
                 pool_type pool({ raw_pages, raw_pages_sz }, { raw_pool, raw_pool_sz });
@@ -261,7 +264,7 @@ TEST_CASE("gc mem v1 battery", "[memory][gc][battery]")
             // NOTE: We may want to revert to all asserts in battery so that assert count doesn't fluctuate a lot
             for(int i = 0; i < 50; ++i)
             {
-                auto pages = make_vector_random_size<traits::page_type>(rng, 4, 24);
+                auto pages = make_vector_random_size<page_type>(rng, 4, 24);
                 auto raw = make_vector_random_size<char>(rng, 32, 4096, 8);
 
                 CAPTURE(pages.size(), raw.size());

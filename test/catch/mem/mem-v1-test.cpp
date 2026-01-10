@@ -15,7 +15,8 @@ using namespace embr::mem;
 template <class Traits, class HandlesTraits, std::size_t N>
 static void assemble_pool(typename detail::pool<Traits>::template ops<HandlesTraits>& ops, const test::page (&pool)[N])
 {
-    using pos_type = typename Traits::pos_type;
+    using page_type = typename HandlesTraits::value_type;
+    using pos_type = typename page_type::unit_type;
     const auto aliasing = ops.aliasing;
     const auto null = HandlesTraits::null;
     int prev = null;
@@ -167,7 +168,6 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
             using handles_type = detail::v1::handles<handles_traits>;
             using pool_traits = detail::v1::pool_traits<char[pool_size]>;
             using pool_type = detail::v1::pool<pool_traits>;
-            using pos_type = pool_type::pos_type;
 
             handles_type handles;
             pool_type pool;
@@ -180,6 +180,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                 using bundle = detail::v1::bundle;
                 using block = detail::v1::block;
                 using ops_type = pool_type::ops<handles_traits>;
+                using pos_type = ops_type::pos_type;
                 ops_type op{pool, handles};
                 constexpr pos_type phys_sz(8);
                 constexpr unsigned phys_sz_bytes = ops_type::aliasing * phys_sz.count();

@@ -43,10 +43,6 @@ struct fragmentation
 template <class Container>
 struct pool_traits : container_traits<Container>
 {
-    // DEBT: My gut tells me page_type/pos_type has a better home than this traits
-    using page_type = page<uint16_t>;
-    using pos_type = page_type::unit_type;
-
     static_assert(sizeof(typename container_traits<Container>::value_type) == 1);
 };
 
@@ -58,9 +54,10 @@ class pool : public Traits
 public:
     using traits = Traits;
     using typename traits::container_type;
-    using typename traits::page_type;
-    using typename traits::pos_type;
+    //using typename traits::page_type;
+    //using typename traits::pos_type;
     //using traits::data;
+    using pos_type = page_unit_type;
 
     // Doesn't work for span, see https://github.com/malachi-iot/estdlib/issues/167
     using iterator_traits = estd::iterator_traits<container_type>;
@@ -94,15 +91,6 @@ protected:
         return block(page.pos());
     } */
 
-    static constexpr unsigned aliasing = pos_type::period::num;
-
-    // DEBT: Need better name
-    static constexpr pos_type do_alias(unsigned v)
-    {
-        return pos_type((v + aliasing - 1) / aliasing);
-    }
-
-
 #if UNIT_TESTING
 public:
 #endif
@@ -116,8 +104,15 @@ public:
         using handle_type = typename traits::size_type;
         using handles_type = handles<traits>;
         using page_type = typename traits::value_type;
+        using pos_type = typename page_type::unit_type;
 
         static constexpr unsigned aliasing = pos_type::period::num;
+
+        // DEBT: Need better name
+        static constexpr pos_type do_alias(unsigned v)
+        {
+            return pos_type((v + aliasing - 1) / aliasing);
+        }
 
         this_type& self_;
         handles_type& handles_;
@@ -245,6 +240,9 @@ public:
     explicit constexpr pool(Args&&...args) :
         pool_(std::forward<Args>(args)...)
     {
+        // DEBT: Unhardcode this guy
+        constexpr unsigned aliasing = 8;
+
         assert(std::size(pool_) % aliasing == 0);
     }
 
@@ -257,7 +255,8 @@ public:
     typename Traits2::size_type alloc(handles<Traits2>& h, unsigned logical_sz)
     {
         constexpr unsigned block_sz = v1::block::header_size(mode);
-        return ops<Traits2>{*this, h}.alloc(do_alias(logical_sz + block_sz), mode).handle;
+        using ops_type = ops<Traits2>;
+        return ops_type{*this, h}.alloc(ops_type::do_alias(logical_sz + block_sz), mode).handle;
     }
 
     template <class T, class Traits2, class ...Args>
