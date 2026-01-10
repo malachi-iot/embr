@@ -46,6 +46,10 @@ struct pool_traits : container_traits<Container>
     static_assert(sizeof(typename container_traits<Container>::value_type) == 1);
 };
 
+
+template <class T, class PoolTraits, class HandlesTraits, class ...Args>
+typename HandlesTraits::size_type construct(pool<PoolTraits>& p, handles<HandlesTraits>& h, Args&&...args);
+
 template <class Traits>
 class pool : public Traits
 {
@@ -259,9 +263,6 @@ public:
         return ops_type{*this, h}.alloc(ops_type::do_alias(logical_sz + block_sz), mode).handle;
     }
 
-    template <class T, class Traits2, class ...Args>
-    typename Traits2::size_type construct(handles<Traits2>& h, Args&&...args);
-
     template <class Traits2>
     void dealloc(v1::handles<Traits2>& handles, typename Traits2::size_type h)
     {
@@ -313,6 +314,17 @@ public:
     {
         OPS.dealloc(h);
     }
+
+    void reset()
+    {
+        OPS.reset();
+    }
+
+    template <class T, class ...Args, class Derived2 = Derived>
+    typename Derived2::handle_type construct(Args&&...args)
+    {
+        return detail::construct<T>(THIS->pool_, THIS->handles_, std::forward<Args>(args)...);
+    }
 };
 
 #pragma pop_macro("OPS")
@@ -332,6 +344,7 @@ class pool : public detail::v1::pool_crtp<pool<N, H>>
 public:
     using page_type = detail::v1::page<uint16_t>;
     using handles_traits = detail::v1::handles_traits<page_type[H]>;
+    using handle_type = typename handles_traits::size_type;
     using pool_traits = detail::v1::pool_traits<char[N]>;
 
 private:
@@ -346,15 +359,7 @@ public:
     ops_type ops() { return {pool_, handles_}; }
 
 public:
-    using handle_type = typename handles_traits::size_type;
-
     handle_type alloc(int logical_sz) { return pool_.alloc(handles_, logical_sz); }
-
-    template <class T, class ...Args>
-    handle_type construct(Args&&...args)
-    {
-        return pool_.template construct<T>(handles_, std::forward<Args>(args)...);
-    }
 };
 
 }
@@ -370,6 +375,7 @@ public:
     using page_type = detail::v1::page<uint16_t>;
     using handles_traits = detail::v1::handles_traits<estd::span<page_type>>;
     using pool_traits = detail::v1::pool_traits<estd::span<char>>;
+    using handle_type = typename handles_traits::size_type;
 
 private:
     detail::v1::pool<pool_traits> pool_;
@@ -388,15 +394,7 @@ public:
         handles_(pages)
     {}
 
-    using handle_type = typename handles_traits::size_type;
-
     handle_type alloc(int logical_sz) { return pool_.alloc(handles_, logical_sz); }
-
-    template <class T, class ...Args>
-    handle_type construct(Args&&...args)
-    {
-        return pool_.template construct<T>(handles_, std::forward<Args>(args)...);
-    }
 };
 
 }

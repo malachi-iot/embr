@@ -160,7 +160,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
 
             REQUIRE(counter == 0);
         }
-        SECTION("pool: layer1")
+        SECTION("detail::pool: raw array/layer1")
         {
             constexpr unsigned pool_size = 2048;
             using page = detail::v1::page<uint16_t>;
@@ -444,7 +444,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
             SECTION("construct")
             {
                 int counter = 0;
-                int h = pool.construct<SideEffector>(handles, &counter);
+                int h = detail::construct<SideEffector>(pool, handles, &counter);
 
                 REQUIRE(counter == 1);
 

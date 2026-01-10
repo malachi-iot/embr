@@ -281,9 +281,8 @@ v1::block* pool<Traits>::ops<HandleTraits>::resize(bundle bn, pos_type new_sz)
     return resize(bn, bn_next, new_sz);
 }
 
-template <class Traits>
-template <class T, class Traits2, class ...Args>
-typename Traits2::size_type pool<Traits>::construct(handles<Traits2>& h, Args&&...args)
+template <class T, class PoolTraits, class HandlesTraits, class ...Args>
+typename HandlesTraits::size_type construct(pool<PoolTraits>& p, handles<HandlesTraits>& h, Args&&...args)
 {
     using is_trivial = estd::is_trivially_constructible<T>;
     using is_movable = estd::is_move_constructible<T>;
@@ -293,7 +292,9 @@ typename Traits2::size_type pool<Traits>::construct(handles<Traits2>& h, Args&&.
         !is_movable::value ? v1::block::Immobile :
         is_rtto_base::value ? v1::block::RttoBase : v1::block::RttoProxy;
 
-    return ops<Traits2>{*this, h}.template construct<mode, T>(std::forward<Args>(args)...).handle;
+    using ops_type = typename pool<PoolTraits>::template ops<HandlesTraits>;
+
+    return ops_type{p, h}.template construct<mode, T>(std::forward<Args>(args)...).handle;
 }
 
 template <class Traits>
