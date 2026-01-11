@@ -1,6 +1,7 @@
 #pragma once
 
 #include <estd/internal/units/base.h>
+#include <estd/internal/size.h>
 
 #if __cpp_concepts
 #include <concepts>

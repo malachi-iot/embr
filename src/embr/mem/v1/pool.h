@@ -2,6 +2,7 @@
 
 #include <estd/cstdint.h>
 #include <estd/internal/macro/c++/ctor.h>
+#include <estd/internal/size.h>
 #include <estd/string_view.h>
 #include <estd/utility.h>
 
@@ -41,9 +42,9 @@ struct fragmentation
 };
 
 template <class Container>
-struct pool_traits : container_traits<Container>
+struct pool_traits : estd::internal::container_traits<Container>
 {
-    static_assert(sizeof(typename container_traits<Container>::value_type) == 1);
+    static_assert(sizeof(typename estd::internal::container_traits<Container>::value_type) == 1);
 };
 
 
@@ -57,7 +58,7 @@ class pool : public Traits
 
 public:
     using traits = Traits;
-    using typename traits::container_type;
+    using container_type = typename traits::type;
     //using typename traits::page_type;
     //using typename traits::pos_type;
     //using traits::data;
@@ -75,12 +76,12 @@ protected:
     {
         //assert(at.count() != page_type::null);
         const unsigned offset = page_unit_type(at).count();
-        return reinterpret_cast<v1::block*>(std::data(pool_) + offset);
+        return reinterpret_cast<v1::block*>(estd::data(pool_) + offset);
     }
 
     const v1::block* block(pos_type at) const
     {
-        return reinterpret_cast<const v1::block*>(std::data(pool_) + page_unit_type(at).count());
+        return reinterpret_cast<const v1::block*>(estd::data(pool_) + page_unit_type(at).count());
     }
 
 /*
@@ -247,11 +248,11 @@ public:
         // DEBT: Unhardcode this guy
         constexpr unsigned aliasing = 8;
 
-        assert(std::size(pool_) % aliasing == 0);
+        assert(estd::size(pool_) % aliasing == 0);
     }
 
     // Just for diagnostics
-    const char* data() const { return std::data(pool_); }
+    const char* data() const { return estd::data(pool_); }
 
     using handle_type = int;
 

@@ -93,7 +93,7 @@ template <class Traits2, class Block, class Page>
 auto pool<Traits>::ops<HandleTraits>::phys_size(const bundle_base<Traits2, Block, Page>& bn) const -> pos_type
 {
     pos_type next_pos = bn.block->next() == handles_type::null ?
-        pos_type(std::size(self_.pool_) / aliasing) :
+        pos_type(estd::size(self_.pool_) / aliasing) :
         next(bn).pos();
 
     //return next(bn).pos() - bn.pos();
