@@ -117,6 +117,10 @@ public:
     {
         handle_ = null;
     }
+
+    // EXPERIMENTAL
+    template <class T>
+    using guard = lock_guard<T, Pool, pool>;
 };
     
 }}

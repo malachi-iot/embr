@@ -22,7 +22,8 @@ template <class R, class ...Args, class Pool, Pool* pool>
 class model<R(Args...), Pool, pool> :
     public mem::detail::v1::lock_handle<Pool, pool>
 {
-    using base_type = mem::detail::v1::lock_handle<Pool, pool>;
+    using lock_handle = mem::detail::v1::lock_handle<Pool, pool>;
+    using base_type = lock_handle;
 
 protected:
     using function_type = estd::detail::function<R(Args...)>;
@@ -43,13 +44,15 @@ public:
         return pool2->template construct<model_type>(std::forward<F>(f));
     }
 
-    static R invoke(Pool* pool2, handle_type h, Args&&...args)
+    static R invoke(lock_handle h, Args&&...args)
     {
-        auto underlying = (model_base*) pool2->lock(h);
+        //typename base_type::template guard<model_base> g{h};
+
+        auto underlying = (model_base*) h.lock();
 
         R r = underlying->operator()(std::forward<Args>(args)...);
 
-        pool2->unlock(h);
+        h.unlock();
 
         return r;
     }
@@ -57,7 +60,7 @@ public:
     friend R invoke(model& m, Args&&...args)
     {
         Pool* p = m.pool_();
-        return model::invoke(p, m.handle_, std::forward<Args>(args)...);
+        return model::invoke(m, std::forward<Args>(args)...);
     }
 };
 
@@ -226,6 +229,7 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
 {
     using pool_type = mem::v1::layer1::pool<2048, 8>;
     using handle_type = pool_type::handle_type;
+    using lock_handle = mem::detail::v1::lock_handle<pool_type>;
     pool_type pool;
 
     // DEBT: This debt lives on, we really need to auto-init the thing
@@ -243,7 +247,7 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
 
             REQUIRE(m1.has_value());
 
-            int r = model_type::invoke(&pool, h1, 5);
+            int r = model_type::invoke({ h1, &pool }, 5);
 
             REQUIRE(r == 10);
 
