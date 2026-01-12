@@ -27,6 +27,7 @@ class model<R(Args...), Pool, pool> :
 protected:
     using function_type = estd::detail::function<R(Args...)>;
     using model_base = typename function_type::model_base;
+    using base_type::pool_;
     using typename base_type::handle_type;
 
 public:
@@ -35,25 +36,28 @@ public:
     //model(const model& copy_from) : base_type{copy_from} {}
 
     template <class F>
-    static model make(Pool* pool2, F&& f)
+    static handle_type make(Pool* pool2, F&& f)
     {
         using model_type = typename function_type::template model<F>;
 
-        typename base_type::handle_type h = pool2->template construct<model_type>(std::forward<F>(f));
-
-        // DEBT: As a low level method, we should return only the handle
-        return model{ h, pool2 };
+        return pool2->template construct<model_type>(std::forward<F>(f));
     }
 
-    R operator()(Args&&...args)
+    static R invoke(Pool* pool2, handle_type h, Args&&...args)
     {
-        auto underlying = (model_base*) base_type::lock();
+        auto underlying = (model_base*) pool2->lock(h);
 
         R r = underlying->operator()(std::forward<Args>(args)...);
 
-        base_type::unlock();
+        pool2->unlock(h);
 
         return r;
+    }
+
+    friend R invoke(model& m, Args&&...args)
+    {
+        Pool* p = m.pool_();
+        return model::invoke(p, m.handle_, std::forward<Args>(args)...);
     }
 };
 
@@ -70,7 +74,7 @@ public:
 
     template <class F>
     function(Pool* pool2, F&& f) :
-        base_type(base_type::make(pool2, std::forward<F>(f)))
+        base_type(base_type::make(pool2, std::forward<F>(f)), pool2)
     {
 
     }
@@ -78,13 +82,7 @@ public:
 
     R operator()(Args&&...args)
     {
-        auto underlying = (model_base*) base_type::lock();
-
-        R r = underlying->operator()(std::forward<Args>(args)...);
-
-        base_type::unlock();
-
-        return r;
+        return invoke(*this, std::forward<Args>(args)...);
     }
 };
 
@@ -171,6 +169,7 @@ template <class R, class ...Args, class Pool, Pool* pool>
 class funclist<R(Args...), Pool, pool> : public vector<int, Pool, pool>
 {
     using base_type = vector<int, Pool, pool>;
+    using model_type = model<R(Args...), Pool, pool>;
 
 public:
 
@@ -226,33 +225,35 @@ public:
 TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
 {
     using pool_type = mem::v1::layer1::pool<2048, 8>;
+    using handle_type = pool_type::handle_type;
     pool_type pool;
 
     // DEBT: This debt lives on, we really need to auto-init the thing
     pool.reset();
 
-    using model_type = model<int(int), decltype(pool)>;
+    using model_type = model<int(int), pool_type>;
     using fn_type = function<int(int), decltype(pool)>;
 
     SECTION("basic")
     {
         SECTION("model")
         {
-            model_type h1 = model_type::make(&pool, [](int v) { return v * 2; });
+            handle_type h1 = model_type::make(&pool, [](int v) { return v * 2; });
+            model_type m1(h1, &pool);
 
-            REQUIRE(h1);
+            REQUIRE(m1.has_value());
 
-            int r = h1(5);
+            int r = model_type::invoke(&pool, h1, 5);
 
             REQUIRE(r == 10);
 
-            model_type h2(std::move(h1));
+            model_type m2(std::move(m1));
 
-            r += h2(5);
+            r += invoke(m2, 5);
 
             REQUIRE(r == 20);
 
-            REQUIRE(h1.has_value() == false);
+            REQUIRE(m1.has_value() == false);
         }
         SECTION("function")
         {
