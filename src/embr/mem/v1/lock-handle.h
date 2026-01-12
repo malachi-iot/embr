@@ -55,10 +55,14 @@ class lock_handle : public global_provider<Pool, pool>
 protected:
     using base_type = global_provider<Pool, pool>;
     using base_type::value;
+
+public:
     using handles_traits = typename Pool::handles_traits;
     using handle_type = typename Pool::handle_type;
     constexpr static bool is_global = pool != nullptr;
     constexpr static handle_type null = handles_traits::null;
+
+protected:
 
     handle_type handle_;
 
