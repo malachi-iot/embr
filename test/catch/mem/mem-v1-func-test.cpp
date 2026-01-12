@@ -10,40 +10,153 @@
 
 using namespace embr;
 
-template <class H, class F>
+template <class F, class Pool, Pool* pool = nullptr>
+class model;
+
+template <class F, class Pool, Pool* pool = nullptr>
 class function;
 
-template <class Pool, Pool* pool, class R, class ...Args>
-class function<mem::detail::v1::lock_handle<Pool, pool>, R(Args...)>
-{
-    using handle_type = mem::detail::v1::lock_handle<Pool, pool>;
-    using underlying_type = estd::detail::function<R(Args...)>;
-    using model_base = typename underlying_type::model_base;
 
-    handle_type handle_;
+// DEBT: Consider making model just track the handle, letting 'function' be the one who tracks pool too
+template <class R, class ...Args, class Pool, Pool* pool>
+class model<R(Args...), Pool, pool> :
+    public mem::detail::v1::lock_handle<Pool, pool>
+{
+    using base_type = mem::detail::v1::lock_handle<Pool, pool>;
+
+protected:
+    using function_type = estd::detail::function<R(Args...)>;
+    using model_base = typename function_type::model_base;
+    using typename base_type::handle_type;
 
 public:
-    function(handle_type handle) : handle_{handle} {}
+    constexpr explicit model(handle_type h = base_type::null, Pool* p = nullptr) : base_type(h, p)   {}
+
+    //model(const model& copy_from) : base_type{copy_from} {}
 
     template <class F>
-    static handle_type make_handle(Pool* pool2, F&& f)
+    static model make(Pool* pool2, F&& f)
     {
-        using model_type = typename underlying_type::template model<F>;
+        using model_type = typename function_type::template model<F>;
 
-        typename handle_type::handle_type h = pool2->template construct<model_type>(std::forward<F>(f));
+        typename base_type::handle_type h = pool2->template construct<model_type>(std::forward<F>(f));
 
-        return { h, pool2 };
+        // DEBT: As a low level method, we should return only the handle
+        return model{ h, pool2 };
     }
 
     R operator()(Args&&...args)
     {
-        auto underlying = (model_base*) handle_.lock();
+        auto underlying = (model_base*) base_type::lock();
 
         R r = underlying->operator()(std::forward<Args>(args)...);
 
-        handle_.unlock();
+        base_type::unlock();
 
         return r;
+    }
+};
+
+
+template <class R, class ...Args, class Pool, Pool* pool>
+class function<R(Args...), Pool, pool> :
+    public model<R(Args...), Pool, pool>
+{
+    using base_type = model<R(Args...), Pool, pool>;
+    using typename base_type::model_base;
+
+public:
+    function(estd::nullptr_t) {}
+
+    template <class F>
+    function(Pool* pool2, F&& f) :
+        base_type(base_type::make(pool2, std::forward<F>(f)))
+    {
+
+    }
+
+
+    R operator()(Args&&...args)
+    {
+        auto underlying = (model_base*) base_type::lock();
+
+        R r = underlying->operator()(std::forward<Args>(args)...);
+
+        base_type::unlock();
+
+        return r;
+    }
+};
+
+// Heavy lift
+template <class T, class Pool, Pool* pool = nullptr>
+class vector_impl : public mem::detail::v1::lock_handle<Pool, pool>
+{
+    using base_type = mem::detail::v1::lock_handle<Pool, pool>;
+
+public:
+    vector_impl() : base_type(base_type::null)  {}
+
+    struct policy_type
+    {
+
+    };
+
+    struct allocator_type
+    {
+
+    };
+
+    struct allocator_traits
+    {
+        ESTD_CPP_STD_VALUE_TYPE(T)
+        using size_type = unsigned;
+        using handle_type = mem::detail::v1::lock_handle<Pool, pool>;
+
+        struct handle_with_offset
+        {
+        };
+
+        // FIX: One or multiple of these are wanting to be an accessor
+        using allocator_valref = int;
+        using iterator = pointer;
+        using const_iterator = const_pointer;
+    };
+
+    ESTD_CPP_STD_VALUE_TYPE(T)
+
+    ESTD_CPP_CONSTEXPR(17) pointer lock(unsigned pos = 0, unsigned count = 0)
+    {
+        return ((pointer)base_type::lock()) + pos;
+    }
+};
+
+
+template <class T, class Pool, Pool* pool = nullptr>
+class vector : public estd::internal::dynamic_array<vector_impl<T, Pool, pool>>
+{
+    using base_type = estd::internal::dynamic_array<vector_impl<T, Pool, pool>>;
+
+public:
+
+};
+
+
+template <class F, class Pool, Pool* pool = nullptr>
+class funclist;
+
+template <class R, class ...Args, class Pool, Pool* pool>
+class funclist<R(Args...), Pool, pool> : public vector<int, Pool, pool>
+{
+    using base_type = vector<int, Pool, pool>;
+
+public:
+
+    template <class F>
+    friend int operator+=(funclist& self, F&& f)
+    {
+        base_type::push_back(0);
+        return 0;
     }
 };
 
@@ -51,11 +164,11 @@ public:
 namespace embr { namespace mem { inline namespace v1 {
 
 // Not loving all this 'pool' repetition
-template <class Pool, Pool* pool, class R, class ...Args>
-class shared_handle<function<detail::v1::lock_handle<Pool, pool>, R(Args...)>, Pool, pool>
-{
-
-};
+//template <class Pool, Pool* pool, class R, class ...Args>
+//class shared_handle<function<detail::v1::lock_handle<Pool, pool>, R(Args...)>, Pool, pool>
+//{
+//
+//};
 
 template <class Pool, Pool* pool, class R, class ...Args>
 class shared_handle<estd::detail::function<R(Args...)>, Pool, pool> :
@@ -90,44 +203,55 @@ public:
 
 TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
 {
-    mem::v1::layer1::pool<2048, 8> pool;
+    using pool_type = mem::v1::layer1::pool<2048, 8>;
+    pool_type pool;
 
     // DEBT: This debt lives on, we really need to auto-init the thing
     pool.reset();
 
-    using handle_type = mem::detail::v1::lock_handle<decltype(pool)>;
-
-    using fn_type = function<handle_type, int(int)>;
+    using model_type = model<int(int), decltype(pool)>;
+    using fn_type = function<int(int), decltype(pool)>;
 
     SECTION("basic")
     {
-        handle_type h1 = fn_type::make_handle(&pool, [](int v) { return v * 2; });
+        SECTION("model")
+        {
+            model_type h1 = model_type::make(&pool, [](int v) { return v * 2; });
 
-        REQUIRE(h1);
+            REQUIRE(h1);
 
-        fn_type f1(h1);
+            int r = h1(5);
 
-        int r = f1(5);
+            REQUIRE(r == 10);
 
-        REQUIRE(r == 10);
+            model_type h2(std::move(h1));
+
+            r += h2(5);
+
+            REQUIRE(r == 20);
+
+            REQUIRE(h1.has_value() == false);
+        }
+        SECTION("function")
+        {
+            fn_type f1(&pool, [](int v) { return v * 2; });
+        }
     }
     SECTION("SideEffector")
     {
         int counter = 0;
         SideEffector se(&counter);
 
-        handle_type h1 = fn_type::make_handle(&pool, [se2 = std::move(se)](int v) { return v * 2; });
+        fn_type f1(&pool, [se2 = std::move(se)](int v) { return v * 2; });
 
         REQUIRE(counter == 1);
-
-        fn_type f1(h1);
 
         int r = f1(5);
 
         REQUIRE(r == 10);
 
         // Calls destructor of lambda, which calls destruct of se2, decrementing counter
-        h1.dealloc();
+        f1.dealloc();
 
         REQUIRE(counter == 0);
     }
@@ -144,5 +268,9 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
         int r = h1(5);
 
         REQUIRE(r == 10);
+    }
+    SECTION("vector")
+    {
+        //vector<int, pool_type> v;
     }
 }

@@ -72,6 +72,7 @@ public:
         base_type{p},
         handle_{handle}
     {
+        assert(p || is_global);
     }
 
     constexpr explicit lock_handle(handle_type handle) :
@@ -106,6 +107,8 @@ public:
     }
 
     explicit constexpr operator bool() const { return handle_ != null; }
+
+    constexpr bool has_value() const { return handle_ != null; }
 
     void reset()
     {
