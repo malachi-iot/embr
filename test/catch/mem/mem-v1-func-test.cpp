@@ -47,6 +47,47 @@ public:
     }
 };
 
+
+namespace embr { namespace mem { inline namespace v1 {
+
+// Not loving all this 'pool' repetition
+template <class Pool, Pool* pool, class R, class ...Args>
+class shared_handle<function<detail::v1::lock_handle<Pool, pool>, R(Args...)>, Pool, pool>
+{
+
+};
+
+template <class Pool, Pool* pool, class R, class ...Args>
+class shared_handle<estd::detail::function<R(Args...)>, Pool, pool> :
+    public detail::shared_handle<Pool, pool>
+{
+    using base_type = detail::shared_handle<Pool, pool>;
+    using function_type = estd::detail::function<R(Args...)>;
+    using model_base = typename function_type::model_base;
+
+public:
+    shared_handle(int h, Pool* p) : base_type(h, p) {}
+
+    template <class F>
+    static shared_handle make_handle(Pool* pool2, F&& f)
+    {
+        using model_type = typename function_type::template model<F>;
+
+        int h = pool2->template construct<model_type>(std::forward<F>(f));
+
+        return { h, pool2 };
+    }
+
+    R operator()(Args&&...args)
+    {
+        lock_guard<model_base, Pool, pool> l{*this};
+
+        return l->operator()(std::forward<Args>(args)...);
+    }
+};
+
+}}}
+
 TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
 {
     mem::v1::layer1::pool<2048, 8> pool;
@@ -58,13 +99,50 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
 
     using fn_type = function<handle_type, int(int)>;
 
-    handle_type h1 = fn_type::make_handle(&pool, [](int v) { return v * 2; });
+    SECTION("basic")
+    {
+        handle_type h1 = fn_type::make_handle(&pool, [](int v) { return v * 2; });
 
-    REQUIRE(h1);
+        REQUIRE(h1);
 
-    fn_type f1(h1);
+        fn_type f1(h1);
 
-    int r = f1(5);
+        int r = f1(5);
 
-    REQUIRE(r == 10);
+        REQUIRE(r == 10);
+    }
+    SECTION("SideEffector")
+    {
+        int counter = 0;
+        SideEffector se(&counter);
+
+        handle_type h1 = fn_type::make_handle(&pool, [se2 = std::move(se)](int v) { return v * 2; });
+
+        REQUIRE(counter == 1);
+
+        fn_type f1(h1);
+
+        int r = f1(5);
+
+        REQUIRE(r == 10);
+
+        // Calls destructor of lambda, which calls destruct of se2, decrementing counter
+        h1.dealloc();
+
+        REQUIRE(counter == 0);
+    }
+    SECTION("shared_handle")
+    {
+        /*
+         * Ideal: embr::shared_handle<function<int(int)>, Pool>
+         */
+
+        using shared_type = mem::v1::shared_handle<estd::detail::function<int(int)>, decltype(pool)>;
+
+        shared_type h1 = shared_type::make_handle(&pool, [] (int v) { return v * 2; });
+
+        int r = h1(5);
+
+        REQUIRE(r == 10);
+    }
 }

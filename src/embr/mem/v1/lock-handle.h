@@ -100,6 +100,11 @@ public:
         value()->unlock(handle_);
     }
 
+    void dealloc() const
+    {
+        value()->dealloc(handle_);
+    }
+
     explicit constexpr operator bool() const { return handle_ != null; }
 
     void reset()
