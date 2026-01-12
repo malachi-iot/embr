@@ -66,6 +66,9 @@ protected:
 
     handle_type handle_;
 
+    // DEBT: Swap this and template value parameter name
+    Pool* pool_() { return value(); }
+
 public:
     // NOTE: Out of order - expect Pool, handle order in anticipation of nullptr p
     constexpr lock_handle(handle_type handle, Pool* p) :

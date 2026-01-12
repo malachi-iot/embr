@@ -399,6 +399,14 @@ auto pool<Traits>::ops<HandleTraits>::alloced() const -> unsigned
 }
 
 
+template <class Traits>
+template <class HandleTraits>
+void pool<Traits>::ops<HandleTraits>::realloc(bundle, pos_type)
+{
+
+}
+
+
 }}
 
 }}

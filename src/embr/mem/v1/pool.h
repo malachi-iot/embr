@@ -213,6 +213,12 @@ public:
 
         bundle alloc(pos_type phys_sz, block::modes mode);
 
+        /// Grows or shrinks existing allocation, possibly moving it and others around
+        /// @brief realloc
+        /// @param new_sz
+        ///
+        void realloc(bundle, pos_type new_sz);
+
         template <block::modes mode, class T, class ...Args>
         bundle construct(Args&&...);
 

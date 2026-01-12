@@ -141,6 +141,28 @@ public:
 
 };
 
+// Because "true" vector is a very heavy lift, creating a cut-down easy mode one
+template <class T, class Pool, Pool* pool = nullptr>
+class vector2 : public vector_impl<T, Pool, pool>
+{
+    using base_type = vector_impl<T, Pool, pool>;
+    using base_type::lock;
+    using base_type::unlock;
+    using base_type::pool_;
+    using typename base_type::pointer;
+
+    int size_;
+
+public:
+    void push_back(const T& value)
+    {
+        pointer data = lock();
+
+        unlock();
+    }
+
+};
+
 
 template <class F, class Pool, Pool* pool = nullptr>
 class funclist;
@@ -271,6 +293,6 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
     }
     SECTION("vector")
     {
-        //vector<int, pool_type> v;
+        //vector2<int, pool_type> v;
     }
 }
