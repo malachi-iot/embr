@@ -1,6 +1,6 @@
 #include <catch2/catch_all.hpp>
 
-//#include <estd/internal/units/ostream.h>
+#include <estd/internal/units/ostream.h>
 
 #include <embr/mem/v1/pool.hpp>
 #include <embr/mem/v1/shared-handle.h>
@@ -10,6 +10,35 @@
 
 
 using namespace embr::mem;
+
+namespace estd { namespace units { inline namespace v1 { namespace detail {
+
+template <class Rep, class Period>
+using page_unit_type2 = unit<embr::mem::detail::v1::page_unit_traits<Rep, Period>>;
+
+// ADL you are a demanding one.  OK, here you go
+//template <class Traits>
+//std::ostream& operator<<(std::ostream& out, const unit<Traits>& v)
+template <class Rep, class Period>
+std::ostream& operator<<(std::ostream& out, page_unit_type2<Rep, Period> v)
+{
+    out << v.count();
+
+    if(Period::num != Period::den)
+    {
+        // not 1:1 means let's do a 1:1 (pure bytes) one also
+        // DEBT: OK I already did this elsewhere... probably should standardize this in estd but only
+        // activate with some kind of feature flag.  That includes the whole suffix thing
+        // See https://github.com/malachi-iot/estdlib/issues/172
+        unit<embr::mem::detail::v1::page_unit_traits<double, estd::ratio<1>>> u(v);
+
+        out << " (" << u.count() << " bytes)";
+    }
+
+    return out;
+}
+
+}}}}
 
 template <class Traits, class HandlesTraits, std::size_t N>
 static void assemble_pool(typename detail::pool<Traits>::template ops<HandlesTraits>& ops, const test::page (&pool)[N])
@@ -304,7 +333,10 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
 
                     REQUIRE(r);
 
-                    //REQUIRE(op.phys_size(bn) == new_phys_sz);
+                    pos_type sz2 = op.phys_size(bn);
+
+                    // Nope, still 8 units
+                    //REQUIRE(sz2 == new_phys_sz);
                 }
                 SECTION("pool assembly/edge cases")
                 {

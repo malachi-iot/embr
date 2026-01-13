@@ -24,6 +24,7 @@ struct handles_traits;
 template <class Traits>
 class handles;
 
+// TODO: Strongly considering using estd::units::byte_tag here instead, that feels appropriate
 struct page_tag {};
 
 #if PAGE_ALIAS
