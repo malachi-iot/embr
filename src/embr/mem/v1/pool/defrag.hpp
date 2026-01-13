@@ -162,9 +162,10 @@ template <class Traits>
 template <class HandleTraits>
 void pool<Traits>::ops<HandleTraits>::assess(fragmentation* frag) const
 {
+    // very first block
     const v1::block* b = self_.block(pos_type(0));
     static constexpr handle_type null = v1::block::null;
-    pos_type largest_free_sz;
+    pos_type largest_free_sz{0};
 
     if(b->next() == null)    return;
 
@@ -181,15 +182,27 @@ void pool<Traits>::ops<HandleTraits>::assess(fragmentation* frag) const
 
     static constexpr uint16_t booster = 4;
 
-    pos_type bn_cur_sz = phys_size(cur);
+    pos_type bn_cur_sz{0};
 
     while(cur.handle != block::null)
     {
+        pos_type bn_prev_sz = bn_cur_sz;
+        bn_cur_sz = phys_size(cur);
+
+        // DEBT: I don't think there are any invariant conditions in which 'cur' is_null.  Document if so.
+
+        if(cur.is_null() == false && cur.allocated() == false)
+        {
+            if(bn_cur_sz > largest_free_sz)
+            {
+                largest_free_sz = bn_cur_sz;
+                frag->largest_free_handle = cur.handle;
+            }
+        }
+
         if(cur.is_null() == false && bn_prev.is_null() == false && cur.has_next())
         {
-            pos_type bn_prev_sz = bn_cur_sz;
             pos_type bn_next_sz = phys_size(bn_next);
-            bn_cur_sz = phys_size(cur);
 
             // F A F
             if(!bn_prev.allocated() && cur.allocated() && !bn_next.allocated())

@@ -257,6 +257,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
 
                     op.assess(&frag);
 
+                    REQUIRE(frag.largest_free_handle == 2);
                     REQUIRE(frag0.overlap == false);
                     REQUIRE(frag0.bundle.allocated());
                     REQUIRE(frag0.bundle.is_null() == false);

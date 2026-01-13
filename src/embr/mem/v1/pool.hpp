@@ -401,7 +401,7 @@ auto pool<Traits>::ops<HandleTraits>::alloced() const -> unsigned
 
 template <class Traits>
 template <class HandleTraits>
-void pool<Traits>::ops<HandleTraits>::realloc(bundle bn, pos_type sz)
+void pool<Traits>::ops<HandleTraits>::realloc(bundle bn, pos_type phys_sz)
 {
     // If sz <= phys_sz then just return
     // If sz > phys sz then:
@@ -412,12 +412,20 @@ void pool<Traits>::ops<HandleTraits>::realloc(bundle bn, pos_type sz)
 
     pos_type current_sz = phys_size(bn);
 
-    if(sz <= current_sz)
+    if(phys_sz <= current_sz)
         return;
 
     fragmentation frag;
 
     assess(&frag);
+
+    pos_type free_sz = phys_size(frag.largest_free_handle);
+
+    if(free_sz >= current_sz)
+    {
+        // NOT READY YET
+        move(bn, get_bundle(frag.largest_free_handle), 0, false);
+    }
 }
 
 
