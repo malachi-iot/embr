@@ -138,7 +138,10 @@ public:
 
     constexpr unsigned size() const { return size_; }
 
-    int reallocate(unsigned sz) { return {}; }
+    int reallocate(unsigned sz)
+    {
+        return {};
+    }
 };
 
 

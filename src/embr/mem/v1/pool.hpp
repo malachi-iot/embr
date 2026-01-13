@@ -401,9 +401,23 @@ auto pool<Traits>::ops<HandleTraits>::alloced() const -> unsigned
 
 template <class Traits>
 template <class HandleTraits>
-void pool<Traits>::ops<HandleTraits>::realloc(bundle, pos_type)
+void pool<Traits>::ops<HandleTraits>::realloc(bundle bn, pos_type sz)
 {
+    // If sz <= phys_sz then just return
+    // If sz > phys sz then:
+    // 1.  If following free block exists and can accomodate us, shrink it down and grow into it
+    // 2.  Otherwise look at alternate locations to allocate from (probably assess)
+    // 2.a.  A chunk big enough is just hanging around, ideally similarly sized
+    // 2.b.  We issue a single defrag to see if we can get more space, then try again
 
+    pos_type current_sz = phys_size(bn);
+
+    if(sz <= current_sz)
+        return;
+
+    fragmentation frag;
+
+    assess(&frag);
 }
 
 

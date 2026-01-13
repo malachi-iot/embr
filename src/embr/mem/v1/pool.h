@@ -24,6 +24,8 @@ namespace detail { inline namespace v1 {
 
 struct fragmentation
 {
+    int largest_free_handle;
+
     struct candidate
     {
         int score;

@@ -164,6 +164,7 @@ void pool<Traits>::ops<HandleTraits>::assess(fragmentation* frag) const
 {
     const v1::block* b = self_.block(pos_type(0));
     static constexpr handle_type null = v1::block::null;
+    pos_type largest_free_sz;
 
     if(b->next() == null)    return;
 
@@ -174,6 +175,7 @@ void pool<Traits>::ops<HandleTraits>::assess(fragmentation* frag) const
 
     fragmentation::candidate& top = frag->candidates[0];
     top = {};
+    frag->largest_free_handle = -1;
     frag->candidates[1] = {};
 
     static constexpr uint16_t booster = 4;
