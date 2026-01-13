@@ -1,6 +1,7 @@
 #include <catch2/catch_all.hpp>
 
 #include <estd/functional.h>
+#include <estd/internal/container/traditional_accessor.h>
 
 #include <embr/mem/v1/pool.hpp>
 #include <embr/mem/v1/shared-handle.h>
@@ -95,8 +96,12 @@ class vector_impl : public mem::detail::v1::lock_handle<Pool, pool>
 {
     using base_type = mem::detail::v1::lock_handle<Pool, pool>;
 
+    int size_{};
+
 public:
-    vector_impl() : base_type(base_type::null)  {}
+    vector_impl(Pool* p) : base_type(base_type::null, p)  {}
+
+    ESTD_CPP_STD_VALUE_TYPE(T)
 
     struct policy_type
     {
@@ -105,7 +110,7 @@ public:
 
     struct allocator_type
     {
-
+        ESTD_CPP_STD_VALUE_TYPE(T)
     };
 
     struct allocator_traits
@@ -120,27 +125,25 @@ public:
 
         // FIX: One or multiple of these are wanting to be an accessor
         using allocator_valref = int;
-        using iterator = pointer;
+        //using iterator = pointer;
         using const_iterator = const_pointer;
+        using accessor = estd::internal::traditional_accessor<value_type>;
+        using iterator = estd::internal::locking_iterator<allocator_type, accessor>;
     };
-
-    ESTD_CPP_STD_VALUE_TYPE(T)
 
     ESTD_CPP_CONSTEXPR(17) pointer lock(unsigned pos = 0, unsigned count = 0)
     {
         return ((pointer)base_type::lock()) + pos;
     }
+
+    constexpr unsigned size() const { return size_; }
+
+    int reallocate(unsigned sz) { return {}; }
 };
 
 
 template <class T, class Pool, Pool* pool = nullptr>
-class vector : public estd::internal::dynamic_array<vector_impl<T, Pool, pool>>
-{
-    using base_type = estd::internal::dynamic_array<vector_impl<T, Pool, pool>>;
-
-public:
-
-};
+using vector = estd::internal::dynamic_array<vector_impl<T, Pool, pool>>;
 
 // Because "true" vector is a very heavy lift, creating a cut-down easy mode one
 template <class T, class Pool, Pool* pool = nullptr>
@@ -155,13 +158,19 @@ class vector2 : public vector_impl<T, Pool, pool>
     int size_;
 
 public:
+    T operator[](int index)
+    {
+        T val = *lock(index);
+        unlock();
+        return val;
+    }
+
     void push_back(const T& value)
     {
         pointer data = lock();
 
         unlock();
     }
-
 };
 
 
@@ -298,6 +307,15 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
     }
     SECTION("vector")
     {
+        using vector_type = vector<int, pool_type>;
+
+        vector_type vector(&pool);
+
+        //vector.push_back(1);
+    }
+    SECTION("vector2")
+    {
+        using vector_type = vector2<int, pool_type>;
         //vector2<int, pool_type> v;
     }
 }
