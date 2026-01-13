@@ -168,6 +168,7 @@ void pool<Traits>::ops<HandleTraits>::assess(fragmentation* frag) const
 
     if(b->next() == null)    return;
 
+    // There is no prev at the very first block
     const_bundle bn_prev{}, bn_next, cur;
     next(b, &bn_next);
     prev(bn_next.block, &cur);
