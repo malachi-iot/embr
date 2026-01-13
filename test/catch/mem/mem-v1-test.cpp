@@ -1,6 +1,6 @@
 #include <catch2/catch_all.hpp>
 
-#include <random>
+//#include <estd/internal/units/ostream.h>
 
 #include <embr/mem/v1/pool.hpp>
 #include <embr/mem/v1/shared-handle.h>
@@ -10,7 +10,6 @@
 
 
 using namespace embr::mem;
-
 
 template <class Traits, class HandlesTraits, std::size_t N>
 static void assemble_pool(typename detail::pool<Traits>::template ops<HandlesTraits>& ops, const test::page (&pool)[N])
@@ -182,6 +181,8 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                 using ops_type = pool_type::ops<handles_traits>;
                 using pos_type = ops_type::pos_type;
                 ops_type op{pool, handles};
+
+                // synthetic size of to-be-allocated block
                 constexpr pos_type phys_sz(8);
                 constexpr unsigned phys_sz_bytes = ops_type::aliasing * phys_sz.count();
 
@@ -293,6 +294,17 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
 
                     op.unlock(bn.handle);
                     op.unlock(bn.handle);
+                }
+                SECTION("realloc")
+                {
+                    bundle bn = op.alloc(phys_sz, block::Trivial);
+                    pos_type new_phys_sz = phys_sz + pos_type(1);
+
+                    bool r = op.realloc(bn, new_phys_sz);
+
+                    REQUIRE(r);
+
+                    //REQUIRE(op.phys_size(bn) == new_phys_sz);
                 }
                 SECTION("pool assembly/edge cases")
                 {

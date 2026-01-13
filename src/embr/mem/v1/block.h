@@ -18,6 +18,8 @@ struct block_mode_base : block_mode_enum
     using handle_type = handles_traits_base::size_type;
 };
 
+class block_diagnostic;
+
 class alignas(void*) block : public block_mode_base
 {
     // DEBT: rtto base is WAY overloaded.  Needs attention
@@ -29,6 +31,8 @@ class alignas(void*) block : public block_mode_base
 
     template <class HandlesTraits, class Block, class Page>
     friend class bundle_base;
+
+    friend class block_diagnostic;
 
 protected:
     struct alignas(void*)
@@ -124,15 +128,12 @@ public:
     void move_from(block* from, unsigned sz);
 };
 
-#if UNIT_TESTING
-/*
-struct block_exposer : block
+struct block_diagnostic
 {
-    using block::data_;
-};
+    block b;
 
-static_assert(offsetof(block_exposer, data_) == sizeof(void*));*/
-#endif
+    static_assert(offsetof(block, data_) == sizeof(void*));
+};
 
 
 // EXPERIMENTAL

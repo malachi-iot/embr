@@ -13,9 +13,9 @@
 #include <estd/string_view.h>
 #endif
 
-namespace embr { namespace mem {
+namespace embr { namespace mem { inline namespace v1 {
 
-struct invariant_violation
+struct validation_error
 {
 #if FEATURE_STD_CHARCONV
     // So that debugger can see these more easily
@@ -26,6 +26,10 @@ struct invariant_violation
     estd::string_view details;
 #endif
 };
+
+using validated_result = estd::expected<void, validation_error>;
+
+using invariant_violation = validation_error;
 
 using invariant_result = estd::expected<void, invariant_violation>;
 
@@ -43,4 +47,4 @@ std::basic_ostream<Char>& operator <<(std::basic_ostream<Char>& out, const invar
 
 #endif
 
-}}
+}}}

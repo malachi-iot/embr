@@ -401,7 +401,7 @@ auto pool<Traits>::ops<HandleTraits>::alloced() const -> unsigned
 
 template <class Traits>
 template <class HandleTraits>
-void pool<Traits>::ops<HandleTraits>::realloc(bundle bn, pos_type phys_sz)
+bool pool<Traits>::ops<HandleTraits>::realloc(bundle bn, pos_type phys_sz)
 {
     // If sz <= phys_sz then just return
     // If sz > phys sz then:
@@ -413,19 +413,34 @@ void pool<Traits>::ops<HandleTraits>::realloc(bundle bn, pos_type phys_sz)
     pos_type current_sz = phys_size(bn);
 
     if(phys_sz <= current_sz)
-        return;
+        return true;
 
     fragmentation frag;
 
-    assess(&frag);
-
-    pos_type free_sz = phys_size(frag.largest_free_handle);
-
-    if(free_sz >= current_sz)
+    auto move_to_candidate = [&]
     {
-        // NOT READY YET
-        move(bn, get_bundle(frag.largest_free_handle), 0, false);
-    }
+        assess(&frag);
+
+        bundle dest(get_bundle(frag.largest_free_handle));
+
+        pos_type free_sz = phys_size(dest);
+
+        if(free_sz < current_sz)    return false;
+
+        move(bn, dest, 0, false);
+
+        return true;
+    };
+
+    // If move succeeds, return and indicate so
+    if(move_to_candidate()) return true;
+
+    // If not, evaluate whether we can defrag
+    if(frag.candidates[0].score == 0) return false;
+
+    // Attempt another move after a single defrag
+    defrag(frag.candidates[0]);
+    return move_to_candidate();
 }
 
 

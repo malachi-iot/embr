@@ -175,6 +175,13 @@ public:
         ///
         bool merge_if_free(bundle current, bundle next);
 
+        ///
+        /// @brief Moves an allocated block to a new free block location.  Updates block metadata so 'to' block becomes allocated
+        /// @param from
+        /// @param to free block
+        /// @param logical_sz
+        /// @param is_overlapping
+        ///
         void move(bundle from, bundle to, unsigned logical_sz, bool is_overlapping = false);
 
         bundle first_free(pos_type phys_sz, pos_type* found_size) const;
@@ -218,8 +225,8 @@ public:
         /// Grows or shrinks existing allocation, possibly moving it and others around
         /// @brief realloc
         /// @param new_sz
-        ///
-        void realloc(bundle, pos_type new_sz);
+        /// @return true on success, false on failure (no suitable free block found)
+        bool realloc(bundle, pos_type new_sz);
 
         template <block::modes mode, class T, class ...Args>
         bundle construct(Args&&...);

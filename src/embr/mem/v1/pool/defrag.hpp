@@ -10,6 +10,7 @@ namespace embr { namespace mem {
 namespace detail { inline namespace v1 {
 
 
+// TODO: Consider returning invariant result
 template <class Traits>
 template <class HandleTraits>
 void pool<Traits>::ops<HandleTraits>::move(bundle from, bundle to, unsigned logical_sz,
@@ -94,6 +95,8 @@ void pool<Traits>::ops<HandleTraits>::move(bundle from, bundle to, unsigned logi
     }
     else
     {
+        assert(to_block_phys_sz >= from_block_phys_sz);
+
         // Adjacent, trivial blocks don't have to meet this requirement
         // TODO: Bring this check back for non adjacent OR non trivial blocks
         //assert(to_block_phys_sz >= from_block_phys_sz);
