@@ -165,17 +165,13 @@ template <class Traits>
 template <class HandleTraits>
 void pool<Traits>::ops<HandleTraits>::assess(fragmentation* frag) const
 {
-    // very first block
-    const v1::block* b = self_.block(pos_type(0));
-    static constexpr handle_type null = v1::block::null;
     pos_type largest_free_sz{0};
 
-    if(b->next() == null)    return;
-
+    const_bundle cur = first();
     // There is no prev at the very first block
-    const_bundle bn_prev{}, bn_next, cur;
-    next(b, &bn_next);
-    prev(bn_next.block, &cur);
+    // DEBT: 'next' if cur->has_next() is false creates a UB/invalid pointer for 'block'.  Doesn't violate
+    // our internal rules but extremely easy to stumble over
+    const_bundle bn_prev{}, bn_next = next(cur);
     int last_sc = 0;
 
     fragmentation::candidate& top = frag->candidates[0];
@@ -329,7 +325,7 @@ void pool<Traits>::ops<HandleTraits>::assess(fragmentation* frag) const
         cur = bn_next;
 
         // DEBT: A little sloppy
-        if(cur.handle != null)  next(cur.block, &bn_next);
+        if(cur.handle != block::null)  next(cur.block, &bn_next);
     }
 }
 

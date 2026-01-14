@@ -46,7 +46,8 @@ struct bundle_base
 
     constexpr pos_type pos() const { return page->pos(); }
 
-    // DEBT: Consider renaming to not collide with handle null
+    // DEBT: Consider renaming to not collide with handle null, especially since
+    // at present block can be a super invalid pointer (0xFF location off in the weeds)
     constexpr bool is_null() const { return block == nullptr; }
 
     constexpr bool is_trivial() const { return block->mode() == v1::block::Trivial; }
