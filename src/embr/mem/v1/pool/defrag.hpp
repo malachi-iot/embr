@@ -16,7 +16,7 @@ template <class HandleTraits>
 void pool<Traits>::ops<HandleTraits>::move(bundle from, bundle to, unsigned logical_sz,
     bool is_overlapping)
 {
-    const bool is_trivial = from.block->mode() == block::Trivial;
+    const bool is_trivial = from.mode() == block::Trivial;
     const pos_type to_block_phys_sz = phys_size(to);
     pos_type from_block_phys_sz = phys_size(from);
 
@@ -106,14 +106,19 @@ void pool<Traits>::ops<HandleTraits>::move(bundle from, bundle to, unsigned logi
 
         dealloc(from);
 
+        // Almost works, but makes assess unit test a little upset.  Unclear whether we or the test iself
+        // is at fault
+        //pos_type desired_phys_sz = logical_sz == 0 ? from_block_phys_sz : pos_type(logical_sz / aliasing);
+        pos_type desired_phys_sz = from_block_phys_sz;
+
         // Resize 'to' to match old 'from'
-        if(to.has_next() && to_block_phys_sz != from_block_phys_sz)
+        if(to.has_next() && to_block_phys_sz != desired_phys_sz)
         {
             bundle to_next(next(to));
 
             // We already fit neatly into 'to', so this is only to move following free block backward
             if(to_next.allocated() == false)
-                resize(to, to_next, from_block_phys_sz);
+                resize(to, to_next, desired_phys_sz);
             else
             {
                 // If following block is allocated, instead see if we can do a split to create a mini
@@ -126,7 +131,7 @@ void pool<Traits>::ops<HandleTraits>::move(bundle from, bundle to, unsigned logi
                 // DEBT: Although probably not, since if to_next is allocated so far there are no use cases
                 // which would move to_next around before we get here
                 const pos_type phys_sz = to_next.pos() - to.pos();
-                const pos_type delta = phys_sz - from_block_phys_sz;
+                const pos_type delta = phys_sz - desired_phys_sz;
 
                 // If wasted alloc space count is large enough to split, do so
                 if(delta >= split_threshold)

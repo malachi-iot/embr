@@ -333,6 +333,9 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
 
                     REQUIRE(r);
 
+                    // Block may have moved for this bundle, so re-acquire it
+                    bn = op.get_bundle(bn.handle);
+
                     pos_type sz2 = op.phys_size(bn);
 
                     // Nope, still 8 units

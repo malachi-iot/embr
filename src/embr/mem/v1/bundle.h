@@ -42,6 +42,7 @@ struct bundle_base
         block{block}, page{page}, handle{handle}
     {}
 
+    constexpr block::modes mode() const { return block->mode_; }
     constexpr bool allocated() const { return block->allocated(); }
 
     constexpr pos_type pos() const { return page->pos(); }

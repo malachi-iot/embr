@@ -113,11 +113,18 @@ auto pool<Traits>::ops<HandleTraits>::phys_size(const bundle_base<Traits2, Block
 
 template <class Traits>
 template <class HandleTraits>
-unsigned pool<Traits>::ops<HandleTraits>::logical_size(const bundle& bn) const
+unsigned pool<Traits>::ops<HandleTraits>::logical_size(block::modes mode, pos_type phys_sz)
 {
     // FIX: Needs more work
-    const unsigned tbd = bn.block->header_size(block::Trivial);
-    return phys_size(bn).count() * aliasing - tbd;
+    const unsigned tbd = block::header_size(mode);
+    return phys_sz.count() * aliasing - tbd;
+}
+
+template <class Traits>
+template <class HandleTraits>
+unsigned pool<Traits>::ops<HandleTraits>::logical_size(const bundle& bn) const
+{
+    return logical_size(bn.block->mode(), phys_size(bn));
 }
 
 template <class Traits>
@@ -438,10 +445,12 @@ bool pool<Traits>::ops<HandleTraits>::realloc(bundle bn, pos_type phys_sz)
 
         if(free_sz < current_sz)    return false;
 
-        move(bn, dest, 0, false);
+        unsigned logical_sz = logical_size(bn.block->mode(), phys_sz);
 
-        block bn_saved = *bn.block;
-        block dest_saved = *dest.block;
+        move(bn, dest, logical_sz, false);
+
+        //block bn_saved = *bn.block;
+        //block dest_saved = *dest.block;
 
         // Example - handle:block-pos:block->next
         // 0:0:A0->1, 1:1:F->2, 2:2:A1->3, 3:3:F->null

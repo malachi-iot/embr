@@ -179,9 +179,10 @@ public:
         /// @brief Moves an allocated block to a new free block location.  Updates block metadata so 'to' block becomes allocated
         /// @param from
         /// @param to free block
-        /// @param logical_sz
+        /// @param logical_sz feeds block mover + indicates realloc resize
         /// @param is_overlapping
-        /// @remarks to->next may change due to split operation
+        /// @remarks to->next may change due to split operation.  logical_sz is NOT checked for
+        /// overflow
         void move(bundle from, bundle to, unsigned logical_sz, bool is_overlapping = false);
 
         /// Since page table virtualizes positions, first page table entry is not necessarily
@@ -210,6 +211,7 @@ public:
             return phys_size(self_.bundle(p, h));
         }
 
+        static unsigned logical_size(block::modes, pos_type phys_sz);
         unsigned logical_size(const bundle&) const;
 
         /// Moves block itself to new location - does not consider payload data
