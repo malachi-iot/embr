@@ -275,8 +275,17 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                     // No allocations ever = no fragmentation
                     REQUIRE(frag0.bundle.is_null() == true);
 
+                    // Allocates 64 physical bytes (56 logical)
+                    // This leaves 2048 - 64 = 1984 (1976 logical)
                     bundle bn = op.alloc(phys_sz, block::Trivial);
+
+                    REQUIRE(op.logical_size(bn) == 56);
+
+                    // Allocates 64 physical bytes again (56 logical)
+                    // This leaves 2048 - 128 = 1920 (1912 logical)
                     bn = op.alloc(phys_sz, block::Trivial);
+                    // Deallocates 64 physical bytes (56 logical)
+                    // This leaves 2048 - 64 = 1984 (1976 logical)
                     op.dealloc(0);
                     REQUIRE(op.invariant());
 
