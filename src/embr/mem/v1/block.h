@@ -128,9 +128,9 @@ public:
     void move_from(block* from, unsigned sz);
 };
 
-struct block_diagnostic
+class block_diagnostic
 {
-    block b;
+    block b{};
 
     static_assert(offsetof(block, data_) == sizeof(void*));
 };

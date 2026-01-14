@@ -46,7 +46,15 @@ struct page
 
 private:
     rep pos_{null};
+
+public:
+    friend void swap(page& lhs, page& rhs) noexcept
+    {
+        swap(lhs.pos_, rhs.pos_);
+    }
+
 };
+
 #endif
 
 

@@ -19,6 +19,17 @@ namespace detail { inline namespace v1 {
 
 template <class Traits>
 template <class HandleTraits>
+auto pool<Traits>::ops<HandleTraits>::first() const -> bundle
+{
+    bundle bn = get_bundle(0);
+
+    for(; bn.has_prev(); bn = prev(bn));        // NOLINT
+
+    return bn;
+}
+
+template <class Traits>
+template <class HandleTraits>
 auto pool<Traits>::ops<HandleTraits>::first_free(pos_type phys_sz, pos_type* found_size) const -> bundle
 {
     for(page_type& p : handles_)
@@ -428,6 +439,28 @@ bool pool<Traits>::ops<HandleTraits>::realloc(bundle bn, pos_type phys_sz)
         if(free_sz < current_sz)    return false;
 
         move(bn, dest, 0, false);
+
+        block bn_saved = *bn.block;
+        block dest_saved = *dest.block;
+
+        // Example - handle:block-pos:block->next
+        // 0:0:A0->1, 1:1:F->2, 2:2:A1->3, 3:3:F->null
+        // A0 wants to realloc to 3:3:F.  We become
+        // 0:0:F->1, 1:1:F->2, 2:2:A1->3, 3:3:A0->4, 4:4:F->null
+        // Since previous 3:3:F splits and creates 4:4:F
+        // Now we swap page table so that A0 handle remains constant
+        // 0:3:A0->4, 1:1:F->2, 2:2:A1->3, 3:0:F->1, 4:4:F->null
+        // 0:A0 is still physically at old position 3
+        // Critically, block-pos remains contiguous
+
+        // 1. Swap page table positions, which effectively swaps handles
+        swap(bn.page, dest.page);
+
+        // 2. Relink linked list so that handles continue to represent
+        //    contiguous pages
+        // NOTE: Perhaps not necessary
+        //bn = get_bundle(*bn.page);
+        //bn.block->next(bn_saved.next());
 
         return true;
     };

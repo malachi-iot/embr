@@ -181,9 +181,13 @@ public:
         /// @param to free block
         /// @param logical_sz
         /// @param is_overlapping
-        ///
+        /// @remarks to->next may change due to split operation
         void move(bundle from, bundle to, unsigned logical_sz, bool is_overlapping = false);
 
+        /// Since page table virtualizes positions, first page table entry is not necessarily
+        /// starting handle.  Use this to find actual first handle in the list
+        /// @return
+        bundle first() const;
         bundle first_free(pos_type phys_sz, pos_type* found_size) const;
 
         template <class Traits2, class Block, class Page>
