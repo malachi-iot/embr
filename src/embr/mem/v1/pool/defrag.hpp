@@ -106,10 +106,14 @@ void pool<Traits>::ops<HandleTraits>::move(bundle from, bundle to, unsigned logi
 
         dealloc(from);
 
-        // Almost works, but makes assess unit test a little upset.  Unclear whether we or the test iself
-        // is at fault
-        //pos_type desired_phys_sz = logical_sz == 0 ? from_block_phys_sz : pos_type(logical_sz / aliasing);
-        pos_type desired_phys_sz = from_block_phys_sz;
+        // New physical size is either directly the source block size or computed from
+        // incoming logical size
+        pos_type desired_phys_sz = logical_sz == 0 ?
+            from_block_phys_sz :
+            pos_type((block::header_size(to.mode()) + logical_sz) / aliasing);
+        assert(desired_phys_sz <= to_block_phys_sz);
+
+        //pos_type desired_phys_sz = from_block_phys_sz;
 
         // Resize 'to' to match old 'from'
         if(to.has_next() && to_block_phys_sz != desired_phys_sz)

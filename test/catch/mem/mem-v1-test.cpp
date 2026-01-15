@@ -289,10 +289,13 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                     op.dealloc(0);
                     REQUIRE(op.invariant());
 
+                    // Now we have a F A F pattern
+
+                    // 2048 - (2 free blocks headers) - (allocated physical block size)
+                    REQUIRE(op.available() == pool_size - phys_sz_bytes - block_sz * 2);
+
                     memcpy(data = op.lock(bn), "Hello", 6);
                     op.unlock(bn.handle);
-
-                    // Now we have a F A F pattern
 
                     op.assess(&frag);
 

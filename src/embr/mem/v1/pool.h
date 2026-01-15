@@ -249,6 +249,7 @@ public:
         void ref_up(handle_type h);
         void ref_down(handle_type h);
 
+        // Reports in logical size
         unsigned alloced() const;
         unsigned available() const;
 

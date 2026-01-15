@@ -11,6 +11,7 @@
 
 using namespace embr::mem;
 
+#define ENABLE_BATTERY 1
 #define ENABLE_RANDOM_BATTERY 1
 
 template <class Traits, class HandlesTraits>
@@ -161,6 +162,7 @@ std::vector<T> make_vector_random_size(Gen& gen, unsigned min, unsigned max, uns
 
 TEST_CASE("gc mem v1 battery", "[memory][gc][battery]")
 {
+#if ENABLE_BATTERY
     SECTION("layer1: pseudo random")
     {
         constexpr unsigned pool_sz = 512;
@@ -280,4 +282,5 @@ TEST_CASE("gc mem v1 battery", "[memory][gc][battery]")
         }
 #endif
     }
+#endif
 }
