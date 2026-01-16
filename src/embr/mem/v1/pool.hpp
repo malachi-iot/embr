@@ -11,6 +11,7 @@
 #include "block.hpp"
 #include "pool.h"
 #include "pool/defrag.hpp"
+#include "pool/move.hpp"
 #include "pool/invariant.hpp"
 
 namespace embr { namespace mem {
@@ -262,42 +263,6 @@ bool pool<Traits>::ops<HandleTraits>::merge_if_free(bundle current, bundle next)
 }
 
 
-template <class Traits>
-template <class HandleTraits>
-v1::block* pool<Traits>::ops<HandleTraits>::move_block(page_type& page, pos_type new_pos)
-{
-    block* from = self_.block(page.pos());
-    block* to = self_.block(new_pos);
-
-    page.pos(new_pos);
-
-    *to = *from;
-
-    return to;
-}
-
-template <class Traits>
-template <class HandleTraits>
-v1::block* pool<Traits>::ops<HandleTraits>::resize(bundle bn, bundle bn_next, pos_type new_sz)
-{
-    const pos_type pos = bn.pos() + new_sz;
-
-    return move_block(*bn_next.page, pos);
-}
-
-template <class Traits>
-template <class HandleTraits>
-v1::block* pool<Traits>::ops<HandleTraits>::resize(bundle bn, pos_type new_sz)
-{
-    assert(bn.has_next());
-    bundle bn_next = next(bn);
-    assert(bn_next.allocated() == false);
-    const pos_type bn_sz = phys_size(bn);
-    const pos_type bn_next_sz = phys_size(bn_next);
-    assert(new_sz <= bn_sz + bn_next_sz);
-
-    return resize(bn, bn_next, new_sz);
-}
 
 template <class T, class PoolTraits, class HandlesTraits, class ...Args>
 typename HandlesTraits::size_type construct(pool<PoolTraits>& p, handles<HandlesTraits>& h, Args&&...args)
@@ -452,24 +417,21 @@ bool pool<Traits>::ops<HandleTraits>::realloc(bundle bn, pos_type phys_sz)
         //block bn_saved = *bn.block;
         //block dest_saved = *dest.block;
 
-        // Example - handle:block-pos:block->next
-        // 0:0:A0->1, 1:1:F->2, 2:2:A1->3, 3:3:F->null
+        // Example - prev<-handle:block-pos:block->next
+        // null<-0:0:A0->1, 0<-1:1:F->2, 1<-2:2:A1->3, 2<-3:3:F->null
         // A0 wants to realloc to 3:3:F.  We become
-        // 0:0:F->1, 1:1:F->2, 2:2:A1->3, 3:3:A0->4, 4:4:F->null
+        // null<-0:0:F->1,  0<-1:1:F->2, 1<-2:2:A1->3, 2<-3:3:A0->4,   3<-4:4:F->null
         // Since previous 3:3:F splits and creates 4:4:F
-        // Now we swap page table so that A0 handle remains constant
-        // 0:3:A0->4, 1:1:F->2, 2:2:A1->3, 3:0:F->1, 4:4:F->null
+        // Now we swap page table position 3 and 0 so that A0 handle remains constant
+        // 2<-0:3:A0->4,    0<-1:1:F->2, 1<-2:2:A1->3, null<-3:0:F->1, 3<-4:4:F->null
         // 0:A0 is still physically at old position 3
-        // Critically, block-pos remains contiguous
+        // Critically, block-pos must remain contiguous.  This means:
+        // 1. handle #1 should now prev link to handle 3, not 0
+        // 2. handle #2 should now next link to handle 0, not 3
+        // 3. handle #4 should now prev link to handle 0, not 3
 
-        // 1. Swap page table positions, which effectively swaps handles
-        swap(*bn.page, *dest.page);
-
-        // 2. Relink linked list so that handles continue to represent
-        //    contiguous pages
-        // NOTE: Perhaps not necessary
-        //bn = get_bundle(*bn.page);
-        //bn.block->next(bn_saved.next());
+        // Swap page table positions and relink as described above
+        virtual_swap(bn, dest);
 
         return true;
     };

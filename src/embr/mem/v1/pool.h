@@ -188,6 +188,13 @@ public:
             unsigned desired_logical_sz,
             bool is_overlapping);
 
+        ///
+        /// @brief virtual_swap performs page position swap and relinks to maintain contiguous next and prev
+        /// @param lhs
+        /// @param rhs
+        ///
+        void virtual_swap(bundle& lhs, bundle& rhs);
+
         /// Since page table virtualizes positions, first page table entry is not necessarily
         /// starting handle.  Use this to find actual first handle in the list
         /// @return
