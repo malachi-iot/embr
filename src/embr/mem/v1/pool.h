@@ -179,11 +179,14 @@ public:
         /// @brief Moves an allocated block to a new free block location.  Updates block metadata so 'to' block becomes allocated
         /// @param from
         /// @param to free block
-        /// @param logical_sz feeds block mover + indicates realloc resize
+        /// @param logical_sz feeds block mover +
+        /// @param desired_logical_sz indicates logical realloc resize
         /// @param is_overlapping
         /// @remarks to->next may change due to split operation.  logical_sz is NOT checked for
         /// overflow
-        void move(bundle from, bundle to, unsigned logical_sz, bool is_overlapping = false);
+        validated_result move(bundle from, bundle to, unsigned logical_sz,
+            unsigned desired_logical_sz,
+            bool is_overlapping);
 
         /// Since page table virtualizes positions, first page table entry is not necessarily
         /// starting handle.  Use this to find actual first handle in the list

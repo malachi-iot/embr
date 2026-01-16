@@ -336,22 +336,72 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                     op.unlock(bn.handle);
                     op.unlock(bn.handle);
                 }
+                SECTION("move")
+                {
+                    bundle bn = op.alloc(phys_sz, block::Trivial);
+
+                    memcpy(op.lock(bn.handle), "Hello", 6);
+                    op.unlock(bn.handle);
+
+                    SECTION("to BFB")
+                    {
+                        block* b = bn.block;
+                        page* p = bn.page;
+                        pos_type pos = p->pos();
+                        bundle bn_free = op.get_bundle(1);
+
+                        REQUIRE(bn.handle == 0);
+                        REQUIRE(bn.has_next());
+                        REQUIRE(bn_free.has_next() == false);
+                        REQUIRE(bn_free.allocated() == false);
+
+                        op.move(bn, bn_free, 0, 24, false);
+
+                        bn_free = op.get_bundle(0);
+
+                        REQUIRE(bn_free.allocated() == false);
+
+                        bn = op.get_bundle(1);
+
+                        // Ensure split did occur
+                        REQUIRE(bn.has_next());
+                        REQUIRE(bn.allocated());
+                        REQUIRE(bn.page->pos() != pos);
+
+                        REQUIRE(std::string_view((char*)op.lock(bn.handle)) == "Hello");
+                        op.unlock(bn.handle);
+
+                        REQUIRE(op.phys_size(bn) == pos_type(4));
+                    }
+                }
                 SECTION("realloc")
                 {
                     bundle bn = op.alloc(phys_sz, block::Trivial);
+                    block* bl = bn.block;
+                    page* p = bn.page;
+                    pos_type pos = p->pos();
                     pos_type new_phys_sz = phys_sz + pos_type(1);
+
+                    memcpy(op.lock(bn.handle), "Hello", 6);
+                    op.unlock(bn.handle);
 
                     bool r = op.realloc(bn, new_phys_sz);
 
                     REQUIRE(r);
 
-                    // Block may have moved for this bundle, so re-acquire it
+                    // Block has moved for this bundle, so re-acquire it
                     bn = op.get_bundle(bn.handle);
+
+                    REQUIRE(bn.page->pos() != pos);
+                    REQUIRE(bn.block != bl);
+                    REQUIRE(bn.is_null() == false);
+                    REQUIRE(bn.allocated() == true);
+                    REQUIRE(std::string_view((char*)op.lock(bn.handle)) == "Hello");
+                    op.unlock(bn.handle);
 
                     pos_type sz2 = op.phys_size(bn);
 
-                    // Nope, still 8 units
-                    //REQUIRE(sz2 == new_phys_sz);
+                    REQUIRE(sz2 == new_phys_sz);
                 }
                 SECTION("pool assembly/edge cases")
                 {

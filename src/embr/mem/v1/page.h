@@ -50,7 +50,7 @@ private:
 public:
     friend void swap(page& lhs, page& rhs) noexcept
     {
-        swap(lhs.pos_, rhs.pos_);
+        std::swap(lhs.pos_, rhs.pos_);
     }
 
 };

@@ -445,9 +445,9 @@ bool pool<Traits>::ops<HandleTraits>::realloc(bundle bn, pos_type phys_sz)
 
         if(free_sz < current_sz)    return false;
 
-        unsigned logical_sz = logical_size(bn.block->mode(), phys_sz);
+        unsigned logical_sz = logical_size(bn.mode(), phys_sz);
 
-        move(bn, dest, logical_sz, false);
+        move(bn, dest, 0, logical_sz, false);
 
         //block bn_saved = *bn.block;
         //block dest_saved = *dest.block;
@@ -463,7 +463,7 @@ bool pool<Traits>::ops<HandleTraits>::realloc(bundle bn, pos_type phys_sz)
         // Critically, block-pos remains contiguous
 
         // 1. Swap page table positions, which effectively swaps handles
-        swap(bn.page, dest.page);
+        swap(*bn.page, *dest.page);
 
         // 2. Relink linked list so that handles continue to represent
         //    contiguous pages

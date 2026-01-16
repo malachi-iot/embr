@@ -10,10 +10,11 @@ namespace embr { namespace mem {
 namespace detail { inline namespace v1 {
 
 
-// TODO: Consider returning invariant result
 template <class Traits>
 template <class HandleTraits>
-void pool<Traits>::ops<HandleTraits>::move(bundle from, bundle to, unsigned logical_sz,
+validated_result pool<Traits>::ops<HandleTraits>::move(bundle from, bundle to,
+    unsigned logical_sz,
+    unsigned desired_logical_sz,
     bool is_overlapping)
 {
     const bool is_trivial = from.mode() == block::Trivial;
@@ -107,21 +108,27 @@ void pool<Traits>::ops<HandleTraits>::move(bundle from, bundle to, unsigned logi
         dealloc(from);
 
         // New physical size is either directly the source block size or computed from
-        // incoming logical size
-        pos_type desired_phys_sz = logical_sz == 0 ?
+        // incoming desired logical size
+        pos_type desired_phys_sz = desired_logical_sz == 0 ?
             from_block_phys_sz :
-            pos_type((block::header_size(to.mode()) + logical_sz) / aliasing);
+            pos_type((block::header_size(to.mode()) + desired_logical_sz) / aliasing);
+
         assert(desired_phys_sz <= to_block_phys_sz);
 
         //pos_type desired_phys_sz = from_block_phys_sz;
 
         // Resize 'to' to match old 'from'
-        if(to.has_next() && to_block_phys_sz != desired_phys_sz)
+        if(to_block_phys_sz != desired_phys_sz)
         {
+            // Special treatment of to_next where we invite the 'one past end' block
             bundle to_next(next(to));
+            bool has_next = to.has_next();
+            bool to_next_allocated = has_next ? to_next.allocated() : true;
+            pos_type to_next_pos = has_next ? to_next.pos() :
+                pos_type(estd::size(self_.pool_) / aliasing);
 
             // We already fit neatly into 'to', so this is only to move following free block backward
-            if(to_next.allocated() == false)
+            if(to_next_allocated == false)
                 resize(to, to_next, desired_phys_sz);
             else
             {
@@ -134,17 +141,17 @@ void pool<Traits>::ops<HandleTraits>::move(bundle from, bundle to, unsigned logi
                 // block landscape
                 // DEBT: Although probably not, since if to_next is allocated so far there are no use cases
                 // which would move to_next around before we get here
-                const pos_type phys_sz = to_next.pos() - to.pos();
+                const pos_type phys_sz = to_next_pos - to.pos();
                 const pos_type delta = phys_sz - desired_phys_sz;
 
                 // If wasted alloc space count is large enough to split, do so
                 if(delta >= split_threshold)
                 {
-                    const pos_type new_pos1 = to_next.pos() - delta;
+                    const pos_type split_pos = to_next_pos - delta;
                     //const pos_type new_pos2 = to.pos() + from_block_phys_sz;
                     //assert(new_pos1 == new_pos2);
                     // DEBT: Much like alloc, this is a bit harsh
-                    assert(split_at(to, new_pos1));
+                    assert(split_at(to, split_pos));
                 }
                 else
                 {
@@ -158,6 +165,8 @@ void pool<Traits>::ops<HandleTraits>::move(bundle from, bundle to, unsigned logi
     // Treat move as the dealloc it is, and do a merge evaluation
     //merge(from, next(from));
     //merge_if_free(prev(from), from);
+
+    return {};
 }
 
 
@@ -167,7 +176,7 @@ template <class HandleTraits>
 void pool<Traits>::ops<HandleTraits>::defrag(const fragmentation::candidate& c)
 {
     // DEBT: A bit sloppy converting bundles like this, but gets the job done
-    move(get_bundle(c.bundle.handle), get_bundle(c.move_to.handle), 0, c.overlap);
+    move(get_bundle(c.bundle.handle), get_bundle(c.move_to.handle), 0, 0, c.overlap);
 }
 
 template <class Traits>
