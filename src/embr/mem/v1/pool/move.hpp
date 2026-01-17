@@ -12,6 +12,26 @@ template <class Traits>
 template <class HandleTraits>
 void pool<Traits>::ops<HandleTraits>::virtual_swap(bundle& lhs, bundle& rhs)
 {
+    // DEBT: Adjacent block swap not yet supported due to complexity of relinking
+    assert(lhs.block->next() != rhs.handle && rhs.block->next() != lhs.handle);
+
+    if(lhs.has_prev())
+    {
+        prev(lhs).next(rhs.handle);
+    }
+    if(lhs.has_next())
+    {
+        next(lhs).prev(rhs.handle);
+    }
+    if(rhs.has_prev())
+    {
+        prev(rhs).next(lhs.handle);
+    }
+    if(rhs.has_next())
+    {
+        next(rhs).prev(lhs.handle);
+    }
+
     swap(*lhs.page, *rhs.page);
 
     // TODO: Still need to do relinking

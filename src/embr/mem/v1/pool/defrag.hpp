@@ -18,7 +18,13 @@ template <class HandleTraits>
 void pool<Traits>::ops<HandleTraits>::defrag(const fragmentation::candidate& c)
 {
     // DEBT: A bit sloppy converting bundles like this, but gets the job done
-    move(get_bundle(c.bundle.handle), get_bundle(c.move_to.handle), 0, 0, c.overlap);
+    bundle from(get_bundle(c.bundle.handle));
+    bundle to(get_bundle(c.move_to.handle));
+
+    move(from, to, 0, 0, c.overlap);
+
+    // FIX: Need this guy, he's just not up to adjacent block challenge yet
+    //virtual_swap(from, to);
 }
 
 template <class Traits>

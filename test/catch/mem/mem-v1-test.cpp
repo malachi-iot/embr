@@ -381,27 +381,54 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                     page* p = bn.page;
                     pos_type pos = p->pos();
                     pos_type new_phys_sz = phys_sz + pos_type(1);
+                    REQUIRE(pos.count() == 0);
 
                     memcpy(op.lock(bn.handle), "Hello", 6);
                     op.unlock(bn.handle);
 
-                    bool r = op.realloc(bn, new_phys_sz);
+                    SECTION("simple grow")
+                    {
+                        // A F pattern, ideally we expect this to expand existing A and shrink existing F.  At this point we're
+                        // not there yet so it's going to move the block
 
-                    REQUIRE(r);
+                        bool r = op.realloc(bn, new_phys_sz);
 
-                    // Block has moved for this bundle, so re-acquire it
-                    bn = op.get_bundle(bn.handle);
+                        REQUIRE(op.invariant());
 
-                    REQUIRE(bn.page->pos() != pos);
-                    REQUIRE(bn.block != bl);
-                    REQUIRE(bn.is_null() == false);
-                    REQUIRE(bn.allocated() == true);
-                    REQUIRE(std::string_view((char*)op.lock(bn.handle)) == "Hello");
-                    op.unlock(bn.handle);
+                        REQUIRE(r);
 
-                    pos_type sz2 = op.phys_size(bn);
+                        // Block does NOT move for a simpler grow
+                        REQUIRE(bn.block == bl);
 
-                    REQUIRE(sz2 == new_phys_sz);
+                        pos_type sz2 = op.phys_size(bn);
+
+                        REQUIRE(sz2 == new_phys_sz);
+                    }
+                    SECTION("move")
+                    {
+                        // Allocate another block to inhibit grow-into-free
+                        op.alloc(phys_sz, block::Trivial);
+
+                        bool r = op.realloc(bn, new_phys_sz);
+
+                        REQUIRE(op.invariant());
+
+                        REQUIRE(r);
+
+                        // Block has moved for this bundle, so re-acquire it
+                        bn = op.get_bundle(bn.handle);
+
+                        REQUIRE(bn.page->pos() != pos);
+                        REQUIRE(bn.block != bl);
+                        REQUIRE(bn.is_null() == false);
+                        REQUIRE(bn.allocated() == true);
+                        REQUIRE(std::string_view((char*)op.lock(bn.handle)) == "Hello");
+                        op.unlock(bn.handle);
+
+                        pos_type sz2 = op.phys_size(bn);
+
+                        REQUIRE(sz2 == new_phys_sz);
+                    }
                 }
                 SECTION("pool assembly/edge cases")
                 {

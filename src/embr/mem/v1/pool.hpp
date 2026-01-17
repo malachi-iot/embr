@@ -173,6 +173,34 @@ void pool<Traits>::ops<HandleTraits>::reset()
 
 template <class Traits>
 template <class HandleTraits>
+void pool<Traits>::ops<HandleTraits>::alloc(bundle bn, pos_type found_sz, pos_type phys_sz, block::modes mode)
+{
+    // If we're 3 blocks larger, go ahead and split
+    // We start with min block size.  On 64-bit systems that is:
+    // 8 for header, 8 for free data portion.  We then fudge it
+    // and say that either:
+    // 1. Room for RttoProxy mode is interesting OR
+    // 2. Room for larger than the tiniest free block is interesting
+    // So we add +1
+    // NOTE: May need tuning
+    constexpr pos_type min_block_and_data_phys_sz(2);
+    constexpr pos_type split_threshold{min_block_and_data_phys_sz + pos_type(1)};
+
+    if(found_sz - phys_sz >= split_threshold)
+    {
+        pos_type at = bn.pos() + phys_sz;
+
+        // DEBT: An assert is a little too harsh here, but helpful enough to keep for the short term
+        // really we need an error code
+        assert(split_at(bn, at) != handles_type::traits::null);
+    }
+
+    bn.block->reset(mode, true);
+}
+
+
+template <class Traits>
+template <class HandleTraits>
 auto pool<Traits>::ops<HandleTraits>::alloc(pos_type phys_sz, block::modes mode) -> bundle
 {
     pos_type found_size(0);
@@ -180,27 +208,7 @@ auto pool<Traits>::ops<HandleTraits>::alloc(pos_type phys_sz, block::modes mode)
 
     if(bn.is_null() == false)
     {
-        // If we're 3 blocks larger, go ahead and split
-        // We start with min block size.  On 64-bit systems that is:
-        // 8 for header, 8 for free data portion.  We then fudge it
-        // and say that either:
-        // 1. Room for RttoProxy mode is interesting OR
-        // 2. Room for larger than the tiniest free block is interesting
-        // So we add +1
-        // NOTE: May need tuning
-        constexpr pos_type min_block_and_data_phys_sz(2);
-        constexpr pos_type split_threshold{min_block_and_data_phys_sz + pos_type(1)};
-
-        if(found_size - phys_sz >= split_threshold)
-        {
-            pos_type at = bn.pos() + phys_sz;
-
-            // DEBT: An assert is a little too harsh here, but helpful enough to keep for the short term
-            // really we need an error code
-            assert(split_at(bn, at) != handles_type::traits::null);
-        }
-
-        bn.block->reset(mode, true);
+        alloc(bn, found_size, phys_sz, mode);
     }
 
     //assert(phys_size(bn) >= pos_type(2));
@@ -398,6 +406,39 @@ bool pool<Traits>::ops<HandleTraits>::realloc(bundle bn, pos_type phys_sz)
     if(phys_sz <= current_sz)
         return true;
 
+    if(bn.has_next())
+    {
+        // Assess for condition #1
+
+        bundle bn_next(next(bn));
+        if(bn_next.allocated() == false)
+        {
+            pos_type next_sz = phys_size(bn_next);
+
+            // DEBT: We do this kind of op elsewhere (forget where) - consolidate
+            // DEBT: This also feels like we overlap with 'resize' - consolidate
+
+            const pos_type max_sz(current_sz + next_sz);
+
+            if(phys_sz <= max_sz)
+            {
+                constexpr pos_type split_thresh(3);
+
+                if(max_sz - phys_sz >= split_thresh)
+                {
+                    // retain existing free block, merely move it
+                    move_block(*bn_next.page, phys_sz);
+                }
+                else
+                    handles_.dealloc(bn_next.handle);
+
+                return true;
+            }
+
+            // Reaching here means requested size won't fit, so cascade down to assess a move operation instead
+        }
+    }
+
     fragmentation frag;
 
     auto move_to_candidate = [&]
@@ -429,6 +470,10 @@ bool pool<Traits>::ops<HandleTraits>::realloc(bundle bn, pos_type phys_sz)
         // 1. handle #1 should now prev link to handle 3, not 0
         // 2. handle #2 should now next link to handle 0, not 3
         // 3. handle #4 should now prev link to handle 0, not 3
+        // Creating:
+        // 2<-0:3:A0->4,    3<-1:1:F->2, 1<-2:2:A1->0, null<-3:0:F->1, 0<-4:4:F->null
+        // Although this is a little mind bending, remember the golden rule where prev/next MUST represent contiguous
+        // block-positions
 
         // Swap page table positions and relink as described above
         virtual_swap(bn, dest);

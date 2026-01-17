@@ -156,6 +156,7 @@ public:
         /// Creates a new free block inside bundle, before next block
         /// @param at particular location of split - NOT a size
         /// @details presumes bundle is big enough to split, no checks performed.
+        /// @returns handle of new free block created
         /// Does not notice if block following this bundle is already free.  Renamed
         /// from 'split' to disambiguate that we need absolute position, not relative size
         handle_type split_at(bundle, pos_type at);
@@ -235,6 +236,9 @@ public:
         /// @return
         v1::block* resize(bundle, pos_type new_sz);
         v1::block* resize(bundle bn, bundle bn_next, pos_type new_sz);
+
+        /// Low level alloc TBD docs
+        void alloc(bundle, pos_type found_sz, pos_type phys_sz, block::modes);
 
         bundle alloc(pos_type phys_sz, block::modes mode);
 
