@@ -12,8 +12,32 @@ template <class Traits>
 template <class HandleTraits>
 void pool<Traits>::ops<HandleTraits>::virtual_swap(bundle& lhs, bundle& rhs)
 {
+    // Adjacency example - prev<-handle:block-pos:block->next
+    // null<-0:0:A0->1, 0<-1:1:F0->2, 1<-2:2:A1->3, 2<-3:3:F1->null
+    // A1 (lhs) wants to swap with F0 (rhs).  Note the counterintuitive order of lhs, rhs.
+    // This is not unusual.  We then have:
+    // null<-0:0:A0->1, 1<-1:2:A1->3, 0<-2:1:F0->2, 2<-3:3:F1->null
+    // In addition to relinking neighbors, with adjacent blocks,
+    // we have to relink the swapped blocks too:
+    // 1.  Handle #1 prev must relink from 1 (itself) to 2
+    // 2.  Handle #2 next must relink from 2 (itself) to 1
+    // Creating
+    // null<-0:0:A0->1, 2<-1:2:A1->3, 0<-2:1:F0->1, 2<-3:3:F1->null
+
     // DEBT: Adjacent block swap not yet supported due to complexity of relinking
     assert(lhs.block->next() != rhs.handle && rhs.block->next() != lhs.handle);
+
+    // Doesn't pass tests, but despite its mind bending nature should be close
+    if(lhs.block->next() == rhs.handle)
+    {
+        lhs.prev(lhs.handle);
+        rhs.next(rhs.handle);
+    }
+    else if(rhs.block->next() == lhs.handle)
+    {
+        rhs.next(rhs.handle);
+        lhs.prev(lhs.handle);
+    }
 
     if(lhs.has_prev())
     {
