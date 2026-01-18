@@ -23,7 +23,7 @@ void pool<Traits>::ops<HandleTraits>::defrag(const fragmentation::candidate& c)
 
     move(from, to, 0, 0, c.overlap);
 
-    // FIX: Need this guy, he's just not up to adjacent block challenge yet
+    // FIX: Need this guy, he's just not quite ready yet
     //virtual_swap(from, to);
 }
 

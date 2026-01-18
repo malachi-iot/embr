@@ -1,6 +1,6 @@
 #include <catch2/catch_all.hpp>
 
-#include <random>
+#include <sstream>
 
 #include <embr/mem/v1/pool.hpp>
 #include <embr/mem/v1/shared-handle.h>
@@ -34,6 +34,9 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
 
     bundle b0 = ops.alloc(pos_type(8), block::Trivial);
     bundle b1 = ops.get_bundle(1);
+    pos_type p0 = b0.pos();
+    pos_type p1 = b1.pos();
+    std::ostringstream out;
 
     REQUIRE(b0.handle == 0);
     REQUIRE(b0.allocated());
@@ -43,19 +46,54 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
     {
         SECTION("adjacent forward")
         {
-            //ops.virtual_swap(b0, b1);
+            ops.virtual_swap(b0, b1);
+
+            ops.dump(out << "\n");
+            CAPTURE(out.str());
+            REQUIRE(ops.invariant());
+
+            REQUIRE(b0.pos() == p1);
+            REQUIRE(b1.pos() == p0);
         }
         SECTION("adjacent reverse")
         {
-            //ops.virtual_swap(b1, b0);
-        }
-        SECTION("non-adjacent forward")
-        {
+            ops.virtual_swap(b1, b0);
 
-        }
-        SECTION("non-adjacent reverse")
-        {
+            ops.dump(out << "\n");
+            CAPTURE(out.str());
+            REQUIRE(ops.invariant());
 
+            REQUIRE(b0.pos() == p1);
+            REQUIRE(b1.pos() == p0);
+        }
+        SECTION("non-adjacent")
+        {
+            b1 = ops.alloc(pos_type(8), block::Trivial);
+
+            REQUIRE(b1.handle == 1);
+
+            bundle b2 = ops.get_bundle(2);
+            REQUIRE(b2.allocated() == false);
+            REQUIRE(b2.has_next() == false);
+            pos_type p2 = b2.pos();
+            bool reversed = false;
+
+            SECTION("forward")
+            {
+                ops.virtual_swap(b0, b2);
+            }
+            SECTION("reverse")
+            {
+                reversed = true;
+                ops.virtual_swap(b2, b0);
+            }
+
+            ops.dump(out << "\n");
+            CAPTURE(reversed, out.str());
+            REQUIRE(ops.invariant());
+
+            REQUIRE(b0.pos() == p2);
+            REQUIRE(b2.pos() == p0);
         }
     }
 }

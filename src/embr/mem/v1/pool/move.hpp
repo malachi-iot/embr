@@ -8,10 +8,15 @@ namespace embr { namespace mem {
 
 namespace detail { inline namespace v1 {
 
+// TODO: Consider also a brute relinker based purely on page.pos, though that's very extreme
+
 template <class Traits>
 template <class HandleTraits>
 void pool<Traits>::ops<HandleTraits>::virtual_swap(bundle& lhs, bundle& rhs)
 {
+    constexpr handle_type null = block::null;
+    // At its core we're doing a doubly-linked list item swap operation
+
     // Adjacency example - prev<-handle:block-pos:block->next
     // null<-0:0:A0->1, 0<-1:1:F0->2, 1<-2:2:A1->3, 2<-3:3:F1->null
     // A1 (lhs) wants to swap with F0 (rhs).  Note the counterintuitive order of lhs, rhs.
@@ -25,13 +30,16 @@ void pool<Traits>::ops<HandleTraits>::virtual_swap(bundle& lhs, bundle& rhs)
     // null<-0:0:A0->1, 2<-1:2:A1->3, 0<-2:1:F0->1, 2<-3:3:F1->null
 
     // DEBT: Adjacent block swap not yet supported due to complexity of relinking
-    assert(lhs.block->next() != rhs.handle && rhs.block->next() != lhs.handle);
+    //assert(lhs.block->next() != rhs.handle && rhs.block->next() != lhs.handle);
+
+    bundle lhs_prev(prev(lhs)), lhs_next(next(lhs));
+    bundle rhs_prev(prev(rhs)), rhs_next(next(rhs));
 
     // Doesn't pass tests, but despite its mind bending nature should be close
     if(lhs.block->next() == rhs.handle)
     {
-        lhs.prev(lhs.handle);
-        rhs.next(rhs.handle);
+        lhs.next(lhs.handle);
+        rhs.prev(rhs.handle);
     }
     else if(rhs.block->next() == lhs.handle)
     {
@@ -41,24 +49,24 @@ void pool<Traits>::ops<HandleTraits>::virtual_swap(bundle& lhs, bundle& rhs)
 
     if(lhs.has_prev())
     {
-        prev(lhs).next(rhs.handle);
+        lhs_prev.next(rhs.handle);
     }
     if(lhs.has_next())
     {
-        next(lhs).prev(rhs.handle);
+        lhs_next.prev(rhs.handle);
     }
     if(rhs.has_prev())
     {
-        prev(rhs).next(lhs.handle);
+        rhs_prev.next(lhs.handle);
     }
     if(rhs.has_next())
     {
-        next(rhs).prev(lhs.handle);
+        rhs_next.prev(lhs.handle);
     }
 
-    swap(*lhs.page, *rhs.page);
+    // If my speculation is right, there are null-handle relinkings which still need to happen
 
-    // TODO: Still need to do relinking
+    swap(*lhs.page, *rhs.page);
 }
 
 template <class Traits>

@@ -127,8 +127,9 @@ static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& 
 
         ops.dump(after << "\n");
 
-        CAPTURE(after.str());
-        assert(ops.invariant());
+        invariant_result ir = ops.invariant();
+        CAPTURE(after.str(), ir);
+        assert(ir);
 
         //last.str("");
         last << "before(" << i << "):" << before.str();
