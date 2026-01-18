@@ -200,6 +200,12 @@ public:
         /// starting handle.  Use this to find actual first handle in the list
         /// @return
         bundle first() const;
+
+        /// Not generally used, alternative first-finder which moves physically through handles
+        /// looking for 0-pos.  Used for invariant.  More resilient to incorrect linking, so
+        /// consider swapping above first() with this
+        bundle first_alt() const;
+
         bundle first_free(pos_type phys_sz, pos_type* found_size) const;
 
         template <class Traits2, class Block, class Page>

@@ -31,6 +31,18 @@ auto pool<Traits>::ops<HandleTraits>::first() const -> bundle
 
 template <class Traits>
 template <class HandleTraits>
+auto pool<Traits>::ops<HandleTraits>::first_alt() const -> bundle
+{
+    constexpr pos_type zero{0};
+
+    for(page_type& page : handles_)
+        if(page.pos() == zero) return get_bundle(page);
+
+    return {};
+}
+
+template <class Traits>
+template <class HandleTraits>
 auto pool<Traits>::ops<HandleTraits>::first_free(pos_type phys_sz, pos_type* found_size) const -> bundle
 {
     for(page_type& p : handles_)

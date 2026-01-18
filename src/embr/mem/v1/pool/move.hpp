@@ -18,6 +18,8 @@ void pool<Traits>::ops<HandleTraits>::virtual_swap(bundle& lhs, bundle& rhs)
     // At its core we're doing a doubly-linked list item swap operation
 
     // Adjacency example - prev<-handle:block-pos:block->next
+
+    // Scenario 1:
     // null<-0:0:A0->1, 0<-1:1:F0->2, 1<-2:2:A1->3, 2<-3:3:F1->null
     // A1 (lhs) wants to swap with F0 (rhs).  Note the counterintuitive order of lhs, rhs.
     // This is not unusual.  We then have:
@@ -28,6 +30,15 @@ void pool<Traits>::ops<HandleTraits>::virtual_swap(bundle& lhs, bundle& rhs)
     // 2.  Handle #2 next must relink from 2 (itself) to 1
     // Creating
     // null<-0:0:A0->1, 2<-1:2:A1->3, 0<-2:1:F0->1, 2<-3:3:F1->null
+
+    // Scenario 2:
+    // null<-0:0:A0->1,  0<-1:1:F0->2 ,  1<-2:2:A1->3, 2<-3:3:F1->null
+    // A0 (lhs) wants to swap with F0 (rhs):
+    //   0<-0:1:F0->2 , null<-1:0:A0->1, 1<-2:2:A1->3, 2<-3:3:F1->null
+    // Relinking required:
+    // 1.  Handle# 0 prev must relink from 0 (itself) to 1
+    // 2.  Handle# 1 next must relink from 1 (itself) to 0
+    // Note how despite lhs movement from handle 0 to handle 1, that prev null link remains valid
 
     // DEBT: Adjacent block swap not yet supported due to complexity of relinking
     //assert(lhs.block->next() != rhs.handle && rhs.block->next() != lhs.handle);

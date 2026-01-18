@@ -20,7 +20,6 @@ invariant_result pool<Traits>::ops<HandleTraits>::invariant() const
     using result = invariant_result::unexpected_type;
     using violation = invariant_violation;
     //using iterator = typename handles_type::const_iterator;
-    const page_type* first{};
     constexpr pos_type zero_pos = pos_type(0);
     // TODO: Inspires a thought of convertible-to which embr/estd units explored before.  pos_type
     // really is directly convertible to bytes - although in this case we could probably cheat and
@@ -30,25 +29,15 @@ invariant_result pool<Traits>::ops<HandleTraits>::invariant() const
     constexpr handle_type null = traits::null;
     const unsigned max_handles = handles_.size();
 
-    // Scan for page representing position 0
-    for(const page_type& page : handles_)
-    {
-        if(page.pos() == zero_pos)
-        {
-            first = &page;
-            break;
-        }
-
-        //const_bundle bn = get_bundle(page);
-        //if(bn.p)
-        }
+    const_bundle bn = first_alt();
+    const page_type* first = bn.page;
 
     // Minimum one handle MUST be allocated at all times (big free block)
     if(first == nullptr)
         return result({"no handles", ""});
 
     // Now, walk forward and check that 'next' is sane
-    const_bundle bn = get_bundle(*first);
+    //const_bundle bn = get_bundle(*first);
     const_bundle bn_last{};
     pos_type size_tally{0};
     unsigned handle_count = 0;
