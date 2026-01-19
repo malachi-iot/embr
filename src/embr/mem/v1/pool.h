@@ -64,7 +64,6 @@ public:
     //using typename traits::page_type;
     //using typename traits::pos_type;
     //using traits::data;
-    using pos_type = page_unit_type;
 
     // Doesn't work for span, see https://github.com/malachi-iot/estdlib/issues/167
     using iterator_traits = estd::iterator_traits<container_type>;
@@ -74,13 +73,13 @@ protected:
 
     container_type pool_;
 
-    v1::block* block(page_unit_type at)
+    v1::block* block(bytes_unit<unsigned> at)
     {
         //assert(at.count() != page_type::null);
         return reinterpret_cast<v1::block*>(estd::data(pool_) + at.count());
     }
 
-    const v1::block* block(page_unit_type at) const
+    const v1::block* block(bytes_unit<unsigned> at) const
     {
         return reinterpret_cast<const v1::block*>(estd::data(pool_) + at.count());
     }
@@ -357,14 +356,21 @@ public:
         OPS.dealloc(h);
     }
 
-    void realloc(int h, int size)
+    void realloc(int h, unsigned size)
     {
-        OPS.realloc(OPS.get_bundle(h), size);
+        auto bn = OPS.get_bundle(h);
+        // DEBT: remove explicit bytes_unit, dependent on https://github.com/malachi-iot/estdlib/issues/173
+        OPS.realloc(bn, bn.header_size() + bytes_unit<unsigned>(size));
     }
 
     void reset()
     {
         OPS.reset();
+    }
+
+    unsigned allocated()
+    {
+        return OPS.alloced();
     }
 
     template <class T, class ...Args, class Derived2 = Derived>

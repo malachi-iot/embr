@@ -190,7 +190,9 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
     {
         constexpr unsigned pool_sz = 512;
         using pool_type = v1::layer1::pool<pool_sz, 8>;
+        using handle_type = pool_type::handle_type;
         using bundle = pool_type::ops_type::bundle;
+        using lock_handle = detail::lock_handle<pool_type>;
         pool_type pool1;
         using block = detail::v1::block;
         constexpr unsigned block_sz = block::header_size(block::Trivial);
@@ -206,7 +208,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
 
         SECTION("basic")
         {
-            pool_type::handle_type h1 = pool1.alloc(10);
+            handle_type h1 = pool1.alloc(10);
             REQUIRE((int)h1 == 0);
             void* locked = pool1.lock(0);
             // We allocate from very start of pool, and lock returns user/app data just past block header
@@ -215,7 +217,11 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
         }
         SECTION("realloc")
         {
-
+            handle_type h0 = pool1.alloc(10);
+            lock_handle lh0(h0, &pool1);
+            memcpy(lh0.guard().data(), "Hello", 6);
+            pool1.realloc(h0, 32);
+            REQUIRE(pool1.allocated() == 32);
         }
         SECTION("defrag")
         {

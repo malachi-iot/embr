@@ -80,6 +80,12 @@ struct bundle_base
     constexpr bool has_prev() const { return block->prev() != null; }
     constexpr bool has_next() const { return block->next() != null; }
 
+    constexpr bytes_unit<unsigned> header_size() const
+    {
+        // DEBT: Do a CTAD
+        return bytes_unit<unsigned>{ block::header_size(block->mode()) };
+    }
+
     // DEBT: Sloppy way to convert between const and non-const bundles.
     template <class Block2, class Page2>
     bundle_base& operator =(const bundle_base<handles_traits, Block2, Page2>& copy_from)

@@ -120,7 +120,13 @@ public:
 
     // EXPERIMENTAL
     template <class T>
-    using guard = lock_guard<T, Pool, pool>;
+    using guard_type = lock_guard<T, Pool, pool>;
+
+    template <class T = void>
+    guard_type<T*> guard() const
+    {
+        return { *this };
+    }
 };
     
 }}

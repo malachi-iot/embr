@@ -24,9 +24,6 @@ struct handles_traits;
 template <class Traits>
 class handles;
 
-// TODO: Strongly considering using estd::units::byte_tag here instead, that feels appropriate
-struct page_tag {};
-
 #if PAGE_ALIAS
 // NOTE: Not possible because internal::units::unit_base has a protected default constructor
 template <class Rep, unsigned alias = sizeof(void*)>

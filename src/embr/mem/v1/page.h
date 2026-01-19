@@ -13,19 +13,15 @@ namespace detail { inline namespace v1 {
 
 
 template <typename Rep, typename Period>
-struct page_unit_traits : estd::units::detail::traits<Rep, Period, page_tag>
+struct page_unit_traits : estd::units::detail::traits<Rep, Period, estd::internal::units::bytes_tag>
 {
     static constexpr auto options = estd::units::detail::options::value_initialized;
 
     constexpr static Rep default_value() { return estd::numeric_limits<Rep>::max(); }
 };
 
-template <typename Rep, typename Period>
-using page_unit_type_base = estd::units::v1::detail::unit<page_unit_traits<Rep, Period>>;
-
-// DEBT: Rename this guy to reflect he's byte_count - already bit me a few times
-// DEBT: default_value() is not gonna be accurate because of precision difference
-using page_unit_type = page_unit_type_base<unsigned, estd::ratio<1>>;
+template <typename Rep, typename Period = estd::ratio<1>>
+using bytes_unit = estd::units::v1::detail::unit<page_unit_traits<Rep, Period>>;
 
 // TODO: Do unit_traits for human-readable descriptions
 
@@ -35,7 +31,7 @@ struct page
 {
     using rep = Rep;
     using unit_traits = page_unit_traits<Rep, Ratio>;
-    using unit_type = estd::units::v1::detail::unit<unit_traits>;
+    using unit_type = bytes_unit<Rep, Ratio>;
 
     static constexpr int aliasing = Ratio::num;
     static_assert(aliasing % sizeof(void*) == 0, "Aliasing must fall on pointer size boundary");
