@@ -212,13 +212,21 @@ TEST_CASE("gc mem v1 edge cases", "[memory][gc]")
 
             frag0 = {62, op.get_bundle(2), op.get_bundle(3), true, true};
 
+            // Moves 2->3 (overlapping) resulting in expanded 0
+            // Fails in that:
+            // #0 prev link is goofed up to be '2' instead of 0xFF
+            // #2 prev link is goofed up to be '3' instead of staying 0 as it should
+            // In an overlap case like this, a handle swap and relink is not appropriate since
+            // handle 2 is not moving enough to break contiguous nature of next/prev, and
+            // handle 3 vanishes
+
             // Early relink ON mode, eventually flag will phase out
             op.defrag(frag0, true);
 
             op.dump(out);
 
             CAPTURE(out.str());
-            //REQUIRE(op.invariant());
+            REQUIRE(op.invariant());
         }
     }
 }

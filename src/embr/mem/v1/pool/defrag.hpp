@@ -24,7 +24,10 @@ void pool<Traits>::ops<HandleTraits>::defrag(const fragmentation::candidate& c, 
     move(from, to, 0, 0, c.overlap);
 
     // FIX: Need this guy, he's just not quite ready yet, that's why he's flagged out
-    if(relink)  virtual_swap(from, to);
+    // Overlap sometimes eats free block completely and doesn't move allocated block enough
+    // to need a swap (links are all still contiguous)
+    // NOTE: Above assertion is true sometimes, but may not be true all the time
+    if(relink && !c.overlap)  virtual_swap(from, to);
 }
 
 template <class Traits>

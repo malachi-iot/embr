@@ -280,7 +280,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
 
                     // Since we correctly identified handle 1 is allocated and fragmented, as identified
                     // by frag0, defrag (move it)
-                    op.defrag(frag0);
+                    op.defrag(frag0, false);
                     REQUIRE(op.invariant());
 
                     bn = op.get_bundle(1);
