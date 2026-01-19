@@ -20,9 +20,12 @@ struct page_unit_traits : estd::units::detail::traits<Rep, Period, page_tag>
     constexpr static Rep default_value() { return estd::numeric_limits<Rep>::max(); }
 };
 
-// DEBT: Rename this guy to reflect he's byte_count
+template <typename Rep, typename Period>
+using page_unit_type_base = estd::units::v1::detail::unit<page_unit_traits<Rep, Period>>;
+
+// DEBT: Rename this guy to reflect he's byte_count - already bit me a few times
 // DEBT: default_value() is not gonna be accurate because of precision difference
-using page_unit_type = estd::units::v1::detail::unit<page_unit_traits<unsigned, estd::ratio<1>>>;
+using page_unit_type = page_unit_type_base<unsigned, estd::ratio<1>>;
 
 // TODO: Do unit_traits for human-readable descriptions
 

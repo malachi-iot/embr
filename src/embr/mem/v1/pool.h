@@ -74,16 +74,15 @@ protected:
 
     container_type pool_;
 
-    v1::block* block(pos_type at)
+    v1::block* block(page_unit_type at)
     {
         //assert(at.count() != page_type::null);
-        const unsigned offset = page_unit_type(at).count();
-        return reinterpret_cast<v1::block*>(estd::data(pool_) + offset);
+        return reinterpret_cast<v1::block*>(estd::data(pool_) + at.count());
     }
 
-    const v1::block* block(pos_type at) const
+    const v1::block* block(page_unit_type at) const
     {
-        return reinterpret_cast<const v1::block*>(estd::data(pool_) + page_unit_type(at).count());
+        return reinterpret_cast<const v1::block*>(estd::data(pool_) + at.count());
     }
 
 /*
@@ -356,6 +355,11 @@ public:
     void dealloc(int h)
     {
         OPS.dealloc(h);
+    }
+
+    void realloc(int h, int size)
+    {
+        OPS.realloc(OPS.get_bundle(h), size);
     }
 
     void reset()

@@ -213,6 +213,14 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
             REQUIRE(locked == pool1.ops().self_.data() + block_sz);
             pool1.unlock(0);
         }
+        SECTION("realloc")
+        {
+
+        }
+        SECTION("defrag")
+        {
+
+        }
         SECTION("shared_handle")
         {
             REQUIRE(pool1.ops().available() == pool_sz - block_sz);
