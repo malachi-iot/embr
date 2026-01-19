@@ -15,7 +15,7 @@ namespace detail { inline namespace v1 {
 
 template <class Traits>
 template <class HandleTraits>
-void pool<Traits>::ops<HandleTraits>::defrag(const fragmentation::candidate& c)
+void pool<Traits>::ops<HandleTraits>::defrag(const fragmentation::candidate& c, bool relink)
 {
     // DEBT: A bit sloppy converting bundles like this, but gets the job done
     bundle from(get_bundle(c.bundle.handle));
@@ -23,8 +23,8 @@ void pool<Traits>::ops<HandleTraits>::defrag(const fragmentation::candidate& c)
 
     move(from, to, 0, 0, c.overlap);
 
-    // FIX: Need this guy, he's just not quite ready yet
-    //virtual_swap(from, to);
+    // FIX: Need this guy, he's just not quite ready yet, that's why he's flagged out
+    if(relink)  virtual_swap(from, to);
 }
 
 template <class Traits>

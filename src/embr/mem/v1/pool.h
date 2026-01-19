@@ -274,7 +274,7 @@ public:
         unsigned available() const;
 
         void assess(fragmentation*) const;
-        void defrag(const fragmentation::candidate&);
+        void defrag(const fragmentation::candidate&, bool relink = false);
 
         invariant_result invariant() const;
 

@@ -109,4 +109,15 @@ static const page pool7[]
     { /* 6 */ 0 , block{ block::Trivial, F } }
 };
 
+static const page pool8[]
+{
+    { /* 0 */ 96, block{ block::Trivial, F, {}, 2 } },
+    { /* 2 */ 48, block{ block::Trivial, A } },
+    { /* 3 */ 16, block{ block::Trivial, F } },
+    { /* 4 */ 16, block{ block::Trivial, A } },
+    { /* 5 */ 40, block{ block::Trivial, F } },
+    { /* 6 */ 32, block{ block::Trivial, A } },
+    { /* 7 */ 0 , block{ block::Trivial, F } }
+};
+
 }}

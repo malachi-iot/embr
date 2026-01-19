@@ -40,6 +40,7 @@ set(SOURCE_FILES
     json-test.cpp
     observer-test.cpp
     experimental-test.cpp
+    mem/mem-v1-edge-test.cpp
     mem/mem-v1-test.cpp
     mem/mem-v1-battery-test.cpp
     mem/mem-v1-func-test.cpp
