@@ -27,7 +27,19 @@ void pool<Traits>::ops<HandleTraits>::defrag(const fragmentation::candidate& c, 
     // Overlap sometimes eats free block completely and doesn't move allocated block enough
     // to need a swap (links are all still contiguous)
     // NOTE: Above assertion is true sometimes, but may not be true all the time
-    if(relink && !c.overlap)  virtual_swap(from, to);
+    if(relink && !c.overlap)
+    {
+        // By definition move may change position of block, so re-acquire bundle
+        from = get_bundle(from.handle);
+        to = get_bundle(to.handle);
+
+        // It's entirely possible one of these handles got swallowed by GC, in which case although
+        // we do need to relink, a swap is problematic.
+        // FIX: Don't just return here
+        if(from.page->is_null() || to.page->is_null()) return;
+
+        virtual_swap(from, to);
+    }
 }
 
 template <class Traits>

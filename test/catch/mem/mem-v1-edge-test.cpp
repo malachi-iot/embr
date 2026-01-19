@@ -195,12 +195,30 @@ TEST_CASE("gc mem v1 edge cases", "[memory][gc]")
 
             CAPTURE(before.str());
 
-            op.defrag(frag0);
+            SECTION("relinked")
+            {
+                op.defrag(frag0, true);
 
-            op.dump(out);
+                op.dump(out);
 
-            CAPTURE(out.str());
-            REQUIRE(op.invariant());
+                CAPTURE(out.str());
+                REQUIRE(op.invariant());
+            }
+            SECTION("non-relinked")
+            {
+                op.defrag(frag0, false);
+
+                op.dump(out);
+
+                CAPTURE(out.str());
+
+                bundle bn0 = op.get_bundle(0);
+                bundle bn1 = op.get_bundle(1);
+
+                REQUIRE(bn0.allocated() == false);
+                REQUIRE(bn1.allocated() == false);
+                REQUIRE(op.invariant());
+            }
         }
         SECTION("defrag case 8:")
         {
