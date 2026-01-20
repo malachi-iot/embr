@@ -52,6 +52,8 @@ void pool<Traits>::ops<HandleTraits>::defrag(const fragmentation::candidate& c, 
             // Reverse order is indicative of pseudo-swap
             virtual_move(to, from);
         }
+        else
+            virtual_swap(from, to);
     }
 }
 

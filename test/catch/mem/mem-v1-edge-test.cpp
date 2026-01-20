@@ -258,9 +258,9 @@ TEST_CASE("gc mem v1 edge cases", "[memory][gc]")
             CAPTURE(out.str());
             REQUIRE(op.invariant());
 
-            //REQUIRE(bn2.allocated());
+            REQUIRE(bn2.allocated());
         }
-        SECTION("defrag case 9: overlap - reverse direction")
+        SECTION("defrag case 9: overlap - reverse direction, free block not swallowed")
         {
             assemble_pool<pool_traits>(op, test::pool9);
 
@@ -282,9 +282,26 @@ TEST_CASE("gc mem v1 edge cases", "[memory][gc]")
             from = op.get_bundle(6);
 
             REQUIRE(from.page->is_null() == false);
+            REQUIRE(from.allocated());
+        }
+        SECTION("defrag case 10:")
+        {
+            assemble_pool<pool_traits>(op, test::pool10);
 
-            // TODO: Not resolved yet
-            //REQUIRE(from.allocated());
+            op.dump(before);
+
+            CAPTURE(before.str());
+
+            bundle from = op.get_bundle(1);
+            bundle to = op.get_bundle(2);
+
+            frag0 = {67, from, to, false, true};
+
+            op.defrag(frag0);
+
+            op.dump(out);
+
+            CAPTURE(out.str());
         }
     }
 }
