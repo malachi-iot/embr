@@ -40,6 +40,19 @@ void pool<Traits>::ops<HandleTraits>::defrag(const fragmentation::candidate& c, 
 
         virtual_swap(from, to);
     }
+    else if(relink && c.overlap)
+    {
+        // By definition move may change position of block and validity of handle, so re-acquire
+        from = get_bundle(from.handle);
+        to = get_bundle(to.handle);
+
+        // If old 'from' block got freed then swallowed
+        if(from.page->is_null())
+        {
+            // Reverse order is indicative of pseudo-swap
+            virtual_move(to, from);
+        }
+    }
 }
 
 template <class Traits>

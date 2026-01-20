@@ -92,6 +92,9 @@ TEST_CASE("gc mem v1 edge cases", "[memory][gc]")
 
             frag0 = {48, from, to, true};
 
+            op.dump(before);
+            CAPTURE(before.str());
+
             op.defrag(frag0);
 
             op.dump(out);
@@ -101,6 +104,13 @@ TEST_CASE("gc mem v1 edge cases", "[memory][gc]")
 
             unsigned alloced = op.alloced();
             REQUIRE(alloced == 16 + 56 + 40 + 32);
+
+            from = op.get_bundle(2);
+            to = op.get_bundle(3);
+
+            REQUIRE(to.page->is_null() == true);
+            REQUIRE(from.page->is_null() == false);
+            REQUIRE(from.allocated());
         }
         SECTION("defrag case 3: reverse overlapping trivial movement")
         {
@@ -220,7 +230,7 @@ TEST_CASE("gc mem v1 edge cases", "[memory][gc]")
                 REQUIRE(op.invariant());
             }
         }
-        SECTION("defrag case 8:")
+        SECTION("defrag case 8: overlap + relink")
         {
             assemble_pool<pool_traits>(op, test::pool8);
 
@@ -241,10 +251,40 @@ TEST_CASE("gc mem v1 edge cases", "[memory][gc]")
             // Early relink ON mode, eventually flag will phase out
             op.defrag(frag0, true);
 
+            bundle bn2 = op.get_bundle(2);
+
             op.dump(out);
 
             CAPTURE(out.str());
             REQUIRE(op.invariant());
+
+            //REQUIRE(bn2.allocated());
+        }
+        SECTION("defrag case 9: overlap - reverse direction")
+        {
+            assemble_pool<pool_traits>(op, test::pool9);
+
+            op.dump(before);
+
+            CAPTURE(before.str());
+
+            bundle from = op.get_bundle(6);
+            bundle to = op.get_bundle(5);
+
+            frag0 = {1933, from, to, true, false};
+
+            op.defrag(frag0);
+
+            op.dump(out);
+
+            CAPTURE(out.str());
+
+            from = op.get_bundle(6);
+
+            REQUIRE(from.page->is_null() == false);
+
+            // TODO: Not resolved yet
+            //REQUIRE(from.allocated());
         }
     }
 }

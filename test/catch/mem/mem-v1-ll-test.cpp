@@ -17,6 +17,7 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
     using page = detail::v1::page<uint16_t>;
     using handles_traits = detail::v1::handles_traits<page[10]>;
     using handles_type = detail::v1::handles<handles_traits>;
+    using handle_type = handles_type::size_type;
     using pool_traits = detail::v1::pool_traits<char[pool_size]>;
     using pool_type = detail::v1::pool<pool_traits>;
     using ops_type = pool_type::ops<handles_traits>;
@@ -269,12 +270,29 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
         REQUIRE(frag0.bundle.handle == 1);
         REQUIRE(frag0.move_to.handle == 0);
 
+        handle_type alloced = 1;
+        handle_type free_block = 0;
+        bool relink_mode = false;
+
         // Since we correctly identified handle 1 is allocated and fragmented, as identified
         // by frag0, defrag (move it)
-        op.defrag(frag0, false);
+
+        SECTION("non-relinked")
+        {
+            alloced = 0;
+            free_block = 1;
+        }
+        SECTION("relinked")
+        {
+            relink_mode = true;
+        }
+
+        CAPTURE(relink_mode, alloced, free_block);
+
+        op.defrag(frag0, relink_mode);
         REQUIRE(op.invariant());
 
-        bn = op.get_bundle(1);
+        bn = op.get_bundle(free_block);
 
         // handle 1 now ought to be freed up, since above frag assessment indicated to move
         // allocated 1 elsewhere
@@ -285,7 +303,7 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
         REQUIRE(op.logical_size(bn) == pool_size - phys_sz_bytes - block_sz);
         REQUIRE(bn.invariant());
 
-        bn = op.get_bundle(0);
+        bn = op.get_bundle(alloced);
 
         // handle 0 was determined the move_to destination, which means he should
         // have the old handle 1 data

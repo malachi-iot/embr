@@ -40,9 +40,6 @@ void pool<Traits>::ops<HandleTraits>::virtual_swap(bundle& lhs, bundle& rhs)
     // 2.  Handle# 1 next must relink from 1 (itself) to 0
     // Note how despite lhs movement from handle 0 to handle 1, that prev null link remains valid
 
-    // DEBT: Adjacent block swap not yet supported due to complexity of relinking
-    //assert(lhs.block->next() != rhs.handle && rhs.block->next() != lhs.handle);
-
     bundle lhs_prev(prev(lhs)), lhs_next(next(lhs));
     bundle rhs_prev(prev(rhs)), rhs_next(next(rhs));
 
@@ -78,6 +75,22 @@ void pool<Traits>::ops<HandleTraits>::virtual_swap(bundle& lhs, bundle& rhs)
     // If my speculation is right, there are null-handle relinkings which still need to happen
 
     swap(*lhs.page, *rhs.page);
+}
+
+
+template <class Traits>
+template <class HandleTraits>
+void pool<Traits>::ops<HandleTraits>::virtual_move(bundle& from, bundle& to)
+{
+    assert(from.page->is_null() == false && to.page->is_null());
+
+    bundle bn_prev(prev(from)), bn_next(next(from));
+
+    if(from.has_prev()) bn_prev.next(to.handle);
+    if(from.has_next()) bn_next.prev(to.handle);
+
+    to.page->pos(from.pos());
+    from.page->reset();
 }
 
 template <class Traits>

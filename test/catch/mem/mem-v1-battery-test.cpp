@@ -6,9 +6,6 @@
 #include <embr/mem/v1/shared-handle.h>
 #include <embr/mem/v1/unique-handle.h>
 
-#include "test-mem-data.h"
-
-
 using namespace embr::mem;
 
 #define ENABLE_BATTERY 1
@@ -37,6 +34,7 @@ static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& 
     CAPTURE(it, seed);
 
     std::ostringstream last;
+    std::vector<handle_type> handle_cache;
 
     for(int i = 0; i < allocs_to_do; ++i)
     {
@@ -114,7 +112,7 @@ static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& 
 
         ops.assess(&frag);
 
-        auto& frag0 = frag.candidates[0];
+        const auto& frag0 = frag.candidates[0];
 
         CAPTURE(frag0.score, (int)frag0.bundle.handle, (int)frag0.move_to.handle);
         CAPTURE(frag0.overlap, frag0.adjacent);
@@ -123,6 +121,7 @@ static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& 
         {
             assert(frag0.invariant());
             ops.defrag(frag0);
+            handle_cache.push_back(frag0.bundle.handle);
         }
 
         ops.dump(after << "\n");
@@ -131,10 +130,28 @@ static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& 
         CAPTURE(after.str(), ir);
         assert(ir);
 
+        if(frag0.score == 0)
+        {
+            last << "frag0.score == 0, i=" << i << "\n";
+            continue;
+        }
+
         //last.str("");
         last << "before(" << i << "):" << before.str();
-        last << "frag0.handle=" << (int)frag0.bundle.handle << ", frag0.move_to=" << (int)frag0.move_to.handle << "\n";
+        last << "frag0.handle=" << (int)frag0.bundle.handle << ", frag0.move_to=" << (int)frag0.move_to.handle << ' ';
+        last << "frag0.score=" << frag0.score << ", frag0.overlap=" << frag0.overlap << '\n';
         last << "after:" << after.str();
+    }
+
+    for(handle_type h : handle_cache)
+    {
+        INFO("Phase 4");
+        CAPTURE((int)h, last.str());
+
+        bundle bn = ops.get_bundle(h);
+        invariant_result r = ops.invariant();
+        assert(r);
+        //assert(bn.allocated());
     }
 }
 
