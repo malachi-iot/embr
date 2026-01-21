@@ -17,11 +17,13 @@ static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& 
     using namespace detail;
     std::mt19937 gen{seed}; // fixed seed: deterministic sequence
 
+    using block = detail::v1::block;
     using page_type = typename HandlesTraits::value_type;
     using pos_type = typename page_type::unit_type;
     using bundle = detail::bundle;
     using handle_type = typename HandlesTraits::size_type;
     using page_type = typename HandlesTraits::value_type;
+    using bytes_type = bytes_unit<unsigned>;
     constexpr handle_type null = HandlesTraits::null;
     fragmentation frag;
 
@@ -45,6 +47,11 @@ static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& 
         // DEBT: bring back 0-byte allocation requests as a bounds check.  Maybe ops itself shouldn't
         // kick back, but higher level mode definitely would need to
         pos_type phys_sz(distrib(gen) + 1);
+        bytes_type logical_sz(phys_sz);
+
+        block::modes mode = block::Trivial;
+
+        logical_sz -= bytes_type{ block::header_size(mode) };
 
         ops.dump(before << "\n");
 
@@ -53,6 +60,13 @@ static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& 
         CAPTURE(before.str(), i, phys_sz.count(), available);
 
         bundle bn = ops.alloc(phys_sz, block::Trivial);
+
+        if(bn.handle != null)
+        {
+            void* data = ops.lock(bn);
+            memset(data, 'a' + bn.handle, logical_sz.count());
+            ops.unlock(bn.handle);
+        }
 
         //REQUIRE((int)bn.handle != null);
         // I don't want assertions number to balloon at the moment
@@ -136,6 +150,12 @@ static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& 
             continue;
         }
 
+        auto data = (char*)ops.lock(frag0.bundle.handle);
+        // DEBT: Compare entire logical size
+        char comp = 'a' + frag0.bundle.handle;
+        assert(comp == data[0]);
+        ops.unlock(frag0.bundle.handle);
+
         //last.str("");
         last << "before(" << i << "):" << before.str();
         last << "frag0.handle=" << (int)frag0.bundle.handle << ", frag0.move_to=" << (int)frag0.move_to.handle << ' ';
@@ -151,7 +171,7 @@ static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& 
         bundle bn = ops.get_bundle(h);
         invariant_result r = ops.invariant();
         assert(r);
-        //assert(bn.allocated());
+        assert(bn.allocated());
     }
 }
 

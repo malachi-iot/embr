@@ -23,35 +23,19 @@ void pool<Traits>::ops<HandleTraits>::defrag(const fragmentation::candidate& c, 
 
     move(from, to, 0, 0, c.overlap);
 
-    // FIX: Need this guy, he's just not quite ready yet, that's why he's flagged out
-    // Overlap sometimes eats free block completely and doesn't move allocated block enough
-    // to need a swap (links are all still contiguous)
-    // NOTE: Above assertion is true sometimes, but may not be true all the time
-    if(relink && !c.overlap)
+    if(relink)
     {
         // By definition move may change position of block, so re-acquire bundle
+        // By definition move may change position of block and validity of handle, so re-acquire
         from = get_bundle(from.handle);
         to = get_bundle(to.handle);
 
         // It's entirely possible one of these handles got swallowed by GC, in which case although
         // we do need to relink, a swap is problematic.
-        // FIX: Don't just return here
-        if(from.page->is_null() || to.page->is_null()) return;
-
-        virtual_swap(from, to);
-    }
-    else if(relink && c.overlap)
-    {
-        // By definition move may change position of block and validity of handle, so re-acquire
-        from = get_bundle(from.handle);
-        to = get_bundle(to.handle);
-
-        // If old 'from' block got freed then swallowed
         if(from.page->is_null())
-        {
-            // Reverse order is indicative of pseudo-swap
             virtual_move(to, from);
-        }
+        else if(to.page->is_null())
+            virtual_move(from, to);
         else
             virtual_swap(from, to);
     }

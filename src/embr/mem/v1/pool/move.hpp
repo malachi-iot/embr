@@ -150,6 +150,8 @@ validated_result pool<Traits>::ops<HandleTraits>::move(
         (to.pos() < from.pos() && to.pos() + from_block_phys_sz > from.pos()) ||
         (to.pos() > from.pos() && from.pos() + from_block_phys_sz > to.pos()); */
 
+    assert(from.page->is_null() == false && to.page->is_null() == false);
+
     // DEBT: Deducing logical_sz for non-trivial is interesting too, but not critical
     if(logical_sz == 0 && is_trivial)
     {

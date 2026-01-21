@@ -284,7 +284,7 @@ TEST_CASE("gc mem v1 edge cases", "[memory][gc]")
             REQUIRE(from.page->is_null() == false);
             REQUIRE(from.allocated());
         }
-        SECTION("defrag case 10:")
+        SECTION("defrag case 10: virtual_move into null page")
         {
             assemble_pool<pool_traits>(op, test::pool10);
 
@@ -301,7 +301,12 @@ TEST_CASE("gc mem v1 edge cases", "[memory][gc]")
 
             op.dump(out);
 
+            from = op.get_bundle(1);
+
             CAPTURE(out.str());
+            REQUIRE(op.invariant());
+            REQUIRE(from.page->is_null() == false);
+            REQUIRE(from.allocated());
         }
     }
 }
