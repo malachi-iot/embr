@@ -38,20 +38,25 @@ static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& 
     std::ostringstream last;
     std::vector<handle_type> handle_cache;
 
+    struct metadata
+    {
+        unsigned logical_sz;
+    };
+
+    std::unordered_map<handle_type, metadata> handle_metadata;
+
     for(int i = 0; i < allocs_to_do; ++i)
     {
         std::ostringstream before, after;
 
         INFO("Phase 1");
 
+        block::modes mode = block::Trivial;
+
         // DEBT: bring back 0-byte allocation requests as a bounds check.  Maybe ops itself shouldn't
         // kick back, but higher level mode definitely would need to
         pos_type phys_sz(distrib(gen) + 1);
-        bytes_type logical_sz(phys_sz);
-
-        block::modes mode = block::Trivial;
-
-        logical_sz -= bytes_type{ block::header_size(mode) };
+        unsigned logical_sz = bytes_type(phys_sz).count() - block::header_size(mode);
 
         ops.dump(before << "\n");
 
@@ -64,8 +69,9 @@ static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& 
         if(bn.handle != null)
         {
             void* data = ops.lock(bn);
-            memset(data, 'a' + bn.handle, logical_sz.count());
+            memset(data, 'a' + bn.handle, logical_sz);
             ops.unlock(bn.handle);
+            handle_metadata.emplace(bn.handle, metadata { logical_sz} );
         }
 
         //REQUIRE((int)bn.handle != null);
@@ -150,12 +156,6 @@ static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& 
             continue;
         }
 
-        auto data = (char*)ops.lock(frag0.bundle.handle);
-        // DEBT: Compare entire logical size
-        char comp = 'a' + frag0.bundle.handle;
-        assert(comp == data[0]);
-        ops.unlock(frag0.bundle.handle);
-
         //last.str("");
         last << "before(" << i << "):" << before.str();
         last << "frag0.handle=" << (int)frag0.bundle.handle << ", frag0.move_to=" << (int)frag0.move_to.handle << ' ';
@@ -172,6 +172,15 @@ static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& 
         invariant_result r = ops.invariant();
         assert(r);
         assert(bn.allocated());
+
+        auto data = (char*)ops.lock(bn);
+        char comp = 'a' + bn.handle;
+        const metadata& m = handle_metadata.at(bn.handle);
+        CAPTURE(m.logical_sz);
+        for(int i = 0; i < m.logical_sz; ++i, ++data)
+            assert(*data == comp);
+        ops.unlock(bn.handle);
+
     }
 }
 
