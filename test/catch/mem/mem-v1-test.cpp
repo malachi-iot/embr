@@ -13,14 +13,11 @@ using namespace embr::mem;
 
 namespace estd { namespace units { inline namespace v1 { namespace detail {
 
-template <class Rep, class Period>
-using page_unit_type2 = unit<embr::mem::detail::v1::page_unit_traits<Rep, Period>>;
-
 // ADL you are a demanding one.  OK, here you go
 //template <class Traits>
 //std::ostream& operator<<(std::ostream& out, const unit<Traits>& v)
 template <class Rep, class Period>
-std::ostream& operator<<(std::ostream& out, page_unit_type2<Rep, Period> v)
+std::ostream& operator<<(std::ostream& out, embr::mem::bytes_unit<Rep, Period> v)
 {
     out << v.count();
 
@@ -30,7 +27,7 @@ std::ostream& operator<<(std::ostream& out, page_unit_type2<Rep, Period> v)
         // DEBT: OK I already did this elsewhere... probably should standardize this in estd but only
         // activate with some kind of feature flag.  That includes the whole suffix thing
         // See https://github.com/malachi-iot/estdlib/issues/172
-        unit<embr::mem::detail::v1::page_unit_traits<double, estd::ratio<1>>> u(v);
+        embr::mem::bytes_unit<double> u(v);
 
         out << " (" << u.count() << " bytes)";
     }

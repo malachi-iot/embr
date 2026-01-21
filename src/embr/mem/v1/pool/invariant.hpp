@@ -24,7 +24,7 @@ invariant_result pool<Traits>::ops<HandleTraits>::invariant() const
     // TODO: Inspires a thought of convertible-to which embr/estd units explored before.  pos_type
     // really is directly convertible to bytes - although in this case we could probably cheat and
     // use bytes_tag type right from the get go
-    using bytes_type = estd::units::v1::detail::unit<page_unit_traits<unsigned, estd::ratio<1>>>;
+    using bytes_type = estd::units::v1::detail::unit<bytes_unit_traits<unsigned, estd::ratio<1>>>;
     const bytes_type size(std::size(self_.pool_));
     constexpr handle_type null = traits::null;
     const unsigned max_handles = handles_.size();
@@ -103,7 +103,7 @@ template <class Traits>
 template <class HandleTraits>
 std::ostream& pool<Traits>::ops<HandleTraits>::dump(std::ostream& out) const
 {
-    using bytes_type = estd::units::v1::detail::unit<page_unit_traits<unsigned, estd::ratio<1>>>;
+    using bytes_type = embr::mem::bytes_unit<unsigned>;
     constexpr handle_type null = traits::null;
     constexpr pos_type zero_pos = pos_type(0);
     const page_type* first{};
