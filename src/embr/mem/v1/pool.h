@@ -365,6 +365,16 @@ public:
         OPS.dealloc(h);
     }
 
+    // Only for trivial mode, use construct otherwise
+    // UNTESTED
+    template <class Derived2 = Derived>
+    typename Derived2::handle_type alloc(unsigned sz)
+    {
+        constexpr auto mode = v1::block::Trivial;
+        constexpr unsigned block_sz = v1::block::header_size(mode);
+        return OPS.alloc(OPS.do_alias(sz + block_sz), mode).handle;
+    }
+
     void realloc(int h, unsigned size)
     {
         auto bn = OPS.get_bundle(h);

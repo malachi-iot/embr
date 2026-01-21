@@ -72,8 +72,6 @@ void pool<Traits>::ops<HandleTraits>::virtual_swap(bundle& lhs, bundle& rhs)
         rhs_next.prev(lhs.handle);
     }
 
-    // If my speculation is right, there are null-handle relinkings which still need to happen
-
     swap(*lhs.page, *rhs.page);
 }
 
@@ -182,7 +180,7 @@ validated_result pool<Traits>::ops<HandleTraits>::move(
             block* new_to_block = self_.block(new_to_loc);
 
             // moving A forward in memory = regular unfancy forward copy
-            std::memcpy(new_to_block->data(), from.block->data(), logical_sz);
+            memcpy(new_to_block->data(), from.block->data(), logical_sz);
 
             *new_to_block = retained;
             new_to_block->reset(block::Trivial, true);
@@ -285,10 +283,6 @@ validated_result pool<Traits>::ops<HandleTraits>::move(
             }
         }
     }
-
-    // Treat move as the dealloc it is, and do a merge evaluation
-    //merge(from, next(from));
-    //merge_if_free(prev(from), from);
 
     return {};
 }

@@ -314,7 +314,7 @@ TEST_CASE("gc mem v1 battery", "[memory][gc][battery]")
             for(int i = 0; i < 50; ++i)
             {
                 auto pages = make_vector_random_size<page_type>(rng, 4, 24);
-                auto raw = make_vector_random_size<char>(rng, 32, 4096, 8);
+                auto raw = make_vector_random_size<char>(rng, 32, 8192, 8);
 
                 CAPTURE(pages.size(), raw.size());
 
