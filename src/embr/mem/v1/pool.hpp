@@ -24,7 +24,7 @@ auto pool<Traits>::ops<HandleTraits>::first() const -> bundle
 {
     bundle bn = get_bundle(0);
 
-    for(; bn.has_prev(); bn = prev(bn));        // NOLINT
+    for(; bn.has_prev(); bn = prev(bn).unconst());        // NOLINT
 
     return bn;
 }
@@ -43,13 +43,13 @@ auto pool<Traits>::ops<HandleTraits>::first_alt() const -> bundle
 
 template <class Traits>
 template <class HandleTraits>
-auto pool<Traits>::ops<HandleTraits>::first_free(pos_type phys_sz, pos_type* found_size) const -> bundle
+auto pool<Traits>::ops<HandleTraits>::first_free(pos_type phys_sz, pos_type* found_size) const -> const_bundle
 {
-    for(page_type& p : handles_)
+    for(const page_type& p : handles_)
     {
         handle_type i = &p - &handles_[0];
 
-        bundle bn = get_bundle(p, i);
+        const_bundle bn = get_bundle(p, i);
 
         if(bn.block->allocated() == false)
         {
@@ -77,34 +77,43 @@ auto pool<Traits>::ops<HandleTraits>::first_free(pos_type phys_sz, pos_type* fou
 template <class Traits>
 template <class HandleTraits>
 template <class Traits2, class Block, class Page>
-void pool<Traits>::ops<HandleTraits>::prev(const v1::block* b, bundle_base<Traits2, Block, Page>* out) const
+void pool<Traits>::ops<HandleTraits>::prev(Block* b, bundle_base<Traits2, Block, Page>* out) const
 {
-    page_type& page = handles_[b->prev()];
+    Page& page = handles_[b->prev()];
     new (out) bundle_base<traits, Block, Page>{ self_.block(page.pos()), &page, b->prev() };
 }
 
 
 template <class Traits>
 template <class HandleTraits>
-auto pool<Traits>::ops<HandleTraits>::prev(const v1::block* b) const -> bundle
+auto pool<Traits>::ops<HandleTraits>::prev(const v1::block* b) const -> const_bundle
 {
-    page_type& page = handles_[b->prev()];
+    const page_type& page = handles_[b->prev()];
     return { self_.block(page.pos()), &page, b->prev() };
 }
 
 template <class Traits>
 template <class HandleTraits>
 template <class Traits2, class Block, class Page>
-void pool<Traits>::ops<HandleTraits>::next(const v1::block* b, bundle_base<Traits2, Block, Page>* out) const
+void pool<Traits>::ops<HandleTraits>::next(Block* b, bundle_base<Traits2, Block, Page>* out) const
 {
-    page_type& page = handles_[b->next()];
+    Page& page = handles_[b->next()];
     new (out) bundle_base<traits, Block, Page>{ self_.block(page.pos()), &page, b->next() };
 }
 
 
 template <class Traits>
 template <class HandleTraits>
-auto pool<Traits>::ops<HandleTraits>::next(const v1::block* b) const -> bundle
+auto pool<Traits>::ops<HandleTraits>::next(const v1::block* b) const -> const_bundle
+{
+    const page_type& page = handles_[b->next()];
+    return { self_.block(page.pos()), &page, b->next() };
+}
+
+
+template <class Traits>
+template <class HandleTraits>
+auto pool<Traits>::ops<HandleTraits>::next(v1::block* b) const -> bundle
 {
     page_type& page = handles_[b->next()];
     return { self_.block(page.pos()), &page, b->next() };
@@ -216,16 +225,16 @@ template <class HandleTraits>
 auto pool<Traits>::ops<HandleTraits>::alloc(pos_type phys_sz, block::modes mode) -> bundle
 {
     pos_type found_size(0);
-    bundle bn = first_free(phys_sz, &found_size);
+    const_bundle bn = first_free(phys_sz, &found_size);
 
     if(bn.is_null() == false)
     {
-        alloc(bn, found_size, phys_sz, mode);
+        alloc(bn.unconst(), found_size, phys_sz, mode);
     }
 
     //assert(phys_size(bn) >= pos_type(2));
 
-    return bn;
+    return bn.unconst();
 }
 
 template <class Traits>
@@ -311,7 +320,7 @@ void pool<Traits>::ops<HandleTraits>::dealloc(bundle bn)
 
     if(bn.has_prev())
     {
-        bundle bn_prev = prev(bn);
+        bundle bn_prev = prev(bn).unconst();
         // this potentially nulls out bn.handle and invalidates its block
         if(merge_if_free(bn_prev, bn))
             // if so, we've merged with previous, so make him the one

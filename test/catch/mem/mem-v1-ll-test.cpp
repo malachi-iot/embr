@@ -23,6 +23,7 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
     using ops_type = pool_type::ops<handles_traits>;
     using block = detail::v1::block;
     using bundle = ops_type::bundle;
+    using const_bundle = ops_type::const_bundle;
     using pos_type = page::unit_type;
 
     pool_type pool;
@@ -217,7 +218,7 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
     {
         pos_type found_size(0);
         constexpr pos_type phys_sz(8);
-        bundle bn = ops.first_free(phys_sz, &found_size);
+        const_bundle bn = ops.first_free(phys_sz, &found_size);
 
         REQUIRE(bn.invariant());
         REQUIRE(bn.is_null() == false);

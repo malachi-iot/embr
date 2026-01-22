@@ -19,6 +19,9 @@ struct bundle_base
     using page_type = Page;
     using pos_type = typename page_type::unit_type;
 
+    using page_noncv_type = estd::remove_cv_t<Page>;
+    using block_noncv_type = estd::remove_cv_t<Block>;
+
     template <class PoolTraits>
     friend class pool;
 
@@ -110,6 +113,15 @@ private:
     void allocated(bool v) const    { block->allocated_ = v; }
 
     void mode(block::modes v)       { block->mode_ = v; }
+
+    using unconst_type = bundle_base<handles_traits, block_noncv_type, page_noncv_type>;
+
+    // DEBT: Crude flavor of const_cast tuned just to our application.  Not TOO debt-y since it's for
+    // internal use only
+    constexpr unconst_type& unconst() const
+    {
+        return *(unconst_type*) this;
+    }
 };
 
 using bundle = bundle_base<handles_traits_base, v1::block, page<uint16_t>>;

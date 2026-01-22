@@ -105,6 +105,7 @@ public:
         using block = v1::block;
         //using bundle = v1::bundle_base<HandlesTraits, page_type>;
         using bundle = v1::bundle;
+        using const_bundle = v1::const_bundle;
         using traits = HandlesTraits;
         using handle_type = typename traits::size_type;
         using handles_type = handles<traits>;
@@ -213,20 +214,22 @@ public:
         /// consider swapping above first() with this
         bundle first_alt() const;
 
-        bundle first_free(pos_type phys_sz, pos_type* found_size) const;
+        const_bundle first_free(pos_type phys_sz, pos_type* found_size) const;
 
         template <class Traits2, class Block, class Page>
-        void prev(const block*, bundle_base<Traits2, Block, Page>* out) const;
+        void prev(Block*, bundle_base<Traits2, Block, Page>* out) const;
 
-        bundle prev(const block*) const;
-        bundle prev(const bundle& bn) const { return prev(bn.block); }
+        const_bundle prev(const block*) const;
+        const_bundle prev(const bundle& bn) const { return prev(bn.block); }
 
         template <class Traits2, class Block, class Page>
-        void next(const block*, bundle_base<Traits2, Block, Page>* out) const;
+        void next(Block*, bundle_base<Traits2, Block, Page>* out) const;
 
-        bundle next(const block*) const;
+        const_bundle next(const block*) const;
+        bundle next(block*) const;
+
         template <class Traits2, class Block, class Page>
-        bundle next(const bundle_base<Traits2, Block, Page>& bn) const { return next(bn.block); }
+        bundle_base<Traits2, Block, Page> next(const bundle_base<Traits2, Block, Page>& bn) const { return next(bn.block); }
 
         template <class Traits2, class Block, class Page>
         pos_type phys_size(const bundle_base<Traits2, Block, Page>&) const;
