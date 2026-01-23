@@ -101,6 +101,8 @@ class vector_impl : public mem::detail::v1::lock_handle<Pool, pool>
 public:
     vector_impl(Pool* p) : base_type(base_type::null, p)  {}
 
+    using size_type = unsigned;
+
     ESTD_CPP_STD_VALUE_TYPE(T)
 
     struct policy_type
@@ -136,12 +138,14 @@ public:
         return ((pointer)base_type::lock()) + pos;
     }
 
-    constexpr unsigned size() const { return size_; }
+    constexpr size_type size() const { return size_; }
 
     int reallocate(unsigned sz)
     {
         return {};
     }
+
+    allocator_type get_allocator() { return {}; }
 };
 
 

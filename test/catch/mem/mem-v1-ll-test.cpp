@@ -2,6 +2,8 @@
 
 #include <sstream>
 
+#include <estd/string_view.h>
+
 #include <embr/mem/v1/pool.hpp>
 #include <embr/mem/v1/shared-handle.h>
 #include <embr/mem/v1/unique-handle.h>
@@ -310,7 +312,7 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
         // have the old handle 1 data
         REQUIRE(bn.is_null() == false);
         REQUIRE(data != op.lock(bn));
-        REQUIRE(std::string_view((char*)op.lock(bn)) == "Hello");
+        REQUIRE(estd::string_view((char*)op.lock(bn)) == "Hello");
         REQUIRE(bn.allocated());
         REQUIRE(bn.invariant());
         REQUIRE(op.invariant());
@@ -353,7 +355,7 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
             REQUIRE(bn.allocated());
             REQUIRE(bn.page->pos() != pos);
 
-            REQUIRE(std::string_view((char*)op.lock(bn.handle)) == "Hello");
+            REQUIRE(estd::string_view((char*)op.lock(bn.handle)) == "Hello");
             op.unlock(bn.handle);
 
             REQUIRE(op.phys_size(bn) == pos_type(4));

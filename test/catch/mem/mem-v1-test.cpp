@@ -1,8 +1,7 @@
 #include <catch2/catch_all.hpp>
 
-#include <string_view>
-
 #include <estd/internal/units/ostream.h>
+#include <estd/string_view.h>
 
 #include <embr/mem/v1/pool.hpp>
 #include <embr/mem/v1/shared-handle.h>
@@ -159,7 +158,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                         REQUIRE(bn.block != bl);
                         REQUIRE(bn.is_null() == false);
                         REQUIRE(bn.allocated() == true);
-                        REQUIRE(std::string_view((char*)op.lock(bn.handle)) == "Hello");
+                        REQUIRE(estd::string_view((char*)op.lock(bn.handle)) == "Hello");
                         op.unlock(bn.handle);
 
                         pos_type sz2 = op.phys_size(bn);
@@ -191,7 +190,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
         using pool_type = v1::layer1::pool<pool_sz, 8>;
         using handle_type = pool_type::handle_type;
         using bundle = pool_type::ops_type::bundle;
-        using lock_handle = detail::lock_handle<pool_type>;
+        using lock_handle = detail::lock_handle<pool_type, nullptr>;
         pool_type pool1;
         using block = detail::v1::block;
         constexpr unsigned block_sz = block::header_size(block::Trivial);
@@ -234,9 +233,14 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
             {
                 pool_type::handle_type h1 = pool1.alloc(block_sz);
                 bundle bn1 = pool1.ops().get_bundle(h1);
-                detail::v1::shared_handle<pool_type, nullptr> sh1(h1, &pool1);
+                detail::v1::shared_handle<pool_type> sh1(h1, &pool1);
 
                 REQUIRE(pool1.ops().available() == pool_sz - block_sz * 3);
+
+#if !__cpp_deduction_guides
+                // UNTESTED
+                using lock_guard = detail::v1::lock_guard<pool_type, nullptr>;
+#endif
 
                 REQUIRE(bn1.block->lock_count() == 0);
                 {
