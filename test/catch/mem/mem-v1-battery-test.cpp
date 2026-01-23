@@ -1,6 +1,7 @@
 #include <catch2/catch_all.hpp>
 
 #include <random>
+#include <unordered_map>
 
 #include <embr/mem/v1/pool.hpp>
 #include <embr/mem/v1/shared-handle.h>
@@ -27,11 +28,11 @@ static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& 
     constexpr handle_type null = HandlesTraits::null;
     fragmentation frag;
 
-    std::uniform_int_distribution distrib(1, 10);
+    std::uniform_int_distribution<int> distrib(1, 10);
 
     //int allocs_to_do = gen() % ops.handles_.size();
     int allocs_to_do = ops.handles_.size() - 1;     // 1 handle already used for big-free-block
-    int frees_to_do = std::uniform_int_distribution(0, allocs_to_do)(gen);
+    int frees_to_do = std::uniform_int_distribution<int>(0, allocs_to_do)(gen);
 
     CAPTURE(it, seed);
 

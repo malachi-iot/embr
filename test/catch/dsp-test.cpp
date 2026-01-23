@@ -96,8 +96,8 @@ TEST_CASE("dsp")
             using fp4_4 = dsp::v1::fixed_point<4, 4, dsp::v1::FP_SIGNED>;
 
             static_assert(sizeof(fp4_4) == 1);
-            static_assert(estd::is_same_v<fp12_4::value_type, uint16_t>, "");
-            static_assert(estd::is_same_v<fp12_4::promoted_type, uint32_t>, "");
+            static_assert(estd::is_same<fp12_4::value_type, uint16_t>::value, "");
+            static_assert(estd::is_same<fp12_4::promoted_type, uint32_t>::value, "");
 
             static_assert(sizeof(fp12_4::value_type) == 2, "");
             static_assert(sizeof(fp12_4::promoted_type) == 4, "");
@@ -138,8 +138,8 @@ TEST_CASE("dsp")
         }
         SECTION("general")
         {
-            static_assert(std::is_same_v<fp8_24::value_type, uint32_t>, "");
-            static_assert(std::is_same_v<fp8_24::promoted_type, uint64_t>, "");
+            static_assert(std::is_same<fp8_24::value_type, uint32_t>::value, "");
+            static_assert(std::is_same<fp8_24::promoted_type, uint64_t>::value, "");
 
             fp8_24 v1{0x1800000};
             fp8 v2{0x0180};

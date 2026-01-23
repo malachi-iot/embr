@@ -1,5 +1,7 @@
 #include <catch2/catch_all.hpp>
 
+#include <string_view>
+
 #include <estd/internal/units/ostream.h>
 
 #include <embr/mem/v1/pool.hpp>

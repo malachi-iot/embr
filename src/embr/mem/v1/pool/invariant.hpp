@@ -25,7 +25,7 @@ invariant_result pool<Traits>::ops<HandleTraits>::invariant() const
     // really is directly convertible to bytes - although in this case we could probably cheat and
     // use bytes_tag type right from the get go
     using bytes_type = estd::units::v1::detail::unit<bytes_unit_traits<unsigned, estd::ratio<1>>>;
-    const bytes_type size(std::size(self_.pool_));
+    const bytes_type size(estd::size(self_.pool_));
     constexpr handle_type null = traits::null;
     const unsigned max_handles = handles_.size();
 

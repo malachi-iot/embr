@@ -65,7 +65,7 @@ public:
     template <class P, class F>
     size_type alloc(P&& predicate, F&& on_alloc)
     {
-        for(size_type i = 0; i < std::size(container_); ++i)
+        for(size_type i = 0; i < estd::size(container_); ++i)
         {
             // Remember, we are allocating handles, not pool entries - so evaluating
             // is_null is correct for identifying unused handles
@@ -88,7 +88,7 @@ public:
     estd::errc dealloc(size_type handle)
     {
         // DEBT: https://github.com/malachi-iot/estdlib/issues/166
-        if(handle >= std::size(container_)) return estd::errc::bad_address;
+        if(handle >= estd::size(container_)) return estd::errc::bad_address;
 
         traits::reset(container_[handle]);
 
@@ -102,10 +102,10 @@ public:
 
     iterator begin() { return { pred(), &container_[0] }; }
     constexpr const_iterator begin() const { return { pred(), &container_[0] }; }
-    iterator end() { return { pred(), &container_[std::size(container_)] }; }
-    constexpr const_iterator end() const { return { pred(), &container_[std::size(container_)] }; }
+    iterator end() { return { pred(), &container_[estd::size(container_)] }; }
+    constexpr const_iterator end() const { return { pred(), &container_[estd::size(container_)] }; }
 
-    constexpr unsigned size() const { return std::size(container_); }
+    constexpr unsigned size() const { return estd::size(container_); }
 
     constexpr bool invariant() const;
 };

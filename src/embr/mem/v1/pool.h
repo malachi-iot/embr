@@ -61,16 +61,24 @@ struct pool_traits : estd::internal::container_traits<Container>
 template <class T, class PoolTraits, class HandlesTraits, class ...Args>
 typename HandlesTraits::size_type construct(pool<PoolTraits>& p, handles<HandlesTraits>& h, Args&&...args);
 
+template <class Pool, class Handles>
+struct pool_ops_traits
+{
+    using pool_type = Pool;
+    using handles_type = Handles;
+};
+
 // TODO: Do 'concepts'
 // 23JAN26 MB Appears unavoidable to template it out to this level.  Was hoping CRTP wizardry would help us, but I don't
 // like an intermediate pool::ops with pointer/references out to the real classes.  That makes the optimizer work a lot
 // harder and aside from intellisense doesn't make the code easier to read
-template <class Pool, class Handles>
+template <class Traits>
 class pool_ops
 {
 public:
-    using pool_type = estd::remove_reference_t<Pool>;
-    using handles_type = estd::remove_reference_t<Handles>;
+    using traits = Traits;
+    using pool_type = estd::remove_reference_t<typename traits::pool_type>;
+    using handles_type = estd::remove_reference_t<typename traits::handles_type>;
     using pool_traits = typename pool_type::traits;
     using handles_traits = typename handles_type::traits;
     using block = v1::block;
@@ -82,8 +90,8 @@ public:
 
 protected:
 
-    Pool self_;
-    Handles handles_;
+    typename traits::pool_type self_;
+    typename traits::handles_type handles_;
 
     constexpr const pool_type& pool() { return self_; }
 
@@ -158,7 +166,7 @@ public:
     using iterator_traits = estd::iterator_traits<container_type>;
 
 protected:
-    template <class Pool, class Handles>
+    template <class Traits2>
     friend class pool_ops;
 
     //static_assert(sizeof(typename iterator_traits::value_type) == 1);
@@ -193,9 +201,9 @@ public:
 #endif
     template <class HandlesTraits>
     struct ops //: HandlesTraits    // FIX: We ought to be able to do this, what's stopping us?
-        : public pool_ops<pool&, handles<HandlesTraits>&>
+        : pool_ops<pool_ops_traits<pool&, handles<HandlesTraits>&>>
     {
-        using base_type = pool_ops<pool&, handles<HandlesTraits>&>;
+        using base_type = pool_ops<pool_ops_traits<pool&, handles<HandlesTraits>&>>;
         using base_type::self_;
         using base_type::handles_;
         using base_type::aliasing;
