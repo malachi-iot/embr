@@ -13,6 +13,10 @@
 #include "handles.h"
 #include "page.h"
 
+#if __cpp_lib_concepts
+#include <concepts>
+#endif
+
 #if FEATURE_STD_OSTREAM
 #include <iosfwd>
 #endif
@@ -21,6 +25,10 @@ namespace embr { namespace mem {
 
 namespace detail { inline namespace v1 {
 
+#if __cpp_lib_concepts
+namespace concepts {
+}
+#endif
 
 struct fragmentation
 {
@@ -53,6 +61,87 @@ struct pool_traits : estd::internal::container_traits<Container>
 template <class T, class PoolTraits, class HandlesTraits, class ...Args>
 typename HandlesTraits::size_type construct(pool<PoolTraits>& p, handles<HandlesTraits>& h, Args&&...args);
 
+// TODO: Do 'concepts'
+// 23JAN26 MB Appears unavoidable to template it out to this level.  Was hoping CRTP wizardry would help us, but I don't
+// like an intermediate pool::ops with pointer/references out to the real classes.  That makes the optimizer work a lot
+// harder and aside from intellisense doesn't make the code easier to read
+template <class Pool, class Handles>
+class pool_ops
+{
+public:
+    using pool_type = estd::remove_reference_t<Pool>;
+    using handles_type = estd::remove_reference_t<Handles>;
+    using pool_traits = typename pool_type::traits;
+    using handles_traits = typename handles_type::traits;
+    using block = v1::block;
+    using bundle = v1::bundle;
+    using const_bundle = v1::const_bundle;
+    using handle_type = typename handles_traits::size_type;
+    using page_type = typename handles_traits::value_type;
+    using pos_type = typename page_type::unit_type;
+
+protected:
+
+    Pool self_;
+    Handles handles_;
+
+    constexpr const pool_type& pool() { return self_; }
+
+public:
+    // DEBT: Pool gets punished a little with just one init parameter, I think we'll be OK though
+    template <class PoolArg, class ...HandlesArgs>
+    constexpr pool_ops(PoolArg&& pa, HandlesArgs&&...ha) :
+        self_{std::forward<PoolArg>(pa)},
+        handles_{std::forward<HandlesArgs>(ha)...}
+    {}
+
+    static constexpr unsigned aliasing = pos_type::period::num;
+
+    invariant_result invariant() const;
+
+    // Diagnostic dump of pool content
+    std::ostream& dump(std::ostream& out) const;
+
+    // Best to have this guy here and not in above pool so that we make no assumptions
+    // about page_type and handle_type
+    bundle get_bundle(page_type& page, handle_type handle) const
+    {
+        return { self_.block(page.pos()), &page, handle };
+    }
+
+    const_bundle get_bundle(const page_type& page, handle_type handle) const
+    {
+        return { self_.block(page.pos()), &page, handle };
+    }
+
+    bundle get_bundle(handle_type h)
+    {
+        return get_bundle(handles_[h], h);
+    }
+
+    const_bundle get_bundle(handle_type h) const
+    {
+        return get_bundle(handles_[h], h);
+    }
+
+    bundle get_bundle(page_type& page)
+    {
+        return get_bundle(page, &page - &handles_[0]);
+    }
+
+    const_bundle get_bundle(const page_type& page) const
+    {
+        return get_bundle(page, &page - &handles_[0]);
+    }
+
+    // DEBT: Need better name
+    static constexpr pos_type do_alias(unsigned v)
+    {
+        return pos_type((v + aliasing - 1) / aliasing);
+    }
+
+};
+
 template <class Traits>
 class pool : public Traits
 {
@@ -69,6 +158,9 @@ public:
     using iterator_traits = estd::iterator_traits<container_type>;
 
 protected:
+    template <class Pool, class Handles>
+    friend class pool_ops;
+
     //static_assert(sizeof(typename iterator_traits::value_type) == 1);
 
     container_type pool_;
@@ -101,7 +193,14 @@ public:
 #endif
     template <class HandlesTraits>
     struct ops //: HandlesTraits    // FIX: We ought to be able to do this, what's stopping us?
+        : public pool_ops<pool&, handles<HandlesTraits>&>
     {
+        using base_type = pool_ops<pool&, handles<HandlesTraits>&>;
+        using base_type::self_;
+        using base_type::handles_;
+        using base_type::aliasing;
+        using base_type::do_alias;
+
         using block = v1::block;
         //using bundle = v1::bundle_base<HandlesTraits, page_type>;
         using bundle = v1::bundle;
@@ -112,48 +211,10 @@ public:
         using page_type = typename traits::value_type;
         using pos_type = typename page_type::unit_type;
 
-        static constexpr unsigned aliasing = pos_type::period::num;
+        using base_type::get_bundle;
 
-        // DEBT: Need better name
-        static constexpr pos_type do_alias(unsigned v)
-        {
-            return pos_type((v + aliasing - 1) / aliasing);
-        }
-
-        this_type& self_;
-        handles_type& handles_;
-
-        // Best to have this guy here and not in above pool so that we make no assumptions
-        // about page_type and handle_type
-        bundle get_bundle(page_type& page, handle_type handle) const
-        {
-            return { self_.block(page.pos()), &page, handle };
-        }
-
-        const_bundle get_bundle(const page_type& page, handle_type handle) const
-        {
-            return { self_.block(page.pos()), &page, handle };
-        }
-
-        bundle get_bundle(handle_type h)
-        {
-            return get_bundle(handles_[h], h);
-        }
-
-        const_bundle get_bundle(handle_type h) const
-        {
-            return get_bundle(handles_[h], h);
-        }
-
-        bundle get_bundle(page_type& page)
-        {
-            return get_bundle(page, &page - &handles_[0]);
-        }
-
-        const_bundle get_bundle(const page_type& page) const
-        {
-            return get_bundle(page, &page - &handles_[0]);
-        }
+        template <class ...Args>
+        constexpr ops(Args&&...args) : base_type(std::forward<Args>(args)...) {}
 
         block* create_free_block(pos_type, handle_type prev, handle_type next);
 
