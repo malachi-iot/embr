@@ -135,12 +135,17 @@ public:
             return { self_.block(page.pos()), &page, handle };
         }
 
-        bundle get_bundle(handle_type h) const
+        bundle get_bundle(handle_type h)
         {
             return get_bundle(handles_[h], h);
         }
 
-        bundle get_bundle(page_type& page) const
+        const_bundle get_bundle(handle_type h) const
+        {
+            return get_bundle(handles_[h], h);
+        }
+
+        bundle get_bundle(page_type& page)
         {
             return get_bundle(page, &page - &handles_[0]);
         }
@@ -207,7 +212,7 @@ public:
         /// Since page table virtualizes positions, first page table entry is not necessarily
         /// starting handle.  Use this to find actual first handle in the list
         /// @return
-        bundle first() const;
+        const_bundle first() const;
 
         /// Not generally used, alternative first-finder which moves physically through handles
         /// looking for 0-pos.  Used for invariant.  More resilient to incorrect linking, so
@@ -220,7 +225,12 @@ public:
         void prev(Block*, bundle_base<Traits2, Block, Page>* out) const;
 
         const_bundle prev(const block*) const;
-        const_bundle prev(const bundle& bn) const { return prev(bn.block); }
+
+        template <class Traits2, class Block, class Page>
+        const_bundle prev(const bundle_base<Traits2, Block, Page>& bn) const
+        {
+            return prev(bn.block);
+        }
 
         template <class Traits2, class Block, class Page>
         void next(Block*, bundle_base<Traits2, Block, Page>* out) const;
@@ -239,7 +249,9 @@ public:
         }
 
         static unsigned logical_size(block::modes, pos_type phys_sz);
-        unsigned logical_size(const bundle&) const;
+
+        template <class Traits2, class Block, class Page>
+        unsigned logical_size(const bundle_base<Traits2, Block, Page>&) const;
 
         /// Moves block itself to new location - does not consider payload data
         /// Free blocks only is RECOMMENDED

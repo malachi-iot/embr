@@ -20,11 +20,11 @@ namespace detail { inline namespace v1 {
 
 template <class Traits>
 template <class HandleTraits>
-auto pool<Traits>::ops<HandleTraits>::first() const -> bundle
+auto pool<Traits>::ops<HandleTraits>::first() const -> const_bundle
 {
-    bundle bn = get_bundle(0);
+    const_bundle bn = get_bundle(0);
 
-    for(; bn.has_prev(); bn = prev(bn).unconst());        // NOLINT
+    for(; bn.has_prev(); bn = prev(bn));        // NOLINT
 
     return bn;
 }
@@ -35,8 +35,8 @@ auto pool<Traits>::ops<HandleTraits>::first_alt() const -> bundle
 {
     constexpr pos_type zero{0};
 
-    for(page_type& page : handles_)
-        if(page.pos() == zero) return get_bundle(page);
+    for(const page_type& page : handles_)
+        if(page.pos() == zero) return get_bundle(page).unconst();
 
     return {};
 }
@@ -115,8 +115,8 @@ template <class Traits>
 template <class HandleTraits>
 auto pool<Traits>::ops<HandleTraits>::next(v1::block* b) const -> bundle
 {
-    page_type& page = handles_[b->next()];
-    return { self_.block(page.pos()), &page, b->next() };
+    auto page = const_cast<page_type*>(&handles_[b->next()]);
+    return { self_.block(page->pos()), page, b->next() };
 }
 
 
@@ -144,7 +144,8 @@ unsigned pool<Traits>::ops<HandleTraits>::logical_size(block::modes mode, pos_ty
 
 template <class Traits>
 template <class HandleTraits>
-unsigned pool<Traits>::ops<HandleTraits>::logical_size(const bundle& bn) const
+template <class Traits2, class Block, class Page>
+unsigned pool<Traits>::ops<HandleTraits>::logical_size(const bundle_base<Traits2, Block, Page>& bn) const
 {
     return logical_size(bn.block->mode(), phys_size(bn));
 }
@@ -385,9 +386,9 @@ auto pool<Traits>::ops<HandleTraits>::available() const -> unsigned
 
     unsigned count(0);
 
-    for(page_type& page : handles_)
+    for(const page_type& page : handles_)
     {
-        bundle bn = get_bundle(page);
+        const_bundle bn = get_bundle(page);
 
         if(bn.allocated() == false)  count += logical_size(bn);
     }
@@ -402,9 +403,9 @@ auto pool<Traits>::ops<HandleTraits>::alloced() const -> unsigned
 {
     // If we permitted ourselves c++20 we could use ranges here.  Oh well !
 
-    return estd::accumulate(handles_.begin(), handles_.end(), 0, [&](unsigned count, page_type& p)
+    return estd::accumulate(handles_.begin(), handles_.end(), 0, [&](unsigned count, const page_type& p)
     {
-        bundle bn = get_bundle(p);
+        const_bundle bn = get_bundle(p);
 
         return count + (bn.block->allocated() ? logical_size(bn) : 0);
     });
