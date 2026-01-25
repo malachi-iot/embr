@@ -29,7 +29,7 @@ class alignas(void*) block : public block_mode_base
     template <class T>
     using rtto = estd::internal::rtto<T>;
 
-    template <class HandlesTraits, class Block, class Page>
+    template <class HandlesTraits, class Block>
     friend class bundle_base;
 
     friend class block_diagnostic;

@@ -70,11 +70,12 @@ auto pool<Traits>::ops<HandleTraits>::first_free(pos_type phys_sz, pos_type* fou
 
 template <class Traits>
 template <class HandleTraits>
-template <class Traits2, class Block, class Page>
-void pool<Traits>::ops<HandleTraits>::prev(Block* b, bundle_base<Traits2, Block, Page>* out) const
+template <class Traits2, class Block>
+void pool<Traits>::ops<HandleTraits>::prev(Block* b, bundle_base<Traits2, Block>* out) const
 {
-    Page& page = handles_[b->prev()];
-    new (out) bundle_base<traits, Block, Page>{ self_.block(page.pos()), &page, b->prev() };
+    // DEBT: No auto please
+    auto& page = handles_[b->prev()];
+    new (out) bundle_base<traits, Block>{ self_.block(page.pos()), &page, b->prev() };
 }
 
 
@@ -88,11 +89,12 @@ auto pool<Traits>::ops<HandleTraits>::prev(const v1::block* b) const -> const_bu
 
 template <class Traits>
 template <class HandleTraits>
-template <class Traits2, class Block, class Page>
-void pool<Traits>::ops<HandleTraits>::next(Block* b, bundle_base<Traits2, Block, Page>* out) const
+template <class Traits2, class Block>
+void pool<Traits>::ops<HandleTraits>::next(Block* b, bundle_base<Traits2, Block>* out) const
 {
-    Page& page = handles_[b->next()];
-    new (out) bundle_base<traits, Block, Page>{ self_.block(page.pos()), &page, b->next() };
+    // DEBT: No auto please
+    auto& page = handles_[b->next()];
+    new (out) bundle_base<traits, Block>{ self_.block(page.pos()), &page, b->next() };
 }
 
 
@@ -116,8 +118,8 @@ auto pool<Traits>::ops<HandleTraits>::next(v1::block* b) const -> bundle
 
 template <class Traits>
 template <class HandleTraits>
-template <class Traits2, class Block, class Page>
-auto pool<Traits>::ops<HandleTraits>::phys_size(const bundle_base<Traits2, Block, Page>& bn) const -> pos_type
+template <class Traits2, class Block>
+auto pool<Traits>::ops<HandleTraits>::phys_size(const bundle_base<Traits2, Block>& bn) const -> pos_type
 {
     pos_type next_pos = bn.block->next() == handles_type::null ?
         pos_type(estd::size(self_.pool_) / aliasing) :
@@ -138,8 +140,8 @@ unsigned pool<Traits>::ops<HandleTraits>::logical_size(block::modes mode, pos_ty
 
 template <class Traits>
 template <class HandleTraits>
-template <class Traits2, class Block, class Page>
-unsigned pool<Traits>::ops<HandleTraits>::logical_size(const bundle_base<Traits2, Block, Page>& bn) const
+template <class Traits2, class Block>
+unsigned pool<Traits>::ops<HandleTraits>::logical_size(const bundle_base<Traits2, Block>& bn) const
 {
     return logical_size(bn.block->mode(), phys_size(bn));
 }

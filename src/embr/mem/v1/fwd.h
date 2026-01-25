@@ -36,8 +36,7 @@ struct page;
 template <bool B, class T>
 using add_const_conditional_t = estd::conditional_t<B, estd::add_const_t<T>, T>;
 
-template <class HandlesTraits, class Block = block,
-    class Page = add_const_conditional_t<estd::is_const<Block>::value, typename HandlesTraits::value_type>>
+template <class HandlesTraits, class Block = block>
 struct bundle_base;
 
 

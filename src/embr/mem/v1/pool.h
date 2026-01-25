@@ -291,19 +291,19 @@ public:
 
         const_bundle first_free(pos_type phys_sz, pos_type* found_size) const;
 
-        template <class Traits2, class Block, class Page>
-        void prev(Block*, bundle_base<Traits2, Block, Page>* out) const;
+        template <class Traits2, class Block>
+        void prev(Block*, bundle_base<Traits2, Block>* out) const;
 
         const_bundle prev(const block*) const;
 
-        template <class Traits2, class Block, class Page>
-        const_bundle prev(const bundle_base<Traits2, Block, Page>& bn) const
+        template <class Traits2, class Block>
+        const_bundle prev(const bundle_base<Traits2, Block>& bn) const
         {
             return prev(bn.block);
         }
 
-        template <class Traits2, class Block, class Page>
-        void next(Block*, bundle_base<Traits2, Block, Page>* out) const;
+        template <class Traits2, class Block>
+        void next(Block*, bundle_base<Traits2, Block>* out) const;
 
         const_bundle next(const block*) const;
         bundle next(block*) const;
@@ -311,8 +311,8 @@ public:
         template <class Traits2, class Block>
         bundle_base<Traits2, Block> next(const bundle_base<Traits2, Block>& bn) const { return next(bn.block); }
 
-        template <class Traits2, class Block, class Page>
-        pos_type phys_size(const bundle_base<Traits2, Block, Page>&) const;
+        template <class Traits2, class Block>
+        pos_type phys_size(const bundle_base<Traits2, Block>&) const;
         pos_type phys_size(int h, page_type& p) const
         {
             return phys_size(self_.bundle(p, h));
@@ -320,8 +320,8 @@ public:
 
         static unsigned logical_size(block::modes, pos_type phys_sz);
 
-        template <class Traits2, class Block, class Page>
-        unsigned logical_size(const bundle_base<Traits2, Block, Page>&) const;
+        template <class Traits2, class Block>
+        unsigned logical_size(const bundle_base<Traits2, Block>&) const;
 
         /// Moves block itself to new location - does not consider payload data
         /// Free blocks only is RECOMMENDED

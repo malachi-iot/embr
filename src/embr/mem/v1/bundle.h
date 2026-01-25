@@ -11,15 +11,15 @@ namespace embr { namespace mem {
 
 namespace detail { inline namespace v1 {
 
-template <class HandlesTraits, class Block, class Page>
+template <class HandlesTraits, class Block>
 struct bundle_base
 {
     using handles_traits = HandlesTraits;
     using handle_type = typename HandlesTraits::size_type;
-    using page_type = Page;
+    using page_noncv_type = typename HandlesTraits::value_type;
+    using page_type = add_const_conditional_t<estd::is_const<Block>::value, page_noncv_type>;
     using pos_type = typename page_type::unit_type;
 
-    using page_noncv_type = estd::remove_cv_t<Page>;
     using block_noncv_type = estd::remove_cv_t<Block>;
 
     template <class PoolTraits>
@@ -34,8 +34,8 @@ struct bundle_base
     bundle_base() = default;
 
     // DEBT: Sloppy conversion from non-const to const.  Should enforce this more strictly
-    template <class Block2, class Page2>
-    bundle_base(const bundle_base<handles_traits, Block2, Page2>& convert_from) :
+    template <class Block2>
+    bundle_base(const bundle_base<handles_traits, Block2>& convert_from) :
         block(convert_from.block),
         page(convert_from.page),
         handle(convert_from.handle)
@@ -90,8 +90,8 @@ struct bundle_base
     }
 
     // DEBT: Sloppy way to convert between const and non-const bundles.
-    template <class Block2, class Page2>
-    bundle_base& operator =(const bundle_base<handles_traits, Block2, Page2>& copy_from)
+    template <class Block2>
+    bundle_base& operator =(const bundle_base<handles_traits, Block2>& copy_from)
     {
         block = copy_from.block;
         page = copy_from.page;
@@ -114,7 +114,7 @@ private:
 
     void mode(block::modes v)       { block->mode_ = v; }
 
-    using unconst_type = bundle_base<handles_traits, block_noncv_type, page_noncv_type>;
+    using unconst_type = bundle_base<handles_traits, block_noncv_type>;
 
     // DEBT: Crude flavor of const_cast tuned just to our application.  Not TOO debt-y since it's for
     // internal use only
