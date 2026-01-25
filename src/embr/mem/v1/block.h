@@ -1,6 +1,7 @@
 #pragma once
 
 #include <estd/internal/rtto.h>
+#include <estd/units.h>
 
 #include "enum.h"
 #include "error.h"
@@ -100,11 +101,11 @@ public:
     rtto_base_type* rtto_base() { return (rtto_base_type*) data_; }
 
     // FIX: Probably not 100% right, because RttoBase mode includes size of rtto::u_ in the object itself
-    static constexpr unsigned header_size(modes mode)
+    static constexpr estd::units::bytes<unsigned> header_size(modes mode)
     {
-        return (mode == Trivial || mode == RttoBase) ?
+        return estd::units::bytes<unsigned>((mode == Trivial || mode == RttoBase) ?
             sizeof(block) :
-            (sizeof(block) + sizeof(estd::internal::rtto_base::base));
+            (sizeof(block) + sizeof(estd::internal::rtto_base::base)));
     }
 
     // DEBT: Protect this and make friend classes, or pull WriteableBlock child stunt

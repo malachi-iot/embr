@@ -58,7 +58,7 @@ static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& 
         // DEBT: bring back 0-byte allocation requests as a bounds check.  Maybe ops itself shouldn't
         // kick back, but higher level mode definitely would need to
         pos_type phys_sz(distrib(gen) + 1);
-        unsigned logical_sz = bytes_type(phys_sz).count() - block::header_size(mode);
+        unsigned logical_sz = bytes_type(phys_sz).count() - block::header_size(mode).count();
 
         ops.dump(before << "\n");
 

@@ -107,18 +107,18 @@ auto pool_ops<Traits>::phys_size(const bundle_base<Traits2, Block>& bn) const ->
 }
 
 template <class Traits>
-unsigned pool_ops<Traits>::logical_size(block::modes mode, pos_type phys_sz)
+estd::units::bytes<unsigned> pool_ops<Traits>::logical_size(block::modes mode, pos_type phys_sz)
 {
     // FIX: Needs more work
-    const unsigned tbd = block::header_size(mode);
-    return phys_sz.count() * aliasing - tbd;
+    const unsigned tbd = block::header_size(mode).count();
+    return estd::units::bytes<unsigned>(phys_sz.count() * aliasing - tbd);
 }
 
 template <class Traits>
-template <class Traits2, class Block>
-unsigned pool_ops<Traits>::logical_size(const bundle_base<Traits2, Block>& bn) const
+template <class Block>
+unsigned pool_ops<Traits>::logical_size(const bundle_base<handles_traits, Block>& bn) const
 {
-    return logical_size(bn.block->mode(), phys_size(bn));
+    return logical_size(bn.block->mode(), phys_size(bn)).count();
 }
 
 template <class Traits>
@@ -132,8 +132,7 @@ auto pool_ops<Traits>::create_free_block(
 }
 
 template <class Traits>
-template <class HandleTraits>
-auto pool<Traits>::ops<HandleTraits>::split_at(bundle b, pos_type at) -> handle_type
+auto pool_ops<Traits>::split_at(bundle b, pos_type at) -> handle_type
 {
     // Brand new handle needed for this
     return handles_.alloc([&](handle_type h, page_type& page)
@@ -164,8 +163,7 @@ void pool_ops<Traits>::reset()
 
 
 template <class Traits>
-template <class HandleTraits>
-void pool<Traits>::ops<HandleTraits>::alloc(bundle bn, pos_type found_sz, pos_type phys_sz, block::modes mode)
+void pool_ops<Traits>::alloc(bundle bn, pos_type found_sz, pos_type phys_sz, block::modes mode)
 {
     // If we're 3 blocks larger, go ahead and split
     // We start with min block size.  On 64-bit systems that is:
@@ -192,11 +190,10 @@ void pool<Traits>::ops<HandleTraits>::alloc(bundle bn, pos_type found_sz, pos_ty
 
 
 template <class Traits>
-template <class HandleTraits>
-auto pool<Traits>::ops<HandleTraits>::alloc(pos_type phys_sz, block::modes mode) -> bundle
+auto pool_ops<Traits>::alloc(pos_type phys_sz, block::modes mode) -> bundle
 {
     pos_type found_size(0);
-    const_bundle bn = base_type::first_free(phys_sz, &found_size);
+    const_bundle bn = first_free(phys_sz, &found_size);
 
     if(bn.is_null() == false)
     {
@@ -209,15 +206,14 @@ auto pool<Traits>::ops<HandleTraits>::alloc(pos_type phys_sz, block::modes mode)
 }
 
 template <class Traits>
-template <class HandleTraits>
 template <block::modes mode, class T, class ...Args>
-auto pool<Traits>::ops<HandleTraits>::construct(Args&&...args) -> bundle
+auto pool_ops<Traits>::construct(Args&&...args) -> bundle
 {
     // Rtto and Immobile use proxy
     constexpr bool rtto_proxied = mode == block::RttoProxy || mode == block::Immobile;
     // DEBT: Effective but error prone accounting for various block sizing.  Probably
     // ought to move this plumbing into 'emplace'
-    constexpr unsigned block_sz = block::header_size(mode);
+    constexpr unsigned block_sz = block::header_size(mode).count();
 
     bundle bn = alloc(do_alias(sizeof(T) + block_sz), mode);
 
@@ -434,7 +430,7 @@ bool pool<Traits>::ops<HandleTraits>::realloc(bundle bn, pos_type phys_sz)
 
         if(free_sz < current_sz)    return false;
 
-        unsigned logical_sz = logical_size(bn.mode(), phys_sz);
+        unsigned logical_sz = logical_size(bn.mode(), phys_sz).count();
 
         move(bn, dest, 0, logical_sz, false);
 

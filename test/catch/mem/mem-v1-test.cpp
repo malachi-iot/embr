@@ -74,7 +74,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
 
                 SECTION("alloc")
                 {
-                    constexpr unsigned block_sz = block::header_size(block::Trivial);
+                    constexpr unsigned block_sz = block::header_size(block::Trivial).count();
                     bundle bn = op.alloc(phys_sz, block::Trivial);
 
                     REQUIRE(bn.invariant());
@@ -193,7 +193,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
         using lock_handle = detail::lock_handle<pool_type, nullptr>;
         pool_type pool1;
         using block = detail::v1::block;
-        constexpr unsigned block_sz = block::header_size(block::Trivial);
+        constexpr unsigned block_sz = block::header_size(block::Trivial).count();
 
         // DEBT: This guy still being stupid
         pool1.ops().reset();

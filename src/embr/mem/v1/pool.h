@@ -100,6 +100,14 @@ public:
 
     block* create_free_block(pos_type, handle_type prev, handle_type next);
 
+    /// Low level alloc TBD docs
+    void alloc(bundle, pos_type found_sz, pos_type phys_sz, block::modes);
+
+    bundle alloc(pos_type phys_sz, block::modes mode);
+
+    template <block::modes mode, class T, class ...Args>
+    bundle construct(Args&&...);
+
     void dealloc(bundle);
     void dealloc(handle_type h) { dealloc(get_bundle(handles_[h], h)); }
 
@@ -169,10 +177,10 @@ public:
     template <class Traits2, class Block>
     bundle_base<Traits2, Block> next(const bundle_base<Traits2, Block>& bn) const { return next(bn.block); }
 
-    static unsigned logical_size(block::modes, pos_type phys_sz);
+    static estd::units::bytes<unsigned> logical_size(block::modes, pos_type phys_sz);
 
-    template <class Traits2, class Block>
-    unsigned logical_size(const bundle_base<Traits2, Block>&) const;
+    template <class Block>
+    unsigned logical_size(const bundle_base<handles_traits, Block>&) const;
 
     /// @brief merge
     /// @param current
@@ -210,6 +218,14 @@ public:
     /// @return
     v1::block* resize(bundle, pos_type new_sz);
     block* resize(bundle bn, bundle bn_next, pos_type new_sz);
+
+    /// Creates a new free block inside bundle, before next block
+    /// @param at particular location of split - NOT a size
+    /// @details presumes bundle is big enough to split, no checks performed.
+    /// @returns handle of new free block created
+    /// Does not notice if block following this bundle is already free.  Renamed
+    /// from 'split' to disambiguate that we need absolute position, not relative size
+    handle_type split_at(bundle, pos_type at);
 
     ///
     /// @brief virtual_swap performs page position swap and relinks to maintain contiguous next and prev
@@ -286,6 +302,7 @@ public:
         using base_type::self_;
         using base_type::handles_;
         using base_type::aliasing;
+        using base_type::alloc;
         using base_type::create_free_block;
         using base_type::dealloc;
         using base_type::do_alias;
@@ -311,14 +328,6 @@ public:
         template <class ...Args>
         constexpr ops(Args&&...args) : base_type(std::forward<Args>(args)...) {}
 
-        /// Creates a new free block inside bundle, before next block
-        /// @param at particular location of split - NOT a size
-        /// @details presumes bundle is big enough to split, no checks performed.
-        /// @returns handle of new free block created
-        /// Does not notice if block following this bundle is already free.  Renamed
-        /// from 'split' to disambiguate that we need absolute position, not relative size
-        handle_type split_at(bundle, pos_type at);
-
         ///
         /// @brief Moves an allocated block to a new free block location.  Updates block metadata so 'to' block becomes allocated
         /// @param from
@@ -339,19 +348,11 @@ public:
         /// @return
         const_bundle first_alt() const;
 
-        /// Low level alloc TBD docs
-        void alloc(bundle, pos_type found_sz, pos_type phys_sz, block::modes);
-
-        bundle alloc(pos_type phys_sz, block::modes mode);
-
         /// Grows or shrinks existing allocation, possibly moving it and others around
         /// @brief realloc
         /// @param new_sz
         /// @return true on success, false on failure (no suitable free block found)
         bool realloc(bundle, pos_type new_sz);
-
-        template <block::modes mode, class T, class ...Args>
-        bundle construct(Args&&...);
 
         using fragmentation = fragmentation_base<const_bundle>;
 
@@ -378,7 +379,7 @@ public:
     template <v1::block::modes mode = v1::block::Trivial, class Traits2>
     typename Traits2::size_type alloc(handles<Traits2>& h, unsigned logical_sz)
     {
-        constexpr unsigned block_sz = v1::block::header_size(mode);
+        constexpr unsigned block_sz = v1::block::header_size(mode).count();
         using ops_type = ops<Traits2>;
         return ops_type{*this, h}.alloc(ops_type::do_alias(logical_sz + block_sz), mode).handle;
     }
@@ -441,7 +442,7 @@ public:
     typename Derived2::handle_type alloc(unsigned sz)
     {
         constexpr auto mode = v1::block::Trivial;
-        constexpr unsigned block_sz = v1::block::header_size(mode);
+        constexpr unsigned block_sz = v1::block::header_size(mode).count();
         return OPS.alloc(OPS.do_alias(sz + block_sz), mode).handle;
     }
 

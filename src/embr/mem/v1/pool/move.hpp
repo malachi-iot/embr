@@ -228,7 +228,7 @@ validated_result pool<Traits>::ops<HandleTraits>::move(
         // incoming desired logical size
         pos_type desired_phys_sz = desired_logical_sz == 0 ?
             from_block_phys_sz :
-            pos_type((block::header_size(to.mode()) + desired_logical_sz) / aliasing);
+            pos_type((block::header_size(to.mode()).count() + desired_logical_sz) / aliasing);
 
         assert(desired_phys_sz <= to_block_phys_sz);
 
@@ -268,7 +268,7 @@ validated_result pool<Traits>::ops<HandleTraits>::move(
                     //const pos_type new_pos2 = to.pos() + from_block_phys_sz;
                     //assert(new_pos1 == new_pos2);
                     // DEBT: Much like alloc, this is a bit harsh
-                    assert(split_at(to, split_pos));
+                    assert(base_type::split_at(to, split_pos));
                 }
                 else
                 {
