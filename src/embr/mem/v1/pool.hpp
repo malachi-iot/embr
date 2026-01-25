@@ -77,27 +77,12 @@ void pool_ops<Traits>::prev(Block* b, bundle_base<Traits2, Block>* out) const
 
 
 template <class Traits>
-auto pool_ops<Traits>::prev(const v1::block* b) const -> const_bundle
-{
-    const page_type& page = handles_[b->prev()];
-    return { self_.block(page.pos()), &page, b->prev() };
-}
-
-template <class Traits>
 template <class Traits2, class Block>
 void pool_ops<Traits>::next(Block* b, bundle_base<Traits2, Block>* out) const
 {
     // DEBT: No auto please
     auto& page = handles_[b->next()];
     new (out) bundle_base<handles_traits, Block>{ self_.block(page.pos()), &page, b->next() };
-}
-
-
-template <class Traits>
-auto pool_ops<Traits>::next(const v1::block* b) const -> const_bundle
-{
-    const page_type& page = handles_[b->next()];
-    return { self_.block(page.pos()), &page, b->next() };
 }
 
 
@@ -249,8 +234,7 @@ auto pool<Traits>::ops<HandleTraits>::construct(Args&&...args) -> bundle
 
 
 template <class Traits>
-template <class HandleTraits>
-bool pool<Traits>::ops<HandleTraits>::merge(bundle current, bundle next)
+bool pool_ops<Traits>::merge(bundle current, bundle next)
 {
     if(next.allocated()) return false;
 
@@ -269,8 +253,7 @@ bool pool<Traits>::ops<HandleTraits>::merge(bundle current, bundle next)
 }
 
 template <class Traits>
-template <class HandleTraits>
-bool pool<Traits>::ops<HandleTraits>::merge_if_free(bundle current, bundle next)
+bool pool_ops<Traits>::merge_if_free(bundle current, bundle next)
 {
     if(current.allocated()) return false;
 
@@ -296,8 +279,7 @@ typename HandlesTraits::size_type construct(pool<PoolTraits>& p, handles<Handles
 }
 
 template <class Traits>
-template <class HandleTraits>
-void pool<Traits>::ops<HandleTraits>::dealloc(bundle bn)
+void pool_ops<Traits>::dealloc(bundle bn)
 {
     // DEBT: Consolidate with other free operations
     bn.block->destroy();
@@ -306,7 +288,7 @@ void pool<Traits>::ops<HandleTraits>::dealloc(bundle bn)
 
     if(bn.has_prev())
     {
-        bundle bn_prev = prev(bn).unconst();
+        bundle bn_prev = prev(bn);
         // this potentially nulls out bn.handle and invalidates its block
         if(merge_if_free(bn_prev, bn))
             // if so, we've merged with previous, so make him the one
@@ -348,8 +330,7 @@ void pool_ops<Traits>::ref_up(handle_type h)
 
 
 template <class Traits>
-template <class HandleTraits>
-void pool<Traits>::ops<HandleTraits>::ref_down(handle_type h)
+void pool_ops<Traits>::ref_down(handle_type h)
 {
     bundle bn(get_bundle(h));
 

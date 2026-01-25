@@ -100,6 +100,9 @@ public:
 
     block* create_free_block(pos_type, handle_type prev, handle_type next);
 
+    void dealloc(bundle);
+    void dealloc(handle_type h) { dealloc(get_bundle(handles_[h], h)); }
+
     invariant_result invariant() const;
 
     // Diagnostic dump of pool content
@@ -154,18 +157,13 @@ public:
     template <class Traits2, class Block>
     void prev(Block*, bundle_base<Traits2, Block>* out) const;
 
-    const_bundle prev(const block*) const;
-
-    template <class Traits2, class Block>
-    const_bundle prev(const bundle_base<Traits2, Block>& bn) const
-    {
-        return prev(bn.block);
-    }
+    bundle prev(const_bundle bn) { return get_bundle(bn.block->prev()); }
+    const_bundle prev(const_bundle bn) const { return get_bundle(bn.block->prev()); }
 
     template <class Traits2, class Block>
     void next(Block*, bundle_base<Traits2, Block>* out) const;
 
-    const_bundle next(const block*) const;
+    const_bundle next(const block* b) const { return get_bundle(b->next()); }
     bundle next(block*) const;
 
     template <class Traits2, class Block>
@@ -176,6 +174,18 @@ public:
     template <class Traits2, class Block>
     unsigned logical_size(const bundle_base<Traits2, Block>&) const;
 
+    /// @brief merge
+    /// @param current
+    /// @param next MUST be a free block, returns false otherwise
+    /// @details
+    bool merge(bundle current, bundle next);
+
+    /// Same as merge but 'current' must be free also
+    /// @brief merge_free
+    /// @param current
+    /// @param next
+    /// @return
+    bool merge_if_free(bundle current, bundle next);
 
     template <class Traits2, class Block>
     pos_type phys_size(const bundle_base<Traits2, Block>&) const;
@@ -184,6 +194,7 @@ public:
         return phys_size(self_.bundle(p, h));
     }
 
+    void ref_down(handle_type h);
     void ref_up(handle_type h);
 
     void reset();
@@ -264,6 +275,7 @@ public:
         using base_type::handles_;
         using base_type::aliasing;
         using base_type::create_free_block;
+        using base_type::dealloc;
         using base_type::do_alias;
         using base_type::prev;
         using base_type::next;
@@ -294,21 +306,6 @@ public:
         /// Does not notice if block following this bundle is already free.  Renamed
         /// from 'split' to disambiguate that we need absolute position, not relative size
         handle_type split_at(bundle, pos_type at);
-
-        ///
-        /// @brief merge
-        /// @param current
-        /// @param next MUST be a free block, returns false otherwise
-        /// @details
-        bool merge(bundle current, bundle next);
-
-        /// Same as merge but 'current' must be free also
-        /// @brief merge_free
-        /// @param current
-        /// @param next
-        /// @return
-        ///
-        bool merge_if_free(bundle current, bundle next);
 
         ///
         /// @brief Moves an allocated block to a new free block location.  Updates block metadata so 'to' block becomes allocated
@@ -355,11 +352,6 @@ public:
 
         template <block::modes mode, class T, class ...Args>
         bundle construct(Args&&...);
-
-        void dealloc(bundle);
-        void dealloc(handle_type h) { dealloc(get_bundle(handles_[h], h)); }
-
-        void ref_down(handle_type h);
 
         using fragmentation = fragmentation_base<const_bundle>;
 
