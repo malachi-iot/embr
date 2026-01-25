@@ -231,7 +231,7 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
         constexpr pos_type phys_sz(8);
         constexpr unsigned phys_sz_bytes = ops_type::aliasing * phys_sz.count();
         constexpr unsigned block_sz = block::header_size(block::Trivial);
-        detail::fragmentation frag{};
+        ops_type::fragmentation frag{};
         auto& frag0 = frag.candidates[0];
         auto& frag1 = frag.candidates[1];
         void* data;

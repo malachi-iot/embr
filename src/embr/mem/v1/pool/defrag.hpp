@@ -15,7 +15,7 @@ namespace detail { inline namespace v1 {
 
 template <class Traits>
 template <class HandleTraits>
-void pool<Traits>::ops<HandleTraits>::defrag(const fragmentation::candidate& c, bool relink)
+void pool<Traits>::ops<HandleTraits>::defrag(const typename fragmentation::candidate& c, bool relink)
 {
     // DEBT: A bit sloppy converting bundles like this, but gets the job done
     bundle from(get_bundle(c.bundle.handle));
@@ -54,7 +54,7 @@ void pool<Traits>::ops<HandleTraits>::assess(fragmentation* frag) const
     const_bundle bn_prev{}, bn_next = next(cur);
     int last_sc = 0;
 
-    fragmentation::candidate& top = frag->candidates[0];
+    typename fragmentation::candidate& top = frag->candidates[0];
     top = {};
     frag->largest_free_handle = -1;
     frag->candidates[1] = {};

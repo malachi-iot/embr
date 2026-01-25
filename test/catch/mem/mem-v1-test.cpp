@@ -62,11 +62,11 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
 
             SECTION("ops")
             {
-                using bundle = detail::v1::bundle;
-                using block = detail::v1::block;
                 using ops_type = pool_type::ops<handles_traits>;
                 using pos_type = ops_type::pos_type;
                 ops_type op{pool, handles};
+                using bundle = ops_type::bundle;
+                using block = ops_type::block;
 
                 // synthetic size of to-be-allocated block
                 constexpr pos_type phys_sz(8);

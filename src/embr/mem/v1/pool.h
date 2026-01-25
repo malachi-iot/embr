@@ -30,15 +30,16 @@ namespace concepts {
 }
 #endif
 
-struct fragmentation
+template <class Bundle>
+struct fragmentation_base
 {
     int largest_free_handle;
 
     struct candidate
     {
         int score;
-        const_bundle bundle;
-        const_bundle move_to;
+        Bundle bundle;
+        Bundle move_to;
         bool overlap{true};
         bool adjacent{true};
 
@@ -82,11 +83,11 @@ public:
     using pool_traits = typename pool_type::traits;
     using handles_traits = typename handles_type::traits;
     using block = v1::block;
-    using bundle = v1::bundle;
-    using const_bundle = v1::const_bundle;
     using handle_type = typename handles_traits::size_type;
     using page_type = typename handles_traits::value_type;
     using pos_type = typename page_type::unit_type;
+    using bundle = v1::bundle_base<handles_traits, block>;
+    using const_bundle = v1::bundle_base<handles_traits, const block>;
 
 protected:
 
@@ -208,11 +209,13 @@ public:
         using base_type::handles_;
         using base_type::aliasing;
         using base_type::do_alias;
+        using typename base_type::bundle;
+        using typename base_type::const_bundle;
 
         using block = v1::block;
         //using bundle = v1::bundle_base<HandlesTraits, page_type>;
-        using bundle = v1::bundle;
-        using const_bundle = v1::const_bundle;
+        //using bundle = v1::bundle;
+        //using const_bundle = v1::const_bundle;
         using traits = HandlesTraits;
         using handle_type = typename traits::size_type;
         using handles_type = handles<traits>;
@@ -279,14 +282,12 @@ public:
 
 
         /// Since page table virtualizes positions, first page table entry is not necessarily
-        /// starting handle.  Use this to find actual first handle in the list
+        /// starting handle.  Use this to find actual first handle in the list (deprecated - linked
+        /// list walking version)
         /// @return
-        const_bundle first() const;
+        const_bundle first_alt() const;
 
-        /// Not generally used, alternative first-finder which moves physically through handles
-        /// looking for 0-pos.  Used for invariant.  More resilient to incorrect linking, so
-        /// consider swapping above first() with this
-        bundle first_alt() const;
+        const_bundle first() const;
 
         const_bundle first_free(pos_type phys_sz, pos_type* found_size) const;
 
@@ -307,8 +308,8 @@ public:
         const_bundle next(const block*) const;
         bundle next(block*) const;
 
-        template <class Traits2, class Block, class Page>
-        bundle_base<Traits2, Block, Page> next(const bundle_base<Traits2, Block, Page>& bn) const { return next(bn.block); }
+        template <class Traits2, class Block>
+        bundle_base<Traits2, Block> next(const bundle_base<Traits2, Block>& bn) const { return next(bn.block); }
 
         template <class Traits2, class Block, class Page>
         pos_type phys_size(const bundle_base<Traits2, Block, Page>&) const;
@@ -364,8 +365,10 @@ public:
         unsigned alloced() const;
         unsigned available() const;
 
+        using fragmentation = fragmentation_base<const_bundle>;
+
         void assess(fragmentation*) const;
-        void defrag(const fragmentation::candidate&, bool relink = true);
+        void defrag(const typename fragmentation::candidate&, bool relink = true);
 
         invariant_result invariant() const;
 

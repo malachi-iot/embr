@@ -13,8 +13,10 @@ using namespace embr::mem;
 template <class Traits, class HandlesTraits, std::size_t N>
 static void assemble_pool(typename detail::pool<Traits>::template ops<HandlesTraits>& ops, const test::page (&pool)[N])
 {
+    using ops_type = typename detail::pool<Traits>::template ops<HandlesTraits>;
     using page_type = typename HandlesTraits::value_type;
     using pos_type = typename page_type::unit_type;
+    using bundle = typename ops_type::bundle;
     const auto aliasing = ops.aliasing;
     const auto null = HandlesTraits::null;
     int prev = null;
@@ -29,7 +31,7 @@ static void assemble_pool(typename detail::pool<Traits>::template ops<HandlesTra
             i + 1 : page.blk.next();
 
         ops.handles_[i].pos(tally);
-        detail::bundle b = ops.get_bundle(i);
+        bundle b = ops.get_bundle(i);
 
         *b.block = detail::block(page.blk.mode(), page.blk.allocated(), prev, next);
 
@@ -55,15 +57,16 @@ TEST_CASE("gc mem v1 edge cases", "[memory][gc]")
     // DEBT: Need to make this automatic
     pool.reset(handles);
 
-    using bundle = detail::v1::bundle;
-    using block = detail::v1::block;
     using ops_type = pool_type::ops<handles_traits>;
+    using bundle = ops_type::bundle;
+    using block = ops_type::block;
+    using fragmentation = ops_type::fragmentation;
     ops_type op{pool, handles};
 
     SECTION("pool assembly/edge cases")
     {
-        detail::fragmentation frag;
-        detail::fragmentation::candidate& frag0 = frag.candidates[0];
+        fragmentation frag;
+        fragmentation::candidate& frag0 = frag.candidates[0];
 
         std::ostringstream before;
 
@@ -85,7 +88,7 @@ TEST_CASE("gc mem v1 edge cases", "[memory][gc]")
         {
             // NOTE: Doesn't match defrag failure pool size (that one's 512)
             assemble_pool<pool_traits>(op, test::pool2);
-            detail::const_bundle from, to;
+            ops_type::const_bundle from, to;
 
             from = op.get_bundle(2);
             to = op.get_bundle(3);
@@ -116,12 +119,12 @@ TEST_CASE("gc mem v1 edge cases", "[memory][gc]")
         {
             assemble_pool<pool_traits>(op, test::pool3);
 
-            detail::const_bundle from, to;
+            ops_type::const_bundle from, to;
 
             from = (op.get_bundle(4));
             to = (op.get_bundle(3));
 
-            detail::fragmentation::candidate frag0{171, from, to, true};
+            fragmentation::candidate frag0{171, from, to, true};
 
             op.dump(before);
 
@@ -136,7 +139,7 @@ TEST_CASE("gc mem v1 edge cases", "[memory][gc]")
         {
             assemble_pool<pool_traits>(op, test::pool4);
 
-            detail::const_bundle from, to;
+            ops_type::const_bundle from, to;
 
             op.dump(before);
 

@@ -31,12 +31,12 @@ auto pool<Traits>::ops<HandleTraits>::first() const -> const_bundle
 
 template <class Traits>
 template <class HandleTraits>
-auto pool<Traits>::ops<HandleTraits>::first_alt() const -> bundle
+auto pool<Traits>::ops<HandleTraits>::first_alt() const -> const_bundle
 {
     constexpr pos_type zero{0};
 
     for(const page_type& page : handles_)
-        if(page.pos() == zero) return get_bundle(page).unconst();
+        if(page.pos() == zero) return get_bundle(page);
 
     return {};
 }
@@ -60,12 +60,6 @@ auto pool<Traits>::ops<HandleTraits>::first_free(pos_type phys_sz, pos_type* fou
                 *found_size = candidate_sz;
                 return bn;
             }
-        }
-
-        // Nifty, but needs this clumsy end check since 'end' doesn't work normally here
-        if(&p == handles_.end().base() - 1)
-        {
-            return {};
         }
     }
 
@@ -255,9 +249,9 @@ auto pool<Traits>::ops<HandleTraits>::construct(Args&&...args) -> bundle
 
     // DEBT: May need this to be if constexpr (or equivalent) - keep an eye on this
     if(rtto_proxied)
-        bn.block->emplace_rtto_proxied<T>(std::forward<Args>(args)...);
+        bn.block->template emplace_rtto_proxied<T>(std::forward<Args>(args)...);
     else
-        bn.block->emplace<T>(std::forward<Args>(args)...);
+        bn.block->template emplace<T>(std::forward<Args>(args)...);
 
     return bn;
 }

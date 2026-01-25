@@ -18,15 +18,16 @@ static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& 
     using namespace detail;
     std::mt19937 gen{seed}; // fixed seed: deterministic sequence
 
+    using ops_type = typename detail::pool<Traits>::template ops<HandlesTraits>;
     using block = detail::v1::block;
     using page_type = typename HandlesTraits::value_type;
     using pos_type = typename page_type::unit_type;
-    using bundle = detail::bundle;
+    using bundle = typename ops_type::bundle;
     using handle_type = typename HandlesTraits::size_type;
     using page_type = typename HandlesTraits::value_type;
     using bytes_type = bytes_unit<unsigned>;
     constexpr handle_type null = HandlesTraits::null;
-    fragmentation frag;
+    typename ops_type::fragmentation frag;
 
     std::uniform_int_distribution<int> distrib(1, 10);
 

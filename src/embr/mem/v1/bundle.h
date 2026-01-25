@@ -124,9 +124,6 @@ private:
     }
 };
 
-using bundle = bundle_base<handles_traits_base, v1::block, page<uint16_t>>;
-using const_bundle = bundle_base<handles_traits_base, const v1::block, const page<uint16_t>>;
-
 
 }}
 
