@@ -47,7 +47,7 @@ void pool<Traits>::ops<HandleTraits>::assess(fragmentation* frag) const
 {
     pos_type largest_free_sz{0};
 
-    const_bundle cur = first();
+    const_bundle cur = base_type::first();
     // There is no prev at the very first block
     // DEBT: 'next' if cur->has_next() is false creates a UB/invalid pointer for 'block'.  Doesn't violate
     // our internal rules but extremely easy to stumble over

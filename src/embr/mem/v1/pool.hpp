@@ -20,7 +20,7 @@ namespace detail { inline namespace v1 {
 
 template <class Traits>
 template <class HandleTraits>
-auto pool<Traits>::ops<HandleTraits>::first() const -> const_bundle
+auto pool<Traits>::ops<HandleTraits>::first_alt() const -> const_bundle
 {
     const_bundle bn = get_bundle(0);
 
@@ -30,8 +30,7 @@ auto pool<Traits>::ops<HandleTraits>::first() const -> const_bundle
 }
 
 template <class Traits>
-template <class HandleTraits>
-auto pool<Traits>::ops<HandleTraits>::first_alt() const -> const_bundle
+auto pool_ops<Traits>::first() const -> const_bundle
 {
     constexpr pos_type zero{0};
 
@@ -69,38 +68,34 @@ auto pool<Traits>::ops<HandleTraits>::first_free(pos_type phys_sz, pos_type* fou
 // FIX: These next/prev guys need bounds checking
 
 template <class Traits>
-template <class HandleTraits>
 template <class Traits2, class Block>
-void pool<Traits>::ops<HandleTraits>::prev(Block* b, bundle_base<Traits2, Block>* out) const
+void pool_ops<Traits>::prev(Block* b, bundle_base<Traits2, Block>* out) const
 {
-    // DEBT: No auto please
-    auto& page = handles_[b->prev()];
-    new (out) bundle_base<traits, Block>{ self_.block(page.pos()), &page, b->prev() };
+    using page_type = typename bundle_base<Traits2, Block>::page_type;
+    page_type& page = handles_[b->prev()];
+    new (out) bundle_base<handles_traits, Block>{ self_.block(page.pos()), &page, b->prev() };
 }
 
 
 template <class Traits>
-template <class HandleTraits>
-auto pool<Traits>::ops<HandleTraits>::prev(const v1::block* b) const -> const_bundle
+auto pool_ops<Traits>::prev(const v1::block* b) const -> const_bundle
 {
     const page_type& page = handles_[b->prev()];
     return { self_.block(page.pos()), &page, b->prev() };
 }
 
 template <class Traits>
-template <class HandleTraits>
 template <class Traits2, class Block>
-void pool<Traits>::ops<HandleTraits>::next(Block* b, bundle_base<Traits2, Block>* out) const
+void pool_ops<Traits>::next(Block* b, bundle_base<Traits2, Block>* out) const
 {
     // DEBT: No auto please
     auto& page = handles_[b->next()];
-    new (out) bundle_base<traits, Block>{ self_.block(page.pos()), &page, b->next() };
+    new (out) bundle_base<handles_traits, Block>{ self_.block(page.pos()), &page, b->next() };
 }
 
 
 template <class Traits>
-template <class HandleTraits>
-auto pool<Traits>::ops<HandleTraits>::next(const v1::block* b) const -> const_bundle
+auto pool_ops<Traits>::next(const v1::block* b) const -> const_bundle
 {
     const page_type& page = handles_[b->next()];
     return { self_.block(page.pos()), &page, b->next() };
@@ -108,8 +103,7 @@ auto pool<Traits>::ops<HandleTraits>::next(const v1::block* b) const -> const_bu
 
 
 template <class Traits>
-template <class HandleTraits>
-auto pool<Traits>::ops<HandleTraits>::next(v1::block* b) const -> bundle
+auto pool_ops<Traits>::next(v1::block* b) const -> bundle
 {
     auto page = const_cast<page_type*>(&handles_[b->next()]);
     return { self_.block(page->pos()), page, b->next() };
@@ -117,9 +111,8 @@ auto pool<Traits>::ops<HandleTraits>::next(v1::block* b) const -> bundle
 
 
 template <class Traits>
-template <class HandleTraits>
 template <class Traits2, class Block>
-auto pool<Traits>::ops<HandleTraits>::phys_size(const bundle_base<Traits2, Block>& bn) const -> pos_type
+auto pool_ops<Traits>::phys_size(const bundle_base<Traits2, Block>& bn) const -> pos_type
 {
     pos_type next_pos = bn.block->next() == handles_type::null ?
         pos_type(estd::size(self_.pool_) / aliasing) :

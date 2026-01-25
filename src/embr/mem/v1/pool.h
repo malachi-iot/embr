@@ -7,15 +7,12 @@
 #include <estd/utility.h>
 
 #include "bundle.h"
+#include "concepts.h"
 #include "error.h"
 #include "fwd.h"
 #include "block.h"
 #include "handles.h"
 #include "page.h"
-
-#if __cpp_lib_concepts
-#include <concepts>
-#endif
 
 #if FEATURE_STD_OSTREAM
 #include <iosfwd>
@@ -24,11 +21,6 @@
 namespace embr { namespace mem {
 
 namespace detail { inline namespace v1 {
-
-#if __cpp_lib_concepts
-namespace concepts {
-}
-#endif
 
 template <class Bundle>
 struct fragmentation_base
@@ -62,7 +54,7 @@ struct pool_traits : estd::internal::container_traits<Container>
 template <class T, class PoolTraits, class HandlesTraits, class ...Args>
 typename HandlesTraits::size_type construct(pool<PoolTraits>& p, handles<HandlesTraits>& h, Args&&...args);
 
-template <class Pool, class Handles>
+template <class Pool, ESTD_CPP_CONCEPT(concepts::Handles) Handles>
 struct pool_ops_traits
 {
     using pool_type = Pool;
@@ -149,6 +141,35 @@ public:
         return pos_type((v + aliasing - 1) / aliasing);
     }
 
+
+    template <class Traits2, class Block>
+    void prev(Block*, bundle_base<Traits2, Block>* out) const;
+
+    const_bundle prev(const block*) const;
+
+    template <class Traits2, class Block>
+    const_bundle prev(const bundle_base<Traits2, Block>& bn) const
+    {
+        return prev(bn.block);
+    }
+
+    template <class Traits2, class Block>
+    void next(Block*, bundle_base<Traits2, Block>* out) const;
+
+    const_bundle next(const block*) const;
+    bundle next(block*) const;
+
+    template <class Traits2, class Block>
+    bundle_base<Traits2, Block> next(const bundle_base<Traits2, Block>& bn) const { return next(bn.block); }
+
+    template <class Traits2, class Block>
+    pos_type phys_size(const bundle_base<Traits2, Block>&) const;
+    pos_type phys_size(int h, page_type& p) const
+    {
+        return phys_size(self_.bundle(p, h));
+    }
+
+    const_bundle first() const;
 };
 
 template <class Traits>
@@ -209,6 +230,9 @@ public:
         using base_type::handles_;
         using base_type::aliasing;
         using base_type::do_alias;
+        using base_type::prev;
+        using base_type::next;
+        using base_type::phys_size;
         using typename base_type::bundle;
         using typename base_type::const_bundle;
 
@@ -287,36 +311,7 @@ public:
         /// @return
         const_bundle first_alt() const;
 
-        const_bundle first() const;
-
         const_bundle first_free(pos_type phys_sz, pos_type* found_size) const;
-
-        template <class Traits2, class Block>
-        void prev(Block*, bundle_base<Traits2, Block>* out) const;
-
-        const_bundle prev(const block*) const;
-
-        template <class Traits2, class Block>
-        const_bundle prev(const bundle_base<Traits2, Block>& bn) const
-        {
-            return prev(bn.block);
-        }
-
-        template <class Traits2, class Block>
-        void next(Block*, bundle_base<Traits2, Block>* out) const;
-
-        const_bundle next(const block*) const;
-        bundle next(block*) const;
-
-        template <class Traits2, class Block>
-        bundle_base<Traits2, Block> next(const bundle_base<Traits2, Block>& bn) const { return next(bn.block); }
-
-        template <class Traits2, class Block>
-        pos_type phys_size(const bundle_base<Traits2, Block>&) const;
-        pos_type phys_size(int h, page_type& p) const
-        {
-            return phys_size(self_.bundle(p, h));
-        }
 
         static unsigned logical_size(block::modes, pos_type phys_sz);
 
