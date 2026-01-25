@@ -187,6 +187,10 @@ public:
     /// @return
     bool merge_if_free(bundle current, bundle next);
 
+    /// Moves block itself to new location - does not consider payload data
+    /// Free blocks only is RECOMMENDED
+    block* move_block(page_type&, pos_type);
+
     template <class Traits2, class Block>
     pos_type phys_size(const bundle_base<Traits2, Block>&) const;
     pos_type phys_size(int h, page_type& p) const
@@ -198,6 +202,14 @@ public:
     void ref_up(handle_type h);
 
     void reset();
+
+    /// Resizes a bundle to new presented size.  next block MUST be a free block
+    /// with enough space
+    /// @brief resize
+    /// @param new_sz
+    /// @return
+    v1::block* resize(bundle, pos_type new_sz);
+    block* resize(bundle bn, bundle bn_next, pos_type new_sz);
 
     ///
     /// @brief virtual_swap performs page position swap and relinks to maintain contiguous next and prev
@@ -327,18 +339,6 @@ public:
         /// @return
         const_bundle first_alt() const;
 
-        /// Moves block itself to new location - does not consider payload data
-        /// Free blocks only is RECOMMENDED
-        block* move_block(page_type&, pos_type);
-
-        /// Resizes a bundle to new presented size.  next block MUST be a free block
-        /// with enough space
-        /// @brief resize
-        /// @param new_sz
-        /// @return
-        v1::block* resize(bundle, pos_type new_sz);
-        v1::block* resize(bundle bn, bundle bn_next, pos_type new_sz);
-
         /// Low level alloc TBD docs
         void alloc(bundle, pos_type found_sz, pos_type phys_sz, block::modes);
 
@@ -357,11 +357,6 @@ public:
 
         void assess(fragmentation*) const;
         void defrag(const typename fragmentation::candidate&, bool relink = true);
-
-        invariant_result invariant() const;
-
-        // Diagnostic dump of pool content
-        std::ostream& dump(std::ostream& out) const;
     };
 
 public:

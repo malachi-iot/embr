@@ -90,8 +90,7 @@ void pool_ops<Traits>::virtual_move(bundle& from, bundle& to)
 }
 
 template <class Traits>
-template <class HandleTraits>
-v1::block* pool<Traits>::ops<HandleTraits>::move_block(page_type& page, pos_type new_pos)
+auto pool_ops<Traits>::move_block(page_type& page, pos_type new_pos) -> block*
 {
     block* from = self_.block(page.pos());
     block* to = self_.block(new_pos);
@@ -104,8 +103,7 @@ v1::block* pool<Traits>::ops<HandleTraits>::move_block(page_type& page, pos_type
 }
 
 template <class Traits>
-template <class HandleTraits>
-v1::block* pool<Traits>::ops<HandleTraits>::resize(bundle bn, bundle bn_next, pos_type new_sz)
+auto pool_ops<Traits>::resize(bundle bn, bundle bn_next, pos_type new_sz) -> block*
 {
     const pos_type pos = bn.pos() + new_sz;
 
@@ -113,8 +111,7 @@ v1::block* pool<Traits>::ops<HandleTraits>::resize(bundle bn, bundle bn_next, po
 }
 
 template <class Traits>
-template <class HandleTraits>
-v1::block* pool<Traits>::ops<HandleTraits>::resize(bundle bn, pos_type new_sz)
+v1::block* pool_ops<Traits>::resize(bundle bn, pos_type new_sz)
 {
     assert(bn.has_next());
     bundle bn_next = next(bn);
@@ -249,7 +246,7 @@ validated_result pool<Traits>::ops<HandleTraits>::move(
 
             // We already fit neatly into 'to', so this is only to move following free block backward
             if(to_next_allocated == false)
-                resize(to, to_next, desired_phys_sz);
+                base_type::resize(to, to_next, desired_phys_sz);
             else
             {
                 // If following block is allocated, instead see if we can do a split to create a mini

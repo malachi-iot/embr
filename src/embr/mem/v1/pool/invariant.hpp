@@ -14,8 +14,7 @@ namespace embr { namespace mem {
 namespace detail { inline namespace v1 {
 
 template <class Traits>
-template <class HandleTraits>
-invariant_result pool<Traits>::ops<HandleTraits>::invariant() const
+invariant_result pool_ops<Traits>::invariant() const
 {
     using result = invariant_result::unexpected_type;
     using violation = invariant_violation;
@@ -26,10 +25,10 @@ invariant_result pool<Traits>::ops<HandleTraits>::invariant() const
     // use bytes_tag type right from the get go
     using bytes_type = estd::units::v1::detail::unit<bytes_unit_traits<unsigned, estd::ratio<1>>>;
     const bytes_type size(estd::size(self_.pool_));
-    constexpr handle_type null = traits::null;
+    constexpr handle_type null = handles_traits::null;
     const unsigned max_handles = handles_.size();
 
-    const_bundle bn = first_alt();
+    const_bundle bn = first();
     const page_type* first = bn.page;
 
     // Minimum one handle MUST be allocated at all times (big free block)
@@ -100,11 +99,10 @@ invariant_result pool<Traits>::ops<HandleTraits>::invariant() const
 
 #if FEATURE_STD_OSTREAM
 template <class Traits>
-template <class HandleTraits>
-std::ostream& pool<Traits>::ops<HandleTraits>::dump(std::ostream& out) const
+std::ostream& pool_ops<Traits>::dump(std::ostream& out) const
 {
     using bytes_type = embr::mem::bytes_unit<unsigned>;
-    constexpr handle_type null = traits::null;
+    constexpr handle_type null = handles_traits::null;
     constexpr pos_type zero_pos = pos_type(0);
     const page_type* first{};
     const unsigned handles_size = handles_.size();

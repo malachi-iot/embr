@@ -410,7 +410,7 @@ bool pool<Traits>::ops<HandleTraits>::realloc(bundle bn, pos_type phys_sz)
                 if(max_sz - phys_sz >= split_thresh)
                 {
                     // retain existing free block, merely move it
-                    move_block(*bn_next.page, phys_sz);
+                    base_type::move_block(*bn_next.page, phys_sz);
                 }
                 else
                     handles_.dealloc(bn_next.handle);
