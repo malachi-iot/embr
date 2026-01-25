@@ -98,10 +98,16 @@ public:
 
     static constexpr unsigned aliasing = pos_type::period::num;
 
+    block* create_free_block(pos_type, handle_type prev, handle_type next);
+
     invariant_result invariant() const;
 
     // Diagnostic dump of pool content
     std::ostream& dump(std::ostream& out) const;
+
+    const_bundle first() const;
+
+    const_bundle first_free(pos_type phys_sz, pos_type* found_size) const;
 
     // Best to have this guy here and not in above pool so that we make no assumptions
     // about page_type and handle_type
@@ -141,6 +147,9 @@ public:
         return pos_type((v + aliasing - 1) / aliasing);
     }
 
+    void* lock(bundle);
+    void* lock(handle_type h)   { return lock(get_bundle(h)); }
+    void unlock(handle_type h);
 
     template <class Traits2, class Block>
     void prev(Block*, bundle_base<Traits2, Block>* out) const;
@@ -162,6 +171,12 @@ public:
     template <class Traits2, class Block>
     bundle_base<Traits2, Block> next(const bundle_base<Traits2, Block>& bn) const { return next(bn.block); }
 
+    static unsigned logical_size(block::modes, pos_type phys_sz);
+
+    template <class Traits2, class Block>
+    unsigned logical_size(const bundle_base<Traits2, Block>&) const;
+
+
     template <class Traits2, class Block>
     pos_type phys_size(const bundle_base<Traits2, Block>&) const;
     pos_type phys_size(int h, page_type& p) const
@@ -169,7 +184,26 @@ public:
         return phys_size(self_.bundle(p, h));
     }
 
-    const_bundle first() const;
+    void ref_up(handle_type h);
+
+    void reset();
+
+    ///
+    /// @brief virtual_swap performs page position swap and relinks to maintain contiguous next and prev
+    /// @param lhs
+    /// @param rhs
+    void virtual_swap(bundle& lhs, bundle& rhs);
+
+    ///
+    /// @brief virtual_move similar to virtual_swap, but only remaps a one page position - does do relinking
+    /// @param from
+    /// @param to - a null page
+    void virtual_move(bundle& from, bundle& to);
+
+    // Reports in logical size
+    // DEBT: Report back in 1:1 pos_type since ops is lower level and "logical" isn't in title
+    unsigned alloced() const;
+    unsigned available() const;
 };
 
 template <class Traits>
@@ -229,9 +263,11 @@ public:
         using base_type::self_;
         using base_type::handles_;
         using base_type::aliasing;
+        using base_type::create_free_block;
         using base_type::do_alias;
         using base_type::prev;
         using base_type::next;
+        using base_type::logical_size;
         using base_type::phys_size;
         using typename base_type::bundle;
         using typename base_type::const_bundle;
@@ -250,8 +286,6 @@ public:
 
         template <class ...Args>
         constexpr ops(Args&&...args) : base_type(std::forward<Args>(args)...) {}
-
-        block* create_free_block(pos_type, handle_type prev, handle_type next);
 
         /// Creates a new free block inside bundle, before next block
         /// @param at particular location of split - NOT a size
@@ -290,33 +324,11 @@ public:
             bool is_overlapping);
 
 
-        ///
-        /// @brief virtual_swap performs page position swap and relinks to maintain contiguous next and prev
-        /// @param lhs
-        /// @param rhs
-        ///
-        void virtual_swap(bundle& lhs, bundle& rhs);
-
-        ///
-        /// @brief virtual_move similar to virtual_swap, but only remaps a one page position - does do relinking
-        /// @param from
-        /// @param to - a null page
-        ///
-        void virtual_move(bundle& from, bundle& to);
-
-
         /// Since page table virtualizes positions, first page table entry is not necessarily
         /// starting handle.  Use this to find actual first handle in the list (deprecated - linked
         /// list walking version)
         /// @return
         const_bundle first_alt() const;
-
-        const_bundle first_free(pos_type phys_sz, pos_type* found_size) const;
-
-        static unsigned logical_size(block::modes, pos_type phys_sz);
-
-        template <class Traits2, class Block>
-        unsigned logical_size(const bundle_base<Traits2, Block>&) const;
 
         /// Moves block itself to new location - does not consider payload data
         /// Free blocks only is RECOMMENDED
@@ -347,18 +359,7 @@ public:
         void dealloc(bundle);
         void dealloc(handle_type h) { dealloc(get_bundle(handles_[h], h)); }
 
-        void reset();
-
-        void* lock(bundle);
-        void* lock(handle_type h)   { return lock(get_bundle(h)); }
-        void unlock(handle_type h);
-
-        void ref_up(handle_type h);
         void ref_down(handle_type h);
-
-        // Reports in logical size
-        unsigned alloced() const;
-        unsigned available() const;
 
         using fragmentation = fragmentation_base<const_bundle>;
 

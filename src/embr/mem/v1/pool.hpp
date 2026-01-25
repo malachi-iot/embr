@@ -41,8 +41,7 @@ auto pool_ops<Traits>::first() const -> const_bundle
 }
 
 template <class Traits>
-template <class HandleTraits>
-auto pool<Traits>::ops<HandleTraits>::first_free(pos_type phys_sz, pos_type* found_size) const -> const_bundle
+auto pool_ops<Traits>::first_free(pos_type phys_sz, pos_type* found_size) const -> const_bundle
 {
     for(const page_type& p : handles_)
     {
@@ -123,8 +122,7 @@ auto pool_ops<Traits>::phys_size(const bundle_base<Traits2, Block>& bn) const ->
 }
 
 template <class Traits>
-template <class HandleTraits>
-unsigned pool<Traits>::ops<HandleTraits>::logical_size(block::modes mode, pos_type phys_sz)
+unsigned pool_ops<Traits>::logical_size(block::modes mode, pos_type phys_sz)
 {
     // FIX: Needs more work
     const unsigned tbd = block::header_size(mode);
@@ -132,16 +130,14 @@ unsigned pool<Traits>::ops<HandleTraits>::logical_size(block::modes mode, pos_ty
 }
 
 template <class Traits>
-template <class HandleTraits>
 template <class Traits2, class Block>
-unsigned pool<Traits>::ops<HandleTraits>::logical_size(const bundle_base<Traits2, Block>& bn) const
+unsigned pool_ops<Traits>::logical_size(const bundle_base<Traits2, Block>& bn) const
 {
     return logical_size(bn.block->mode(), phys_size(bn));
 }
 
 template <class Traits>
-template <class HandleTraits>
-auto pool<Traits>::ops<HandleTraits>::create_free_block(
+auto pool_ops<Traits>::create_free_block(
     pos_type pos,
     handle_type prev, handle_type next) -> block*
 {
@@ -170,12 +166,12 @@ auto pool<Traits>::ops<HandleTraits>::split_at(bundle b, pos_type at) -> handle_
 }
 
 template <class Traits>
-template <class HandleTraits>
-void pool<Traits>::ops<HandleTraits>::reset()
+void pool_ops<Traits>::reset()
 {
-    using unit_type = typename page_type::unit_type;
+    // Note we use pos_type(0) and not 'null' because first free block is NOT null -
+    // it's an allocated handle to a free block
     handles_.reset();
-    handles_[0].pos(unit_type(0));
+    handles_[0].pos(pos_type(0));
 
     create_free_block(pos_type(0), block::null, block::null);
 
@@ -215,7 +211,7 @@ template <class HandleTraits>
 auto pool<Traits>::ops<HandleTraits>::alloc(pos_type phys_sz, block::modes mode) -> bundle
 {
     pos_type found_size(0);
-    const_bundle bn = first_free(phys_sz, &found_size);
+    const_bundle bn = base_type::first_free(phys_sz, &found_size);
 
     if(bn.is_null() == false)
     {
@@ -327,8 +323,7 @@ void pool<Traits>::ops<HandleTraits>::dealloc(bundle bn)
 
 
 template <class Traits>
-template <class HandleTraits>
-void* pool<Traits>::ops<HandleTraits>::lock(bundle bn)
+void* pool_ops<Traits>::lock(bundle bn)
 {
     bn.lock_up();
 
@@ -336,8 +331,7 @@ void* pool<Traits>::ops<HandleTraits>::lock(bundle bn)
 }
 
 template <class Traits>
-template <class HandleTraits>
-void pool<Traits>::ops<HandleTraits>::unlock(handle_type h)
+void pool_ops<Traits>::unlock(handle_type h)
 {
     bundle bn(get_bundle(h));
 
@@ -345,8 +339,7 @@ void pool<Traits>::ops<HandleTraits>::unlock(handle_type h)
 }
 
 template <class Traits>
-template <class HandleTraits>
-void pool<Traits>::ops<HandleTraits>::ref_up(handle_type h)
+void pool_ops<Traits>::ref_up(handle_type h)
 {
     bundle bn(get_bundle(h));
 
@@ -368,8 +361,7 @@ void pool<Traits>::ops<HandleTraits>::ref_down(handle_type h)
 
 
 template <class Traits>
-template <class HandleTraits>
-auto pool<Traits>::ops<HandleTraits>::available() const -> unsigned
+auto pool_ops<Traits>::available() const -> unsigned
 {
     // If we permitted ourselves c++20 we could use ranges here.  Oh well !
 
@@ -387,8 +379,7 @@ auto pool<Traits>::ops<HandleTraits>::available() const -> unsigned
 
 
 template <class Traits>
-template <class HandleTraits>
-auto pool<Traits>::ops<HandleTraits>::alloced() const -> unsigned
+auto pool_ops<Traits>::alloced() const -> unsigned
 {
     // If we permitted ourselves c++20 we could use ranges here.  Oh well !
 
@@ -487,7 +478,7 @@ bool pool<Traits>::ops<HandleTraits>::realloc(bundle bn, pos_type phys_sz)
         // block-positions
 
         // Swap page table positions and relink as described above
-        virtual_swap(bn, dest);
+        base_type::virtual_swap(bn, dest);
 
         return true;
     };

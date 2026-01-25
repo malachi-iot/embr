@@ -25,6 +25,9 @@ struct bundle_base
     template <class PoolTraits>
     friend class pool;
 
+    template <class Traits>
+    friend class pool_ops;
+
     static constexpr handle_type null = handles_traits::null;
 
     Block* block;

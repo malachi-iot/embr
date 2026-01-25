@@ -11,8 +11,7 @@ namespace detail { inline namespace v1 {
 // TODO: Consider also a brute relinker based purely on page.pos, though that's very extreme
 
 template <class Traits>
-template <class HandleTraits>
-void pool<Traits>::ops<HandleTraits>::virtual_swap(bundle& lhs, bundle& rhs)
+void pool_ops<Traits>::virtual_swap(bundle& lhs, bundle& rhs)
 {
     constexpr handle_type null = block::null;
     // At its core we're doing a doubly-linked list item swap operation
@@ -77,8 +76,7 @@ void pool<Traits>::ops<HandleTraits>::virtual_swap(bundle& lhs, bundle& rhs)
 
 
 template <class Traits>
-template <class HandleTraits>
-void pool<Traits>::ops<HandleTraits>::virtual_move(bundle& from, bundle& to)
+void pool_ops<Traits>::virtual_move(bundle& from, bundle& to)
 {
     assert(from.page->is_null() == false && to.page->is_null());
 

@@ -33,11 +33,11 @@ void pool<Traits>::ops<HandleTraits>::defrag(const typename fragmentation::candi
         // It's entirely possible one of these handles got swallowed by GC, in which case although
         // we do need to relink, a swap is problematic.
         if(from.page->is_null())
-            virtual_move(to, from);
+            base_type::virtual_move(to, from);
         else if(to.page->is_null())
-            virtual_move(from, to);
+            base_type::virtual_move(from, to);
         else
-            virtual_swap(from, to);
+            base_type::virtual_swap(from, to);
     }
 }
 
