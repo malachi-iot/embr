@@ -111,6 +111,11 @@ public:
     void dealloc(bundle);
     void dealloc(handle_type h) { dealloc(get_bundle(handles_[h], h)); }
 
+    using fragmentation = fragmentation_base<const_bundle>;
+
+    void assess(fragmentation*) const;
+    void defrag(const typename fragmentation::candidate&, bool relink = true);
+
     invariant_result invariant() const;
 
     // Diagnostic dump of pool content
@@ -162,8 +167,8 @@ public:
     void* lock(handle_type h)   { return lock(get_bundle(h)); }
     void unlock(handle_type h);
 
-    template <class Traits2, class Block>
-    void prev(Block*, bundle_base<Traits2, Block>* out) const;
+    template <class Block>
+    void prev(Block*, bundle_base<handles_traits, Block>* out) const;
 
     bundle prev(const_bundle bn) { return get_bundle(bn.block->prev()); }
     const_bundle prev(const_bundle bn) const { return get_bundle(bn.block->prev()); }
@@ -174,8 +179,8 @@ public:
     const_bundle next(const block* b) const { return get_bundle(b->next()); }
     bundle next(block*) const;
 
-    template <class Traits2, class Block>
-    bundle_base<Traits2, Block> next(const bundle_base<Traits2, Block>& bn) const { return next(bn.block); }
+    template <class Block>
+    bundle_base<handles_traits, Block> next(const bundle_base<handles_traits, Block>& bn) const { return next(bn.block); }
 
     static estd::units::bytes<unsigned> logical_size(block::modes, pos_type phys_sz);
 
@@ -195,6 +200,20 @@ public:
     /// @return
     bool merge_if_free(bundle current, bundle next);
 
+    ///
+    /// @brief Moves an allocated block to a new free block location.  Updates block metadata so 'to' block becomes allocated
+    /// @param from
+    /// @param to free block
+    /// @param logical_sz feeds block mover +
+    /// @param desired_logical_sz indicates logical realloc resize
+    /// @param is_overlapping
+    /// @remarks to->next may change due to split operation.  logical_sz is NOT checked for
+    /// overflow
+    validated_result move(bundle from, bundle to, unsigned logical_sz,
+        unsigned desired_logical_sz,
+        bool is_overlapping);
+
+
     /// Moves block itself to new location - does not consider payload data
     /// Free blocks only is RECOMMENDED
     block* move_block(page_type&, pos_type);
@@ -205,6 +224,12 @@ public:
     {
         return phys_size(self_.bundle(p, h));
     }
+
+    /// Grows or shrinks existing allocation, possibly moving it and others around
+    /// @brief realloc
+    /// @param new_sz
+    /// @return true on success, false on failure (no suitable free block found)
+    bool realloc(bundle, pos_type new_sz);
 
     void ref_down(handle_type h);
     void ref_up(handle_type h);
@@ -328,36 +353,11 @@ public:
         template <class ...Args>
         constexpr ops(Args&&...args) : base_type(std::forward<Args>(args)...) {}
 
-        ///
-        /// @brief Moves an allocated block to a new free block location.  Updates block metadata so 'to' block becomes allocated
-        /// @param from
-        /// @param to free block
-        /// @param logical_sz feeds block mover +
-        /// @param desired_logical_sz indicates logical realloc resize
-        /// @param is_overlapping
-        /// @remarks to->next may change due to split operation.  logical_sz is NOT checked for
-        /// overflow
-        validated_result move(bundle from, bundle to, unsigned logical_sz,
-            unsigned desired_logical_sz,
-            bool is_overlapping);
-
-
         /// Since page table virtualizes positions, first page table entry is not necessarily
         /// starting handle.  Use this to find actual first handle in the list (deprecated - linked
         /// list walking version)
         /// @return
         const_bundle first_alt() const;
-
-        /// Grows or shrinks existing allocation, possibly moving it and others around
-        /// @brief realloc
-        /// @param new_sz
-        /// @return true on success, false on failure (no suitable free block found)
-        bool realloc(bundle, pos_type new_sz);
-
-        using fragmentation = fragmentation_base<const_bundle>;
-
-        void assess(fragmentation*) const;
-        void defrag(const typename fragmentation::candidate&, bool relink = true);
     };
 
 public:

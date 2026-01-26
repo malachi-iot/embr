@@ -14,8 +14,7 @@ namespace detail { inline namespace v1 {
 
 
 template <class Traits>
-template <class HandleTraits>
-void pool<Traits>::ops<HandleTraits>::defrag(const typename fragmentation::candidate& c, bool relink)
+void pool_ops<Traits>::defrag(const typename fragmentation::candidate& c, bool relink)
 {
     // DEBT: A bit sloppy converting bundles like this, but gets the job done
     bundle from(get_bundle(c.bundle.handle));
@@ -33,21 +32,20 @@ void pool<Traits>::ops<HandleTraits>::defrag(const typename fragmentation::candi
         // It's entirely possible one of these handles got swallowed by GC, in which case although
         // we do need to relink, a swap is problematic.
         if(from.page->is_null())
-            base_type::virtual_move(to, from);
+            virtual_move(to, from);
         else if(to.page->is_null())
-            base_type::virtual_move(from, to);
+            virtual_move(from, to);
         else
-            base_type::virtual_swap(from, to);
+            virtual_swap(from, to);
     }
 }
 
 template <class Traits>
-template <class HandleTraits>
-void pool<Traits>::ops<HandleTraits>::assess(fragmentation* frag) const
+void pool_ops<Traits>::assess(fragmentation* frag) const
 {
     pos_type largest_free_sz{0};
 
-    const_bundle cur = base_type::first();
+    const_bundle cur = first();
     // There is no prev at the very first block
     // DEBT: 'next' if cur->has_next() is false creates a UB/invalid pointer for 'block'.  Doesn't violate
     // our internal rules but extremely easy to stumble over

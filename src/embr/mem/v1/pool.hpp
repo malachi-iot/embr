@@ -45,11 +45,9 @@ auto pool_ops<Traits>::first_free(pos_type phys_sz, pos_type* found_size) const 
 {
     for(const page_type& p : handles_)
     {
-        handle_type i = &p - &handles_[0];
+        const_bundle bn = get_bundle(p);
 
-        const_bundle bn = get_bundle(p, i);
-
-        if(bn.block->allocated() == false)
+        if(bn.allocated() == false)
         {
             pos_type candidate_sz = phys_size(bn);
 
@@ -67,10 +65,10 @@ auto pool_ops<Traits>::first_free(pos_type phys_sz, pos_type* found_size) const 
 // FIX: These next/prev guys need bounds checking
 
 template <class Traits>
-template <class Traits2, class Block>
-void pool_ops<Traits>::prev(Block* b, bundle_base<Traits2, Block>* out) const
+template <class Block>
+void pool_ops<Traits>::prev(Block* b, bundle_base<handles_traits, Block>* out) const
 {
-    using page_type = typename bundle_base<Traits2, Block>::page_type;
+    using page_type = typename bundle_base<handles_traits, Block>::page_type;
     page_type& page = handles_[b->prev()];
     new (out) bundle_base<handles_traits, Block>{ self_.block(page.pos()), &page, b->prev() };
 }
@@ -364,14 +362,13 @@ auto pool_ops<Traits>::alloced() const -> unsigned
     {
         const_bundle bn = get_bundle(p);
 
-        return count + (bn.block->allocated() ? logical_size(bn) : 0);
+        return count + (bn.allocated() ? logical_size(bn) : 0);
     });
 }
 
 
 template <class Traits>
-template <class HandleTraits>
-bool pool<Traits>::ops<HandleTraits>::realloc(bundle bn, pos_type phys_sz)
+bool pool_ops<Traits>::realloc(bundle bn, pos_type phys_sz)
 {
     // If sz <= phys_sz then just return
     // If sz > phys sz then:
@@ -406,7 +403,7 @@ bool pool<Traits>::ops<HandleTraits>::realloc(bundle bn, pos_type phys_sz)
                 if(max_sz - phys_sz >= split_thresh)
                 {
                     // retain existing free block, merely move it
-                    base_type::move_block(*bn_next.page, phys_sz);
+                    move_block(*bn_next.page, phys_sz);
                 }
                 else
                     handles_.dealloc(bn_next.handle);
@@ -455,7 +452,7 @@ bool pool<Traits>::ops<HandleTraits>::realloc(bundle bn, pos_type phys_sz)
         // block-positions
 
         // Swap page table positions and relink as described above
-        base_type::virtual_swap(bn, dest);
+        virtual_swap(bn, dest);
 
         return true;
     };

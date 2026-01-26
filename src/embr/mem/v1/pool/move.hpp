@@ -125,8 +125,7 @@ v1::block* pool_ops<Traits>::resize(bundle bn, pos_type new_sz)
 
 
 template <class Traits>
-template <class HandleTraits>
-validated_result pool<Traits>::ops<HandleTraits>::move(
+validated_result pool_ops<Traits>::move(
     bundle from, bundle to,
     unsigned logical_sz,
     unsigned desired_logical_sz,
@@ -246,7 +245,7 @@ validated_result pool<Traits>::ops<HandleTraits>::move(
 
             // We already fit neatly into 'to', so this is only to move following free block backward
             if(to_next_allocated == false)
-                base_type::resize(to, to_next, desired_phys_sz);
+                resize(to, to_next, desired_phys_sz);
             else
             {
                 // If following block is allocated, instead see if we can do a split to create a mini
@@ -268,7 +267,7 @@ validated_result pool<Traits>::ops<HandleTraits>::move(
                     //const pos_type new_pos2 = to.pos() + from_block_phys_sz;
                     //assert(new_pos1 == new_pos2);
                     // DEBT: Much like alloc, this is a bit harsh
-                    assert(base_type::split_at(to, split_pos));
+                    assert(split_at(to, split_pos));
                 }
                 else
                 {
