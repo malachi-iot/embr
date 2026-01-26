@@ -85,8 +85,7 @@ void pool_ops<Traits>::next(Block* b, bundle_base<handles_traits, Block>* out) c
 
 
 template <class Traits>
-template <class Traits2, class Block>
-auto pool_ops<Traits>::phys_size(const bundle_base<Traits2, Block>& bn) const -> pos_type
+auto pool_ops<Traits>::phys_size(const const_bundle& bn) const -> pos_type
 {
     pos_type next_pos = bn.block->next() == handles_type::null ?
         pos_type(estd::size(self_.pool_) / aliasing) :
@@ -105,8 +104,7 @@ estd::units::bytes<unsigned> pool_ops<Traits>::logical_size(block::modes mode, p
 }
 
 template <class Traits>
-template <class Block>
-unsigned pool_ops<Traits>::logical_size(const bundle_base<handles_traits, Block>& bn) const
+unsigned pool_ops<Traits>::logical_size(const const_bundle& bn) const
 {
     return logical_size(bn.block->mode(), phys_size(bn)).count();
 }

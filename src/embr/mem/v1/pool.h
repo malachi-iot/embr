@@ -129,19 +129,9 @@ public:
 
     // Best to have this guy here and not in above pool so that we make no assumptions
     // about page_type and handle_type
-    bundle get_bundle(page_type& page, handle_type handle)
-    {
-        return { self_.block(page.pos()), &page, handle };
-    }
-
     const_bundle get_bundle(const page_type& page, handle_type handle) const
     {
         return { self_.block(page.pos()), &page, handle };
-    }
-
-    bundle get_bundle(handle_type h)
-    {
-        return get_bundle(handles_[h], h);
     }
 
     const_bundle get_bundle(handle_type h) const
@@ -149,14 +139,15 @@ public:
         return get_bundle(handles_[h], h);
     }
 
-    bundle get_bundle(page_type& page)
+    const_bundle get_bundle(const page_type& page) const
     {
         return get_bundle(page, &page - &handles_[0]);
     }
 
-    const_bundle get_bundle(const page_type& page) const
+    template <class ...Args>
+    bundle get_bundle(Args&&...args)
     {
-        return get_bundle(page, &page - &handles_[0]);
+        return std::as_const(*this).get_bundle(std::forward<Args>(args)...).unconst();
     }
 
     // DEBT: Need better name
@@ -172,19 +163,18 @@ public:
     template <class Block>
     void prev(Block*, bundle_base<handles_traits, Block>* out) const;
 
-    bundle prev(const_bundle bn) { return get_bundle(bn.block->prev()); }
-    const_bundle prev(const_bundle bn) const { return get_bundle(bn.block->prev()); }
+    bundle prev(const const_bundle& bn) { return get_bundle(bn.block->prev()); }
+    const_bundle prev(const const_bundle& bn) const { return get_bundle(bn.block->prev()); }
 
     template <class Block>
     void next(Block*, bundle_base<handles_traits, Block>* out) const;
 
-    bundle next(const_bundle bn) { return get_bundle(bn.block->next()); }
-    const_bundle next(const_bundle bn) const { return get_bundle(bn.block->next()); }
+    bundle next(const const_bundle& bn) { return get_bundle(bn.block->next()); }
+    const_bundle next(const const_bundle& bn) const { return get_bundle(bn.block->next()); }
 
     static estd::units::bytes<unsigned> logical_size(block::modes, pos_type phys_sz);
 
-    template <class Block>
-    unsigned logical_size(const bundle_base<handles_traits, Block>&) const;
+    unsigned logical_size(const const_bundle&) const;
 
     /// @brief merge
     /// @param current
@@ -217,12 +207,7 @@ public:
     /// Free blocks only is RECOMMENDED
     block* move_block(page_type&, pos_type);
 
-    template <class Traits2, class Block>
-    pos_type phys_size(const bundle_base<Traits2, Block>&) const;
-    pos_type phys_size(int h, page_type& p) const
-    {
-        return phys_size(self_.bundle(p, h));
-    }
+    pos_type phys_size(const const_bundle&) const;
 
     /// Grows or shrinks existing allocation, possibly moving it and others around
     /// @brief realloc
