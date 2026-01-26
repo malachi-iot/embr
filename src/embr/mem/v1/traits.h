@@ -3,10 +3,12 @@
 // DEBT: Make a span fwd
 #include <estd/span.h>
 
+#include "concepts.h"
 #include "fwd.h"
 
-namespace embr { namespace mem {
+namespace embr { namespace mem { inline namespace v1 {
 
+#if !REFACTOR_CONTAINER_TRAITS
 // DEBT: container_traits looking pretty useful.  Consider putting him up at estd level
 // 08JAN26 MB - Backing off of this - std::data() and std::size() seem to do the job here (though
 // the STD_VALUE_TYPE is still nice)
@@ -41,7 +43,7 @@ struct container_traits<estd::span<T, N>>
 
     //static pointer data(container_type& c) { return c.data(); }
 };
-
+#endif
 
 /*
 // DEBT: Guard with #if STD SPAN availability
@@ -61,6 +63,7 @@ struct container_traits<std::span<T, N>>
     //static pointer data(container_type& c) { return c.data(); }
 };  */
 
+}
 
 namespace detail { inline namespace v1 {
 
@@ -78,16 +81,28 @@ struct handles_traits :
 {
     using base_type = container_traits<Container>;
     using typename base_type::value_type;
+    using typename handles_traits_base::size_type;
+    using container_type = Container;
 
     static constexpr bool is_null(const value_type& v) { return v.is_null(); }
     static void reset(value_type& v) { v.reset(); }
-
-    struct bundle
-    {
-        value_type* value;
-        size_type handle;
-    };
 };
+
+template <class Container>
+struct pool_traits : estd::internal::container_traits<Container>
+{
+    static_assert(sizeof(typename estd::internal::container_traits<Container>::value_type) == 1);
+};
+
+
+template <class Pool, ESTD_CPP_CONCEPT(concepts::Handles) Handles>
+struct pool_ops_traits
+{
+    using pool_type = Pool;
+    using handles_type = Handles;
+};
+
+
 
 }}
 

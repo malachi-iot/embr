@@ -7,12 +7,12 @@
 #include <estd/utility.h>
 
 #include "bundle.h"
-#include "concepts.h"
 #include "error.h"
 #include "fwd.h"
 #include "block.h"
 #include "handles.h"
 #include "page.h"
+#include "traits.h"
 
 #if FEATURE_STD_OSTREAM
 #include <iosfwd>
@@ -44,22 +44,8 @@ struct fragmentation_base
     candidate candidates[2];
 };
 
-template <class Container>
-struct pool_traits : estd::internal::container_traits<Container>
-{
-    static_assert(sizeof(typename estd::internal::container_traits<Container>::value_type) == 1);
-};
-
-
 template <class T, class PoolTraits, class HandlesTraits, class ...Args>
 typename HandlesTraits::size_type construct(pool<PoolTraits>& p, handles<HandlesTraits>& h, Args&&...args);
-
-template <class Pool, ESTD_CPP_CONCEPT(concepts::Handles) Handles>
-struct pool_ops_traits
-{
-    using pool_type = Pool;
-    using handles_type = Handles;
-};
 
 // TODO: Do 'concepts'
 // 23JAN26 MB Appears unavoidable to template it out to this level.  Was hoping CRTP wizardry would help us, but I don't
