@@ -241,7 +241,7 @@ validated_result pool_ops<Traits>::move(
             bool has_next = to.has_next();
             bool to_next_allocated = has_next ? to_next.allocated() : true;
             pos_type to_next_pos = has_next ? to_next.pos() :
-                pos_type(estd::size(pool().pool_) / aliasing);
+                pos_type(estd::size(storage().pool_) / aliasing);
 
             // We already fit neatly into 'to', so this is only to move following free block backward
             if(to_next_allocated == false)

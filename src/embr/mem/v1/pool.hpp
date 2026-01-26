@@ -59,7 +59,7 @@ void pool_ops<Traits>::prev(Block* b, bundle_base<handles_traits, Block>* out) c
 {
     using page_type = typename bundle_base<handles_traits, Block>::page_type;
     page_type& page = handles_[b->prev()];
-    new (out) bundle_base<handles_traits, Block>{ pool().block(page.pos()), &page, b->prev() };
+    new (out) bundle_base<handles_traits, Block>{ storage().block(page.pos()), &page, b->prev() };
 }
 
 
@@ -69,7 +69,7 @@ void pool_ops<Traits>::next(Block* b, bundle_base<handles_traits, Block>* out) c
 {
     // DEBT: No auto please
     auto& page = handles_[b->next()];
-    new (out) bundle_base<handles_traits, Block>{ pool().block(page.pos()), &page, b->next() };
+    new (out) bundle_base<handles_traits, Block>{ storage().block(page.pos()), &page, b->next() };
 }
 
 
@@ -77,7 +77,7 @@ template <class Traits>
 auto pool_ops<Traits>::phys_size(const const_bundle& bn) const -> pos_type
 {
     pos_type next_pos = bn.block->next() == handles_type::null ?
-        pos_type(estd::size(pool().pool_) / aliasing) :
+        pos_type(estd::size(storage().pool_) / aliasing) :
         next(bn).pos();
 
     //return next(bn).pos() - bn.pos();

@@ -212,7 +212,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
             REQUIRE((int)h1 == 0);
             void* locked = pool1.lock(0);
             // We allocate from very start of pool, and lock returns user/app data just past block header
-            REQUIRE(locked == pool1.ops().pool().data() + block_sz);
+            REQUIRE(locked == pool1.ops().storage().data() + block_sz);
             pool1.unlock(0);
         }
         SECTION("realloc")

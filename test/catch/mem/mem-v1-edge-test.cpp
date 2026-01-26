@@ -166,11 +166,10 @@ TEST_CASE("gc mem v1 edge cases", "[memory][gc]")
             using handles_type = detail::v1::handles<handles_traits>;
             using pool_traits = detail::v1::pool_traits<char[pool_size]>;
             using pool_type = detail::v1::pool<pool_traits>;
-            using ops_type = pool_type::ops<handles_traits>;
+            using traits = detail::v1::pool_ops_traits<pool_type, handles_type&>;
+            using ops_type = detail::v1::pool_ops<traits>;
 
-            pool_type pool;
-
-            ops_type op{pool, handles};
+            ops_type op{estd::nullopt, handles};
 
             assemble_pool(op, test::pool5);
 

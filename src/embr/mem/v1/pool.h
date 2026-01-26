@@ -60,9 +60,9 @@ class pool_ops
 {
 public:
     using traits = Traits;
-    using pool_type = estd::remove_reference_t<typename traits::pool_type>;
+    using storage_type = estd::remove_reference_t<typename traits::pool_type>;
     using handles_type = estd::remove_reference_t<typename traits::handles_type>;
-    using pool_traits = typename pool_type::traits;
+    using pool_traits = typename storage_type::traits;
     using handles_traits = typename handles_type::traits;
     using block = v1::block;
     using handle_type = typename handles_traits::size_type;
@@ -87,9 +87,15 @@ public:
         handles_{std::forward<HandlesArgs>(ha)...}
     {}
 
+    // DEBT: More clumsiness, this one skips pool init altogether
+    template <class ...HandlesArgs>
+    constexpr pool_ops(estd::nullopt_t, HandlesArgs&&...ha) :
+        handles_{std::forward<HandlesArgs>(ha)...}
+    {}
+
     constexpr pool_ops() = default;
 
-    constexpr const pool_type& pool() const { return self_; }
+    constexpr const storage_type& storage() const { return self_; }
     constexpr const handles_type& handles() const { return handles_; }
 
     static constexpr unsigned aliasing = pos_type::period::num;
@@ -295,14 +301,6 @@ protected:
         return block(page.pos());
     } */
 
-#if UNIT_TESTING
-public:
-#endif
-
-    // DEBT: deprecated
-    template <class HandlesTraits>
-    using ops = pool_ops<pool_ops_traits<pool&, handles<HandlesTraits>&>>;
-
 public:
     template <class ...Args>
     explicit constexpr pool(Args&&...args) :
@@ -323,7 +321,7 @@ public:
     typename Traits2::size_type alloc(handles<Traits2>& h, unsigned logical_sz)
     {
         constexpr unsigned block_sz = v1::block::header_size(mode).count();
-        using ops_type = ops<Traits2>;
+        using ops_type = pool_ops<pool_ops_traits<pool&, handles<Traits2>&>>;
         return ops_type{*this, h}.alloc(ops_type::do_alias(logical_sz + block_sz), mode).handle;
     }
 };
