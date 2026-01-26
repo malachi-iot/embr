@@ -85,14 +85,6 @@ void pool_ops<Traits>::next(Block* b, bundle_base<handles_traits, Block>* out) c
 
 
 template <class Traits>
-auto pool_ops<Traits>::next(v1::block* b) const -> bundle
-{
-    auto page = const_cast<page_type*>(&handles_[b->next()]);
-    return { self_.block(page->pos()), page, b->next() };
-}
-
-
-template <class Traits>
 template <class Traits2, class Block>
 auto pool_ops<Traits>::phys_size(const bundle_base<Traits2, Block>& bn) const -> pos_type
 {

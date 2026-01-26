@@ -34,7 +34,7 @@ struct bundle_base
     page_type* page;
     handle_type handle{null};
 
-    bundle_base() = default;
+    constexpr bundle_base() = default;
 
     // DEBT: Sloppy conversion from non-const to const.  Should enforce this more strictly
     template <class Block2>

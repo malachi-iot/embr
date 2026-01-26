@@ -225,7 +225,11 @@ TEST_CASE("gc mem v1 battery", "[memory][gc][battery]")
         for(int i = 0; i < 100; ++i)
         {
             pool_type pool;
+#if TRANSITION1
+            auto& ops = pool.ops();
+#else
             auto ops = pool.ops();
+#endif
 
             // DEBT: Still having to do this
             ops.reset();

@@ -129,7 +129,7 @@ public:
 
     // Best to have this guy here and not in above pool so that we make no assumptions
     // about page_type and handle_type
-    bundle get_bundle(page_type& page, handle_type handle) const
+    bundle get_bundle(page_type& page, handle_type handle)
     {
         return { self_.block(page.pos()), &page, handle };
     }
@@ -178,11 +178,8 @@ public:
     template <class Block>
     void next(Block*, bundle_base<handles_traits, Block>* out) const;
 
-    const_bundle next(const block* b) const { return get_bundle(b->next()); }
-    bundle next(block*) const;
-
-    template <class Block>
-    bundle_base<handles_traits, Block> next(const bundle_base<handles_traits, Block>& bn) const { return next(bn.block); }
+    bundle next(const_bundle bn) { return get_bundle(bn.block->next()); }
+    const_bundle next(const_bundle bn) const { return get_bundle(bn.block->next()); }
 
     static estd::units::bytes<unsigned> logical_size(block::modes, pos_type phys_sz);
 
@@ -479,6 +476,8 @@ public:
 
 inline namespace v1 {
 
+#define TRANSITION1 0
+
 namespace layer1 {
 
 template <std::size_t N, std::size_t H>
@@ -500,13 +499,15 @@ private:
 #if UNIT_TESTING
 public:
 #endif
+#if !TRANSITION1
     using ops_type = typename detail::v1::pool<pool_traits>::template ops<handles_traits>;
     ops_type ops() { return {pool_, handles_}; }
-
-    //using ops_type = detail::v1::pool_ops<pool_op_traits>;
-    //ops_type ops_;
-    //ops_type& ops() { return ops_; }
-    //const ops_type& ops() const { return ops_; }
+#else
+    using ops_type = detail::v1::pool_ops<pool_op_traits>;
+    ops_type ops_;
+    ops_type& ops() { return ops_; }
+    const ops_type& ops() const { return ops_; }
+#endif
 
 public:
     handle_type alloc(int logical_sz) { return pool_.alloc(handles_, logical_sz); }
