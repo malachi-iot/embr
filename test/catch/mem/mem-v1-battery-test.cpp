@@ -12,27 +12,28 @@ using namespace embr::mem;
 #define ENABLE_BATTERY 1
 #define ENABLE_RANDOM_BATTERY 1
 
-template <class Traits, class HandlesTraits>
-static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& ops, int it, unsigned seed)
+template <class Traits>
+static void battery(typename detail::pool_ops<Traits>& ops, int it, unsigned seed)
 {
     using namespace detail;
     std::mt19937 gen{seed}; // fixed seed: deterministic sequence
 
-    using ops_type = typename detail::pool<Traits>::template ops<HandlesTraits>;
+    using ops_type = typename detail::pool_ops<Traits>;
     using block = detail::v1::block;
-    using page_type = typename HandlesTraits::value_type;
+    using handles_traits = typename ops_type::handles_traits;
+    using page_type = typename handles_traits::value_type;
     using pos_type = typename page_type::unit_type;
     using bundle = typename ops_type::bundle;
-    using handle_type = typename HandlesTraits::size_type;
-    using page_type = typename HandlesTraits::value_type;
+    using handle_type = typename handles_traits::size_type;
+    using page_type = typename handles_traits::value_type;
     using bytes_type = bytes_unit<unsigned>;
-    constexpr handle_type null = HandlesTraits::null;
+    constexpr handle_type null = handles_traits::null;
     typename ops_type::fragmentation frag;
 
     std::uniform_int_distribution<int> distrib(1, 10);
 
     //int allocs_to_do = gen() % ops.handles_.size();
-    int allocs_to_do = ops.handles_.size() - 1;     // 1 handle already used for big-free-block
+    int allocs_to_do = ops.handles().size() - 1;     // 1 handle already used for big-free-block
     int frees_to_do = std::uniform_int_distribution<int>(0, allocs_to_do)(gen);
 
     CAPTURE(it, seed);
@@ -91,7 +92,7 @@ static void battery(typename detail::pool<Traits>::template ops<HandlesTraits>& 
 
         std::ostringstream before, after;
 
-        const handle_type handle = gen() % ops.handles_.size();
+        const handle_type handle = gen() % ops.handles().size();
 
         ops.dump(before << "\n");
 
@@ -233,7 +234,7 @@ TEST_CASE("gc mem v1 battery", "[memory][gc][battery]")
 
             // DEBT: Still having to do this
             ops.reset();
-            battery<traits>(ops, i, rng());
+            battery(ops, i, rng());
         }
     }
     SECTION("layer3")
@@ -254,11 +255,15 @@ TEST_CASE("gc mem v1 battery", "[memory][gc][battery]")
             {
                 pool_type pool({ pages.get(), 10 }, { raw_pool, 512 });
 
+#if TRANSITION2
+                auto& ops = pool.ops();
+#else
                 auto ops = pool.ops();
+#endif
 
                 // DEBT: Still having to do this
                 ops.reset();
-                battery<traits>(ops, i, rng());
+                battery(ops, i, rng());
             }
 
             delete [] raw_pool;
@@ -276,11 +281,15 @@ TEST_CASE("gc mem v1 battery", "[memory][gc][battery]")
 
                 pool_type pool({ pages.data(), pages.size() }, { raw.data(), raw.size() });
 
+#if TRANSITION2
+                auto& ops = pool.ops();
+#else
                 auto ops = pool.ops();
+#endif
 
                 // DEBT: Still having to do this
                 ops.reset();
-                battery<traits>(ops, i, rng());
+                battery(ops, i, rng());
             }
         }
         SECTION("force feed")
@@ -299,11 +308,15 @@ TEST_CASE("gc mem v1 battery", "[memory][gc][battery]")
 
                 CAPTURE(raw_pages_sz, raw_pool_sz);
 
+#if TRANSITION2
+                auto& ops = pool.ops();
+#else
                 auto ops = pool.ops();
+#endif
 
                 // DEBT: Still having to do this
                 ops.reset();
-                battery<traits>(ops, 13, seed);
+                battery(ops, 13, seed);
 
                 delete [] raw_pages;
                 delete [] raw_pool;
@@ -326,11 +339,15 @@ TEST_CASE("gc mem v1 battery", "[memory][gc][battery]")
 
                 pool_type pool({ pages.data(), pages.size() }, { raw.data(), raw.size() });
 
+#if TRANSITION2
+                auto& ops = pool.ops();
+#else
                 auto ops = pool.ops();
+#endif
 
                 // DEBT: Still having to do this
                 ops.reset();
-                battery<traits>(ops, i, rng());
+                battery(ops, i, rng());
             }
         }
 #endif

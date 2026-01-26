@@ -46,6 +46,9 @@ struct pool_traits;
 template <class Traits>
 class pool;
 
+template <class Derived>
+class pool_crtp;
+
 // Overlap with estd::experimental::global_provider
 
 template <class T, T* t, bool global = t != nullptr>

@@ -81,6 +81,9 @@ public:
     using bundle = v1::bundle_base<handles_traits, block>;
     using const_bundle = v1::bundle_base<handles_traits, const block>;
 
+    template <class Derived>
+    friend class pool_crtp;
+
 protected:
 
     typename traits::pool_type self_;
@@ -97,6 +100,7 @@ public:
     constexpr pool_ops() = default;
 
     constexpr const pool_type& pool() const { return self_; }
+    constexpr const handles_type& handles() const { return handles_; }
 
     static constexpr unsigned aliasing = pos_type::period::num;
 
@@ -308,7 +312,6 @@ public:
         : pool_ops<pool_ops_traits<pool&, handles<HandlesTraits>&>>
     {
         using base_type = pool_ops<pool_ops_traits<pool&, handles<HandlesTraits>&>>;
-        using base_type::self_;
         using base_type::handles_;
         using base_type::aliasing;
         using base_type::alloc;
@@ -392,6 +395,9 @@ protected:
     detail::v1::handles<handles_traits> handles_;
 };
 
+#define TRANSITION1 1
+#define TRANSITION2 1
+
 #pragma push_macro("THIS")
 #pragma push_macro("OPS")
 #undef THIS
@@ -450,7 +456,7 @@ public:
     template <class T, class ...Args, class Derived2 = Derived>
     typename Derived2::handle_type construct(Args&&...args)
     {
-        return detail::construct<T>(THIS->pool_, THIS->handles_, std::forward<Args>(args)...);
+        return detail::construct<T>(OPS.self_, OPS.handles_, std::forward<Args>(args)...);
     }
 };
 
@@ -460,8 +466,6 @@ public:
 }}
 
 inline namespace v1 {
-
-#define TRANSITION1 0
 
 namespace layer1 {
 
@@ -478,8 +482,10 @@ public:
     using pool_op_traits = detail::v1::pool_ops_traits<detail::v1::pool<pool_traits>, detail::v1::handles<handles_traits>>;
 
 private:
+#if !TRANSITION1
     detail::v1::pool<pool_traits> pool_;
     detail::v1::handles<handles_traits> handles_;
+#endif
 
 #if UNIT_TESTING
 public:
@@ -495,7 +501,7 @@ public:
 #endif
 
 public:
-    handle_type alloc(int logical_sz) { return pool_.alloc(handles_, logical_sz); }
+    //handle_type alloc(int logical_sz) { return pool_.alloc(handles_, logical_sz); }
 };
 
 }
@@ -512,25 +518,39 @@ public:
     using handles_traits = detail::v1::handles_traits<estd::span<page_type>>;
     using pool_traits = detail::v1::pool_traits<estd::span<char>>;
     using handle_type = typename handles_traits::size_type;
+    using pool_op_traits = detail::v1::pool_ops_traits<detail::v1::pool<pool_traits>, detail::v1::handles<handles_traits>>;
 
 private:
+#if !TRANSITION2
     detail::v1::pool<pool_traits> pool_;
     detail::v1::handles<handles_traits> handles_;
+#endif
 
 #if UNIT_TESTING
 public:
 #endif
+#if !TRANSITION2
     using ops_type = typename detail::v1::pool<pool_traits>::template ops<handles_traits>;
 
     ops_type ops() { return {pool_, handles_}; }
+#else
+    using ops_type = detail::v1::pool_ops<pool_op_traits>;
+    ops_type ops_;
+    ops_type& ops() { return ops_; }
+    const ops_type& ops() const { return ops_; }
+#endif
 
 public:
     pool(estd::span<page_type> pages, estd::span<char> raw) :
+#if !TRANSITION2
         pool_(raw),
         handles_(pages)
+#else
+        ops_(raw, pages)
+#endif
     {}
 
-    handle_type alloc(int logical_sz) { return pool_.alloc(handles_, logical_sz); }
+    //handle_type alloc(int logical_sz) { return pool_.alloc(handles_, logical_sz); }
 };
 
 }
