@@ -18,6 +18,11 @@
 #include <iosfwd>
 #endif
 
+
+#define TRANSITION1 1
+#define TRANSITION2 1
+#define TRANSITION3 0
+
 namespace embr { namespace mem {
 
 namespace detail { inline namespace v1 {
@@ -325,12 +330,6 @@ public:
 
         template <class ...Args>
         constexpr ops(Args&&...args) : base_type(std::forward<Args>(args)...) {}
-
-        /// Since page table virtualizes positions, first page table entry is not necessarily
-        /// starting handle.  Use this to find actual first handle in the list (deprecated - linked
-        /// list walking version)
-        /// @return
-        const_bundle first_alt() const;
     };
 
 public:
@@ -380,9 +379,6 @@ protected:
     detail::v1::pool<detail::v1::pool_traits<PoolContainer>> pool_;
     detail::v1::handles<handles_traits> handles_;
 };
-
-#define TRANSITION1 1
-#define TRANSITION2 1
 
 #pragma push_macro("THIS")
 #pragma push_macro("OPS")
@@ -465,7 +461,12 @@ public:
     using handles_traits = detail::v1::handles_traits<page_type[H]>;
     using handle_type = typename handles_traits::size_type;
     using pool_traits = detail::v1::pool_traits<char[N]>;
+#if TRANSITION1
     using pool_op_traits = detail::v1::pool_ops_traits<detail::v1::pool<pool_traits>, detail::v1::handles<handles_traits>>;
+#else
+    using pool_op_traits = detail::v1::pool_ops_traits<detail::v1::pool<pool_traits>&, detail::v1::handles<handles_traits>&>;
+#endif
+    using ops_type = detail::v1::pool_ops<pool_op_traits>;
 
 private:
 #if !TRANSITION1
@@ -477,10 +478,8 @@ private:
 public:
 #endif
 #if !TRANSITION1
-    using ops_type = typename detail::v1::pool<pool_traits>::template ops<handles_traits>;
     ops_type ops() { return {pool_, handles_}; }
 #else
-    using ops_type = detail::v1::pool_ops<pool_op_traits>;
     ops_type ops_;
     ops_type& ops() { return ops_; }
     const ops_type& ops() const { return ops_; }
@@ -504,7 +503,12 @@ public:
     using handles_traits = detail::v1::handles_traits<estd::span<page_type>>;
     using pool_traits = detail::v1::pool_traits<estd::span<char>>;
     using handle_type = typename handles_traits::size_type;
+#if TRANSITION2
     using pool_op_traits = detail::v1::pool_ops_traits<detail::v1::pool<pool_traits>, detail::v1::handles<handles_traits>>;
+#else
+    using pool_op_traits = detail::v1::pool_ops_traits<detail::v1::pool<pool_traits>&, detail::v1::handles<handles_traits>&>;
+#endif
+    using ops_type = detail::v1::pool_ops<pool_op_traits>;
 
 private:
 #if !TRANSITION2
@@ -516,11 +520,8 @@ private:
 public:
 #endif
 #if !TRANSITION2
-    using ops_type = typename detail::v1::pool<pool_traits>::template ops<handles_traits>;
-
     ops_type ops() { return {pool_, handles_}; }
 #else
-    using ops_type = detail::v1::pool_ops<pool_op_traits>;
     ops_type ops_;
     ops_type& ops() { return ops_; }
     const ops_type& ops() const { return ops_; }

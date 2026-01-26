@@ -19,17 +19,6 @@ namespace embr { namespace mem {
 namespace detail { inline namespace v1 {
 
 template <class Traits>
-template <class HandleTraits>
-auto pool<Traits>::ops<HandleTraits>::first_alt() const -> const_bundle
-{
-    const_bundle bn = get_bundle(0);
-
-    for(; bn.has_prev(); bn = prev(bn));        // NOLINT
-
-    return bn;
-}
-
-template <class Traits>
 auto pool_ops<Traits>::first() const -> const_bundle
 {
     constexpr pos_type zero{0};
