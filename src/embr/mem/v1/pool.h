@@ -21,7 +21,6 @@
 
 #define TRANSITION1 1
 #define TRANSITION2 1
-#define TRANSITION3 0
 
 namespace embr { namespace mem {
 
@@ -256,6 +255,7 @@ class pool : public Traits
 
 public:
     using traits = Traits;
+    using block_type = typename traits::block;
     using container_type = typename traits::type;
     //using typename traits::page_type;
     //using typename traits::pos_type;
@@ -272,15 +272,15 @@ protected:
 
     container_type pool_;
 
-    v1::block* block(bytes_unit<unsigned> at)
+    block_type* block(bytes_unit<unsigned> at)
     {
         //assert(at.count() != page_type::null);
-        return reinterpret_cast<v1::block*>(estd::data(pool_) + at.count());
+        return reinterpret_cast<block_type*>(estd::data(pool_) + at.count());
     }
 
-    const v1::block* block(bytes_unit<unsigned> at) const
+    const block_type* block(bytes_unit<unsigned> at) const
     {
-        return reinterpret_cast<const v1::block*>(estd::data(pool_) + at.count());
+        return reinterpret_cast<const block_type*>(estd::data(pool_) + at.count());
     }
 
 /*
@@ -298,39 +298,10 @@ protected:
 #if UNIT_TESTING
 public:
 #endif
+
+    // DEBT: deprecated
     template <class HandlesTraits>
-    struct ops //: HandlesTraits    // FIX: We ought to be able to do this, what's stopping us?
-        : pool_ops<pool_ops_traits<pool&, handles<HandlesTraits>&>>
-    {
-        using base_type = pool_ops<pool_ops_traits<pool&, handles<HandlesTraits>&>>;
-        using base_type::handles_;
-        using base_type::aliasing;
-        using base_type::alloc;
-        using base_type::create_free_block;
-        using base_type::dealloc;
-        using base_type::do_alias;
-        using base_type::prev;
-        using base_type::next;
-        using base_type::logical_size;
-        using base_type::phys_size;
-        using typename base_type::bundle;
-        using typename base_type::const_bundle;
-
-        using block = v1::block;
-        //using bundle = v1::bundle_base<HandlesTraits, page_type>;
-        //using bundle = v1::bundle;
-        //using const_bundle = v1::const_bundle;
-        using traits = HandlesTraits;
-        using handle_type = typename traits::size_type;
-        using handles_type = handles<traits>;
-        using page_type = typename traits::value_type;
-        using pos_type = typename page_type::unit_type;
-
-        using base_type::get_bundle;
-
-        template <class ...Args>
-        constexpr ops(Args&&...args) : base_type(std::forward<Args>(args)...) {}
-    };
+    using ops = pool_ops<pool_ops_traits<pool&, handles<HandlesTraits>&>>;
 
 public:
     template <class ...Args>
@@ -346,7 +317,7 @@ public:
     // Just for diagnostics
     const char* data() const { return estd::data(pool_); }
 
-    using handle_type = int;
+    //using handle_type = int;
 
     template <v1::block::modes mode = v1::block::Trivial, class Traits2>
     typename Traits2::size_type alloc(handles<Traits2>& h, unsigned logical_sz)
@@ -354,18 +325,6 @@ public:
         constexpr unsigned block_sz = v1::block::header_size(mode).count();
         using ops_type = ops<Traits2>;
         return ops_type{*this, h}.alloc(ops_type::do_alias(logical_sz + block_sz), mode).handle;
-    }
-
-    template <class Traits2>
-    void dealloc(v1::handles<Traits2>& handles, typename Traits2::size_type h)
-    {
-        return ops<Traits2>{*this, handles}.dealloc(h);
-    }
-
-    template <class Traits2>
-    void reset(v1::handles<Traits2>& handles)
-    {
-        ops<Traits2>{*this, handles}.reset();
     }
 };
 

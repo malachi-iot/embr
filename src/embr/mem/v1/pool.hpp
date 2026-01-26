@@ -245,10 +245,9 @@ typename HandlesTraits::size_type construct(pool<PoolTraits>& p, handles<Handles
         is_trivial::value ? v1::block::Trivial :
         !is_movable::value ? v1::block::Immobile :
         is_rtto_base::value ? v1::block::RttoBase : v1::block::RttoProxy;
+    using traits = pool_ops_traits<pool<PoolTraits>&, handles<HandlesTraits>&>;
 
-    using ops_type = typename pool<PoolTraits>::template ops<HandlesTraits>;
-
-    return ops_type{p, h}.template construct<mode, T>(std::forward<Args>(args)...).handle;
+    return pool_ops<traits>{p, h}.template construct<mode, T>(std::forward<Args>(args)...).handle;
 }
 
 template <class Traits>

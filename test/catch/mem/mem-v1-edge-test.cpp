@@ -10,16 +10,19 @@
 using namespace embr::mem;
 
 
-template <class Traits, class HandlesTraits, std::size_t N>
-static void assemble_pool(typename detail::pool<Traits>::template ops<HandlesTraits>& ops, const test::page (&pool)[N])
+template <class Traits, std::size_t N>
+static void assemble_pool(typename detail::pool_ops<Traits>& ops, const test::page (&pool)[N])
 {
-    using ops_type = typename detail::pool<Traits>::template ops<HandlesTraits>;
-    using page_type = typename HandlesTraits::value_type;
+    using ops_type = typename detail::pool_ops<Traits>;
+    using handles_type = typename ops_type::handles_type;
+    using handles_traits = typename Traits::handles_traits;
+    using page_type = typename handles_traits::value_type;
     using pos_type = typename page_type::unit_type;
     using bundle = typename ops_type::bundle;
     const auto aliasing = ops.aliasing;
-    const auto null = HandlesTraits::null;
+    const auto null = handles_traits::null;
     int prev = null;
+    handles_type& handles = const_cast<handles_type&>(ops.handles());
 
     pos_type tally(0);
 
@@ -30,7 +33,7 @@ static void assemble_pool(typename detail::pool<Traits>::template ops<HandlesTra
         int next = j == N - 1 ? null : page.blk.next() == null ?
             i + 1 : page.blk.next();
 
-        ops.handles_[i].pos(tally);
+        handles[i].pos(tally);
         bundle b = ops.get_bundle(i);
 
         *b.block = detail::block(page.blk.mode(), page.blk.allocated(), prev, next);
@@ -50,18 +53,19 @@ TEST_CASE("gc mem v1 edge cases", "[memory][gc]")
     using handles_type = detail::v1::handles<handles_traits>;
     using pool_traits = detail::v1::pool_traits<char[pool_size]>;
     using pool_type = detail::v1::pool<pool_traits>;
+    using pool_ops_traits = detail::v1::pool_ops_traits<pool_type&, handles_type&>;
 
     handles_type handles;
     pool_type pool;
 
-    // DEBT: Need to make this automatic
-    pool.reset(handles);
-
-    using ops_type = pool_type::ops<handles_traits>;
+    using ops_type = detail::v1::pool_ops<pool_ops_traits>;
     using bundle = ops_type::bundle;
     using block = ops_type::block;
     using fragmentation = ops_type::fragmentation;
     ops_type op{pool, handles};
+
+    // DEBT: Need to make this automatic
+    op.reset();
 
     SECTION("pool assembly/edge cases")
     {
@@ -78,7 +82,7 @@ TEST_CASE("gc mem v1 edge cases", "[memory][gc]")
 
         SECTION("assemble_pool itself")
         {
-            assemble_pool<pool_traits>(op, test::pool1);
+            assemble_pool(op, test::pool1);
 
             REQUIRE(op.alloced() == 24);
             unsigned available = op.available();
@@ -87,7 +91,7 @@ TEST_CASE("gc mem v1 edge cases", "[memory][gc]")
         SECTION("defrag case 2: reverse overlapping trivial movement")
         {
             // NOTE: Doesn't match defrag failure pool size (that one's 512)
-            assemble_pool<pool_traits>(op, test::pool2);
+            assemble_pool(op, test::pool2);
             ops_type::const_bundle from, to;
 
             from = op.get_bundle(2);
@@ -117,7 +121,7 @@ TEST_CASE("gc mem v1 edge cases", "[memory][gc]")
         }
         SECTION("defrag case 3: reverse overlapping trivial movement")
         {
-            assemble_pool<pool_traits>(op, test::pool3);
+            assemble_pool(op, test::pool3);
 
             ops_type::const_bundle from, to;
 
@@ -137,7 +141,7 @@ TEST_CASE("gc mem v1 edge cases", "[memory][gc]")
         }
         SECTION("defrag case 4: reverse non-overlapping trivial")
         {
-            assemble_pool<pool_traits>(op, test::pool4);
+            assemble_pool(op, test::pool4);
 
             ops_type::const_bundle from, to;
 
@@ -168,7 +172,7 @@ TEST_CASE("gc mem v1 edge cases", "[memory][gc]")
 
             ops_type op{pool, handles};
 
-            assemble_pool<pool_traits>(op, test::pool5);
+            assemble_pool(op, test::pool5);
 
             op.dump(before);
 
@@ -188,7 +192,7 @@ TEST_CASE("gc mem v1 edge cases", "[memory][gc]")
         }
         SECTION("defrag case 6: allocated block trailing moved-to")
         {
-            assemble_pool<pool_traits>(op, test::pool6);
+            assemble_pool(op, test::pool6);
 
             op.dump(before);
 
@@ -200,7 +204,7 @@ TEST_CASE("gc mem v1 edge cases", "[memory][gc]")
         }
         SECTION("defrag case 7: split")
         {
-            assemble_pool<pool_traits>(op, test::pool7);
+            assemble_pool(op, test::pool7);
 
             op.dump(before);
 
@@ -235,7 +239,7 @@ TEST_CASE("gc mem v1 edge cases", "[memory][gc]")
         }
         SECTION("defrag case 8: overlap + relink")
         {
-            assemble_pool<pool_traits>(op, test::pool8);
+            assemble_pool(op, test::pool8);
 
             op.dump(before);
 
@@ -265,7 +269,7 @@ TEST_CASE("gc mem v1 edge cases", "[memory][gc]")
         }
         SECTION("defrag case 9: overlap - reverse direction, free block not swallowed")
         {
-            assemble_pool<pool_traits>(op, test::pool9);
+            assemble_pool(op, test::pool9);
 
             op.dump(before);
 
@@ -289,7 +293,7 @@ TEST_CASE("gc mem v1 edge cases", "[memory][gc]")
         }
         SECTION("defrag case 10: virtual_move into null page")
         {
-            assemble_pool<pool_traits>(op, test::pool10);
+            assemble_pool(op, test::pool10);
 
             op.dump(before);
 

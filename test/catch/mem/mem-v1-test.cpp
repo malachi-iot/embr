@@ -57,14 +57,16 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
             handles_type handles;
             pool_type pool;
 
+            using pool_ops_traits = detail::v1::pool_ops_traits<pool_type&, handles_type&>;
+            using ops_type = detail::v1::pool_ops<pool_ops_traits>;
+            ops_type op{pool, handles};
+
             // DEBT: Need to make this automatic
-            pool.reset(handles);
+            op.reset();
 
             SECTION("ops")
             {
-                using ops_type = pool_type::ops<handles_traits>;
                 using pos_type = ops_type::pos_type;
-                ops_type op{pool, handles};
                 using bundle = ops_type::bundle;
                 using block = ops_type::block;
 
@@ -178,7 +180,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
 
                 REQUIRE(counter == 1);
 
-                pool.dealloc(handles, h);
+                op.dealloc(h);
 
                 REQUIRE(counter == 0);
             }

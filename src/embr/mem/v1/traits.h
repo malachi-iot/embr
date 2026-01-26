@@ -92,14 +92,22 @@ template <class Container>
 struct pool_traits : estd::internal::container_traits<Container>
 {
     static_assert(sizeof(typename estd::internal::container_traits<Container>::value_type) == 1);
+
+    using block = v1::block;
 };
 
 
+// DEBT: Really we ought to directly use traits - waiting until we transition away from the need
+// for Pool&
 template <class Pool, ESTD_CPP_CONCEPT(concepts::Handles) Handles>
 struct pool_ops_traits
 {
     using pool_type = Pool;
     using handles_type = Handles;
+    using storage_unref_type = estd::remove_cvref_t<Pool>;
+    using handles_unref_type = estd::remove_cvref_t<Handles>;
+    using storage_traits = typename storage_unref_type::pool_traits;
+    using handles_traits = typename handles_unref_type::handles_traits;
 };
 
 
