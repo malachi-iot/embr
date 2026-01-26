@@ -75,8 +75,8 @@ void pool_ops<Traits>::prev(Block* b, bundle_base<handles_traits, Block>* out) c
 
 
 template <class Traits>
-template <class Traits2, class Block>
-void pool_ops<Traits>::next(Block* b, bundle_base<Traits2, Block>* out) const
+template <class Block>
+void pool_ops<Traits>::next(Block* b, bundle_base<handles_traits, Block>* out) const
 {
     // DEBT: No auto please
     auto& page = handles_[b->next()];

@@ -22,16 +22,15 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
     using handle_type = handles_type::size_type;
     using pool_traits = detail::v1::pool_traits<char[pool_size]>;
     using pool_type = detail::v1::pool<pool_traits>;
-    using ops_type = pool_type::ops<handles_traits>;
+    using ops_type = detail::pool_ops<detail::pool_ops_traits<pool_type&, handles_type>>;
     using block = detail::v1::block;
     using bundle = ops_type::bundle;
     using const_bundle = ops_type::const_bundle;
     using pos_type = page::unit_type;
 
     pool_type pool;
-    handles_type handles;
 
-    ops_type ops = ops_type{pool, handles};
+    ops_type ops{pool};
 
     // DEBT: Still having to do this
     ops.reset();
@@ -235,7 +234,7 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
         auto& frag0 = frag.candidates[0];
         auto& frag1 = frag.candidates[1];
         void* data;
-        ops_type op{pool, handles};
+        ops_type& op = ops;
 
         op.assess(&frag);
 
@@ -324,7 +323,7 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
     {
         constexpr pos_type phys_sz(8);
         constexpr unsigned phys_sz_bytes = ops_type::aliasing * phys_sz.count();
-        ops_type op{pool, handles};
+        ops_type& op  = ops;;
         bundle bn = op.alloc(phys_sz, block::Trivial);
 
         memcpy(op.lock(bn.handle), "Hello", 6);

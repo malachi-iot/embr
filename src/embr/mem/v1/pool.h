@@ -86,8 +86,6 @@ protected:
     typename traits::pool_type self_;
     typename traits::handles_type handles_;
 
-    constexpr const pool_type& pool() { return self_; }
-
 public:
     // DEBT: Pool gets punished a little with just one init parameter, I think we'll be OK though
     template <class PoolArg, class ...HandlesArgs>
@@ -95,6 +93,10 @@ public:
         self_{std::forward<PoolArg>(pa)},
         handles_{std::forward<HandlesArgs>(ha)...}
     {}
+
+    constexpr pool_ops() = default;
+
+    constexpr const pool_type& pool() const { return self_; }
 
     static constexpr unsigned aliasing = pos_type::period::num;
 
@@ -173,8 +175,8 @@ public:
     bundle prev(const_bundle bn) { return get_bundle(bn.block->prev()); }
     const_bundle prev(const_bundle bn) const { return get_bundle(bn.block->prev()); }
 
-    template <class Traits2, class Block>
-    void next(Block*, bundle_base<Traits2, Block>* out) const;
+    template <class Block>
+    void next(Block*, bundle_base<handles_traits, Block>* out) const;
 
     const_bundle next(const block* b) const { return get_bundle(b->next()); }
     bundle next(block*) const;
@@ -489,6 +491,7 @@ public:
     using handles_traits = detail::v1::handles_traits<page_type[H]>;
     using handle_type = typename handles_traits::size_type;
     using pool_traits = detail::v1::pool_traits<char[N]>;
+    using pool_op_traits = detail::v1::pool_ops_traits<detail::v1::pool<pool_traits>, detail::v1::handles<handles_traits>>;
 
 private:
     detail::v1::pool<pool_traits> pool_;
@@ -498,8 +501,12 @@ private:
 public:
 #endif
     using ops_type = typename detail::v1::pool<pool_traits>::template ops<handles_traits>;
-
     ops_type ops() { return {pool_, handles_}; }
+
+    //using ops_type = detail::v1::pool_ops<pool_op_traits>;
+    //ops_type ops_;
+    //ops_type& ops() { return ops_; }
+    //const ops_type& ops() const { return ops_; }
 
 public:
     handle_type alloc(int logical_sz) { return pool_.alloc(handles_, logical_sz); }
