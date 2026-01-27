@@ -23,6 +23,7 @@ static void assemble_pool(typename detail::pool_ops<Traits>& ops, const test::pa
     const auto null = handles_traits::null;
     int prev = null;
     handles_type& handles = const_cast<handles_type&>(ops.handles());
+    using bytes = estd::units::bytes<unsigned>;
 
     pos_type tally(0);
 
@@ -85,7 +86,7 @@ TEST_CASE("gc mem v1 edge cases", "[memory][gc]")
             assemble_pool(op, test::pool1);
 
             REQUIRE(op.alloced() == 24);
-            unsigned available = op.available();
+            unsigned available = op.available().count();
             REQUIRE(available == pool_size - (32 + 8));
         }
         SECTION("defrag case 2: reverse overlapping trivial movement")
@@ -109,7 +110,7 @@ TEST_CASE("gc mem v1 edge cases", "[memory][gc]")
             CAPTURE(out.str());
             REQUIRE(op.invariant());
 
-            unsigned alloced = op.alloced();
+            auto alloced = op.alloced();
             REQUIRE(alloced == 16 + 56 + 40 + 32);
 
             from = op.get_bundle(2);

@@ -70,6 +70,7 @@ public:
     using pos_type = typename page_type::unit_type;
     using bundle = v1::bundle_base<handles_traits, block>;
     using const_bundle = v1::bundle_base<handles_traits, const block>;
+    using bytes = bytes_unit<unsigned>;
 
     template <class Derived>
     friend class pool_crtp;
@@ -250,8 +251,8 @@ public:
 
     // Reports in logical size
     // DEBT: Report back in 1:1 pos_type since ops is lower level and "logical" isn't in title
-    unsigned alloced() const;
-    unsigned available() const;
+    bytes alloced() const;
+    bytes available() const;
 };
 
 template <class Traits>
@@ -389,7 +390,7 @@ public:
 
     unsigned allocated()
     {
-        return OPS.alloced();
+        return OPS.alloced().count();
     }
 
     template <class T, class ...Args, class Derived2 = Derived>

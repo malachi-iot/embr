@@ -314,11 +314,11 @@ void pool_ops<Traits>::ref_down(handle_type h)
 
 
 template <class Traits>
-auto pool_ops<Traits>::available() const -> unsigned
+auto pool_ops<Traits>::available() const -> bytes
 {
     // If we permitted ourselves c++20 we could use ranges here.  Oh well !
 
-    unsigned count(0);
+    bytes count(0);
 
     for(const page_type& page : handles_)
     {
@@ -332,16 +332,16 @@ auto pool_ops<Traits>::available() const -> unsigned
 
 
 template <class Traits>
-auto pool_ops<Traits>::alloced() const -> unsigned
+auto pool_ops<Traits>::alloced() const -> bytes
 {
     // If we permitted ourselves c++20 we could use ranges here.  Oh well !
 
-    return estd::accumulate(handles_.begin(), handles_.end(), 0, [&](unsigned count, const page_type& p)
+    return bytes(estd::accumulate(handles_.begin(), handles_.end(), 0, [&](unsigned count, const page_type& p)
     {
         const_bundle bn = get_bundle(p);
 
         return count + (bn.allocated() ? logical_size(bn) : 0);
-    });
+    }));
 }
 
 

@@ -26,7 +26,7 @@ static void battery(typename detail::pool_ops<Traits>& ops, int it, unsigned see
     using bundle = typename ops_type::bundle;
     using handle_type = typename handles_traits::size_type;
     using page_type = typename handles_traits::value_type;
-    using bytes_type = bytes_unit<unsigned>;
+    using bytes = estd::units::bytes<unsigned>;
     constexpr handle_type null = handles_traits::null;
     typename ops_type::fragmentation frag;
 
@@ -43,7 +43,7 @@ static void battery(typename detail::pool_ops<Traits>& ops, int it, unsigned see
 
     struct metadata
     {
-        unsigned logical_sz;
+        bytes logical_sz;
     };
 
     std::unordered_map<handle_type, metadata> handle_metadata;
@@ -59,11 +59,11 @@ static void battery(typename detail::pool_ops<Traits>& ops, int it, unsigned see
         // DEBT: bring back 0-byte allocation requests as a bounds check.  Maybe ops itself shouldn't
         // kick back, but higher level mode definitely would need to
         pos_type phys_sz(distrib(gen) + 1);
-        unsigned logical_sz = bytes_type(phys_sz).count() - block::header_size(mode).count();
+        bytes logical_sz = bytes(phys_sz) - block::header_size(mode);
 
         ops.dump(before << "\n");
 
-        const unsigned available = ops.available();
+        const bytes available = ops.available();
 
         CAPTURE(before.str(), i, phys_sz.count(), available);
 
@@ -72,16 +72,16 @@ static void battery(typename detail::pool_ops<Traits>& ops, int it, unsigned see
         if(bn.handle != null)
         {
             void* data = ops.lock(bn);
-            memset(data, 'a' + bn.handle, logical_sz);
+            memset(data, 'a' + bn.handle, logical_sz.count());
             ops.unlock(bn.handle);
-            handle_metadata.emplace(bn.handle, metadata { logical_sz} );
+            handle_metadata.emplace(bn.handle, metadata { logical_sz } );
         }
 
         //REQUIRE((int)bn.handle != null);
         // I don't want assertions number to balloon at the moment
 
         // Either we have a real handle or we failed because OOM
-        assert(phys_sz.count() * ops.aliasing >= available || bn.handle != null);
+        assert(phys_sz * ops.aliasing >= available || bn.handle != null);
 
         assert(ops.invariant());
     }
@@ -180,7 +180,8 @@ static void battery(typename detail::pool_ops<Traits>& ops, int it, unsigned see
         char comp = 'a' + bn.handle;
         const metadata& m = handle_metadata.at(bn.handle);
         CAPTURE(m.logical_sz);
-        for(int i = 0; i < m.logical_sz; ++i, ++data)
+        // DEBT: See https://github.com/malachi-iot/estdlib/issues/173
+        for(int i = 0; i < m.logical_sz.count(); ++i, ++data)
             assert(*data == comp);
         ops.unlock(bn.handle);
 
