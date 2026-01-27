@@ -20,17 +20,19 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
     using handles_traits = detail::v1::handles_traits<page[10]>;
     using handles_type = detail::v1::handles<handles_traits>;
     using handle_type = handles_type::size_type;
-    using pool_traits = detail::v1::pool_traits<char[pool_size]>;
+    using pool_traits = detail::v1::pool_traits<estd::span<char>>;
     using pool_type = detail::v1::pool<pool_traits>;
-    using ops_type = detail::pool_ops<detail::pool_ops_val_traits<pool_type&, handles_type>>;
-    using block = detail::v1::block;
+    using ops_type = detail::pool_ops<detail::pool_ops_traits<pool_traits, handles_traits>>;
+    using block = ops_type::block;
     using bundle = ops_type::bundle;
     using const_bundle = ops_type::const_bundle;
     using pos_type = page::unit_type;
 
-    pool_type pool;
+    static_assert(std::is_same<pool_type, ops_type::storage_type>::value);
 
-    ops_type ops{pool};
+    char buf[pool_size];
+
+    ops_type ops{buf};
 
     // DEBT: Still having to do this
     ops.reset();
@@ -39,13 +41,10 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
     {
         SECTION("page")
         {
-            using page = detail::v1::page<uint16_t>;
-
             REQUIRE(page::null == 0xFFFF);
         }
         SECTION("handles: layer1")
         {
-            using page = detail::v1::page<uint16_t>;
 #if PAGE_ALIAS
             using unit_type = page;
 #else

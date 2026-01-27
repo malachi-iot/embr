@@ -57,7 +57,7 @@ class pool_ops
 {
 public:
     using traits = Traits;
-    using storage_type = estd::remove_reference_t<typename traits::pool_type>;
+    using storage_type = estd::remove_reference_t<typename traits::storage_type>;
     using handles_type = estd::remove_reference_t<typename traits::handles_type>;
     using pool_traits = typename storage_type::traits;
     using handles_traits = typename handles_type::traits;
@@ -74,14 +74,14 @@ public:
 
 protected:
 
-    typename traits::pool_type self_;
+    typename traits::storage_type storage_;
     typename traits::handles_type handles_;
 
 public:
     // DEBT: Pool gets punished a little with just one init parameter, I think we'll be OK though
     template <class PoolArg, class ...HandlesArgs>
     constexpr pool_ops(PoolArg&& pa, HandlesArgs&&...ha) :
-        self_{std::forward<PoolArg>(pa)},
+        storage_{std::forward<PoolArg>(pa)},
         handles_{std::forward<HandlesArgs>(ha)...}
     {}
 
@@ -93,7 +93,7 @@ public:
 
     constexpr pool_ops() = default;
 
-    constexpr const storage_type& storage() const { return self_; }
+    constexpr const storage_type& storage() const { return storage_; }
     constexpr const handles_type& handles() const { return handles_; }
 
     static constexpr unsigned aliasing = pos_type::period::num;
@@ -129,7 +129,7 @@ public:
     // about page_type and handle_type
     const_bundle get_bundle(const page_type& page, handle_type handle) const
     {
-        return { self_.block(page.pos()), &page, handle };
+        return { storage_.block(page.pos()), &page, handle };
     }
 
     const_bundle get_bundle(handle_type h) const
@@ -319,7 +319,7 @@ public:
     typename Traits2::size_type alloc(handles<Traits2>& h, unsigned logical_sz)
     {
         constexpr unsigned block_sz = v1::block::header_size(mode).count();
-        using ops_type = pool_ops<pool_ops_ref_traits<pool, handles<Traits2>>>;
+        using ops_type = pool_ops<pool_ops_val_traits<pool&, handles<Traits2>&>>;
         return ops_type{*this, h}.alloc(ops_type::do_alias(logical_sz + block_sz), mode).handle;
     }
 };
@@ -393,7 +393,7 @@ public:
     template <class T, class ...Args, class Derived2 = Derived>
     typename Derived2::handle_type construct(Args&&...args)
     {
-        return detail::construct<T>(OPS.self_, OPS.handles_, std::forward<Args>(args)...);
+        return detail::construct<T>(OPS.storage_, OPS.handles_, std::forward<Args>(args)...);
     }
 };
 

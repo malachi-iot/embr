@@ -51,19 +51,14 @@ TEST_CASE("gc mem v1 edge cases", "[memory][gc]")
     constexpr unsigned pool_size = 2048;
     using page = detail::v1::page<uint16_t>;
     using handles_traits = detail::v1::handles_traits<page[10]>;
-    using handles_type = detail::v1::handles<handles_traits>;
     using pool_traits = detail::v1::pool_traits<char[pool_size]>;
-    using pool_type = detail::v1::pool<pool_traits>;
-    using pool_ops_traits = detail::v1::pool_ops_ref_traits<pool_type, handles_type>;
-
-    handles_type handles;
-    pool_type pool;
+    using pool_ops_traits = detail::v1::pool_ops_traits<pool_traits, handles_traits>;
 
     using ops_type = detail::v1::pool_ops<pool_ops_traits>;
     using bundle = ops_type::bundle;
     using block = ops_type::block;
     using fragmentation = ops_type::fragmentation;
-    ops_type op{pool, handles};
+    ops_type op;
 
     // DEBT: Need to make this automatic
     op.reset();
@@ -169,6 +164,8 @@ TEST_CASE("gc mem v1 edge cases", "[memory][gc]")
             using pool_type = detail::v1::pool<pool_traits>;
             using traits = detail::v1::pool_ops_val_traits<pool_type, handles_type&>;
             using ops_type = detail::v1::pool_ops<traits>;
+
+            auto& handles = const_cast<handles_type&>(op.handles());
 
             ops_type op{estd::nullopt, handles};
 

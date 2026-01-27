@@ -92,8 +92,8 @@ void pool_ops<Traits>::virtual_move(bundle& from, bundle& to)
 template <class Traits>
 auto pool_ops<Traits>::move_block(page_type& page, pos_type new_pos) -> block*
 {
-    block* from = self_.block(page.pos());
-    block* to = self_.block(new_pos);
+    block* from = storage_.block(page.pos());
+    block* to = storage_.block(new_pos);
 
     page.pos(new_pos);
 
@@ -171,7 +171,7 @@ validated_result pool_ops<Traits>::move(
             pos_type new_to_loc = from.pos() + free_block_phys_sz;
             to.page->pos(new_to_loc);
 
-            block* new_to_block = self_.block(new_to_loc);
+            block* new_to_block = storage_.block(new_to_loc);
 
             // moving A forward in memory = regular unfancy forward copy
             memcpy(new_to_block->data(), from.block->data(), logical_sz);
@@ -194,7 +194,7 @@ validated_result pool_ops<Traits>::move(
             pos_type new_from_loc = to.pos() + alloced_block_phys_sz;
             from.page->pos(new_from_loc);
 
-            block* new_from_block = self_.block(new_from_loc);
+            block* new_from_block = storage_.block(new_from_loc);
 
             // moving A backward in memory = fancy reverse copy
             std::memmove(to.block->data(), from.block->data(), logical_sz);

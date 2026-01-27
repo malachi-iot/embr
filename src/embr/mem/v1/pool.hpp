@@ -103,7 +103,7 @@ auto pool_ops<Traits>::create_free_block(
     pos_type pos,
     handle_type prev, handle_type next) -> block*
 {
-    block* storage = self_.block(pos);
+    block* storage = storage_.block(pos);
 
     return new (storage) block(block::Trivial, false, prev, next);
 }
