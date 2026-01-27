@@ -50,16 +50,12 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
             constexpr unsigned pool_size = 2048;
             using page = detail::v1::page<uint16_t>;
             using handles_traits = detail::v1::handles_traits<page[10]>;
-            using handles_type = detail::v1::handles<handles_traits>;
             using pool_traits = detail::v1::pool_traits<char[pool_size]>;
-            using pool_type = detail::v1::pool<pool_traits>;
+            using bytes = estd::units::bytes<int>;
 
-            handles_type handles;
-            pool_type pool;
-
-            using pool_ops_traits = detail::v1::pool_ops_ref_traits<pool_type, handles_type>;
+            using pool_ops_traits = detail::v1::pool_ops_traits<pool_traits, handles_traits>;
             using ops_type = detail::v1::pool_ops<pool_ops_traits>;
-            ops_type op{pool, handles};
+            ops_type op;
 
             // DEBT: Need to make this automatic
             op.reset();
@@ -70,13 +66,13 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                 using bundle = ops_type::bundle;
                 using block = ops_type::block;
 
-                // synthetic size of to-be-allocated block
+                // synthetic size of to-be-allocated block, in aliased units (actually 64 bytes
+                // since aliasing is 8)
                 constexpr pos_type phys_sz(8);
-                constexpr unsigned phys_sz_bytes = ops_type::aliasing * phys_sz.count();
 
                 SECTION("alloc")
                 {
-                    constexpr unsigned block_sz = block::header_size(block::Trivial).count();
+                    constexpr bytes block_sz = block::header_size(block::Trivial);
                     bundle bn = op.alloc(phys_sz, block::Trivial);
 
                     REQUIRE(bn.invariant());
@@ -92,10 +88,10 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                     REQUIRE(bn.block->prev() == 0);
                     REQUIRE(bn.has_next() == false);
 
-                    constexpr unsigned logical_alloced_sz = phys_sz_bytes - block_sz;
-                    constexpr unsigned phys_alloced_sz = block_sz + phys_sz_bytes;
+                    constexpr bytes logical_alloced_sz = phys_sz - block_sz;
+                    constexpr bytes phys_alloced_sz = block_sz + phys_sz;
 
-                    REQUIRE(op.available() == pool_size - phys_alloced_sz);
+                    REQUIRE(op.available() == pool_size - phys_alloced_sz.count());
                     REQUIRE(op.alloced() == logical_alloced_sz);
 
                     bn = op.alloc(phys_sz, block::Trivial);
@@ -169,14 +165,13 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                     }
                 }
             }
-            SECTION("alloc")
-            {
-                pool.alloc(handles, 32);
-            }
             SECTION("construct")
             {
+                ops_type::storage_type& storage = const_cast<ops_type::storage_type&>(op.storage());
+                ops_type::handles_type& handles = const_cast<ops_type::handles_type&>(op.handles());
+
                 int counter = 0;
-                int h = detail::construct<SideEffector>(pool, handles, &counter);
+                int h = detail::construct<SideEffector>(storage, handles, &counter);
 
                 REQUIRE(counter == 1);
 
