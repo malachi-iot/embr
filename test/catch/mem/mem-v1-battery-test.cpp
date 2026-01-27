@@ -59,7 +59,7 @@ static void battery(typename detail::pool_ops<Traits>& ops, int it, unsigned see
         // DEBT: bring back 0-byte allocation requests as a bounds check.  Maybe ops itself shouldn't
         // kick back, but higher level mode definitely would need to
         pos_type phys_sz(distrib(gen) + 1);
-        bytes logical_sz = bytes(phys_sz) - block::header_size(mode);
+        bytes logical_sz = phys_sz - block::header_size(mode);
 
         ops.dump(before << "\n");
 
@@ -180,8 +180,7 @@ static void battery(typename detail::pool_ops<Traits>& ops, int it, unsigned see
         char comp = 'a' + bn.handle;
         const metadata& m = handle_metadata.at(bn.handle);
         CAPTURE(m.logical_sz);
-        // DEBT: See https://github.com/malachi-iot/estdlib/issues/173
-        for(int i = 0; i < m.logical_sz.count(); ++i, ++data)
+        for(int i = 0; i < m.logical_sz; ++i, ++data)
             assert(*data == comp);
         ops.unlock(bn.handle);
 
