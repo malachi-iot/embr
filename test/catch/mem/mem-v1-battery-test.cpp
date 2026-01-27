@@ -227,11 +227,7 @@ TEST_CASE("gc mem v1 battery", "[memory][gc][battery]")
         for(int i = 0; i < 100; ++i)
         {
             pool_type pool;
-#if TRANSITION1
             auto& ops = pool.ops();
-#else
-            auto ops = pool.ops();
-#endif
 
             // DEBT: Still having to do this
             ops.reset();
@@ -256,11 +252,7 @@ TEST_CASE("gc mem v1 battery", "[memory][gc][battery]")
             {
                 pool_type pool({ pages.get(), 10 }, { raw_pool, 512 });
 
-#if TRANSITION2
                 auto& ops = pool.ops();
-#else
-                auto ops = pool.ops();
-#endif
 
                 // DEBT: Still having to do this
                 ops.reset();
@@ -282,11 +274,7 @@ TEST_CASE("gc mem v1 battery", "[memory][gc][battery]")
 
                 pool_type pool({ pages.data(), pages.size() }, { raw.data(), raw.size() });
 
-#if TRANSITION2
                 auto& ops = pool.ops();
-#else
-                auto ops = pool.ops();
-#endif
 
                 // DEBT: Still having to do this
                 ops.reset();
@@ -309,11 +297,7 @@ TEST_CASE("gc mem v1 battery", "[memory][gc][battery]")
 
                 CAPTURE(raw_pages_sz, raw_pool_sz);
 
-#if TRANSITION2
                 auto& ops = pool.ops();
-#else
-                auto ops = pool.ops();
-#endif
 
                 // DEBT: Still having to do this
                 ops.reset();
@@ -340,11 +324,7 @@ TEST_CASE("gc mem v1 battery", "[memory][gc][battery]")
 
                 pool_type pool({ pages.data(), pages.size() }, { raw.data(), raw.size() });
 
-#if TRANSITION2
                 auto& ops = pool.ops();
-#else
-                auto ops = pool.ops();
-#endif
 
                 // DEBT: Still having to do this
                 ops.reset();

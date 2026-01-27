@@ -100,7 +100,7 @@ struct pool_traits : estd::internal::container_traits<Container>
 // DEBT: Really we ought to directly use traits - waiting until we transition away from the need
 // for Pool&
 template <class Pool, ESTD_CPP_CONCEPT(concepts::Handles) Handles>
-struct pool_ops_traits
+struct pool_ops_val_traits
 {
     using pool_type = Pool;
     using handles_type = Handles;
@@ -110,6 +110,22 @@ struct pool_ops_traits
     using handles_traits = typename handles_unref_type::handles_traits;
 };
 
+
+// DEBT: Make concept for traits too
+template <class StorageTraits, class HandlesTraits>
+struct pool_ops_traits
+{
+    using storage_traits = StorageTraits;
+    using handles_traits = HandlesTraits;
+
+    using storage_type = pool<storage_traits>;
+    using handles_type = handles<handles_traits>;
+
+    using pool_type = storage_type;
+};
+
+template <class Pool, ESTD_CPP_CONCEPT(concepts::Handles) Handles>
+using pool_ops_ref_traits = pool_ops_val_traits<Pool&, Handles&>;
 
 
 }}

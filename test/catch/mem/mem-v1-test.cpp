@@ -57,7 +57,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
             handles_type handles;
             pool_type pool;
 
-            using pool_ops_traits = detail::v1::pool_ops_traits<pool_type&, handles_type&>;
+            using pool_ops_traits = detail::v1::pool_ops_ref_traits<pool_type, handles_type>;
             using ops_type = detail::v1::pool_ops<pool_ops_traits>;
             ops_type op{pool, handles};
 

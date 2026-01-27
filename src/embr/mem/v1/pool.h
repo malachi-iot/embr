@@ -19,9 +19,6 @@
 #endif
 
 
-#define TRANSITION1 1
-#define TRANSITION2 1
-
 namespace embr { namespace mem {
 
 namespace detail { inline namespace v1 {
@@ -322,7 +319,7 @@ public:
     typename Traits2::size_type alloc(handles<Traits2>& h, unsigned logical_sz)
     {
         constexpr unsigned block_sz = v1::block::header_size(mode).count();
-        using ops_type = pool_ops<pool_ops_traits<pool&, handles<Traits2>&>>;
+        using ops_type = pool_ops<pool_ops_ref_traits<pool, handles<Traits2>>>;
         return ops_type{*this, h}.alloc(ops_type::do_alias(logical_sz + block_sz), mode).handle;
     }
 };
@@ -419,29 +416,16 @@ public:
     using handles_traits = detail::v1::handles_traits<page_type[H]>;
     using handle_type = typename handles_traits::size_type;
     using pool_traits = detail::v1::pool_traits<char[N]>;
-#if TRANSITION1
-    using pool_op_traits = detail::v1::pool_ops_traits<detail::v1::pool<pool_traits>, detail::v1::handles<handles_traits>>;
-#else
-    using pool_op_traits = detail::v1::pool_ops_traits<detail::v1::pool<pool_traits>&, detail::v1::handles<handles_traits>&>;
-#endif
+    using pool_op_traits = detail::v1::pool_ops_traits<pool_traits, handles_traits>;
     using ops_type = detail::v1::pool_ops<pool_op_traits>;
 
 private:
-#if !TRANSITION1
-    detail::v1::pool<pool_traits> pool_;
-    detail::v1::handles<handles_traits> handles_;
-#endif
-
 #if UNIT_TESTING
 public:
 #endif
-#if !TRANSITION1
-    ops_type ops() { return {pool_, handles_}; }
-#else
     ops_type ops_;
     ops_type& ops() { return ops_; }
     const ops_type& ops() const { return ops_; }
-#endif
 
 public:
     //handle_type alloc(int logical_sz) { return pool_.alloc(handles_, logical_sz); }
@@ -461,38 +445,20 @@ public:
     using handles_traits = detail::v1::handles_traits<estd::span<page_type>>;
     using pool_traits = detail::v1::pool_traits<estd::span<char>>;
     using handle_type = typename handles_traits::size_type;
-#if TRANSITION2
-    using pool_op_traits = detail::v1::pool_ops_traits<detail::v1::pool<pool_traits>, detail::v1::handles<handles_traits>>;
-#else
-    using pool_op_traits = detail::v1::pool_ops_traits<detail::v1::pool<pool_traits>&, detail::v1::handles<handles_traits>&>;
-#endif
+    using pool_op_traits = detail::v1::pool_ops_traits<pool_traits, handles_traits>;
     using ops_type = detail::v1::pool_ops<pool_op_traits>;
 
 private:
-#if !TRANSITION2
-    detail::v1::pool<pool_traits> pool_;
-    detail::v1::handles<handles_traits> handles_;
-#endif
-
 #if UNIT_TESTING
 public:
 #endif
-#if !TRANSITION2
-    ops_type ops() { return {pool_, handles_}; }
-#else
     ops_type ops_;
     ops_type& ops() { return ops_; }
     const ops_type& ops() const { return ops_; }
-#endif
 
 public:
     pool(estd::span<page_type> pages, estd::span<char> raw) :
-#if !TRANSITION2
-        pool_(raw),
-        handles_(pages)
-#else
         ops_(raw, pages)
-#endif
     {}
 
     //handle_type alloc(int logical_sz) { return pool_.alloc(handles_, logical_sz); }

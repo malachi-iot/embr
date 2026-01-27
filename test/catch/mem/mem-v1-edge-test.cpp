@@ -54,7 +54,7 @@ TEST_CASE("gc mem v1 edge cases", "[memory][gc]")
     using handles_type = detail::v1::handles<handles_traits>;
     using pool_traits = detail::v1::pool_traits<char[pool_size]>;
     using pool_type = detail::v1::pool<pool_traits>;
-    using pool_ops_traits = detail::v1::pool_ops_traits<pool_type&, handles_type&>;
+    using pool_ops_traits = detail::v1::pool_ops_ref_traits<pool_type, handles_type>;
 
     handles_type handles;
     pool_type pool;
@@ -167,7 +167,7 @@ TEST_CASE("gc mem v1 edge cases", "[memory][gc]")
             using handles_type = detail::v1::handles<handles_traits>;
             using pool_traits = detail::v1::pool_traits<char[pool_size]>;
             using pool_type = detail::v1::pool<pool_traits>;
-            using traits = detail::v1::pool_ops_traits<pool_type, handles_type&>;
+            using traits = detail::v1::pool_ops_val_traits<pool_type, handles_type&>;
             using ops_type = detail::v1::pool_ops<traits>;
 
             ops_type op{estd::nullopt, handles};
