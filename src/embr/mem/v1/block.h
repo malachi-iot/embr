@@ -12,16 +12,11 @@ namespace embr { namespace mem {
 
 namespace detail { inline namespace v1 {
 
-struct block_mode_base : block_mode_enum
-{
-    // DEBT: Do stricter check to make sure prev_/next_ are compatible
-    static constexpr unsigned null = handles_traits_base::null;
-    using handle_type = handles_traits_base::size_type;
-};
+struct block_base_uint8 : block_mode_enum, handles_traits_uint8 {};
 
 class block_diagnostic;
 
-class alignas(void*) block : public block_mode_base
+class alignas(void*) block : public block_base_uint8
 {
     // DEBT: rtto base is WAY overloaded.  Needs attention
     using rtto_base_type = estd::internal::rtto_base::base;
@@ -129,16 +124,20 @@ public:
     void move_from(block* from, unsigned sz);
 };
 
+using block_8 = block;
+
+// Block is NOT packed since following data wants to sit comfortably on aligned pointer boundary
 class block_diagnostic
 {
     block b{};
 
     static_assert(offsetof(block, data_) == sizeof(void*));
+    static_assert(sizeof(block) == sizeof(void*));
 };
 
 
 // EXPERIMENTAL
-class alignas(void*) small_block : block_mode_base
+class alignas(void*) block_6 : block_base_uint8
 {
     struct alignas(void*)
     {

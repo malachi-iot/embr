@@ -61,8 +61,8 @@ public:
     using handles_type = estd::remove_reference_t<typename traits::handles_type>;
     using pool_traits = typename storage_type::traits;
     using handles_traits = typename handles_type::traits;
-    using block = v1::block;
-    using handle_type = typename handles_traits::size_type;
+    using block = v1::block_8;
+    using handle_type = typename handles_traits::handle_type;
     using page_type = typename handles_traits::value_type;
     using pos_type = typename page_type::unit_type;
     using bundle = v1::bundle_base<handles_traits, block>;
@@ -220,7 +220,7 @@ public:
     /// @brief resize
     /// @param new_sz
     /// @return
-    v1::block* resize(bundle, pos_type new_sz);
+    block* resize(bundle, pos_type new_sz);
     block* resize(bundle bn, bundle bn_next, pos_type new_sz);
 
     /// Creates a new free block inside bundle, before next block

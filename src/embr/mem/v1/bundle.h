@@ -30,13 +30,16 @@ struct bundle_base
 
     static constexpr handle_type null = handles_traits::null;
 
+    static_assert(Block::null == null);
+
     Block* block;
     page_type* page;
     handle_type handle{null};
 
     constexpr bundle_base() = default;
 
-    // DEBT: Sloppy conversion from non-const to const.  Should enforce this more strictly
+    // Conversion from non-const to const.  Kicks back if incoming Block2 is incompatible.
+    // Tried enable_if_t here but errors are clearer without it.
     template <class Block2>
     constexpr bundle_base(const bundle_base<handles_traits, Block2>& convert_from) :
         block(convert_from.block),
@@ -70,7 +73,7 @@ struct bundle_base
 
         // Despite null page validity, null handle is not.  Don't call get_bundle if your handle is null.
         // Only valid when entire bundle is nulled out
-        EMBR_MEM_INVARIANT_ASSERT(handle != block_mode_base::null || page != nullptr,
+        EMBR_MEM_INVARIANT_ASSERT(handle != null || page != nullptr,
             "Handle cannot be null unless page is also null", "");
 
         if(page->is_null()) return {};

@@ -67,21 +67,21 @@ struct container_traits<std::span<T, N>>
 
 namespace detail { inline namespace v1 {
 
-struct handles_traits_base
+struct handles_traits_uint8
 {
-    using size_type = uint8_t;
+    using handle_type = uint8_t;
 
-    static constexpr size_type null = estd::numeric_limits<size_type>::max();
+    static constexpr handle_type null = estd::numeric_limits<handle_type>::max();
 };
 
 template <class Container>
 struct handles_traits :
-    handles_traits_base,
+    handles_traits_uint8,
     container_traits<Container>
 {
     using base_type = container_traits<Container>;
     using typename base_type::value_type;
-    using typename handles_traits_base::size_type;
+    using size_type = typename handles_traits_uint8::handle_type;
     using container_type = Container;
 
     static constexpr bool is_null(const value_type& v) { return v.is_null(); }

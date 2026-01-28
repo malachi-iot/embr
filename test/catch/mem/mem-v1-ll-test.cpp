@@ -37,6 +37,13 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
     // DEBT: Still having to do this
     ops.reset();
 
+    SECTION("bundle things")
+    {
+        bundle bn1;
+        const_bundle cbn(bn1);
+        // Correctly kicks back
+        //bundle bn2(cbn);
+    }
     SECTION("detail")
     {
         SECTION("page")
@@ -330,7 +337,7 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
 
         SECTION("to BFB")
         {
-            block* b = bn.block;
+            //block* b = bn.block;
             page* p = bn.page;
             pos_type pos = p->pos();
             bundle bn_free = op.get_bundle(1);
