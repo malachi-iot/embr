@@ -67,7 +67,7 @@ invariant_result pool_ops<Traits>::invariant() const
     size_tally = zero_pos;
 
     // Walk backward and check that 'prev' is sane
-    for(bn = bn_last; bn.handle != null; prev(bn.block, &bn), bn)
+    for(bn = bn_last; bn.handle != null; bn = prev(bn))
     {
         // As we walk backward, if physical position moves forward, that's an error
         if(bn.pos() > bn_last.pos())

@@ -51,18 +51,6 @@ auto pool_ops<Traits>::first_free(pos_type phys_sz, pos_type* found_size) const 
     return {};
 }
 
-// FIX: These next/prev guys need bounds checking
-
-template <class Traits>
-template <class Block>
-void pool_ops<Traits>::prev(Block* b, bundle_base<handles_traits, Block>* out) const
-{
-    using page_type = typename bundle_base<handles_traits, Block>::page_type;
-    page_type& page = handles_[b->prev()];
-    new (out) bundle_base<handles_traits, Block>{ storage().block(page.pos()), &page, b->prev() };
-}
-
-
 template <class Traits>
 template <class Block>
 void pool_ops<Traits>::next(Block* b, bundle_base<handles_traits, Block>* out) const
@@ -109,11 +97,12 @@ auto pool_ops<Traits>::create_free_block(
 }
 
 template <class Traits>
-auto pool_ops<Traits>::split_at(bundle b, pos_type at) -> handle_type
+auto pool_ops<Traits>::split_at(const bundle& b, pos_type at) -> handle_type
 {
     // Brand new handle needed for this
     return handles_.alloc([&](handle_type h, page_type& page)
     {
+        // At new handle, assign split point for new block location
         page.pos(at);
 
         create_free_block(at, b.handle, b.block->next());
@@ -140,7 +129,7 @@ void pool_ops<Traits>::reset()
 
 
 template <class Traits>
-void pool_ops<Traits>::alloc(bundle bn, pos_type found_sz, pos_type phys_sz, block::modes mode)
+void pool_ops<Traits>::alloc(const bundle& bn, pos_type found_sz, pos_type phys_sz, block::modes mode)
 {
     // If we're 3 blocks larger, go ahead and split
     // We start with min block size.  On 64-bit systems that is:
@@ -170,16 +159,14 @@ template <class Traits>
 auto pool_ops<Traits>::alloc(pos_type phys_sz, block::modes mode) -> bundle
 {
     pos_type found_size(0);
-    const_bundle bn = first_free(phys_sz, &found_size);
 
-    if(bn.is_null() == false)
-    {
-        alloc(bn.unconst(), found_size, phys_sz, mode);
-    }
+    bundle bn = first_free(phys_sz, &found_size).unconst();
+
+    if(bn.is_null() == false)   alloc(bn, found_size, phys_sz, mode);
 
     //assert(phys_size(bn) >= pos_type(2));
 
-    return bn.unconst();
+    return bn;
 }
 
 template <class Traits>
@@ -190,9 +177,9 @@ auto pool_ops<Traits>::construct(Args&&...args) -> bundle
     constexpr bool rtto_proxied = mode == block::RttoProxy || mode == block::Immobile;
     // DEBT: Effective but error prone accounting for various block sizing.  Probably
     // ought to move this plumbing into 'emplace'
-    constexpr unsigned block_sz = block::header_size(mode).count();
+    constexpr bytes block_sz = block::header_size(mode);
 
-    bundle bn = alloc(do_alias(sizeof(T) + block_sz), mode);
+    bundle bn = alloc(do_alias(sizeof(T) + block_sz.count()), mode);
 
     if(bn.is_null())    return {};
 

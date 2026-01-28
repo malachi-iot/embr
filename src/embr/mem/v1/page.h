@@ -34,10 +34,13 @@ private:
 public:
     friend void swap(page& lhs, page& rhs) noexcept
     {
-        std::swap(lhs.pos_, rhs.pos_);
+        rep temp = lhs.pos_;
+        lhs.pos_ = rhs.pos_;
+        rhs.pos_ = temp;
+        //std::swap(lhs.pos_, rhs.pos_);    // Not happy on packed types
     }
 
-};
+}    __attribute__((packed));
 
 #endif
 

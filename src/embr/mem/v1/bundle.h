@@ -38,7 +38,7 @@ struct bundle_base
 
     // DEBT: Sloppy conversion from non-const to const.  Should enforce this more strictly
     template <class Block2>
-    bundle_base(const bundle_base<handles_traits, Block2>& convert_from) :
+    constexpr bundle_base(const bundle_base<handles_traits, Block2>& convert_from) :
         block(convert_from.block),
         page(convert_from.page),
         handle(convert_from.handle)
