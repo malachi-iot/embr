@@ -23,7 +23,7 @@ struct page
     static constexpr rep null = unit_traits::default_value();
 
     constexpr bool is_null() const { return pos_ == null; }
-    void reset() { pos_ = null; }
+    ESTD_CPP_CONSTEXPR(14) void reset() { pos_ = null; }
 
     constexpr const unit_type pos() const { return unit_type{ pos_ }; }
     void pos(unit_type v) { pos_ = v.count(); }

@@ -8,6 +8,7 @@
 
 
 #include "filter-iterator.h"
+#include "error.h"
 #include "fwd.h"
 #include "traits.h"
 
@@ -107,7 +108,26 @@ public:
 
     constexpr unsigned size() const { return estd::size(container_); }
 
-    constexpr bool invariant() const;
+    const value_type* first_zero() const
+    {
+        for(const_reference page : container_)  if(traits::is_zero(page)) return &page;
+
+        return nullptr;
+    }
+
+    // DEBT: Not 100% sure we want zero-pos to qualify as an invariant check
+    invariant_result invariant() const
+    {
+        using result = invariant_result::unexpected_type;
+
+        int valid = 0;
+
+        for(const_reference page : container_)  if(traits::is_zero(page))   ++valid;
+
+        if(valid != 1)  return result({"zero check failed", "phase 1"});
+
+        return {};
+    }
 };
 
 }}

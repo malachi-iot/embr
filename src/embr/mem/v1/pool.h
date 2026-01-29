@@ -145,7 +145,7 @@ public:
     template <class ...Args>
     bundle get_bundle(Args&&...args)
     {
-        return std::as_const(*this).get_bundle(std::forward<Args>(args)...).unconst();
+        return estd::as_const(*this).get_bundle(std::forward<Args>(args)...).unconst();
     }
 
     // DEBT: Need better name

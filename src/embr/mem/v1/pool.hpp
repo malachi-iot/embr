@@ -21,12 +21,9 @@ namespace detail { inline namespace v1 {
 template <class Traits>
 auto pool_ops<Traits>::first() const -> const_bundle
 {
-    constexpr pos_type zero{0};
+    const page_type* page = handles_.first_zero();
 
-    for(const page_type& page : handles_)
-        if(page.pos() == zero) return get_bundle(page);
-
-    return {};
+    return page ? get_bundle(*page) : const_bundle{};
 }
 
 template <class Traits>

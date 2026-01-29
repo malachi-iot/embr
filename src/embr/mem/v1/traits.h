@@ -74,18 +74,34 @@ struct handles_traits_uint8
     static constexpr handle_type null = estd::numeric_limits<handle_type>::max();
 };
 
+// A little bit of a reversal, Page itself dictates some of the traits - this
+// is to keep C++ error spew smaller
+template <class Page>
+struct page_traits
+{
+    using page_type = Page;
+    using unit_type = typename page_type::unit_type;
+
+    static constexpr unit_type zero = unit_type(0);
+
+    static constexpr bool is_null(const page_type& v) { return v.is_null(); }
+    static ESTD_CPP_CONSTEXPR(14) void reset(page_type& v) { v.reset(); }
+    static constexpr bool is_zero(const page_type& v)
+    {
+        return v.pos() == zero;
+    }
+};
+
 template <class Container>
 struct handles_traits :
     handles_traits_uint8,
-    container_traits<Container>
+    container_traits<Container>,
+    page_traits<typename container_traits<Container>::value_type>
 {
     using base_type = container_traits<Container>;
     using typename base_type::value_type;
     using size_type = typename handles_traits_uint8::handle_type;
     using container_type = Container;
-
-    static constexpr bool is_null(const value_type& v) { return v.is_null(); }
-    static void reset(value_type& v) { v.reset(); }
 };
 
 template <class Container>
