@@ -251,11 +251,7 @@ TEST_CASE("gc mem v1 battery", "[memory][gc][battery]")
             {
                 pool_type pool({ pages.get(), 10 }, { raw_pool, 512 });
 
-                auto& ops = pool.ops();
-
-                // DEBT: Still having to do this
-                ops.reset();
-                battery(ops, i, rng());
+                battery(pool.ops(), i, rng());
             }
 
             delete [] raw_pool;
@@ -273,11 +269,7 @@ TEST_CASE("gc mem v1 battery", "[memory][gc][battery]")
 
                 pool_type pool({ pages.data(), pages.size() }, { raw.data(), raw.size() });
 
-                auto& ops = pool.ops();
-
-                // DEBT: Still having to do this
-                ops.reset();
-                battery(ops, i, rng());
+                battery(pool.ops(), i, rng());
             }
         }
         SECTION("force feed")
@@ -296,11 +288,7 @@ TEST_CASE("gc mem v1 battery", "[memory][gc][battery]")
 
                 CAPTURE(raw_pages_sz, raw_pool_sz);
 
-                auto& ops = pool.ops();
-
-                // DEBT: Still having to do this
-                ops.reset();
-                battery(ops, 13, seed);
+                battery(pool.ops(), 13, seed);
 
                 delete [] raw_pages;
                 delete [] raw_pool;
@@ -323,11 +311,7 @@ TEST_CASE("gc mem v1 battery", "[memory][gc][battery]")
 
                 pool_type pool({ pages.data(), pages.size() }, { raw.data(), raw.size() });
 
-                auto& ops = pool.ops();
-
-                // DEBT: Still having to do this
-                ops.reset();
-                battery(ops, i, rng());
+                battery(pool.ops(), i, rng());
             }
         }
 #endif

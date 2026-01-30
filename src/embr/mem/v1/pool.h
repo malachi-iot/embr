@@ -335,12 +335,14 @@ class pool_crtp
     //using handle_type = typename Derived::handle_type;
 
 public:
-    void* lock(int h)
+    template <class Handle>
+    void* lock(Handle h)
     {
         return OPS.lock(h);
     }
 
-    void unlock(int h)
+    template <class Handle>
+    void unlock(Handle h)
     {
         OPS.unlock(h);
     }
@@ -414,8 +416,10 @@ public:
     ops_type& ops() { return ops_; }
     const ops_type& ops() const { return ops_; }
 
-public:
-    //handle_type alloc(int logical_sz) { return pool_.alloc(handles_, logical_sz); }
+    pool()
+    {
+        ops_.reset();
+    }
 };
 
 }
@@ -431,7 +435,7 @@ public:
     using page_type = detail::v1::page<uint16_t>;
     using handles_traits = detail::v1::handles_traits<estd::span<page_type>>;
     using pool_traits = detail::v1::pool_traits<estd::span<char>>;
-    using handle_type = typename handles_traits::size_type;
+    using handle_type = typename handles_traits::handle_type;
     using pool_op_traits = detail::v1::pool_ops_traits<pool_traits, handles_traits>;
     using ops_type = detail::v1::pool_ops<pool_op_traits>;
 
@@ -446,9 +450,9 @@ public:
 public:
     pool(estd::span<page_type> pages, estd::span<char> raw) :
         ops_(raw, pages)
-    {}
-
-    //handle_type alloc(int logical_sz) { return pool_.alloc(handles_, logical_sz); }
+    {
+        ops_.reset();
+    }
 };
 
 }

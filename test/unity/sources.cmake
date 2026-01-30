@@ -4,6 +4,7 @@ set(SOURCES
         delegate-queue.cpp
         dsp.cpp
         lwip.cpp
+        mem.cpp
         misc.cpp
         objlist.cpp
         observer.cpp

@@ -192,9 +192,6 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
         using block = detail::v1::block;
         constexpr unsigned block_sz = block::header_size(block::Trivial).count();
 
-        // DEBT: This guy still being stupid
-        pool1.ops().reset();
-
         int counter = 0;
 
         // FIX: All these shared_handle MAY want to participate in zero'ing lock counter
@@ -357,8 +354,11 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
             REQUIRE(counter == 0);
         }
     }
-    SECTION("layer2")
+    SECTION("layer3")
     {
+        layer3::pool::page_type pages[20];
+        char buf[512];
 
+        layer3::pool pool1(pages, buf);
     }
 }
