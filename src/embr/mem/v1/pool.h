@@ -6,6 +6,8 @@
 #include <estd/string_view.h>
 #include <estd/utility.h>
 
+#include "../../internal/mutex.h"
+
 #include "bundle.h"
 #include "error.h"
 #include "fwd.h"
@@ -154,8 +156,15 @@ public:
         return pos_type((v + aliasing - 1) / aliasing);
     }
 
-    void* lock(bundle);
-    void* lock(handle_type h)   { return lock(get_bundle(h)); }
+    template <class Mutex = embr::internal::noop_mutex>
+    void* lock(bundle, Mutex = {});
+
+    template <class Mutex = embr::internal::noop_mutex>
+    void* lock(handle_type h, Mutex mutex = {})
+    {
+        return lock(get_bundle(h), mutex);
+    }
+
     void unlock(handle_type h);
 
     bundle prev(const const_bundle& bn) { return get_bundle(bn.block->prev()); }

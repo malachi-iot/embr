@@ -261,7 +261,8 @@ void pool_ops<Traits>::dealloc(bundle bn)
 
 
 template <class Traits>
-void* pool_ops<Traits>::lock(bundle bn)
+template <class Mutex>
+void* pool_ops<Traits>::lock(bundle bn, Mutex mutex)
 {
     bn.lock_up();
 

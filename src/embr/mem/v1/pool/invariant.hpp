@@ -17,7 +17,7 @@ template <class Traits>
 invariant_result pool_ops<Traits>::invariant() const
 {
     using result = invariant_result::unexpected_type;
-    using violation = invariant_violation;
+
     //using iterator = typename handles_type::const_iterator;
     constexpr pos_type zero_pos = pos_type(0);
     // TODO: Inspires a thought of convertible-to which embr/estd units explored before.  pos_type
