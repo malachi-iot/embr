@@ -33,13 +33,12 @@ protected:
 
     struct alignas(void*)
     {
-        unsigned prev_ : 8;
-        unsigned next_ : 8;
+        uint8_t prev_, next_;
         modes mode_ : 2;
         bool allocated_ : 1;
         unsigned lock_count_ : 4;
         unsigned ref_count_ : 4;
-    };
+    }   __attribute__((packed));
 
     // DEBT: Apparently this and flexible array is a GCC extension.
     char data_[0];
@@ -47,9 +46,9 @@ protected:
 public:
     block_header_8() = default;
     explicit block_header_8(modes mode, bool allocated,
-        unsigned prev = null, unsigned next = null) :
-        prev_{prev},
-        next_{next},
+        handle_type prev = null, handle_type next = null) :
+        prev_{uint8_t(prev)},
+        next_{uint8_t(next)},
         mode_{mode},
         allocated_{allocated},
         lock_count_{0},
@@ -108,7 +107,7 @@ public:
     block_8() = default;
 
     explicit block_8(modes mode, bool allocated,
-        unsigned prev = null, unsigned next = null) :
+        handle_type prev = null, handle_type next = null) :
         base_type(mode, allocated, prev, next)
     {}
 
