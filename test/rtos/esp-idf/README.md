@@ -71,6 +71,7 @@ These tests are all for variants of Espressif ESP32
 | 17SEP23 | unity        | RejsaCAN v3.1        | ESP32S3        | v5.1.1   | Pass     | 
 | 07JAN24 | unity        | Lilygo QT Pro        | ESP32S3        | v5.1.2   | Pass     | 
 | 10JAN24 | unity        | WaveShare DevKit     | ESP32C6        | v5.1.2   | Pass     | 
+| 31JAN26 | unity        | QEMU                 | ESP32          | v5.5.2   | Pass*    | Must turn on exceptions due to estd v0.8.11-beta1
 | 06JAN26 | unity        | QEMU                 | ESP32S3        | v5.5.2   | Fail     | esp-helper.cpp gets mad
 | 05JAN25 | unity        | QEMU                 | ESP32          | v5.3.2   | Pass     | NOTE: LwIP loopback now flaky due to disabled WiFi init
 | 07MAR25 | unity        | QEMU                 | ESP32S3        | v5.3.2   | Pass     |
