@@ -98,7 +98,7 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
         SECTION("block")
         {
             int counter{};
-            using block = detail::v1::block;
+            using block = detail::v1::block_8;
             using proxy = estd::internal::rtto_base::base;
 
             union

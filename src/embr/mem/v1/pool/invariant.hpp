@@ -141,7 +141,7 @@ std::ostream& pool_ops<Traits>::dump(std::ostream& out) const
         }
         bytes_type sz = phys_size(bn);
         out << ", " << (bn.allocated() ? "A" : "F");
-        out << (bn.block->mode() == v1::block::Trivial ? 'T' : 'N');
+        out << (bn.block->mode() == v1::block_8::Trivial ? 'T' : 'N');
         out << ", prev=" << (int)bn.block->prev();
         out << ", next=" << (int)bn.block->next();
         out << ", sz=" << sz.count() << "b";

@@ -12,7 +12,7 @@ namespace embr { namespace mem {
 namespace detail { inline namespace v1 {
 
 template <class HandlesTraits, class Block>
-struct bundle_base
+struct bundle_base : block_mode_enum
 {
     using handles_traits = HandlesTraits;
     using handle_type = typename HandlesTraits::size_type;
@@ -51,7 +51,7 @@ struct bundle_base
         block{block}, page{page}, handle{handle}
     {}
 
-    constexpr block::modes mode() const { return block->mode_; }
+    constexpr modes mode() const { return block->mode_; }
     constexpr bool allocated() const { return block->allocated(); }
 
     constexpr pos_type pos() const { return page->pos(); }
@@ -60,7 +60,7 @@ struct bundle_base
     // at present block can be a super invalid pointer (0xFF location off in the weeds)
     constexpr bool is_null() const { return block == nullptr; }
 
-    constexpr bool is_trivial() const { return block->mode() == v1::block::Trivial; }
+    constexpr bool is_trivial() const { return block->mode() == v1::block_8::Trivial; }
 
     invariant_result invariant() const
     {
@@ -83,7 +83,7 @@ struct bundle_base
 
     void* data() const
     {
-        return block->mode_ == block::RttoProxy ? block->proxy()->storage() : block->data();
+        return block->mode_ == RttoProxy ? block->proxy()->storage() : block->data();
     }
 
     constexpr bool has_prev() const { return block->prev() != null; }
@@ -92,7 +92,7 @@ struct bundle_base
     constexpr bytes_unit<unsigned> header_size() const
     {
         // DEBT: Do a CTAD
-        return bytes_unit<unsigned>{ block::header_size(block->mode()) };
+        return bytes_unit<unsigned>{ Block::header_size(block->mode()) };
     }
 
     // DEBT: Sloppy way to convert between const and non-const bundles.
@@ -119,7 +119,7 @@ private:
     void next(handle_type v) const  { block->next_ = v; }
     void allocated(bool v) const    { block->allocated_ = v; }
 
-    void mode(block::modes v)       { block->mode_ = v; }
+    void mode(modes v)       { block->mode_ = v; }
     void reserve()                  { block->lock_count_ = 0xF; }
 
     using unconst_type = bundle_base<handles_traits, block_noncv_type>;

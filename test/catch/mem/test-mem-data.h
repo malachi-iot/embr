@@ -29,6 +29,8 @@ namespace test { inline namespace mem {
 
 using namespace embr::mem::detail::v1;
 
+using block = block_8;
+
 struct page
 {
     unsigned phys_sz;

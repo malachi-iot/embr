@@ -37,7 +37,7 @@ static void assemble_pool(typename detail::pool_ops<Traits>& ops, const test::pa
         handles[i].pos(tally);
         bundle b = ops.get_bundle(i);
 
-        *b.block = detail::block(page.blk.mode(), page.blk.allocated(), prev, next);
+        *b.block = detail::block_8(page.blk.mode(), page.blk.allocated(), prev, next);
 
         tally += pos_type(page.phys_sz / aliasing);
 

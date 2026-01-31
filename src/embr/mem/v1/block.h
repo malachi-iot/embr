@@ -16,21 +16,21 @@ struct block_base_uint8 : block_mode_enum, handles_traits_uint8 {};
 
 class block_diagnostic;
 
-class alignas(void*) block : public block_base_uint8
+class alignas(void*) block_header_8 : public block_base_uint8
 {
-    // DEBT: rtto base is WAY overloaded.  Needs attention
-    using rtto_base_type = estd::internal::rtto_base::base;
-    using rtto_proxy = estd::internal::rtto_base::rtto_base::proxy<>;
+    using this_type = block_header_8;
 
+protected:
     template <class T>
     using rtto = estd::internal::rtto<T>;
 
     template <class HandlesTraits, class Block>
     friend class bundle_base;
 
-    friend class block_diagnostic;
+    // DEBT: rtto base is WAY overloaded.  Needs attention
+    using rtto_base_type = estd::internal::rtto_base::base;
+    using rtto_proxy = estd::internal::rtto_base::rtto_base::proxy<>;
 
-protected:
     struct alignas(void*)
     {
         unsigned prev_ : 8;
@@ -41,11 +41,12 @@ protected:
         unsigned ref_count_ : 4;
     };
 
-    char data_[];
+    // DEBT: Apparently this and flexible array is a GCC extension.
+    char data_[0];
 
 public:
-    block() = default;
-    explicit block(modes mode, bool allocated,
+    block_header_8() = default;
+    explicit block_header_8(modes mode, bool allocated,
         unsigned prev = null, unsigned next = null) :
         prev_{prev},
         next_{next},
@@ -55,26 +56,10 @@ public:
         ref_count_{0}
     {}
 
-    // emplace constructors
-    // DEBT: Nifty idea, but unfortunately flawed.  By the time we reach a block to do this, it's
-    // already a free-block so technically performing a 2nd in-place construction is bad form.
-    // That's despite the fact that it's safe and functional.
-    template <class T, class ...Args>
-    explicit block(estd::in_place_index_t<modes::Immobile>, estd::in_place_type_t<T>, Args&&...args);
+    block_header_8(const this_type&) = default;
 
-    template <class T, class ...Args>
-    explicit block(estd::in_place_index_t<modes::Trivial>, estd::in_place_type_t<T>, Args&&...args);
-
-    template <class T, class ...Args>
-    explicit block(estd::in_place_index_t<modes::RttoProxy>, estd::in_place_type_t<T>, Args&&...args);
-
-    template <class T, class ...Args>
-    explicit block(estd::in_place_index_t<modes::RttoBase>, estd::in_place_type_t<T>, Args&&...args);
-
-    block(const block&) = default;
-
-    block& operator=(const block&) = default;
-    block& operator=(block&&) = default;
+    this_type& operator=(const this_type&) = default;
+    this_type& operator=(this_type&&) = default;
 
     constexpr modes mode() const { return mode_; }
     constexpr handle_type prev() const { return prev_; }
@@ -91,17 +76,12 @@ public:
         return {};
     }
 
-    void* data() { return data_; }
-    constexpr const void* data() const { return data_; }
-    rtto_proxy* proxy() { return (rtto_proxy*) data_; }
-    rtto_base_type* rtto_base() { return (rtto_base_type*) data_; }
-
     // FIX: Probably not 100% right, because RttoBase mode includes size of rtto::u_ in the object itself
     static constexpr estd::units::bytes<unsigned> header_size(modes mode)
     {
         return estd::units::bytes<unsigned>((mode == Trivial || mode == RttoBase) ?
-            sizeof(block) :
-            (sizeof(block) + sizeof(estd::internal::rtto_base::base)));
+            sizeof(this_type) :
+            (sizeof(this_type) + sizeof(estd::internal::rtto_base::base)));
     }
 
     // DEBT: Protect this and make friend classes, or pull WriteableBlock child stunt
@@ -112,6 +92,32 @@ public:
         lock_count_ = 0;
         ref_count_ = 0;
     }
+};
+
+
+class alignas(void*) block_8 : public block_header_8
+{
+    using base_type = block_header_8;
+    using this_type = block_8;
+
+    friend class block_diagnostic;
+
+    // DEBT: data[0] is a GCC extension, according to AI
+
+public:
+    block_8() = default;
+
+    explicit block_8(modes mode, bool allocated,
+        unsigned prev = null, unsigned next = null) :
+        base_type(mode, allocated, prev, next)
+    {}
+
+    ESTD_CPP_DEFAULT_RULE_OF_5(block_8)
+
+    void* data() { return data_; }
+    constexpr const void* data() const { return data_; }
+    rtto_proxy* proxy() { return (rtto_proxy*) data_; }
+    rtto_base_type* rtto_base() { return (rtto_base_type*) data_; }
 
     template <class T, class ...Args>
     void emplace_rtto_proxied(Args&&...args);
@@ -122,18 +128,16 @@ public:
     // Destroy tracked object, not necessarily block itself
     void destroy();
 
-    void move_from(block* from, unsigned sz);
+    void move_from(this_type* from, unsigned sz);
 };
-
-using block_8 = block;
 
 // Block is NOT packed since following data wants to sit comfortably on aligned pointer boundary
 class block_diagnostic
 {
-    block b{};
+    block_8 b{};
 
-    static_assert(offsetof(block, data_) == sizeof(void*));
-    static_assert(sizeof(block) == sizeof(void*));
+    static_assert(offsetof(block_8, data_) == sizeof(void*));
+    static_assert(sizeof(block_8) == sizeof(void*));
 };
 
 

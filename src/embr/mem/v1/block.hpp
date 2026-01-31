@@ -11,36 +11,9 @@ namespace embr { namespace mem {
 
 namespace detail { inline namespace v1 {
 
-template <class T, class ...Args>
-block::block(estd::in_place_index_t<Immobile>, estd::in_place_type_t<T>, Args&&...args) :
-    mode_{Immobile}
-{
-}
 
 template <class T, class ...Args>
-block::block(estd::in_place_index_t<Trivial>, estd::in_place_type_t<T>, Args&&...args) :
-    mode_{Trivial}
-{
-
-}
-
-template <class T, class ...Args>
-block::block(estd::in_place_index_t<RttoProxy>, estd::in_place_type_t<T>, Args&&...args) :
-    mode_{RttoProxy}
-{
-    emplace_rtto_proxied<T>(std::forward<Args>(args)...);
-}
-
-
-template <class T, class ...Args>
-block::block(estd::in_place_index_t<modes::RttoBase>, estd::in_place_type_t<T>, Args&&...args) :
-    mode_{RttoBase}
-{
-
-}
-
-template <class T, class ...Args>
-void block::emplace_rtto_proxied(Args&&...args)
+void block_8::emplace_rtto_proxied(Args&&...args)
 {
     using rt = rtto<T>;
     using proxy = typename rt::template proxy<>;
@@ -49,7 +22,7 @@ void block::emplace_rtto_proxied(Args&&...args)
 }
 
 template <class T, class ...Args>
-void block::emplace(Args&&...args)
+void block_8::emplace(Args&&...args)
 {
     new (data_) T(std::forward<Args>(args)...);
 }
@@ -63,35 +36,35 @@ inline block& block::operator=(block&& move_from)
 }
 */
 
-inline void block::move_from(block* from, unsigned sz)
+inline void block_8::move_from(this_type* from, unsigned sz)
 {
     switch(from->mode_)
     {
-        case block::Trivial:
+        case Trivial:
             std::memmove(data_, from->data_, sz);
-            mode_ = block::Trivial;
+            mode_ = Trivial;
             break;
 
-        case block::RttoProxy:
+        case RttoProxy:
         {
             new (data_) rtto_proxy(std::move(*from->proxy()), sz);
-            mode_ = block::RttoProxy;
+            mode_ = RttoProxy;
             break;
         }
 
-        case block::RttoBase:
+        case RttoBase:
             from->rtto_base()->move_to(rtto_base());
-            mode_ = block::RttoBase;
+            mode_ = RttoBase;
             break;
 
-        case block::Immobile:
+        case Immobile:
             // CANNOT
             return;
     }
 }
 
 
-inline void block::destroy()
+inline void block_8::destroy()
 {
     assert(lock_count_ == 0);
 

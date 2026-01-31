@@ -111,7 +111,7 @@ auto pool_ops<Traits>::resize(bundle bn, bundle bn_next, pos_type new_sz) -> blo
 }
 
 template <class Traits>
-v1::block* pool_ops<Traits>::resize(bundle bn, pos_type new_sz)
+auto pool_ops<Traits>::resize(bundle bn, pos_type new_sz) -> block*
 {
     assert(bn.has_next());
     bundle bn_next = next(bn);
@@ -164,7 +164,7 @@ validated_result pool_ops<Traits>::move(
             // A:0  ... F:1 -> F:0  .. A:1
             // from ... to     from .. to
 
-            v1::block retained = *to.block;
+            block retained = *to.block;
 
             // New 'to' location moves backward enough to shrink preceding
             // 'from' block before it to match F size (keep F size consistent)
@@ -187,7 +187,7 @@ validated_result pool_ops<Traits>::move(
             // F:0 .. A:1  -> A:0 ... F:1
             // to  .. from    to  ... from
 
-            v1::block retained = *from.block;
+            block retained = *from.block;
 
             // New 'from' location (1) moves forward to make room for expanding
             // 'to' block

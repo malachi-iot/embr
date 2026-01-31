@@ -109,7 +109,7 @@ struct pool_traits : estd::internal::container_traits<Container>
 {
     static_assert(sizeof(typename estd::internal::container_traits<Container>::value_type) == 1);
 
-    using block = v1::block;
+    using block = v1::block_8;
 };
 
 

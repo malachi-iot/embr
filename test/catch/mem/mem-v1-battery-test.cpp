@@ -19,7 +19,8 @@ static void battery(typename detail::pool_ops<Traits>& ops, int it, unsigned see
     std::mt19937 gen{seed}; // fixed seed: deterministic sequence
 
     using ops_type = typename detail::pool_ops<Traits>;
-    using block = detail::v1::block;
+    using block = detail::v1::block_8;
+    using modes = block_mode_enum::modes;
     using handles_traits = typename ops_type::handles_traits;
     using page_type = typename handles_traits::value_type;
     using pos_type = typename page_type::unit_type;

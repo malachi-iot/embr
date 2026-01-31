@@ -167,7 +167,7 @@ auto pool_ops<Traits>::alloc(pos_type phys_sz, block::modes mode) -> bundle
 }
 
 template <class Traits>
-template <block::modes mode, class T, class ...Args>
+template <block_mode_enum::modes mode, class T, class ...Args>
 auto pool_ops<Traits>::construct(Args&&...args) -> bundle
 {
     // Rtto and Immobile use proxy
@@ -225,10 +225,11 @@ typename HandlesTraits::size_type construct(pool<PoolTraits>& p, handles<Handles
     using is_trivial = estd::is_trivially_constructible<T>;
     using is_movable = estd::is_move_constructible<T>;
     using is_rtto_base = estd::is_base_of<estd::internal::rtto_base::base, T>;
-    constexpr v1::block::modes mode =
-        is_trivial::value ? v1::block::Trivial :
-        !is_movable::value ? v1::block::Immobile :
-        is_rtto_base::value ? v1::block::RttoBase : v1::block::RttoProxy;
+    using modes = block_mode_enum::modes;
+    constexpr modes mode =
+        is_trivial::value ? modes::Trivial :
+        !is_movable::value ? modes::Immobile :
+        is_rtto_base::value ? modes::RttoBase : modes::RttoProxy;
     using traits = pool_ops_val_traits<pool<PoolTraits>&, handles<HandlesTraits>&>;
 
     return pool_ops<traits>{p, h}.template construct<mode, T>(std::forward<Args>(args)...).handle;
@@ -240,7 +241,7 @@ void pool_ops<Traits>::dealloc(bundle bn)
     // DEBT: Consolidate with other free operations
     bn.block->destroy();
 
-    bn.block->reset(v1::block::Trivial, false);
+    bn.block->reset(v1::block_8::Trivial, false);
 
     if(bn.has_prev())
     {
