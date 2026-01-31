@@ -111,6 +111,7 @@ private:
 
     void lock_up()              { ++block->lock_count_; }
     unsigned lock_down()        { return --block->lock_count_; }
+    void lock_reset()           { block->lock_count_ = 0; }
     void ref_up() const         { ++block->ref_count_; }
     unsigned ref_down() const   { return --block->ref_count_; }
 
@@ -119,6 +120,7 @@ private:
     void allocated(bool v) const    { block->allocated_ = v; }
 
     void mode(block::modes v)       { block->mode_ = v; }
+    void reserve()                  { block->lock_count_ = 0xF; }
 
     using unconst_type = bundle_base<handles_traits, block_noncv_type>;
 

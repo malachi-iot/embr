@@ -81,6 +81,7 @@ public:
     constexpr handle_type next() const { return next_; }
     constexpr bool allocated() const { return allocated_; }
     constexpr unsigned lock_count() const { return lock_count_; }
+    constexpr bool reserved() const { return lock_count_ == 0xF; }
 
     invariant_result invariant() const
     {
