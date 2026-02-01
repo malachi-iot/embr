@@ -1,3 +1,5 @@
+#include <estd/internal/platform.h>
+
 #include "unit-test.h"
 
 #if ESTD_OS_FREERTOS
