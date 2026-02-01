@@ -25,9 +25,15 @@ void test_mem_gc()
 
     TEST_ASSERT_NOT_NULL(data);
 
+    pool.gc();
+
     pool.unlock(h);
 
+    pool.gc();
+
     pool.dealloc(h);
+
+    pool.gc();
 }
 
 #endif
