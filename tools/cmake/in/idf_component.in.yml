@@ -11,3 +11,4 @@ files:
 dependencies:
   malachi-iot/estd:
     version: "^0.8"
+    pre_release: true
