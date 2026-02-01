@@ -15,6 +15,8 @@ void test_mem_gc()
 {
     freertos::layer1::pool<256, 4> pool;
 
+    pool.init();
+
     int h = pool.alloc(15);
 
     TEST_ASSERT_EQUAL(0, h);

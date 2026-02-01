@@ -345,7 +345,17 @@ protected:
 template <class Derived, class Mutex = void>
 class pool_mutex_crtp
 {
+protected:
     Mutex mutex_;
+
+    template <class ...Args>
+    constexpr pool_mutex_crtp(estd::in_place_type_t<Mutex>, Args&&...args) :
+        mutex_{std::forward<Args>(args)...}
+    {
+
+    }
+
+    constexpr pool_mutex_crtp() = default;
 
 public:
     template <class Handle>
@@ -471,6 +481,8 @@ class pool :
     public detail::v1::pool_crtp<pool<N, H, Mutex>>,
     public detail::v1::pool_mutex_crtp<pool<N, H, Mutex>, Mutex>
 {
+    using mutex_base_type = detail::v1::pool_mutex_crtp<pool, Mutex>;
+
     friend class detail::v1::pool_mutex_crtp<pool, Mutex>;
 
 public:
@@ -495,6 +507,13 @@ public:
     {
         ops_.reset();
     }
+
+    template <class ...Args>
+    pool(estd::in_place_type_t<Mutex>, Args&&...args) :
+        mutex_base_type(
+            estd::in_place_type_t<Mutex>{},
+            std::forward<Args>(args)...)
+    {}
 };
 
 }
