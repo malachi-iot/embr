@@ -65,6 +65,10 @@ public:
     constexpr handle_type next() const { return next_; }
     constexpr bool allocated() const { return allocated_; }
     constexpr unsigned lock_count() const { return lock_count_; }
+
+    // NOT USED and probably not correct, tricky to make this atomic since block itself can move around.
+    // That makes it difficult since we want to use this specifically at assess/defrag which ultimately
+    // may indeed move the block
     constexpr bool reserved() const { return lock_count_ == 0xF; }
 
     invariant_result invariant() const

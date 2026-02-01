@@ -144,7 +144,7 @@ public:
         {
             ++current_;
         }
-        while(p = predicate(current_, is_pred_empty{}) == false);
+        while((p = predicate(current_, is_pred_empty{})) == false);
 
         return *this;
     }

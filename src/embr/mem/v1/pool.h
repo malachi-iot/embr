@@ -3,6 +3,7 @@
 #include <estd/cstdint.h>
 #include <estd/internal/macro/c++/ctor.h>
 #include <estd/internal/size.h>
+#include <estd/mutex.h>
 #include <estd/string_view.h>
 #include <estd/utility.h>
 
@@ -73,6 +74,9 @@ public:
 
     template <class Derived>
     friend class pool_crtp;
+
+    template <class Derived, class Mutex>
+    friend class pool_mutex_crtp;
 
 protected:
 
@@ -156,16 +160,13 @@ public:
         return pos_type((v + aliasing - 1) / aliasing);
     }
 
-    template <class Mutex = embr::internal::noop_mutex>
-    void* lock(bundle, Mutex = {});
+    void* lock(bundle);
 
     template <class Mutex = embr::internal::noop_mutex>
-    void* lock(handle_type h, Mutex mutex = {})
-    {
-        return lock(get_bundle(h), mutex);
-    }
+    void* lock(handle_type h, Mutex mutex = {});
 
-    void unlock(handle_type h);
+    template <class Mutex = embr::internal::noop_mutex>
+    void unlock(handle_type h, Mutex mutex = {});
 
     bundle prev(const const_bundle& bn) { return get_bundle(bn.block->prev()); }
     const_bundle prev(const const_bundle& bn) const { return get_bundle(bn.block->prev()); }
@@ -338,11 +339,61 @@ protected:
 #define THIS static_cast<Derived*>(this)
 #define OPS THIS->ops()
 
-template <class Derived>
-class pool_crtp
-{
-    //using handle_type = typename Derived::handle_type;
 
+// DEBT: I was resisting an ebo/mutex() paradigm but that's starting to look like
+// the best option
+template <class Derived, class Mutex = void>
+class pool_mutex_crtp
+{
+    Mutex mutex_;
+
+public:
+    template <class Handle>
+    void* lock(Handle h)
+    {
+        return OPS.lock(h, mutex_);
+    }
+
+    template <class Handle>
+    void unlock(Handle h)
+    {
+        OPS.unlock(h, mutex_);
+    }
+
+
+    // Only for trivial mode, use construct otherwise
+    template <class Derived2 = Derived>
+    typename Derived2::handle_type alloc(unsigned sz)
+    {
+        estd::lock_guard<Mutex> lg(mutex_);
+
+        constexpr auto mode = v1::block_mode_enum::Trivial;
+        // DEBT: Uncouple from block_8
+        constexpr unsigned block_sz = v1::block_8::header_size(mode).count();
+        return OPS.alloc(OPS.do_alias(sz + block_sz), mode).handle;
+    }
+
+
+    template <class T, class ...Args, class Derived2 = Derived>
+    typename Derived2::handle_type construct(Args&&...args)
+    {
+        estd::lock_guard<Mutex> lg(mutex_);
+
+        return detail::construct<T>(OPS.storage_, OPS.handles_, std::forward<Args>(args)...);
+    }
+
+
+    void dealloc(int h)
+    {
+        estd::lock_guard<Mutex> lg(mutex_);
+
+        OPS.dealloc(h);
+    }
+};
+
+template <class Derived>
+class pool_mutex_crtp<Derived>
+{
 public:
     template <class Handle>
     void* lock(Handle h)
@@ -356,13 +407,14 @@ public:
         OPS.unlock(h);
     }
 
-    void dealloc(int h)
+
+    template <class T, class ...Args, class Derived2 = Derived>
+    typename Derived2::handle_type construct(Args&&...args)
     {
-        OPS.dealloc(h);
+        return detail::construct<T>(OPS.storage_, OPS.handles_, std::forward<Args>(args)...);
     }
 
     // Only for trivial mode, use construct otherwise
-    // UNTESTED
     template <class Derived2 = Derived>
     typename Derived2::handle_type alloc(unsigned sz)
     {
@@ -372,6 +424,21 @@ public:
         return OPS.alloc(OPS.do_alias(sz + block_sz), mode).handle;
     }
 
+
+    void dealloc(int h)
+    {
+        OPS.dealloc(h);
+    }
+};
+
+
+
+template <class Derived>
+class pool_crtp
+{
+    //using handle_type = typename Derived::handle_type;
+
+public:
     void realloc(int h, unsigned size)
     {
         auto bn = OPS.get_bundle(h);
@@ -388,12 +455,6 @@ public:
     {
         return OPS.alloced().count();
     }
-
-    template <class T, class ...Args, class Derived2 = Derived>
-    typename Derived2::handle_type construct(Args&&...args)
-    {
-        return detail::construct<T>(OPS.storage_, OPS.handles_, std::forward<Args>(args)...);
-    }
 };
 
 #pragma pop_macro("OPS")
@@ -405,10 +466,12 @@ inline namespace v1 {
 
 namespace layer1 {
 
-template <std::size_t N, std::size_t H>
-class pool : public detail::v1::pool_crtp<pool<N, H>>
+template <std::size_t N, std::size_t H, class Mutex = void>
+class pool :
+    public detail::v1::pool_crtp<pool<N, H, Mutex>>,
+    public detail::v1::pool_mutex_crtp<pool<N, H, Mutex>, Mutex>
 {
-    friend class detail::v1::pool_crtp<pool<N, H>>;
+    friend class detail::v1::pool_mutex_crtp<pool, Mutex>;
 
 public:
     using page_type = detail::v1::page<uint16_t>;
@@ -424,6 +487,8 @@ public:
 #endif
     ops_type ops_;
     ops_type& ops() { return ops_; }
+
+public:
     const ops_type& ops() const { return ops_; }
 
     pool()
@@ -437,10 +502,10 @@ public:
 
 namespace layer3 {
 
-class pool : public detail::v1::pool_crtp<pool>
+class pool :
+    public detail::v1::pool_crtp<pool>,
+    public detail::v1::pool_mutex_crtp<pool>
 {
-    friend class detail::v1::pool_crtp<pool>;
-
 public:
     using page_type = detail::v1::page<uint16_t>;
     using handles_traits = detail::v1::handles_traits<estd::span<page_type>>;
@@ -455,9 +520,10 @@ public:
 #endif
     ops_type ops_;
     ops_type& ops() { return ops_; }
-    const ops_type& ops() const { return ops_; }
 
 public:
+    const ops_type& ops() const { return ops_; }
+
     pool(estd::span<page_type> pages, estd::span<char> raw) :
         ops_(raw, pages)
     {

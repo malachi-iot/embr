@@ -29,6 +29,8 @@ struct page
     void pos(unit_type v) { pos_ = v.count(); }
 
 private:
+    // TODO: Consider using one bit of this to indicate 'reserved' since doing so down at block
+    // level isn't really atomic-friendly
     rep pos_{null};
 
 public:

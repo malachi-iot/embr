@@ -1,6 +1,7 @@
 #pragma once
 
 #include <estd/internal/rtto.h>
+#include <estd/mutex.h>
 #include <estd/new.h>
 #include <estd/numeric.h>
 
@@ -241,7 +242,7 @@ void pool_ops<Traits>::dealloc(bundle bn)
     // DEBT: Consolidate with other free operations
     bn.block->destroy();
 
-    bn.block->reset(v1::block_8::Trivial, false);
+    bn.block->reset(block::Trivial, false);
 
     if(bn.has_prev())
     {
@@ -262,17 +263,32 @@ void pool_ops<Traits>::dealloc(bundle bn)
 
 
 template <class Traits>
-template <class Mutex>
-void* pool_ops<Traits>::lock(bundle bn, Mutex mutex)
+void* pool_ops<Traits>::lock(bundle bn)
 {
     bn.lock_up();
 
     return bn.data();
 }
 
+
 template <class Traits>
-void pool_ops<Traits>::unlock(handle_type h)
+template <class Mutex>
+void* pool_ops<Traits>::lock(handle_type h, Mutex mutex)
 {
+#if __has_builtin(__atomic_compare_exchange_n)
+#endif
+
+    estd::lock_guard<Mutex> lg(mutex);
+
+    return lock(get_bundle(h));
+}
+
+template <class Traits>
+template <class Mutex>
+void pool_ops<Traits>::unlock(handle_type h, Mutex mutex)
+{
+    estd::lock_guard<Mutex> lg(mutex);
+
     bundle bn(get_bundle(h));
 
     bn.lock_down();
