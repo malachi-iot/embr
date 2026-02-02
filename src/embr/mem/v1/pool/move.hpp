@@ -13,7 +13,7 @@ namespace detail { inline namespace v1 {
 template <class Traits>
 void pool_ops<Traits>::virtual_swap(bundle& lhs, bundle& rhs)
 {
-    constexpr handle_type null = block::null;
+    //constexpr handle_type null = block::null;
     // At its core we're doing a doubly-linked list item swap operation
 
     // Adjacency example - prev<-handle:block-pos:block->next

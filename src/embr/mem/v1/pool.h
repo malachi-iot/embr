@@ -400,19 +400,23 @@ public:
         OPS.dealloc(h);
     }
 
+    // Higher thresh = demand quicker, easier GC
     void gc(int thresh = 0)
     {
         using ops_type = typename Derived::ops_type;
         using fragmentation = typename ops_type::fragmentation;
         fragmentation frag;
+        const typename fragmentation::candidate& cand = frag.candidates[0];
 
         estd::lock_guard<Mutex> lg(mutex_);
 
-        // Can't execute yet due to
-        // https://github.com/malachi-iot/estdlib/issues/175
-        // Could do a workaround, but would rather actually upgrade estd
-        // to handle it more elegantly
-        //OPS.assess(&frag);
+        OPS.assess(&frag);
+
+        if(cand.score > 0)
+        {
+            if(cand.score > thresh)
+                OPS.defrag(cand);
+        }
     }
 };
 

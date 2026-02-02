@@ -99,8 +99,9 @@ void pool_ops<Traits>::assess(fragmentation* frag) const
                 {
                     pos_type max = bn_prev_sz + bn_next_sz;
 
-                    pos_type prev_boost = (max - bn_prev_sz) * booster;
-                    pos_type next_boost = (max - bn_next_sz) * booster;
+                    // DEBT: https://github.com/malachi-iot/estdlib/issues/175 means we have to convert to .count()
+                    pos_type prev_boost((max - bn_prev_sz).count() * booster);
+                    pos_type next_boost((max - bn_next_sz).count() * booster);
 
                     // If following F block is the would-be end big-free-block, greatly favor
                     // previous F block so that merge can create end big-free-block
