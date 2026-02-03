@@ -3,9 +3,10 @@
 #include <estd/mutex.h>
 
 #include "../../../mem/v1/pool.h"
+#include "../../../mem/v1/shared-handle.h"
 
 
-namespace embr { namespace mem { namespace freertos {
+namespace embr { namespace mem { namespace freertos { inline namespace v1 {
 
 namespace layer1 {
 
@@ -24,4 +25,28 @@ public:
 
 }
 
-}}}
+#ifndef FEATURE_EMBR_GLOBAL_GC
+#define FEATURE_EMBR_GLOBAL_GC 1
+#define EMBR_GLOBAL_GC_STORAGE_SIZE 512
+#define EMBR_GLOBAL_GC_HANDLE_SIZE 8
+#endif
+
+
+#if FEATURE_EMBR_GLOBAL_GC
+using global_pool_type = freertos::layer1::pool<EMBR_GLOBAL_GC_STORAGE_SIZE, EMBR_GLOBAL_GC_HANDLE_SIZE>;
+extern global_pool_type global_pool;
+
+template <class T>
+using shared_handle = shared_handle<T, global_pool_type, &global_pool>;
+
+using lock_handle = detail::v1::lock_handle<global_pool_type, &global_pool>;
+
+template <class T, class ...Args>
+shared_handle<T> make_shared(Args&&...args)
+{
+    return shared_handle<T>{ global_pool.template construct<T>(std::forward<Args>(args)...) };
+}
+
+#endif
+
+}}}}

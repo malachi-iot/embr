@@ -358,6 +358,8 @@ protected:
     constexpr pool_mutex_crtp() = default;
 
 public:
+    using mutex_type = Mutex;
+
     template <class Handle>
     void* lock(Handle h)
     {
@@ -401,7 +403,7 @@ public:
     }
 
     // Higher thresh = demand quicker, easier GC
-    void gc(int thresh = 0)
+    int gc(int thresh = 0)
     {
         using ops_type = typename Derived::ops_type;
         using fragmentation = typename ops_type::fragmentation;
@@ -417,6 +419,8 @@ public:
             if(cand.score > thresh)
                 OPS.defrag(cand);
         }
+
+        return cand.score;
     }
 };
 
@@ -424,6 +428,8 @@ template <class Derived>
 class pool_mutex_crtp<Derived>
 {
 public:
+    using mutex_type = void;
+
     template <class Handle>
     void* lock(Handle h)
     {
@@ -504,6 +510,9 @@ class pool :
 
     friend class detail::v1::pool_mutex_crtp<pool, Mutex>;
 
+    template <class Pool, Pool*>
+    friend class detail::lock_handle;
+
 public:
     using page_type = detail::v1::page<uint16_t>;
     using handles_traits = detail::v1::handles_traits<page_type[H]>;
@@ -544,6 +553,9 @@ class pool :
     public detail::v1::pool_crtp<pool>,
     public detail::v1::pool_mutex_crtp<pool>
 {
+    template <class Pool, Pool*>
+    friend class detail::lock_handle;
+
 public:
     using page_type = detail::v1::page<uint16_t>;
     using handles_traits = detail::v1::handles_traits<estd::span<page_type>>;

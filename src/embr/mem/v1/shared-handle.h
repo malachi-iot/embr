@@ -15,19 +15,20 @@ class shared_handle : public lock_handle<Pool, pool>
     using base_type::is_global;
     using base_type::handle_;
     using handle_type = typename Pool::handle_type;
+    using base_type::ops;
 
 public:
     // NOTE: Out of order - expect Pool, handle order in anticipation of nullptr p
     constexpr explicit shared_handle(handle_type handle, Pool* p) :
         base_type(handle, p)
     {
-        value()->ops().ref_up(handle_);
+        ops().ref_up(handle_);
     }
 
     constexpr explicit shared_handle(handle_type handle) :
         base_type(handle)
     {
-        value()->ops().ref_up(handle_);
+        ops().ref_up(handle_);
     }
 
     static constexpr bool global = false;
@@ -36,7 +37,7 @@ public:
 
     ~shared_handle()
     {
-        if(*this)   value()->ops().ref_down(handle_);
+        if(*this)   ops().ref_down(handle_);
     }
 };
 

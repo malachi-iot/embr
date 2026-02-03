@@ -5,15 +5,51 @@
 #if ESTD_OS_FREERTOS
 #include <embr/platform/freertos/mem/pool.hpp>
 
-using namespace embr::mem;
+#include <embr/mem/v1/shared-handle.h>
 
-#ifdef ESP_IDF_TESTING
-TEST_CASE("gc memory allocator", "[gc]")
-#else
-void test_mem_gc()
-#endif
+#include "../catch/mem/test-mem-data.h"
+
+using namespace embr;
+
+using pool_type = mem::freertos::layer1::pool<256, 4>;
+
+#if FEATURE_EMBR_GLOBAL_GC
+namespace embr { namespace mem { namespace freertos { inline namespace v1 {
+
+// DEBT: Put this guy in a different .cpp
+global_pool_type global_pool;
+
+}}}}
+
+static void test_mem_gc_global()
 {
-    freertos::layer1::pool<256, 4> pool;
+    using namespace embr::mem::freertos;
+    auto& pool = global_pool;
+    int counter = 0;
+
+    pool.init();
+
+    // DEBT: Watch out, global_pool initializes its mutex in an undefined way, which can
+    // lead to crashes here
+    int h = pool.alloc(15);
+
+    {
+        shared_handle<SideEffector> sh1 = make_shared<SideEffector>(&counter);
+        TEST_ASSERT_EQUAL(1, counter);
+    }
+
+    pool.gc();
+
+    pool.dealloc(h);
+
+    pool.gc();
+}
+#endif
+
+
+static void test_mem_gc_base()
+{
+    pool_type pool;
 
     pool.init();
 
@@ -33,7 +69,36 @@ void test_mem_gc()
 
     pool.dealloc(h);
 
-    pool.gc();
+    // 0 == no candidates found, suggesting fully defragmented
+    TEST_ASSERT_EQUAL(0, pool.gc());
+}
+
+static void test_mem_gc_shared()
+{
+    pool_type pool;
+    int counter = 0;
+
+    // FIX: Still needs Mutex support
+    {
+        mem::v1::shared_handle<SideEffector, pool_type> sh =
+            mem::v1::make_shared<SideEffector>(pool, &counter);
+
+        TEST_ASSERT_EQUAL(1, counter);
+    }
+}
+
+
+#ifdef ESP_IDF_TESTING
+TEST_CASE("gc memory allocator", "[gc]")
+#else
+void test_mem_gc()
+#endif
+{
+#if FEATURE_EMBR_GLOBAL_GC
+    RUN_TEST(test_mem_gc_global);
+#endif
+    RUN_TEST(test_mem_gc_base);
+    RUN_TEST(test_mem_gc_shared);
 }
 
 #endif

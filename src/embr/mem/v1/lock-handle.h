@@ -62,12 +62,15 @@ public:
     constexpr static bool is_global = pool != nullptr;
     constexpr static handle_type null = handles_traits::null;
 
+    using ops_type = typename Pool::ops_type;
+
 protected:
 
     handle_type handle_;
 
     // DEBT: Swap this and template value parameter name
     Pool* pool_() { return value(); }
+    ops_type& ops() { return value()->ops(); }
 
 public:
     // NOTE: Out of order - expect Pool, handle order in anticipation of nullptr p
@@ -75,6 +78,8 @@ public:
         base_type{p},
         handle_{handle}
     {
+        // DEBT: Seems we can do a static_assert for is_global and demand p always be set, depending
+        // on nature of those calling us
         assert(p || is_global);
     }
 
