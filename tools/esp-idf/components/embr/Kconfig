@@ -80,6 +80,7 @@ menu "Embr config"
         rsource "Kconfigs/targets"
     endchoice
 
+    rsource "Kconfigs/mem"
     rsource "Kconfigs/twai"
     rsource "Kconfigs/dsp"
 

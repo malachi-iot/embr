@@ -27,6 +27,10 @@ static void test_mem_gc_global()
     auto& pool = global_pool;
     int counter = 0;
 
+    static_assert(sizeof(lock_handle) <= sizeof(int));
+    static_assert(sizeof(shared_handle<int>) <= sizeof(int));
+    static_assert(sizeof(lock_handle[4]) == 4);
+
     pool.init();
 
     // DEBT: Watch out, global_pool initializes its mutex in an undefined way, which can
@@ -36,6 +40,20 @@ static void test_mem_gc_global()
     {
         shared_handle<SideEffector> sh1 = make_shared<SideEffector>(&counter);
         TEST_ASSERT_EQUAL(1, counter);
+
+        shared_handle<SideEffector> sh2 = make_shared<SideEffector>(&counter);
+        TEST_ASSERT_EQUAL(2, counter);
+
+        sh2()->counter_ = nullptr;
+    }
+
+    pool.gc();
+
+    TEST_ASSERT_EQUAL(1, counter);
+
+    {
+        shared_handle<SideEffector> sh1 = make_shared<SideEffector>(&counter);
+        TEST_ASSERT_EQUAL(2, counter);
     }
 
     pool.gc();
