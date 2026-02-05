@@ -50,6 +50,10 @@ static void test_mem_gc_global()
         TEST_ASSERT_EQUAL(2, counter);
     }
 
+    function<void(void)> f([&]{ ++counter; });
+
+    //f();
+
     pool.gc();
 
     pool.dealloc(h);

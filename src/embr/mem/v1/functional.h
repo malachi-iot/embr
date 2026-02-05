@@ -31,13 +31,14 @@ public:
     //model(const model& copy_from) : base_type{copy_from} {}
 
     template <class F>
-    static handle_type make(Pool* pool2, F&& f)
+    constexpr static handle_type make(Pool* pool2, F&& f)
     {
         using model_type = typename function_type::template model<F>;
 
         return pool2->template construct<model_type>(std::forward<F>(f));
     }
 
+    // FIX: Not resilient to void return
     static R invoke(lock_handle h, Args&&...args)
     {
         //typename base_type::template guard<model_base> g{h};
@@ -76,6 +77,13 @@ public:
         base_type(base_type::make(pool2, std::forward<F>(f)), pool2)
     {
 
+    }
+
+    template <class F>
+    function(F&& f) :
+        base_type(base_type::make(pool, std::forward<F>(f)))
+    {
+        static_assert(pool != nullptr);
     }
 
 
