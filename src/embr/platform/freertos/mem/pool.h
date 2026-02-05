@@ -49,6 +49,8 @@ shared_handle<T> make_shared(Args&&...args)
 
 template <class F>
 using function = mem::function<F, global_pool_type, &global_pool>;
+
+static_assert(sizeof(void*) >= sizeof(shared_handle<int[32]>));
 #endif
 
 }}}}

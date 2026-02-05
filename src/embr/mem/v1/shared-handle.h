@@ -13,9 +13,11 @@ class shared_handle : public lock_handle<Pool, pool>
     using base_type = lock_handle<Pool, pool>;
     using base_type::value;
     using base_type::is_global;
-    using base_type::handle_;
     using handle_type = typename Pool::handle_type;
     using base_type::ops;
+
+protected:
+    using base_type::handle_;
 
 public:
     // NOTE: Out of order - expect Pool, handle order in anticipation of nullptr p

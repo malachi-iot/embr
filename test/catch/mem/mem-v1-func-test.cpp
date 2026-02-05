@@ -111,7 +111,8 @@ template <class R, class ...Args, class Pool, Pool* pool>
 class funclist<R(Args...), Pool, pool> : public vector<int, Pool, pool>
 {
     using base_type = vector<int, Pool, pool>;
-    using model_type = mem::detail::v1::model<R(Args...), Pool, pool>;
+    using handle_type = typename Pool::handle_type;
+    using model_type = mem::detail::v1::model<R(Args...), handle_type>;
 
 public:
 
@@ -174,7 +175,7 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
     // DEBT: This debt lives on, we really need to auto-init the thing
     pool.reset();
 
-    using model_type = mem::detail::v1::model<int(int), pool_type>;
+    using model_type = mem::detail::v1::model<int(int), handle_type>;
     using fn_type = mem::function<int(int), pool_type>;
 
     SECTION("basic")
@@ -182,21 +183,10 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
         SECTION("model")
         {
             handle_type h1 = model_type::make(&pool, [](int v) { return v * 2; });
-            model_type m1(h1, &pool);
 
-            REQUIRE(m1.has_value());
-
-            int r = model_type::invoke({ h1, &pool }, 5);
+            int r = model_type::invoke(&pool, h1, 5);
 
             REQUIRE(r == 10);
-
-            model_type m2(std::move(m1));
-
-            r += invoke(m2, 5);
-
-            REQUIRE(r == 20);
-
-            REQUIRE(m1.has_value() == false);
         }
         SECTION("function")
         {

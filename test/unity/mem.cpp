@@ -50,9 +50,13 @@ static void test_mem_gc_global()
         TEST_ASSERT_EQUAL(2, counter);
     }
 
+    TEST_ASSERT_EQUAL(1, counter);
+
     function<void(void)> f([&]{ ++counter; });
 
-    //f();
+    f();
+
+    TEST_ASSERT_EQUAL(2, counter);
 
     pool.gc();
 

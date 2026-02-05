@@ -61,6 +61,9 @@ class lock_handle;
 template <class Pool, Pool* pool = {}>
 class shared_handle;
 
+template <class Pool, Pool* pool>
+class unique_handle;
+
 }}
 
 namespace internal { inline namespace v1 {
