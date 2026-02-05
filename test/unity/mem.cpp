@@ -5,6 +5,7 @@
 #if ESTD_OS_FREERTOS
 #include <embr/platform/freertos/mem/pool.hpp>
 
+#include <embr/mem/v1/functional.h>
 #include <embr/mem/v1/shared-handle.h>
 
 #include "../catch/mem/test-mem-data.h"
@@ -14,13 +15,6 @@ using namespace embr;
 using pool_type = mem::freertos::layer1::pool<256, 4>;
 
 #if FEATURE_EMBR_GLOBAL_GC
-namespace embr { namespace mem { namespace freertos { inline namespace v1 {
-
-// DEBT: Put this guy in a different .cpp
-global_pool_type global_pool;
-
-}}}}
-
 static void test_mem_gc_global()
 {
     using namespace embr::mem::freertos;

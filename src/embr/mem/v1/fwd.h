@@ -104,5 +104,7 @@ class unique_handle;
 
 }
 
+template <class F, class Pool, Pool* pool = nullptr>
+class function;
 
 }}

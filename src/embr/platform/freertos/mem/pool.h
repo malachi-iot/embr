@@ -46,6 +46,9 @@ shared_handle<T> make_shared(Args&&...args)
 {
     return shared_handle<T>{ global_pool.template construct<T>(std::forward<Args>(args)...) };
 }
+
+template <class F>
+using function = mem::function<F, global_pool_type, &global_pool>;
 #endif
 
 }}}}
