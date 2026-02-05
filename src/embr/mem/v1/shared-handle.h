@@ -48,12 +48,29 @@ public:
 inline namespace v1 {
 
 template <class T, class Pool, Pool* pool>
+class weak_handle : public detail::v1::lock_handle<Pool, pool>
+{
+    using base_type = detail::v1::lock_handle<Pool, pool>;
+    using shared_type = shared_handle<T, Pool, pool>;
+
+public:
+    weak_handle(const shared_type& r) : base_type(r) {}
+
+    shared_type lock()
+    {
+        return shared_type(base_type::handle_, pool);
+    }
+};
+
+template <class T, class Pool, Pool* pool>
 class shared_handle :
     public detail::shared_handle<Pool, pool>
 {
     using base_type = detail::shared_handle<Pool, pool>;
 
 public:
+    using weak_type = weak_handle<T, Pool, pool>;
+
     ESTD_CPP_STD_VALUE_TYPE(T)
 
     constexpr explicit shared_handle(int handle, Pool* p = nullptr) :

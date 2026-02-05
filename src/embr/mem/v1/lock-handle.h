@@ -118,6 +118,14 @@ public:
 
     constexpr bool has_value() const { return handle_ != null; }
 
+    // shared_ptr style behavior is tracked at the block level, so expose this here
+    // even for parties who aren't using the ref counter
+    int use_count() const
+    {
+        // TBD
+        return {};
+    }
+
     void reset()
     {
         handle_ = null;
