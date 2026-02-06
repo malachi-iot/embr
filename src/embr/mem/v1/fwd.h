@@ -7,6 +7,8 @@
 #include <concepts>
 #endif
 
+#include "pool/fwd.h"
+
 // See https://github.com/malachi-iot/estdlib/issues/160
 #define PAGE_ALIAS 0
 
@@ -17,12 +19,6 @@ namespace detail { inline namespace v1 {
 class block_8;
 
 class small_block;
-
-template <class Container>
-struct handles_traits;
-
-template <class Traits>
-class handles;
 
 #if PAGE_ALIAS
 // NOTE: Not possible because internal::units::unit_base has a protected default constructor
@@ -39,12 +35,6 @@ using add_const_conditional_t = estd::conditional_t<B, estd::add_const_t<T>, T>;
 template <class HandlesTraits, class Block = block_8>
 struct bundle_base;
 
-
-template <class Container>
-struct pool_traits;
-
-template <class Traits>
-class pool;
 
 template <class Derived>
 class pool_crtp;

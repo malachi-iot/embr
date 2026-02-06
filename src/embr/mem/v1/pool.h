@@ -17,6 +17,8 @@
 #include "page.h"
 #include "traits.h"
 
+#include "pool/ops.h"
+
 #if FEATURE_STD_OSTREAM
 #include <iosfwd>
 #endif
@@ -48,9 +50,6 @@ struct fragmentation_base
     candidate candidates[2];
 };
 
-template <class T, class PoolTraits, class HandlesTraits, class ...Args>
-typename HandlesTraits::size_type construct(pool<PoolTraits>& p, handles<HandlesTraits>& h, Args&&...args);
-
 // TODO: Do 'concepts'
 // 23JAN26 MB Appears unavoidable to template it out to this level.  Was hoping CRTP wizardry would help us, but I don't
 // like an intermediate pool::ops with pointer/references out to the real classes.  That makes the optimizer work a lot
@@ -64,6 +63,8 @@ public:
     using handles_type = estd::remove_reference_t<typename traits::handles_type>;
     using pool_traits = typename storage_type::traits;
     using handles_traits = typename handles_type::traits;
+    // DEBT: Would prefer grabbing this from traits, but that interrupts convenience
+    // of getting at enum
     using block = v1::block_8;
     using handle_type = typename handles_traits::handle_type;
     using page_type = typename handles_traits::value_type;
