@@ -181,7 +181,7 @@ public:
 
     static estd::units::bytes<unsigned> logical_size(block::modes, pos_type phys_sz);
 
-    unsigned logical_size(const const_bundle&) const;
+    estd::units::bytes<unsigned> logical_size(const const_bundle&) const;
 
     /// @brief merge
     /// @param current

@@ -164,6 +164,30 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                         REQUIRE(sz2 == new_phys_sz);
                     }
                 }
+                SECTION("copy")
+                {
+                    int counter = 0;
+                    constexpr block::modes mode = detail::v1::ascertain_block_mode<SideEffector>();
+
+                    bundle bn = op.construct<mode, SideEffector>(&counter);
+
+                    REQUIRE(bn.allocated());
+
+                    // DEBT: Broaching on UB to copy a locked block.  Acceptable though.
+                    auto se = (SideEffector*)op.lock(bn);
+
+                    REQUIRE(se->copied_from_counter == 0);
+
+                    bundle copied = op.copy(bn);
+
+                    auto se_copied = (SideEffector*)op.lock(copied);
+
+                    REQUIRE(se->copied_from_counter == 1);
+                    REQUIRE(se_copied->counter_ == &counter);
+                    REQUIRE(se_copied->copied_to_counter == 1);
+
+                    op.unlock(bn.handle);
+                }
             }
             SECTION("construct")
             {

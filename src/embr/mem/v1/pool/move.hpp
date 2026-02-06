@@ -147,7 +147,7 @@ validated_result pool_ops<Traits>::move(
     // DEBT: Deducing logical_sz for non-trivial is interesting too, but not critical
     if(logical_sz == 0 && is_trivial)
     {
-        logical_sz = logical_size(from);
+        logical_sz = logical_size(from).count();
     }
 
     if(is_overlapping)

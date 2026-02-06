@@ -7,10 +7,12 @@ struct SideEffector
 {
     int* counter_{};
     int copied_to_counter{};
+    mutable int copied_from_counter{};
 
     SideEffector(const SideEffector& copy_from) :
         counter_{copy_from.counter_}
     {
+        ++copy_from.copied_from_counter;
         ++copied_to_counter;
     }
 

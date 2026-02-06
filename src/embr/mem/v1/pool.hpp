@@ -80,9 +80,9 @@ estd::units::bytes<unsigned> pool_ops<Traits>::logical_size(block::modes mode, p
 }
 
 template <class Traits>
-unsigned pool_ops<Traits>::logical_size(const const_bundle& bn) const
+estd::units::bytes<unsigned> pool_ops<Traits>::logical_size(const const_bundle& bn) const
 {
-    return logical_size(bn.block->mode(), phys_size(bn)).count();
+    return logical_size(bn.block->mode(), phys_size(bn));
 }
 
 template <class Traits>
@@ -219,19 +219,25 @@ bool pool_ops<Traits>::merge_if_free(bundle current, bundle next)
     return merge(current, next);
 }
 
-
-
-template <class T, class PoolTraits, class HandlesTraits, class ...Args>
-typename HandlesTraits::size_type construct(pool<PoolTraits>& p, handles<HandlesTraits>& h, Args&&...args)
+template <class T>
+constexpr block_mode_enum::modes ascertain_block_mode()
 {
     using is_trivial = estd::is_trivially_constructible<T>;
     using is_movable = estd::is_move_constructible<T>;
     using is_rtto_base = estd::is_base_of<estd::internal::rtto_base::base, T>;
     using modes = block_mode_enum::modes;
-    constexpr modes mode =
+    return
         is_trivial::value ? modes::Trivial :
-        !is_movable::value ? modes::Immobile :
-        is_rtto_base::value ? modes::RttoBase : modes::RttoProxy;
+            !is_movable::value ? modes::Immobile :
+            is_rtto_base::value ? modes::RttoBase : modes::RttoProxy;
+
+}
+
+
+template <class T, class PoolTraits, class HandlesTraits, class ...Args>
+typename HandlesTraits::size_type construct(pool<PoolTraits>& p, handles<HandlesTraits>& h, Args&&...args)
+{
+    constexpr block_mode_enum::modes mode = ascertain_block_mode<T>();
     using traits = pool_ops_val_traits<pool<PoolTraits>&, handles<HandlesTraits>&>;
 
     return pool_ops<traits>{p, h}.template construct<mode, T>(std::forward<Args>(args)...).handle;
@@ -343,7 +349,7 @@ auto pool_ops<Traits>::alloced() const -> bytes
     {
         const_bundle bn = get_bundle(p);
 
-        return count + (bn.allocated() ? logical_size(bn) : 0);
+        return count + (bn.allocated() ? logical_size(bn).count() : 0);
     }));
 }
 
