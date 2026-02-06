@@ -114,6 +114,8 @@ public:
     template <block::modes mode, class T, class ...Args>
     bundle construct(Args&&...);
 
+    bundle copy(bundle);
+
     void dealloc(bundle);
     void dealloc(handle_type h) { dealloc(get_bundle(handles_[h], h)); }
 

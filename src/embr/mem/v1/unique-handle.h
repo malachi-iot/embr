@@ -17,6 +17,7 @@ protected:
     using base_type::is_global;
     using base_type::handle_;
     using handle_type = typename Pool::handle_type;
+    using base_type::ops;
 
 public:
     constexpr explicit unique_handle(handle_type handle, Pool* p = nullptr) :
@@ -28,7 +29,7 @@ public:
 
     ~unique_handle()
     {
-        if(*this)   value()->ops().dealloc(handle_);
+        if(*this)   ops().dealloc(handle_);
     }
 };
 

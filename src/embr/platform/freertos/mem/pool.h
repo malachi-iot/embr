@@ -4,6 +4,7 @@
 
 #include "../../../mem/v1/pool.h"
 #include "../../../mem/v1/shared-handle.h"
+#include "../../../mem/v1/unique-handle.h"
 
 
 namespace embr { namespace mem { namespace freertos { inline namespace v1 {
@@ -24,6 +25,10 @@ public:
 };
 
 }
+
+// From IDF (TBD)
+#if CONFIG_EMBR_GLOBAL_GC_STORAGE_SZ
+#endif
 
 #ifndef FEATURE_EMBR_GLOBAL_GC
 #define FEATURE_EMBR_GLOBAL_GC 1

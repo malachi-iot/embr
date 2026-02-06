@@ -131,6 +131,7 @@ public:
     // Destroy tracked object, not necessarily block itself
     void destroy();
 
+    void copy_from(this_type* from, unsigned sz);
     void move_from(this_type* from, unsigned sz);
 };
 

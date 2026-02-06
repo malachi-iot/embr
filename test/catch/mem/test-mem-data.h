@@ -6,6 +6,13 @@
 struct SideEffector
 {
     int* counter_{};
+    int copied_to_counter{};
+
+    SideEffector(const SideEffector& copy_from) :
+        counter_{copy_from.counter_}
+    {
+        ++copied_to_counter;
+    }
 
     SideEffector(SideEffector&& move_from) :
         counter_{move_from.counter_}

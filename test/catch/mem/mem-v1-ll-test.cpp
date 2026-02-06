@@ -113,17 +113,39 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
                 char storage2[64];
             };
 
-            b1.reset(block::RttoProxy, false);
-            b1.emplace_rtto_proxied<SideEffector>(&counter);
+            SECTION("block: move")
+            {
+                b1.reset(block::RttoProxy, false);
+                b1.emplace_rtto_proxied<SideEffector>(&counter);
 
-            REQUIRE(counter == 1);
+                REQUIRE(counter == 1);
 
-            b2.move_from(&b1, sizeof(SideEffector));
+                b2.move_from(&b1, sizeof(SideEffector));
 
-            b1.proxy()->destroy();
-            b2.proxy()->destroy();
+                b1.proxy()->destroy();
+                b2.proxy()->destroy();
 
-            REQUIRE(counter == 0);
+                REQUIRE(counter == 0);
+            }
+            SECTION("block: copy")
+            {
+                b1.reset(block::RttoProxy, false);
+                b1.emplace_rtto_proxied<SideEffector>(&counter);
+
+                auto se2 = (SideEffector*) b2.proxy()->storage();
+
+                REQUIRE(se2->copied_to_counter == 0);
+
+                b2.copy_from(&b1, sizeof(SideEffector));
+
+                REQUIRE(se2->copied_to_counter == 1);
+
+                b1.proxy()->destroy();
+                b2.proxy()->destroy();
+
+                // No move means --*counter happens twice
+                REQUIRE(counter == -1);
+            }
         }
     }
     SECTION("filter_iterator")

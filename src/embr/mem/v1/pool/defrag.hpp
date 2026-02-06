@@ -1,3 +1,5 @@
+#pragma once
+
 #include <estd/internal/rtto.h>
 #include <estd/new.h>
 #include <estd/numeric.h>

@@ -11,6 +11,7 @@
 
 #include "block.hpp"
 #include "pool.h"
+#include "pool/copy.hpp"
 #include "pool/defrag.hpp"
 #include "pool/move.hpp"
 #include "pool/invariant.hpp"
