@@ -39,7 +39,9 @@ std::ostream& operator<<(std::ostream& out, embr::mem::bytes_unit<Rep, Period> v
 }}}}
 
 
-
+constexpr unsigned s_l1_pool_sz = 512;
+using s_l1_pool_type = v1::layer1::pool<s_l1_pool_sz, 8>;
+s_l1_pool_type s_pool;
 
 TEST_CASE("gc mem v1 tests", "[memory][gc]")
 {
@@ -272,6 +274,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                 pool_type::handle_type h1 = pool1.construct<SideEffector>(&counter);
                 bundle bn1 = pool1.ops().get_bundle(h1);
                 v1::shared_handle<SideEffector, pool_type> sh1(h1, &pool1);
+                using guard_type = decltype(sh1)::guard_type;
 
                 SideEffector* se = sh1.lock();
 
@@ -292,11 +295,11 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                 }
 
                 {
-                    lock_guard guard = sh1;
+                    guard_type guard = sh1;
                 }
 
                 {
-                    lock_guard guard(sh1);
+                    guard_type guard(sh1);
                 }
 
                 {
@@ -327,20 +330,20 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
         }
         SECTION("shared_handle (global)")
         {
-            static pool_type pool2;
+            pool_type& pool2 = s_pool;
 
             pool2.ops().reset();
 
             // trivial
             {
                 pool_type::handle_type h1 = pool2.alloc(block_sz);
-                detail::v1::shared_handle<pool_type, &pool2> sh1(h1);
+                detail::v1::shared_handle<pool_type, &s_pool> sh1(h1);
                 REQUIRE(pool2.ops().available() == pool_sz - block_sz * 3);
             }
 
             {
                 pool_type::handle_type h1 = pool2.construct<SideEffector>(&counter);
-                v1::shared_handle<SideEffector, pool_type, &pool2> sh1(h1);
+                v1::shared_handle<SideEffector, pool_type, &s_pool> sh1(h1);
 
                 static_assert(sizeof(sh1) == sizeof(pool_type::handle_type));
 

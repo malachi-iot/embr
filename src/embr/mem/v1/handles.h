@@ -68,9 +68,11 @@ public:
     {
         for(size_type i = 0; i < estd::size(container_); ++i)
         {
+            reference v = container_[i];
+
             // Remember, we are allocating handles, not pool entries - so evaluating
             // is_null is correct for identifying unused handles
-            if(reference v = container_[i]; traits::is_null(v) && predicate(i, v))
+            if(traits::is_null(v) && predicate(i, v))
             {
                 on_alloc(i, v);
                 return i;

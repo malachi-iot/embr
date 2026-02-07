@@ -45,10 +45,10 @@ template <class T, T* t, bool global = t != nullptr>
 struct global_provider;
 
 
-template <class Pool, Pool* pool = {}>
+template <class Pool, Pool* pool = nullptr>
 class lock_handle;
 
-template <class Pool, Pool* pool = {}>
+template <class Pool, Pool* pool = nullptr>
 class shared_handle;
 
 template <class Pool, Pool* pool>
@@ -67,7 +67,7 @@ struct bundle;
 
 inline namespace v1 {
 
-template <class T, class Pool, Pool* pool = {}>
+template <class T, class Pool, Pool* pool = nullptr>
 class shared_handle;
 
 template <class T, class Pool, Pool* pool>

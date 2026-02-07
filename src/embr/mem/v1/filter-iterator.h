@@ -167,7 +167,9 @@ public:
     }
 };
 
-
+// <= c++14 needs this
+template <class Pred, class It>
+constexpr Pred* filter_iterator<Pred, It>::pred_null;
 
 }}}
 

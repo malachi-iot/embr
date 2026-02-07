@@ -82,7 +82,8 @@ static void battery(typename detail::pool_ops<Traits>& ops, int it, unsigned see
         // I don't want assertions number to balloon at the moment
 
         // Either we have a real handle or we failed because OOM
-        assert(phys_sz * ops.aliasing >= available || bn.handle != null);
+        auto aliasing = ops.aliasing;
+        assert(phys_sz * aliasing >= available || bn.handle != null);
 
         assert(ops.invariant());
     }

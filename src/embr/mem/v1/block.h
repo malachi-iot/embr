@@ -45,14 +45,15 @@ protected:
 
 public:
     block_header_8() = default;
-    explicit block_header_8(modes mode, bool allocated,
+    explicit constexpr block_header_8(modes mode, bool allocated,
         handle_type prev = null, handle_type next = null) :
         prev_{uint8_t(prev)},
         next_{uint8_t(next)},
         mode_{mode},
         allocated_{allocated},
         lock_count_{0},
-        ref_count_{0}
+        ref_count_{0},
+        data_{}         // Just a compiler formality.  Obviously not doing anything
     {}
 
     block_header_8(const this_type&) = default;
@@ -110,7 +111,7 @@ class alignas(void*) block_8 : public block_header_8
 public:
     block_8() = default;
 
-    explicit block_8(modes mode, bool allocated,
+    constexpr explicit block_8(modes mode, bool allocated,
         handle_type prev = null, handle_type next = null) :
         base_type(mode, allocated, prev, next)
     {}

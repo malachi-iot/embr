@@ -80,7 +80,6 @@ public:
 
     pointer lock() const { return static_cast<pointer>(base_type::lock()); }
 
-    // UNTESTED
     using guard_type = typename base_type::template guard_type<value_type>;
 };
 

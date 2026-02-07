@@ -92,6 +92,10 @@ struct page_traits
     }
 };
 
+// <= c++14 needs this
+template <class Page>
+constexpr typename Page::unit_type page_traits<Page>::zero;
+
 template <class Container>
 struct handles_traits :
     handles_traits_uint8,

@@ -30,6 +30,8 @@ TEST_CASE("units")
 
     SECTION("amps")
     {
+        // See https://github.com/malachi-iot/estdlib/issues/23
+#if __cplusplus >= 201703L
         SECTION("double")
         {
             // DEBT: Due to nasty to-double-string kludge, we have
@@ -40,6 +42,7 @@ TEST_CASE("units")
 
             REQUIRE(s == "5.10 amps");
         }
+#endif
         SECTION("int")
         {
             milliamps<uint16_t> ma{3600};
@@ -113,9 +116,12 @@ TEST_CASE("units")
         {
             units::volts<double> v(5);
 
+            // See https://github.com/malachi-iot/estdlib/issues/23
+#if __cplusplus >= 201703L
             out << put_unit(v);
 
             REQUIRE(s == "5.00V");
+#endif
 
             v += 0.5;
 
