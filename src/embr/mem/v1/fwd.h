@@ -16,8 +16,6 @@ namespace embr { namespace mem {
 
 namespace detail { inline namespace v1 {
 
-class block_8;
-
 class small_block;
 
 #if PAGE_ALIAS
@@ -31,10 +29,6 @@ struct page;
 
 template <bool B, class T>
 using add_const_conditional_t = estd::conditional_t<B, estd::add_const_t<T>, T>;
-
-template <class HandlesTraits, class Block = block_8>
-struct bundle_base;
-
 
 template <class Derived>
 class pool_crtp;

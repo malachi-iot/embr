@@ -4,6 +4,11 @@ namespace embr { namespace mem {
 
 namespace detail { inline namespace v1 {
 
+class block_8;
+
+template <class HandlesTraits, class Block = block_8>
+struct bundle_base;
+
 template <class Container>
 struct handles_traits;
 
