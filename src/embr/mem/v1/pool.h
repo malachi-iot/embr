@@ -115,7 +115,7 @@ protected:
     Mutex mutex_;
 
     template <class ...Args>
-    constexpr pool_mutex_crtp(estd::in_place_type_t<Mutex>, Args&&...args) :
+    constexpr explicit pool_mutex_crtp(estd::in_place_type_t<Mutex>, Args&&...args) :
         mutex_{std::forward<Args>(args)...}
     {
 
@@ -148,6 +148,7 @@ public:
         constexpr auto mode = v1::block_mode_enum::Trivial;
         // DEBT: Uncouple from block_8
         constexpr unsigned block_sz = v1::block_8::header_size(mode).count();
+        // DEBT: Probably do_alias ought to be in page_type
         return OPS.alloc(OPS.do_alias(sz + block_sz), mode).handle;
     }
 
@@ -282,7 +283,7 @@ class pool :
 public:
     using page_type = detail::v1::page<uint16_t>;
     using handles_traits = detail::v1::handles_traits<page_type[H]>;
-    using handle_type = typename handles_traits::size_type;
+    using handle_type = typename handles_traits::handle_type;
     using pool_traits = detail::v1::pool_traits<char[N]>;
     using pool_op_traits = detail::v1::pool_ops_traits<pool_traits, handles_traits>;
     using ops_type = detail::v1::pool_ops<pool_op_traits>;
@@ -297,17 +298,19 @@ public:
 public:
     const ops_type& ops() const { return ops_; }
 
-    pool()
+    ESTD_CPP_CONSTEXPR(14) pool()
     {
         ops_.reset();
     }
 
     template <class ...Args>
-    pool(estd::in_place_type_t<Mutex>, Args&&...args) :
+    ESTD_CPP_CONSTEXPR(14) explicit pool(estd::in_place_type_t<Mutex>, Args&&...args) :
         mutex_base_type(
             estd::in_place_type_t<Mutex>{},
             std::forward<Args>(args)...)
-    {}
+    {
+        ops_.reset();
+    }
 };
 
 }
@@ -340,7 +343,9 @@ public:
 public:
     const ops_type& ops() const { return ops_; }
 
-    pool(estd::span<page_type> pages, estd::span<char> raw) :
+    ESTD_CPP_CONSTEXPR(14) pool(
+        const estd::span<page_type>& pages,
+        const estd::span<char>& raw) :
         ops_(raw, pages)
     {
         ops_.reset();

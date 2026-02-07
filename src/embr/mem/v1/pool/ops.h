@@ -107,8 +107,10 @@ public:
 
     invariant_result invariant() const;
 
+#if FEATURE_STD_OSTREAM
     // Diagnostic dump of pool content
     std::ostream& dump(std::ostream& out) const;
+#endif
 
     const_bundle first() const;
 
