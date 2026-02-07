@@ -19,7 +19,7 @@ namespace embr { namespace mem {
 
 namespace detail { inline namespace v1 {
 
-template <class Traits>
+template <ESTD_CPP_CONCEPT(concepts::HandlesTraits) Traits>
 class handles : public Traits
 {
     using this_type = handles;

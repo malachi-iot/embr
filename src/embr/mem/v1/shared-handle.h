@@ -13,10 +13,10 @@ class shared_handle : public lock_handle<Pool, pool>
     using base_type = lock_handle<Pool, pool>;
     using base_type::value;
     using base_type::is_global;
-    using handle_type = typename Pool::handle_type;
     using base_type::ops;
 
 protected:
+    using handle_type = typename Pool::handle_type;
     using base_type::handle_;
 
 public:
@@ -67,13 +67,14 @@ class shared_handle :
     public detail::shared_handle<Pool, pool>
 {
     using base_type = detail::shared_handle<Pool, pool>;
+    using typename base_type::handle_type;
 
 public:
     using weak_type = weak_handle<T, Pool, pool>;
 
     ESTD_CPP_STD_VALUE_TYPE(T)
 
-    constexpr explicit shared_handle(int handle, Pool* p = nullptr) :
+    constexpr explicit shared_handle(handle_type handle, Pool* p = nullptr) :
         base_type(handle, p) {}
 
     lock_guard<value_type, Pool, pool> operator()() { return { *this }; }

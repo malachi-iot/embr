@@ -235,7 +235,7 @@ constexpr block_mode_enum::modes ascertain_block_mode()
 
 
 template <class T, class PoolTraits, class HandlesTraits, class ...Args>
-typename HandlesTraits::size_type construct(pool<PoolTraits>& p, handles<HandlesTraits>& h, Args&&...args)
+typename HandlesTraits::handle_type construct(pool<PoolTraits>& p, handles<HandlesTraits>& h, Args&&...args)
 {
     constexpr block_mode_enum::modes mode = ascertain_block_mode<T>();
     using traits = pool_ops_val_traits<pool<PoolTraits>&, handles<HandlesTraits>&>;

@@ -75,16 +75,8 @@ template <class Pool, Pool* pool>
 lock_guard(detail::v1::shared_handle<Pool, pool>) -> lock_guard<char, Pool, pool>;
 #endif
 
-#define REFACTOR_CONTAINER_TRAITS 1
-
-// DEBT: Refactor this into estd::internal::container_traits
-#if REFACTOR_CONTAINER_TRAITS
 template <class Container>
 using container_traits = estd::internal::container_traits<Container>;
-#else
-template <class Container>
-struct container_traits;
-#endif
 
 template <class T, class Pool, Pool* pool = nullptr>
 class unique_handle;

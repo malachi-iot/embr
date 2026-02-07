@@ -3,6 +3,8 @@
 #if __cpp_lib_concepts
 #include <concepts>
 
+#include "pool/concepts.h"
+
 namespace embr::mem::detail::inline v1::concepts {
 
 template <class T>

@@ -6,64 +6,7 @@
 #include "concepts.h"
 #include "fwd.h"
 
-namespace embr { namespace mem { inline namespace v1 {
-
-#if !REFACTOR_CONTAINER_TRAITS
-// DEBT: container_traits looking pretty useful.  Consider putting him up at estd level
-// 08JAN26 MB - Backing off of this - std::data() and std::size() seem to do the job here (though
-// the STD_VALUE_TYPE is still nice)
-template <class T, int N>
-struct container_traits<T[N]>
-{
-    static constexpr bool constexpr_size = true;
-
-    //static constexpr int size() { return N; }
-
-    using container_type = T[N];
-
-    ESTD_CPP_STD_VALUE_TYPE(T)
-
-    using iterator = pointer;
-
-    //static T* data(container_type& c) { return c; }
-};
-
-template <class T, estd::size_t N>
-struct container_traits<estd::span<T, N>>
-{
-    static constexpr bool constexpr_size = N != -1;
-
-    //static constexpr int size() { return N; }
-
-    using container_type = estd::span<T, N>;
-
-    ESTD_CPP_STD_VALUE_TYPE(T)
-
-    using iterator = pointer;
-
-    //static pointer data(container_type& c) { return c.data(); }
-};
-#endif
-
-/*
-// DEBT: Guard with #if STD SPAN availability
-template <class T, std::size_t N>
-struct container_traits<std::span<T, N>>
-{
-    static constexpr bool constexpr_size = N != -1;
-
-    //static constexpr int size() { return N; }
-
-    using container_type = std::span<T, N>;
-
-    ESTD_CPP_STD_VALUE_TYPE(T)
-
-    using iterator = pointer;
-
-    //static pointer data(container_type& c) { return c.data(); }
-};  */
-
-}
+namespace embr { namespace mem {
 
 namespace detail { inline namespace v1 {
 
@@ -92,9 +35,10 @@ struct page_traits
     }
 };
 
-// <= c++14 needs this
+#if !__cpp_inline_variables
 template <class Page>
 constexpr typename Page::unit_type page_traits<Page>::zero;
+#endif
 
 template <class Container>
 struct handles_traits :
@@ -102,16 +46,13 @@ struct handles_traits :
     container_traits<Container>,
     page_traits<typename container_traits<Container>::value_type>
 {
-    using base_type = container_traits<Container>;
-    using typename base_type::value_type;
-    using size_type = typename handles_traits_uint8::handle_type;
     using container_type = Container;
 };
 
 template <class Container>
-struct pool_traits : estd::internal::container_traits<Container>
+struct pool_traits : container_traits<Container>
 {
-    static_assert(sizeof(typename estd::internal::container_traits<Container>::value_type) == 1);
+    static_assert(sizeof(typename container_traits<Container>::value_type) == 1);
 
     using block = v1::block_8;
 };
