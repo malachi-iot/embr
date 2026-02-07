@@ -85,7 +85,7 @@ struct page_traits
     static constexpr unit_type zero = unit_type(0);
 
     static constexpr bool is_null(const page_type& v) { return v.is_null(); }
-    static ESTD_CPP_CONSTEXPR(14) void reset(page_type& v) { v.reset(); }
+    static constexpr void reset(page_type& v) { v.reset(); }
     static constexpr bool is_zero(const page_type& v)
     {
         return v.pos() == zero;

@@ -86,7 +86,7 @@ estd::units::bytes<unsigned> pool_ops<Traits>::logical_size(const const_bundle& 
 }
 
 template <class Traits>
-auto pool_ops<Traits>::create_free_block(
+ESTD_CPP_CONSTEXPR(14) auto pool_ops<Traits>::create_free_block(
     pos_type pos,
     handle_type prev, handle_type next) -> block*
 {
@@ -115,7 +115,7 @@ auto pool_ops<Traits>::split_at(const bundle& b, pos_type at) -> handle_type
 }
 
 template <class Traits>
-void pool_ops<Traits>::reset()
+ESTD_CPP_CONSTEXPR(14) void pool_ops<Traits>::reset()
 {
     // Note we use pos_type(0) and not 'null' because first free block is NOT null -
     // it's an allocated handle to a free block

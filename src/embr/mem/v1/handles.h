@@ -98,7 +98,7 @@ public:
         return {};
     }
 
-    void reset()
+    ESTD_CPP_CONSTEXPR(14) void reset()
     {
         for(value_type& v : container_) traits::reset(v);
     }

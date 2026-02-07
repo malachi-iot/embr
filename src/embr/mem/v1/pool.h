@@ -105,7 +105,7 @@ public:
 
     static constexpr unsigned aliasing = pos_type::period::num;
 
-    block* create_free_block(pos_type, handle_type prev, handle_type next);
+    ESTD_CPP_CONSTEXPR(14) block* create_free_block(pos_type, handle_type prev, handle_type next);
 
     /// Low level alloc TBD docs
     void alloc(const bundle&, pos_type found_sz, pos_type phys_sz, block::modes);
@@ -226,7 +226,7 @@ public:
     void ref_down(handle_type h);
     void ref_up(handle_type h);
 
-    void reset();
+    ESTD_CPP_CONSTEXPR(14) void reset();
 
     /// Resizes a bundle to new presented size.  next block MUST be a free block
     /// with enough space
@@ -286,13 +286,13 @@ protected:
 
     container_type pool_;
 
-    block_type* block(bytes_unit<unsigned> at)
+    ESTD_CPP_CONSTEXPR(14) block_type* block(const bytes_unit<unsigned>& at)
     {
         //assert(at.count() != page_type::null);
         return reinterpret_cast<block_type*>(estd::data(pool_) + at.count());
     }
 
-    const block_type* block(bytes_unit<unsigned> at) const
+    ESTD_CPP_CONSTEXPR(14) const block_type* block(const bytes_unit<unsigned>& at) const
     {
         return reinterpret_cast<const block_type*>(estd::data(pool_) + at.count());
     }
