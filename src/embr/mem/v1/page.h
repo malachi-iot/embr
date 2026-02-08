@@ -3,6 +3,12 @@
 #include "fwd.h"
 #include "unit.h"
 
+#if FEATURE_STD_UTILITY
+#include <utility>
+#else
+#include <estd/utility.h>
+#endif
+
 // 17DEC25 MB - boilerplate for incoming playground.memory mem-11 formalization
 
 namespace embr { namespace mem {
@@ -34,15 +40,20 @@ private:
     rep pos_{null};
 
 public:
-    friend void swap(page& lhs, page& rhs) noexcept
+    ESTD_CPP_CONSTEXPR(14) friend void swap(page& lhs, page& rhs) noexcept
     {
-        rep temp = lhs.pos_;
-        lhs.pos_ = rhs.pos_;
-        rhs.pos_ = temp;
-        //std::swap(lhs.pos_, rhs.pos_);    // Not happy on packed types
+        // If we decided to go packed, manual swap:
+        //rep temp = lhs.pos_;
+        //lhs.pos_ = rhs.pos_;
+        //rhs.pos_ = temp;
+#if FEATURE_STD_UTILITY
+        std::swap(lhs.pos_, rhs.pos_);
+#else
+        estd::swap(lhs.pos_, rhs.pos_);
+#endif
     }
 
-}    __attribute__((packed));
+};  //    __attribute__((packed));
 
 #endif
 
