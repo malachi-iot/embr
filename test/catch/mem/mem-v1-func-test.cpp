@@ -14,12 +14,22 @@ using namespace embr;
 
 
 // Heavy lift
+// Not done, I'd say over the hump for a proof of concept
 template <class T, class Pool, Pool* pool = nullptr>
 class vector_impl : public mem::detail::v1::lock_handle<Pool, pool>
 {
     using base_type = mem::detail::v1::lock_handle<Pool, pool>;
+    using typename base_type::ops_type;
+    using pos_type = typename ops_type::pos_type;
+    using bundle = typename ops_type::bundle;
+    using base_type::ops;
+    using base_type::get_bundle;
+    using bytes = estd::units::bytes<unsigned>;
 
+    // DEBT: Really size_ ought to be part of the allocated chunk
     int size_{};
+
+    using base_type::handle_;
 
 public:
     using base_type::pool_;
@@ -56,21 +66,51 @@ public:
         using const_iterator = const_pointer;
         using accessor = estd::internal::traditional_accessor<value_type>;
         using iterator = estd::internal::locking_iterator<allocator_type, accessor>;
+
+        static constexpr auto locking_preference = estd::internal::allocator_locking_preference::standard;
     };
 
-    ESTD_CPP_CONSTEXPR(17) pointer lock(unsigned pos = 0, unsigned count = 0)
+    ESTD_CPP_CONSTEXPR(17) reference lock(unsigned pos = 0, unsigned count = 0)
     {
-        return ((pointer)base_type::lock()) + pos;
+        // DEBT: lock return a reference is somewhat counterintuitive
+        return *(((pointer)base_type::lock()) + pos);
     }
 
     constexpr size_type size() const { return size_; }
 
-    int reallocate(unsigned sz)
+    constexpr unsigned capacity() const
     {
-        return {};
+        // DEBT: assert (in debug mode only) that we're evenly divisible
+        const pos_type phys_size = ops().phys_size(get_bundle());
+        return bytes(phys_size).count() / sizeof(T);
+    }
+
+    constexpr bool is_allocated() const { return base_type::has_value(); }
+
+    void size(unsigned new_capacity)
+    {
+        bytes rsz(new_capacity * sizeof(T));
+        // TODO: Realloc
+        pos_type sz = ops().phys_size(get_bundle());
+
+        if(rsz > sz)    reallocate(new_capacity);
+    }
+
+    bool reallocate(unsigned capacity)
+    {
+        handle_ = pool_()->realloc(handle_, capacity * sizeof(T));
+        return is_allocated();
     }
 
     allocator_type get_allocator() { return {}; }
+
+    bool allocate(unsigned capacity)
+    {
+        assert(!is_allocated());
+
+        handle_ = pool_()->alloc(capacity * sizeof(T));
+        return is_allocated();
+    }
 };
 
 
@@ -268,6 +308,6 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
     {
         funclist<void(int), pool_type> fl(&pool);
 
-        //fl += [](int v) {};
+        fl += [](int v) {};
     }
 }

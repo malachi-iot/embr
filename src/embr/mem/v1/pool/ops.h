@@ -211,10 +211,11 @@ public:
     ESTD_CPP_CONSTEXPR(14) void reset();
 
     /// Resizes a bundle to new presented size.  next block MUST be a free block
-    /// with enough space
+    /// with enough space.  No realloc occurs here ever
     /// @brief resize
     /// @param new_sz
     /// @return
+    /// @remarks low-level call, consumers want realloc
     block* resize(bundle, pos_type new_sz);
     block* resize(bundle bn, bundle bn_next, pos_type new_sz);
 

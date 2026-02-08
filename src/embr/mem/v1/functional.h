@@ -22,15 +22,16 @@ typename Pool::handle_type make_model(Pool* pool, F&& f)
 
 
 template <class ...Args, class Handle>
-class model<void(Args...), Handle>
+class model<void(Args...), Handle> : public typed_handle<typename estd::detail::function<void(Args...)>::model_base, Handle>
 {
 protected:
+    using base_type = typed_handle<typename estd::detail::function<void(Args...)>::model_base, Handle>;
     using function_type = estd::detail::function<void(Args...)>;
     using model_base = typename function_type::model_base;
     using handle_type = Handle;
 
 public:
-    //model(const model& copy_from) : base_type{copy_from} {}
+    explicit constexpr model(const handle_type& handle) : base_type{handle} {}
 
     template <class Pool, class F>
     constexpr static handle_type make(Pool* pool, F&& f)
@@ -55,11 +56,14 @@ template <class R, class ...Args, class Handle>
 class model<R(Args...), Handle>
 {
 protected:
+    using base_type = typed_handle<typename estd::detail::function<void(Args...)>::model_base, Handle>;
     using function_type = estd::detail::function<R(Args...)>;
     using model_base = typename function_type::model_base;
     using handle_type = Handle;
 
 public:
+    explicit constexpr model(const handle_type& handle) : base_type{handle} {}
+
     template <class Pool, class F>
     constexpr static handle_type make(Pool* pool, F&& f)
     {
@@ -112,11 +116,10 @@ template <class F, class Pool>
 class sparse_function;
 
 template <class R, class ...Args, class Pool>
-class sparse_function<R(Args...), Pool> : public typed_handle<void, typename Pool::handle_type>
+class sparse_function<R(Args...), Pool> : public model<R(Args...), typename Pool::handle_type>
 {
-    using base_type = typed_handle<void, typename Pool::handle_type>;
+    using base_type = model<R(Args...), typename Pool::handle_type>;
     using typename base_type::handle_type;
-    using model = detail::v1::model<R(Args...), handle_type>;
 
 public:
     template <class ...Args2>
@@ -124,7 +127,7 @@ public:
 
     constexpr R invoke(Pool& pool, Args&&...args)
     {
-        return model::invoke(pool, base_type::handle_, std::forward<Args>(args)...);
+        return base_type::invoke(pool, base_type::handle_, std::forward<Args>(args)...);
     }
 };
 

@@ -231,6 +231,15 @@ public:
     {
         OPS.dealloc(h);
     }
+
+
+    /*
+    template <class Handle>
+    void realloc(Handle h, unsigned sz)
+    {
+        // FIX: Not complete
+        OPS.realloc(OPS.get_bundle(h), OPS.do_alias(sz));
+    }   */
 };
 
 
@@ -241,11 +250,11 @@ class pool_crtp
     //using handle_type = typename Derived::handle_type;
 
 public:
-    void realloc(int h, unsigned size)
+    bool realloc(int h, unsigned size)
     {
         auto bn = OPS.get_bundle(h);
         // DEBT: remove explicit bytes_unit, dependent on https://github.com/malachi-iot/estdlib/issues/173
-        OPS.realloc(bn, bn.header_size() + bytes_unit<unsigned>(size));
+        return OPS.realloc(bn, bn.header_size() + bytes_unit<unsigned>(size));
     }
 
     void reset()

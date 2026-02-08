@@ -110,9 +110,16 @@ protected:
 
     handle_type handle_;
 
+    using bundle = typename ops_type::bundle;
+    using const_bundle = typename ops_type::const_bundle;
+
     // DEBT: Swap this and template value parameter name
     Pool* pool_() { return value(); }
     ops_type& ops() { return value()->ops(); }
+    constexpr const ops_type& ops() const { return value()->ops(); }
+
+    bundle get_bundle() { return ops().get_bundle(handle_); }
+    constexpr const_bundle get_bundle() const { return ops().get_bundle(handle_); }
 
 public:
     // NOTE: Out of order - expect Pool, handle order in anticipation of nullptr p
