@@ -22,6 +22,8 @@ class vector_impl : public mem::detail::v1::lock_handle<Pool, pool>
     int size_{};
 
 public:
+    using base_type::pool_;
+
     vector_impl(Pool* p) : base_type(base_type::null, p)  {}
 
     using size_type = unsigned;
@@ -101,26 +103,49 @@ public:
 
         unlock();
     }
+
+    constexpr int size() const { return size_; }
 };
 
 
 template <class F, class Pool, Pool* pool = nullptr>
 class funclist;
 
-template <class R, class ...Args, class Pool, Pool* pool>
-class funclist<R(Args...), Pool, pool> : public vector<int, Pool, pool>
+template <class ...Args, class Pool, Pool* pool>
+class funclist<void(Args...), Pool, pool> : public vector<mem::detail::sparse_function<void(Args...), Pool>, Pool, pool>
 {
-    using base_type = vector<int, Pool, pool>;
+    using value_type = mem::detail::sparse_function<void(Args...), Pool>;
+    using base_type = vector<value_type, Pool, pool>;
     using handle_type = typename Pool::handle_type;
-    using model_type = mem::detail::v1::model<R(Args...), handle_type>;
+    using model_type = mem::detail::v1::model<void(Args...), handle_type>;
+    using typename base_type::pointer;
 
 public:
+    template <class ...Args2>
+    funclist(Args2&&...args) : base_type(std::forward<Args2>(args)...)  {}
 
     template <class F>
     friend int operator+=(funclist& self, F&& f)
     {
-        base_type::push_back(0);
+        Pool* pool2 = self.impl().pool_();
+        value_type item(model_type::make(pool2, std::forward<F>(f)));
+
+        self.push_back(item);
         return 0;
+    }
+
+    void operator()(Args&&...args)
+    {
+        // TBD do mutex here
+        pointer v = base_type::lock();
+        pointer end = v + base_type::size();
+
+        for(; v < end; ++v)
+        {
+            v->invoke(base_type::pool_(), std::forward<Args>(args)...);
+        }
+
+        base_type::unlock();
     }
 };
 
@@ -238,5 +263,11 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
     {
         using vector_type = vector2<int, pool_type>;
         //vector2<int, pool_type> v;
+    }
+    SECTION("funclist")
+    {
+        funclist<void(int), pool_type> fl(&pool);
+
+        //fl += [](int v) {};
     }
 }

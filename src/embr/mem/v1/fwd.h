@@ -54,6 +54,9 @@ class lock_handle;
 template <class Pool, Pool* pool = nullptr>
 class shared_handle;
 
+template <class T, class Pool>
+class typed_handle;
+
 template <class Pool, Pool* pool>
 class unique_handle;
 

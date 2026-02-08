@@ -105,6 +105,29 @@ public:
     }
 };
 
+template <class F, class Pool>
+using nonowning_function = function<F, lock_handle<Pool>>;
+
+template <class F, class Pool>
+class sparse_function;
+
+template <class R, class ...Args, class Pool>
+class sparse_function<R(Args...), Pool> : public typed_handle<void, typename Pool::handle_type>
+{
+    using base_type = typed_handle<void, typename Pool::handle_type>;
+    using typename base_type::handle_type;
+    using model = detail::v1::model<R(Args...), handle_type>;
+
+public:
+    template <class ...Args2>
+    constexpr explicit sparse_function(Args2&&...args) : base_type(std::forward<Args2>(args)...) {}
+
+    constexpr R invoke(Pool& pool, Args&&...args)
+    {
+        return model::invoke(pool, base_type::handle_, std::forward<Args>(args)...);
+    }
+};
+
 template <class F, class Pool, Pool* pool>
 struct innate_traits<mem::function<F, Pool, pool>>
 {

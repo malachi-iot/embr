@@ -63,6 +63,7 @@ protected:
     handle_type handle_;
 
 public:
+    constexpr explicit typed_handle(handle_type handle) : handle_{handle}   {}
 
     template <class Pool>
     T* lock(Pool& pool) const
