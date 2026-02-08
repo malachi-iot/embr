@@ -16,7 +16,7 @@ protected:
     using base_type::value;
     using base_type::is_global;
     using base_type::handle_;
-    using handle_type = typename Pool::handle_type;
+    using typename base_type::handle_type;
     using base_type::ops;
 
 public:

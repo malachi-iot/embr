@@ -16,6 +16,19 @@ namespace embr { namespace mem {
 
 namespace detail { inline namespace v1 {
 
+// EXPERIMENTAL
+// For types who inherently are aware of pooling
+struct innate_shared_t {};
+
+// EXPERIMENTAL
+// For types who inherently are aware of pooling
+template <class T>
+struct innate_traits
+{
+    static constexpr bool shared = false;
+    static constexpr bool unique = false;
+};
+
 class small_block;
 
 #if PAGE_ALIAS
@@ -83,7 +96,7 @@ class unique_handle;
 
 }
 
-template <class F, class Pool, Pool* pool = nullptr>
+template <class F, class Pool = void, Pool* pool = nullptr>
 class function;
 
 }}

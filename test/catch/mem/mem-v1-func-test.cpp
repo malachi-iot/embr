@@ -140,26 +140,20 @@ class shared_handle<estd::detail::function<R(Args...)>, Pool, pool> :
 {
     using base_type = detail::shared_handle<Pool, pool>;
     using function_type = estd::detail::function<R(Args...)>;
-    using model_base = typename function_type::model_base;
+    using handle_type = typename Pool::handle_type;
+    using model = detail::v1::model<R(Args...), handle_type>;
 
 public:
-    shared_handle(int h, Pool* p) : base_type(h, p) {}
+    shared_handle(handle_type h, Pool* p) : base_type(h, p) {}
 
     template <class F>
-    static shared_handle make_handle(Pool* pool2, F&& f)
+    shared_handle(Pool* pool2, F&& f) :
+        base_type(model::make(pool2, std::forward<F>(f)), pool2)
+    {}
+
+    constexpr R operator()(Args&&...args)
     {
-        using model_type = typename function_type::template model<F>;
-
-        int h = pool2->template construct<model_type>(std::forward<F>(f));
-
-        return { h, pool2 };
-    }
-
-    R operator()(Args&&...args)
-    {
-        lock_guard<model_base, Pool, pool> l{*this};
-
-        return l->operator()(std::forward<Args>(args)...);
+        return model::invoke(base_type::pool_(), base_type::handle_, std::forward<Args>(args)...);
     }
 };
 
@@ -217,13 +211,20 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
          * Ideal: embr::shared_handle<function<int(int)>, Pool>
          */
 
-        using shared_type = mem::v1::shared_handle<estd::detail::function<int(int)>, decltype(pool)>;
+        using shared_type = mem::v1::shared_handle<estd::detail::function<int(int)>, pool_type>;
 
-        shared_type h1 = shared_type::make_handle(&pool, [] (int v) { return v * 2; });
+        SECTION("constructed")
+        {
+            shared_type h1(&pool, [] (int v) { return v * 2; });
 
-        int r = h1(5);
+            int r = h1(5);
 
-        REQUIRE(r == 10);
+            REQUIRE(r == 10);
+        }
+        SECTION("make_shared")
+        {
+            //auto h1 = mem::v1::make_shared<mem::function<int(int)>>(pool, [](int v) { return v * 2; });
+        }
     }
     SECTION("vector")
     {

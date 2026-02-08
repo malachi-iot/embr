@@ -88,10 +88,20 @@ public:
 
 
 // DEBT: Need to filter this more, otherwise ADL is gonna lose its mind
-template <class T, class Pool, class ...Args>
+template <class T, class Pool, class ...Args,
+    estd::enable_if_t<detail::v1::innate_traits<T>::shared == false, int> = 0>
 constexpr shared_handle<T, Pool> make_shared(Pool& pool, Args&&...args)
 {
     return shared_handle<T, Pool>{ pool.template construct<T>(std::forward<Args>(args)...), &pool };
+}
+
+// NOT READY YET
+template <class T, class Pool, class ...Args,
+    estd::enable_if_t<detail::v1::innate_traits<T>::shared, int> = 0>
+constexpr typename detail::v1::innate_traits<T>::template rebind_shared<Pool> make_shared(Pool& pool, Args&&...args)
+{
+    using traits = detail::v1::innate_traits<T>;
+    return typename traits::template rebind_shared<Pool>{ &pool, std::forward<Args>(args)... };
 }
 
 }}}

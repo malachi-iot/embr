@@ -141,6 +141,25 @@ public:
         return { *this };
     }
 };
+
+// Dummy lock handle just to help out make_shared
+template <>
+class lock_handle<void, nullptr>
+{
+public:
+    // Never allowed to actually construct
+    template <class ...Args>
+    lock_handle(Args&&...args) = delete;
+
+    using handle_type = int;
+    using ops = void;
+
+    int handle_;
+
+    constexpr int value() { return {}; }
+    constexpr void* pool_() { return {}; }
+    static constexpr bool is_global = false;
+};
     
 }}
 
