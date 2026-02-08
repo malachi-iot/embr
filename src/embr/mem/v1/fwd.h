@@ -18,10 +18,6 @@ namespace detail { inline namespace v1 {
 
 // EXPERIMENTAL
 // For types who inherently are aware of pooling
-struct innate_shared_t {};
-
-// EXPERIMENTAL
-// For types who inherently are aware of pooling
 template <class T>
 struct innate_traits
 {

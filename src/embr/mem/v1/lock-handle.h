@@ -49,6 +49,47 @@ public:
     }
 };
 
+// AKA "sparse handle"
+// Not owning
+// Not lock-guarded
+// Primarily a type-safety mechanism for T
+template <class T, class Handle>
+class typed_handle
+{
+public:
+    using handle_type = Handle;
+
+protected:
+    handle_type handle_;
+
+public:
+
+    template <class Pool>
+    T* lock(Pool& pool) const
+    {
+        return static_cast<T*>(pool.lock(handle_));
+    }
+
+    template <class Pool>
+    void unlock(Pool& pool) const
+    {
+        return pool.unlock(handle_);
+    }
+
+    template <class Pool>
+    void destroy(Pool& pool) const
+    {
+        pool.destroy(handle_);
+    }
+
+    template <class Pool>
+    constexpr lock_handle<Pool> handle(Pool& pool) const
+    {
+        return lock_handle<Pool>(handle_, &pool);
+    }
+};
+
+
 template <class Pool, Pool* pool>
 class lock_handle : public global_provider<Pool, pool>
 {
