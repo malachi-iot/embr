@@ -6,11 +6,13 @@ namespace embr { namespace units {
 
 namespace internal {
 
+// OBSOLETE - use estd::units flavors directly
+
 template <class Rep>
-using passthrough = estd::internal::units::passthrough<Rep>;
+using passthrough = estd::units::passthrough<Rep>;
 
 template <class Int, Int v>
-using adder = estd::internal::units::adder<Int, v>;
+using adder = estd::units::adder<Int, v>;
 
 template <class T1, class T2>
 using compound_tag = estd::internal::units::compound_tag<T1, T2>;

@@ -59,7 +59,7 @@ TEST_CASE("units")
     SECTION("celsius")
     {
         // lifted right from SPN 4420
-        celsius<uint8_t, estd::ratio<1>, estd::internal::units::adder<int16_t, -40> > c1{0};
+        celsius<uint8_t, estd::ratio<1>, estd::units::adder<int16_t, -40> > c1{0};
         celsius<int> c2{c1};
 
         REQUIRE(c1.count() == -40);

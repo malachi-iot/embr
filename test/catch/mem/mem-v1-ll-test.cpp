@@ -78,7 +78,7 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
             //detail::v1::bundle bundle{nullptr, nullptr, h0};
 
             // DEBT: https://github.com/malachi-iot/estdlib/issues/159
-            REQUIRE(handles.dealloc(h0) == estd::errc::values{});
+            REQUIRE(handles.dealloc(h0) == estd::errc{});
 
             //type::iterator b = handles.begin();
         }
