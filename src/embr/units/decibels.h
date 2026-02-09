@@ -16,10 +16,10 @@ struct bels_tag {};
 
 }
 
-template <typename Rep, class Period = estd::ratio<1>, typename F = internal::passthrough<Rep> >
+template <typename Rep, class Period = estd::ratio<1>, typename F = estd::units::passthrough<Rep> >
 using bels = detail::unit<Rep, Period, internal::bels_tag, F>;
 
-template <typename Rep, typename F = internal::passthrough<Rep> >
+template <typename Rep, typename F = estd::units::passthrough<Rep> >
 using decibels = bels<Rep, estd::deci, F>;
 
 

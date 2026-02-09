@@ -14,19 +14,19 @@ struct volts_tag {};
 /// @tparam Rep core unit size of underlying count/ticks
 /// @tparam Period scaling ratio
 /// @tparam F final conversion.  defaults to passhtrough (noop)
-template <typename Rep, class Period = estd::ratio<1>, typename F = internal::passthrough<Rep> >
+template <typename Rep, class Period = estd::ratio<1>, typename F = estd::units::passthrough<Rep> >
 using volts = estd::units::v1::unit<Rep, Period, internal::volts_tag, F>;
 
-template <class Rep, typename F = internal::passthrough<Rep> >
+template <class Rep, typename F = estd::units::passthrough<Rep> >
 using kilovolts = volts<Rep, estd::kilo, F>;
 
-template <class Rep, typename F = internal::passthrough<Rep> >
+template <class Rep, typename F = estd::units::passthrough<Rep> >
 using decivolts = volts<Rep, estd::deci, F>;
 
-template <class Rep, typename F = internal::passthrough<Rep> >
+template <class Rep, typename F = estd::units::passthrough<Rep> >
 using millivolts = volts<Rep, estd::milli, F>;
 
-template <class Rep, typename F = internal::passthrough<Rep> >
+template <class Rep, typename F = estd::units::passthrough<Rep> >
 using microvolts = volts<Rep, estd::micro, F>;
 
 

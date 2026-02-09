@@ -22,24 +22,24 @@ using amp_seconds_tag = estd::internal::units::compound_tag<amps_tag, seconds_ta
 template <class Rep, class Period = estd::ratio<1>, typename F = internal::passthrough<Rep> >
 using amps = detail::unit<Rep, Period, internal::amps_tag, F>;
 
-template <class Rep, typename F = internal::passthrough<Rep> >
+template <class Rep, typename F = estd::units::passthrough<Rep> >
 using milliamps = amps<Rep, estd::milli, F>;
 
-template <class Rep, typename F = internal::passthrough<Rep> >
+template <class Rep, typename F = estd::units::passthrough<Rep> >
 using microamps = amps<Rep, estd::micro, F>;
 
-template <class Rep, class Period = estd::ratio<1>, typename F = internal::passthrough<Rep> >
+template <class Rep, class Period = estd::ratio<1>, typename F = estd::units::passthrough<Rep> >
 using amp_seconds = detail::unit<Rep, Period, internal::amp_seconds_tag, F>;
 
 // +++ EXPERIMENTAL, untested.  Might want a rate_unit_base, though I like the flexibility of
 // basing it all on an underlying compound tag
-template <class Rep, typename F = internal::passthrough<Rep> >
+template <class Rep, typename F = estd::units::passthrough<Rep> >
 using milliamp_seconds = amp_seconds<Rep, estd::ratio<1000>, F>;
 
-template <class Rep, typename F = internal::passthrough<Rep> >
+template <class Rep, typename F = estd::units::passthrough<Rep> >
 using amp_hours = amp_seconds<Rep, estd::ratio<3600>, F>;
 
-template <class Rep, typename F = internal::passthrough<Rep> >
+template <class Rep, typename F = estd::units::passthrough<Rep> >
 using milliamp_hours = amp_seconds<Rep, estd::ratio<1000UL * 3600>, F>;
 
 
