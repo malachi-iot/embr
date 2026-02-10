@@ -20,18 +20,11 @@ namespace estd { namespace units { inline namespace v1 { namespace detail {
 template <class Rep, class Period>
 std::ostream& operator<<(std::ostream& out, embr::mem::bytes_unit<Rep, Period> v)
 {
-    out << v.count();
-
-    if(Period::num != Period::den)
-    {
-        // not 1:1 means let's do a 1:1 (pure bytes) one also
-        // DEBT: OK I already did this elsewhere... probably should standardize this in estd but only
-        // activate with some kind of feature flag.  That includes the whole suffix thing
-        // See https://github.com/malachi-iot/estdlib/issues/172
-        embr::mem::bytes_unit<double> u(v);
-
-        out << " (" << u.count() << " bytes)";
-    }
+    // TODO: Make a helper for this in estd, perhaps another flag for put_unit
+    if(Period::num == Period::den || v.count() == 0)
+        out << put_unit(bytes<int>(v));
+    else
+        out << v.count() << " (" << put_unit(bytes<int>(v)) << ')';
 
     return out;
 }
@@ -71,6 +64,10 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                 // synthetic size of to-be-allocated block, in aliased units (actually 64 bytes
                 // since aliasing is 8)
                 constexpr pos_type phys_sz(8);
+
+                // DEBT: Brute force check that operator << overload above is happy.  Do a real stringstream
+                // check instead
+                REQUIRE(phys_sz == pos_type(0));
 
                 SECTION("alloc")
                 {

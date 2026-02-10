@@ -2,6 +2,7 @@
 
 #include <esp_log.h>
 
+#include <estd/system_error.h>
 #include "v1/scheduler.hpp"
 
 namespace embr { namespace esp_idf {
