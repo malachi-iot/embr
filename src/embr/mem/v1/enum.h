@@ -13,7 +13,18 @@ struct block_mode_enum
         RttoBase,
         Immobile    // RttoProxy with no move constructor.  RttoBase not yet supported here
     };
+
+    static const char* to_string(modes);
 };
+
+
+
+inline const char* to_string(block_mode_enum::modes m)
+{
+    return block_mode_enum::to_string(m);
+}
+
+inline const char to_abbrev(block_mode_enum::modes m);
 
 }}
 

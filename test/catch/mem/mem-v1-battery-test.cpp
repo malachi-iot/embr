@@ -7,6 +7,8 @@
 #include <embr/mem/v1/shared-handle.h>
 #include <embr/mem/v1/unique-handle.h>
 
+#include "test-mem-data.h"
+
 using namespace embr::mem;
 
 #define ENABLE_BATTERY 1
@@ -32,6 +34,7 @@ static void battery(typename detail::pool_ops<Traits>& ops, int it, unsigned see
     typename ops_type::fragmentation frag;
 
     std::uniform_int_distribution<int> distrib(1, 10);
+    std::uniform_int_distribution<int> mode_distrib(0, 1);      // Trivial or Proxy
 
     //int allocs_to_do = gen() % ops.handles_.size();
     int allocs_to_do = ops.handles().size() - 1;     // 1 handle already used for big-free-block
@@ -41,13 +44,16 @@ static void battery(typename detail::pool_ops<Traits>& ops, int it, unsigned see
 
     std::ostringstream last;
     std::vector<handle_type> handle_cache;
+    int counter = 0;
 
     struct metadata
     {
         bytes logical_sz;
+        block::modes mode;
     };
 
     std::unordered_map<handle_type, metadata> handle_metadata;
+    auto aliasing = ops.aliasing;
 
     for(int i = 0; i < allocs_to_do; ++i)
     {
@@ -55,35 +61,46 @@ static void battery(typename detail::pool_ops<Traits>& ops, int it, unsigned see
 
         INFO("Phase 1");
 
-        block::modes mode = block::Trivial;
-
-        // DEBT: bring back 0-byte allocation requests as a bounds check.  Maybe ops itself shouldn't
-        // kick back, but higher level mode definitely would need to
-        pos_type phys_sz(distrib(gen) + 1);
-        bytes logical_sz = phys_sz - block::header_size(mode);
+        //const auto mode = (block::modes)mode_distrib(gen);
+        const auto mode = block::Trivial;
 
         ops.dump(before << "\n");
 
         const bytes available = ops.available();
 
-        CAPTURE(before.str(), i, phys_sz.count(), available);
+        CAPTURE(before.str(), mode, i, available);
 
-        bundle bn = ops.alloc(phys_sz, block::Trivial);
+        bundle bn;
 
-        if(bn.handle != null)
+        if(mode == block::Trivial)
         {
-            void* data = ops.lock(bn);
-            memset(data, 'a' + bn.handle, logical_sz.count());
-            ops.unlock(bn.handle);
-            handle_metadata.emplace(bn.handle, metadata { logical_sz } );
+            // DEBT: bring back 0-byte allocation requests as a bounds check.  Maybe ops itself shouldn't
+            // kick back, but higher level mode definitely would need to
+            pos_type phys_sz(distrib(gen) + 1);
+            bytes logical_sz = phys_sz - block::header_size(mode);
+
+            bn = ops.alloc(phys_sz, block::Trivial);
+
+            if(bn.handle != null)
+            {
+                void* data = ops.lock(bn);
+                memset(data, 'a' + bn.handle, logical_sz.count());
+                ops.unlock(bn.handle);
+                handle_metadata.emplace(bn.handle, metadata { logical_sz, mode } );
+            }
+            else
+                // Either we have a real handle or we failed because OOM
+                assert(phys_sz * aliasing >= available);
         }
+        else
+        {
+            bn = ops.template construct<block::RttoProxy, SideEffector>(&counter);
 
-        //REQUIRE((int)bn.handle != null);
-        // I don't want assertions number to balloon at the moment
-
-        // Either we have a real handle or we failed because OOM
-        auto aliasing = ops.aliasing;
-        assert(phys_sz * aliasing >= available || bn.handle != null);
+            if(bn.handle != null)
+            {
+                handle_metadata.emplace(bn.handle, metadata { bytes{0}, mode } );
+            }
+        }
 
         assert(ops.invariant());
     }
@@ -140,10 +157,13 @@ static void battery(typename detail::pool_ops<Traits>& ops, int it, unsigned see
         const auto& frag0 = frag.candidates[0];
 
         CAPTURE(frag0.score, (int)frag0.bundle.handle, (int)frag0.move_to.handle);
-        CAPTURE(frag0.overlap, frag0.adjacent);
 
         if(frag0.score > 0)
         {
+            const metadata& m = handle_metadata.at(frag0.bundle.handle);
+
+            CAPTURE(m.mode, frag0.overlap, frag0.adjacent);
+
             assert(frag0.invariant());
             ops.defrag(frag0);
             handle_cache.push_back(frag0.bundle.handle);
@@ -168,6 +188,7 @@ static void battery(typename detail::pool_ops<Traits>& ops, int it, unsigned see
         last << "after:" << after.str();
     }
 
+    // Verify data integrity
     for(handle_type h : handle_cache)
     {
         INFO("Phase 4");
@@ -181,9 +202,18 @@ static void battery(typename detail::pool_ops<Traits>& ops, int it, unsigned see
         auto data = (char*)ops.lock(bn);
         char comp = 'a' + bn.handle;
         const metadata& m = handle_metadata.at(bn.handle);
-        CAPTURE(m.logical_sz);
-        for(int i = 0; i < m.logical_sz; ++i, ++data)
-            assert(*data == comp);
+        if(m.mode == block::Trivial)
+        {
+            CAPTURE(m.logical_sz);
+            for(int i = 0; i < m.logical_sz; ++i, ++data)
+                assert(*data == comp);
+        }
+        else
+        {
+            auto se = (SideEffector*)ops.lock(bn);
+            assert(se->counter_ == &counter);
+            ops.unlock(bn.handle);
+        }
         ops.unlock(bn.handle);
 
     }

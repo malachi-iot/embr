@@ -117,6 +117,32 @@ inline void block_8::destroy()
 }
 
 
+inline const char* block_mode_enum::to_string(modes mode)
+{
+    switch(mode)
+    {
+        case Trivial:       return "Trivial";
+        case RttoProxy:     return "RttoProxy";
+        case RttoBase:      return "RttoBase";
+        default:            return "N/A";
+    }
+}
+
+
+inline const char to_abbrev(block_mode_enum::modes m)
+{
+    using B = block_mode_enum::modes;
+
+    switch(m)
+    {
+        case B::Trivial:    return 'T';
+        case B::RttoProxy:  return 'P';
+        case B::RttoBase:   return 'B';
+        default:            return '?';
+    }
+}
+
+
 
 }}
 

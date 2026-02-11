@@ -3,6 +3,10 @@
 #include <estd/internal/rtto.h>
 #include <estd/units.h>
 
+#if FEATURE_STD_OSTREAM
+#include <ostream>
+#endif
+
 #include "enum.h"
 #include "error.h"
 #include "fwd.h"
@@ -159,6 +163,15 @@ class alignas(void*) block_6 : block_base_uint8
     };
 public:
 };
+
+
+#if FEATURE_STD_OSTREAM
+template <class Char>
+std::basic_ostream<Char>& operator<<(std::basic_ostream<Char>& out, block_mode_enum::modes m)
+{
+    return out << to_string(m);
+}
+#endif
 
 }}
 
