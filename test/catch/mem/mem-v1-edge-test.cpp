@@ -312,5 +312,13 @@ TEST_CASE("gc mem v1 edge cases", "[memory][gc]")
             REQUIRE(from.page->is_null() == false);
             REQUIRE(from.allocated());
         }
+        SECTION("defrag case 11: RttoProxy move")
+        {
+            assemble_pool(op, test::pool11);
+
+            op.dump(before);
+
+            CAPTURE(before.str());
+        }
     }
 }

@@ -95,7 +95,7 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
 
             REQUIRE(handles[0].is_null());
         }
-        SECTION("block")
+        SECTION("block: RttoProxy")
         {
             int counter{};
             using block = detail::v1::block_8;

@@ -59,7 +59,7 @@ static void battery(typename detail::pool_ops<Traits>& ops, int it, unsigned see
     {
         std::ostringstream before, after;
 
-        INFO("Phase 1");
+        INFO("Phase 1: allocation");
 
         //const auto mode = (block::modes)mode_distrib(gen);
         const auto mode = block::Trivial;
@@ -107,7 +107,7 @@ static void battery(typename detail::pool_ops<Traits>& ops, int it, unsigned see
 
     for(int i = 0; i < frees_to_do; ++i)
     {
-        INFO("Phase 2");
+        INFO("Phase 2: partial deallocation");
 
         std::ostringstream before, after;
 
@@ -143,7 +143,7 @@ static void battery(typename detail::pool_ops<Traits>& ops, int it, unsigned see
 
     for(int i = 0; i < frees_to_do; ++i)
     {
-        INFO("Phase 3");
+        INFO("Phase 3: defragmentation");
 
         std::ostringstream before, after;
 

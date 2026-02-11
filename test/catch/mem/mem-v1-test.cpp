@@ -187,8 +187,32 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
 
                     op.unlock(bn.handle);
                 }
+                SECTION("construct")
+                {
+                    int counter = 0;
+                    constexpr block::modes mode = detail::v1::ascertain_block_mode<SideEffector>();
+
+                    static_assert(mode == block::RttoProxy);
+
+                    bundle bn = op.construct<mode, SideEffector>(&counter);
+
+                    // DEBT: Usually true...
+                    constexpr bytes expected_sz(sizeof(int) * 2 + sizeof(void*));
+                    static_assert(sizeof(SideEffector) == expected_sz);
+
+                    const pos_type sz = op.phys_size(bn);
+
+#if __SIZEOF_POINTER__ == 8 && __SIZEOF_INT__ == 4
+                    static_assert(op.aliasing == 8);
+                    static_assert(expected_sz == 16);
+                    // 4x8 = 32 bytes.  8 for header, 8 for RTTO proxy header, 16 for remainder
+                    REQUIRE(sz.count() == 4);
+#else
+#warning Please specify platform specific mode here
+#endif
+                }
             }
-            SECTION("construct")
+            SECTION("construct (standalone)")
             {
                 ops_type::storage_type& storage = const_cast<ops_type::storage_type&>(op.storage());
                 ops_type::handles_type& handles = const_cast<ops_type::handles_type&>(op.handles());
