@@ -315,10 +315,28 @@ TEST_CASE("gc mem v1 edge cases", "[memory][gc]")
         SECTION("defrag case 11: RttoProxy move")
         {
             assemble_pool(op, test::pool11);
+            int counter = 0;
+
+#if __SIZEOF_POINTER__ == 8 && __SIZEOF_INT__ == 4
+            bundle bn = op.get_bundle(4);
+            bn.block->emplace_rtto_proxied<SideEffector>(&counter);
 
             op.dump(before);
 
             CAPTURE(before.str());
+
+            op.assess(&frag);
+
+            REQUIRE(frag0.bundle.handle == 4);
+            REQUIRE(frag0.move_to.handle == 5);
+
+            op.defrag(frag0);
+
+            bn = op.get_bundle(5);
+
+            // TODO: Inspect and make sure he moved correctly
+            //bn.block->proxy()->storage<SideEffector>();
+#endif
         }
     }
 }

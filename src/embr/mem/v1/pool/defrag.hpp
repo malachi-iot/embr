@@ -45,6 +45,11 @@ void pool_ops<Traits>::defrag(const typename fragmentation::candidate& c, bool r
 template <class Traits>
 void pool_ops<Traits>::assess(fragmentation* frag) const
 {
+    static constexpr pos_type zero(0);
+
+    using pos_traits = typename pos_type::traits;
+    // estd v0.8.11-beta2+ feature
+    using ipos = estd::units::detail::unit<typename pos_traits::template rebind<int>>;
     pos_type largest_free_sz{0};
 
     const_bundle cur = first();
@@ -122,8 +127,22 @@ void pool_ops<Traits>::assess(fragmentation* frag) const
                 }
                 else
                 {
-                    if(bn_cur_sz <= bn_prev_sz) v += bn_prev_sz;
-                    if(bn_cur_sz <= bn_next_sz) v += bn_next_sz;
+                    // Non-trivial calculated differently, since overlap is not permitted
+                    ipos bn_prev_delta = bn_prev_sz - bn_cur_sz;
+                    ipos bn_next_delta = bn_next_sz - bn_cur_sz;
+
+                    if(bn_prev_delta >= zero)
+                        v += bn_prev_sz;
+
+                    if(bn_next_delta >= zero)
+                    {
+                        // If we're a tighter fit than prev OR prev never was a candidate,
+                        // then choose next
+                        if(bn_next_delta < bn_prev_delta || v == zero)
+                            which = &bn_next;
+
+                        v += bn_next_sz;
+                    }
                 }
 
                 int sc = v.count();
