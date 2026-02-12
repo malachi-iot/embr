@@ -34,6 +34,7 @@ static void battery(typename detail::pool_ops<Traits>& ops, int it, unsigned see
     typename ops_type::fragmentation frag;
 
     std::uniform_int_distribution<int> distrib(1, 10);
+    // TODO: Still need to include RttoBase flavor
     std::uniform_int_distribution<int> mode_distrib(0, 1);      // Trivial or Proxy
 
     //int allocs_to_do = gen() % ops.handles_.size();
@@ -61,8 +62,8 @@ static void battery(typename detail::pool_ops<Traits>& ops, int it, unsigned see
 
         INFO("Phase 1: allocation");
 
-        //const auto mode = (block::modes)mode_distrib(gen);
-        const auto mode = block::Trivial;
+        const auto mode = (block::modes)mode_distrib(gen);
+        //const auto mode = block::Trivial;
 
         ops.dump(before << "\n");
 

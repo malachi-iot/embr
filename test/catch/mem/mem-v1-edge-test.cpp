@@ -55,6 +55,7 @@ TEST_CASE("gc mem v1 edge cases", "[memory][gc]")
     using pool_ops_traits = detail::v1::pool_ops_traits<pool_traits, handles_traits>;
 
     using ops_type = detail::v1::pool_ops<pool_ops_traits>;
+    using pos_type = typename ops_type::pos_type;
     using bundle = ops_type::bundle;
     using block = ops_type::block;
     using fragmentation = ops_type::fragmentation;
@@ -320,6 +321,10 @@ TEST_CASE("gc mem v1 edge cases", "[memory][gc]")
 #if __SIZEOF_POINTER__ == 8 && __SIZEOF_INT__ == 4
             bundle bn = op.get_bundle(4);
             bn.block->emplace_rtto_proxied<SideEffector>(&counter);
+            pos_type old_pos = bn.pos();
+            auto se = bn.block->proxy()->storage<SideEffector*>();
+
+            REQUIRE(se->counter_ == &counter);
 
             op.dump(before);
 
@@ -330,12 +335,22 @@ TEST_CASE("gc mem v1 edge cases", "[memory][gc]")
             REQUIRE(frag0.bundle.handle == 4);
             REQUIRE(frag0.move_to.handle == 5);
 
+            pos_type new_pos = frag0.move_to.pos();
+
+            REQUIRE(frag0.bundle.pos() == old_pos);
+            REQUIRE(new_pos != old_pos);
+
             op.defrag(frag0);
 
-            bn = op.get_bundle(5);
+            // Remember, cleverness dictates we retain our handle#
+            bn = op.get_bundle(4);
 
-            // TODO: Inspect and make sure he moved correctly
-            //bn.block->proxy()->storage<SideEffector>();
+            se = bn.block->proxy()->storage<SideEffector*>();
+
+            REQUIRE(se->moved_to_counter == 1);
+            REQUIRE(se->counter_ == &counter);
+            REQUIRE(bn.pos() != old_pos);
+            REQUIRE(bn.pos() == new_pos);
 #endif
         }
     }

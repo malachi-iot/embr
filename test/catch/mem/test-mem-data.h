@@ -1,6 +1,7 @@
 #pragma once
 
 #include "embr/mem/v1/block.h"
+#include "embr/mem/v1/unit.h"
 
 // DEBT: See if we can scoop this from estd
 struct SideEffector
@@ -48,6 +49,31 @@ struct SideEffector
         if(counter_)   --*counter_;
     }
 };
+
+
+// NOTE: Considered making an operators.h for this guy.  Somehow putting him at global scope still
+// doesn't feel right - in part because this hangs off standard bytes tag and I don't want to presume
+// this is how everyone wants to render 'bytes'
+namespace estd { namespace units { inline namespace v1 { namespace detail {
+
+// ADL you are a demanding one.  OK, here you go
+//template <class Traits>
+//std::ostream& operator<<(std::ostream& out, const unit<Traits>& v)
+template <class Rep, class Period>
+std::ostream& operator<<(std::ostream& out, embr::mem::bytes_unit<Rep, Period> v)
+{
+    // TODO: Make a helper for this in estd, perhaps another flag for put_unit
+    if(Period::num == Period::den || v.count() == 0)
+        out << put_unit(bytes<int>(v));
+    else
+        out << v.count() << " (" << put_unit(bytes<int>(v)) << ')';
+
+    return out;
+}
+
+}}}}
+
+
 
 
 namespace test { inline namespace mem {

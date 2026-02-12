@@ -70,6 +70,8 @@ void pool_ops<Traits>::assess(fragmentation* frag) const
 
     while(cur.handle != block::null)
     {
+        assert(!cur.is_null());
+
         pos_type bn_prev_sz = bn_cur_sz;
         bn_cur_sz = phys_size(cur);
 
@@ -106,13 +108,12 @@ void pool_ops<Traits>::assess(fragmentation* frag) const
                 {
                     pos_type max = bn_prev_sz + bn_next_sz;
 
-                    // DEBT: https://github.com/malachi-iot/estdlib/issues/175 means we have to convert to .count()
-                    pos_type prev_boost((max - bn_prev_sz).count() * booster);
-                    pos_type next_boost((max - bn_next_sz).count() * booster);
+                    pos_type prev_boost((max - bn_prev_sz) * booster);
+                    pos_type next_boost((max - bn_next_sz) * booster);
 
-                    // If following F block is the would-be end big-free-block, greatly favor
+                    // If following F block is the would-be end big-free-block, favor
                     // previous F block so that merge can create end big-free-block
-                    if(!bn_next.has_next()) prev_boost *= booster * booster;
+                    if(!bn_next.has_next()) prev_boost *= booster;
 
                     // Favor the smaller fitting F
                     if(next_boost > prev_boost)

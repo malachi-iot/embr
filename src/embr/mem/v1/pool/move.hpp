@@ -218,6 +218,8 @@ validated_result pool_ops<Traits>::move(
         // TODO: Bring this check back for non adjacent OR non trivial blocks
         //assert(to_block_phys_sz >= from_block_phys_sz);
 
+        // MOVE_AND_DESTROY would be better here - an optimization.  A little tricky to do with rtto_proxy.
+
         to.block->move_from(from.block, logical_sz);
         to.allocated(true);
 

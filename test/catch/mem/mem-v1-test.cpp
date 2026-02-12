@@ -12,26 +12,6 @@
 
 using namespace embr::mem;
 
-namespace estd { namespace units { inline namespace v1 { namespace detail {
-
-// ADL you are a demanding one.  OK, here you go
-//template <class Traits>
-//std::ostream& operator<<(std::ostream& out, const unit<Traits>& v)
-template <class Rep, class Period>
-std::ostream& operator<<(std::ostream& out, embr::mem::bytes_unit<Rep, Period> v)
-{
-    // TODO: Make a helper for this in estd, perhaps another flag for put_unit
-    if(Period::num == Period::den || v.count() == 0)
-        out << put_unit(bytes<int>(v));
-    else
-        out << v.count() << " (" << put_unit(bytes<int>(v)) << ')';
-
-    return out;
-}
-
-}}}}
-
-
 constexpr unsigned s_l1_pool_sz = 512;
 using s_l1_pool_type = v1::layer1::pool<s_l1_pool_sz, 8>;
 s_l1_pool_type s_pool;
