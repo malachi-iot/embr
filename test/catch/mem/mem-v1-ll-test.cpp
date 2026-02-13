@@ -95,11 +95,10 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
 
             REQUIRE(handles[0].is_null());
         }
-        SECTION("block: RttoProxy")
+        SECTION("block: RttoBase")
         {
             int counter{};
             using block = detail::v1::block_8;
-            using proxy = estd::internal::rtto_base::base;
 
             union
             {
@@ -113,9 +112,47 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
                 char storage2[64];
             };
 
+            b1.reset(block::RttoBase, true);
+            b1.emplace<RttoSideEffector>(&counter);
+            b2.reset(block::Trivial, false);
+
+            REQUIRE(counter == 1);
+
+            SECTION("copy")
+            {
+                b2.copy_from(&b1, sizeof(RttoSideEffector));
+                REQUIRE(b2.mode() == block::RttoBase);
+                auto rse2 = (RttoSideEffector*)b2.data();       // NOLINT
+                REQUIRE(rse2->copied_to_counter == 1);
+                b1.destroy();
+            }
+            SECTION("move")
+            {
+
+            }
+        }
+        SECTION("block: RttoProxy")
+        {
+            int counter{};
+            using block = detail::v1::block_8;
+            using proxy = estd::internal::rtto_base::base;
+
+            union
+            {
+                block b1;
+                char storage1[64]{};
+            };
+
+            union
+            {
+                block b2;
+                char storage2[64]{};
+            };
+
+            b1.reset(block::RttoProxy, true);
+
             SECTION("block: move")
             {
-                b1.reset(block::RttoProxy, false);
                 b1.emplace_rtto_proxied<SideEffector>(&counter);
 
                 REQUIRE(counter == 1);
@@ -129,11 +166,11 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
             }
             SECTION("block: copy")
             {
-                b1.reset(block::RttoProxy, false);
                 b1.emplace_rtto_proxied<SideEffector>(&counter);
 
                 auto se2 = (SideEffector*) b2.proxy()->storage();
 
+                // DEBT: Slightly UB-ish since we never actually constructed b2
                 REQUIRE(se2->copied_to_counter == 0);
 
                 b2.copy_from(&b1, sizeof(SideEffector));

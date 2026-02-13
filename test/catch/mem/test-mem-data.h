@@ -51,6 +51,31 @@ struct SideEffector
 };
 
 
+// Semi-CRTP style
+template <class Self>
+class RttoBase : public estd::internal::rtto_base::base
+{
+    using base_type = estd::internal::rtto_base::base;
+
+public:
+    RttoBase() :
+        base_type(estd::internal::rtto<Self>::utility)
+    {}
+};
+
+
+class RttoSideEffector :
+    public RttoBase<RttoSideEffector>,  // This guy must come first
+    public SideEffector
+{
+    using base_type = SideEffector;
+
+public:
+    template <class ...Args>
+    RttoSideEffector(Args&&...args) : base_type(std::forward<Args>(args)...)    {}
+};
+
+
 // NOTE: Considered making an operators.h for this guy.  Somehow putting him at global scope still
 // doesn't feel right - in part because this hangs off standard bytes tag and I don't want to presume
 // this is how everyone wants to render 'bytes'
