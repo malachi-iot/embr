@@ -48,10 +48,7 @@ inline void block_8::copy_from(this_type* from, unsigned sz)
 
         case RttoProxy:
         {
-            const rtto_proxy& from_proxy = *from->proxy();
-            // DEBT: estd doesnt have a copy constructor yet for rtto_proxy.  Need v0.8.11-beta2 or higher
-            auto p = (rtto_proxy*) new (data_) rtto_proxy::base(from_proxy);
-            from_proxy.copy_to(p->storage());
+            new (data_) rtto_proxy(*from->proxy());
             mode_ = RttoProxy;
             break;
         }
