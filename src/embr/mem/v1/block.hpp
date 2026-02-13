@@ -114,6 +114,34 @@ inline void block_8::destroy()
 }
 
 
+inline auto block_8::metadata() const -> metadata_type
+{
+    metadata_type md = nullptr;
+
+#if FEATURE_ESTD_RTTO_GET_METADATA
+    switch(mode_)
+    {
+        case RttoProxy:
+        {
+            int rc = proxy()->get_metadata(&md);
+            break;
+        }
+
+        case RttoBase:
+        {
+            int rc = rtto_base()->get_metadata(&md);
+            break;
+        }
+
+        default:
+            break;
+    }
+#endif
+
+    return md;
+}
+
+
 inline const char* block_mode_enum::to_string(modes mode)
 {
     switch(mode)

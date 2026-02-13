@@ -19,6 +19,7 @@ static void assemble_pool(typename detail::pool_ops<Traits>& ops, const test::pa
     using page_type = typename handles_traits::value_type;
     using pos_type = typename page_type::unit_type;
     using bundle = typename ops_type::bundle;
+    using block = detail::v1::block_8;
     const auto aliasing = ops.aliasing;
     const auto null = handles_traits::null;
     int prev = null;
@@ -38,6 +39,32 @@ static void assemble_pool(typename detail::pool_ops<Traits>& ops, const test::pa
         bundle b = ops.get_bundle(i);
 
         *b.block = detail::block_8(page.blk.mode(), page.blk.allocated(), prev, next);
+
+        // Had this idea to auto populate these guys, but he wants int* for SideEffector::counter_
+        // I suppose we could pass that into this function... for the time being feeding it a static
+        // just to get him online
+        static int sideeffector_counter_kludge = 0;
+
+        switch(page.blk.mode())
+        {
+            case block::Trivial:
+                break;
+
+            case block::RttoProxy:
+#if __SIZEOF_POINTER__ == 8 && __SIZEOF_INT__ == 4
+                b.block->template emplace_rtto_proxied<SideEffector>(&sideeffector_counter_kludge);
+#endif
+                break;
+
+            case block::RttoBase:
+#if __SIZEOF_POINTER__ == 8 && __SIZEOF_INT__ == 4
+                b.block->template emplace<RttoSideEffector>(&sideeffector_counter_kludge);
+#endif
+                break;
+
+            default:
+                assert(false);
+        }
 
         tally += pos_type(page.phys_sz / aliasing);
 
@@ -355,9 +382,17 @@ TEST_CASE("gc mem v1 edge cases", "[memory][gc]")
         }
         SECTION("defrag case 12: RttoBase move")
         {
+            // In fact this scenario never had a specific issue, I made mistake during battery test logic itself.
+            // Keeping anyway
             assemble_pool(op, test::pool12);
             int counter = 0;
 
+            op.assess(&frag);
+
+            REQUIRE(frag0.bundle.handle == 5);
+            REQUIRE(frag0.move_to.handle == 4);
+
+            op.defrag(frag0);
         }
     }
 }

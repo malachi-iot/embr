@@ -35,7 +35,7 @@ static void battery(typename detail::pool_ops<Traits>& ops, int it, unsigned see
 
     std::uniform_int_distribution<int> distrib(1, 10);
     // TODO: Still need to include RttoBase flavor
-    std::uniform_int_distribution<int> mode_distrib(0, 1);      // Trivial or Proxy
+    std::uniform_int_distribution<int> mode_distrib(0, 2);      // Trivial, Proxy or Base
 
     //int allocs_to_do = gen() % ops.handles_.size();
     int allocs_to_do = ops.handles().size() - 1;     // 1 handle already used for big-free-block
@@ -203,28 +203,37 @@ static void battery(typename detail::pool_ops<Traits>& ops, int it, unsigned see
     // Verify data integrity
     for(handle_type h : handle_cache)
     {
-        INFO("Phase 4");
-        CAPTURE((int)h, last.str());
+        INFO("Phase 4: Integrity Verification");
 
         bundle bn = ops.get_bundle(h);
         invariant_result r = ops.invariant();
+
+        CAPTURE((int)h, last.str());
+
         assert(r);
         assert(bn.allocated());
 
         auto data = (char*)ops.lock(bn);
-        char comp = 'a' + bn.handle;
         const metadata& m = handle_metadata.at(bn.handle);
+
+        CAPTURE(m.mode);
+
         if(m.mode == block::Trivial)
         {
+            char comp = 'a' + bn.handle;
             CAPTURE(m.logical_sz);
             for(int i = 0; i < m.logical_sz; ++i, ++data)
                 assert(*data == comp);
         }
-        else
+        else if (m.mode == block::RttoProxy)
         {
-            auto se = (SideEffector*)ops.lock(bn);
+            auto se = (SideEffector*)data;
             assert(se->counter_ == &counter);
-            ops.unlock(bn.handle);
+        }
+        else if (m.mode == block::RttoBase)
+        {
+            auto se = (RttoSideEffector*)data;
+            assert(se->counter_ == &counter);
         }
         ops.unlock(bn.handle);
 

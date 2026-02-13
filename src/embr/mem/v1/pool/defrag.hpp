@@ -97,6 +97,7 @@ void pool_ops<Traits>::assess(fragmentation* frag) const
                 pos_type v(0);
                 const_bundle* which = &bn_prev;
                 bool overlap = false;
+                block::metadata_type metadata = cur.block->metadata();
 
                 // favor trivial
                 // favor a triple with a small middle, since that's easier to move
@@ -126,7 +127,11 @@ void pool_ops<Traits>::assess(fragmentation* frag) const
 
                     v += prev_boost + bn_cur_sz + next_boost;
                 }
+#if FEATURE_ESTD_RTTO_GET_METADATA
+                else if(metadata->moveable)
+#else
                 else
+#endif
                 {
                     // Non-trivial calculated differently, since overlap is not permitted
                     ipos bn_prev_delta = bn_prev_sz - bn_cur_sz;

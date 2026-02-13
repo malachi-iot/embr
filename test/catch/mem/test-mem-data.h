@@ -11,18 +11,21 @@ struct SideEffector
     mutable int copied_from_counter : 4;
     int moved_from_counter : 4;
     int moved_to_counter : 4;
+    bool constructed_ : 1;
 
     constexpr SideEffector() :
         copied_from_counter{},
         moved_from_counter{},
-        moved_to_counter{}
+        moved_to_counter{},
+        constructed_{true}
     {}
 
     constexpr SideEffector(const SideEffector& copy_from) :
         counter_{copy_from.counter_},
         copied_from_counter{},
         moved_from_counter{},
-        moved_to_counter{}
+        moved_to_counter{},
+        constructed_{true}
     {
         ++copy_from.copied_from_counter;
         ++copied_to_counter;
@@ -32,7 +35,8 @@ struct SideEffector
         counter_{move_from.counter_},
         copied_from_counter{},
         moved_from_counter{},
-        moved_to_counter{}
+        moved_to_counter{},
+        constructed_{true}
     {
         ++move_from.moved_from_counter;
         move_from.counter_ = nullptr;
@@ -231,7 +235,13 @@ static const page pool11[]
 
 static const page pool12[]
 {
-    { /* ?? */ 0 , block{ block::Trivial, F } },
+    { /* 0 */ 72, block{ block::Trivial, A } },
+    { /* 1 */ 16, block{ block::Trivial, A } },
+    { /* 2 */ 32, block{ block::RttoProxy, A } },
+    { /* 3 */ 32, block{ block::RttoBase, A } },
+    { /* 4 */ 32, block{ block::Trivial, F } },
+    { /* 5 */ 32, block{ block::RttoBase, A } },
+    { /* 6 */ 0 , block{ block::Trivial, F } },
 };
 
 }}

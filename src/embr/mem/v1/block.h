@@ -115,6 +115,8 @@ class alignas(void*) block_8 : public block_header_8
 public:
     block_8() = default;
 
+    using metadata_type = const estd::internal::rtto_base::metadata*;
+
     constexpr explicit block_8(modes mode, bool allocated,
         handle_type prev = null, handle_type next = null) :
         base_type(mode, allocated, prev, next)
@@ -125,13 +127,17 @@ public:
     void* data() { return data_; }
     constexpr const void* data() const { return data_; }
     rtto_proxy* proxy() { return (rtto_proxy*) data_; }
+    const rtto_proxy* proxy() const { return (rtto_proxy*) data_; }
     rtto_base_type* rtto_base() { return (rtto_base_type*) data_; }
+    const rtto_base_type* rtto_base() const { return (rtto_base_type*) data_; }
 
     template <class T, class ...Args>
     void emplace_rtto_proxied(Args&&...args);
 
     template <class T, class ...Args>
     void emplace(Args&&...args);
+
+    metadata_type metadata() const;
 
     // Destroy tracked object, not necessarily block itself
     void destroy();
