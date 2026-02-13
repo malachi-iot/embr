@@ -124,10 +124,17 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
                 REQUIRE(b2.mode() == block::RttoBase);
                 auto rse2 = (RttoSideEffector*)b2.data();       // NOLINT
                 REQUIRE(rse2->copied_to_counter == 1);
+                REQUIRE(rse2->moved_to_counter == 0);
                 b1.destroy();
             }
             SECTION("move")
             {
+                b2.move_from(&b1, sizeof(RttoSideEffector));
+                REQUIRE(b2.mode() == block::RttoBase);
+                auto rse2 = (RttoSideEffector*)b2.data();       // NOLINT
+                REQUIRE(rse2->copied_to_counter == 0);
+                REQUIRE(rse2->moved_to_counter == 1);
+                b1.destroy();
 
             }
         }

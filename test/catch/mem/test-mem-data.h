@@ -229,4 +229,9 @@ static const page pool11[]
     { /* 5 */ 0 , block{ block::Trivial, F } },
 };
 
+static const page pool12[]
+{
+    { /* ?? */ 0 , block{ block::Trivial, F } },
+};
+
 }}

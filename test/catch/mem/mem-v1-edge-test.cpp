@@ -353,5 +353,11 @@ TEST_CASE("gc mem v1 edge cases", "[memory][gc]")
             REQUIRE(bn.pos() == new_pos);
 #endif
         }
+        SECTION("defrag case 12: RttoBase move")
+        {
+            assemble_pool(op, test::pool12);
+            int counter = 0;
+
+        }
     }
 }

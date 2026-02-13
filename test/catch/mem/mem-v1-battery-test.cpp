@@ -93,7 +93,7 @@ static void battery(typename detail::pool_ops<Traits>& ops, int it, unsigned see
                 // Either we have a real handle or we failed because OOM
                 assert(phys_sz * aliasing >= available);
         }
-        else
+        else if(mode == block::RttoProxy)
         {
             bn = ops.template construct<block::RttoProxy, SideEffector>(&counter);
 
@@ -102,6 +102,17 @@ static void battery(typename detail::pool_ops<Traits>& ops, int it, unsigned see
                 handle_metadata.emplace(bn.handle, metadata { bytes{0}, mode } );
             }
         }
+        else if(mode == block::RttoBase)
+        {
+            bn = ops.template construct<block::RttoBase, RttoSideEffector>(&counter);
+
+            if(bn.handle != null)
+            {
+                handle_metadata.emplace(bn.handle, metadata { bytes{0}, mode } );
+            }
+        }
+        else
+            assert(false);
 
         assert(ops.invariant());
     }
