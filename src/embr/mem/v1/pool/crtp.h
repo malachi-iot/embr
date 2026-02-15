@@ -23,6 +23,24 @@ class pool_crtp
     //using handle_type = typename Derived::handle_type;
 
 public:
+    template <class Handle>
+    void* lock(Handle h)
+    {
+        return OPS.lock(h);
+    }
+
+    template <class Handle>
+    void unlock(Handle h)
+    {
+        OPS.unlock(h);
+    }
+
+    template <class Handle>
+    void dealloc(Handle h)
+    {
+        OPS.dealloc(h);
+    }
+
     bool realloc(int h, unsigned size)
     {
         auto bn = OPS.get_bundle(h);
@@ -119,7 +137,8 @@ public:
     }
 
 
-    void dealloc(int h)
+    template <class Handle>
+    void dealloc(Handle h)
     {
         estd::lock_guard<Mutex> lg(mutex_);
 
@@ -141,19 +160,6 @@ class pool_mutex_crtp<Derived> : public pool_crtp<Derived>
 public:
     using mutex_type = void;
 
-    template <class Handle>
-    void* lock(Handle h)
-    {
-        return OPS.lock(h);
-    }
-
-    template <class Handle>
-    void unlock(Handle h)
-    {
-        OPS.unlock(h);
-    }
-
-
     template <class T, class ...Args, class Derived2 = Derived>
     typename Derived2::handle_type construct(Args&&...args)
     {
@@ -168,12 +174,6 @@ public:
         // DEBT: Uncouple from block_8
         constexpr unsigned block_sz = v1::block_8::header_size(mode).count();
         return OPS.alloc(OPS.do_alias(sz + block_sz), mode).handle;
-    }
-
-
-    void dealloc(int h)
-    {
-        OPS.dealloc(h);
     }
 
 
