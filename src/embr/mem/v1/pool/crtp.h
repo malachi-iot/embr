@@ -64,7 +64,7 @@ public:
 // DEBT: I was resisting an ebo/mutex() paradigm but that's starting to look like
 // the best option
 template <class Derived, class Mutex = void>
-class pool_mutex_crtp //: public pool_crtp<Derived>
+class pool_mutex_crtp : public pool_crtp<Derived>
 {
     using base_type = pool_crtp<Derived>;
 
@@ -136,7 +136,7 @@ public:
 };
 
 template <class Derived>
-class pool_mutex_crtp<Derived> //: public pool_crtp<Derived>
+class pool_mutex_crtp<Derived> : public pool_crtp<Derived>
 {
 public:
     using mutex_type = void;
