@@ -11,8 +11,6 @@ struct block_mode_enum
         Trivial,
         RttoProxy,
         RttoBase,
-        // DEBT: This guy is going away, displaced by Metadata.  Makes room for possible RttoVirtual
-        Immobile    // RttoProxy with no move constructor.  RttoBase not yet supported here
     };
 
     static const char* to_string(modes);

@@ -172,8 +172,7 @@ template <class Traits>
 template <block_mode_enum::modes mode, class T, class ...Args>
 auto pool_ops<Traits>::construct(Args&&...args) -> bundle
 {
-    // Rtto and Immobile use proxy
-    constexpr bool rtto_proxied = mode == block::RttoProxy || mode == block::Immobile;
+    constexpr bool rtto_proxied = mode == block::RttoProxy;
     // DEBT: Effective but error prone accounting for various block sizing.  Probably
     // ought to move this plumbing into 'emplace'
     constexpr bytes block_sz = block::header_size(mode);
@@ -228,7 +227,6 @@ constexpr block_mode_enum::modes ascertain_block_mode()
     using modes = block_mode_enum::modes;
     return
         is_trivial::value ? modes::Trivial :
-            !is_movable::value ? modes::Immobile :
             is_rtto_base::value ? modes::RttoBase : modes::RttoProxy;
 
 }

@@ -57,10 +57,6 @@ inline void block_8::copy_from(this_type* from, unsigned sz)
             from->rtto_base()->copy_to(rtto_base());
             mode_ = RttoBase;
             break;
-
-        case Immobile:
-            // TBD
-            return;
     }
 }
 
@@ -85,10 +81,6 @@ inline void block_8::move_from(this_type* from, unsigned sz)
             from->rtto_base()->move_to(rtto_base());
             mode_ = RttoBase;
             break;
-
-        case Immobile:
-            // CANNOT
-            return;
     }
 }
 
@@ -102,7 +94,6 @@ inline void block_8::destroy()
         case Trivial:
             break;
 
-        case Immobile:
         case RttoProxy:
             proxy()->destroy();
             break;
