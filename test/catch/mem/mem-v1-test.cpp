@@ -244,7 +244,8 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
         }
         SECTION("defrag")
         {
-
+            // NOTE: Something about this side-effects battery into misbehaving occasionally
+            //pool1.gc();
         }
         SECTION("shared_handle")
         {

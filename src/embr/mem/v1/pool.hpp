@@ -222,7 +222,6 @@ template <class T>
 constexpr block_mode_enum::modes ascertain_block_mode()
 {
     using is_trivial = estd::is_trivially_constructible<T>;
-    using is_movable = estd::is_move_constructible<T>;
     using is_rtto_base = estd::is_base_of<estd::internal::rtto_base::base, T>;
     using modes = block_mode_enum::modes;
     return
