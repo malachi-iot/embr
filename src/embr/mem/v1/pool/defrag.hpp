@@ -49,7 +49,11 @@ void pool_ops<Traits>::assess(fragmentation* frag) const
 
     using pos_traits = typename pos_type::traits;
     // estd v0.8.11-beta2+ feature
-    using ipos = estd::units::detail::unit<typename pos_traits::template rebind<int>>;
+    // DEBT: Ongoing awkwardess with type promotion, precision safety.  As of
+    // estd v0.8.11-beta2 this still isn't in a comfortable place.
+    // //estd::make_signed_t<typename pos_traits::rep>;
+    using pos_int_type = int32_t; // DEBT: Hardcoding this = bad
+    using ipos = estd::units::detail::unit<typename pos_traits::template rebind<pos_int_type>>;
     pos_type largest_free_sz{0};
 
     const_bundle cur = first();
@@ -97,7 +101,9 @@ void pool_ops<Traits>::assess(fragmentation* frag) const
                 pos_type v(0);
                 const_bundle* which = &bn_prev;
                 bool overlap = false;
+#if FEATURE_ESTD_RTTO_GET_METADATA
                 block::metadata_type metadata = cur.block->metadata();
+#endif
 
                 // favor trivial
                 // favor a triple with a small middle, since that's easier to move

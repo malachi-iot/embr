@@ -23,7 +23,7 @@ inline const char* to_string(block_mode_enum::modes m)
     return block_mode_enum::to_string(m);
 }
 
-inline const char to_abbrev(block_mode_enum::modes m);
+inline char to_abbrev(block_mode_enum::modes m);
 
 }}
 

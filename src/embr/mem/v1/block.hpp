@@ -145,7 +145,7 @@ inline const char* block_mode_enum::to_string(modes mode)
 }
 
 
-inline const char to_abbrev(block_mode_enum::modes m)
+inline char to_abbrev(block_mode_enum::modes m)
 {
     using B = block_mode_enum::modes;
 

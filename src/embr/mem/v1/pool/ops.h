@@ -3,6 +3,7 @@
 #include <estd/utility.h>
 
 #include "../block.h"
+#include "../unit.h"
 
 namespace embr { namespace mem {
 
