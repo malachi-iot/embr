@@ -34,9 +34,6 @@ public:
     using traits = Traits;
     using block_type = typename traits::block;
     using container_type = typename traits::type;
-    //using typename traits::page_type;
-    //using typename traits::pos_type;
-    //using traits::data;
 
     // Doesn't work for span, see https://github.com/malachi-iot/estdlib/issues/167
     using iterator_traits = estd::iterator_traits<container_type>;
@@ -44,8 +41,6 @@ public:
 protected:
     template <class Traits2>
     friend class pool_ops;
-
-    //static_assert(sizeof(typename iterator_traits::value_type) == 1);
 
     container_type pool_;
 
@@ -60,42 +55,19 @@ protected:
         return reinterpret_cast<const block_type*>(estd::data(pool_) + at.count());
     }
 
-/*
-#if PAGE_ALIAS
-    template <class Rep, unsigned alias>
-    v1::block* block(const v1::page<Rep, alias>& page)
-#else
-    template <class Rep, class Ratio>
-    v1::block* block(const v1::page<Rep, Ratio>& page)
-#endif
-    {
-        return block(page.pos());
-    } */
-
 public:
     template <class ...Args>
     explicit constexpr pool(Args&&...args) :
         pool_(std::forward<Args>(args)...)
     {
-        // DEBT: Unhardcode this guy
-        constexpr unsigned aliasing = 8;
+        // DEBT: Unhardcode this guy, though may be difficult since 'page' isn't specified yet
+        constexpr unsigned aliasing = sizeof(void*);
 
         assert(estd::size(pool_) % aliasing == 0);
     }
 
     // Just for diagnostics
     const char* data() const { return estd::data(pool_); }
-};
-
-// EXPERIMENTAL
-template <class HandlesContainer, class PoolContainer>
-class pool_aggregate
-{
-protected:
-    using handles_traits = v1::handles_traits<HandlesContainer>;
-    using page_type = typename handles_traits::value_type;
-    detail::v1::pool<detail::v1::pool_traits<PoolContainer>> pool_;
-    detail::v1::handles<handles_traits> handles_;
 };
 
 }}
