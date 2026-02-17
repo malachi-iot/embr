@@ -247,6 +247,22 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
             // NOTE: Something about this side-effects battery into misbehaving occasionally
             //pool1.gc();
         }
+        SECTION("lock_guard")
+        {
+            int counter = 0;
+
+            handle_type h0 = pool1.construct<SideEffector>(&counter);
+            lock_handle lh0(h0, &pool1);
+
+            {
+                lock_guard<SideEffector, pool_type> guard(lh0);
+
+                REQUIRE(guard->counter() == 1);
+                REQUIRE(guard->counter_ == &counter);
+            }
+
+            pool1.dealloc(h0);
+        }
         SECTION("shared_handle")
         {
             REQUIRE(pool1.ops().available() == pool_sz - block_sz);

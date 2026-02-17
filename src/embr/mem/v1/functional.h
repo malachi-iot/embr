@@ -112,6 +112,7 @@ public:
 template <class F, class Pool>
 using nonowning_function = function<F, lock_handle<Pool>>;
 
+// A gc'd function/functor which doesn't itself track Pool*
 template <class F, class Pool>
 class sparse_function;
 

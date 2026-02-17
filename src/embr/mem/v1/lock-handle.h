@@ -114,7 +114,7 @@ protected:
     using const_bundle = typename ops_type::const_bundle;
 
     // DEBT: Swap this and template value parameter name
-    Pool* pool_() { return value(); }
+    Pool* pool_() const { return value(); }
     ops_type& ops() { return value()->ops(); }
     constexpr const ops_type& ops() const { return value()->ops(); }
 

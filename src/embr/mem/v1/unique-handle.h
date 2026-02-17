@@ -54,8 +54,9 @@ public:
 
 
     pointer lock() const { return static_cast<pointer>(base_type::lock()); }
+    const_pointer clock() const { return static_cast<const_pointer>(base_type::lock()); }
 
-    typename base_type::template guard_type<T*> guard() const
+    typename base_type::template guard_type<T> guard() const
     {
         return { *this };
     }

@@ -52,6 +52,8 @@ struct SideEffector
     {
         if(counter_)   --*counter_;
     }
+
+    constexpr unsigned counter() const { return *counter_; }
 };
 
 

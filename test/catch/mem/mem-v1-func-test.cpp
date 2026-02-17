@@ -57,6 +57,7 @@ class vector_impl : public mem::v1::unique_handle<detail::vector_impl<T>, Pool, 
     using bundle = typename ops_type::bundle;
     using base_type::ops;
     using base_type::get_bundle;
+    using base_type::guard;
     using bytes = estd::units::bytes<unsigned>;
 
     using base_type::handle_;
@@ -69,6 +70,31 @@ public:
     using base_type::pool_;
 
     vector_impl(Pool* p) : base_type(base_type::null, p)  {}
+
+    vector_impl(const vector_impl& copy_from) :
+        base_type(base_type::null, copy_from.pool_())
+    {
+        if(!copy_from.has_value())  return;
+
+        const control_type* c = copy_from.clock();
+
+        allocate(c->size_);
+
+        pointer dest = base_type::lock()->data();
+        // FIX: Won't work... why?  Feels a lot like an alignment, padding issue - perhaps combination of
+        // block alignment and this + 1 trickery
+        //estd::copy_n(c->data(), c->size_, dest);
+
+        base_type::unlock();
+
+        copy_from.unlock();
+    }
+
+    vector_impl(vector_impl&& move_from) :
+        base_type(move_from.handle_, move_from.pool_())
+    {
+        move_from.handle_ = base_type::null;
+    }
 
     using size_type = unsigned;
 
@@ -112,15 +138,24 @@ public:
         return *(control->data() + pos);
     }
 
-    constexpr size_type size() const
+    size_type size() const
     {
         if(!is_allocated()) return 0;
 
-        return (*base_type::guard())->size_;
+        return guard()->size_;
     }
 
-    constexpr unsigned capacity() const
+    size_type max_size() const
     {
+        // This involves asking pool/ops for available contiguous free space.  Don't do fancy
+        // theoretical/defrag calc here - let someone else do defragging first before calling max_size()
+        return {};  // TBD
+    }
+
+    unsigned capacity() const
+    {
+        if(is_allocated() == false) return 0;
+
         // DEBT: assert (in debug mode only) that we're evenly divisible
         const bytes phys_size = ops().phys_size(get_bundle());
         return (phys_size.count() - control_size) / sizeof(T);
@@ -128,20 +163,23 @@ public:
 
     constexpr bool is_allocated() const { return base_type::has_value(); }
 
-    void size(unsigned new_capacity)
+    void size(unsigned new_size)
     {
-        bytes rsz(new_capacity * sizeof(T));
+        /*
+        bytes rsz(new_size * sizeof(T));
         bytes sz = ops().phys_size(get_bundle());
 
         sz -= control_size;
 
-        if(rsz > sz)    assert(reallocate(new_capacity));
+        // DEBT: Consider padding here
+        if(rsz > sz)    assert(reallocate(new_size));   */
+        guard()->size_ = new_size;
     }
 
     bool reallocate(unsigned capacity)
     {
         // DEBT: Check estd, it may be that reallocate is NEVER called in this unallocated
-        // condition.
+        // condition.  Leaning strongly towards it handles that for us
         if(is_allocated() == false) return allocate(capacity);
 
         // DEBT: High-level realloc puts extra effort into reusing handle.  That's an awesome feature,
@@ -213,13 +251,13 @@ public:
     funclist(Args2&&...args) : base_type(std::forward<Args2>(args)...)  {}
 
     template <class F>
-    friend int operator+=(funclist& self, F&& f)
+    friend funclist& operator+=(funclist& self, F&& f)
     {
         Pool* pool2 = self.impl().pool_();
         value_type item(model_type::make(pool2, std::forward<F>(f)));
 
         self.push_back(item);
-        return 0;
+        return self;
     }
 
     void operator()(Args&&...args)
@@ -353,6 +391,12 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
         vector_type vector(&pool);
 
         vector.push_back(1);
+
+        REQUIRE(vector.size() == 1);
+        //REQUIRE(vector.at(0) == 1);
+        //REQUIRE(*vector.lock() == 1);
+
+        vector_type copied(vector);
     }
     SECTION("vector2")
     {

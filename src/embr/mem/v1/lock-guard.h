@@ -52,7 +52,7 @@ lock_guard(shared_handle<Pool, pool>) -> lock_guard<Pool, pool>;
 
 inline namespace v1 {
 
-template <class T, class Pool, Pool* pool>
+template <class T, class Pool, Pool* pool = nullptr>
 class lock_guard : public detail::lock_guard<Pool, pool>
 {
     using base_type = detail::lock_guard<Pool, pool>;
