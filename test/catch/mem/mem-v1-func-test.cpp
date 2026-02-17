@@ -13,12 +13,45 @@
 using namespace embr;
 
 
+template <class T, class Pool, Pool* pool = nullptr>
+class vector_impl;
+
+namespace detail {
+
+// Effectively alter ego of layer1::vector:
+// - estd one is size + inline array + const length
+// - this one is size + inline array + semi-const length
+// Really similar mechanisms differing primarily in max_size acquisition and of course
+// we have to lock here
+template <class T, class Size = int>
+class vector_impl
+{
+    template <class T2, class Pool, Pool* pool>
+    friend class ::vector_impl;
+
+public:
+    using size_type = Size;
+
+    ESTD_CPP_STD_VALUE_TYPE(T)
+
+    T* data() { return reinterpret_cast<T*>(this + 1); }
+    const_pointer data() const { reinterpret_cast<const_pointer>(this + 1); }
+
+private:
+    size_type size_{};
+};
+
+
+}
+
+
 // Heavy lift
 // Not done, I'd say over the hump for a proof of concept
-template <class T, class Pool, Pool* pool = nullptr>
-class vector_impl : public mem::detail::v1::lock_handle<Pool, pool>
+template <class T, class Pool, Pool* pool>
+class vector_impl : public mem::v1::unique_handle<detail::vector_impl<T>, Pool, pool>
 {
-    using base_type = mem::detail::v1::lock_handle<Pool, pool>;
+    using control_type = detail::vector_impl<T>;
+    using base_type = mem::v1::unique_handle<control_type, Pool, pool>;
     using typename base_type::ops_type;
     using pos_type = typename ops_type::pos_type;
     using bundle = typename ops_type::bundle;
@@ -26,10 +59,11 @@ class vector_impl : public mem::detail::v1::lock_handle<Pool, pool>
     using base_type::get_bundle;
     using bytes = estd::units::bytes<unsigned>;
 
-    // DEBT: Really size_ ought to be part of the allocated chunk
-    int size_{};
-
     using base_type::handle_;
+
+    static constexpr unsigned control_size = sizeof(control_type);
+
+    //static_assert(control_size == sizeof(void*));
 
 public:
     using base_type::pool_;
@@ -72,17 +106,24 @@ public:
 
     ESTD_CPP_CONSTEXPR(17) reference lock(unsigned pos = 0, unsigned count = 0)
     {
+        control_type* control = base_type::lock();
+
         // DEBT: lock return a reference is somewhat counterintuitive
-        return *(((pointer)base_type::lock()) + pos);
+        return *(control->data() + pos);
     }
 
-    constexpr size_type size() const { return size_; }
+    constexpr size_type size() const
+    {
+        if(!is_allocated()) return 0;
+
+        return (*base_type::guard())->size_;
+    }
 
     constexpr unsigned capacity() const
     {
         // DEBT: assert (in debug mode only) that we're evenly divisible
-        const pos_type phys_size = ops().phys_size(get_bundle());
-        return bytes(phys_size).count() / sizeof(T);
+        const bytes phys_size = ops().phys_size(get_bundle());
+        return (phys_size.count() - control_size) / sizeof(T);
     }
 
     constexpr bool is_allocated() const { return base_type::has_value(); }
@@ -90,16 +131,23 @@ public:
     void size(unsigned new_capacity)
     {
         bytes rsz(new_capacity * sizeof(T));
-        // TODO: Realloc
-        pos_type sz = ops().phys_size(get_bundle());
+        bytes sz = ops().phys_size(get_bundle());
 
-        if(rsz > sz)    reallocate(new_capacity);
+        sz -= control_size;
+
+        if(rsz > sz)    assert(reallocate(new_capacity));
     }
 
     bool reallocate(unsigned capacity)
     {
-        handle_ = pool_()->realloc(handle_, capacity * sizeof(T));
-        return is_allocated();
+        // DEBT: Check estd, it may be that reallocate is NEVER called in this unallocated
+        // condition.
+        if(is_allocated() == false) return allocate(capacity);
+
+        // DEBT: High-level realloc puts extra effort into reusing handle.  That's an awesome feature,
+        // but not strictly necessary here.  Make a "easier" realloc who skips relinking.
+        bool success = pool_()->realloc(handle_, control_size + capacity * sizeof(T));
+        return success;
     }
 
     allocator_type get_allocator() { return {}; }
@@ -108,7 +156,7 @@ public:
     {
         assert(!is_allocated());
 
-        handle_ = pool_()->alloc(capacity * sizeof(T));
+        handle_ = pool_()->alloc(control_size + capacity * sizeof(T));
         return is_allocated();
     }
 };
@@ -291,13 +339,20 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
             //auto h1 = mem::v1::make_shared<mem::function<int(int)>>(pool, [](int v) { return v * 2; });
         }
     }
+    SECTION("vector_impl")
+    {
+        using type = detail::vector_impl<char>;
+        type vi;
+
+        REQUIRE(vi.data() == ((char*)&vi) + sizeof(type));
+    }
     SECTION("vector")
     {
         using vector_type = vector<int, pool_type>;
 
         vector_type vector(&pool);
 
-        //vector.push_back(1);
+        vector.push_back(1);
     }
     SECTION("vector2")
     {

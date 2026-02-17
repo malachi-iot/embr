@@ -51,6 +51,14 @@ public:
 
     constexpr explicit unique_handle(handle_type handle, Pool* p = nullptr) :
         base_type(handle, p) {}
+
+
+    pointer lock() const { return static_cast<pointer>(base_type::lock()); }
+
+    typename base_type::template guard_type<T*> guard() const
+    {
+        return { *this };
+    }
 };
 
 }
