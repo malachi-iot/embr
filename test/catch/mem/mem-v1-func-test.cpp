@@ -37,6 +37,21 @@ public:
     T* data() { return reinterpret_cast<T*>(this + 1); }
     const_pointer data() const { reinterpret_cast<const_pointer>(this + 1); }
 
+    vector_impl() = default;
+
+    vector_impl(const vector_impl& copy_from) :
+        size_{copy_from.size_}
+    {
+        estd::copy_n(copy_from.data(), size_, data());
+    }
+
+    vector_impl(vector_impl&& move_from) :
+        size_{move_from.size_}
+    {
+        // DEBT: Make an estd flavor of this
+        std::move(move_from.data(), move_from.data() + size_, data());
+    }
+
 private:
     size_type size_{};
 };
@@ -194,7 +209,17 @@ public:
     {
         assert(!is_allocated());
 
-        handle_ = pool_()->alloc(control_size + capacity * sizeof(T));
+        //handle_ = pool_()->alloc(control_size + capacity * sizeof(T));
+
+        using block = embr::mem::detail::block_8;
+
+        constexpr block::modes mode = embr::mem::detail::ascertain_block_mode<control_type>();
+        constexpr bytes block_sz = block::header_size(mode);
+        constexpr unsigned sz = block_sz.count() + sizeof(T);
+
+        bundle bn = ops().template construct_ll<mode, control_type>(ops().do_alias(sz));
+        handle_ = bn.handle;
+
         return is_allocated();
     }
 };
@@ -395,6 +420,15 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
         REQUIRE(vector.size() == 1);
         //REQUIRE(vector.at(0) == 1);
         //REQUIRE(*vector.lock() == 1);
+
+        // This guy will be a true 'grow' (no memory moved)
+        vector.grow(5);
+
+        vector_type vector1(&pool);
+
+        // This guy will require memory movement
+        // FIX: Somehow he doesn't need more.  Maybe we intenally overprovisioned...
+        vector.grow(5);
 
         vector_type copied(vector);
     }

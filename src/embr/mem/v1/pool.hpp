@@ -11,6 +11,7 @@
 
 #include "block.hpp"
 #include "pool.h"
+#include "pool/construct.hpp"
 #include "pool/copy.hpp"
 #include "pool/defrag.hpp"
 #include "pool/move.hpp"
@@ -168,28 +169,6 @@ auto pool_ops<Traits>::alloc(pos_type phys_sz, block::modes mode) -> bundle
     return bn;
 }
 
-template <class Traits>
-template <block_mode_enum::modes mode, class T, class ...Args>
-auto pool_ops<Traits>::construct(Args&&...args) -> bundle
-{
-    constexpr bool rtto_proxied = mode == block::RttoProxy;
-    // DEBT: Effective but error prone accounting for various block sizing.  Probably
-    // ought to move this plumbing into 'emplace'
-    constexpr bytes block_sz = block::header_size(mode);
-
-    bundle bn = alloc(do_alias(sizeof(T) + block_sz.count()), mode);
-
-    if(bn.is_null())    return {};
-
-    // DEBT: May need this to be if constexpr (or equivalent) - keep an eye on this
-    if(rtto_proxied)
-        bn.block->template emplace_rtto_proxied<T>(std::forward<Args>(args)...);
-    else
-        bn.block->template emplace<T>(std::forward<Args>(args)...);
-
-    return bn;
-}
-
 
 template <class Traits>
 bool pool_ops<Traits>::merge(bundle current, bundle next)
@@ -216,28 +195,6 @@ bool pool_ops<Traits>::merge_if_free(bundle current, bundle next)
     if(current.allocated()) return false;
 
     return merge(current, next);
-}
-
-template <class T>
-constexpr block_mode_enum::modes ascertain_block_mode()
-{
-    using is_trivial = estd::is_trivially_constructible<T>;
-    using is_rtto_base = estd::is_base_of<estd::internal::rtto_base::base, T>;
-    using modes = block_mode_enum::modes;
-    return
-        is_trivial::value ? modes::Trivial :
-            is_rtto_base::value ? modes::RttoBase : modes::RttoProxy;
-
-}
-
-
-template <class T, class PoolTraits, class HandlesTraits, class ...Args>
-typename HandlesTraits::handle_type construct(pool<PoolTraits>& p, handles<HandlesTraits>& h, Args&&...args)
-{
-    constexpr block_mode_enum::modes mode = ascertain_block_mode<T>();
-    using traits = pool_ops_val_traits<pool<PoolTraits>&, handles<HandlesTraits>&>;
-
-    return pool_ops<traits>{p, h}.template construct<mode, T>(std::forward<Args>(args)...).handle;
 }
 
 template <class Traits>
@@ -371,8 +328,11 @@ bool pool_ops<Traits>::realloc(bundle bn, pos_type phys_sz)
         // Assess for condition #1
 
         bundle bn_next(next(bn));
+
         if(bn_next.allocated() == false)
         {
+            // Reaching here means we have a following free block that possibly we can expand into
+
             pos_type next_sz = phys_size(bn_next);
 
             // DEBT: We do this kind of op elsewhere (forget where) - consolidate
@@ -380,14 +340,19 @@ bool pool_ops<Traits>::realloc(bundle bn, pos_type phys_sz)
 
             const pos_type max_sz(current_sz + next_sz);
 
+            // If requested phys_sz does not exceed actual current size + available free block...
             if(phys_sz <= max_sz)
             {
+                // ... then we can comfortably grow the block
+
+                // DEBT: Document why '3' is good (or not)
                 constexpr pos_type split_thresh(3);
 
                 if(max_sz - phys_sz >= split_thresh)
                 {
-                    // retain existing free block, merely move it
-                    move_block(*bn_next.page, phys_sz);
+                    // retain existing free block, merely move its starting point to
+                    // the end of the newly grown block
+                    move_block(*bn_next.page, bn.pos() + phys_sz);
                 }
                 else
                     handles_.dealloc(bn_next.handle);

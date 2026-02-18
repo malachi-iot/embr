@@ -2,6 +2,8 @@
 
 #include <estd/utility.h>
 
+#include "../../../internal/mutex.h"
+
 #include "../block.h"
 #include "../unit.h"
 
@@ -92,6 +94,9 @@ public:
     void alloc(const bundle&, pos_type found_sz, pos_type phys_sz, block::modes);
 
     bundle alloc(pos_type phys_sz, block::modes mode);
+
+    template <block::modes mode, class T, class ...Args>
+    bundle construct_ll(pos_type sz, Args&&...);
 
     template <block::modes mode, class T, class ...Args>
     bundle construct(Args&&...);

@@ -23,6 +23,9 @@ struct pool_traits;
 template <class Traits>
 class pool;
 
+template <class Traits>
+class pool_ops;
+
 template <class T, class PoolTraits, class HandlesTraits, class ...Args>
 typename HandlesTraits::handle_type construct(pool<PoolTraits>& p, handles<HandlesTraits>& h, Args&&...args);
 
