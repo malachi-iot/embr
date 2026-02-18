@@ -35,7 +35,7 @@ public:
     ESTD_CPP_STD_VALUE_TYPE(T)
 
     T* data() { return reinterpret_cast<T*>(this + 1); }
-    const_pointer data() const { reinterpret_cast<const_pointer>(this + 1); }
+    const_pointer data() const { return reinterpret_cast<const_pointer>(this + 1); }
 
     vector_impl() = default;
 
@@ -45,6 +45,7 @@ public:
         estd::copy_n(copy_from.data(), size_, data());
     }
 
+    // DEBT: If this guy isn't present, rtto incorrectly finds above copy_from during a move request
     vector_impl(vector_impl&& move_from) :
         size_{move_from.size_}
     {
@@ -93,14 +94,7 @@ public:
 
         const control_type* c = copy_from.clock();
 
-        allocate(c->size_);
-
-        pointer dest = base_type::lock()->data();
-        // FIX: Won't work... why?  Feels a lot like an alignment, padding issue - perhaps combination of
-        // block alignment and this + 1 trickery
-        //estd::copy_n(c->data(), c->size_, dest);
-
-        base_type::unlock();
+        construct(c->size_ * sizeof(T), *c);
 
         copy_from.unlock();
     }
@@ -136,7 +130,7 @@ public:
         };
 
         // FIX: One or multiple of these are wanting to be an accessor
-        using allocator_valref = int;
+        using allocator_valref = allocator_type;
         //using iterator = pointer;
         using const_iterator = const_pointer;
         using accessor = estd::internal::traditional_accessor<value_type>;
@@ -205,20 +199,23 @@ public:
 
     allocator_type get_allocator() { return {}; }
 
-    bool allocate(unsigned capacity)
+    template <class ...Args>
+    bundle construct(int extra, Args&&...args)
     {
-        assert(!is_allocated());
-
-        //handle_ = pool_()->alloc(control_size + capacity * sizeof(T));
-
         using block = embr::mem::detail::block_8;
 
         constexpr block::modes mode = embr::mem::detail::ascertain_block_mode<control_type>();
         constexpr bytes block_sz = block::header_size(mode);
-        constexpr unsigned sz = block_sz.count() + sizeof(T);
+        unsigned sz = extra + block_sz.count() + sizeof(T);
 
-        bundle bn = ops().template construct_ll<mode, control_type>(ops().do_alias(sz));
-        handle_ = bn.handle;
+        return ops().template construct_ll<mode, control_type>(ops().do_alias(sz), std::forward<Args>(args)...);
+    }
+
+    bool allocate(unsigned capacity)
+    {
+        assert(!is_allocated());
+
+        handle_ = construct(0).handle;
 
         return is_allocated();
     }
@@ -409,7 +406,7 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
 
         REQUIRE(vi.data() == ((char*)&vi) + sizeof(type));
     }
-    SECTION("vector")
+    SECTION("vector: int")
     {
         using vector_type = vector<int, pool_type>;
 
@@ -422,15 +419,32 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
         //REQUIRE(*vector.lock() == 1);
 
         // This guy will be a true 'grow' (no memory moved)
-        vector.grow(5);
+        vector.reserve(5);
 
         vector_type vector1(&pool);
 
+        // He doesn't allocate from pool until we push something, so do so
+        vector1.push_back(1);
+
         // This guy will require memory movement
         // FIX: Somehow he doesn't need more.  Maybe we intenally overprovisioned...
-        vector.grow(5);
+        vector.reserve(10);
 
         vector_type copied(vector);
+    }
+    SECTION("vector: SideEffector")
+    {
+        int counter = 0;
+
+        using vector_type = vector<SideEffector, pool_type>;
+
+        vector_type vector(&pool);
+
+        // Can't do due to non-triviality and lack of operator= -- seems correct
+        //vector.push_back({});
+
+        // allocator_valref and friends need to be dialed in for this
+        //vector.emplace_back(&counter);
     }
     SECTION("vector2")
     {

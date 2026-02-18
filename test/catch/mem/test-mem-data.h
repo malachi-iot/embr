@@ -57,6 +57,8 @@ struct SideEffector
 };
 
 
+static_assert(std::is_trivially_constructible<SideEffector>::value == false);
+
 // Semi-CRTP style
 template <class Self>
 class RttoBase : public estd::internal::rtto_base::base

@@ -368,13 +368,16 @@ bool pool_ops<Traits>::realloc(bundle bn, pos_type phys_sz)
 
     auto move_to_candidate = [&]
     {
+        // Utilize defragger to determine a free block we can move to
         assess(&frag);
 
+        // DEBT: Crudely we grab the biggest block, but a best-fit would be better
         bundle dest(get_bundle(frag.largest_free_handle));
 
         pos_type free_sz = phys_size(dest);
 
-        if(free_sz < current_sz)    return false;
+        // If largest free block cannot accomodate, it's game over for now
+        if(free_sz < phys_sz)    return false;
 
         unsigned logical_sz = logical_size(bn.mode(), phys_sz).count();
 
