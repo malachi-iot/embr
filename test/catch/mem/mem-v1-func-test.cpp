@@ -68,6 +68,7 @@ class vector_impl : public mem::v1::unique_handle<detail::vector_impl<T>, Pool, 
 {
     using control_type = detail::vector_impl<T>;
     using base_type = mem::v1::unique_handle<control_type, Pool, pool>;
+    using this_type = vector_impl;
     using typename base_type::ops_type;
     using pos_type = typename ops_type::pos_type;
     using bundle = typename ops_type::bundle;
@@ -114,9 +115,20 @@ public:
 
     };
 
+    struct handle_with_offset
+    {
+    };
+
     struct allocator_type
     {
+        using size_type = unsigned;
+
         ESTD_CPP_STD_VALUE_TYPE(T)
+
+        Pool* pool_;
+
+        // DEBT: Document why we need this up in estd
+        using const_void_pointer = const void*;
     };
 
     struct allocator_traits
@@ -125,19 +137,21 @@ public:
         using size_type = unsigned;
         using handle_type = mem::detail::v1::lock_handle<Pool, pool>;
 
-        struct handle_with_offset
-        {
-        };
-
         // FIX: One or multiple of these are wanting to be an accessor
         using allocator_valref = allocator_type;
         //using iterator = pointer;
         using const_iterator = const_pointer;
         using accessor = estd::internal::traditional_accessor<value_type>;
         using iterator = estd::internal::locking_iterator<allocator_type, accessor>;
+        using handle_with_offset = typename this_type::handle_with_offset;
 
         static constexpr auto locking_preference = estd::internal::allocator_locking_preference::standard;
     };
+
+    handle_with_offset offset(unsigned pos) const
+    {
+        return {};
+    }
 
     ESTD_CPP_CONSTEXPR(17) reference lock(unsigned pos = 0, unsigned count = 0)
     {
@@ -197,7 +211,7 @@ public:
         return success;
     }
 
-    allocator_type get_allocator() { return {}; }
+    allocator_type get_allocator() { return { pool_() }; }
 
     template <class ...Args>
     bundle construct(int extra, Args&&...args)
@@ -419,7 +433,7 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
         //REQUIRE(*vector.lock() == 1);
 
         // This guy will be a true 'grow' (no memory moved)
-        vector.reserve(5);
+        vector.reserve(3);
 
         vector_type vector1(&pool);
 
@@ -427,8 +441,8 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
         vector1.push_back(1);
 
         // This guy will require memory movement
-        // FIX: Somehow he doesn't need more.  Maybe we intenally overprovisioned...
-        vector.reserve(10);
+        // DEBT: Find a way to verify a memory move really happened here
+        vector.reserve(20);
 
         vector_type copied(vector);
     }
