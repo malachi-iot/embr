@@ -215,6 +215,7 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
             using iterator = v1::filter_iterator<decltype(filter), const int*>;
             iterator i{values};
 
+            //REQUIRE(*(i + 1) == 9);
             REQUIRE(*i == 7);
             ++i;
             REQUIRE(*i++ == 9);

@@ -110,6 +110,16 @@ class filter_iterator :
 #pragma GCC diagnostic pop
     }
 
+    ESTD_CPP_CONSTEXPR(17) void bump()
+    {
+        // Increment until predicate is satisfied
+        do
+        {
+            ++current_;
+        }
+        while(predicate(current_, is_pred_empty{}) == false);
+    }
+
 public:
     //ESTD_CPP_STD_VALUE_TYPE(typename traits::value_type)
     using value_type = typename traits::value_type;
@@ -137,16 +147,19 @@ public:
 
     this_type& operator++()
     {
-        int p;
-
-        // Increment until predicate is satisfied
-        do
-        {
-            ++current_;
-        }
-        while((p = predicate(current_, is_pred_empty{})) == false);
+        bump();
 
         return *this;
+    }
+
+    // FIX: Not ready yet
+    this_type operator+(int count)
+    {
+        this_type copied(*this);
+
+        while(count--)  bump();
+
+        return copied;
     }
 
     reference operator*() { return *current_; }

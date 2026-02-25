@@ -460,6 +460,12 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
         REQUIRE(bn.allocated());
         REQUIRE(pool.ops().phys_size(bn).count() == 3);
 
+        bn = pool.ops().get_bundle(*++it);
+        REQUIRE(bn.allocated() == false);
+        valid = ++it == handles.end();
+        // DEBT: Catch2 is unhappy if we do this particular expression in a REQUIRE
+        REQUIRE(valid);
+
         REQUIRE(vector.size() == 1);
         REQUIRE(vector.at(0) == 1);
         REQUIRE(*vector.lock() == 1);
