@@ -132,6 +132,8 @@ public:
         // DEBT: Document why we need this up in estd
         using const_void_pointer = const void*;
         using handle_with_offset = typename this_type::handle_with_offset;
+
+        reference lock(const handle_with_offset& h) { return *h.handle(); }
     };
 
     struct allocator_traits
@@ -155,8 +157,11 @@ public:
     {
         // FIX: We need the non-pointer variety of handle_with_offset
         // FIX: Feed this non-nullptr
+        // FIX: We need to not use this temporal pointer
+        control_type* control = base_type::lock();
+        base_type::unlock();
 
-        return { nullptr };
+        return { control->data() + pos };
     }
 
     ESTD_CPP_CONSTEXPR(17) reference lock(unsigned pos = 0, unsigned count = 0)
@@ -355,6 +360,10 @@ public:
 TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
 {
     using pool_type = mem::v1::layer1::pool<2048, 8>;
+    using ops_type = pool_type::ops_type;
+    using handles_type = ops_type::handles_type;
+    using bundle = ops_type::bundle;
+    using page_type = pool_type::page_type;
     using handle_type = pool_type::handle_type;
     using lock_handle = mem::detail::v1::lock_handle<pool_type>;
     pool_type pool;
@@ -429,17 +438,38 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
     SECTION("vector: int")
     {
         using vector_type = vector<int, pool_type>;
+        const handles_type& handles = pool.ops().handles();
+
+        handles_type::const_iterator it = handles.cbegin();
+
+        // Always 1 'free' handle, skip him
+        bool valid = ++it == handles.end();
+        REQUIRE(valid);
 
         vector_type vector(&pool);
 
         vector.push_back(1);
+        //vector.push_back(2);
+        REQUIRE(pool.ops_.invariant());
+
+        // After first push, that's when we actually allocate.  Grab and make sure
+        it = handles.begin();
+        page_type page = *it;
+        bundle bn = pool.ops().get_bundle(page);
+
+        REQUIRE(bn.allocated());
+        REQUIRE(pool.ops().phys_size(bn).count() == 3);
 
         REQUIRE(vector.size() == 1);
-        //REQUIRE(vector.at(0) == 1);
-        //REQUIRE(*vector.lock() == 1);
+        REQUIRE(vector.at(0) == 1);
+        REQUIRE(*vector.lock() == 1);
+        vector.unlock();
 
         // This guy will be a true 'grow' (no memory moved)
         vector.reserve(3);
+
+        // Indeed no memory movement occurs
+        REQUIRE(handles.begin()->pos() == page.pos());
 
         vector_type vector1(&pool);
 

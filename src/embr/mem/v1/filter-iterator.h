@@ -122,10 +122,10 @@ public:
     using base_ops::operator ==;
     using base_ops::operator !=;
 
-    constexpr filter_iterator(iterator it) : current_{it}
+    ESTD_CPP_CONSTEXPR(20) filter_iterator(iterator it) : current_{it}
     {
         int p;
-        while(p = predicate(current_, is_pred_empty{}) == false) ++current_;
+        while((p = predicate(current_, is_pred_empty{}) == false)) ++current_;
     }
 
     constexpr filter_iterator(Pred&& pred, iterator it) :

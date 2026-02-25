@@ -64,6 +64,10 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
 
             type handles;
 
+            type::const_iterator begin = handles.cbegin();
+            bool b = begin == handles.cend();
+            REQUIRE(b);
+
             REQUIRE(handles[0].is_null());
 
             handle_type h0 = handles.alloc(
@@ -80,7 +84,9 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
             // DEBT: https://github.com/malachi-iot/estdlib/issues/159
             REQUIRE(handles.dealloc(h0) == estd::errc{});
 
-            //type::iterator b = handles.begin();
+            begin = handles.cbegin();
+            b = begin == handles.cend();
+            REQUIRE(b);
         }
         SECTION("handles: layer2")
         {

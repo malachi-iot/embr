@@ -56,6 +56,8 @@ protected:
 
 public:
     using iterator = filter_iterator<filter, pointer>;
+    // DEBT: If we can, add a converting constructor to filter_iterator to permit
+    // copying from regular non-const iterator
     using const_iterator = filter_iterator<filter, typename traits::const_pointer>;
 
     reference operator[](int i) { return container_[i]; }
@@ -105,8 +107,10 @@ public:
 
     iterator begin() { return { pred(), &container_[0] }; }
     constexpr const_iterator begin() const { return { pred(), &container_[0] }; }
+    constexpr const_iterator cbegin() const { return { pred(), &container_[0] }; }
     iterator end() { return { pred(), &container_[estd::size(container_)] }; }
     constexpr const_iterator end() const { return { pred(), &container_[estd::size(container_)] }; }
+    constexpr const_iterator cend() const { return { pred(), &container_[estd::size(container_)] }; }
 
     constexpr unsigned size() const { return estd::size(container_); }
 
