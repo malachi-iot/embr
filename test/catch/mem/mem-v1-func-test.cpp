@@ -115,9 +115,11 @@ public:
 
     };
 
-    struct handle_with_offset
+    struct handle_with_offset_old
     {
     };
+
+    using handle_with_offset = estd::internal::handle_with_offset_raw<pointer>;
 
     struct allocator_type
     {
@@ -129,6 +131,7 @@ public:
 
         // DEBT: Document why we need this up in estd
         using const_void_pointer = const void*;
+        using handle_with_offset = typename this_type::handle_with_offset;
     };
 
     struct allocator_traits
@@ -150,7 +153,10 @@ public:
 
     handle_with_offset offset(unsigned pos) const
     {
-        return {};
+        // FIX: We need the non-pointer variety of handle_with_offset
+        // FIX: Feed this non-nullptr
+
+        return { nullptr };
     }
 
     ESTD_CPP_CONSTEXPR(17) reference lock(unsigned pos = 0, unsigned count = 0)
