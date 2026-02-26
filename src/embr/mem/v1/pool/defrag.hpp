@@ -53,7 +53,10 @@ void pool_ops<Traits>::assess(fragmentation* frag) const
     // estd v0.8.11-beta2 this still isn't in a comfortable place.
     // //estd::make_signed_t<typename pos_traits::rep>;
     using pos_int_type = int32_t; // DEBT: Hardcoding this = bad
-    using ipos = estd::units::detail::unit<typename pos_traits::template rebind<pos_int_type>>;
+    // FIX: Still unhappy
+    //using ipos = estd::units::detail::unit<typename pos_traits::template rebind<pos_int_type>>;
+    using ipos = estd::units::detail::unit<bytes_unit_traits<pos_int_type, typename pos_traits::period>>;
+    static_assert(estd::is_same<typename ipos::rep, pos_int_type>::value);
     pos_type largest_free_sz{0};
 
     const_bundle cur = first();
@@ -139,9 +142,10 @@ void pool_ops<Traits>::assess(fragmentation* frag) const
                 else
 #endif
                 {
+                    // TODO: Refactor with https://github.com/malachi-iot/estdlib/issues/179
                     // Non-trivial calculated differently, since overlap is not permitted
-                    ipos bn_prev_delta = bn_prev_sz - bn_cur_sz;
-                    ipos bn_next_delta = bn_next_sz - bn_cur_sz;
+                    ipos bn_prev_delta = ipos(bn_prev_sz) - bn_cur_sz;
+                    ipos bn_next_delta = ipos(bn_next_sz) - bn_cur_sz;
 
                     if(bn_prev_delta >= zero)
                         v += bn_prev_sz;

@@ -248,4 +248,17 @@ static const page pool12[]
     { /* 6 */ 0 , block{ block::Trivial, F } },
 };
 
+static const page pool13[]
+{
+    { /* 0 */ 24, block{ block::Trivial, F } },
+    { /* 1 */ 32, block{ block::RttoBase, A } },
+    { /* 2 */ 16, block{ block::Trivial, F } },
+    { /* 3 */ 24, block{ block::Trivial, A } },
+    { /* 4 */ 56, block{ block::Trivial, A } },
+    { /* 5 */ 32, block{ block::RttoBase, A } },
+    { /* 6 */ 32, block{ block::RttoProxy, A } },
+    { /* 7 */ 168, block{ block::Trivial, F } },
+    { /* 8 */ 0 , block{ block::Trivial, F } },
+};
+
 }}

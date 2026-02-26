@@ -394,5 +394,13 @@ TEST_CASE("gc mem v1 edge cases", "[memory][gc]")
 
             op.defrag(frag0);
         }
+        SECTION("defrag case 13")
+        {
+            assemble_pool(op, test::pool13);
+
+            op.assess(&frag);
+
+            REQUIRE(frag0.bundle.is_null());    // No candidate found
+        }
     }
 }
