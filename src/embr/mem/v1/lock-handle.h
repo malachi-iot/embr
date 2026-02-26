@@ -163,6 +163,8 @@ public:
         value()->dealloc(handle_);
     }
 
+    constexpr handle_type handle() const { return handle_; }
+
     explicit constexpr operator bool() const { return handle_ != null; }
 
     constexpr bool has_value() const { return handle_ != null; }

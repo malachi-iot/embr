@@ -191,8 +191,8 @@ public:
         if(is_allocated() == false) return 0;
 
         // DEBT: assert (in debug mode only) that we're evenly divisible
-        const bytes phys_size = ops().phys_size(get_bundle());
-        return (phys_size.count() - control_size) / sizeof(T);
+        const bytes size = ops().logical_size(get_bundle());
+        return (size.count() - control_size) / sizeof(T);
     }
 
     constexpr bool is_allocated() const { return base_type::has_value(); }
@@ -249,6 +249,19 @@ public:
 
 template <class T, class Pool, Pool* pool = nullptr>
 using vector = estd::internal::dynamic_array<vector_impl<T, Pool, pool>>;
+
+template <class T, class Pool, Pool* pool = nullptr>
+class vector_revealed : public vector<T, Pool, pool>
+{
+    using base_type = vector<T, Pool, pool>;
+
+public:
+    using base_type::impl;
+
+    template <class ...Args>
+    constexpr vector_revealed(Args&&...args) :
+        base_type(std::forward<Args>(args)...) {}
+};
 
 // Because "true" vector is a very heavy lift, creating a cut-down easy mode one
 template <class T, class Pool, Pool* pool = nullptr>
@@ -447,9 +460,10 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
         REQUIRE(valid);
 
         vector_type vector(&pool);
+        const auto& revealed = (vector_revealed<int, pool_type>&)vector;
 
         vector.push_back(1);
-        //vector.push_back(2);
+        vector.push_back(2);
         REQUIRE(pool.ops_.invariant());
 
         // After first push, that's when we actually allocate.  Grab and make sure
@@ -457,8 +471,11 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
         page_type page = *it;
         bundle bn = pool.ops().get_bundle(page);
 
+        // FIX: Determine descrepency and ultimately displace with 'revealed' approach
+        //REQUIRE(bn.handle == revealed.impl().handle());
         REQUIRE(bn.allocated());
-        REQUIRE(pool.ops().phys_size(bn).count() == 3);
+        // DEBT: Fine tune vector padding/reservation code so that this is more predictable
+        REQUIRE(pool.ops().phys_size(bn).count() == 8);
 
         bn = pool.ops().get_bundle(*++it);
         REQUIRE(bn.allocated() == false);
@@ -466,7 +483,7 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
         // DEBT: Catch2 is unhappy if we do this particular expression in a REQUIRE
         REQUIRE(valid);
 
-        REQUIRE(vector.size() == 1);
+        REQUIRE(vector.size() == 2);
         REQUIRE(vector.at(0) == 1);
         REQUIRE(*vector.lock() == 1);
         vector.unlock();
@@ -483,8 +500,9 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
         vector1.push_back(1);
 
         // This guy will require memory movement
-        // DEBT: Find a way to verify a memory move really happened here
         vector.reserve(20);
+
+        REQUIRE(handles.begin()->pos() != page.pos());
 
         vector_type copied(vector);
     }

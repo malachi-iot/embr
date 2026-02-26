@@ -53,7 +53,7 @@ void pool_ops<Traits>::assess(fragmentation* frag) const
     // estd v0.8.11-beta2 this still isn't in a comfortable place.
     // //estd::make_signed_t<typename pos_traits::rep>;
     using pos_int_type = int32_t; // DEBT: Hardcoding this = bad
-    // FIX: Still unhappy
+    // TODO: v0.8.11-beta3 will have a fix for this
     //using ipos = estd::units::detail::unit<typename pos_traits::template rebind<pos_int_type>>;
     using ipos = estd::units::detail::unit<bytes_unit_traits<pos_int_type, typename pos_traits::period>>;
     static_assert(estd::is_same<typename ipos::rep, pos_int_type>::value);
