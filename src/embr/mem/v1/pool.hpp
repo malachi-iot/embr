@@ -309,7 +309,7 @@ auto pool_ops<Traits>::alloced() const -> bytes
 
 
 template <class Traits>
-bool pool_ops<Traits>::realloc(bundle bn, pos_type phys_sz)
+bool pool_ops<Traits>::realloc(bundle bn, pos_type phys_sz, bundle* out)
 {
     // If sz <= phys_sz then just return
     // If sz > phys sz then:
@@ -319,6 +319,9 @@ bool pool_ops<Traits>::realloc(bundle bn, pos_type phys_sz)
     // 2.b.  We issue a single defrag to see if we can get more space, then try again
 
     pos_type current_sz = phys_size(bn);
+
+    // Default to not moved
+    if(out)     *out = bn;
 
     if(phys_sz <= current_sz)
         return true;
@@ -403,8 +406,12 @@ bool pool_ops<Traits>::realloc(bundle bn, pos_type phys_sz)
         // Although this is a little mind bending, remember the golden rule where prev/next MUST represent contiguous
         // block-positions
 
-        // Swap page table positions and relink as described above
-        virtual_swap(bn, dest);
+        // presence of 'out' indicates no-relink is requested
+        if(out)
+            *out = bn;
+        else
+            // Swap page table positions and relink as described above
+            virtual_swap(bn, dest);
 
         return true;
     };
