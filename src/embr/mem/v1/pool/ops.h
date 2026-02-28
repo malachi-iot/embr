@@ -210,7 +210,7 @@ public:
     /// @param new_sz
     /// @param out if nullptr (default), relink and keep handle consistent.  If set, handle MAY move and is indicated by out
     /// @return true on success, false on failure (no suitable free block found)
-    bool realloc(bundle, pos_type new_sz, bundle* out = nullptr);
+    bool realloc(bundle, pos_type new_sz, handle_type* out = nullptr);
 
     void ref_down(handle_type h);
     void ref_up(handle_type h);

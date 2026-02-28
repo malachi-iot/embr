@@ -309,7 +309,7 @@ auto pool_ops<Traits>::alloced() const -> bytes
 
 
 template <class Traits>
-bool pool_ops<Traits>::realloc(bundle bn, pos_type phys_sz, bundle* out)
+bool pool_ops<Traits>::realloc(bundle bn, pos_type phys_sz, handle_type* out)
 {
     // If sz <= phys_sz then just return
     // If sz > phys sz then:
@@ -321,7 +321,7 @@ bool pool_ops<Traits>::realloc(bundle bn, pos_type phys_sz, bundle* out)
     pos_type current_sz = phys_size(bn);
 
     // Default to not moved
-    if(out)     *out = bn;
+    if(out)     *out = bn.handle;
 
     if(phys_sz <= current_sz)
         return true;
@@ -408,7 +408,7 @@ bool pool_ops<Traits>::realloc(bundle bn, pos_type phys_sz, bundle* out)
 
         // presence of 'out' indicates no-relink is requested
         if(out)
-            *out = bn;
+            *out = dest.handle;
         else
             // Swap page table positions and relink as described above
             virtual_swap(bn, dest);

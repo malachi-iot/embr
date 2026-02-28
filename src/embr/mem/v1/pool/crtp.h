@@ -41,11 +41,12 @@ public:
         OPS.dealloc(h);
     }
 
-    bool realloc(int h, unsigned size)
+    template <class Handle>
+    bool realloc(Handle h, unsigned size, Handle* out = nullptr)
     {
         auto bn = OPS.get_bundle(h);
         // DEBT: remove explicit bytes_unit, dependent on https://github.com/malachi-iot/estdlib/issues/173
-        return OPS.realloc(bn, bn.header_size() + bytes_unit<unsigned>(size));
+        return OPS.realloc(bn, bn.header_size() + bytes_unit<unsigned>(size), out);
     }
 
     void reset()

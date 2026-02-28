@@ -1,5 +1,7 @@
 #pragma once
 
+#include <estd/units.h>
+
 #include "fwd.h"
 
 namespace embr { namespace mem {
@@ -105,13 +107,14 @@ public:
     constexpr static handle_type null = handles_traits::null;
 
     using ops_type = typename Pool::ops_type;
+    using pos_type = typename ops_type::pos_type;
+
+    using bundle = typename ops_type::bundle;
+    using const_bundle = typename ops_type::const_bundle;
 
 protected:
 
     handle_type handle_;
-
-    using bundle = typename ops_type::bundle;
-    using const_bundle = typename ops_type::const_bundle;
 
     // DEBT: Swap this and template value parameter name
     Pool* pool_() const { return value(); }
@@ -119,7 +122,6 @@ protected:
     constexpr const ops_type& ops() const { return value()->ops(); }
 
     bundle get_bundle() { return ops().get_bundle(handle_); }
-    constexpr const_bundle get_bundle() const { return ops().get_bundle(handle_); }
 
 public:
     // NOTE: Out of order - expect Pool, handle order in anticipation of nullptr p
@@ -161,6 +163,18 @@ public:
     void dealloc() const
     {
         value()->dealloc(handle_);
+    }
+
+    constexpr const_bundle get_bundle() const { return ops().get_bundle(handle_); }
+
+    estd::units::bytes<unsigned> logical_size() const
+    {
+        return ops().logical_size(get_bundle());
+    }
+
+    pos_type phys_size() const
+    {
+        return ops().phys_size(get_bundle());
     }
 
     constexpr handle_type handle() const { return handle_; }

@@ -74,7 +74,6 @@ class vector_impl : public mem::v1::unique_handle<detail::vector_impl<T>, Pool, 
     using bundle = typename ops_type::bundle;
     using const_bundle = typename ops_type::const_bundle;
     using base_type::ops;
-    using base_type::get_bundle;
     using base_type::guard;
     using bytes = estd::units::bytes<unsigned>;
 
@@ -83,6 +82,18 @@ class vector_impl : public mem::v1::unique_handle<detail::vector_impl<T>, Pool, 
     static constexpr unsigned control_size = sizeof(control_type);
 
     //static_assert(control_size == sizeof(void*));
+
+    template <class ...Args>
+    bundle construct(int reserved, Args&&...args)
+    {
+        using block = embr::mem::detail::block_8;
+
+        constexpr block::modes mode = embr::mem::detail::ascertain_block_mode<control_type>();
+        constexpr bytes block_sz = block::header_size(mode);
+        unsigned sz = reserved + block_sz.count() + sizeof(T);
+
+        return ops().template construct_ll<mode, control_type>(ops().do_alias(sz), std::forward<Args>(args)...);
+    }
 
 public:
     using base_type::pool_;
@@ -96,7 +107,7 @@ public:
 
         const control_type* c = copy_from.clock();
 
-        construct(c->size_ * sizeof(T), *c);
+        handle_ = construct(c->size_ * sizeof(T), *c).handle;
 
         copy_from.unlock();
     }
@@ -192,7 +203,7 @@ public:
         if(is_allocated() == false) return 0;
 
         // DEBT: assert (in debug mode only) that we're evenly divisible
-        const bytes size = ops().logical_size(get_bundle());
+        const bytes size = base_type::logical_size();
         return (size.count() - control_size) / sizeof(T);
     }
 
@@ -217,29 +228,11 @@ public:
         // condition.  Leaning strongly towards it handles that for us
         if(is_allocated() == false) return allocate(capacity);
 
-        bytes size(control_size + capacity * sizeof(T));
-        bundle bn(get_bundle());
-
-        // DEBT: High-level realloc puts extra effort into reusing handle.  That's an awesome feature,
-        // but not strictly necessary here.  Make a "easier" realloc who skips relinking.
-        bool success = ops().realloc(bn, size);//, &bn);
-        //handle_ = bn.handle;
+        bool success = pool_()->realloc(handle_, control_size + capacity * sizeof(T), &handle_);
         return success;
     }
 
     allocator_type get_allocator() { return { pool_() }; }
-
-    template <class ...Args>
-    bundle construct(int extra, Args&&...args)
-    {
-        using block = embr::mem::detail::block_8;
-
-        constexpr block::modes mode = embr::mem::detail::ascertain_block_mode<control_type>();
-        constexpr bytes block_sz = block::header_size(mode);
-        unsigned sz = extra + block_sz.count() + sizeof(T);
-
-        return ops().template construct_ll<mode, control_type>(ops().do_alias(sz), std::forward<Args>(args)...);
-    }
 
     bool allocate(unsigned capacity)
     {
@@ -250,6 +243,14 @@ public:
         return is_allocated();
     }
 };
+
+/*
+// FIX: enable_if clumsy and incorrect here.  Just whipping it up and easily collides with sparse_function flavor
+template <class T, class Pool, Pool* pool>
+struct estd::internal::dynamic_array_helper<vector_impl<T, Pool, pool>, estd::enable_if_t<estd::is_same<T, int>::value>>
+{
+
+};  */
 
 
 template <class T, class Pool, Pool* pool = nullptr>
@@ -381,6 +382,7 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
     using ops_type = pool_type::ops_type;
     using handles_type = ops_type::handles_type;
     using bundle = ops_type::bundle;
+    using const_bundle = ops_type::const_bundle;
     using page_type = pool_type::page_type;
     using handle_type = pool_type::handle_type;
     using lock_handle = mem::detail::v1::lock_handle<pool_type>;
@@ -473,15 +475,17 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
 
         // After first push, that's when we actually allocate.  Grab and make sure
         it = handles.begin();
-        page_type page = *it;
-        bundle bn = pool.ops().get_bundle(page);
+        // NOTE: Be aware that we can't copy this guy because get_bundle secretly takes address.  This is acceptable
+        // because ops() are low level in nature and even passing in a pointer doesn't clear this up much
+        const page_type& page = *it;
+        const_bundle bn = pool.ops().get_bundle(page);
+        const_bundle bn2 = revealed.impl().get_bundle();
 
-        // FIX: Determine descrepency and ultimately displace with 'revealed' approach
-        //REQUIRE(bn.handle == revealed.impl().handle());
+        // DEBT: Ultimately displace with 'revealed' approach
+        REQUIRE(bn.handle == bn2.handle);
         REQUIRE(bn.allocated());
         // DEBT: Fine tune vector padding/reservation code so that this is more predictable
-        // FIX: Double check math in general this wiggled in an uncomfortable way
-        REQUIRE(pool.ops().phys_size(bn).count() == 6);
+        REQUIRE(pool.ops().phys_size(bn).count() == 8);
 
         bn = pool.ops().get_bundle(*++it);
         REQUIRE(bn.allocated() == false);
@@ -508,9 +512,22 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
         // This guy will require memory movement
         vector.reserve(20);
 
-        REQUIRE(handles.begin()->pos() != page.pos());
+        bn = revealed.impl().get_bundle();
+
+        REQUIRE(bn.pos() != page.pos());
+        // We skip relinking handle, so double check we have indeed moved to a new handle#
+        REQUIRE(bn2.handle != bn.handle);
+        REQUIRE(bn.handle == 2);
 
         vector_type copied(vector);
+        const auto& copied_revealed = (vector_revealed<int, pool_type>&)copied;
+
+        const_bundle bn_copied = copied_revealed.impl().get_bundle();
+
+        // Remember 0 was freed up when doing vector.reserve, so it is reused for the new copied
+        // vector
+        REQUIRE(bn_copied.handle == 0);
+        //REQUIRE(copied == vector);
     }
     SECTION("vector: SideEffector")
     {
