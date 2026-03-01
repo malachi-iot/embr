@@ -58,6 +58,11 @@ inline void block_8::copy_from(this_type* from, unsigned sz)
             from->rtto_base()->copy_to(rtto_base());
             mode_ = RttoBase;
             break;
+
+        case RttoVirtual:
+            from->virt()->copy_to(virt());
+            mode_ = RttoVirtual;
+            break;
     }
 }
 
@@ -83,6 +88,11 @@ inline void block_8::move_from(this_type* from, unsigned sz)
             from->rtto_base()->move_to(rtto_base());
             mode_ = RttoBase;
             break;
+
+        case RttoVirtual:
+            from->virt()->move_to(virt());
+            mode_ = RttoVirtual;
+            break;
     }
 }
 
@@ -102,6 +112,10 @@ inline void block_8::destroy()
 
         case RttoBase:
             rtto_base()->destroy();
+            break;
+
+        case RttoVirtual:
+            virt()->destroy();
             break;
     }
 }
@@ -126,6 +140,12 @@ inline auto block_8::metadata() const -> metadata_type
             break;
         }
 
+        case RttoVirtual:
+        {
+            // estd doesn't yet provide metadata here
+            break;
+        }
+
         default:
             break;
     }
@@ -142,6 +162,7 @@ inline const char* block_mode_enum::to_string(modes mode)
         case Trivial:       return "Trivial";
         case RttoProxy:     return "RttoProxy";
         case RttoBase:      return "RttoBase";
+        case RttoVirtual:   return "RttoVirtual";
         default:            return "N/A";
     }
 }
@@ -156,6 +177,7 @@ inline char to_abbrev(block_mode_enum::modes m)
         case B::Trivial:    return 'T';
         case B::RttoProxy:  return 'P';
         case B::RttoBase:   return 'B';
+        case B::RttoVirtual:    return 'V';
         default:            return '?';
     }
 }

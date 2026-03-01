@@ -11,6 +11,8 @@ struct block_mode_enum
         Trivial,
         RttoProxy,
         RttoBase,
+        // 01MAR26 DEBT: Not well tested yet, favor using above 3 instead
+        RttoVirtual
     };
 
     static const char* to_string(modes);

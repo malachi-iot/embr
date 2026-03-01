@@ -34,6 +34,7 @@ protected:
     // DEBT: rtto base is WAY overloaded.  Needs attention
     using rtto_base_type = estd::internal::rtto_base::base;
     using rtto_proxy = estd::internal::rtto_base::rtto_base::proxy<>;
+    using rtto_virt = estd::internal::rtto_base::virtual_base;
 
     struct alignas(void*)
     {
@@ -130,6 +131,8 @@ public:
     const rtto_proxy* proxy() const { return (rtto_proxy*) data_; }
     rtto_base_type* rtto_base() { return (rtto_base_type*) data_; }
     const rtto_base_type* rtto_base() const { return (rtto_base_type*) data_; }
+    rtto_virt* virt() { return (rtto_virt*) data_; }
+    const rtto_virt* virt() const { return (rtto_virt*) data_; }
 
     template <class T, class ...Args>
     void emplace_rtto_proxied(Args&&...args);
