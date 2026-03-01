@@ -42,15 +42,16 @@ public:
     vector_impl(const vector_impl& copy_from) :
         size_{copy_from.size_}
     {
-        estd::copy_n(copy_from.data(), size_, data());
+        // DEBT: Make an estd flavor of this https://github.com/malachi-iot/estdlib/issues/181
+        std::uninitialized_copy_n(copy_from.data(), size_, data());
     }
 
     // DEBT: If this guy isn't present, rtto incorrectly finds above copy_from during a move request
     vector_impl(vector_impl&& move_from) :
         size_{move_from.size_}
     {
-        // DEBT: Make an estd flavor of this
-        std::move(move_from.data(), move_from.data() + size_, data());
+        // DEBT: Make an estd flavor of this https://github.com/malachi-iot/estdlib/issues/181
+        std::uninitialized_move_n(move_from.data(), size_, data());
     }
 
 private:
@@ -84,14 +85,15 @@ class vector_impl : public mem::v1::unique_handle<detail::vector_impl<T>, Pool, 
     //static_assert(control_size == sizeof(void*));
 
     template <class ...Args>
-    bundle construct(int reserved, Args&&...args)
+    bundle construct_ll(int reserved, Args&&...args)
     {
         using block = embr::mem::detail::block_8;
 
         constexpr block::modes mode = embr::mem::detail::ascertain_block_mode<control_type>();
         constexpr bytes block_sz = block::header_size(mode);
-        unsigned sz = reserved + block_sz.count() + sizeof(T);
+        unsigned sz = reserved * sizeof(T) + block_sz.count() + sizeof(control_type);
 
+        // construct_ll takes explicit size as 1st parameter as you might glean
         return ops().template construct_ll<mode, control_type>(ops().do_alias(sz), std::forward<Args>(args)...);
     }
 
@@ -107,7 +109,8 @@ public:
 
         const control_type* c = copy_from.clock();
 
-        handle_ = construct(c->size_ * sizeof(T), *c).handle;
+        // DEBT: Consider overprovisioning
+        handle_ = construct_ll(c->size_, *c).handle;
 
         copy_from.unlock();
     }
@@ -238,9 +241,20 @@ public:
     {
         assert(!is_allocated());
 
-        handle_ = construct(0).handle;
+        handle_ = construct_ll(capacity).handle;
 
         return is_allocated();
+    }
+
+    // DEBT: Seems superfluous - like estd could do all this on our behalf
+    template <class ...Args>
+    void construct(int pos, Args&&...args)
+    {
+        control_type* control = base_type::lock();
+
+        new (control->data() + pos) value_type(std::forward<Args>(args)...);
+
+        base_type::unlock();
     }
 };
 
@@ -536,12 +550,22 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
         using vector_type = vector<SideEffector, pool_type>;
 
         vector_type vector(&pool);
+        std::vector<SideEffector> parity;
 
-        // Can't do due to non-triviality and lack of operator= -- seems correct
-        //vector.push_back({});
+        vector.push_back({});
 
-        // allocator_valref and friends need to be dialed in for this
-        //vector.emplace_back(&counter);
+        // Calls default ctor, then move ctor
+        parity.push_back({});
+
+        // FIX: A dangling lock should cause an assert, but our iterator/handle treatment is
+        // still goofy
+        REQUIRE(vector[0].clock().moved_to_counter == 1);
+        REQUIRE(parity[0].moved_to_counter == 1);
+
+        vector.emplace_back(&counter);
+
+        REQUIRE(vector[1].clock().counter() == 1);
+        REQUIRE(vector[1].clock().moved_to_counter == 0);
     }
     SECTION("vector2")
     {
