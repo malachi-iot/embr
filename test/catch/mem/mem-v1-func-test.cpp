@@ -56,6 +56,10 @@ public:
 
 private:
     size_type size_{};
+
+public:
+
+    constexpr size_type size() const { return size_; }
 };
 
 
@@ -281,6 +285,70 @@ public:
     template <class ...Args>
     constexpr vector_revealed(Args&&...args) :
         base_type(std::forward<Args>(args)...) {}
+};
+
+// Span-esque
+template <class Derived, class T>
+class container_crtp
+{
+public:
+    ESTD_CPP_STD_VALUE_TYPE(T)
+
+    reference operator[](int v)
+    {
+        return *(static_cast<Derived*>(this)->data() + v);
+    }
+
+    constexpr const_reference operator[](int v) const
+    {
+        return *(static_cast<const Derived*>(this)->data() + v);
+    }
+
+    pointer begin()
+    {
+        return static_cast<Derived*>(this)->data();
+    }
+
+    const_pointer begin() const
+    {
+        return static_cast<const Derived*>(this)->data();
+    }
+
+    pointer end()
+    {
+        auto self = static_cast<Derived*>(this);
+        return self->data() + self->size();
+    }
+
+    const_pointer end() const
+    {
+        auto self = static_cast<const Derived*>(this);
+        return self->data() + self->size();
+    }
+};
+
+// EXPERIMENTAL, probably disambiguate with a name like 'pinned' since this behaves slightly
+// differently than lock_guard (that's an has-a wrapper, this is a sort of an is-a reinterpreter)
+template <class T, class Pool, Pool* pool>
+class embr::mem::v1::lock_guard<vector<T, Pool, pool>, Pool, pool> :
+    public embr::mem::v1::lock_guard<::detail::vector_impl<T>, Pool, pool>,
+    public container_crtp<embr::mem::v1::lock_guard<vector<T, Pool, pool>, Pool, pool>, T>
+{
+    using vector_type = ::detail::vector_impl<T>;
+    using base_type = embr::mem::v1::lock_guard<vector_type, Pool, pool>;
+
+public:
+    ESTD_CPP_STD_VALUE_TYPE(T)
+
+    using size_type = typename vector_type::size_type;
+
+    pointer data() { return base_type::data()->data(); }
+    constexpr const_pointer data() const { return base_type::data()->data(); }
+
+    template <class ...Args>
+    constexpr lock_guard(Args&&...args) : base_type(std::forward<Args>(args)...) {}
+
+    constexpr size_type size() const { return base_type::data()->size(); }
 };
 
 // Because "true" vector is a very heavy lift, creating a cut-down easy mode one
@@ -566,6 +634,24 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
 
         REQUIRE(vector[1].clock().counter() == 1);
         REQUIRE(vector[1].clock().moved_to_counter == 0);
+    }
+    SECTION("vector: lock_guard (pinned) - EXPERIMENTAL")
+    {
+        using vector_type = vector<int, pool_type>;
+        vector_type vector(&pool);
+        auto& revealed = (vector_revealed<int, pool_type>&) vector;
+
+        vector.push_back(5);
+        vector.push_back(10);
+
+        mem::v1::lock_guard<vector_type, pool_type> pinned(revealed.impl());
+
+        REQUIRE(pinned[0] == 5);
+
+        const int* i = pinned.begin();
+
+        REQUIRE(*i++ == 5);
+        REQUIRE(*i == 10);
     }
     SECTION("vector2")
     {
