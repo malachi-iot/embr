@@ -76,7 +76,7 @@ inline namespace v1 {
 template <class T, class Pool, Pool* pool = nullptr>
 class shared_handle;
 
-template <class T, class Pool, Pool* pool>
+template <class T, class Pool = void, Pool* pool = nullptr>
 class lock_guard;
 
 #if __cpp_deduction_guides

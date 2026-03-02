@@ -353,9 +353,9 @@ public:
 // EXPERIMENTAL, probably disambiguate with a name like 'pinned' since this behaves slightly
 // differently than lock_guard (that's an has-a wrapper, this is a sort of an is-a reinterpreter)
 template <class T, class Pool, Pool* pool>
-class embr::mem::v1::lock_guard<vector<T, Pool, pool>, Pool, pool> :
+class embr::mem::v1::lock_guard<vector<T, Pool, pool>, void, nullptr> :
     public embr::mem::v1::lock_guard<::detail::vector_impl<T>, Pool, pool>,
-    public mixins::container<embr::mem::v1::lock_guard<vector<T, Pool, pool>, Pool, pool>, T>
+    public mixins::container<embr::mem::v1::lock_guard<vector<T, Pool, pool>, void, nullptr>, T>
 {
     using vector_type = ::detail::vector_impl<T>;
     using base_type = embr::mem::v1::lock_guard<vector_type, Pool, pool>;
@@ -667,7 +667,7 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
         vector.push_back(5);
         vector.push_back(10);
 
-        mem::v1::lock_guard<vector_type, pool_type> pinned(revealed.impl());
+        mem::v1::lock_guard<vector_type> pinned(revealed.impl());
 
         REQUIRE(pinned[0] == 5);
 
