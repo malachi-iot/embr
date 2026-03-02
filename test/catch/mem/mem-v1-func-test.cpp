@@ -287,9 +287,11 @@ public:
         base_type(std::forward<Args>(args)...) {}
 };
 
+// DEBT: Put this guy up in estd
+namespace mixins {
 // Span-esque
 template <class Derived, class T>
-class container_crtp
+class container
 {
 public:
     ESTD_CPP_STD_VALUE_TYPE(T)
@@ -309,10 +311,12 @@ public:
         return static_cast<Derived*>(this)->data();
     }
 
-    const_pointer begin() const
+    constexpr const_pointer cbegin() const
     {
         return static_cast<const Derived*>(this)->data();
     }
+
+    constexpr const_pointer begin() const { return cbegin(); }
 
     pointer end()
     {
@@ -320,19 +324,38 @@ public:
         return self->data() + self->size();
     }
 
-    const_pointer end() const
+    const_pointer cend() const
     {
         auto self = static_cast<const Derived*>(this);
         return self->data() + self->size();
     }
+
+    const_pointer end() const { return cend(); }
+
+    const_reference front()
+    {
+        return *begin();
+    }
+
+    constexpr const_reference front() const
+    {
+        return *begin();
+    }
+
+    constexpr bool empty() const
+    {
+        return static_cast<const Derived*>(this)->size() == 0;
+    }
 };
+
+}
 
 // EXPERIMENTAL, probably disambiguate with a name like 'pinned' since this behaves slightly
 // differently than lock_guard (that's an has-a wrapper, this is a sort of an is-a reinterpreter)
 template <class T, class Pool, Pool* pool>
 class embr::mem::v1::lock_guard<vector<T, Pool, pool>, Pool, pool> :
     public embr::mem::v1::lock_guard<::detail::vector_impl<T>, Pool, pool>,
-    public container_crtp<embr::mem::v1::lock_guard<vector<T, Pool, pool>, Pool, pool>, T>
+    public mixins::container<embr::mem::v1::lock_guard<vector<T, Pool, pool>, Pool, pool>, T>
 {
     using vector_type = ::detail::vector_impl<T>;
     using base_type = embr::mem::v1::lock_guard<vector_type, Pool, pool>;
@@ -652,6 +675,8 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
 
         REQUIRE(*i++ == 5);
         REQUIRE(*i == 10);
+
+        REQUIRE(pinned.empty() == false);
     }
     SECTION("vector2")
     {
