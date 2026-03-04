@@ -398,7 +398,7 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
         op.unlock(bn.handle);
         op.unlock(bn.handle);
     }
-    SECTION("move")
+    SECTION("move: trivial")
     {
         constexpr pos_type phys_sz(8);
         constexpr unsigned phys_sz_bytes = ops_type::aliasing * phys_sz.count();
@@ -438,5 +438,23 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
 
             REQUIRE(op.phys_size(bn) == pos_type(4));
         }
+    }
+    SECTION("move: virtual")
+    {
+        int counter = 0;
+
+        RttoVirtSideEffector se1(&counter);
+
+        constexpr unsigned logical_sz_bytes = sizeof(se1);
+        // FIX: I thought 1:1 + operation from bytes was now present in estd, looks like we have a bug
+        pos_type phys_sz = ops.do_alias(block::header_size(block::RttoVirtual).count() + logical_sz_bytes);
+        estd::units::bytes<unsigned> b1(0);
+
+        b1 = b1 + logical_sz_bytes;
+
+        REQUIRE(counter == 1);
+
+        ops_type& op  = ops;;
+        bundle bn = op.alloc(phys_sz, block::RttoVirtual);
     }
 }

@@ -71,6 +71,29 @@ public:
     {}
 };
 
+// DEBT: This helper seems useful enough to put into estd proper
+template <class Self>
+class RttoVirtualWrap : public estd::internal::rtto_base::virtual_base, public Self
+{
+    using rtto = estd::internal::rtto<Self>;
+
+public:
+    template <class ...Args>
+    constexpr RttoVirtualWrap(Args&&...args) : Self(std::forward<Args>(args)...)    {}
+
+    int move_to(void* dest, int sz) override
+    {
+        return rtto::move(this, dest, sz);
+    }
+
+    int copy_to(void* dest, int sz) override
+    {
+        return rtto::copy(this, dest, sz);
+    }
+
+    ~RttoVirtualWrap() override = default;
+};
+
 
 class RttoSideEffector :
     public RttoBase<RttoSideEffector>,  // This guy must come first
@@ -83,6 +106,7 @@ public:
     RttoSideEffector(Args&&...args) : base_type(std::forward<Args>(args)...)    {}
 };
 
+using RttoVirtSideEffector = RttoVirtualWrap<SideEffector>;
 
 // NOTE: Considered making an operators.h for this guy.  Somehow putting him at global scope still
 // doesn't feel right - in part because this hangs off standard bytes tag and I don't want to presume
