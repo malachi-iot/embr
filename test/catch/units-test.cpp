@@ -23,6 +23,7 @@ using namespace embr::units;
 
 TEST_CASE("units")
 {
+    constexpr estd::units::relaxed_narrow_t relaxed;
     estd::layer1::ostringstream<256> out;
     auto out2 = estd::internal::make_ostream_like(out);
     const auto& s = out.rdbuf()->str();
@@ -46,8 +47,7 @@ TEST_CASE("units")
         SECTION("int")
         {
             milliamps<uint16_t> ma{3600};
-            // DEBT: Can't do an = here, but would like to.  This requires a default ctor
-            amps<uint8_t> a(ma);
+            amps<uint8_t> a(ma, relaxed);
 
             REQUIRE(a.count() == 3);
 
@@ -130,8 +130,8 @@ TEST_CASE("units")
         SECTION("int")
         {
             millivolts<uint16_t> mv{3600};
-            decivolts<uint8_t> dv{mv};
-            volts<uint8_t> v{mv};
+            decivolts<uint8_t> dv{mv, relaxed};
+            volts<uint8_t> v{mv, relaxed};
 
             REQUIRE(dv.count() == 36);
             REQUIRE(v.count() == 3);
