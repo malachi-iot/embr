@@ -13,6 +13,9 @@ struct SideEffector
     int moved_to_counter : 4;
     bool constructed_ : 1;
 
+    // TODO: Add a 'moved_to' pointer, useful for debugging.  Not doing so yet
+    // because I think some of our tests have calcified into specific size of SideEffector
+
     constexpr SideEffector() :
         copied_from_counter{},
         moved_from_counter{},

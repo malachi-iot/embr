@@ -470,6 +470,12 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
 
         REQUIRE(bn_free.allocated() == false);
 
+        auto se_free = static_cast<type*>(bn_free.block->data());
+
+        // DEBT: Presumes that raw pool data is zeroed
+        REQUIRE(se_free->counter_ == nullptr);
+        REQUIRE(se_free->constructed_ == false);
+
         validated_result r = ops.move(bn, bn_free, 0, logical_sz_bytes, false);
 
         REQUIRE(r);
@@ -477,6 +483,7 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
         REQUIRE(bn.allocated() == false);
         REQUIRE(bn_free.allocated());
         REQUIRE(bn_free.block->mode() == block::RttoVirtual);
+        REQUIRE(ops.get_bundle(1).pos() == bn_free.pos());  // Sanity check
         REQUIRE(ops.phys_size(bn_free) == phys_sz);
 
         REQUIRE(se2->counter_ == nullptr);
@@ -484,6 +491,8 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
         REQUIRE(se2->moved_to_counter == 0);
 
         se2 = static_cast<type*>(ops.lock(bn_free));
+
+        REQUIRE(se2 == se_free);
 
         // FIX: Not working
         //REQUIRE(se2->counter_ == &counter);

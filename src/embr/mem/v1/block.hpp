@@ -90,7 +90,7 @@ inline void block_8::move_from(this_type* from, unsigned sz)
             break;
 
         case RttoVirtual:
-            from->virt()->move_to(virt());
+            from->virt()->move_to(virt(), sz);
             mode_ = RttoVirtual;
             break;
     }
