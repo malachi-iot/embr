@@ -79,6 +79,32 @@ public:
     {}
 };
 
+// EXPERIMENTAL
+template <class Derived>
+class RttoVirtualMixin : public estd::internal::rtto_base::virtual_base
+{
+public:
+    int move_to(void* dest, int sz) override
+    {
+        using rtto = estd::internal::rtto<Derived>;
+        return rtto::move(this, dest, sz);
+    }
+
+    int copy_to(void* dest, int sz) const override
+    {
+        using rtto = estd::internal::rtto<Derived>;
+        return rtto::copy(this, dest, sz);
+    }
+
+#if FEATURE_ESTD_RTTO_GET_METADATA
+    const metadata* get_metadata() const override
+    {
+        using rtto = estd::internal::rtto<Derived>;
+        return rtto::get_metadata();
+    }
+#endif
+};
+
 // DEBT: This helper seems useful enough to put into estd proper
 template <class Self>
 class RttoVirtualWrap : public estd::internal::rtto_base::virtual_base, public Self
@@ -100,11 +126,9 @@ public:
     }
 
 #if FEATURE_ESTD_RTTO_GET_METADATA
-    // DEBT: Change estd signature to return const metadata*
-    int get_metadata(const metadata** out) const override
+    const metadata* get_metadata() const override
     {
-        *out = rtto::get_metadata();
-        return 0;
+        return rtto::get_metadata();
     }
 #endif
 

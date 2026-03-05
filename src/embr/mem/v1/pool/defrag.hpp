@@ -159,6 +159,14 @@ void pool_ops<Traits>::assess(fragmentation* frag) const
 
                         v += bn_next_sz;
                     }
+
+#if FEATURE_ESTD_RTTO_GET_METADATA
+                    // More complex = less favored.  Note that complexity reflects copy, not move - move
+                    // is inherently less complex.  That being said, we expect a 1:1 ratio of copy complexity
+                    // to move complexity.  Probably will need tuning (maybe a move_complexity indicator?)
+                    // DEBT: Also, perhaps v should be signed to avoid this if guard
+                    if(v >= pos_type(metadata->complexity))    v -= pos_type(metadata->complexity);
+#endif
                 }
 
                 int sc = v.count();
