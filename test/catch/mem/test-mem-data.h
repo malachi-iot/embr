@@ -83,7 +83,7 @@ public:
 template <class Self>
 class RttoVirtualWrap : public estd::internal::rtto_base::virtual_base, public Self
 {
-    using rtto = estd::internal::rtto<Self>;
+    using rtto = estd::internal::rtto<RttoVirtualWrap>;
 
 public:
     template <class ...Args>

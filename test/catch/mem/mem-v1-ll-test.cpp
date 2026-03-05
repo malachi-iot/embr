@@ -30,7 +30,7 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
 
     static_assert(std::is_same<pool_type, ops_type::storage_type>::value);
 
-    char buf[pool_size];
+    char buf[pool_size] {};
 
     ops_type ops{buf};
 
@@ -472,7 +472,7 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
 
         auto se_free = static_cast<type*>(bn_free.block->data());
 
-        // DEBT: Presumes that raw pool data is zeroed
+        // Presumes that raw pool data is zeroed, which it is
         REQUIRE(se_free->counter_ == nullptr);
         REQUIRE(se_free->constructed_ == false);
 
@@ -494,10 +494,9 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
 
         REQUIRE(se2 == se_free);
 
-        // FIX: Not working
-        //REQUIRE(se2->counter_ == &counter);
-        //REQUIRE(se2->moved_from_counter == 0);
-        //REQUIRE(se2->moved_to_counter == 1);
+        REQUIRE(se2->counter_ == &counter);
+        REQUIRE(se2->moved_from_counter == 0);
+        REQUIRE(se2->moved_to_counter == 1);
 
         ops.unlock(bn_free.handle);
     }
