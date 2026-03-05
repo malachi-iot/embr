@@ -48,8 +48,8 @@ inline void block_8::copy_from(this_type* from, unsigned sz)
 
         case RttoProxy:
         {
-            // FIX: Dangerous, doesn't indicate whether this object can copy - always "succeeds"
-            new (data_) rtto_proxy(*from->proxy());
+            int rc;
+            new (data_) rtto_proxy(*from->proxy(), &rc, sz);
             mode_ = RttoProxy;
             break;
         }
@@ -78,14 +78,14 @@ inline void block_8::move_from(this_type* from, unsigned sz)
 
         case RttoProxy:
         {
-            // FIX: Dangerous, doesn't indicate whether this object can move - always "succeeds"
-            new (data_) rtto_proxy(std::move(*from->proxy()), sz);
+            int rc;
+            new (data_) rtto_proxy(std::move(*from->proxy()), &rc, sz);
             mode_ = RttoProxy;
             break;
         }
 
         case RttoBase:
-            from->rtto_base()->move_to(rtto_base());
+            from->rtto_base()->move_to(rtto_base(), sz);
             mode_ = RttoBase;
             break;
 

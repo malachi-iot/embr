@@ -28,7 +28,7 @@ template <typename Rep, typename F = estd::units::passthrough<Rep> >
 using micrometers = meters<Rep, estd::micro, F>;
 
 template <typename Rep, typename F = estd::units::passthrough<Rep> >
-using nanoometers = meters<Rep, estd::nano, F>;
+using nanometers = meters<Rep, estd::nano, F>;
 
 template <typename Rep, typename F = estd::units::passthrough<Rep> >
 using kilometers = meters<Rep, estd::kilo, F>;

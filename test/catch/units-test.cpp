@@ -175,7 +175,9 @@ TEST_CASE("units")
         SECTION("meters per second")
         {
             constexpr kilometers_per_hour<uint8_t> kph(60);
-            meters_per_second<uint16_t> m_s{kph};
+            // DEBT: This condition MIGHT warrant permissive ratio conversion.  'relaxed'
+            // was needed.
+            meters_per_second<uint16_t> m_s{kph, relaxed};
 
             REQUIRE(m_s.count() == 60000 / 3600);
         }

@@ -79,17 +79,26 @@ class RttoVirtualWrap : public estd::internal::rtto_base::virtual_base, public S
 
 public:
     template <class ...Args>
-    constexpr RttoVirtualWrap(Args&&...args) : Self(std::forward<Args>(args)...)    {}
+    constexpr explicit RttoVirtualWrap(Args&&...args) : Self(std::forward<Args>(args)...)    {}
 
     int move_to(void* dest, int sz) override
     {
         return rtto::move(this, dest, sz);
     }
 
+    // DEBT: estd ought to declare this as const
     int copy_to(void* dest, int sz) override
     {
         return rtto::copy(this, dest, sz);
     }
+
+#if FEATURE_ESTD_RTTO_GET_METADATA
+    int get_metadata(const metadata** out) const override
+    {
+        *out = rtto::get_metadata();
+        return 0;
+    }
+#endif
 
     ~RttoVirtualWrap() override = default;
 };
@@ -103,7 +112,7 @@ class RttoSideEffector :
 
 public:
     template <class ...Args>
-    RttoSideEffector(Args&&...args) : base_type(std::forward<Args>(args)...)    {}
+    explicit RttoSideEffector(Args&&...args) : base_type(std::forward<Args>(args)...)    {}
 };
 
 using RttoVirtSideEffector = RttoVirtualWrap<SideEffector>;
