@@ -8,14 +8,17 @@ namespace embr { namespace mem {
 namespace detail { inline namespace v1 {
 
 template <typename Rep, typename Period>
-struct bytes_unit_traits : estd::units::detail::traits<Rep, Period, estd::internal::units::bytes_tag>
+struct bytes_unit_traits : estd::units::detail::traits<Rep, Period, estd::units::bytes_tag>
 {
-    static constexpr auto options = estd::units::detail::options::value_initialized;
+    static constexpr auto options =
+        estd::units::detail::options::value_initialized |
+        estd::units::detail::options::permissive;
 
     constexpr static Rep default_value() { return estd::numeric_limits<Rep>::max(); }
 };
 
-// TODO: Do unit_traits for human-readable descriptions, presuming existing bytes_traits doesn't already
+// TODO: Do si::traits in estd for human-readable descriptions, with kb, gb, etc. if not already
+// existing
 
 }}
 
