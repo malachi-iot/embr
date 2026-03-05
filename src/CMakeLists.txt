@@ -20,7 +20,7 @@ add_library(embr::embr ALIAS ${PROJECT_NAME}-static)
 add_library(embr::interface ALIAS ${INTERFACE_NAME})
 
 #CPMAddPackage("gh:malachi-iot/estdlib@0.8.11-beta2")
-CPMAddPackage("gh:malachi-iot/estdlib#ea7f6958d775a27a6e4e4c40000ba9690fa931f8")
+CPMAddPackage("gh:malachi-iot/estdlib#60a58bd29cd")
 
 # DEBT: Was done for macOS, but it doesn't pick it up.  Once that is resolved,
 # bring these in

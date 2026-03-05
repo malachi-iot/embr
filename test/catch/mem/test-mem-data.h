@@ -94,13 +94,13 @@ public:
         return rtto::move(this, dest, sz);
     }
 
-    // DEBT: estd ought to declare this as const
-    int copy_to(void* dest, int sz) override
+    int copy_to(void* dest, int sz) const override
     {
         return rtto::copy(this, dest, sz);
     }
 
 #if FEATURE_ESTD_RTTO_GET_METADATA
+    // DEBT: Change estd signature to return const metadata*
     int get_metadata(const metadata** out) const override
     {
         *out = rtto::get_metadata();
