@@ -31,7 +31,7 @@ struct SideEffector
         ++copied_to_counter;
     }
 
-    constexpr SideEffector(SideEffector&& move_from) :
+    constexpr SideEffector(SideEffector&& move_from) noexcept :
         counter_{move_from.counter_},
         copied_from_counter{},
         moved_from_counter{},
@@ -43,7 +43,12 @@ struct SideEffector
         ++moved_to_counter;
     }
 
-    explicit SideEffector(int* counter) : counter_{counter}
+    explicit SideEffector(int* counter) :
+        counter_{counter},
+        copied_from_counter{},
+        moved_from_counter{},
+        moved_to_counter{},
+        constructed_{true}
     {
         ++*counter_;
     }

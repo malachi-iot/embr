@@ -88,7 +88,7 @@ public:
     // FIX: Probably not 100% right, because RttoBase mode includes size of rtto::u_ in the object itself
     static constexpr estd::units::bytes<unsigned> header_size(modes mode)
     {
-        return estd::units::bytes<unsigned>((mode == Trivial || mode == RttoBase) ?
+        return estd::units::bytes<unsigned>((mode == Trivial || mode == RttoBase || mode == RttoVirtual) ?
             sizeof(this_type) :
             (sizeof(this_type) + sizeof(estd::internal::rtto_base::base)));
     }

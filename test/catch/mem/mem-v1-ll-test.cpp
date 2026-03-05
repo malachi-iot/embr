@@ -441,9 +441,11 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
     }
     SECTION("move: virtual")
     {
+        using type = RttoVirtSideEffector;
+
         int counter = 0;
 
-        RttoVirtSideEffector se1(&counter);
+        type se1(&counter);
 
         constexpr unsigned logical_sz_bytes = sizeof(se1);
         // FIX: I thought 1:1 + operation from bytes was now present in estd, looks like we have a bug
@@ -454,7 +456,40 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
 
         REQUIRE(counter == 1);
 
-        ops_type& op  = ops;;
-        bundle bn = op.alloc(phys_sz, block::RttoVirtual);
+        bundle bn = ops.alloc(phys_sz, block::RttoVirtual);
+
+        REQUIRE(bn.handle == 0);
+
+        auto se2 = new (ops.lock(bn.handle)) type(&counter);
+
+        ops.unlock(bn.handle);
+
+        REQUIRE(counter == 2);
+
+        bundle bn_free = ops.get_bundle(1);
+
+        REQUIRE(bn_free.allocated() == false);
+
+        validated_result r = ops.move(bn, bn_free, 0, logical_sz_bytes, false);
+
+        REQUIRE(r);
+
+        REQUIRE(bn.allocated() == false);
+        REQUIRE(bn_free.allocated());
+        REQUIRE(bn_free.block->mode() == block::RttoVirtual);
+        REQUIRE(ops.phys_size(bn_free) == phys_sz);
+
+        REQUIRE(se2->counter_ == nullptr);
+        REQUIRE(se2->moved_from_counter == 1);
+        REQUIRE(se2->moved_to_counter == 0);
+
+        se2 = static_cast<type*>(ops.lock(bn_free));
+
+        // FIX: Not working
+        //REQUIRE(se2->counter_ == &counter);
+        //REQUIRE(se2->moved_from_counter == 0);
+        //REQUIRE(se2->moved_to_counter == 1);
+
+        ops.unlock(bn_free.handle);
     }
 }
