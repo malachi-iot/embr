@@ -31,7 +31,8 @@ inline bool Button::evaluate(duration delta, bool down)
                     deciseconds current = long_press();
                     estd::chrono::seconds threshold(2);
 
-                    current += delta;
+                    // DEBT: Perhaps 'delta' itself ought to be deciseconds to begin with
+                    current += estd::chrono::duration_cast<deciseconds>(delta);
 
                     long_press_ = current.count();
 
@@ -87,7 +88,7 @@ inline bool Button::evaluate(duration delta, bool down)
                     // too long a time passed, so this is not a multiclick but the start of a new
                     // click/longpress
                     click_count_ = 0;
-                    long_press_ = deciseconds(delta).count();
+                    long_press_ = estd::chrono::duration_cast<deciseconds>(delta).count();
                 }
             }
             else

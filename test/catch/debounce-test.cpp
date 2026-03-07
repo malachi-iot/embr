@@ -147,7 +147,7 @@ TEST_CASE("Debounce and friends state machine tests", "[debounce]")
             fake_lpf_ms::wrapped<30> f;
 
             f.add(estd::chrono::milliseconds(1));
-            f.add(estd::chrono::microseconds(1500));
+            f.add(estd::chrono::duration_cast<estd::chrono::milliseconds>(estd::chrono::microseconds(1500)));
 
             // FIX: Was working fine until I added runtime chrono - smells like an undefined variable
             // value situation

@@ -363,7 +363,9 @@ struct DurationConverter
     template <typename Rep, typename Period>
     static constexpr int_type convert(const estd::chrono::duration<Rep, Period>& convert_from)
     {
-        return duration(convert_from).count();
+        // DEBT: Just tossed relaxed_narrow_t in here while upgrading things, give it a closer look
+        // if we really should use it
+        return duration(convert_from, estd::units::relaxed_narrow_t{}).count();
     }
 
     template <typename Rep, typename Period>

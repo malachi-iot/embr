@@ -1,5 +1,7 @@
 #pragma once
 
+#include <estd/chrono.h>
+
 namespace embr { namespace experimental {
 
 template <typename T, T max_, T min = T()>
