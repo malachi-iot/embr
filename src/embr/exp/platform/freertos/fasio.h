@@ -155,7 +155,7 @@ struct delegate_queue : embr::internal::delegate_queue<TBase>
         template <class E, class F, class ...TArgs>
         async_wrapper2(E&& emit, F&& f, TArgs&&...args)
         {
-            static const char* TAG = "async_wrapper2";
+            //static const char* TAG = "async_wrapper2";
 
             //ESP_LOGI(TAG, "ctor");
 

@@ -209,6 +209,7 @@ TEST_CASE("fake asio2", "[experimental]")
 
     //TEST_ASSERT_EQUAL(pdFALSE, r);
 
+    [[maybe_unused]]
     auto v = fasio2.buffer.test2([](){ return 5; });
     auto v2 = fasio2.buffer.test2(test_fn, 10);
 
