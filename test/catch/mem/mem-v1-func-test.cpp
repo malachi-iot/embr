@@ -22,7 +22,8 @@ namespace detail {
 // - estd one is size + inline array + const length
 // - this one is size + inline array + semi-const length
 // Really similar mechanisms differing primarily in max_size acquisition and of course
-// we have to lock here
+// we have to lock here.  When adding inplace_vector https://github.com/malachi-iot/estdlib/issues/182
+// consider consolidating this guy, if by then he's ready for estd'ness
 template <class T, class Size = int>
 class vector_impl
 {
@@ -34,10 +35,13 @@ public:
 
     ESTD_CPP_STD_VALUE_TYPE(T)
 
-    T* data() { return reinterpret_cast<T*>(this + 1); }
+    pointer data() { return reinterpret_cast<pointer>(this + 1); }
     const_pointer data() const { return reinterpret_cast<const_pointer>(this + 1); }
 
     vector_impl() = default;
+
+    // uninitialized variants below important since they call placement new rather than
+    // use operator=
 
     vector_impl(const vector_impl& copy_from) :
         size_{copy_from.size_}
@@ -350,12 +354,10 @@ public:
 
 }
 
-// EXPERIMENTAL, probably disambiguate with a name like 'pinned' since this behaves slightly
-// differently than lock_guard (that's an has-a wrapper, this is a sort of an is-a reinterpreter)
 template <class T, class Pool, Pool* pool>
-class embr::mem::v1::lock_guard<vector<T, Pool, pool>, void, nullptr> :
+class embr::mem::v1::pinned<vector<T, Pool, pool>> :
     public embr::mem::v1::lock_guard<::detail::vector_impl<T>, Pool, pool>,
-    public mixins::container<embr::mem::v1::lock_guard<vector<T, Pool, pool>, void, nullptr>, T>
+    public mixins::container<embr::mem::v1::pinned<vector<T, Pool, pool>>, T>
 {
     using vector_type = ::detail::vector_impl<T>;
     using base_type = embr::mem::v1::lock_guard<vector_type, Pool, pool>;
@@ -369,7 +371,7 @@ public:
     constexpr const_pointer data() const { return base_type::data()->data(); }
 
     template <class ...Args>
-    constexpr lock_guard(Args&&...args) : base_type(std::forward<Args>(args)...) {}
+    constexpr pinned(Args&&...args) : base_type(std::forward<Args>(args)...) {}
 
     constexpr size_type size() const { return base_type::data()->size(); }
 };
@@ -633,6 +635,9 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
         // vector
         REQUIRE(bn_copied.handle == 0);
         //REQUIRE(copied == vector);
+
+        vector.clear();
+        vector.shrink_to_fit();
     }
     SECTION("vector: SideEffector")
     {
@@ -667,7 +672,7 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
         vector.push_back(5);
         vector.push_back(10);
 
-        mem::v1::lock_guard<vector_type> pinned(revealed.impl());
+        mem::v1::pinned<vector_type> pinned(revealed.impl());
 
         REQUIRE(pinned[0] == 5);
 

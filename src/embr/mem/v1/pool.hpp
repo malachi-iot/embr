@@ -311,7 +311,10 @@ auto pool_ops<Traits>::alloced() const -> bytes
 template <class Traits>
 bool pool_ops<Traits>::realloc(bundle bn, pos_type phys_sz, handle_type* out)
 {
-    // If sz <= phys_sz then just return
+    // Don't try to shrink down below 1 block size.  Silently ignore
+    if(phys_sz.count() <= 1)    return true;
+
+    // If sz <= phys_sz then just return (being revised, see a1-a4)
     // If sz > phys sz then:
     // 1.  If following free block exists and can accomodate us, shrink it down and grow into it
     // 2.  Otherwise look at alternate locations to allocate from (probably assess)
@@ -324,7 +327,36 @@ bool pool_ops<Traits>::realloc(bundle bn, pos_type phys_sz, handle_type* out)
     if(out)     *out = bn.handle;
 
     if(phys_sz <= current_sz)
+    {
+        // TODO: Do a shrink assessment.  In this order, assess and do the one that fits:
+        // a1. pull back bn_next if bn_next is not allocated
+        // a1.1. if shrink flag is not specified, we stop here, otherwise proceed
+        // a2. pull back bn_next if bn_next is allocated & trivial & below a generous threshold.
+        // a3. pull back bn_next if bn_next is allocated, non-trivial, low complexity AND not an overlapping move
+        // a4. move to a better-fit smaller allocated spot if WE are an easy move and
+        //    the phys_sz - current_sz delta exceeds a certain threshold
+        if(bn.has_next())
+        {
+            bundle bn_next(next(bn));
+
+            if(bn_next.allocated() == false)
+            {
+                // Unlike below no threshold needed, since expanding bn_next is always a
+                // useful size
+                move_block(*bn_next.page, bn.pos() + phys_sz);
+            }
+            else if(bn_next.mode() == block::Trivial)
+            {
+                // TODO: Do 'move' except that current one takes bundles (make a move_ll)
+            }
+            else if(bn_next.block->metadata()->complexity < 2)
+            {
+                // check for overlap, and if none, call 'move_ll'
+            }
+        }
+
         return true;
+    }
 
     if(bn.has_next())
     {

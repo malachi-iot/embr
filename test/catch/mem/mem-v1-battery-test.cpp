@@ -95,6 +95,8 @@ static void battery(typename detail::pool_ops<Traits>& ops, int it, unsigned see
         }
         else if(mode == block::RttoProxy)
         {
+            // TODO: do construct_ll and over-provision some so we can call realloc/shrink later
+
             bn = ops.template construct<block::RttoProxy, SideEffector>(&counter);
 
             if(bn.handle != null)

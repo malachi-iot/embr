@@ -130,19 +130,19 @@ inline auto block_8::metadata() const -> metadata_type
     {
         case RttoProxy:
         {
-            int rc = proxy()->get_metadata(&md);
+            proxy()->get_metadata(&md);
             break;
         }
 
         case RttoBase:
         {
-            int rc = rtto_base()->get_metadata(&md);
+            rtto_base()->get_metadata(&md);
             break;
         }
 
         case RttoVirtual:
         {
-            // estd doesn't yet provide metadata here
+            md = virt()->get_metadata();
             break;
         }
 
