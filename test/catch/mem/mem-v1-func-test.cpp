@@ -30,6 +30,9 @@ class vector_impl
     template <class T2, class Pool, Pool* pool>
     friend class ::vector_impl;
 
+    template <class T2>
+    friend class embr::mem::v1::pinned;
+
 public:
     using size_type = Size;
 
@@ -300,6 +303,9 @@ class container
 public:
     ESTD_CPP_STD_VALUE_TYPE(T)
 
+    using iterator = pointer;
+    using const_iterator = const_pointer;
+
     reference operator[](int v)
     {
         return *(static_cast<Derived*>(this)->data() + v);
@@ -328,7 +334,7 @@ public:
         return self->data() + self->size();
     }
 
-    const_pointer cend() const
+    constexpr const_pointer cend() const
     {
         auto self = static_cast<const Derived*>(this);
         return self->data() + self->size();
@@ -336,7 +342,7 @@ public:
 
     const_pointer end() const { return cend(); }
 
-    const_reference front()
+    reference front()
     {
         return *begin();
     }
@@ -344,6 +350,16 @@ public:
     constexpr const_reference front() const
     {
         return *begin();
+    }
+
+    reference back()
+    {
+        return *(end() - 1);
+    }
+
+    constexpr const_reference back() const
+    {
+        return *(end() - 1);
     }
 
     constexpr bool empty() const
@@ -354,6 +370,7 @@ public:
 
 }
 
+// Works to conform to https://en.cppreference.com/w/cpp/named_req/Container.html
 template <class T, class Pool, Pool* pool>
 class embr::mem::v1::pinned<vector<T, Pool, pool>> :
     public embr::mem::v1::lock_guard<::detail::vector_impl<T>, Pool, pool>,
@@ -371,9 +388,22 @@ public:
     constexpr const_pointer data() const { return base_type::data()->data(); }
 
     template <class ...Args>
-    constexpr pinned(Args&&...args) : base_type(std::forward<Args>(args)...) {}
+    constexpr explicit pinned(Args&&...args) : base_type(std::forward<Args>(args)...) {}
 
-    constexpr size_type size() const { return base_type::data()->size(); }
+    constexpr size_type size() const { return base_type::data()->size_; }
+
+    // DEBT: Put this up in mixin::container, since size_ doesn't need changing
+    void swap(pinned& with)
+    {
+        pointer begin = data();
+        const_pointer end = begin + size();
+        pointer dbegin = with.data();
+
+        if(size() != with.size())   return; // DEBT: I think we need to do something else here
+
+        for(; begin < end; ++begin, ++dbegin)
+            estd::swap(*begin, *dbegin);
+    }
 };
 
 // Because "true" vector is a very heavy lift, creating a cut-down easy mode one
