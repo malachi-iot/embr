@@ -8,6 +8,24 @@ namespace embr { namespace mem {
 
 namespace detail { inline namespace v1 {
 
+namespace mixin {
+
+// Maybe overdoing things?
+template <class Derived, class T>
+struct typed_handle
+{
+    ESTD_CPP_STD_VALUE_TYPE(T)
+
+    template <class Pool>
+    pointer lock() const
+    {
+        auto self = static_cast<Derived*>(this);
+        return static_cast<pointer>(self->lock());
+    }
+};
+
+}
+
 // Overlap with estd::experimental::global_provider
 
 template <class T, T* t>
@@ -55,6 +73,7 @@ public:
 // Not owning
 // Not lock-guarded
 // Primarily a type-safety mechanism for T
+// DEBT: Perhaps actually call this 'sparse_handle' for real
 template <class T, class Handle>
 class typed_handle
 {

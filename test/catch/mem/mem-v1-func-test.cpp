@@ -72,6 +72,8 @@ public:
 
 }
 
+// FIX: Not ready yet.  At least it compiles and is coming along
+#define USE_REAL_HANDLE_OFFSET  0
 
 // Heavy lift
 // Not done, I'd say over the hump for a proof of concept
@@ -82,6 +84,8 @@ class vector_impl : public mem::v1::unique_handle<detail::vector_impl<T>, Pool, 
     using base_type = mem::v1::unique_handle<control_type, Pool, pool>;
     using this_type = vector_impl;
     using typename base_type::ops_type;
+    // DEBT: disambiguate lock_handle and handle_type, causing confusion
+    using typename base_type::handle_type;
     using pos_type = typename ops_type::pos_type;
     using bundle = typename ops_type::bundle;
     using const_bundle = typename ops_type::const_bundle;
@@ -145,7 +149,11 @@ public:
     {
     };
 
+#if USE_REAL_HANDLE_OFFSET
+    using handle_with_offset = estd::internal::handle_with_offset<handle_type>;
+#else
     using handle_with_offset = estd::internal::handle_with_offset_raw<pointer>;
+#endif
 
     struct allocator_type
     {
@@ -172,7 +180,55 @@ public:
         using allocator_valref = allocator_type;
         //using iterator = pointer;
         using const_iterator = const_pointer;
+#if USE_REAL_HANDLE_OFFSET
+        struct accessor_exp
+        {
+            using locked_type = reference;
+            using const_locked_type = const_reference;
+
+            handle_type h_;
+
+            locked_type lock() { return *(pointer*)h_.lock(); }
+        };
+
+        struct accessor_impl :
+            handle_type
+            //mem::detail::mixin::typed_handle<accessor_impl, value_type>
+        {
+            using base_type = handle_type;
+            //using mixin_type = mem::detail::mixin::typed_handle<accessor_impl, value_type>;
+            //using mixin_type::lock;
+
+            ESTD_CPP_STD_VALUE_TYPE(value_type)
+
+            //ESTD_CPP_FORWARDING_CTOR(accessor_impl);
+
+            // FIX:
+            template <class Allocator>
+            accessor_impl(Allocator, handle_with_offset hwo) :
+                base_type(hwo.handle(), nullptr)
+            {
+
+            }
+
+            using offset_type = int;
+            using const_offset_type = int;
+            using locked_type = reference;
+            using const_locked_type = const_reference;
+
+            locked_type lock() const
+            {
+                // FIX: We need to return parent->data in fact
+                auto parent = (pointer)base_type::lock();
+                return *parent;
+            }
+        };
+
+        // Needs to be typed to T
+        using accessor = estd::internal::locking_accessor<accessor_impl>;
+#else
         using accessor = estd::internal::traditional_accessor<value_type>;
+#endif
         using iterator = estd::internal::locking_iterator<allocator_type, accessor>;
         using handle_with_offset = typename this_type::handle_with_offset;
 
@@ -187,7 +243,11 @@ public:
         control_type* control = base_type::lock();
         base_type::unlock();
 
+#if USE_REAL_HANDLE_OFFSET
+        return { handle_, pos };
+#else
         return { control->data() + pos };
+#endif
     }
 
     ESTD_CPP_CONSTEXPR(17) reference lock(unsigned pos = 0, unsigned count = 0)
