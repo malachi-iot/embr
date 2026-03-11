@@ -12,6 +12,19 @@
 
 using namespace embr;
 
+namespace mixins {
+
+template <class Derived, class T>
+class iterator;
+
+template <class Derived, class T>
+class iterator_access;
+
+template <class Derived>
+class iterator_math;
+
+
+}
 
 template <class T, class Pool, Pool* pool = nullptr>
 class vector_impl;
@@ -24,7 +37,7 @@ namespace detail {
 // Really similar mechanisms differing primarily in max_size acquisition and of course
 // we have to lock here.  When adding inplace_vector https://github.com/malachi-iot/estdlib/issues/182
 // consider consolidating this guy, if by then he's ready for estd'ness
-template <class T, class Size = int>
+template <class T, unsigned lock_bits = 3>
 class vector_impl
 {
     template <class T2, class Pool, Pool* pool>
@@ -34,14 +47,14 @@ class vector_impl
     friend class embr::mem::v1::pinned;
 
 public:
-    using size_type = Size;
+    using size_type = unsigned;
 
     ESTD_CPP_STD_VALUE_TYPE(T)
 
     pointer data() { return reinterpret_cast<pointer>(this + 1); }
     const_pointer data() const { return reinterpret_cast<const_pointer>(this + 1); }
 
-    vector_impl() = default;
+    constexpr vector_impl() : size_{}, lock_count_{}        {};
 
     // uninitialized variants below important since they call placement new rather than
     // use operator=
@@ -62,7 +75,10 @@ public:
     }
 
 private:
-    size_type size_{};
+    static constexpr unsigned size_bits = sizeof(size_type) * 8 - lock_bits;
+
+    size_type size_ : size_bits;
+    size_type lock_count_ : lock_bits;
 
 public:
 
@@ -327,6 +343,54 @@ public:
 
         base_type::unlock();
     }
+
+    // TODO: Do sentry comparison
+
+    class pinned_iterator : public mixins::iterator<pinned_iterator, value_type>
+    {
+        this_type* parent_;
+        pointer current_;
+
+        template <class Derived, class T2>
+        friend class mixins::iterator_access;
+
+        template <class Derived>
+        friend class mixins::iterator_math;
+
+    public:
+        constexpr pinned_iterator(const pinned_iterator& copy_from) :
+            parent_{copy_from.parent_}, current_{copy_from.current_}
+        {
+            control_type* control = parent_->data();
+
+            ++control->lock_count_;
+        }
+
+        constexpr pinned_iterator(this_type* parent, pointer current) :
+            parent_{parent}, current_{current}
+        {}
+
+        ~pinned_iterator()
+        {
+            control_type* control = parent_->data();
+
+            if(--control->lock_count_ == 0)
+            {
+                parent_->unlock();
+            }
+        }
+    };
+
+    // EXPERIMENTAL
+    // probably will work in which case change this to begin() and if it works really well, support this up
+    // in estd
+    pinned_iterator pinned_begin()
+    {
+        control_type* control = base_type::lock();
+        ++control->lock_count_;
+
+        return { this, control->data() };
+    }
 };
 
 /*
@@ -426,6 +490,76 @@ public:
     {
         return static_cast<const Derived*>(this)->size() == 0;
     }
+};
+
+
+// This guy seems familiar, think we did this before
+template <class Derived, class T>
+class iterator_access
+{
+public:
+    ESTD_CPP_STD_VALUE_TYPE(T)
+
+private:
+
+    pointer current()
+    {
+        return static_cast<Derived*>(this)->current_;
+    }
+
+    constexpr const_pointer current() const
+    {
+        return static_cast<const Derived*>(this)->current_;
+    }
+
+public:
+    reference operator*()   { return *current(); }
+    pointer operator->()   { return current(); }
+};
+
+
+// This guy seems familiar, think we did this before
+template <class Derived>
+class iterator_math
+{
+public:
+    Derived& operator++()
+    {
+        auto self = static_cast<Derived*>(this);
+        ++self->current_;
+        return *self;
+    }
+
+    Derived operator++(int)
+    {
+        auto self = static_cast<Derived*>(this);
+        Derived copy(*self);
+        ++self->current_;
+        return copy;
+    }
+
+    Derived& operator--()
+    {
+        auto self = static_cast<Derived*>(this);
+        --self->current_;
+        return *self;
+    }
+
+    Derived operator--(int)
+    {
+        auto self = static_cast<Derived*>(this);
+        Derived copy(*self);
+        --self->current_;
+        return copy;
+    }
+};
+
+template <class Derived, class T>
+class iterator :
+    public iterator_access<Derived, T>,
+    public iterator_math<Derived>
+{
+
 };
 
 }
@@ -772,6 +906,36 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
         REQUIRE(*i == 10);
 
         REQUIRE(pinned.empty() == false);
+    }
+    SECTION("vector: pinned_iterator (EXPERIMENTAL)")
+    {
+        SECTION("int")
+        {
+            using vector_type = vector<int, pool_type>;
+            vector_type vector(&pool);
+            auto& revealed = (vector_revealed<int, pool_type>&) vector;
+
+            vector.push_back(5);
+            vector.push_back(10);
+
+            auto it = revealed.impl().pinned_begin();
+
+            REQUIRE(*it == 5);
+            REQUIRE(*++it++ == 10);
+        }
+        SECTION("SideEffector")
+        {
+            int counter = 0;
+            using vector_type = vector<SideEffector, pool_type>;
+            vector_type vector(&pool);
+            auto& revealed = (vector_revealed<SideEffector, pool_type>&) vector;
+
+            vector.emplace_back(&counter);
+
+            auto it = revealed.impl().pinned_begin();
+
+            REQUIRE(it->counter() == 1);
+        }
     }
     SECTION("vector2")
     {

@@ -39,6 +39,7 @@ inline namespace v1 {
 
 template <class T, class Pool, Pool* pool>
 class unique_handle : public detail::unique_handle<Pool, pool>
+    // DEBT: Why don't we use crtp/mixin here?
     //detail::v1::lock_handle_crtp<unique_handle<T, Pool, pool>>
 {
     using base_type = detail::unique_handle<Pool, pool>;
@@ -59,6 +60,19 @@ public:
     typename base_type::template guard_type<T> guard() const
     {
         return { *this };
+    }
+
+protected:
+    // Low-level call which presumes we're already locked
+    pointer data()
+    {
+        // DEBT: This feels like it ought to live in a mixin
+        typename base_type::bundle bn(base_type::get_bundle());
+
+        // DEBT: Put in a strict-mode flag to avoid this check for optimizations
+        assert(bn.block->lock_count() > 0);
+
+        return static_cast<pointer>(bn.data());
     }
 };
 
