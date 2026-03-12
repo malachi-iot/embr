@@ -74,6 +74,16 @@ public:
         std::uninitialized_move_n(move_from.data(), size_, data());
     }
 
+    // DEBT: See https://github.com/malachi-iot/estdlib/issues/185 as to whether WE should
+    // be doing this
+    ~vector_impl()
+    {
+        const_pointer end = data() + size_;
+
+        for(pointer begin = data(); begin < end; ++begin)
+            begin->~value_type();
+    }
+
 private:
     static constexpr unsigned size_bits = sizeof(size_type) * 8 - lock_bits;
 
@@ -391,6 +401,12 @@ public:
 
         return { this, control->data() };
     }
+
+    /*
+    pinned_iterator pinned_end()
+    {
+
+    }   */
 };
 
 /*
@@ -869,23 +885,27 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
 
         using vector_type = vector<SideEffector, pool_type>;
 
-        vector_type vector(&pool);
-        std::vector<SideEffector> parity;
+        {
+            vector_type vector(&pool);
+            std::vector<SideEffector> parity;
 
-        vector.push_back({});
+            vector.push_back({});
 
-        // Calls default ctor, then move ctor
-        parity.push_back({});
+            // Calls default ctor, then move ctor
+            parity.push_back({});
 
-        // FIX: A dangling lock should cause an assert, but our iterator/handle treatment is
-        // still goofy
-        REQUIRE(vector[0].clock().moved_to_counter == 1);
-        REQUIRE(parity[0].moved_to_counter == 1);
+            // FIX: A dangling lock should cause an assert, but our iterator/handle treatment is
+            // still goofy
+            REQUIRE(vector[0].clock().moved_to_counter == 1);
+            REQUIRE(parity[0].moved_to_counter == 1);
 
-        vector.emplace_back(&counter);
+            vector.emplace_back(&counter);
 
-        REQUIRE(vector[1].clock().counter() == 1);
-        REQUIRE(vector[1].clock().moved_to_counter == 0);
+            REQUIRE(vector[1].clock().counter() == 1);
+            REQUIRE(vector[1].clock().moved_to_counter == 0);
+        }
+
+        REQUIRE(counter == 0);
     }
     SECTION("vector: lock_guard (pinned) - EXPERIMENTAL")
     {
@@ -927,14 +947,19 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
         {
             int counter = 0;
             using vector_type = vector<SideEffector, pool_type>;
-            vector_type vector(&pool);
-            auto& revealed = (vector_revealed<SideEffector, pool_type>&) vector;
 
-            vector.emplace_back(&counter);
+            {
+                vector_type vector(&pool);
+                auto& revealed = (vector_revealed<SideEffector, pool_type>&) vector;
 
-            auto it = revealed.impl().pinned_begin();
+                vector.emplace_back(&counter);
 
-            REQUIRE(it->counter() == 1);
+                auto it = revealed.impl().pinned_begin();
+
+                REQUIRE(it->counter() == 1);
+            }
+
+            REQUIRE(counter == 0);
         }
     }
     SECTION("vector2")
