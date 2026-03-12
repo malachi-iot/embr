@@ -138,6 +138,13 @@ class vector_impl : public mem::v1::unique_handle<detail::vector_impl<T>, Pool, 
         return ops().template construct_ll<mode, control_type>(ops().do_alias(sz), std::forward<Args>(args)...);
     }
 
+    // Low-level end() - does NOT do locking, so be careful
+    const T* end_ll() const
+    {
+        const control_type* control = base_type::data();
+        return control->data() + control->size_;
+    }
+
 public:
     using base_type::pool_;
 
@@ -356,8 +363,14 @@ public:
 
     // TODO: Do sentry comparison
 
+    class sentinel;
+
+    // EXPERIMENTAL
     class pinned_iterator : public mixins::iterator<pinned_iterator, value_type>
     {
+        friend sentinel;
+        friend this_type;
+
         this_type* parent_;
         pointer current_;
 
@@ -366,6 +379,10 @@ public:
 
         template <class Derived>
         friend class mixins::iterator_math;
+
+        constexpr pinned_iterator(this_type* parent, pointer current) :
+            parent_{parent}, current_{current}
+        {}
 
     public:
         constexpr pinned_iterator(const pinned_iterator& copy_from) :
@@ -376,10 +393,6 @@ public:
             ++control->lock_count_;
         }
 
-        constexpr pinned_iterator(this_type* parent, pointer current) :
-            parent_{parent}, current_{current}
-        {}
-
         ~pinned_iterator()
         {
             control_type* control = parent_->data();
@@ -388,6 +401,43 @@ public:
             {
                 parent_->unlock();
             }
+        }
+    };
+
+
+    // EXPERIMENTAL
+    class sentinel
+    {
+        this_type* parent_;
+
+        pinned_iterator promote()
+        {
+            return { parent_, parent_->end_ll() };
+        }
+
+    public:
+        sentinel(this_type* parent) : parent_{parent}   {}
+
+        pinned_iterator operator--(int)
+        {
+            return --promote();
+        }
+
+        operator pinned_iterator() { return promote(); }
+
+        friend constexpr bool operator==(sentinel lhs, const pinned_iterator& rhs)
+        {
+            return lhs.parent_->end_ll() == rhs.current_;
+        }
+
+        friend constexpr bool operator==(const pinned_iterator& lhs, sentinel rhs)
+        {
+            return rhs.parent_->end_ll() == lhs.current_;
+        }
+
+        friend constexpr bool operator!=(const pinned_iterator& lhs, sentinel rhs)
+        {
+            return rhs.parent_->end_ll() != lhs.current_;
         }
     };
 
@@ -402,11 +452,11 @@ public:
         return { this, control->data() };
     }
 
-    /*
-    pinned_iterator pinned_end()
+    // EXPERIMENTAL
+    sentinel pinned_end()
     {
-
-    }   */
+        return sentinel{this};
+    }
 };
 
 /*
@@ -567,6 +617,16 @@ public:
         Derived copy(*self);
         --self->current_;
         return copy;
+    }
+
+    friend constexpr bool operator <(const Derived& lhs, const Derived& rhs)
+    {
+        return lhs.current_ < rhs.current_;
+    }
+
+    friend constexpr bool operator >(const Derived& lhs, const Derived& rhs)
+    {
+        return lhs.current_ > rhs.current_;
     }
 };
 
@@ -939,7 +999,9 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
             vector.push_back(10);
 
             auto it = revealed.impl().pinned_begin();
+            auto end = revealed.impl().pinned_end();
 
+            //REQUIRE(it != end);
             REQUIRE(*it == 5);
             REQUIRE(*++it++ == 10);
         }

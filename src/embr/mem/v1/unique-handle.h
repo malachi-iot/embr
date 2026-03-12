@@ -74,6 +74,17 @@ protected:
 
         return static_cast<pointer>(bn.data());
     }
+
+    const_pointer data() const
+    {
+        // DEBT: This feels like it ought to live in a mixin
+        typename base_type::const_bundle bn(base_type::get_bundle());
+
+        // DEBT: Put in a strict-mode flag to avoid this check for optimizations
+        assert(bn.block->lock_count() > 0);
+
+        return static_cast<const_pointer>(bn.data());
+    }
 };
 
 }
