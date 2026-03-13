@@ -9,7 +9,7 @@
 #include "unit.h"
 
 // FIX: Not ready yet.  At least it compiles and is coming along
-#define USE_REAL_HANDLE_OFFSET  0
+#define USE_REAL_HANDLE_OFFSET  1
 
 namespace embr { namespace mem {
 
@@ -219,6 +219,8 @@ public:
             handle_type
             //mem::detail::mixin::typed_handle<accessor_impl, value_type>
         {
+            int offset_;
+
             using base_type = handle_type;
             //using mixin_type = mem::detail::mixin::typed_handle<accessor_impl, value_type>;
             //using mixin_type::lock;
@@ -227,12 +229,17 @@ public:
 
             //ESTD_CPP_FORWARDING_CTOR(accessor_impl);
 
-            // FIX:
-            template <class Allocator>
-            accessor_impl(Allocator, handle_with_offset hwo) :
-                base_type(hwo.handle(), nullptr)
+            accessor_impl(allocator_type allocator, handle_with_offset hwo) :
+                base_type(hwo.handle(), allocator.pool_),
+                offset_{int(hwo.offset())}
             {
 
+            }
+
+            // Dormant - since this is hidden inside 'impl'.  mixin/crtp accessors would probably help
+            lock_guard<T, Pool, pool> guard()
+            {
+                return { *this };
             }
 
             using offset_type = int;
@@ -240,11 +247,12 @@ public:
             using locked_type = reference;
             using const_locked_type = const_reference;
 
+            // DEBT: Continued awkwardness with lock returning ref
+            // See https://github.com/malachi-iot/estdlib/issues/88
             locked_type lock() const
             {
-                // FIX: We need to return parent->data in fact
-                auto parent = (pointer)base_type::lock();
-                return *parent;
+                auto control = (control_type*)base_type::lock();
+                return *(control->data() + offset_);
             }
         };
 

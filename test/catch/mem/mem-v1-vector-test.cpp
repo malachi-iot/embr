@@ -121,7 +121,8 @@ TEST_CASE("gc mem v1 vector", "[memory][gc][vector]")
         REQUIRE(valid);
 
         REQUIRE(vector.size() == 2);
-        REQUIRE(vector.at(0) == 1);
+        auto accessor = vector.at(0);
+        REQUIRE(accessor == 1);
         REQUIRE(*vector.lock() == 1);
         vector.unlock();
 
@@ -174,8 +175,11 @@ TEST_CASE("gc mem v1 vector", "[memory][gc][vector]")
             // Calls default ctor, then move ctor
             parity.push_back({});
 
-            // FIX: A dangling lock should cause an assert, but our iterator/handle treatment is
-            // still goofy
+#if USE_REAL_HANDLE_OFFSET_NOTREADY
+            // Need a mixin reality for this to really happen
+            //REQUIRE(vector[0].guard()->moved_to_counter == 1);
+            //REQUIRE(parity[0].moved_to_counter == 1);
+#else
             REQUIRE(vector[0].clock().moved_to_counter == 1);
             REQUIRE(parity[0].moved_to_counter == 1);
 
@@ -183,6 +187,11 @@ TEST_CASE("gc mem v1 vector", "[memory][gc][vector]")
 
             REQUIRE(vector[1].clock().counter() == 1);
             REQUIRE(vector[1].clock().moved_to_counter == 0);
+
+            vector[0].cunlock();
+            vector[1].cunlock();
+            vector[1].cunlock();
+#endif
         }
 
         REQUIRE(counter == 0);
@@ -219,6 +228,7 @@ TEST_CASE("gc mem v1 vector", "[memory][gc][vector]")
             vector.push_back(10);
 
             auto it = revealed.impl().pinned_begin();
+            [[maybe_unused]]
             auto end = revealed.impl().pinned_end();
 
             //REQUIRE(it != end);

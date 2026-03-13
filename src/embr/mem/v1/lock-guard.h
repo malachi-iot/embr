@@ -10,6 +10,7 @@ template <class Pool, Pool* pool>
 class lock_guard
 {
 protected:
+    // DEBT: Disambiguate raw numeric handle vs lock_handle
     using handle = lock_handle<Pool, pool>;
 
     handle handle_;
