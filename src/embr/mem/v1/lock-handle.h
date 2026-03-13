@@ -52,6 +52,7 @@ struct global_provider<T, t, false>
     static constexpr bool is_global = false;
 };
 
+// Auto-casts to Derived::pointer
 template <class Derived>
 class lock_handle_crtp
 {

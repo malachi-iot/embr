@@ -14,6 +14,19 @@
 
 namespace embr { namespace mem {
 
+namespace mixins {
+
+template <class Derived, class T>
+class iterator;
+
+template <class Derived, class T>
+class iterator_access;
+
+template <class Derived>
+class iterator_math;
+
+}
+
 namespace detail { inline namespace v1 {
 
 // EXPERIMENTAL
@@ -95,6 +108,9 @@ using container_traits = estd::internal::container_traits<Container>;
 
 template <class T, class Pool, Pool* pool = nullptr>
 class unique_handle;
+
+template <class T, class Pool, Pool* pool = nullptr>
+class vector_impl;
 
 }
 

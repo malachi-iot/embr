@@ -45,6 +45,7 @@ set(SOURCE_FILES
     mem/mem-v1-battery-test.cpp
     mem/mem-v1-func-test.cpp
     mem/mem-v1-ll-test.cpp
+    mem/mem-v1-vector-test.cpp
     objlist-test.cpp
     property-test.cpp
     retry-test.cpp
