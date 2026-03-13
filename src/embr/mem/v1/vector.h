@@ -169,10 +169,6 @@ public:
 
     };
 
-    struct handle_with_offset_old
-    {
-    };
-
 #if USE_REAL_HANDLE_OFFSET
     using handle_with_offset = estd::internal::handle_with_offset<handle_type>;
 #else

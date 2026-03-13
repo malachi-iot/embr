@@ -180,6 +180,9 @@ TEST_CASE("gc mem v1 vector", "[memory][gc][vector]")
             //REQUIRE(vector[0].guard()->moved_to_counter == 1);
             //REQUIRE(parity[0].moved_to_counter == 1);
 #else
+            // FIX: Erroneously leaves this unlocked, accessor DEBT because it doesn't know if
+            // you want a ref or a copy so it presumes a ref, requiring a dangling lock
+            //SideEffector copied = vector[0];
             REQUIRE(vector[0].clock().moved_to_counter == 1);
             REQUIRE(parity[0].moved_to_counter == 1);
 
