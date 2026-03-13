@@ -1,10 +1,10 @@
 #include <catch2/catch_all.hpp>
 
 #include <embr/mem/v1/mixins.h>
-#include <embr/mem/v1/vector.h>
 #include <embr/mem/v1/pool.hpp>
 #include <embr/mem/v1/shared-handle.h>
 #include <embr/mem/v1/unique-handle.h>
+#include <embr/mem/v1/vector.h>
 
 #include "test-mem-data.h"
 

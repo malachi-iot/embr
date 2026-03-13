@@ -253,6 +253,13 @@ public:
         };
 
         // Needs to be typed to T
+        // TODO: Rework this to be 100% custom accessor all our own with improved features:
+        // 1. always operating like a lock_guard
+        // 2. have an accessor something like value_type&& value() and/or operator value_type&&()
+        //    so that it's enforced that the locked data doesn't outlive the accessor
+        // 3. have a disambiguated flavor of above accessor that really does return value_type&
+        //    just make it as clear as possible THAT guy in danger of invalidating quickly
+        // 4. lock/unlock theoretically not necessary or wanted anymore since it's auto locked
         using accessor = estd::internal::locking_accessor<accessor_impl>;
 #else
         using accessor = estd::internal::traditional_accessor<value_type>;
