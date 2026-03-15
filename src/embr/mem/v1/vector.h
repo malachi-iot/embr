@@ -10,7 +10,8 @@
 
 
 #define USE_REAL_HANDLE_OFFSET  1
-// NOTE: Almost there, one major confounding monostate/catch2 error remaining
+// NOTE: Almost there, one major confounding monostate/catch2 error remaining.  It's that estd::expected constructor
+// is too greedy and converts too often, thus spuriously activating operator <<(out, expected)
 #define EMBR_VECTOR_ADV_ACCESSOR 0
 
 namespace embr { namespace mem {
