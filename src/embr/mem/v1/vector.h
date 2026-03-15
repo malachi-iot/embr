@@ -14,7 +14,7 @@
 
 
 #define USE_REAL_HANDLE_OFFSET  1
-#define EMBR_VECTOR_ADV_ACCESSOR 0
+#define EMBR_VECTOR_ADV_ACCESSOR 1
 
 namespace embr { namespace mem {
 
@@ -211,26 +211,62 @@ public:
         {
             using base_type = handle_type;
 
-            int offset_;
+            pointer value_;
             using locked_type = reference;
             using const_locked_type = const_reference;
 
+            // DEBT: Too many of these little utility helpers laying about, clean it up
+            static pointer lock_and_retrieve(handle_type& h, int offset)
+            {
+                auto parent = (control_type*)h.lock();
+
+                return parent->data() + offset;
+            }
+
             accessor(allocator_type allocator, handle_with_offset hwo) :
                 base_type(hwo.handle(), allocator.pool_),
-                offset_{int(hwo.offset())}
+                value_{lock_and_retrieve(*this, int(hwo.offset()))}
             {
-
             }
 
-            constexpr bool operator==(const_reference compare_to) const
+            ~accessor()
             {
-                return false;
+                base_type::unlock();
             }
 
-            // FIX:
-            const_reference clock() const { static value_type dummy; return dummy; }
-            void cunlock() { }
-            const_reference value() const { static value_type dummy; return dummy ;}
+            friend constexpr bool operator==(const_reference lhs, const accessor& rhs)
+            {
+                return lhs == *rhs.value_;
+            }
+
+            friend constexpr bool operator==(const accessor& lhs, const_reference rhs)
+            {
+                return *lhs.value_ == rhs;
+            }
+
+            reference value()
+            {
+                return *value_;
+            }
+
+            constexpr const_reference value() const
+            {
+                return *value_;
+            }
+
+            /*
+             * EXPERIMENTAL
+             * Flips out still-sensitive Catch2 stringify - specifically he's trying to ostream this 'accessor'
+             * but returning value_type&& this way may not be compatible.  Frustrating since our down-below operator
+             * << is ignored too
+            operator value_type&&() &&
+            {
+                return *value_;
+            } */
+
+            // EXPERIMENTAL
+            // So far not good, compiles but invites implicit move operations
+            //value_type&& operator()() && { return std::forward<value_type>(*value_); }
         };
 #else
         struct accessor_impl :

@@ -121,8 +121,11 @@ TEST_CASE("gc mem v1 vector", "[memory][gc][vector]")
         REQUIRE(valid);
 
         REQUIRE(vector.size() == 2);
-        auto accessor = vector.at(0);
-        REQUIRE(accessor == 1);
+        {
+            // NOTE: accessors should not hang around in scope too long
+            auto accessor = vector.at(0);
+            REQUIRE(accessor == 1);
+        }
         REQUIRE(*vector.lock() == 1);
         vector.unlock();
 
@@ -180,6 +183,14 @@ TEST_CASE("gc mem v1 vector", "[memory][gc][vector]")
             //REQUIRE(vector[0].guard()->moved_to_counter == 1);
             //REQUIRE(parity[0].moved_to_counter == 1);
 #elif EMBR_VECTOR_ADV_ACCESSOR
+            REQUIRE(vector[0].value().moved_to_counter == 1);
+            REQUIRE(parity[0].moved_to_counter == 1);
+
+            vector.emplace_back(&counter);
+
+            REQUIRE(vector[1].value().counter() == 1);
+            REQUIRE(vector[1]().moved_to_counter == 0);
+            REQUIRE(vector[1]().moved_from_counter == 0);
 #else
             // FIX: Erroneously leaves this unlocked, accessor DEBT because it doesn't know if
             // you want a ref or a copy so it presumes a ref, requiring a dangling lock
