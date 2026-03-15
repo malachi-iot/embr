@@ -51,11 +51,14 @@ struct objlist_element : internal::objlist_element
     friend class objlist_base<objlist_element>;
 
 private:
-    // DEBT: Look into consolidation opportunity with embr::mem::v1::block_8
+    // DEBT: Look into consolidation opportunity with embr::mem::v1::block_8, especially
+    // with RTTO awareness
     union
     {
         struct
         {
+            // DEBT: Consider aligned here too (ala block_8) since sizes must be on
+            // pointer offset too
             unsigned size_ : 16;
             int next_ : 14;        ///< aligned pointer offset
             // Perhaps we can deduce this based on what list it is in?  Don't know.

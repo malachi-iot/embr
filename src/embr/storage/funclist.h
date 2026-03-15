@@ -11,7 +11,8 @@ namespace internal {
 template <class F>
 struct objlist_function_factory
 {
-    using fn_impl = estd::detail::impl::function_fnptr2<F>;
+    //using fn_impl = estd::detail::impl::function_fnptr2<F>;
+    using fn_impl = estd::detail::impl::function_virtual<F>;
     using model = typename fn_impl::model_base;
 
     template <ESTD_CPP_CONCEPT(concepts::v1::Objlist) Objlist, class F2>
@@ -103,7 +104,7 @@ struct funclist
 
 }
 
-template <class F, ESTD_CPP_CONCEPT(concepts::v1::Objlist) Objlist>
+template <class F, ESTD_CPP_CONCEPT(concepts::v1::Objlist) Objlist, Objlist* global = nullptr>
 class funclist_base
 {
 protected:
@@ -114,11 +115,26 @@ protected:
     Objlist* list_;
     impl::funclist<F, value_type> impl_;
 
+    // DEBT: Specialize out funclist_base so that we realize the evaportion optimization
+    // of list_
+    constexpr explicit funclist_base() :
+        list_{global}
+    {
+        static_assert(global != nullptr);
+    }
+
     constexpr explicit funclist_base(objlist_type* objlist) :
         list_{objlist}
     {
-
+        static_assert(global == nullptr);
     }
+    \
+    template <class ...Args>
+    void fire(Args&&...args)
+    {
+        impl_.fire(*list_, std::forward<Args>(args)...);
+    }
+
 
 public:
     template <class F2>
@@ -130,23 +146,21 @@ public:
 
 
 // Separating this out so that funclist_base may be exposed more generally
-// without everyone accessing 'fire' method
-template <class F, ESTD_CPP_CONCEPT(concepts::v1::Objlist) Objlist>
-class funclist : public funclist_base<F, Objlist>
+// without everyone accessing 'fire' method.  In particular, primary use case
+// is those who want += are not the producer, so they shouldn't be able to 'fire'
+// DEBT: At the moment, everyone consumes funclist directly anyway...
+template <class F, ESTD_CPP_CONCEPT(concepts::v1::Objlist) Objlist, Objlist* global = nullptr>
+class funclist : public funclist_base<F, Objlist, global>
 {
     using base_type = funclist_base<F, Objlist>;
     using typename base_type::objlist_type;
 
 public:
+    using base_type::fire;
+
     constexpr explicit funclist(objlist_type* objlist) :
         base_type(objlist)
     {}
-
-    template <class ...Args>
-    void fire(Args&&...args)
-    {
-        base_type::impl_.fire(*base_type::list_, std::forward<Args>(args)...);
-    }
 
     template <class ...Args>
     void operator()(Args&&...args)

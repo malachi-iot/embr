@@ -1,5 +1,7 @@
 #pragma once
 
+#include <estd/internal/macro/c++11_emul.h>
+
 #if __cpp_concepts
 #include <concepts>
 #endif

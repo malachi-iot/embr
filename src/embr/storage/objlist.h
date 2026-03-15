@@ -113,7 +113,6 @@ protected:
     const objstack_type& stack() const { return stack_; }
 
 public:
-    //ESTD_CPP_FORWARDING_CTOR_MEMBER(objlist, stack_)
     template <class ...Args>
     constexpr explicit objlist(Args&&...args) :
         stack_(std::forward<Args>(args)...),
