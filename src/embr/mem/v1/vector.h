@@ -8,8 +8,10 @@
 #include "pool/construct.hpp"
 #include "unit.h"
 
-// FIX: Not ready yet.  At least it compiles and is coming along
+
 #define USE_REAL_HANDLE_OFFSET  1
+// NOTE: Almost there, one major confounding monostate/catch2 error remaining
+#define EMBR_VECTOR_ADV_ACCESSOR 0
 
 namespace embr { namespace mem {
 
@@ -201,16 +203,32 @@ public:
         //using iterator = pointer;
         using const_iterator = const_pointer;
 #if USE_REAL_HANDLE_OFFSET
-        struct accessor_exp
+#if EMBR_VECTOR_ADV_ACCESSOR
+        struct accessor : handle_type
         {
+            using base_type = handle_type;
+
+            int offset_;
             using locked_type = reference;
             using const_locked_type = const_reference;
 
-            handle_type h_;
+            accessor(allocator_type allocator, handle_with_offset hwo) :
+                base_type(hwo.handle(), allocator.pool_),
+                offset_{int(hwo.offset())}
+            {
 
-            locked_type lock() { return *(pointer*)h_.lock(); }
+            }
+
+            constexpr bool operator==(const_reference compare_to) const
+            {
+                return false;
+            }
+
+            // FIX:
+            const_reference clock() const { static value_type dummy; return dummy; }
+            void cunlock() { }
         };
-
+#else
         struct accessor_impl :
             handle_type
             //mem::detail::mixin::typed_handle<accessor_impl, value_type>
@@ -261,6 +279,7 @@ public:
         //    just make it as clear as possible THAT guy in danger of invalidating quickly
         // 4. lock/unlock theoretically not necessary or wanted anymore since it's auto locked
         using accessor = estd::internal::locking_accessor<accessor_impl>;
+#endif
 #else
         using accessor = estd::internal::traditional_accessor<value_type>;
 #endif
