@@ -3,6 +3,10 @@
 #include <estd/internal/dynamic_array.h>
 #include <estd/memory.h>
 
+#if FEATURE_STD_OSTREAM
+#include <estd/iosfwd.h>
+#endif
+
 #include "block.h"
 #include "fwd.h"
 #include "pool/construct.hpp"
@@ -10,8 +14,6 @@
 
 
 #define USE_REAL_HANDLE_OFFSET  1
-// NOTE: Almost there, one major confounding monostate/catch2 error remaining.  It's that estd::expected constructor
-// is too greedy and converts too often, thus spuriously activating operator <<(out, expected)
 #define EMBR_VECTOR_ADV_ACCESSOR 0
 
 namespace embr { namespace mem {
@@ -228,6 +230,7 @@ public:
             // FIX:
             const_reference clock() const { static value_type dummy; return dummy; }
             void cunlock() { }
+            const_reference value() const { static value_type dummy; return dummy ;}
         };
 #else
         struct accessor_impl :
@@ -480,6 +483,17 @@ public:
         return sentinel{this};
     }
 };
+
+#if FEATURE_STD_OSTREAM && EMBR_VECTOR_ADV_ACCESSOR
+// FIX: ADL doesn't seem to pick this up, perhaps because they are inner classes?
+template <class Char, class T, class Pool, Pool* pool>
+std::basic_ostream<Char>& operator <<(std::basic_ostream<Char>& out,
+    const typename vector_impl<T, Pool, pool>::allocator_traits::accessor& acc)
+{
+    return out << acc.value();
+}
+
+#endif
 
 }   // v1
 

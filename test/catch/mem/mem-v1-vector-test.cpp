@@ -179,6 +179,7 @@ TEST_CASE("gc mem v1 vector", "[memory][gc][vector]")
             // Need a mixin reality for this to really happen
             //REQUIRE(vector[0].guard()->moved_to_counter == 1);
             //REQUIRE(parity[0].moved_to_counter == 1);
+#elif EMBR_VECTOR_ADV_ACCESSOR
 #else
             // FIX: Erroneously leaves this unlocked, accessor DEBT because it doesn't know if
             // you want a ref or a copy so it presumes a ref, requiring a dangling lock
