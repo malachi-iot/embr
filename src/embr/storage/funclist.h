@@ -45,6 +45,22 @@ struct funclist
 
     constexpr bool empty() const { return head_ == nullptr; }
 
+    ~funclist()
+    {
+        // DEBT: Use walk() instead
+        for(pointer i = head_; i; i = i->next())
+        {
+            using model = typename fn_impl::model_base;
+
+            auto m = (model*)i->data();
+
+            m->destroy();
+        }
+
+        // NOTE: Because of the potentially interweaving linked-list nature of funclists,
+        // an obstack pop is not a guarantee here.
+    }
+
     template <ESTD_CPP_CONCEPT(concepts::v1::Objlist) Objlist, class F2>
     pointer add(Objlist& list, F2&& f)
     {

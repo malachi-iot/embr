@@ -20,6 +20,7 @@ protected:
     // This looks like it can comfortably live in objlist_element itself ... although
     // hiding this function from others is nice
 
+    // Reassign 'next' of prev to p
     static void dealloc(pointer prev, pointer p)
     {
         prev->next_ = p->next_;

@@ -3,6 +3,8 @@
 #include <embr/storage/objlist.h>
 #include <embr/storage/funclist.h>
 
+#include "mem/test-mem-data.h"
+
 template <class Objstack>
 unsigned total_allocated(embr::detail::v1::objlist<Objstack>& objlist)
 {
@@ -146,7 +148,7 @@ TEST_CASE("Object list, Object stack", "[objlist]")
 
         REQUIRE(counter == 5);
     }
-    SECTION("funclist")
+    SECTION("funclist: trivial")
     {
         int counter = 0;
         objlist_type objlist;
@@ -163,5 +165,34 @@ TEST_CASE("Object list, Object stack", "[objlist]")
         list2(2);
 
         REQUIRE(counter == 2);
+    }
+    SECTION("funclist: non-trivial")
+    {
+        int counter{}, counter2{};
+        {
+            SideEffector se(&counter);
+
+            objlist_type objlist;
+            embr::detail::funclist<void(int), objlist_type> list(&objlist);
+
+            // functor itself is made (copy se) then when actually allocated somewhere it's
+            // moved (move se)
+            list += [&, se](int v)
+            {
+                counter2 += se.moved_to_counter;
+            };
+
+            REQUIRE(se.copied_from_counter == 1);
+            REQUIRE(se.copied_to_counter == 0);
+            REQUIRE(se.moved_from_counter == 0);
+
+            REQUIRE(counter == 1);
+            REQUIRE(counter2 == 0);
+
+            list.fire(0);
+
+            REQUIRE(counter2 == 1);
+        }
+        REQUIRE(counter == -1);
     }
 }

@@ -1,9 +1,12 @@
 #pragma once
 
+#include <estd/utility.h>
+
 #include "fwd.h"
 
 namespace embr { namespace detail { inline namespace v1 {
 
+// DEBT: Displace with estd rtto
 struct objlist_element_extra
 {
     objlist_element_move_fn move_;
@@ -48,6 +51,7 @@ struct objlist_element : internal::objlist_element
     friend class objlist_base<objlist_element>;
 
 private:
+    // DEBT: Look into consolidation opportunity with embr::mem::v1::block_8
     union
     {
         struct
