@@ -108,6 +108,7 @@ class vector_impl : public mem::v1::unique_handle<detail::vector_impl<T>, Pool, 
     using typename base_type::ops_type;
     // DEBT: disambiguate lock_handle and handle_type, causing confusion
     using typename base_type::handle_type;
+    using lock_handle = mem::detail::v1::lock_handle<Pool, pool>;
     using pos_type = typename ops_type::pos_type;
     using bundle = typename ops_type::bundle;
     using const_bundle = typename ops_type::const_bundle;
@@ -139,6 +140,14 @@ class vector_impl : public mem::v1::unique_handle<detail::vector_impl<T>, Pool, 
     {
         const control_type* control = base_type::data();
         return control->data() + control->size_;
+    }
+
+    // DEBT: Too many of these little utility helpers laying about, clean it up
+    static T* lock_and_retrieve(const lock_handle& h, int offset)
+    {
+        auto parent = (control_type*)h.lock();
+
+        return parent->data() + offset;
     }
 
 public:
@@ -199,7 +208,7 @@ public:
     {
         ESTD_CPP_STD_VALUE_TYPE(T)
         using size_type = unsigned;
-        using handle_type = mem::detail::v1::lock_handle<Pool, pool>;
+        using handle_type = lock_handle;
 
         // FIX: One or multiple of these are wanting to be an accessor
         using allocator_valref = allocator_type;
@@ -207,6 +216,9 @@ public:
         using const_iterator = const_pointer;
 #if USE_REAL_HANDLE_OFFSET
 #if EMBR_VECTOR_ADV_ACCESSOR
+        // DEBT: This has a lot in common with lock_guard.  Consolidate if we can.  Note that
+        // value() / data() nature is different, since we have that extra array lookup in this
+        // accessor case
         struct accessor : handle_type,
             mixins::accessor_access<accessor, value_type>
         {
@@ -215,14 +227,6 @@ public:
             pointer value_;
             using locked_type = reference;
             using const_locked_type = const_reference;
-
-            // DEBT: Too many of these little utility helpers laying about, clean it up
-            static pointer lock_and_retrieve(handle_type& h, int offset)
-            {
-                auto parent = (control_type*)h.lock();
-
-                return parent->data() + offset;
-            }
 
             accessor(allocator_type allocator, handle_with_offset hwo) :
                 base_type(hwo.handle(), allocator.pool_),

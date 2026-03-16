@@ -17,6 +17,12 @@ protected:
     void* data_;       // DEBT: Pull this direct from block
 
 public:
+    constexpr lock_guard(typename handle::handle_type h, Pool* p) :
+        handle_{h, p},
+        data_{handle_.lock()}
+    {
+    }
+
     constexpr explicit lock_guard(handle h) : handle_{h},
         data_{h.lock()}
     {

@@ -10,6 +10,8 @@ namespace detail { inline namespace v1 {
 
 namespace mixin {
 
+// TODO: Put mixins up into mixins.h
+
 // Maybe overdoing things?
 template <class Derived, class T>
 struct typed_handle
