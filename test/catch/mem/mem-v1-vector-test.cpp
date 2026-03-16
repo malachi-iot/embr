@@ -211,6 +211,24 @@ TEST_CASE("gc mem v1 vector", "[memory][gc][vector]")
 
         REQUIRE(counter == 0);
     }
+    SECTION("vector: SideEffector*")
+    {
+        // NOTE: Not a primary use case.  Just testing operator-> here
+
+        int counter = 0;
+
+        using vector_type = mem::vector<SideEffector*, pool_type>;
+
+        {
+            vector_type vector(&pool);
+
+            SideEffector se1(&counter);
+
+            vector.push_back(&se1);
+
+            REQUIRE(vector[0]->counter() == 1);
+        }
+    }
     SECTION("vector: lock_guard (pinned) - EXPERIMENTAL")
     {
         using vector_type = mem::vector<int, pool_type>;

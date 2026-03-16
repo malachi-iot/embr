@@ -9,8 +9,8 @@
 
 #include "block.h"
 #include "fwd.h"
+#include "mixins.h"
 #include "pool/construct.hpp"
-#include "unit.h"
 
 
 #define USE_REAL_HANDLE_OFFSET  1
@@ -207,7 +207,8 @@ public:
         using const_iterator = const_pointer;
 #if USE_REAL_HANDLE_OFFSET
 #if EMBR_VECTOR_ADV_ACCESSOR
-        struct accessor : handle_type
+        struct accessor : handle_type,
+            mixins::accessor_access<accessor, value_type>
         {
             using base_type = handle_type;
 
@@ -234,16 +235,6 @@ public:
                 base_type::unlock();
             }
 
-            friend constexpr bool operator==(const_reference lhs, const accessor& rhs)
-            {
-                return lhs == *rhs.value_;
-            }
-
-            friend constexpr bool operator==(const accessor& lhs, const_reference rhs)
-            {
-                return *lhs.value_ == rhs;
-            }
-
             reference value()
             {
                 return *value_;
@@ -267,6 +258,11 @@ public:
             // EXPERIMENTAL
             // So far not good, compiles but invites implicit move operations
             //value_type&& operator()() && { return std::forward<value_type>(*value_); }
+
+            constexpr operator const_reference() const
+            {
+                return *value_;
+            }
         };
 #else
         struct accessor_impl :

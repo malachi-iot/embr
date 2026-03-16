@@ -1,7 +1,7 @@
 #pragma once
 
 #include <estd/internal/macro/cpp.h>
-
+#include <estd/utility.h>
 
 // DEBT: Put this guy up in estd
 namespace embr { namespace mem { namespace mixins {
@@ -157,6 +157,58 @@ class iterator :
     public iterator_math<Derived>
 {
 
+};
+
+// DEBT: I am warned by AI this doesn't cover a lot of cases
+template <class T>
+using dereference = decltype(*std::declval<T>());
+
+template <class, class = void>
+struct can_dereference : estd::false_type{};
+
+template <class T>
+struct can_dereference<T, estd::void_t<dereference<T>>> : estd::true_type {};
+
+template <class Derived, class T, class Enabled = void>
+class accessor_dereference {};
+
+template <class Derived, class T>
+class accessor_dereference<Derived, T, estd::enable_if_t<can_dereference<T>::value>>
+{
+    using dereferenced = dereference<T>;
+
+public:
+    ESTD_CPP_STD_VALUE_TYPE(T)
+
+    // In these cases, reference itself is something like T*&
+    reference operator->() { return static_cast<Derived*>(this)->value(); }
+    constexpr const_reference operator->() const
+    {
+        return static_cast<const Derived*>(this)->value();
+    }
+
+    // UNTESTED
+    dereferenced operator*() { return *operator->(); }
+    const dereferenced operator*() const { return *operator->(); }
+};
+
+template <class Derived, class T>
+class accessor_access : public accessor_dereference<Derived, T>
+{
+public:
+    ESTD_CPP_STD_VALUE_TYPE(T)
+
+    friend constexpr bool operator==(const_reference lhs, const Derived& rhs)
+    {
+        return lhs == rhs.value();
+    }
+
+    friend constexpr bool operator==(const Derived& lhs, const_reference rhs)
+    {
+        return lhs.value() == rhs;
+    }
+
+    constexpr const_reference operator()() const { return static_cast<const Derived*>(this)->value(); }
 };
 
 
