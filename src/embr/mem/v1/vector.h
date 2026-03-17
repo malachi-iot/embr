@@ -11,93 +11,10 @@
 #include "fwd.h"
 #include "mixins.h"
 #include "pool/construct.hpp"
-
-
-#define USE_REAL_HANDLE_OFFSET  1
-#define EMBR_VECTOR_ADV_ACCESSOR 1
+#include "vector/detail.h"
+#include "vector/ostream.h"
 
 namespace embr { namespace mem {
-
-inline namespace v1 {
-
-template <class T, class Pool, Pool* pool = nullptr>
-using vector = estd::internal::dynamic_array<mem::v1::vector_impl<T, Pool, pool>>;
-
-}
-
-namespace detail { inline namespace v1 {
-
-
-// Effectively alter ego of layer1::vector:
-// - estd one is size + inline array + const length
-// - this one is size + inline array + semi-const length
-// Really similar mechanisms differing primarily in max_size acquisition and of course
-// we have to lock here.  When adding inplace_vector https://github.com/malachi-iot/estdlib/issues/182
-// consider consolidating this guy, if by then he's ready for estd'ness
-template <class T, unsigned lock_bits = 3>
-class vector_impl
-{
-    template <class T2, class Pool, Pool* pool>
-    friend class mem::v1::vector_impl;
-
-    template <class T2>
-    friend class embr::mem::v1::pinned;
-
-public:
-    using size_type = unsigned;
-
-    ESTD_CPP_STD_VALUE_TYPE(T)
-
-    pointer data() { return reinterpret_cast<pointer>(this + 1); }
-    const_pointer data() const { return reinterpret_cast<const_pointer>(this + 1); }
-
-    constexpr vector_impl() : size_{}, lock_count_{}        {};
-
-    // uninitialized variants below important since they call placement new rather than
-    // use operator=
-
-    vector_impl(const vector_impl& copy_from) :
-        size_{copy_from.size_}
-    {
-        // DEBT: Make an estd flavor of this https://github.com/malachi-iot/estdlib/issues/181
-        std::uninitialized_copy_n(copy_from.data(), size_, data());
-    }
-
-    // DEBT: If this guy isn't present, rtto incorrectly finds above copy_from during a move request
-    vector_impl(vector_impl&& move_from) noexcept :
-        size_{move_from.size_}
-    {
-        // DEBT: Make an estd flavor of this https://github.com/malachi-iot/estdlib/issues/181
-        std::uninitialized_move_n(move_from.data(), size_, data());
-    }
-
-    // DEBT: See https://github.com/malachi-iot/estdlib/issues/185 as to whether WE should
-    // be doing this
-    ~vector_impl()
-    {
-        const_pointer end = data() + size_;
-
-        for(pointer begin = data(); begin < end; ++begin)
-            begin->~value_type();
-    }
-
-private:
-    static constexpr unsigned size_bits = sizeof(size_type) * 8 - lock_bits;
-
-    size_type size_ : size_bits;
-
-    // augmented lock counter for use with pinned_iterator
-    // DEBT: Document why in particular this is more interesting than block->lock_count_ -
-    //       IIRC it's to alleviate pressure on its bit space
-    size_type lock_count_ : lock_bits;
-
-public:
-
-    constexpr size_type size() const { return size_; }
-};
-
-
-}}
 
 inline namespace v1 {
 
@@ -184,14 +101,11 @@ public:
 
     struct policy_type
     {
-
+        // DEBT: Put in something here, even if it's a comment as to why
+        // policy options aren't specified
     };
 
-#if USE_REAL_HANDLE_OFFSET
     using handle_with_offset = estd::internal::handle_with_offset<handle_type>;
-#else
-    using handle_with_offset = estd::internal::handle_with_offset_raw<pointer>;
-#endif
 
     struct allocator_type
     {
@@ -214,19 +128,17 @@ public:
         using size_type = unsigned;
         using handle_type = lock_handle;
 
-        // FIX: One or multiple of these are wanting to be an accessor
         using allocator_valref = allocator_type;
         //using iterator = pointer;
         using const_iterator = const_pointer;
-#if USE_REAL_HANDLE_OFFSET
 #if EMBR_VECTOR_ADV_ACCESSOR
         // DEBT: This has a lot in common with lock_guard.  Consolidate if we can.  Note that
         // value() / data() nature is different, since we have that extra array lookup in this
         // accessor case
-        struct accessor : handle_type,
+        struct accessor : lock_handle,
             mixins::accessor_access<accessor, value_type>
         {
-            using base_type = handle_type;
+            using base_type = lock_handle;
 
             pointer value_;
             using locked_type = reference;
@@ -324,9 +236,9 @@ public:
         // 4. lock/unlock theoretically not necessary or wanted anymore since it's auto locked
         using accessor = estd::internal::locking_accessor<accessor_impl>;
 #endif
-#else
-        using accessor = estd::internal::traditional_accessor<value_type>;
-#endif
+
+        // TODO: Perhaps we can specify pinned_iterator right away here?
+
         using iterator = estd::internal::locking_iterator<allocator_type, accessor>;
         using handle_with_offset = typename this_type::handle_with_offset;
 
@@ -341,11 +253,7 @@ public:
         control_type* control = base_type::lock();
         base_type::unlock();
 
-#if USE_REAL_HANDLE_OFFSET
         return { handle_, pos };
-#else
-        return { control->data() + pos };
-#endif
     }
 
     ESTD_CPP_CONSTEXPR(17) reference lock(unsigned pos = 0, unsigned count = 0)
@@ -523,17 +431,6 @@ public:
         return sentinel{this};
     }
 };
-
-#if FEATURE_STD_OSTREAM && EMBR_VECTOR_ADV_ACCESSOR
-// FIX: ADL doesn't seem to pick this up, perhaps because they are inner classes?
-template <class Char, class T, class Pool, Pool* pool>
-std::basic_ostream<Char>& operator <<(std::basic_ostream<Char>& out,
-    const typename vector_impl<T, Pool, pool>::allocator_traits::accessor& acc)
-{
-    return out << acc.value();
-}
-
-#endif
 
 }   // v1
 

@@ -109,9 +109,6 @@ using container_traits = estd::internal::container_traits<Container>;
 template <class T, class Pool, Pool* pool = nullptr>
 class unique_handle;
 
-template <class T, class Pool, Pool* pool = nullptr>
-class vector_impl;
-
 }
 
 template <class F, class Pool = void, Pool* pool = nullptr>
