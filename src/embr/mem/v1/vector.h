@@ -64,7 +64,7 @@ public:
     }
 
     // DEBT: If this guy isn't present, rtto incorrectly finds above copy_from during a move request
-    vector_impl(vector_impl&& move_from) :
+    vector_impl(vector_impl&& move_from) noexcept :
         size_{move_from.size_}
     {
         // DEBT: Make an estd flavor of this https://github.com/malachi-iot/estdlib/issues/181
@@ -85,6 +85,10 @@ private:
     static constexpr unsigned size_bits = sizeof(size_type) * 8 - lock_bits;
 
     size_type size_ : size_bits;
+
+    // augmented lock counter for use with pinned_iterator
+    // DEBT: Document why in particular this is more interesting than block->lock_count_ -
+    //       IIRC it's to alleviate pressure on its bit space
     size_type lock_count_ : lock_bits;
 
 public:
@@ -153,7 +157,7 @@ class vector_impl : public mem::v1::unique_handle<detail::vector_impl<T>, Pool, 
 public:
     using base_type::pool_;
 
-    vector_impl(Pool* p) : base_type(base_type::null, p)  {}
+    constexpr explicit vector_impl(Pool* p) : base_type(base_type::null, p)  {}
 
     vector_impl(const vector_impl& copy_from) :
         base_type(base_type::null, copy_from.pool_())
@@ -168,7 +172,7 @@ public:
         copy_from.unlock();
     }
 
-    vector_impl(vector_impl&& move_from) :
+    constexpr vector_impl(vector_impl&& move_from) noexcept :
         base_type(move_from.handle_, move_from.pool_())
     {
         move_from.handle_ = base_type::null;

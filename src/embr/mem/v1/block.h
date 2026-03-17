@@ -29,7 +29,7 @@ protected:
     using rtto = estd::internal::rtto<T>;
 
     template <class HandlesTraits, class Block>
-    friend class bundle_base;
+    friend struct bundle_base;
 
     // DEBT: rtto base is WAY overloaded.  Needs attention
     using rtto_base_type = estd::internal::rtto_base::base;
@@ -167,10 +167,13 @@ class alignas(void*) block_6 : block_base_uint8
         unsigned prev_ : 6;
         modes mode_ : 2;
         unsigned next_ : 6;
-        bool allocated_: 1;
-        bool locked_ : 1;
+        unsigned locked_or_allocated_ : 2;
     };
 public:
+
+    // 0, 1 or 2
+    constexpr unsigned lock_count() const { return locked_or_allocated_; }
+    constexpr bool allocated() const { return locked_or_allocated_ != 3; }
 };
 
 
