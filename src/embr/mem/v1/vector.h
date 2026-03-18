@@ -66,9 +66,7 @@ class vector_impl : public mem::v1::unique_handle<detail::vector_impl<T>, Pool, 
     // DEBT: Too many of these little utility helpers laying about, clean it up
     static T* lock_and_retrieve(const lock_handle& h, int offset)
     {
-        auto parent = (control_type*)h.lock();
-
-        return parent->data() + offset;
+        return ((control_type*)h.lock())->data() + offset;
     }
 
 public:

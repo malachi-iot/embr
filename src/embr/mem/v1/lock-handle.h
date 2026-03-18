@@ -145,6 +145,18 @@ protected:
 
     bundle get_bundle() { return ops().get_bundle(handle_); }
 
+    // Low-level call which presumes we're already locked
+    void* data()
+    {
+        // DEBT: This feels like it ought to live in a mixin
+        bundle bn(get_bundle());
+
+        // DEBT: Put in a strict-mode flag to avoid this check for optimizations
+        assert(bn.block->lock_count() > 0);
+
+        return bn.data();
+    }
+
 public:
     // NOTE: Out of order - expect Pool, handle order in anticipation of nullptr p
     constexpr lock_handle(handle_type handle, Pool* p) :

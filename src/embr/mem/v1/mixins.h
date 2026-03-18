@@ -101,6 +101,7 @@ private:
 public:
     reference operator*()   { return *current(); }
     pointer operator->()   { return current(); }
+    constexpr const_pointer operator->() const { return current(); }
 };
 
 
@@ -159,6 +160,16 @@ class iterator :
 
 };
 
+// EXPERIMENTAL
+template <class T>
+struct accessor_traits
+{
+    ESTD_CPP_STD_VALUE_TYPE(typename T::value_type)
+
+    static reference value(T& self) { return self.value(); }
+    constexpr static const_reference value(const T& self) { return self.value(); }
+};
+
 // DEBT: I am warned by AI this doesn't cover a lot of cases
 template <class T>
 using dereference = decltype(*std::declval<T>());
@@ -181,34 +192,48 @@ public:
     ESTD_CPP_STD_VALUE_TYPE(T)
 
     // In these cases, reference itself is something like T*&
-    reference operator->() { return static_cast<Derived*>(this)->value(); }
+    reference operator->()
+    {
+        return static_cast<Derived*>(this)->value();
+    }
+
     constexpr const_reference operator->() const
     {
         return static_cast<const Derived*>(this)->value();
     }
 
-    // UNTESTED
     dereferenced operator*() { return *operator->(); }
     const dereferenced operator*() const { return *operator->(); }
 };
 
-template <class Derived, class T>
+template <class Derived, class T, class Traits = accessor_traits<Derived>>
 class accessor_access : public accessor_dereference<Derived, T>
 {
+    // EXPERIMENTAL
+    using traits = Traits;
+
 public:
     ESTD_CPP_STD_VALUE_TYPE(T)
 
     friend constexpr bool operator==(const_reference lhs, const Derived& rhs)
     {
-        return lhs == rhs.value();
+        return lhs == traits::value(rhs);
     }
 
     friend constexpr bool operator==(const Derived& lhs, const_reference rhs)
     {
-        return lhs.value() == rhs;
+        return traits::value(lhs) == rhs;
     }
 
-    constexpr const_reference operator()() const { return static_cast<const Derived*>(this)->value(); }
+    reference operator()()
+    {
+        return traits::value(*static_cast<Derived*>(this));
+    }
+
+    constexpr const_reference operator()() const
+    {
+        return traits::value(*static_cast<const Derived*>(this));
+    }
 };
 
 

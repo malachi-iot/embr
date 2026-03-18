@@ -227,6 +227,7 @@ TEST_CASE("gc mem v1 vector", "[memory][gc][vector]")
             vector.push_back(&se1);
 
             REQUIRE(vector[0]->counter() == 1);
+            REQUIRE((*vector[0]).constructed_);
         }
     }
     SECTION("vector: lock_guard (pinned) - EXPERIMENTAL")
