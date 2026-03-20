@@ -20,7 +20,7 @@ template <class T, unsigned lock_bits = 3>
 class vector_control
 {
     template <class T2, class Pool, Pool* pool>
-    friend class mem::v1::vector_impl;
+    friend class mem::detail::v1::vector;
 
     template <class T2>
     friend class embr::mem::v1::pinned;

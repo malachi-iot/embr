@@ -65,7 +65,7 @@ public:
 
     void invoke(Args&&...args)
     {
-        using impl_type = mem::vector_impl<value_type, Pool, pool>;
+        using impl_type = mem::detail::v1::vector<value_type, Pool, pool>;
         const impl_type& impl = this->impl();
         pointer v = base_type::lock();
         pointer end = v + base_type::size();

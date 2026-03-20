@@ -6,21 +6,17 @@
 
 namespace embr { namespace mem {
 
-namespace detail { namespace v1 {
+namespace detail { inline namespace v1 {
 
-// TODO
 template <class T, class Pool, Pool* pool = nullptr>
-class vector_impl;
+class vector;
 
 }}
     
 inline namespace v1 {
 
 template <class T, class Pool, Pool* pool = nullptr>
-class vector_impl;
-
-template <class T, class Pool, Pool* pool = nullptr>
-using vector = estd::internal::dynamic_array<vector_impl<T, Pool, pool>>;
+using vector = estd::internal::dynamic_array<detail::v1::vector<T, Pool, pool>>;
 
 }}
 
