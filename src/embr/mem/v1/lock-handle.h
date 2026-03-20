@@ -14,7 +14,7 @@ namespace mixin {
 
 // Maybe overdoing things?
 template <class Derived, class T>
-struct typed_handle
+struct sparse_handle
 {
     ESTD_CPP_STD_VALUE_TYPE(T)
 
@@ -72,13 +72,8 @@ public:
     }
 };
 
-// AKA "sparse handle"
-// Not owning
-// Not lock-guarded
-// Primarily a type-safety mechanism for T
-// DEBT: Perhaps actually call this 'sparse_handle' for real
-template <class T, class Handle>
-class typed_handle
+template <class Handle>
+class sparse_handle<void, Handle>
 {
 public:
     using handle_type = Handle;
@@ -86,13 +81,15 @@ public:
 protected:
     handle_type handle_;
 
+    constexpr explicit sparse_handle(handle_type handle) : handle_{handle}   {}
+
 public:
-    constexpr explicit typed_handle(handle_type handle) : handle_{handle}   {}
+    constexpr handle_type handle() const { return handle_; }
 
     template <class Pool>
-    T* lock(Pool& pool) const
+    void* lock(Pool& pool) const
     {
-        return static_cast<T*>(pool.lock(handle_));
+        return pool.lock(handle_);
     }
 
     template <class Pool>
@@ -108,9 +105,31 @@ public:
     }
 
     template <class Pool>
-    constexpr lock_handle<Pool> handle(Pool& pool) const
+    constexpr lock_handle<Pool> lock_handle(Pool& pool) const
     {
         return lock_handle<Pool>(handle_, &pool);
+    }
+};
+
+// AKA "sparse handle"
+// Not owning
+// Not lock-guarded
+// Primarily a type-safety mechanism for T
+// DEBT: Perhaps actually call this 'sparse_handle' for real
+template <class T, class Handle>
+class sparse_handle : public sparse_handle<void, Handle>
+{
+    using base_type = sparse_handle<void, Handle>;
+
+public:
+    using handle_type = Handle;
+
+    constexpr explicit sparse_handle(handle_type handle) : base_type{handle}   {}
+
+    template <class Pool>
+    T* lock(Pool& pool) const
+    {
+        return static_cast<T*>(base_type::lock(pool));
     }
 };
 

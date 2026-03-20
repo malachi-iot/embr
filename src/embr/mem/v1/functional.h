@@ -22,10 +22,10 @@ typename Pool::handle_type make_model(Pool* pool, F&& f)
 
 
 template <class ...Args, class Handle>
-class model<void(Args...), Handle> : public typed_handle<typename estd::detail::function<void(Args...)>::model_base, Handle>
+class model<void(Args...), Handle> : public sparse_handle<typename estd::detail::function<void(Args...)>::model_base, Handle>
 {
 protected:
-    using base_type = typed_handle<typename estd::detail::function<void(Args...)>::model_base, Handle>;
+    using base_type = sparse_handle<typename estd::detail::function<void(Args...)>::model_base, Handle>;
     using function_type = estd::detail::function<void(Args...)>;
     using model_base = typename function_type::model_base;
     using handle_type = Handle;
@@ -56,7 +56,7 @@ template <class R, class ...Args, class Handle>
 class model<R(Args...), Handle>
 {
 protected:
-    using base_type = typed_handle<typename estd::detail::function<void(Args...)>::model_base, Handle>;
+    using base_type = sparse_handle<typename estd::detail::function<void(Args...)>::model_base, Handle>;
     using function_type = estd::detail::function<R(Args...)>;
     using model_base = typename function_type::model_base;
     using handle_type = Handle;

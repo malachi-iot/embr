@@ -26,9 +26,12 @@ void multi_lock(const embr::mem::detail::v1::pool_ops<Traits>& ops, It begin, En
 {
     mutex.lock();
 
+    using handle_type = uint8_t;
+
     for(It i = begin; i < end; ++i)
     {
-        ops.get_bundle(*begin);
+        embr::mem::detail::v1::sparse_handle<void, handle_type> sh = *begin;
+        //f(sh.lock());
     }
 
     mutex.unlock();
@@ -70,7 +73,7 @@ public:
         pointer v = base_type::lock();
         pointer end = v + base_type::size();
 
-        //multi_lock(impl.ops(), v, end, [](auto){});
+        multi_lock(impl.ops(), v, end, [](auto){});
 
         for(; v < end; ++v)
         {

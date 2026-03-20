@@ -72,6 +72,9 @@ private:
 public:
     using base_type::pool_;
 
+    control_type* control_lock() { return base_type::lock(); }
+    const control_type* control_lock() const { return base_type::lock(); }
+
     constexpr explicit vector(Pool* p) : base_type(base_type::null, p)  {}
 
     vector(const vector& copy_from) :
