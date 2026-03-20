@@ -11,8 +11,8 @@
 #include "fwd.h"
 #include "mixins.h"
 #include "pool/construct.hpp"
-#include "vector/detail.h"
 #include "vector/ostream.h"
+#include "vector/vector.h"
 
 namespace embr { namespace mem {
 
@@ -21,9 +21,12 @@ inline namespace v1 {
 // Heavy lift
 // Not done, I'd say over the hump for a proof of concept
 template <class T, class Pool, Pool* pool>
-class vector_impl : public mem::v1::unique_handle<detail::vector_impl<T>, Pool, pool>
+class vector_impl : public mem::v1::unique_handle<detail::vector_control<T>, Pool, pool>
 {
-    using control_type = detail::vector_impl<T>;
+public:
+    using control_type = detail::vector_control<T>;
+
+private:
     using base_type = mem::v1::unique_handle<control_type, Pool, pool>;
     using this_type = vector_impl;
     using typename base_type::ops_type;
@@ -33,8 +36,12 @@ class vector_impl : public mem::v1::unique_handle<detail::vector_impl<T>, Pool, 
     using pos_type = typename ops_type::pos_type;
     using bundle = typename ops_type::bundle;
     using const_bundle = typename ops_type::const_bundle;
+
+public:
     using base_type::ops;
     using base_type::guard;
+
+private:
     using bytes = estd::units::bytes<unsigned>;
 
     using base_type::handle_;

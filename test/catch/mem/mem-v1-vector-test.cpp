@@ -27,10 +27,10 @@ public:
 // Works to conform to https://en.cppreference.com/w/cpp/named_req/Container.html
 template <class T, class Pool, Pool* pool>
 class embr::mem::v1::pinned<mem::vector<T, Pool, pool>> :
-    public embr::mem::v1::lock_guard<mem::detail::vector_impl<T>, Pool, pool>,
+    public embr::mem::v1::lock_guard<mem::detail::vector_control<T>, Pool, pool>,
     public embr::mem::mixins::container<embr::mem::v1::pinned<mem::vector<T, Pool, pool>>, T>
 {
-    using vector_type = mem::detail::vector_impl<T>;
+    using vector_type = mem::detail::vector_control<T>;
     using base_type = embr::mem::v1::lock_guard<vector_type, Pool, pool>;
 
 public:
@@ -77,7 +77,7 @@ TEST_CASE("gc mem v1 vector", "[memory][gc][vector]")
 
     SECTION("vector_impl")
     {
-        using type = mem::detail::vector_impl<char>;
+        using type = mem::detail::vector_control<char>;
         type vi;
 
         REQUIRE(vi.data() == ((char*)&vi) + sizeof(type));

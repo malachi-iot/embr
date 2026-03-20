@@ -1,5 +1,7 @@
 #pragma once
 
+#include <estd/memory.h>
+
 #include "../fwd.h"
 
 #include "fwd.h"
@@ -15,7 +17,7 @@ namespace detail { inline namespace v1 {
 // we have to lock here.  When adding inplace_vector https://github.com/malachi-iot/estdlib/issues/182
 // consider consolidating this guy, if by then he's ready for estd'ness
 template <class T, unsigned lock_bits = 3>
-class vector_impl
+class vector_control
 {
     template <class T2, class Pool, Pool* pool>
     friend class mem::v1::vector_impl;
@@ -31,12 +33,12 @@ public:
     pointer data() { return reinterpret_cast<pointer>(this + 1); }
     const_pointer data() const { return reinterpret_cast<const_pointer>(this + 1); }
 
-    constexpr vector_impl() : size_{}, lock_count_{}        {};
+    constexpr vector_control() : size_{}, lock_count_{}        {};
 
     // uninitialized variants below important since they call placement new rather than
     // use operator=
 
-    vector_impl(const vector_impl& copy_from) :
+    vector_control(const vector_control& copy_from) :
         size_{copy_from.size_},
         lock_count_{}
     {
@@ -47,7 +49,7 @@ public:
     }
 
     // DEBT: If this guy isn't present, rtto incorrectly finds above copy_from during a move request
-    vector_impl(vector_impl&& move_from) noexcept :
+    vector_control(vector_control&& move_from) noexcept :
         size_{move_from.size_},
         lock_count_{}
     {
@@ -59,7 +61,7 @@ public:
 
     // DEBT: See https://github.com/malachi-iot/estdlib/issues/185 as to whether WE should
     // be doing this
-    ~vector_impl()
+    ~vector_control()
     {
         const_pointer end = data() + size_;
 

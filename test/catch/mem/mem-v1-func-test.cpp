@@ -21,6 +21,18 @@ struct estd::internal::dynamic_array_helper<vector_impl<T, Pool, pool>, estd::en
 
 };  */
 
+template <class Traits, class It, class End, class F, class Mutex = internal::noop_mutex>
+void multi_lock(const embr::mem::detail::v1::pool_ops<Traits>& ops, It begin, End end, F&& f, Mutex mutex = {})
+{
+    mutex.lock();
+
+    for(It i = begin; i < end; ++i)
+    {
+        ops.get_bundle(*begin);
+    }
+
+    mutex.unlock();
+}
 
 
 template <class F, class Pool, Pool* pool = nullptr>
@@ -34,6 +46,8 @@ class funclist<void(Args...), Pool, pool> : public embr::mem::v1::vector<mem::de
     using handle_type = typename Pool::handle_type;
     using model_type = mem::detail::v1::model<void(Args...), handle_type>;
     using typename base_type::pointer;
+    using control_type = typename base_type::impl_type::control_type;
+    using base_type::impl;
 
 public:
     template <class ...Args2>
@@ -49,15 +63,18 @@ public:
         return self;
     }
 
-    void operator()(Args&&...args)
+    void invoke(Args&&...args)
     {
-        // TBD do mutex here
+        using impl_type = mem::vector_impl<value_type, Pool, pool>;
+        const impl_type& impl = this->impl();
         pointer v = base_type::lock();
         pointer end = v + base_type::size();
 
+        //multi_lock(impl.ops(), v, end, [](auto){});
+
         for(; v < end; ++v)
         {
-            v->invoke(base_type::pool_(), std::forward<Args>(args)...);
+            v->invoke(impl.pool_(), std::forward<Args>(args)...);
         }
 
         base_type::unlock();
@@ -173,8 +190,15 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
     }
     SECTION("funclist")
     {
+        int counter = 0;
+
         funclist<void(int), pool_type> fl(&pool);
 
-        fl += [](int v) {};
+        fl += [&](int v) { counter += v * 2; };
+        fl += [&](int v) { counter += v; };
+
+        fl.invoke(5);
+
+        REQUIRE(counter == 15);
     }
 }

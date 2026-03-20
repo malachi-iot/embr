@@ -126,7 +126,7 @@ public:
     template <class ...Args2>
     constexpr explicit sparse_function(Args2&&...args) : base_type(std::forward<Args2>(args)...) {}
 
-    constexpr R invoke(Pool& pool, Args&&...args)
+    constexpr R invoke(Pool* pool, Args&&...args)
     {
         return base_type::invoke(pool, base_type::handle_, std::forward<Args>(args)...);
     }
