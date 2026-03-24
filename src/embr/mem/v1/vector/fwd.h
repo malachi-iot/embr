@@ -8,6 +8,9 @@ namespace embr { namespace mem {
 
 namespace detail { inline namespace v1 {
 
+template <class T, unsigned lock_bits = 3>
+class vector_control;
+
 template <class T, class Pool, Pool* pool = nullptr>
 class vector;
 

@@ -16,7 +16,7 @@ namespace detail { inline namespace v1 {
 // Really similar mechanisms differing primarily in max_size acquisition and of course
 // we have to lock here.  When adding inplace_vector https://github.com/malachi-iot/estdlib/issues/182
 // consider consolidating this guy, if by then he's ready for estd'ness
-template <class T, unsigned lock_bits = 3>
+template <class T, unsigned lock_bits>
 class vector_control
 {
     template <class T2, class Pool, Pool* pool>
