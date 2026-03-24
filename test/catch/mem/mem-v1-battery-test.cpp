@@ -34,8 +34,8 @@ static void battery(typename detail::pool_ops<Traits>& ops, int it, unsigned see
     typename ops_type::fragmentation frag;
 
     std::uniform_int_distribution<int> distrib(1, 10);
-    // TODO: Still need to include RttoBase flavor
-    std::uniform_int_distribution<int> mode_distrib(0, 2);      // Trivial, Proxy or Base
+    // Trivial, Proxy, Base or Virtual
+    std::uniform_int_distribution<int> mode_distrib(0, 3);
 
     //int allocs_to_do = gen() % ops.handles_.size();
     int allocs_to_do = ops.handles().size() - 1;     // 1 handle already used for big-free-block
@@ -72,13 +72,14 @@ static void battery(typename detail::pool_ops<Traits>& ops, int it, unsigned see
         CAPTURE(before.str(), mode, i, available);
 
         bundle bn;
+        bytes logical_sz{0};
 
         if(mode == block::Trivial)
         {
             // DEBT: bring back 0-byte allocation requests as a bounds check.  Maybe ops itself shouldn't
             // kick back, but higher level mode definitely would need to
             pos_type phys_sz(distrib(gen) + 1);
-            bytes logical_sz = phys_sz - block::header_size(mode);
+            logical_sz = phys_sz - block::header_size(mode);
 
             bn = ops.alloc(phys_sz, block::Trivial);
 
@@ -98,23 +99,25 @@ static void battery(typename detail::pool_ops<Traits>& ops, int it, unsigned see
             // TODO: do construct_ll and over-provision some so we can call realloc/shrink later
 
             bn = ops.template construct<block::RttoProxy, SideEffector>(&counter);
-
-            if(bn.handle != null)
-            {
-                handle_metadata.emplace(bn.handle, metadata { bytes{0}, mode } );
-            }
         }
         else if(mode == block::RttoBase)
         {
             bn = ops.template construct<block::RttoBase, RttoSideEffector>(&counter);
-
-            if(bn.handle != null)
-            {
-                handle_metadata.emplace(bn.handle, metadata { bytes{0}, mode } );
-            }
+        }
+        else if(mode == block::RttoVirtual)
+        {
+            // DEBT: While putting this together, I accidentally used block::RttoBase here and
+            // that crashed things.  While incorrect, I don't see how that should crash.
+            // Could be a latent bug.
+            bn = ops.template construct<block::RttoVirtual, RttoVirtSideEffector>(&counter);
         }
         else
             assert(false);
+
+        if(bn.handle != null)
+        {
+            handle_metadata.emplace(bn.handle, metadata { logical_sz, mode } );
+        }
 
         assert(ops.invariant());
     }
@@ -220,6 +223,15 @@ static void battery(typename detail::pool_ops<Traits>& ops, int it, unsigned see
 
         CAPTURE(m.mode);
 
+        auto asserter = [&counter](const SideEffector* se)
+        {
+            // GC operations never use copy constructor
+            assert(se->copied_to_counter == 0);
+            assert(se->copied_from_counter == 0);
+            assert(se->constructed_);
+            assert(se->counter_ == &counter);
+        };
+
         if(m.mode == block::Trivial)
         {
             char comp = 'a' + bn.handle;
@@ -229,16 +241,20 @@ static void battery(typename detail::pool_ops<Traits>& ops, int it, unsigned see
         }
         else if (m.mode == block::RttoProxy)
         {
-            auto se = (SideEffector*)data;
-            assert(se->counter_ == &counter);
+            asserter((SideEffector*)data);      // NOLINT
         }
         else if (m.mode == block::RttoBase)
         {
-            auto se = (RttoSideEffector*)data;
-            assert(se->counter_ == &counter);
+            asserter((RttoSideEffector*)data);  // NOLINT
         }
-        ops.unlock(bn.handle);
+        else if (m.mode == block::RttoVirtual)
+        {
+            asserter((RttoVirtSideEffector*)data);  // NOLINT
+        }
+        else
+            assert(false);
 
+        ops.unlock(bn.handle);
     }
 }
 
