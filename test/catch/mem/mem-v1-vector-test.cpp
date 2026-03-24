@@ -1,5 +1,7 @@
 #include <catch2/catch_all.hpp>
 
+#include <random>
+
 #include <embr/mem/v1/mixins.h>
 #include <embr/mem/v1/pool.hpp>
 #include <embr/mem/v1/shared-handle.h>
@@ -22,6 +24,25 @@ public:
     constexpr vector_revealed(Args&&...args) :
         base_type(std::forward<Args>(args)...) {}
 };
+
+// DEBT: 'battery' test ought to appear in battery-test.cpp.  That one is getting pretty big though, so putting
+// vector-specific one here
+// DEBT: Top-level Pool being just a generic class like this is clumsy.  I'd prefer a pool<Traits>.
+// reverse-determining pool_type from pool_ops kind of a trick here, so we need Pool
+template <class Pool>
+static void battery(Pool& pool, int it, unsigned seed)
+{
+    using pool_type = Pool;
+    using namespace mem::detail::v1;
+    std::mt19937 gen{seed}; // fixed seed: deterministic sequence
+
+    mem::vector<SideEffector, pool_type> vector(&pool);
+
+    auto& revealed = (vector_revealed<SideEffector, pool_type>&) vector;
+
+    // DEBT: Roundabout (but effective) way of getting at bundle
+    auto bn = pool.ops().get_bundle(revealed.impl().handle());
+}
 
 
 TEST_CASE("gc mem v1 vector", "[memory][gc][vector]")
@@ -251,5 +272,12 @@ TEST_CASE("gc mem v1 vector", "[memory][gc][vector]")
 
             REQUIRE(counter == 0);
         }
+    }
+    SECTION("vector: battery")
+    {
+        std::mt19937 rng{12345}; // NOLINT: fixed seed desired: deterministic sequence
+
+        for(int i = 0; i < 50; ++i)
+            battery(pool, i, rng());
     }
 }
