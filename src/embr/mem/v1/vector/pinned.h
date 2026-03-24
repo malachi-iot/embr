@@ -36,6 +36,8 @@ public:
         const_pointer end = begin + size();
         pointer dbegin = with.data();
 
+        // See https://en.cppreference.com/w/cpp/container/inplace_vector/swap.html for
+        // guidance how we might treat this size mismatch (not much so far)
         if(size() != with.size())   return; // DEBT: I think we need to do something else here
 
         for(; begin < end; ++begin, ++dbegin)
