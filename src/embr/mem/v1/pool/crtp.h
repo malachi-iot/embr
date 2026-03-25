@@ -44,9 +44,13 @@ public:
     template <class Handle>
     bool realloc(Handle h, unsigned size, Handle* out = nullptr)
     {
+        // Low level ops.realloc purely takes physical size, so we
+        // need to account for block header plus aliasing
         auto bn = OPS.get_bundle(h);
-        // DEBT: remove explicit bytes_unit, dependent on https://github.com/malachi-iot/estdlib/issues/173
-        return OPS.realloc(bn, bn.header_size() + bytes_unit<unsigned>(size), out);
+
+        size += bn.header_size().count();
+
+        return OPS.realloc(bn, OPS.do_alias(size), out);
     }
 
     void reset()

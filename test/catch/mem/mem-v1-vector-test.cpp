@@ -32,16 +32,47 @@ public:
 template <class Pool>
 static void battery(Pool& pool, int it, unsigned seed)
 {
+    using bytes = mem::bytes_unit<unsigned>;
     using pool_type = Pool;
+    using ops_type = typename pool_type::ops_type;
+    using bundle = typename ops_type::bundle;
+
+    ops_type& ops = pool.ops();
+
     using namespace mem::detail::v1;
     std::mt19937 gen{seed}; // fixed seed: deterministic sequence
 
-    mem::vector<SideEffector, pool_type> vector(&pool);
+    CAPTURE(it, seed);
 
-    auto& revealed = (vector_revealed<SideEffector, pool_type>&) vector;
+    mem::vector<short, pool_type> vector(&pool);
 
-    // DEBT: Roundabout (but effective) way of getting at bundle
-    auto bn = pool.ops().get_bundle(revealed.impl().handle());
+    auto& revealed = (vector_revealed<short, pool_type>&) vector;
+
+    std::uniform_int_distribution<int> sz_distrib(0, 30);
+
+    for(int i = 0; i < 10; ++i)
+    {
+        INFO("Phase 1");
+
+        unsigned sz = sz_distrib(gen);
+
+        CAPTURE(i, sz);
+
+        vector.reserve(sz);
+
+        // DEBT: Roundabout (but effective) way of getting at bundle.  We need to re-acquire
+        // because vector.handle_ is subject to change
+        bundle bn = ops.get_bundle(revealed.impl().handle());
+
+        bytes found_sz = ops.logical_size(bn);
+        // DEBT: Be careful, not confident aliasing rules always gives us the right sizeof
+        // for vector_control here
+        bytes expected_sz(sizeof(mem::detail::vector_control<short>) + sz * sizeof(short));
+
+        CAPTURE(found_sz, expected_sz);
+
+        assert(found_sz >= expected_sz);
+    }
 }
 
 
@@ -55,6 +86,7 @@ TEST_CASE("gc mem v1 vector", "[memory][gc][vector]")
     using page_type = pool_type::page_type;
     using handle_type = pool_type::handle_type;
     using lock_handle = mem::detail::v1::lock_handle<pool_type>;
+    using bytes = mem::bytes_unit<unsigned>;
     pool_type pool;
 
     // DEBT: This debt lives on, we really need to auto-init the thing
@@ -66,6 +98,34 @@ TEST_CASE("gc mem v1 vector", "[memory][gc][vector]")
         type vi;
 
         REQUIRE(vi.data() == ((char*)&vi) + sizeof(type));
+    }
+    SECTION("vector: short")
+    {
+        using vector_type = mem::vector<short, pool_type>;
+
+        constexpr unsigned control_size = sizeof(mem::detail::vector_control<short>);
+
+        // DEBT: Aliasing rules dictate we'd prefer this to be 8 for x64 systems
+        static_assert(control_size == 4);
+        // DEBT: For foreseeable future x64 == 8 aliasing, but still hardcoding this isn't good
+        static_assert(ops_type::aliasing == 8);
+
+        vector_type vector(&pool);
+        const auto& revealed = (vector_revealed<short, pool_type>&)vector;
+
+        vector.reserve(27);
+
+        const_bundle bn = revealed.impl().get_bundle();
+
+        bytes sz = pool.ops().logical_size(bn);
+
+        REQUIRE(sz >= control_size + 27 * 2);
+
+        vector.reserve(12);
+
+        sz = pool.ops().logical_size(bn);
+
+        REQUIRE(sz >= control_size + 12 * 2);
     }
     SECTION("vector: int")
     {

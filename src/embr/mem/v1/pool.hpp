@@ -341,7 +341,10 @@ bool pool_ops<Traits>::realloc(bundle bn, pos_type phys_sz, handle_type* out)
 
             if(bn_next.allocated() == false)
             {
-                // Unlike below no threshold needed, since expanding bn_next is always a
+                // Reaching here means we are indeed shrinking bn - we move following
+                // free block closer to it.
+
+                // Unlike below, no threshold is needed since expanding bn_next is always a
                 // useful size
                 move_block(*bn_next.page, bn.pos() + phys_sz);
             }

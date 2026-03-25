@@ -309,8 +309,7 @@ public:
         // condition.  Leaning strongly towards it handles that for us
         if(is_allocated() == false) return allocate(capacity);
 
-        bool success = pool_()->realloc(handle_, control_size + capacity * sizeof(T), &handle_);
-        return success;
+        return pool_()->realloc(handle_, control_size + capacity * sizeof(T), &handle_);
     }
 
     allocator_type get_allocator() { return { pool_() }; }

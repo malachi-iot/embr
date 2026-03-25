@@ -5,7 +5,9 @@
 
 #include "pool/concepts.h"
 
-namespace embr::mem::detail::inline v1::concepts {
+namespace embr::mem {
+
+namespace detail::inline v1::concepts {
 
 template <class T>
 concept Handles = requires(T t)
@@ -14,6 +16,16 @@ concept Handles = requires(T t)
     t.alloc(int{});
     t.dealloc(int{});
 };
+
+}   // detail::v1::concepts
+
+inline namespace v1 {
+
+namespace concepts {
+
+}
+
+}
 
 }
 
