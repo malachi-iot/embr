@@ -44,11 +44,11 @@ static void battery(Pool& pool, int it, unsigned seed)
 
     CAPTURE(it, seed);
 
-    mem::vector<short, pool_type> vector(&pool);
+    mem::vector<short, pool_type> vector(&pool), vector2(&pool);
 
     auto& revealed = (vector_revealed<short, pool_type>&) vector;
 
-    std::uniform_int_distribution<int> sz_distrib(0, 30);
+    std::uniform_int_distribution<int> sz_distrib(0, 50);
 
     for(int i = 0; i < 10; ++i)
     {
@@ -59,6 +59,8 @@ static void battery(Pool& pool, int it, unsigned seed)
         CAPTURE(i, sz);
 
         vector.reserve(sz);
+
+        assert(vector.capacity() >= sz);
 
         // DEBT: Roundabout (but effective) way of getting at bundle.  We need to re-acquire
         // because vector.handle_ is subject to change
@@ -72,6 +74,26 @@ static void battery(Pool& pool, int it, unsigned seed)
         CAPTURE(found_sz, expected_sz);
 
         assert(found_sz >= expected_sz);
+    }
+
+    vector.push_back(1);
+    vector2.push_back(2);
+
+    for(int i = 0; i < 10; ++i)
+    {
+        unsigned sz1 = sz_distrib(gen);
+        unsigned sz2 = sz_distrib(gen);
+
+        CAPTURE(i, sz1, sz2);
+
+        assert(vector.reserve(sz1));
+        assert(vector2.reserve(sz2));
+
+        CAPTURE(vector[0], vector2[0]);
+
+        // FIX: Resolve CLion error about these == (still compiles actually)
+        assert(vector[0] == 1);
+        assert(vector2[0] == 2);
     }
 }
 
