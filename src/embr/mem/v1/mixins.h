@@ -207,7 +207,7 @@ public:
 };
 
 template <class Derived, class T, class Traits = accessor_traits<Derived>>
-class accessor_access : public accessor_dereference<Derived, T>
+class accessor_mutate
 {
     // EXPERIMENTAL
     using traits = Traits;
@@ -215,12 +215,36 @@ class accessor_access : public accessor_dereference<Derived, T>
 public:
     ESTD_CPP_STD_VALUE_TYPE(T)
 
+    Derived& operator=(const_reference v)
+    {
+        auto self = static_cast<Derived*>(this);
+        traits::value(*self) = v;
+        return *self;
+    }
+};
+
+template <class Derived, class T, class Traits = accessor_traits<Derived>>
+class accessor_access :
+    public accessor_dereference<Derived, T>,
+    public accessor_mutate<Derived, T, Traits>
+{
+    // EXPERIMENTAL
+    using traits = Traits;
+
+public:
+    ESTD_CPP_STD_VALUE_TYPE(T)
+
+    using accessor_mutate<Derived, T, Traits>::operator =;
+
     friend constexpr bool operator==(const_reference lhs, const Derived& rhs)
     {
         return lhs == traits::value(rhs);
     }
 
-    friend constexpr bool operator==(const Derived& lhs, const_reference rhs)
+    // Not taking a mere const_reference since that irritates C++ overload resolution
+    // for near types, such as passing in an int into rhs when a short is desired.
+    template <class T2, estd::enable_if_t<estd::is_convertible<T2, T>::value, int> = 0>
+    friend constexpr bool operator==(const Derived& lhs, const T2& rhs)
     {
         return traits::value(lhs) == rhs;
     }

@@ -91,7 +91,6 @@ static void battery(Pool& pool, int it, unsigned seed)
 
         CAPTURE(vector[0], vector2[0]);
 
-        // FIX: Resolve CLion error about these == (still compiles actually)
         assert(vector[0] == 1);
         assert(vector2[0] == 2);
     }
@@ -148,6 +147,9 @@ TEST_CASE("gc mem v1 vector", "[memory][gc][vector]")
         sz = pool.ops().logical_size(bn);
 
         REQUIRE(sz >= control_size + 12 * 2);
+
+        vector[0] = 5;
+        REQUIRE(vector[0] == 5);
     }
     SECTION("vector: int")
     {
@@ -195,6 +197,8 @@ TEST_CASE("gc mem v1 vector", "[memory][gc][vector]")
         }
         REQUIRE(*vector.lock() == 1);
         vector.unlock();
+
+        REQUIRE(vector[0] == 1);
 
         // This guy will be a true 'grow' (no memory moved)
         vector.reserve(3);

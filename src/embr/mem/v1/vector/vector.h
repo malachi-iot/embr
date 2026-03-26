@@ -140,14 +140,16 @@ public:
             mixins::accessor_access<accessor, value_type>
         {
             using base_type = lock_handle;
+            using mixin_base_type = mixins::accessor_access<accessor, value_type>;
 
             pointer value_;
             using locked_type = reference;
             using const_locked_type = const_reference;
+            using mixin_base_type::operator =;
 
             accessor(allocator_type allocator, handle_with_offset hwo) :
                 base_type(hwo.handle(), allocator.pool_),
-                value_{lock_and_retrieve(*this, int(hwo.offset()))}
+                value_{lock_and_retrieve(*this, hwo.offset())}
             {
             }
 
