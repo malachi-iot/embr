@@ -6,36 +6,67 @@ namespace embr { namespace mem {
 
 namespace detail { inline namespace v1 {
 
-template <class Pool, Pool* pool>
-class lock_guard
+// DEBT: Perhaps call this lock_data?
+template <class Pool, Pool* pool, class T = void>
+class lock_guard_base : public lock_handle<Pool, pool>
 {
-protected:
-    // DEBT: Disambiguate raw numeric handle vs lock_handle
-    using handle = lock_handle<Pool, pool>;
+    using base_type = lock_handle<Pool, pool>;
 
-    handle handle_;
+protected:
+    T* data_;
+
+    // The exact lock acquisition of 'data' can be nuanced, so caller determines that
+    // and is responsible for actual lock operation
+    template <class ...Args>
+    explicit lock_guard_base(T* data, Args&&...args) :
+        base_type(std::forward<Args>(args)...),
+        data_(data)
+    {}
+
+    lock_guard_base(lock_guard_base&& move_from) :
+        data_{move_from.data_}
+    {
+        move_from.data_ = nullptr;
+    }
+
+    ~lock_guard_base()
+    {
+        if(data_)   base_type::unlock();
+    }
+
+public:
+    T* data() const { return data_; }
+};
+
+
+template <class Pool, Pool* pool>
+class lock_guard : public lock_handle<Pool, pool>
+{
+    using base_type = lock_handle<Pool, pool>;
+
+protected:
     void* data_;       // DEBT: Pull this direct from block
 
 public:
-    constexpr lock_guard(typename handle::handle_type h, Pool* p) :
-        handle_{h, p},
-        data_{handle_.lock()}
+    constexpr lock_guard(typename base_type::handle_type h, Pool* p) :
+        base_type{h, p},
+        data_{base_type::lock()}
     {
     }
 
-    constexpr explicit lock_guard(handle h) : handle_{h},
+    constexpr explicit lock_guard(base_type h) : base_type{h},
         data_{h.lock()}
     {
     }
 
     constexpr lock_guard(const lock_guard& copy_from) :
-        handle_{copy_from.handle_},
-        data_{handle_.lock()}
+        base_type{copy_from},
+        data_{base_type::lock()}
     {
     }
 
     constexpr lock_guard(lock_guard&& move_from) noexcept :
-        handle_{std::move(move_from.handle_)},
+        base_type{std::move(move_from.handle_)},
         data_{move_from.data_}
     {
         move_from.data_ = nullptr;
@@ -46,7 +77,7 @@ public:
     ~lock_guard()
     {
         // DEBT: Inspect & modify handle_ directly for this
-        if(data_)   handle_.unlock();
+        if(data_)   base_type::unlock();
     }
 };
 
