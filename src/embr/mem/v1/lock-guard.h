@@ -18,9 +18,13 @@ protected:
     // The exact lock acquisition of 'data' can be nuanced, so caller determines that
     // and is responsible for actual lock operation
     template <class ...Args>
-    explicit lock_guard_base(T* data, Args&&...args) :
+    explicit constexpr lock_guard_base(T* data, Args&&...args) :
         base_type(std::forward<Args>(args)...),
         data_(data)
+    {}
+
+    constexpr lock_guard_base(const lock_guard_base& copy_from) :
+        data_{copy_from.data_}
     {}
 
     lock_guard_base(lock_guard_base&& move_from) :
@@ -40,45 +44,25 @@ public:
 
 
 template <class Pool, Pool* pool>
-class lock_guard : public lock_handle<Pool, pool>
+class lock_guard : public lock_guard_base<Pool, pool>
 {
-    using base_type = lock_handle<Pool, pool>;
-
-protected:
-    void* data_;       // DEBT: Pull this direct from block
+    using hnd = lock_handle<Pool, pool>;
+    using base_type = lock_guard_base<Pool, pool>;
 
 public:
+    // DEBT: We can do better than an intermediate hnd here
     constexpr lock_guard(typename base_type::handle_type h, Pool* p) :
-        base_type{h, p},
-        data_{base_type::lock()}
+        base_type{hnd{h, p}.lock(), h, p}
     {
     }
 
-    constexpr explicit lock_guard(base_type h) : base_type{h},
-        data_{h.lock()}
+    constexpr explicit lock_guard(hnd h) :
+        base_type{h.lock(), h}
     {
     }
 
-    constexpr lock_guard(const lock_guard& copy_from) :
-        base_type{copy_from},
-        data_{base_type::lock()}
-    {
-    }
-
-    constexpr lock_guard(lock_guard&& move_from) noexcept :
-        base_type{std::move(move_from.handle_)},
-        data_{move_from.data_}
-    {
-        move_from.data_ = nullptr;
-    }
-
-    void* data() const { return data_; }
-
-    ~lock_guard()
-    {
-        // DEBT: Inspect & modify handle_ directly for this
-        if(data_)   base_type::unlock();
-    }
+    constexpr lock_guard(const lock_guard& copy_from) = default;
+    constexpr lock_guard(lock_guard&& move_from) = default;
 };
 
 #if __cpp_deduction_guides
