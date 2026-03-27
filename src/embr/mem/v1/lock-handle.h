@@ -2,6 +2,10 @@
 
 #include <estd/units.h>
 
+#if FEATURE_STD_TYPE_TRAITS
+#include <type_traits>
+#endif
+
 #include "fwd.h"
 
 namespace embr { namespace mem {
@@ -133,6 +137,10 @@ public:
     }
 };
 
+
+#if FEATURE_STD_TYPE_TRAITS
+static_assert(std::is_trivially_move_constructible<sparse_handle<int, uint8_t>>::value);
+#endif
 
 template <class Pool, Pool* pool>
 class lock_handle : public global_provider<Pool, pool>

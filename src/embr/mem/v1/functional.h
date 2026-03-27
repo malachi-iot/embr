@@ -2,7 +2,13 @@
 
 #include <estd/functional.h>
 
+#if FEATURE_STD_TYPE_TRAITS
+#include <type_traits>
+#include "traits.h"
+#endif
+
 #include "fwd.h"
+#include "lock-handle.h"
 
 namespace embr { namespace mem {
 
@@ -51,7 +57,7 @@ public:
 };
 
 
-
+// FIX: Pretty sure we're missing our base class here
 template <class R, class ...Args, class Handle>
 class model<R(Args...), Handle>
 {
@@ -120,7 +126,7 @@ template <class R, class ...Args, class Pool>
 class sparse_function<R(Args...), Pool> : public model<R(Args...), typename Pool::handle_type>
 {
     using base_type = model<R(Args...), typename Pool::handle_type>;
-    using typename base_type::handle_type;
+    //using typename base_type::handle_type;
 
 public:
     template <class ...Args2>
@@ -131,6 +137,10 @@ public:
         return base_type::invoke(pool, base_type::handle_, std::forward<Args>(args)...);
     }
 };
+
+#if FEATURE_STD_TYPE_TRAITS
+static_assert(std::is_trivially_move_constructible<sparse_function<void(), detail::handles_traits_uint8>>::value);
+#endif
 
 template <class F, class Pool, Pool* pool>
 struct innate_traits<mem::function<F, Pool, pool>>

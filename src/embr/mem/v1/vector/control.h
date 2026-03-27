@@ -1,6 +1,7 @@
 #pragma once
 
 #include <estd/memory.h>
+//#include <estd/type_traits.h>
 
 #include "../fwd.h"
 
@@ -38,7 +39,7 @@ public:
     // uninitialized variants below important since they call placement new rather than
     // use operator=
 
-    vector_control(const vector_control& copy_from) :
+    ESTD_CPP_CONSTEXPR(17) vector_control(const vector_control& copy_from) :
         size_{copy_from.size_},
         lock_count_{}
     {
@@ -49,7 +50,7 @@ public:
     }
 
     // DEBT: If this guy isn't present, rtto incorrectly finds above copy_from during a move request
-    vector_control(vector_control&& move_from) noexcept :
+    ESTD_CPP_CONSTEXPR(17) vector_control(vector_control&& move_from) noexcept :
         size_{move_from.size_},
         lock_count_{}
     {
@@ -83,6 +84,12 @@ public:
 
     constexpr size_type size() const { return size_; }
 };
+
+
+#if FEATURE_STD_TYPE_TRAITS
+// Nope, variable size precludes this
+//static_assert(std::is_trivially_move_constructible<vector_control<int>>::value);
+#endif
 
 
 }}
