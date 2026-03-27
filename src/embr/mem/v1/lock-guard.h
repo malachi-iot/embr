@@ -23,11 +23,18 @@ protected:
         data_(data)
     {}
 
-    constexpr lock_guard_base(const lock_guard_base& copy_from) :
-        data_{copy_from.data_}
+    // Somewhat experimental - 'f()' probably wants a captured 'this' which isn't fully
+    // initialized
+    template <class F, class ...Args>
+    explicit constexpr lock_guard_base(F&& f, Args&&...args) :
+        base_type(std::forward<Args>(args)...),
+        data_(f())
     {}
 
+    constexpr lock_guard_base(const lock_guard_base& copy_from) = default;
+
     lock_guard_base(lock_guard_base&& move_from) :
+        base_type(std::move(move_from)),
         data_{move_from.data_}
     {
         move_from.data_ = nullptr;
@@ -35,11 +42,19 @@ protected:
 
     ~lock_guard_base()
     {
+        // NOTE: Arguably could inspect has_value() instead
         if(data_)   base_type::unlock();
     }
 
 public:
     T* data() const { return data_; }
+
+    void reset()
+    {
+        base_type::reset();
+
+        data_ = nullptr;
+    }
 };
 
 

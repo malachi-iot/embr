@@ -161,6 +161,7 @@ class iterator :
 };
 
 // EXPERIMENTAL
+// Goes after 'value()' accessor
 template <class T>
 struct accessor_traits
 {
@@ -168,6 +169,16 @@ struct accessor_traits
 
     static reference value(T& self) { return self.value(); }
     constexpr static const_reference value(const T& self) { return self.value(); }
+};
+
+// EXPERIMENTAL
+template <class T>
+struct accessor_traits_data
+{
+    ESTD_CPP_STD_VALUE_TYPE(typename T::value_type)
+
+    static reference value(T& self) { return *self.data(); }
+    constexpr static const_reference value(const T& self) { return *self.data(); }
 };
 
 // DEBT: I am warned by AI this doesn't cover a lot of cases

@@ -3,6 +3,7 @@
 #include "../block.h"
 #include "../fwd.h"
 #include "../mixins.h"
+#include "../lock-guard.h"
 #include "../pool/construct.hpp"
 
 #include "control.h"
@@ -132,40 +133,36 @@ public:
         using allocator_valref = allocator_type;
         //using iterator = pointer;
         using const_iterator = const_pointer;
-#if EMBR_VECTOR_ADV_ACCESSOR
+
         // DEBT: This has a lot in common with lock_guard.  Consolidate if we can.  Note that
         // value() / data() nature is different, since we have that extra array lookup in this
         // accessor case
-        struct accessor : lock_handle,
+        struct accessor : lock_guard_base<Pool, pool, value_type>,
             mixins::accessor_access<accessor, value_type>
         {
-            using base_type = lock_handle;
+            using base_type = lock_guard_base<Pool, pool, value_type>;
             using mixin_base_type = mixins::accessor_access<accessor, value_type>;
 
-            pointer value_;
+            using base_type::data_;
             using locked_type = reference;
             using const_locked_type = const_reference;
             using mixin_base_type::operator =;
 
-            accessor(allocator_type allocator, handle_with_offset hwo) :
-                base_type(hwo.handle(), allocator.pool_),
-                value_{lock_and_retrieve(*this, hwo.offset())}
+            constexpr accessor(allocator_type allocator, handle_with_offset hwo) :
+                base_type(
+                    [&] { return lock_and_retrieve(*this, hwo.offset()); },
+                    hwo.handle(), allocator.pool_)
             {
-            }
-
-            ~accessor()
-            {
-                base_type::unlock();
             }
 
             reference value()
             {
-                return *value_;
+                return *data_;
             }
 
             constexpr const_reference value() const
             {
-                return *value_;
+                return *data_;
             }
 
             /*
@@ -184,61 +181,9 @@ public:
 
             constexpr operator const_reference() const
             {
-                return *value_;
+                return *data_;
             }
         };
-#else
-        struct accessor_impl :
-            handle_type
-            //mem::detail::mixin::typed_handle<accessor_impl, value_type>
-        {
-            int offset_;
-
-            using base_type = handle_type;
-            //using mixin_type = mem::detail::mixin::typed_handle<accessor_impl, value_type>;
-            //using mixin_type::lock;
-
-            ESTD_CPP_STD_VALUE_TYPE(value_type)
-
-            //ESTD_CPP_FORWARDING_CTOR(accessor_impl);
-
-            accessor_impl(allocator_type allocator, handle_with_offset hwo) :
-                base_type(hwo.handle(), allocator.pool_),
-                offset_{int(hwo.offset())}
-            {
-
-            }
-
-            // Dormant - since this is hidden inside 'impl'.  mixin/crtp accessors would probably help
-            lock_guard<T, Pool, pool> guard()
-            {
-                return { *this };
-            }
-
-            using offset_type = int;
-            using const_offset_type = int;
-            using locked_type = reference;
-            using const_locked_type = const_reference;
-
-            // DEBT: Continued awkwardness with lock returning ref
-            // See https://github.com/malachi-iot/estdlib/issues/88
-            locked_type lock() const
-            {
-                auto control = (control_type*)base_type::lock();
-                return *(control->data() + offset_);
-            }
-        };
-
-        // Needs to be typed to T
-        // TODO: Rework this to be 100% custom accessor all our own with improved features:
-        // 1. always operating like a lock_guard
-        // 2. have an accessor something like value_type&& value() and/or operator value_type&&()
-        //    so that it's enforced that the locked data doesn't outlive the accessor
-        // 3. have a disambiguated flavor of above accessor that really does return value_type&
-        //    just make it as clear as possible THAT guy in danger of invalidating quickly
-        // 4. lock/unlock theoretically not necessary or wanted anymore since it's auto locked
-        using accessor = estd::internal::locking_accessor<accessor_impl>;
-#endif
 
         // TODO: Perhaps we can specify pinned_iterator right away here?
 

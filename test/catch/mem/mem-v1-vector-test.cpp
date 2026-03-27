@@ -249,11 +249,6 @@ TEST_CASE("gc mem v1 vector", "[memory][gc][vector]")
             // Calls default ctor, then move ctor
             parity.push_back({});
 
-#if USE_REAL_HANDLE_OFFSET_NOTREADY
-            // Need a mixin reality for this to really happen
-            //REQUIRE(vector[0].guard()->moved_to_counter == 1);
-            //REQUIRE(parity[0].moved_to_counter == 1);
-#elif EMBR_VECTOR_ADV_ACCESSOR
             REQUIRE(vector[0].value().moved_to_counter == 1);
             REQUIRE(parity[0].moved_to_counter == 1);
 
@@ -262,22 +257,6 @@ TEST_CASE("gc mem v1 vector", "[memory][gc][vector]")
             REQUIRE(vector[1].value().counter() == 1);
             REQUIRE(vector[1]().moved_to_counter == 0);
             REQUIRE(vector[1]().moved_from_counter == 0);
-#else
-            // FIX: Erroneously leaves this unlocked, accessor DEBT because it doesn't know if
-            // you want a ref or a copy so it presumes a ref, requiring a dangling lock
-            //SideEffector copied = vector[0];
-            REQUIRE(vector[0].clock().moved_to_counter == 1);
-            REQUIRE(parity[0].moved_to_counter == 1);
-
-            vector.emplace_back(&counter);
-
-            REQUIRE(vector[1].clock().counter() == 1);
-            REQUIRE(vector[1].clock().moved_to_counter == 0);
-
-            vector[0].cunlock();
-            vector[1].cunlock();
-            vector[1].cunlock();
-#endif
         }
 
         REQUIRE(counter == 0);

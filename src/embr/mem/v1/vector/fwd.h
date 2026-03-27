@@ -2,8 +2,6 @@
 
 #include <estd/internal/fwd/dynamic_array.h>
 
-#define EMBR_VECTOR_ADV_ACCESSOR 1
-
 namespace embr { namespace mem {
 
 namespace detail { inline namespace v1 {
