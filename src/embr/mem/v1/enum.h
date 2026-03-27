@@ -11,8 +11,16 @@ struct block_mode_enum
         Trivial,
         RttoProxy,
         RttoBase,
-        // 01MAR26 DEBT: Not well tested yet, favor using above 3 instead
-        RttoVirtual
+        RttoVirtual,
+
+        // EXPERIMENTAL
+        // Trivial vector_control still occupies rtto space.  This might serve
+        // to avoid that
+        //Vector,
+
+        // EXPERIMENTAL
+        // System-wide RTTO avoider
+        //UserType1,
     };
 
     static const char* to_string(modes);
