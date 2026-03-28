@@ -1,5 +1,7 @@
 #include <catch2/catch_all.hpp>
 
+#include <random>
+
 #include <estd/functional.h>
 #include <estd/internal/container/traditional_accessor.h>
 
@@ -12,6 +14,33 @@
 #include "test-mem-data.h"
 
 using namespace embr;
+
+template <class F, class Pool, Pool* pool = nullptr>
+class funclist;
+
+
+template <class Pool>
+static void battery(Pool& pool, int it, unsigned seed)
+{
+    using bytes = mem::bytes_unit<unsigned>;
+    using pool_type = Pool;
+    using ops_type = typename pool_type::ops_type;
+    using bundle = typename ops_type::bundle;
+    using type = funclist<void(int), Pool>;
+
+    ops_type& ops = pool.ops();
+
+    int counter1 = 0;
+
+    using namespace mem::detail::v1;
+    std::mt19937 gen{seed}; // fixed seed: deterministic sequence
+
+    CAPTURE(it, seed);
+
+    type fl1(&pool);
+
+    //fl1 += [&](int) { ++counter1; };
+}
 
 /*
 // FIX: enable_if clumsy and incorrect here.  Just whipping it up and easily collides with sparse_function flavor
@@ -37,12 +66,14 @@ void multi_lock(const embr::mem::detail::v1::pool_ops<Traits>& ops, It begin, En
     mutex.unlock();
 }
 
-
-template <class F, class Pool, Pool* pool = nullptr>
-class funclist;
+template <class R, class ...Args, class Pool, Pool* pool>
+class funclist<R(Args...), Pool, pool>
+{
+    static_assert(false, "Must have void return signature");
+};
 
 template <class ...Args, class Pool, Pool* pool>
-class funclist<void(Args...), Pool, pool> : public embr::mem::v1::vector<mem::detail::sparse_function<void(Args...), Pool>, Pool, pool>
+class funclist<void(Args...), Pool, pool> : protected embr::mem::v1::vector<mem::detail::sparse_function<void(Args...), Pool>, Pool, pool>
 {
     using value_type = mem::detail::sparse_function<void(Args...), Pool>;
     using base_type = embr::mem::v1::vector<value_type, Pool, pool>;
@@ -54,7 +85,14 @@ class funclist<void(Args...), Pool, pool> : public embr::mem::v1::vector<mem::de
 
 public:
     template <class ...Args2>
-    funclist(Args2&&...args) : base_type(std::forward<Args2>(args)...)  {}
+    constexpr explicit funclist(Args2&&...args) : base_type(std::forward<Args2>(args)...)  {}
+
+    /*
+    template <class F>
+    value_type push_back(F&& f)
+    {
+        return value_type{model_type::make(impl().pool_(), std::forward<F>(f))};
+    }   */
 
     template <class F>
     friend funclist& operator+=(funclist& self, F&& f)
@@ -83,7 +121,6 @@ public:
         base_type::unlock();
     }
 };
-
 
 namespace embr { namespace mem { inline namespace v1 {
 
@@ -203,5 +240,12 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
         fl.invoke(5);
 
         REQUIRE(counter == 15);
+    }
+    SECTION("funclist: battery")
+    {
+        std::mt19937 rng{12345}; // NOLINT: fixed seed desired: deterministic sequence
+
+        for(int i = 0; i < 50; ++i)
+            battery(pool, i, rng());
     }
 }
