@@ -3,10 +3,10 @@
 #include <estd/mutex.h>
 
 #include "../block.h"
-#include "../unit.h"
 
 namespace embr { namespace mem {
 
+// DEBT: Refactor and put these into a 'mixins' namespace
 namespace detail { inline namespace v1 {
 
 #pragma push_macro("THIS")

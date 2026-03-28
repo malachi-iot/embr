@@ -21,7 +21,7 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
     using handles_type = detail::v1::handles<handles_traits>;
     using handle_type = handles_type::size_type;
     using pool_traits = detail::v1::pool_traits<estd::span<char>>;
-    using pool_type = detail::v1::pool<pool_traits>;
+    using pool_type = detail::v1::storage<pool_traits>;
     using ops_type = detail::pool_ops<detail::pool_ops_traits<pool_traits, handles_traits>>;
     using block = ops_type::block;
     using bundle = ops_type::bundle;

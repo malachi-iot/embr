@@ -79,7 +79,7 @@ struct pool_ops_traits
     using storage_traits = StorageTraits;
     using handles_traits = HandlesTraits;
 
-    using storage_type = pool<storage_traits>;
+    using storage_type = storage<storage_traits>;
     using handles_type = handles<handles_traits>;
 };
 

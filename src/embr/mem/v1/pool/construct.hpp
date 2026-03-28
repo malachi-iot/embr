@@ -33,10 +33,10 @@ typename Traits::handles_traits::handle_type construct(pool_ops<Traits>& ops, Ar
 
 
 template <class T, class PoolTraits, class HandlesTraits, class ...Args>
-typename HandlesTraits::handle_type construct(pool<PoolTraits>& p, handles<HandlesTraits>& h, Args&&...args)
+typename HandlesTraits::handle_type construct(storage<PoolTraits>& p, handles<HandlesTraits>& h, Args&&...args)
 {
     constexpr block_mode_enum::modes mode = ascertain_block_mode<T>();
-    using traits = pool_ops_val_traits<pool<PoolTraits>&, handles<HandlesTraits>&>;
+    using traits = pool_ops_val_traits<storage<PoolTraits>&, handles<HandlesTraits>&>;
     //return construct<T>(pool_ops<traits>{p, h}, std::forward<Args>(args)...);
 
     return pool_ops<traits>{p, h}.template construct<mode, T>(std::forward<Args>(args)...).handle;

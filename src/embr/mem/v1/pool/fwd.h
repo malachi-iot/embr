@@ -1,5 +1,7 @@
 #pragma once
 
+#include <estd/internal/macros.h>
+
 #include "concepts.h"
 
 namespace embr { namespace mem {
@@ -21,13 +23,13 @@ template <class Container>
 struct pool_traits;
 
 template <class Traits>
-class pool;
+class storage;
 
 template <class Traits>
 class pool_ops;
 
 template <class T, class PoolTraits, class HandlesTraits, class ...Args>
-typename HandlesTraits::handle_type construct(pool<PoolTraits>& p, handles<HandlesTraits>& h, Args&&...args);
+typename HandlesTraits::handle_type construct(storage<PoolTraits>& p, handles<HandlesTraits>& h, Args&&...args);
 
 }}
 
