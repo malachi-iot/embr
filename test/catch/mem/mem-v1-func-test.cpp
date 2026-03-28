@@ -87,20 +87,18 @@ public:
     template <class ...Args2>
     constexpr explicit funclist(Args2&&...args) : base_type(std::forward<Args2>(args)...)  {}
 
-    /*
     template <class F>
     value_type push_back(F&& f)
     {
-        return value_type{model_type::make(impl().pool_(), std::forward<F>(f))};
-    }   */
+        value_type item{model_type::make(impl().pool_(), std::forward<F>(f))};
+        base_type::push_back(item);
+        return item;
+    }
 
     template <class F>
     friend funclist& operator+=(funclist& self, F&& f)
     {
-        Pool* pool2 = self.impl().pool_();
-        value_type item(model_type::make(pool2, std::forward<F>(f)));
-
-        self.push_back(item);
+        self.push_back(std::forward<F>(f));
         return self;
     }
 
@@ -145,7 +143,7 @@ public:
 
     template <class F>
     shared_handle(Pool* pool2, F&& f) :
-        base_type(model::make(pool2, std::forward<F>(f)), pool2)
+        base_type(model::make(pool2, std::forward<F>(f)).handle(), pool2)
     {}
 
     constexpr R operator()(Args&&...args)
@@ -178,9 +176,9 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
     {
         SECTION("model")
         {
-            handle_type h1 = model_type::make(&pool, [](int v) { return v * 2; });
+            model_type h1 = model_type::make(&pool, [](int v) { return v * 2; });
 
-            int r = model_type::invoke(&pool, h1, 5);
+            int r = model_type::invoke(&pool, h1.handle(), 5);
 
             REQUIRE(r == 10);
         }

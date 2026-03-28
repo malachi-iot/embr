@@ -31,18 +31,18 @@ template <class ...Args, class Handle>
 class model<void(Args...), Handle> : public sparse_handle<typename estd::detail::function<void(Args...)>::model_base, Handle>
 {
 protected:
-    using base_type = sparse_handle<typename estd::detail::function<void(Args...)>::model_base, Handle>;
     using function_type = estd::detail::function<void(Args...)>;
     using model_base = typename function_type::model_base;
+    using base_type = sparse_handle<model_base, Handle>;
     using handle_type = Handle;
 
 public:
     explicit constexpr model(const handle_type& handle) : base_type{handle} {}
 
     template <class Pool, class F>
-    constexpr static handle_type make(Pool* pool, F&& f)
+    constexpr static model make(Pool* pool, F&& f)
     {
-        return make_model<void, Args...>(pool, std::forward<F>(f));
+        return model(make_model<void, Args...>(pool, std::forward<F>(f)));
     }
 
     template <class Pool>
@@ -57,12 +57,11 @@ public:
 };
 
 
-// FIX: Pretty sure we're missing our base class here
 template <class R, class ...Args, class Handle>
-class model<R(Args...), Handle>
+class model<R(Args...), Handle> : public sparse_handle<typename estd::detail::function<R(Args...)>::model_base, Handle>
 {
 protected:
-    using base_type = sparse_handle<typename estd::detail::function<void(Args...)>::model_base, Handle>;
+    using base_type = sparse_handle<typename estd::detail::function<R(Args...)>::model_base, Handle>;
     using function_type = estd::detail::function<R(Args...)>;
     using model_base = typename function_type::model_base;
     using handle_type = Handle;
@@ -71,9 +70,9 @@ public:
     explicit constexpr model(const handle_type& handle) : base_type{handle} {}
 
     template <class Pool, class F>
-    constexpr static handle_type make(Pool* pool, F&& f)
+    constexpr static model make(Pool* pool, F&& f)
     {
-        return make_model<R, Args...>(pool, std::forward<F>(f));
+        return model(make_model<R, Args...>(pool, std::forward<F>(f)));
     }
 
 
@@ -109,7 +108,7 @@ public:
     template <class ...Args2>
     constexpr explicit function(Args2&&...args) : base_type(std::forward<Args2>(args)...) {}
 
-    constexpr R operator()(Args&&...args)
+    constexpr R operator()(Args&&...args) const
     {
         return model::invoke(base_type::pool_(), base_type::handle_, std::forward<Args>(args)...);
     }
@@ -170,14 +169,13 @@ public:
     constexpr function(estd::nullptr_t) : base_type(base_type::null) {} // NOLINT
 
     template <class F2>
-    function(Pool* pool2, F2&& f) :
-        base_type(model::make(pool2, std::forward<F2>(f)), pool2)
+    constexpr function(Pool* pool2, F2&& f) :
+        base_type(model::make(pool2, std::forward<F2>(f)).handle(), pool2)
     {
-
     }
 
     template <class F2>
-    function(F2&& f) :   // NOLINT
+    constexpr explicit function(F2&& f) :   // NOLINT
         base_type(model::make(pool, std::forward<F2>(f)))
     {
         static_assert(pool != nullptr);
