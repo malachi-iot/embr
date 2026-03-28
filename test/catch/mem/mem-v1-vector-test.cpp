@@ -110,9 +110,6 @@ TEST_CASE("gc mem v1 vector", "[memory][gc][vector]")
     using bytes = mem::bytes_unit<unsigned>;
     pool_type pool;
 
-    // DEBT: This debt lives on, we really need to auto-init the thing
-    pool.reset();
-
     SECTION("vector_impl")
     {
         using type = mem::detail::vector_control<char>;

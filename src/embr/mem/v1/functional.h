@@ -45,12 +45,14 @@ public:
         return model(make_model<void, Args...>(pool, std::forward<F>(f)));
     }
 
-    template <class Pool>
-    static void invoke(Pool* pool, handle_type h, Args&&...args)
+    // Remember, paradigm is top-level flattens to Args2...
+    // Feels backwards.  See https://github.com/malachi-iot/estdlib/issues/186
+    template <class Pool, class ...Args2>
+    static void invoke(Pool* pool, handle_type h, Args2&&...args)
     {
         auto underlying = static_cast<model_base*>(pool->lock(h));
 
-        underlying->operator()(std::forward<Args>(args)...);
+        underlying->operator()(std::forward<Args2>(args)...);
 
         pool->unlock(h);
     }
@@ -131,9 +133,10 @@ public:
     template <class ...Args2>
     constexpr explicit sparse_function(Args2&&...args) : base_type(std::forward<Args2>(args)...) {}
 
-    constexpr R invoke(Pool* pool, Args&&...args)
+    template <class ...Args2>
+    constexpr R invoke(Pool* pool, Args2&&...args)
     {
-        return base_type::invoke(pool, base_type::handle_, std::forward<Args>(args)...);
+        return base_type::invoke(pool, base_type::handle_, std::forward<Args2>(args)...);
     }
 };
 

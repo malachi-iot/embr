@@ -53,11 +53,6 @@ public:
         return OPS.realloc(bn, OPS.do_alias(size), out);
     }
 
-    void reset()
-    {
-        OPS.reset();
-    }
-
     unsigned allocated()
     {
         return OPS.alloced().count();

@@ -26,20 +26,38 @@ static void battery(Pool& pool, int it, unsigned seed)
     using pool_type = Pool;
     using ops_type = typename pool_type::ops_type;
     using bundle = typename ops_type::bundle;
-    using type = funclist<void(int), Pool>;
+    using type = funclist<void(int), pool_type>;
 
     ops_type& ops = pool.ops();
 
-    int counter1 = 0;
+    int counter1 = 0, counter2 = 0;
 
     using namespace mem::detail::v1;
     std::mt19937 gen{seed}; // fixed seed: deterministic sequence
 
     CAPTURE(it, seed);
 
-    type fl1(&pool);
+    {
+        type fl1(&pool);
 
-    //fl1 += [&](int) { ++counter1; };
+        fl1 += [&](int)     { ++counter1; };
+        fl1 += [&](int v)   { counter1 += v; };
+
+        fl1.invoke(5);
+
+        assert(6);
+    }
+    /*
+    {
+        type fl1(&pool), fl2(&pool);
+
+        fl1 += [&](int)     { ++counter1; };
+        fl1 += [&](int v)   { counter2 += v; };
+        fl2.push_back([&](int) { ++counter1; });
+
+        fl1.invoke(it);
+        fl2.invoke(it);
+    }   */
 }
 
 /*
@@ -95,6 +113,9 @@ public:
         return item;
     }
 
+    // TBD
+    void erase(value_type);
+
     template <class F>
     friend funclist& operator+=(funclist& self, F&& f)
     {
@@ -102,7 +123,14 @@ public:
         return self;
     }
 
-    void invoke(Args&&...args)
+    friend funclist& operator-=(funclist& self, value_type v)
+    {
+        self.erase(v);
+        return self;
+    }
+
+    template <class ...Args2>
+    void invoke(Args2...args)
     {
         using impl_type = mem::detail::v1::vector<value_type, Pool, pool>;
         const impl_type& impl = this->impl();
@@ -113,7 +141,7 @@ public:
 
         for(; v < end; ++v)
         {
-            v->invoke(impl.pool_(), std::forward<Args>(args)...);
+            v->invoke(impl.pool_(), std::forward<Args2>(args)...);
         }
 
         base_type::unlock();
@@ -165,9 +193,6 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
     using handle_type = pool_type::handle_type;
     using lock_handle = mem::detail::v1::lock_handle<pool_type>;
     pool_type pool;
-
-    // DEBT: This debt lives on, we really need to auto-init the thing
-    pool.reset();
 
     using model_type = mem::detail::v1::model<int(int), handle_type>;
     using fn_type = mem::function<int(int), pool_type>;
@@ -238,12 +263,24 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
         fl.invoke(5);
 
         REQUIRE(counter == 15);
+
+        counter = 0;
+
+        auto h = fl.push_back([&](int v) { counter += v; });
+        fl.invoke(2);
+
+        REQUIRE(counter == 8);
+
+        //fl.erase(h);
     }
     SECTION("funclist: battery")
     {
         std::mt19937 rng{12345}; // NOLINT: fixed seed desired: deterministic sequence
 
         for(int i = 0; i < 50; ++i)
+        {
+            pool.ops().reset();
             battery(pool, i, rng());
+        }
     }
 }
