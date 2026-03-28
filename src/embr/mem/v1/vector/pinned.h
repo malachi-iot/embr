@@ -8,6 +8,7 @@
 namespace embr::mem { inline namespace v1 {
 
 // Works to conform vector_control to https://en.cppreference.com/w/cpp/named_req/Container.html
+// One day this should live up in estd.  That's far away, so not even labeling as debt just yet
 template <class T, class Pool, Pool* pool>
 class pinned<mem::vector<T, Pool, pool>> :
     public lock_guard<mem::detail::vector_control<T>, Pool, pool>,

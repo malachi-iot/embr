@@ -30,14 +30,14 @@ static void battery(Pool& pool, int it, unsigned seed)
 
     ops_type& ops = pool.ops();
 
-    int counter1 = 0, counter2 = 0;
-
     using namespace mem::detail::v1;
     std::mt19937 gen{seed}; // fixed seed: deterministic sequence
 
     CAPTURE(it, seed);
 
     {
+        int counter1 = 0, counter2 = 0;
+
         type fl1(&pool);
 
         fl1 += [&](int)     { ++counter1; };
@@ -47,17 +47,23 @@ static void battery(Pool& pool, int it, unsigned seed)
 
         assert(6);
     }
-    /*
     {
+        int counter1 = 0, counter2 = 0;
+
         type fl1(&pool), fl2(&pool);
 
         fl1 += [&](int)     { ++counter1; };
         fl1 += [&](int v)   { counter2 += v; };
+        // FIX: fl2.push_back dies.
+        /*
         fl2.push_back([&](int) { ++counter1; });
-
+        */
         fl1.invoke(it);
         fl2.invoke(it);
-    }   */
+
+        assert(counter1 == 1);
+        assert(counter2 == it);
+    }
 }
 
 /*
