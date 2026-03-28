@@ -100,6 +100,7 @@ class funclist<void(Args...), Pool, pool> : protected embr::mem::v1::vector<mem:
     using typename base_type::pointer;
     using control_type = typename base_type::impl_type::control_type;
     using base_type::impl;
+    using pinned_type = mem::v1::pinned<base_type>;
 
 public:
     template <class ...Args2>
@@ -114,7 +115,18 @@ public:
     }
 
     // TBD
-    void erase(value_type);
+    void erase(value_type v)
+    {
+        pinned_type pinned(impl());
+        // DEBT: https://github.com/malachi-iot/estdlib/issues/187
+        //typename pinned_type::const_iterator it =
+        auto it =
+            estd::find_if(pinned.begin(), pinned.end(), [v](value_type v2) { return v == v2; });
+
+        if(it == pinned.end())  return;
+
+        pinned.erase(it);
+    }
 
     template <class F>
     friend funclist& operator+=(funclist& self, F&& f)
@@ -271,7 +283,13 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
 
         REQUIRE(counter == 8);
 
-        //fl.erase(h);
+        fl.erase(h);
+
+        counter = 0;
+
+        fl.invoke(2);
+
+        REQUIRE(counter == 6);
     }
     SECTION("funclist: battery")
     {

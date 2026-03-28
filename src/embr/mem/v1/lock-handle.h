@@ -137,6 +137,14 @@ public:
     }
 };
 
+template <class T, class Handle>
+constexpr bool operator==(
+    const sparse_handle<T, Handle>& lhs,
+    const sparse_handle<T, Handle>& rhs)
+{
+    return lhs.handle() == rhs.handle();
+}
+
 
 #if FEATURE_STD_TYPE_TRAITS
 static_assert(std::is_trivially_move_constructible<sparse_handle<int, uint8_t>>::value);

@@ -19,6 +19,8 @@ class pinned<mem::vector<T, Pool, pool>> :
 public:
     ESTD_CPP_STD_VALUE_TYPE(T)
 
+    using const_iterator = const_pointer;
+
     using size_type = typename vector_type::size_type;
 
     pointer data() { return base_type::data()->data(); }
@@ -28,6 +30,17 @@ public:
     constexpr explicit pinned(Args&&...args) : base_type(std::forward<Args>(args)...) {}
 
     constexpr size_type size() const { return base_type::data()->size_; }
+
+    void erase(const_iterator pos)
+    {
+        int _pos = pos - data();
+        pointer __pos = data() + _pos;
+        const_pointer end = data() + size();
+        // DEBT: Use estd variety
+        // LIGHTLY TESTED
+        std::move(pos + 1, end, __pos);
+        --base_type::data()->size_;
+    }
 
     // DEBT: Put this up in mixin::container, since size_ doesn't need changing
     void swap(pinned& with)

@@ -95,9 +95,6 @@ class lock_guard : public detail::lock_guard<Pool, pool>
     using base_type = detail::lock_guard<Pool, pool>;
     using base_type::data_;
 
-protected:
-    using typename base_type::handle;
-
 public:
     ESTD_CPP_STD_VALUE_TYPE(T)
 

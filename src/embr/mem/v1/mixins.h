@@ -1,6 +1,7 @@
 #pragma once
 
 #include <estd/internal/macro/cpp.h>
+#include <estd/string.h>
 #include <estd/utility.h>
 
 // DEBT: Put this guy up in estd
@@ -75,6 +76,25 @@ public:
     constexpr bool empty() const
     {
         return static_cast<const Derived*>(this)->size() == 0;
+    }
+};
+
+
+// EXPERIMENTAL, NOT USED
+template <class Derived, class T>
+class vector_erase
+{
+public:
+    ESTD_CPP_STD_VALUE_TYPE(T)
+
+    using iterator = pointer;
+    using const_iterator = const_pointer;
+
+    void erase(const_iterator pos)
+    {
+        auto self = static_cast<const Derived*>(this);
+        // UNTESTED
+        std::move(pos + 1, self->end(), pos);
     }
 };
 
