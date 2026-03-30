@@ -31,6 +31,22 @@ class pool_ops;
 template <class T, class PoolTraits, class HandlesTraits, class ...Args>
 typename HandlesTraits::handle_type construct(storage<PoolTraits>& p, handles<HandlesTraits>& h, Args&&...args);
 
+template <class Derived>
+class pool_crtp;
+
+template <class Derived, class Mutex = void>
+class pool_mutex_crtp;
+
+}}
+
+namespace mixins { inline namespace v1 {
+
+template <class Derived>
+using pool = detail::pool_crtp<Derived>;
+
+template <class Derived, class Mutex = void>
+using pool_mutex = detail::pool_mutex_crtp<Derived, void>;
+
 }}
 
 }}

@@ -29,12 +29,12 @@ inline namespace v1 {
 namespace layer1 {
 
 template <std::size_t N, std::size_t H, class Mutex = void>
-class pool : public detail::v1::pool_mutex_crtp<pool<N, H, Mutex>, Mutex>
+class pool : public mixins::v1::pool_mutex<pool<N, H, Mutex>, Mutex>
 {
-    using mutex_base_type = detail::v1::pool_mutex_crtp<pool, Mutex>;
+    using mutex_base_type = mixins::v1::pool_mutex<pool, Mutex>;
 
     friend class detail::v1::pool_crtp<pool>;
-    friend class detail::v1::pool_mutex_crtp<pool, Mutex>;
+    friend mutex_base_type;
 
     template <class Pool, Pool*>
     friend class detail::lock_handle;
@@ -77,7 +77,7 @@ public:
 
 namespace layer3 {
 
-class pool : public detail::v1::pool_mutex_crtp<pool>
+class pool : public mixins::v1::pool_mutex<pool>
 {
     template <class Pool, Pool*>
     friend class detail::lock_handle;
