@@ -112,14 +112,14 @@ static void battery(typename detail::pool_ops<Traits>& ops, int it, unsigned see
             bn = ops.template construct<block::RttoVirtual, RttoVirtSideEffector>(&counter);
         }
         else
-            assert(false);
+            VERIFY(false);
 
         if(bn.handle != null)
         {
             handle_metadata.emplace(bn.handle, metadata { logical_sz, mode } );
         }
 
-        assert(ops.invariant());
+        VERIFY(ops.invariant());
     }
 
     for(int i = 0; i < frees_to_do; ++i)
@@ -154,7 +154,7 @@ static void battery(typename detail::pool_ops<Traits>& ops, int it, unsigned see
         {
             const invariant_violation& err = r.error();
             CAPTURE(err.rule, err.details);
-            assert(false);
+            VERIFY(false);
         }
     }
 
@@ -190,7 +190,7 @@ static void battery(typename detail::pool_ops<Traits>& ops, int it, unsigned see
 
         invariant_result ir = ops.invariant();
         CAPTURE(after.str(), ir);
-        assert(ir);
+        VERIFY(ir);
 
         if(frag0.score == 0)
         {
@@ -215,8 +215,8 @@ static void battery(typename detail::pool_ops<Traits>& ops, int it, unsigned see
 
         CAPTURE((int)h, last.str());
 
-        assert(r);
-        assert(bn.allocated());
+        VERIFY(r);
+        VERIFY(bn.allocated());
 
         auto data = (char*)ops.lock(bn);
         const metadata& m = handle_metadata.at(bn.handle);
@@ -226,10 +226,10 @@ static void battery(typename detail::pool_ops<Traits>& ops, int it, unsigned see
         auto asserter = [&counter](const SideEffector* se)
         {
             // GC operations never use copy constructor
-            assert(se->copied_to_counter == 0);
-            assert(se->copied_from_counter == 0);
-            assert(se->constructed_);
-            assert(se->counter_ == &counter);
+            VERIFY(se->copied_to_counter == 0);
+            VERIFY(se->copied_from_counter == 0);
+            VERIFY(se->constructed_);
+            VERIFY(se->counter_ == &counter);
         };
 
         if(m.mode == block::Trivial)
@@ -237,7 +237,7 @@ static void battery(typename detail::pool_ops<Traits>& ops, int it, unsigned see
             char comp = 'a' + bn.handle;
             CAPTURE(m.logical_sz);
             for(int i = 0; i < m.logical_sz; ++i, ++data)
-                assert(*data == comp);
+                VERIFY(*data == comp);
         }
         else if (m.mode == block::RttoProxy)
         {
@@ -252,7 +252,7 @@ static void battery(typename detail::pool_ops<Traits>& ops, int it, unsigned see
             asserter((RttoVirtSideEffector*)data);  // NOLINT
         }
         else
-            assert(false);
+            VERIFY(false);
 
         ops.unlock(bn.handle);
     }
