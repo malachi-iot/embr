@@ -239,6 +239,13 @@ public:
 
     void size(unsigned new_size)
     {
+        if(is_allocated() == false)
+        {
+            if(new_size == 0)   return;
+
+            allocate(new_size);
+        }
+
         /*
         bytes rsz(new_size * sizeof(T));
         bytes sz = ops().phys_size(get_bundle());
@@ -248,15 +255,30 @@ public:
         // DEBT: Consider padding here
         if(rsz > sz)    assert(reallocate(new_size));   */
         guard()->size_ = new_size;
+
+        // DEBT: Doesn't pass tests yet, not quite a FIX since leaving control structure allocated is OK.
+        // Consider this an optimization
+        if(new_size == 0)
+        {
+            //base_type::dealloc();
+            //base_type::reset();
+        }
     }
 
-    bool reallocate(unsigned capacity)
+    bool reallocate(unsigned new_cap)
     {
         // DEBT: Check estd, it may be that reallocate is NEVER called in this unallocated
         // condition.  Leaning strongly towards it handles that for us
-        if(is_allocated() == false) return allocate(capacity);
+        if(is_allocated() == false) return allocate(new_cap);
 
-        return pool_()->realloc(handle_, control_size + capacity * sizeof(T), &handle_);
+        // "If new_cap is greater than the current capacity(), new storage is allocated,
+        //  otherwise the function does nothing."
+        if(new_cap <= capacity())
+        {
+            return true;
+        }
+
+        return pool_()->realloc(handle_, control_size + new_cap * sizeof(T), &handle_);
     }
 
     allocator_type get_allocator() { return { pool_() }; }

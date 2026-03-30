@@ -49,18 +49,25 @@ static void battery(Pool& pool, int it, unsigned seed)
     auto& revealed = (vector_revealed<short, pool_type>&) vector;
 
     std::uniform_int_distribution<int> sz_distrib(0, 50);
+    std::ostringstream last;
+
+    std::ostringstream before, after;
 
     for(int i = 0; i < 10; ++i)
     {
+        before.str("");
+
         INFO("Phase 1");
 
         unsigned sz = sz_distrib(gen);
 
-        CAPTURE(i, sz);
+        ops.dump(before << "\nsz=" << sz << "\n");
+
+        CAPTURE(before.str(), i, sz);
 
         vector.reserve(sz);
 
-        assert(vector.capacity() >= sz);
+        VERIFY(vector.capacity() >= sz);
 
         // DEBT: Roundabout (but effective) way of getting at bundle.  We need to re-acquire
         // because vector.handle_ is subject to change
@@ -73,7 +80,7 @@ static void battery(Pool& pool, int it, unsigned seed)
 
         CAPTURE(found_sz, expected_sz);
 
-        assert(found_sz >= expected_sz);
+        VERIFY(found_sz >= expected_sz);
     }
 
     vector.push_back(1);
@@ -81,19 +88,36 @@ static void battery(Pool& pool, int it, unsigned seed)
 
     for(int i = 0; i < 10; ++i)
     {
+        before.str("");
+
+        INFO("Phase 2");
+
         unsigned sz1 = sz_distrib(gen);
         unsigned sz2 = sz_distrib(gen);
 
-        CAPTURE(i, sz1, sz2);
+        ops.dump(before << "\n");
 
-        assert(vector.reserve(sz1));
-        assert(vector2.reserve(sz2));
+        CAPTURE(before.str(), i, sz1, sz2);
+
+        VERIFY(vector.reserve(sz1));
+        VERIFY(vector2.reserve(sz2));
 
         CAPTURE(vector[0], vector2[0]);
 
-        assert(vector[0] == 1);
-        assert(vector2[0] == 2);
+        VERIFY(vector[0] == 1);
+        VERIFY(vector2[0] == 2);
+
+        vector.resize(sz1);
+        vector.resize(sz2);
     }
+
+    vector.clear();
+    vector2.clear();
+
+    vector.shrink_to_fit();
+    vector2.shrink_to_fit();
+
+    VERIFY(revealed.impl().is_allocated());
 }
 
 
