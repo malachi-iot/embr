@@ -129,7 +129,7 @@ ESTD_CPP_CONSTEXPR(14) void pool_ops<Traits>::reset()
 
 
 template <class Traits>
-void pool_ops<Traits>::alloc(const bundle& bn, pos_type found_sz, pos_type phys_sz, block::modes mode)
+bool pool_ops<Traits>::alloc(const bundle& bn, pos_type found_sz, pos_type phys_sz, block::modes mode)
 {
     // If we're 3 blocks larger, go ahead and split
     // We start with min block size.  On 64-bit systems that is:
@@ -146,27 +146,32 @@ void pool_ops<Traits>::alloc(const bundle& bn, pos_type found_sz, pos_type phys_
     {
         pos_type at = bn.pos() + phys_sz;
 
-        // DEBT: An assert is a little too harsh here, but helpful enough to keep for the short term
-        // really we need an error code
-        assert(split_at(bn, at) != handles_type::traits::null);
+        // DEBT: Might be better to return an error code here
+        if(split_at(bn, at) == handles_type::traits::null) return false;
     }
 
     bn.block->reset(mode, true);
+    return true;
 }
 
 
 template <class Traits>
-auto pool_ops<Traits>::alloc(pos_type phys_sz, block::modes mode) -> bundle
+pool_codes pool_ops<Traits>::alloc(bundle* out, pos_type phys_sz, block::modes mode)
 {
     pos_type found_size(0);
 
-    bundle bn = first_free(phys_sz, &found_size).unconst();
+    *out = first_free(phys_sz, &found_size).unconst();
 
-    if(bn.is_null() == false)   alloc(bn, found_size, phys_sz, mode);
+    if(out->is_null())  return POOL_NO_BLOCK;
 
-    //assert(phys_size(bn) >= pos_type(2));
-
-    return bn;
+    if(alloc(*out, found_size, phys_sz, mode))
+        return POOL_OK;
+    else
+    {
+        // DEBT: Crude way to ensure anyone ignoring pool_codes can still kinda tell what happened
+        out->block = nullptr;
+        return POOL_NO_HANDLES;
+    }
 }
 
 

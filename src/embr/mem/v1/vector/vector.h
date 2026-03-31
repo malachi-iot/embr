@@ -45,7 +45,7 @@ private:
     //static_assert(control_size == sizeof(void*));
 
     template <class ...Args>
-    bundle construct_ll(int reserved, Args&&...args)
+    pool_codes construct_ll(bundle* bn, int reserved, Args&&...args)
     {
         using block = embr::mem::detail::block_8;
 
@@ -53,8 +53,8 @@ private:
         constexpr bytes block_sz = block::header_size(mode);
         unsigned sz = reserved * sizeof(T) + block_sz.count() + sizeof(control_type);
 
-        // construct_ll takes explicit size as 1st parameter as you might glean
-        return ops().template construct_ll<mode, control_type>(ops().do_alias(sz), std::forward<Args>(args)...);
+        // construct_ll takes explicit size as 2nd parameter as you might glean
+        return ops().template construct_ll<mode, control_type>(bn, ops().do_alias(sz), std::forward<Args>(args)...);
     }
 
     // Low-level end() - does NOT do locking, so be careful
@@ -85,8 +85,11 @@ public:
 
         const control_type* c = copy_from.clock();
 
+        bundle bn;
+
         // DEBT: Consider overprovisioning
-        handle_ = construct_ll(c->size_, *c).handle;
+        assert(construct_ll(&bn, c->size_, *c) == POOL_OK);
+        handle_ = bn.handle;
 
         copy_from.unlock();
     }
@@ -286,8 +289,11 @@ public:
     bool allocate(unsigned capacity)
     {
         assert(!is_allocated());
+        bundle bn;
 
-        handle_ = construct_ll(capacity).handle;
+        assert(construct_ll(&bn, capacity) == POOL_OK);
+
+        handle_ = bn.handle;
 
         return is_allocated();
     }

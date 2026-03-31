@@ -54,7 +54,8 @@ static void battery(Pool& pool, int it, unsigned seed)
 
         fl1 += [&](int)     { ++counter1; };
         fl1 += [&](int v)   { counter2 += v; };
-        // FIX: fl2.push_back dies.  Because currently we run out of handles
+        // FIX: fl2.push_back dies.  Because currently we run out of handles - but shouldn't
+        // (earlier scope fl1 didn't clear itself out)
         //fl2.push_back([&](int) { ++counter1; });
         fl1.invoke(it);
         fl2.invoke(it);

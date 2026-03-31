@@ -45,21 +45,21 @@ typename HandlesTraits::handle_type construct(storage<PoolTraits>& p, handles<Ha
 
 template <class Traits>
 template <block_mode_enum::modes mode, class T, class ...Args>
-auto pool_ops<Traits>::construct_ll(pos_type phys_sz, Args&&...args) -> bundle
+pool_codes pool_ops<Traits>::construct_ll(bundle* bn, pos_type phys_sz, Args&&...args)
 {
     constexpr bool rtto_proxied = mode == block::RttoProxy;
 
-    bundle bn = alloc(phys_sz, mode);
+    pool_codes code = alloc(bn, phys_sz, mode);
 
-    if(bn.is_null())    return {};
+    if(code != POOL_OK) return code;
 
     // DEBT: May need this to be if constexpr (or equivalent) - keep an eye on this
     if(rtto_proxied)
-        bn.block->template emplace_rtto_proxied<T>(std::forward<Args>(args)...);
+        bn->block->template emplace_rtto_proxied<T>(std::forward<Args>(args)...);
     else
-        bn.block->template emplace<T>(std::forward<Args>(args)...);
+        bn->block->template emplace<T>(std::forward<Args>(args)...);
 
-    return bn;
+    return code;
 }
 
 template <class Traits>
@@ -69,8 +69,11 @@ auto pool_ops<Traits>::construct(Args&&...args) -> bundle
     // DEBT: Effective but error prone accounting for various block sizing.  Probably
     // ought to move this plumbing into 'emplace'
     constexpr bytes block_sz = block::header_size(mode);
+    bundle bn;
 
-    return construct_ll<mode, T>(do_alias(sizeof(T) + block_sz.count()), std::forward<Args>(args)...);
+    construct_ll<mode, T>(&bn, do_alias(sizeof(T) + block_sz.count()), std::forward<Args>(args)...);
+
+    return bn;
 }
 
 

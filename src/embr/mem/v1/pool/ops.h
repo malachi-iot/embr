@@ -33,6 +33,14 @@ struct fragmentation_base
     candidate candidates[2];
 };
 
+// NOTE: Probably we want this up at dynamic_array level for its allocate calls, etc.
+enum pool_codes
+{
+    POOL_OK = 0,
+    POOL_NO_HANDLES,
+    POOL_NO_BLOCK
+};
+
 // TODO: Do 'concepts'
 // 23JAN26 MB Appears unavoidable to template it out to this level.  Was hoping CRTP wizardry would help us, but I don't
 // like an intermediate pool::ops with pointer/references out to the real classes.  That makes the optimizer work a lot
@@ -91,12 +99,20 @@ public:
     ESTD_CPP_CONSTEXPR(14) block* create_free_block(pos_type, handle_type prev, handle_type next);
 
     /// Low level alloc TBD docs
-    void alloc(const bundle&, pos_type found_sz, pos_type phys_sz, block::modes);
+    /// @return true on success, false if we're out of handles
+    bool alloc(const bundle&, pos_type found_sz, pos_type phys_sz, block::modes);
 
-    bundle alloc(pos_type phys_sz, block::modes mode);
+    pool_codes alloc(bundle* out, pos_type phys_sz, block::modes mode);
+    bundle alloc(pos_type phys_sz, block::modes mode)
+    {
+        bundle out;
+        // DEBT: Consumers still rely on this flowing back out to check for mem block failure
+        assert(alloc(&out, phys_sz, mode) != POOL_NO_HANDLES);
+        return out;
+    }
 
     template <block::modes mode, class T, class ...Args>
-    bundle construct_ll(pos_type sz, Args&&...);
+    pool_codes construct_ll(bundle* out, pos_type sz, Args&&...);
 
     template <block::modes mode, class T, class ...Args>
     bundle construct(Args&&...);
