@@ -45,7 +45,7 @@ static void battery(Pool& pool, int it, unsigned seed)
 
         fl1.invoke(5);
 
-        assert(6);
+        VERIFY(6);
     }
     {
         int counter1 = 0, counter2 = 0;
@@ -54,15 +54,13 @@ static void battery(Pool& pool, int it, unsigned seed)
 
         fl1 += [&](int)     { ++counter1; };
         fl1 += [&](int v)   { counter2 += v; };
-        // FIX: fl2.push_back dies.
-        /*
-        fl2.push_back([&](int) { ++counter1; });
-        */
+        // FIX: fl2.push_back dies.  Because currently we run out of handles
+        //fl2.push_back([&](int) { ++counter1; });
         fl1.invoke(it);
         fl2.invoke(it);
 
-        assert(counter1 == 1);
-        assert(counter2 == it);
+        VERIFY(counter1 == 1);
+        VERIFY(counter2 == it);
     }
 }
 
@@ -116,6 +114,8 @@ public:
     value_type push_back(F&& f)
     {
         value_type item{model_type::make(impl().pool_(), std::forward<F>(f))};
+        // FIX: Underlying 'grow by' auto-pads 32, which is OK for the time being but not OK
+        // for a fixed default
         base_type::push_back(item);
         return item;
     }
@@ -272,30 +272,43 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
     SECTION("funclist")
     {
         int counter = 0;
+        using type = funclist<void(int), pool_type>;
 
-        funclist<void(int), pool_type> fl(&pool);
+        type fl(&pool);
 
-        fl += [&](int v) { counter += v * 2; };
-        fl += [&](int v) { counter += v; };
+        SECTION("nominal")
+        {
+            fl += [&](int v) { counter += v * 2; };
+            fl += [&](int v) { counter += v; };
 
-        fl.invoke(5);
+            fl.invoke(5);
 
-        REQUIRE(counter == 15);
+            REQUIRE(counter == 15);
 
-        counter = 0;
+            counter = 0;
 
-        auto h = fl.push_back([&](int v) { counter += v; });
-        fl.invoke(2);
+            auto h = fl.push_back([&](int v) { counter += v; });
+            fl.invoke(2);
 
-        REQUIRE(counter == 8);
+            REQUIRE(counter == 8);
 
-        fl.erase(h);
+            fl.erase(h);
 
-        counter = 0;
+            counter = 0;
 
-        fl.invoke(2);
+            fl.invoke(2);
 
-        REQUIRE(counter == 6);
+            REQUIRE(counter == 6);
+        }
+        SECTION("push_back")
+        {
+            type fl2(&pool);
+
+            fl += [&](int)     { ++counter; };
+            fl += [&](int v)   { counter += v; };
+
+            fl2.push_back([&](int) { ++counter; });
+        }
     }
     SECTION("funclist: battery")
     {
