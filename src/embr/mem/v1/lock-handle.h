@@ -103,9 +103,9 @@ public:
     }
 
     template <class Pool>
-    void destroy(Pool& pool) const
+    void dealloc(Pool& pool) const
     {
-        pool.destroy(handle_);
+        pool.dealloc(handle_);
     }
 
     template <class Pool>

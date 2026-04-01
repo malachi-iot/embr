@@ -49,9 +49,11 @@ static void battery(Pool& pool, int it, unsigned seed)
         fl1.invoke(5);
 
         VERIFY(6);
+
+        //fl1.clear();
     }
 
-    // FIX: Scoping rules should reduce this back to 1
+    // FIX: Almost there, clear() just needs a little more TLC
     allocated_handles = count_allocated(ops.handles());
     VERIFY(allocated_handles == 4);
 
@@ -119,16 +121,22 @@ public:
     template <class ...Args2>
     constexpr explicit funclist(Args2&&...args) : base_type(std::forward<Args2>(args)...)  {}
 
-    ~funclist()
+    void clear()
     {
         pinned_type pinned(impl());
         Pool* p = impl().pool_();
 
         for(const value_type& f : pinned)
         {
-            // TBD
-            //f.destroy(*p);
+            f.dealloc(*p);
         }
+
+        //base_type::resize(0);
+    }
+
+    ~funclist()
+    {
+        //clear();
     }
 
     template <class F>
