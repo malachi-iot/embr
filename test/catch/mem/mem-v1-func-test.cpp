@@ -32,8 +32,11 @@ static void battery(Pool& pool, int it, unsigned seed)
 
     using namespace mem::detail::v1;
     std::mt19937 gen{seed}; // fixed seed: deterministic sequence
+    int allocated_handles = count_allocated(ops.handles());
 
     CAPTURE(it, seed);
+
+    VERIFY(allocated_handles == 1);
 
     {
         int counter1 = 0, counter2 = 0;
@@ -47,6 +50,11 @@ static void battery(Pool& pool, int it, unsigned seed)
 
         VERIFY(6);
     }
+
+    // FIX: Scoping rules should reduce this back to 1
+    allocated_handles = count_allocated(ops.handles());
+    VERIFY(allocated_handles == 4);
+
     {
         int counter1 = 0, counter2 = 0;
 
@@ -110,6 +118,18 @@ class funclist<void(Args...), Pool, pool> : protected embr::mem::v1::vector<mem:
 public:
     template <class ...Args2>
     constexpr explicit funclist(Args2&&...args) : base_type(std::forward<Args2>(args)...)  {}
+
+    ~funclist()
+    {
+        pinned_type pinned(impl());
+        Pool* p = impl().pool_();
+
+        for(const value_type& f : pinned)
+        {
+            // TBD
+            //f.destroy(*p);
+        }
+    }
 
     template <class F>
     value_type push_back(F&& f)
@@ -269,6 +289,24 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
         {
             //auto h1 = mem::v1::make_shared<mem::function<int(int)>>(pool, [](int v) { return v * 2; });
         }
+    }
+    SECTION("funclist: life cyce")
+    {
+        using type = funclist<void(int), pool_type>;
+
+        ops_type& ops = pool.ops();
+
+        auto count = [&] { return count_allocated(ops.handles()); };
+
+        REQUIRE(count() == 1);  // Just free block handle
+
+        {
+            type fl(&pool);
+
+            //fl += [](int) {};
+        }
+
+        REQUIRE(count() == 1);  // Just free block handle
     }
     SECTION("funclist")
     {

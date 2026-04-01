@@ -136,6 +136,12 @@ public:
     }
 };
 
+template <ESTD_CPP_CONCEPT(concepts::HandlesTraits) Traits>
+int count_allocated(const handles<Traits>& handles)
+{
+    return estd::distance(handles.cbegin(), handles.cend());
+}
+
 }}
 
 inline namespace v1 {

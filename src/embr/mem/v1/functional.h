@@ -27,6 +27,7 @@ typename Pool::handle_type make_model(Pool* pool, F&& f)
 }
 
 
+// Non-owning
 template <class ...Args, class Handle>
 class model<void(Args...), Handle> : public sparse_handle<typename estd::detail::function<void(Args...)>::model_base, Handle>
 {
@@ -59,6 +60,7 @@ public:
 };
 
 
+// Non-owning
 template <class R, class ...Args, class Handle>
 class model<R(Args...), Handle> : public sparse_handle<typename estd::detail::function<R(Args...)>::model_base, Handle>
 {
@@ -120,6 +122,7 @@ template <class F, class Pool>
 using nonowning_function = function<F, lock_handle<Pool>>;
 
 // A gc'd function/functor which doesn't itself track Pool*
+// This means it is non-owning similar to std::function_ref
 template <class F, class Pool>
 class sparse_function;
 

@@ -141,6 +141,26 @@ TEST_CASE("gc mem v1 vector", "[memory][gc][vector]")
 
         REQUIRE(vi.data() == ((char*)&vi) + sizeof(type));
     }
+    SECTION("vector: life cycle")
+    {
+        using vector_type = mem::vector<short, pool_type>;
+
+        ops_type& ops = pool.ops();
+
+        auto count = [&] { return count_allocated(ops.handles()); };
+
+        {
+            vector_type v(&pool);
+
+            REQUIRE(count() == 1);
+
+            v.push_back(1);
+
+            REQUIRE(count() == 2);
+        }
+
+        REQUIRE(count() == 1);
+    }
     SECTION("vector: short")
     {
         using vector_type = mem::vector<short, pool_type>;
@@ -278,6 +298,8 @@ TEST_CASE("gc mem v1 vector", "[memory][gc][vector]")
             REQUIRE(vector[1].value().counter() == 1);
             REQUIRE(vector[1]().moved_to_counter == 0);
             REQUIRE(vector[1]().moved_from_counter == 0);
+
+            REQUIRE(counter == 1);
         }
 
         REQUIRE(counter == 0);
