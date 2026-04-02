@@ -121,15 +121,19 @@ public:
         // Pinned isn't (and shouldn't be) smart enough to notice a null handle was used
         if(impl().is_allocated())
         {
-            // DEBT: pinned is convenient, but this would be more efficient with a manual lock/unlock
-            pinned_type pinned(impl());
+            control_type* control = impl().control_lock();
             Pool* p = impl().pool_();
 
-            for(const value_type& f : pinned)
+            for(const value_type& f : *control)
             {
                 f.dealloc(*p);
             }
 
+            impl().unlock();
+
+            // DEBT: Might be better to use a 'clear' from control_lock itself, we'd have
+            // to make size_ more writeable to do so.  Or better yet, call dealloc right away.
+            // Calling dealloc crashes things atm
             base_type::clear();
         }
     }
@@ -141,7 +145,7 @@ public:
     {
         value_type item{model_type::make(impl().pool_(), std::forward<F>(f))};
         // FIX: Underlying 'grow by' auto-pads 32, which is OK for the time being but not OK
-        // for a fixed default
+        // for a fixed default.  See https://github.com/malachi-iot/estdlib/issues/188
         base_type::push_back(item);
         return item;
     }

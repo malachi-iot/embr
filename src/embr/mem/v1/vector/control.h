@@ -4,6 +4,7 @@
 //#include <estd/type_traits.h>
 
 #include "../fwd.h"
+#include "../mixins.h"
 
 #include "fwd.h"
 
@@ -18,7 +19,7 @@ namespace detail { inline namespace v1 {
 // we have to lock here.  When adding inplace_vector https://github.com/malachi-iot/estdlib/issues/182
 // consider consolidating this guy, if by then he's ready for estd'ness
 template <class T, unsigned lock_bits>
-class vector_control
+class vector_control : public mixins::container<vector_control<T, lock_bits>, T>
 {
     template <class T2, class Pool, Pool* pool>
     friend class mem::detail::v1::vector;
