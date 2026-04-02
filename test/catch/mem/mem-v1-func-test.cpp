@@ -49,13 +49,10 @@ static void battery(Pool& pool, int it, unsigned seed)
         fl1.invoke(5);
 
         VERIFY(6);
-
-        //fl1.clear();
     }
 
-    // FIX: Almost there, clear() just needs a little more TLC
     allocated_handles = count_allocated(ops.handles());
-    VERIFY(allocated_handles == 4);
+    VERIFY(allocated_handles == 1);
 
     {
         int counter1 = 0, counter2 = 0;
@@ -64,13 +61,11 @@ static void battery(Pool& pool, int it, unsigned seed)
 
         fl1 += [&](int)     { ++counter1; };
         fl1 += [&](int v)   { counter2 += v; };
-        // FIX: fl2.push_back dies.  Because currently we run out of handles - but shouldn't
-        // (earlier scope fl1 didn't clear itself out)
-        //fl2.push_back([&](int) { ++counter1; });
+        fl2.push_back([&](int) { ++counter1; });
         fl1.invoke(it);
         fl2.invoke(it);
 
-        VERIFY(counter1 == 1);
+        VERIFY(counter1 == 2);
         VERIFY(counter2 == it);
     }
 }
@@ -123,21 +118,23 @@ public:
 
     void clear()
     {
-        pinned_type pinned(impl());
-        Pool* p = impl().pool_();
-
-        for(const value_type& f : pinned)
+        // Pinned isn't (and shouldn't be) smart enough to notice a null handle was used
+        if(impl().is_allocated())
         {
-            f.dealloc(*p);
+            // DEBT: pinned is convenient, but this would be more efficient with a manual lock/unlock
+            pinned_type pinned(impl());
+            Pool* p = impl().pool_();
+
+            for(const value_type& f : pinned)
+            {
+                f.dealloc(*p);
+            }
+
+            base_type::clear();
         }
-
-        //base_type::resize(0);
     }
 
-    ~funclist()
-    {
-        //clear();
-    }
+    ~funclist()     { clear(); }
 
     template <class F>
     value_type push_back(F&& f)
