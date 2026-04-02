@@ -112,33 +112,43 @@ class funclist<void(Args...), Pool, pool> : protected embr::mem::v1::vector<mem:
     using base_type::impl;
     using pinned_type = mem::v1::pinned<base_type>;
 
+    // TODO: This is designed to be a utility function, so put elsewhere
+    template <class F>
+    void foreach(F&& f)
+    {
+        control_type* control = impl().control_lock();
+        Pool* p = impl().pool_();
+
+        for(const value_type& v : *control) f(p, v);
+
+        impl().unlock();
+    }
+
+    void clear_ll()
+    {
+        foreach([&](Pool* p, const value_type& f) { f.dealloc(*p); });
+    }
+
 public:
     template <class ...Args2>
     constexpr explicit funclist(Args2&&...args) : base_type(std::forward<Args2>(args)...)  {}
 
     void clear()
     {
-        // Pinned isn't (and shouldn't be) smart enough to notice a null handle was used
         if(impl().is_allocated())
         {
-            control_type* control = impl().control_lock();
-            Pool* p = impl().pool_();
+            clear_ll();
 
-            for(const value_type& f : *control)
-            {
-                f.dealloc(*p);
-            }
-
-            impl().unlock();
-
-            // DEBT: Might be better to use a 'clear' from control_lock itself, we'd have
-            // to make size_ more writeable to do so.  Or better yet, call dealloc right away.
-            // Calling dealloc crashes things atm
-            base_type::clear();
+            impl().dealloc();
+            impl().reset();
         }
     }
 
-    ~funclist()     { clear(); }
+    ~funclist()
+    {
+        if(impl().is_allocated())
+            clear_ll();
+    }
 
     template <class F>
     value_type push_back(F&& f)
@@ -299,7 +309,7 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
             //auto h1 = mem::v1::make_shared<mem::function<int(int)>>(pool, [](int v) { return v * 2; });
         }
     }
-    SECTION("funclist: life cyce")
+    SECTION("funclist: life cycle")
     {
         using type = funclist<void(int), pool_type>;
 
