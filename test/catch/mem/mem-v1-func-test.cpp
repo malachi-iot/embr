@@ -103,10 +103,10 @@ class funclist<R(Args...), Pool, pool>
 template <class ...Args, class Pool, Pool* pool>
 class funclist<void(Args...), Pool, pool> :
     protected embr::mem::v1::vector<
-        mem::detail::sparse_function<void(Args...), Pool, estd::detail::impl::function_default>,
+        mem::detail::sparse_function<void(Args...), Pool, estd::detail::impl::function_virtual>,
         Pool, pool>
 {
-    using value_type = mem::detail::sparse_function<void(Args...), Pool, estd::detail::impl::function_default>;
+    using value_type = mem::detail::sparse_function<void(Args...), Pool, estd::detail::impl::function_virtual>;
     using base_type = embr::mem::v1::vector<value_type, Pool, pool>;
     using handle_type = typename Pool::handle_type;
    // using model_type = typename value_type::model;
@@ -245,6 +245,7 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
 
     using model_type = mem::detail::v1::model<int(int), handle_type>;
     using fn_type = mem::function<int(int), pool_type>;
+    using fn_virt_type = mem::function<int(int), pool_type, nullptr, estd::detail::impl::function_virtual>;
 
     SECTION("basic")
     {
@@ -259,6 +260,15 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
         SECTION("function")
         {
             fn_type f1(&pool, [](int v) { return v * 2; });
+        }
+        SECTION("function (virtual)")
+        {
+            fn_virt_type f1(&pool, [](int v) { return v * 2; });
+
+            // FIX: Not working
+            //int r = f1(5);
+
+            //REQUIRE(r == 10);
         }
     }
     SECTION("SideEffector")

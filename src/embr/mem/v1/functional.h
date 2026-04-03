@@ -172,11 +172,11 @@ struct innate_traits<mem::function<F, Pool, pool>>
 // DEBT: Consider always making him shared_handle.  Briefly did that, but it occurs that very tight constraint
 // environments may have shared counter disabled (see block_6).  Counterpoint is unique_handle behaves much more
 // like std::function
-template <class F, class Pool, Pool* pool>
+template <class F, class Pool, Pool* pool, template <class, estd::detail::impl::fn_options> class Impl>
 class function :
-    public detail::function<F, detail::v1::unique_handle<Pool, pool>>
+    public detail::function<F, detail::v1::unique_handle<Pool, pool>, Impl>
 {
-    using base_type = detail::function<F, detail::v1::unique_handle<Pool, pool>>;
+    using base_type = detail::function<F, detail::v1::unique_handle<Pool, pool>, Impl>;
     using typename base_type::model;
 
 public:

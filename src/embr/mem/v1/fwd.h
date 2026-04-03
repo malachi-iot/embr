@@ -1,5 +1,6 @@
 #pragma once
 
+#include <estd/functional.h>
 #include <estd/internal/units/base.h>
 #include <estd/internal/size.h>
 
@@ -111,7 +112,8 @@ class unique_handle;
 
 }
 
-template <class F, class Pool = void, Pool* pool = nullptr>
+template <class F, class Pool = void, Pool* pool = nullptr,
+    template <class, estd::detail::impl::fn_options> class Impl = estd::detail::impl::function_default>
 class function;
 
 }}
