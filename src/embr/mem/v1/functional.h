@@ -15,6 +15,8 @@ namespace embr { namespace mem {
 
 namespace detail { inline namespace v1 {
 
+// DEBT: Consider renaming to model_ref since it is non-owning (loosely similar to model_base) though _ref
+// implies self contained behavior.  Perhaps sparse_model?
 template <class F, class Handle,
     template <class, estd::detail::impl::fn_options> class Impl = estd::detail::impl::function_default>
 class model;
@@ -99,18 +101,20 @@ public:
     }
 };
 
-template <class F, class Base>
+template <class F, class Base,
+    template <class, estd::detail::impl::fn_options> class Impl = estd::detail::impl::function_default>
 class function;
 
 // DEBT: Should we do CRTP instead?
-template <class R, class ...Args, class Base>
-class function<R(Args...), Base> : public Base
+template <class R, class ...Args, class Base,
+    template <class, estd::detail::impl::fn_options> class Impl>
+class function<R(Args...), Base, Impl> : public Base
 {
     using base_type = Base;
 
 protected:
     using typename base_type::handle_type;
-    using model = detail::v1::model<R(Args...), handle_type>;
+    using model = detail::v1::model<R(Args...), handle_type, Impl>;
 
 public:
     template <class ...Args2>
@@ -127,11 +131,13 @@ using nonowning_function = function<F, lock_handle<Pool>>;
 
 // A gc'd function/functor which doesn't itself track Pool*
 // This means it is non-owning similar to std::function_ref
-template <class F, class Pool>
+template <class F, class Pool,
+    template <class, estd::detail::impl::fn_options> class Impl = estd::detail::impl::function_default>
 class sparse_function;
 
-template <class R, class ...Args, class Pool>
-class sparse_function<R(Args...), Pool> : public model<R(Args...), typename Pool::handle_type>
+template <class R, class ...Args, class Pool,
+    template <class, estd::detail::impl::fn_options> class Impl>
+class sparse_function<R(Args...), Pool, Impl> : public model<R(Args...), typename Pool::handle_type>
 {
     using base_type = model<R(Args...), typename Pool::handle_type>;
     //using typename base_type::handle_type;

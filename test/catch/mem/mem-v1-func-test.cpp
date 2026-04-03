@@ -101,12 +101,15 @@ class funclist<R(Args...), Pool, pool>
 };
 
 template <class ...Args, class Pool, Pool* pool>
-class funclist<void(Args...), Pool, pool> : protected embr::mem::v1::vector<mem::detail::sparse_function<void(Args...), Pool>, Pool, pool>
+class funclist<void(Args...), Pool, pool> :
+    protected embr::mem::v1::vector<
+        mem::detail::sparse_function<void(Args...), Pool, estd::detail::impl::function_default>,
+        Pool, pool>
 {
-    using value_type = mem::detail::sparse_function<void(Args...), Pool>;
+    using value_type = mem::detail::sparse_function<void(Args...), Pool, estd::detail::impl::function_default>;
     using base_type = embr::mem::v1::vector<value_type, Pool, pool>;
     using handle_type = typename Pool::handle_type;
-    using model_type = mem::detail::v1::model<void(Args...), handle_type>;
+   // using model_type = typename value_type::model;
     using typename base_type::pointer;
     using control_type = typename base_type::impl_type::control_type;
     using base_type::impl;
@@ -141,7 +144,7 @@ public:
     template <class F>
     value_type push_back(F&& f)
     {
-        value_type item{model_type::make(impl().pool_(), std::forward<F>(f))};
+        value_type item{value_type::make(impl().pool_(), std::forward<F>(f))};
         // FIX: Underlying 'grow by' auto-pads 32, which is OK for the time being but not OK
         // for a fixed default.  See https://github.com/malachi-iot/estdlib/issues/188
         base_type::push_back(item);
