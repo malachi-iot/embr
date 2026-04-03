@@ -23,6 +23,21 @@ inline namespace v1 {
 
 namespace concepts {
 
+template <class T>
+concept Pool =
+    detail::concepts::HandlesTraits<typename T::handles_traits> &&
+    requires(T t)
+{
+    typename T::handle_type;
+
+    t.lock(typename T::handle_type{});
+    t.unlock(typename T::handle_type{});
+
+    t.alloc(int{});
+    t.dealloc(typename T::handle_type{});
+    //t.construct();
+};
+
 }
 
 }

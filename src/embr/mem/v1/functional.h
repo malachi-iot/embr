@@ -7,6 +7,7 @@
 #include "traits.h"
 #endif
 
+#include "concepts.h"
 #include "fwd.h"
 #include "lock-handle.h"
 
@@ -14,10 +15,11 @@ namespace embr { namespace mem {
 
 namespace detail { inline namespace v1 {
 
-template <class F, class Handle>
+template <class F, class Handle,
+    template <class, estd::detail::impl::fn_options> class Impl = estd::detail::impl::function_default>
 class model;
 
-template <class R, class ...Args, class Pool, class F>
+template <class R, class ...Args, ESTD_CPP_CONCEPT(mem::concepts::Pool) Pool, class F>
 typename Pool::handle_type make_model(Pool* pool, F&& f)
 {
     using function_type = estd::detail::function<R(Args...)>;
@@ -28,11 +30,12 @@ typename Pool::handle_type make_model(Pool* pool, F&& f)
 
 
 // Non-owning
-template <class ...Args, class Handle>
-class model<void(Args...), Handle> : public sparse_handle<typename estd::detail::function<void(Args...)>::model_base, Handle>
+template <class ...Args, class Handle, template <class, estd::detail::impl::fn_options> class Impl>
+class model<void(Args...), Handle, Impl> : public sparse_handle<
+    typename estd::detail::v2::function<void(Args...), Impl>::model_base, Handle>
 {
 protected:
-    using function_type = estd::detail::function<void(Args...)>;
+    using function_type = estd::detail::v2::function<void(Args...), Impl>;
     using model_base = typename function_type::model_base;
     using base_type = sparse_handle<model_base, Handle>;
     using handle_type = Handle;
@@ -40,7 +43,7 @@ protected:
 public:
     explicit constexpr model(const handle_type& handle) : base_type{handle} {}
 
-    template <class Pool, class F>
+    template <ESTD_CPP_CONCEPT(mem::concepts::Pool) Pool, class F>
     constexpr static model make(Pool* pool, F&& f)
     {
         return model(make_model<void, Args...>(pool, std::forward<F>(f)));
@@ -48,7 +51,7 @@ public:
 
     // Remember, paradigm is top-level flattens to Args2...
     // Feels backwards.  See https://github.com/malachi-iot/estdlib/issues/186
-    template <class Pool, class ...Args2>
+    template <ESTD_CPP_CONCEPT(mem::concepts::Pool) Pool, class ...Args2>
     static void invoke(Pool* pool, handle_type h, Args2&&...args)
     {
         auto underlying = static_cast<model_base*>(pool->lock(h));
@@ -61,13 +64,14 @@ public:
 
 
 // Non-owning
-template <class R, class ...Args, class Handle>
-class model<R(Args...), Handle> : public sparse_handle<typename estd::detail::function<R(Args...)>::model_base, Handle>
+template <class R, class ...Args, class Handle, template <class, estd::detail::impl::fn_options> class Impl>
+class model<R(Args...), Handle, Impl> : public sparse_handle<
+    typename estd::detail::v2::function<R(Args...), Impl>::model_base, Handle>
 {
 protected:
-    using base_type = sparse_handle<typename estd::detail::function<R(Args...)>::model_base, Handle>;
-    using function_type = estd::detail::function<R(Args...)>;
+    using function_type = estd::detail::v2::function<R(Args...), Impl>;
     using model_base = typename function_type::model_base;
+    using base_type = sparse_handle<model_base, Handle>;
     using handle_type = Handle;
 
 public:

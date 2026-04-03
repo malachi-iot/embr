@@ -112,21 +112,9 @@ class funclist<void(Args...), Pool, pool> : protected embr::mem::v1::vector<mem:
     using base_type::impl;
     using pinned_type = mem::v1::pinned<base_type>;
 
-    // TODO: This is designed to be a utility function, so put elsewhere
-    template <class F>
-    void foreach(F&& f)
-    {
-        control_type* control = impl().control_lock();
-        Pool* p = impl().pool_();
-
-        for(const value_type& v : *control) f(p, v);
-
-        impl().unlock();
-    }
-
     void clear_ll()
     {
-        foreach([&](Pool* p, const value_type& f) { f.dealloc(*p); });
+        impl().foreach([&](Pool* p, const value_type& f) { f.dealloc(*p); });
     }
 
 public:

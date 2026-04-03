@@ -76,6 +76,20 @@ public:
     control_type* control_lock() { return base_type::lock(); }
     const control_type* control_lock() const { return base_type::lock(); }
 
+    ///
+    /// @param f functor accepting Pool* and specific value
+    template <class F>
+    void foreach(F&& f) const
+    {
+        const control_type* control = control_lock();
+        Pool* p = pool_();
+
+        for(const_reference v : *control) f(p, v);
+
+        base_type::unlock();
+    }
+
+
     constexpr explicit vector(Pool* p) : base_type(base_type::null, p)  {}
 
     vector(const vector& copy_from) :
