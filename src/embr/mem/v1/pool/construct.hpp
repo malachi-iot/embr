@@ -14,10 +14,12 @@ constexpr block_mode_enum::modes ascertain_block_mode()
 {
     using is_trivial = estd::is_trivially_constructible<T>;
     using is_rtto_base = estd::is_base_of<estd::internal::rtto_base::base, T>;
+    using is_virt_base = estd::is_base_of<estd::internal::rtto_base::virtual_base, T>;
     using modes = block_mode_enum::modes;
     return
         is_trivial::value ? modes::Trivial :
-            is_rtto_base::value ? modes::RttoBase : modes::RttoProxy;
+            is_rtto_base::value ? modes::RttoBase :
+                is_virt_base::value ? modes::RttoVirtual : modes::RttoProxy;
 
 }
 

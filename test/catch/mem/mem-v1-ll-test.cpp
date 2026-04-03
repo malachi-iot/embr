@@ -500,4 +500,10 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
 
         ops.unlock(bn_free.handle);
     }
+    SECTION("ascertain_block_mode")
+    {
+        block::modes mode = detail::ascertain_block_mode<RttoVirtSideEffector>();
+
+        REQUIRE(mode == detail::block_mode_enum::RttoVirtual);
+    }
 }
