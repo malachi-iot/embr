@@ -125,12 +125,26 @@ class sparse_handle : public sparse_handle<void, Handle>
 {
     using base_type = sparse_handle<void, Handle>;
 
+    // Not ready yet
+    template <class R, class F>
+    R guard_op_ll(estd::false_type, F&& f)
+    {
+        return f();
+    }
+
+    // Not ready yet
+    template <class, class F>
+    void guard_op_ll(estd::false_type, F&& f)
+    {
+        f();
+    }
+
 public:
     using handle_type = Handle;
 
     constexpr explicit sparse_handle(handle_type handle) : base_type{handle}   {}
 
-    template <class Pool>
+    template <ESTD_CPP_CONCEPT(mem::concepts::Pool) Pool>
     T* lock(Pool& pool) const
     {
         return static_cast<T*>(base_type::lock(pool));
