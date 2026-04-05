@@ -83,31 +83,6 @@ public:
     }
 };
 
-template <class F, class Base,
-    template <class, estd::detail::impl::fn_options> class Impl = estd::detail::impl::function_default>
-class function;
-
-// DEBT: Should we do CRTP instead?
-template <class R, class ...Args, class Base,
-    template <class, estd::detail::impl::fn_options> class Impl>
-class function<R(Args...), Base, Impl> : public Base
-{
-    using base_type = Base;
-
-protected:
-    using typename base_type::handle_type;
-    using model = detail::v1::model<R(Args...), handle_type, Impl>;
-
-public:
-    template <class ...Args2>
-    constexpr explicit function(Args2&&...args) : base_type(std::forward<Args2>(args)...) {}
-
-    constexpr R operator()(Args&&...args) const
-    {
-        return model::invoke(base_type::pool_(), base_type::handle_, std::forward<Args>(args)...);
-    }
-};
-
 template <class F, class Pool>
 using nonowning_function = function<F, lock_handle<Pool>>;
 
@@ -154,16 +129,17 @@ struct innate_traits<mem::function<F, Pool, pool>>
 // DEBT: Consider always making him shared_handle.  Briefly did that, but it occurs that very tight constraint
 // environments may have shared counter disabled (see block_6).  Counterpoint is unique_handle behaves much more
 // like std::function
-template <class F, class Pool, Pool* pool, template <class, estd::detail::impl::fn_options> class Impl>
-class function :
-    public detail::function<F, detail::v1::unique_handle<Pool, pool>, Impl>
+template <class R, class ...Args, class Pool, Pool* pool,
+    template <class, estd::detail::impl::fn_options> class Impl>
+class function<R(Args...), Pool, pool, Impl> : public detail::v1::unique_handle<Pool, pool>
 {
-    using base_type = detail::function<F, detail::v1::unique_handle<Pool, pool>, Impl>;
+    using base_type = detail::v1::unique_handle<Pool, pool>;
+    using typename base_type::handle_type;
 
 #if UNIT_TESTING
 public:
 #endif
-    using typename base_type::model;
+    using model = detail::v1::model<R(Args...), handle_type, Impl>;
 
 public:
     constexpr function(Pool* pool2, estd::nullptr_t) :
@@ -181,6 +157,11 @@ public:
         base_type(model::make(pool, std::forward<F2>(f)))
     {
         static_assert(pool != nullptr);
+    }
+
+    constexpr R operator()(Args&&...args) const
+    {
+        return model::invoke(base_type::pool_(), base_type::handle_, std::forward<Args>(args)...);
     }
 };
 

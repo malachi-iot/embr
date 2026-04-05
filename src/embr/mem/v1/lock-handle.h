@@ -139,6 +139,14 @@ class sparse_handle : public sparse_handle<void, Handle>
         f();
     }
 
+protected:
+    template <class F>
+    estd::invoke_result_t<F> guard_op(F&& f)
+    {
+        using result_type = estd::invoke_result_t<F>;
+        return guard_op_ll<result_type>(estd::is_void<result_type>{}, std::forward<F>(f));
+    }
+
 public:
     using handle_type = Handle;
 
