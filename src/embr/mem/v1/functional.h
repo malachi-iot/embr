@@ -21,17 +21,8 @@ template <class F, class Handle,
     template <class, estd::detail::impl::fn_options> class Impl = estd::detail::impl::function_default>
 class model;
 
-template <class R, class ...Args, ESTD_CPP_CONCEPT(mem::concepts::Pool) Pool, class F>
-typename Pool::handle_type make_model(Pool* pool, F&& f)
-{
-    using function_type = estd::detail::function<R(Args...)>;
-    using model_type = typename function_type::template model<F>;
-
-    return pool->template construct<model_type>(std::forward<F>(f));
-}
-
-
 // Non-owning
+// Deriving from sparse_handle largely a formality - we treat this as a static struct
 template <class R, class ...Args, class Handle, template <class, estd::detail::impl::fn_options> class Impl>
 class model<R(Args...), Handle, Impl> : public sparse_handle<
     typename estd::detail::v2::function<R(Args...), Impl>::model_base, Handle>
@@ -69,10 +60,12 @@ protected:
 public:
     explicit constexpr model(const handle_type& handle) : base_type{handle} {}
 
-    template <class Pool, class F>
+    template <ESTD_CPP_CONCEPT(mem::concepts::Pool) Pool, class F>
     constexpr static model make(Pool* pool, F&& f)
     {
-        return model(make_model<R, Args...>(pool, std::forward<F>(f)));
+        using model_type = typename function_type::template model<F>;
+
+        return model(pool->template construct<model_type>(std::forward<F>(f)));
     }
 
 

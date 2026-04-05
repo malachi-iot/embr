@@ -269,10 +269,9 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
         {
             fn_virt_type f1(&pool, [](int v) { return v * 2; });
 
-            // FIX: Not working, f1 thinks it's an RttoBase
-            //int r = f1(5);
+            int r = f1(5);
 
-            //REQUIRE(r == 10);
+            REQUIRE(r == 10);
         }
     }
     SECTION("SideEffector")
