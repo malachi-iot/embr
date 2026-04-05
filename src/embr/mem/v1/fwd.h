@@ -71,6 +71,10 @@ class shared_handle;
 template <class T, class Pool>
 class sparse_handle;
 
+template <class F, class Handle,
+    template <class, estd::detail::impl::fn_options> class Impl = estd::detail::impl::function_default>
+class sparse_model;
+
 template <class Pool, Pool* pool>
 class unique_handle;
 

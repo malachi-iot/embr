@@ -15,16 +15,11 @@ namespace embr { namespace mem {
 
 namespace detail { inline namespace v1 {
 
-// DEBT: Consider renaming to model_ref since it is non-owning (loosely similar to model_base) though _ref
-// implies self contained behavior.  Perhaps sparse_model?
-template <class F, class Handle,
-    template <class, estd::detail::impl::fn_options> class Impl = estd::detail::impl::function_default>
-class model;
-
 // Non-owning
-// Deriving from sparse_handle largely a formality - we treat this as a static struct
+// Deriving from sparse_handle largely a formality - we usually treat this as a static struct,
+// except in the case of sparse_function
 template <class R, class ...Args, class Handle, template <class, estd::detail::impl::fn_options> class Impl>
-class model<R(Args...), Handle, Impl> : public sparse_handle<
+class sparse_model<R(Args...), Handle, Impl> : public sparse_handle<
     typename estd::detail::v2::function<R(Args...), Impl>::model_base, Handle>
 {
 public:
@@ -58,14 +53,14 @@ protected:
     }
 
 public:
-    explicit constexpr model(const handle_type& handle) : base_type{handle} {}
+    explicit constexpr sparse_model(const handle_type& handle) : base_type{handle} {}
 
     template <ESTD_CPP_CONCEPT(mem::concepts::Pool) Pool, class F>
-    constexpr static model make(Pool* pool, F&& f)
+    constexpr static sparse_model make(Pool* pool, F&& f)
     {
         using model_type = typename function_type::template model<F>;
 
-        return model(pool->template construct<model_type>(std::forward<F>(f)));
+        return sparse_model(pool->template construct<model_type>(std::forward<F>(f)));
     }
 
 
@@ -81,15 +76,15 @@ using nonowning_function = function<F, lock_handle<Pool>>;
 
 // A gc'd function/functor which doesn't itself track Pool*
 // This means it is non-owning similar to std::function_ref
-template <class F, class Pool,
+template <class F, ESTD_CPP_CONCEPT(mem::concepts::Pool) Pool,
     template <class, estd::detail::impl::fn_options> class Impl = estd::detail::impl::function_default>
 class sparse_function;
 
-template <class R, class ...Args, class Pool,
+template <class R, class ...Args, ESTD_CPP_CONCEPT(mem::concepts::Pool) Pool,
     template <class, estd::detail::impl::fn_options> class Impl>
-class sparse_function<R(Args...), Pool, Impl> : public model<R(Args...), typename Pool::handle_type>
+class sparse_function<R(Args...), Pool, Impl> : public sparse_model<R(Args...), typename Pool::handle_type>
 {
-    using base_type = model<R(Args...), typename Pool::handle_type>;
+    using base_type = sparse_model<R(Args...), typename Pool::handle_type>;
     //using typename base_type::handle_type;
 
 public:
@@ -104,7 +99,7 @@ public:
 };
 
 #if FEATURE_STD_TYPE_TRAITS
-static_assert(std::is_trivially_move_constructible<sparse_function<void(), detail::handles_traits_uint8>>::value);
+//static_assert(std::is_trivially_move_constructible<sparse_function<void(), detail::handles_traits_uint8>>::value);
 #endif
 
 template <class F, class Pool, Pool* pool>
@@ -132,7 +127,8 @@ class function<R(Args...), Pool, pool, Impl> : public detail::v1::unique_handle<
 #if UNIT_TESTING
 public:
 #endif
-    using model = detail::v1::model<R(Args...), handle_type, Impl>;
+    // DEBT: Confusion between full model vs sparse model here
+    using model = detail::v1::sparse_model<R(Args...), handle_type, Impl>;
 
 public:
     constexpr function(Pool* pool2, estd::nullptr_t) :

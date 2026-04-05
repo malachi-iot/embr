@@ -213,7 +213,7 @@ class shared_handle<estd::detail::function<R(Args...)>, Pool, pool> :
     using base_type = detail::shared_handle<Pool, pool>;
     using function_type = estd::detail::function<R(Args...)>;
     using handle_type = typename Pool::handle_type;
-    using model = detail::v1::model<R(Args...), handle_type>;
+    using model = detail::v1::sparse_model<R(Args...), handle_type>;
 
 public:
     shared_handle(handle_type h, Pool* p) : base_type(h, p) {}
@@ -241,11 +241,14 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
     using page_type = pool_type::page_type;
     using handle_type = pool_type::handle_type;
     using lock_handle = mem::detail::v1::lock_handle<pool_type>;
+    using bytes = embr::mem::bytes_unit<unsigned>;
     pool_type pool;
+    ops_type& ops = pool.ops();
 
-    using model_type = mem::detail::v1::model<int(int), handle_type>;
     using fn_type = mem::function<int(int), pool_type>;
+    using model_type = fn_type::model;
     using fn_virt_type = mem::function<int(int), pool_type, nullptr, estd::detail::impl::function_virtual>;
+    using virt_model_type = fn_virt_type::model;
 
     static_assert(std::is_base_of<
         estd::internal::rtto_base::virtual_base,
@@ -258,6 +261,26 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
             model_type h1 = model_type::make(&pool, [](int v) { return v * 2; });
 
             int r = model_type::invoke(&pool, h1.handle(), 5);
+
+            bytes sz = ops.logical_size(ops.get_bundle(h1.handle()));
+
+            // Due to https://github.com/malachi-iot/estdlib/issues/189 even non-capturing lambda
+            // takes up a minimal amount of space (thus +aliasing)
+            REQUIRE(sz == sizeof(void*) * 2 + ops_type::aliasing);
+
+            REQUIRE(r == 10);
+        }
+        SECTION("model (virtual)")
+        {
+            auto h1 = virt_model_type::make(&pool, [](int v) { return v * 2; });
+
+            int r = virt_model_type::invoke(&pool, h1.handle(), 5);
+
+            bytes sz = ops.logical_size(ops.get_bundle(h1.handle()));
+
+            // Due to https://github.com/malachi-iot/estdlib/issues/189 even non-capturing lambda
+            // takes up a minimal amount of space (thus +aliasing)
+            REQUIRE(sz == sizeof(void*) + ops_type::aliasing);
 
             REQUIRE(r == 10);
         }
@@ -316,8 +339,6 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
     SECTION("funclist: life cycle")
     {
         using type = funclist<void(int), pool_type>;
-
-        ops_type& ops = pool.ops();
 
         auto count = [&] { return count_allocated(ops.handles()); };
 
