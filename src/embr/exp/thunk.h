@@ -26,7 +26,7 @@ class ThunkBase : protected Mutex
     // after invocation
     using function_type = estd::detail::v2::function<
         void(void),
-        estd::detail::impl::function_fnptr2_opt>;
+        estd::detail::impl::function_fnptr2_oneshot>;
     using model_base = typename function_type::model_base;
 
     // DEBT: It's possible an inline function flavor of this could do away
@@ -161,7 +161,7 @@ public:
         auto model = (model_base*)item->model;
 
         // Models are directly invocable just like their function owners.
-        // fnptr2_opt also calls functor destructor.
+        // fnptr2_oneshot also calls functor destructor.
         (*model)();
 
         mutex.lock_pop();

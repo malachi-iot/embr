@@ -28,8 +28,8 @@ class storage;
 template <class Traits>
 class pool_ops;
 
-template <class T, class PoolTraits, class HandlesTraits, class ...Args>
-typename HandlesTraits::handle_type construct(storage<PoolTraits>& p, handles<HandlesTraits>& h, Args&&...args);
+template <class T, class Traits, class ...Args>
+typename pool_ops<Traits>::handle_type construct(pool_ops<Traits>& h, Args&&...args);
 
 template <class Derived>
 class pool_crtp;

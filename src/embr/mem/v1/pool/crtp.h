@@ -163,7 +163,7 @@ public:
     template <class T, class ...Args, class Derived2 = Derived>
     typename Derived2::handle_type construct(Args&&...args)
     {
-        return detail::construct<T>(OPS.storage_, OPS.handles_, std::forward<Args>(args)...);
+        return detail::construct<T>(OPS, std::forward<Args>(args)...);
     }
 
     // Only for trivial mode, use construct otherwise

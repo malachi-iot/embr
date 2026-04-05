@@ -24,24 +24,12 @@ constexpr block_mode_enum::modes ascertain_block_mode()
 }
 
 
-// UNTESTED
 template <class T, class Traits, class ...Args>
-typename Traits::handles_traits::handle_type construct(pool_ops<Traits>& ops, Args&&...args)
+typename pool_ops<Traits>::handle_type construct(pool_ops<Traits>& ops, Args&&...args)
 {
     constexpr block_mode_enum::modes mode = ascertain_block_mode<T>();
 
     return ops.template construct<mode, T>(std::forward<Args>(args)...).handle;
-}
-
-
-template <class T, class PoolTraits, class HandlesTraits, class ...Args>
-typename HandlesTraits::handle_type construct(storage<PoolTraits>& p, handles<HandlesTraits>& h, Args&&...args)
-{
-    constexpr block_mode_enum::modes mode = ascertain_block_mode<T>();
-    using traits = pool_ops_val_traits<storage<PoolTraits>&, handles<HandlesTraits>&>;
-    //return construct<T>(pool_ops<traits>{p, h}, std::forward<Args>(args)...);
-
-    return pool_ops<traits>{p, h}.template construct<mode, T>(std::forward<Args>(args)...).handle;
 }
 
 

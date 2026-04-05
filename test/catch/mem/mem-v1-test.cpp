@@ -194,11 +194,8 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
             }
             SECTION("construct (standalone)")
             {
-                ops_type::storage_type& storage = const_cast<ops_type::storage_type&>(op.storage());
-                ops_type::handles_type& handles = const_cast<ops_type::handles_type&>(op.handles());
-
                 int counter = 0;
-                int h = detail::construct<SideEffector>(storage, handles, &counter);
+                int h = detail::construct<SideEffector>(op, &counter);
 
                 REQUIRE(counter == 1);
 
