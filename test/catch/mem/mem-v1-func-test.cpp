@@ -247,6 +247,10 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
     using fn_type = mem::function<int(int), pool_type>;
     using fn_virt_type = mem::function<int(int), pool_type, nullptr, estd::detail::impl::function_virtual>;
 
+    static_assert(std::is_base_of<
+        estd::internal::rtto_base::virtual_base,
+        fn_virt_type::model::function_type::model_base>::value);
+
     SECTION("basic")
     {
         SECTION("model")

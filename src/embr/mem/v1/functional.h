@@ -70,8 +70,9 @@ template <class R, class ...Args, class Handle, template <class, estd::detail::i
 class model<R(Args...), Handle, Impl> : public sparse_handle<
     typename estd::detail::v2::function<R(Args...), Impl>::model_base, Handle>
 {
-protected:
+public:
     using function_type = estd::detail::v2::function<R(Args...), Impl>;
+protected:
     using model_base = typename function_type::model_base;
     using base_type = sparse_handle<model_base, Handle>;
     using handle_type = Handle;
@@ -177,6 +178,10 @@ class function :
     public detail::function<F, detail::v1::unique_handle<Pool, pool>, Impl>
 {
     using base_type = detail::function<F, detail::v1::unique_handle<Pool, pool>, Impl>;
+
+#if UNIT_TESTING
+public:
+#endif
     using typename base_type::model;
 
 public:
