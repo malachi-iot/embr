@@ -246,18 +246,20 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
     ops_type& ops = pool.ops();
 
     using fn_type = mem::function<int(int), pool_type>;
-    using model_type = fn_type::model;
+    using model_type = fn_type::sparse_model;
     using fn_virt_type = mem::function<int(int), pool_type, nullptr, estd::detail::impl::function_virtual>;
-    using virt_model_type = fn_virt_type::model;
+    using virt_model_type = fn_virt_type::sparse_model;
 
     static_assert(std::is_base_of<
         estd::internal::rtto_base::virtual_base,
-        fn_virt_type::model::function_type::model_base>::value);
+        virt_model_type::function_type::model_base>::value);
 
     SECTION("basic")
     {
         SECTION("model")
         {
+            using function_type = model_type::function_type;
+
             model_type h1 = model_type::make(&pool, [](int v) { return v * 2; });
 
             int r = model_type::invoke(&pool, h1.handle(), 5);
@@ -266,7 +268,7 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
 
             // Due to https://github.com/malachi-iot/estdlib/issues/189 even non-capturing lambda
             // takes up a minimal amount of space (thus +aliasing)
-            REQUIRE(sz == sizeof(void*) * 2 + ops_type::aliasing);
+            REQUIRE(sz == sizeof(function_type::model_base) + ops_type::aliasing);
 
             REQUIRE(r == 10);
         }
@@ -278,9 +280,7 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
 
             bytes sz = ops.logical_size(ops.get_bundle(h1.handle()));
 
-            // Due to https://github.com/malachi-iot/estdlib/issues/189 even non-capturing lambda
-            // takes up a minimal amount of space (thus +aliasing)
-            REQUIRE(sz == sizeof(void*) + ops_type::aliasing);
+            REQUIRE(sz == sizeof(estd::internal::rtto_base::virtual_base));
 
             REQUIRE(r == 10);
         }

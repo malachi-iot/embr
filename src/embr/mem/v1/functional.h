@@ -127,8 +127,7 @@ class function<R(Args...), Pool, pool, Impl> : public detail::v1::unique_handle<
 #if UNIT_TESTING
 public:
 #endif
-    // DEBT: Confusion between full model vs sparse model here
-    using model = detail::v1::sparse_model<R(Args...), handle_type, Impl>;
+    using sparse_model = detail::v1::sparse_model<R(Args...), handle_type, Impl>;
 
 public:
     constexpr function(Pool* pool2, estd::nullptr_t) :
@@ -137,20 +136,20 @@ public:
 
     template <class F2>
     constexpr function(Pool* pool2, F2&& f) :
-        base_type(model::make(pool2, std::forward<F2>(f)).handle(), pool2)
+        base_type(sparse_model::make(pool2, std::forward<F2>(f)).handle(), pool2)
     {
     }
 
     template <class F2>
     constexpr explicit function(F2&& f) :   // NOLINT
-        base_type(model::make(pool, std::forward<F2>(f)))
+        base_type(sparse_model::make(pool, std::forward<F2>(f)))
     {
         static_assert(pool != nullptr);
     }
 
     constexpr R operator()(Args&&...args) const
     {
-        return model::invoke(base_type::pool_(), base_type::handle_, std::forward<Args>(args)...);
+        return sparse_model::invoke(base_type::pool_(), base_type::handle_, std::forward<Args>(args)...);
     }
 };
 
