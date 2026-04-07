@@ -6,6 +6,7 @@
 #include "../../../mem/v1/shared-handle.h"
 #include "../../../mem/v1/unique-handle.h"
 
+#include "fwd.h"
 
 namespace embr { namespace mem { namespace freertos { inline namespace v1 {
 
@@ -52,10 +53,11 @@ shared_handle<T> make_shared(Args&&...args)
     return shared_handle<T>{ global_pool.template construct<T>(std::forward<Args>(args)...) };
 }
 
-template <class F>
-using function = mem::function<F, global_pool_type, &global_pool>;
+template <class F,
+    template <class, estd::detail::impl::fn_options> class Impl = estd::detail::impl::function_virtual>
+using function = mem::function<F, global_pool_type, &global_pool, Impl>;
 
 static_assert(sizeof(void*) >= sizeof(shared_handle<int[32]>));
 #endif
 
-}}}}
+}}}}    // embr::mem:freertos::inline v1

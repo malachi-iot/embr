@@ -142,7 +142,7 @@ public:
 
     template <class F2>
     constexpr explicit function(F2&& f) :   // NOLINT
-        base_type(sparse_model::make(pool, std::forward<F2>(f)))
+        base_type(sparse_model::make(pool, std::forward<F2>(f)).handle())
     {
         static_assert(pool != nullptr);
     }
