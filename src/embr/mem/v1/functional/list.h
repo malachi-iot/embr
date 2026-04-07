@@ -15,6 +15,62 @@ class funclist<R(Args...), Pool, pool>
     static_assert(false, "Must have void return signature");
 };
 
+// mimics what Boost::signals2::scoped_connection does
+// DEBT: isolate in a signals namespace or similar
+template <class Pool, Pool* pool>
+class connection
+{
+protected:
+    using handle_type = typename Pool::handle_type;
+
+    detail::lock_handle<Pool, pool> list_handle_;
+    detail::sparse_handle<void, handle_type> func_handle_;
+
+    using control_type = detail::vector_control<handle_type>;
+    using iterator = typename control_type::const_iterator;
+
+    control_type* lock()
+    {
+        (control_type*) list_handle_.lock();
+    }
+
+    void unlock() { list_handle_.unlock(); }
+
+public:
+    // NOT READY YET
+    // Likely doesn't compile
+    // Idea is to opportunistically cast to control_type, presuming sparse_function is trivially 1:1 with handle_type.
+    // With that we then do a trivial erase on the funclist control vector, then manually destroy func_handle - in
+    // essence treating him like a unique_ptr which is correct being that funclist is the owner of the functions in it
+    // TODO: Put a static_assert somewhere to ensure above presumption
+    void remove()
+    {
+        control_type* control = lock();
+
+        iterator found = estd::find_if(
+            control->begin(), control->end(),
+            [&](iterator it) { return *it == func_handle_.handle(); });
+
+        if(found != control->end())
+        {
+            control->erase(found);
+            func_handle_.destroy(list_handle_.pool_());
+        }
+
+        unlock();
+    }
+};
+
+// mimics what Boost::signals2::scoped_connection does
+// DEBT: isolate in a signals namespace or similar
+template <class Pool, Pool* pool>
+class scoped_connection : public connection<Pool, pool>
+{
+    using base_type = connection<Pool, pool>;
+
+public:
+};
+
 template <class ...Args, class Pool, Pool* pool>
 class funclist<void(Args...), Pool, pool> :
     protected vector<

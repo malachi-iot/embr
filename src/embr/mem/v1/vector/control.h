@@ -19,7 +19,9 @@ namespace detail { inline namespace v1 {
 // we have to lock here.  When adding inplace_vector https://github.com/malachi-iot/estdlib/issues/182
 // consider consolidating this guy, if by then he's ready for estd'ness
 template <class T, unsigned lock_bits>
-class vector_control : public mixins::container<vector_control<T, lock_bits>, T>
+class vector_control :
+    public mixins::container<vector_control<T, lock_bits>, T>,
+    public mixins::vector_erase<vector_control<T, lock_bits>, T>
 {
     template <class T2, class Pool, Pool* pool>
     friend class mem::detail::v1::vector;
@@ -31,6 +33,9 @@ public:
     using size_type = unsigned;
 
     ESTD_CPP_STD_VALUE_TYPE(T)
+
+    using iterator = pointer;
+    using const_iterator = const_pointer;
 
     pointer data() { return reinterpret_cast<pointer>(this + 1); }
     const_pointer data() const { return reinterpret_cast<const_pointer>(this + 1); }
@@ -84,6 +89,14 @@ private:
 public:
 
     constexpr size_type size() const { return size_; }
+
+    // Limited version of resize, can only shrink
+    void resize(size_type count)
+    {
+        assert(count <= size_);
+
+        size_ = count;
+    }
 };
 
 

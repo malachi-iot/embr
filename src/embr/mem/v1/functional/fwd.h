@@ -1,5 +1,8 @@
 #pragma once
 
+#include <estd/functional.h>
+
+#include "../concepts.h"
 #include "../pool/fwd.h"
 
 namespace embr { namespace mem {

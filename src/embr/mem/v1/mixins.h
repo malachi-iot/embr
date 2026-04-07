@@ -8,6 +8,7 @@
 namespace embr { namespace mem { namespace mixins {
 
 // Span-esque
+// Slight overlap with std::ranges::range<T> concept
 template <class Derived, class T>
 class container
 {
@@ -80,7 +81,7 @@ public:
 };
 
 
-// EXPERIMENTAL, NOT USED
+// EXPERIMENTAL
 template <class Derived, class T>
 class vector_erase
 {
@@ -95,6 +96,7 @@ public:
         auto self = static_cast<const Derived*>(this);
         // UNTESTED
         std::move(pos + 1, self->end(), pos);
+        self->resize(self->size() - 1);
     }
 };
 
