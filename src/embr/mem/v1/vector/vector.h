@@ -89,7 +89,7 @@ public:
         base_type::unlock();
     }
 
-
+    constexpr explicit vector() : base_type(base_type::null) {}
     constexpr explicit vector(Pool* p) : base_type(base_type::null, p)  {}
 
     vector(const vector& copy_from) :

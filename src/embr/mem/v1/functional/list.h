@@ -17,12 +17,12 @@ class funclist<R(Args...), Pool, pool>
 
 template <class ...Args, class Pool, Pool* pool>
 class funclist<void(Args...), Pool, pool> :
-    protected embr::mem::v1::vector<
-        mem::detail::sparse_function<void(Args...), Pool, estd::detail::impl::function_virtual>,
+    protected vector<
+        detail::v1::sparse_function<void(Args...), Pool, estd::detail::impl::function_virtual>,
         Pool, pool>
 {
-    using value_type = mem::detail::sparse_function<void(Args...), Pool, estd::detail::impl::function_virtual>;
-    using base_type = embr::mem::v1::vector<value_type, Pool, pool>;
+    using value_type = detail::v1::sparse_function<void(Args...), Pool, estd::detail::impl::function_virtual>;
+    using base_type = vector<value_type, Pool, pool>;
     using handle_type = typename Pool::handle_type;
     // using model_type = typename value_type::model;
     using typename base_type::pointer;

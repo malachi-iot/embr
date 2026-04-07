@@ -20,10 +20,10 @@ protected:
     using base_type::ops;
 
 public:
-    constexpr explicit unique_handle(handle_type handle, Pool* p = nullptr) :
-        base_type(handle, p)
-    {
-    }
+    template <class ...Args>
+    constexpr explicit unique_handle(Args&&...args) :
+        base_type(std::forward<Args>(args)...)
+    {}
 
     unique_handle(const unique_handle&) = delete;
 

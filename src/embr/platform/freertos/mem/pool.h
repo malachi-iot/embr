@@ -27,21 +27,7 @@ public:
 
 }
 
-// From IDF (TBD)
-#if CONFIG_EMBR_GLOBAL_GC_STORAGE_SZ
-#endif
-
-#ifndef FEATURE_EMBR_GLOBAL_GC
-#define FEATURE_EMBR_GLOBAL_GC 1
-#define EMBR_GLOBAL_GC_STORAGE_SIZE 512
-#define EMBR_GLOBAL_GC_HANDLE_SIZE 8
-#endif
-
-
 #if FEATURE_EMBR_GLOBAL_GC
-using global_pool_type = freertos::layer1::pool<EMBR_GLOBAL_GC_STORAGE_SIZE, EMBR_GLOBAL_GC_HANDLE_SIZE>;
-extern global_pool_type global_pool;
-
 template <class T>
 using shared_handle = shared_handle<T, global_pool_type, &global_pool>;
 
@@ -52,10 +38,6 @@ shared_handle<T> make_shared(Args&&...args)
 {
     return shared_handle<T>{ global_pool.template construct<T>(std::forward<Args>(args)...) };
 }
-
-template <class F,
-    template <class, estd::detail::impl::fn_options> class Impl = estd::detail::impl::function_virtual>
-using function = mem::function<F, global_pool_type, &global_pool, Impl>;
 
 static_assert(sizeof(void*) >= sizeof(shared_handle<int[32]>));
 #endif

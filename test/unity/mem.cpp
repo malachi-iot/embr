@@ -6,6 +6,7 @@
 #include <embr/platform/freertos/mem/pool.hpp>
 
 #include <embr/mem/v1/functional.h>
+#include <embr/mem/v1/functional/list.h>
 #include <embr/mem/v1/shared-handle.h>
 
 #include "../catch/mem/test-mem-data.h"
@@ -25,6 +26,7 @@ static void test_mem_gc_global()
     static_assert(sizeof(shared_handle<int>) <= sizeof(int));
     static_assert(sizeof(lock_handle[4]) == 4);
 
+    // Not implemented yet, but probably needed to rectify below DEBT
     pool.init();
 
     // DEBT: Watch out, global_pool initializes its mutex in an undefined way, which can
@@ -63,6 +65,34 @@ static void test_mem_gc_global()
     pool.dealloc(h);
 
     pool.gc();
+
+    // TODO: Assert that we have full memory free again here
+}
+
+static void test_mem_gc_global_vector()
+{
+    using namespace embr::mem::freertos;
+
+    vector<int> v1;
+
+    v1.push_back(5);
+
+    TEST_ASSERT_EQUAL(1, v1.size());
+}
+
+static void test_mem_gc_global_funclist()
+{
+    using namespace embr::mem::freertos;
+
+    int counter = 0;
+
+    funclist<void(int)> fl1;
+
+    fl1 += [&](int v){ counter += v; };
+
+    fl1.invoke(5);
+
+    TEST_ASSERT_EQUAL(5, counter);
 }
 #endif
 
@@ -116,6 +146,8 @@ void test_mem_gc()
 {
 #if FEATURE_EMBR_GLOBAL_GC
     RUN_TEST(test_mem_gc_global);
+    RUN_TEST(test_mem_gc_global_funclist);
+    RUN_TEST(test_mem_gc_global_vector);
 #endif
     RUN_TEST(test_mem_gc_base);
     RUN_TEST(test_mem_gc_shared);
