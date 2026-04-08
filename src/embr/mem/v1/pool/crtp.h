@@ -101,6 +101,8 @@ protected:
 public:
     using mutex_type = Mutex;
 
+    constexpr mutex_type mutex() const { return mutex_; }
+
     template <class Handle>
     void* lock(Handle h)
     {
@@ -158,7 +160,9 @@ template <class Derived>
 class pool_mutex_crtp<Derived> : public pool_crtp<Derived>
 {
 public:
-    using mutex_type = void;
+    using mutex_type = embr::internal::noop_mutex;
+
+    constexpr static mutex_type mutex() { return {}; }
 
     template <class T, class ...Args, class Derived2 = Derived>
     typename Derived2::handle_type construct(Args&&...args)

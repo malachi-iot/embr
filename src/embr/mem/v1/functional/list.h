@@ -3,7 +3,6 @@
 #include "../fwd.h"
 #include "../functional.h"
 #include "../vector.h"
-#include "../../../internal/mutex.h"
 
 #include "fwd.h"
 
@@ -31,7 +30,7 @@ protected:
 
     control_type* lock()
     {
-        (control_type*) list_handle_.lock();
+        return (control_type*) list_handle_.lock();
     }
 
     void unlock() { list_handle_.unlock(); }
@@ -153,17 +152,18 @@ public:
     void invoke(Args2...args)
     {
         using impl_type = mem::detail::v1::vector<value_type, Pool, pool>;
-        const impl_type& impl = this->impl();
-        pointer v = base_type::lock();
+        impl_type& impl = this->impl();
+        pointer begin = base_type::lock(), v = begin;
         pointer end = v + base_type::size();
 
-        // FIX: Not quite locking things yet are we?
-        multi_lock(impl.ops(), v, end, [](auto){});
+        multi_lock(impl.ops(), begin, end, impl.pool_()->mutex());
 
         for(; v < end; ++v)
         {
             v->invoke(impl.pool_(), std::forward<Args2>(args)...);
         }
+
+        multi_unlock(impl.ops(), begin, end, impl.pool_()->mutex());
 
         base_type::unlock();
     }
@@ -171,20 +171,41 @@ public:
 
 
 // DEBT: Doesn't belong in list.h here
-template <class Traits, class It, class End, class F, class Mutex = embr::internal::noop_mutex>
-void multi_lock(const detail::v1::pool_ops<Traits>& ops, It begin, End end, F&& f, Mutex mutex = {})
+template <class It, class End, class F, class Mutex = embr::internal::noop_mutex>
+void multi_op(It begin, End end, F&& f, Mutex mutex = {})
 {
     mutex.lock();
 
-    using handle_type = uint8_t;
-
-    for(It i = begin; i < end; ++i)
-    {
-        detail::v1::sparse_handle<void, handle_type> sh = *begin;
-        //f(sh.lock());
-    }
+    for(It i = begin; i < end; ++i) f(*i);
 
     mutex.unlock();
+}
+
+// DEBT: It and End subject to easy errors
+template <class Traits, class It, class End, class Mutex>
+void multi_lock(detail::v1::pool_ops<Traits>& ops, It begin, End end, Mutex mutex)
+{
+    using handle_type = typename Traits::handles_type::handle_type;
+    using type = detail::v1::sparse_handle<void, handle_type>;
+
+    multi_op(begin, end, [&](type v)
+    {
+        ops.lock(v.handle());
+    }, mutex);
+}
+
+
+// DEBT: It and End subject to easy errors
+template <class Traits, class It, class End, class Mutex>
+void multi_unlock(detail::v1::pool_ops<Traits>& ops, It begin, End end, Mutex mutex)
+{
+    using handle_type = typename Traits::handles_type::handle_type;
+    using type = detail::v1::sparse_handle<void, handle_type>;
+
+    multi_op(begin, end, [&](type v)
+    {
+        ops.unlock(v.handle());
+    }, mutex);
 }
 
 
