@@ -74,6 +74,9 @@ public:
 
         for(pointer begin = data(); begin < end; ++begin)
             begin->~value_type();
+
+        // Setting size to 0 here ensures that whatever choice we make with above #185, we are covered
+        size_ = 0;
     }
 
 private:
