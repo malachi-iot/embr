@@ -221,8 +221,9 @@ TEST_CASE("gc mem v1 vector", "[memory][gc][vector]")
         // DEBT: Ultimately displace with 'revealed' approach
         REQUIRE(bn.handle == bn2.handle);
         REQUIRE(bn.allocated());
-        // DEBT: Fine tune vector padding/reservation code so that this is more predictable
-        REQUIRE(pool.ops().phys_size(bn).count() == 8);
+        REQUIRE(bn.block->mode() == ops_type::block::RttoProxy);
+        // #1 = block, #2 = rtto proxy, #3 = vector control block, #4 = vector data
+        REQUIRE(pool.ops().phys_size(bn).count() == 4);
 
         bn = pool.ops().get_bundle(*++it);
         REQUIRE(bn.allocated() == false);

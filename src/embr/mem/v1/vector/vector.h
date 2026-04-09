@@ -49,7 +49,7 @@ private:
     {
         using block = embr::mem::detail::block_8;
 
-        constexpr block::modes mode = embr::mem::detail::ascertain_block_mode<control_type>();
+        constexpr block::modes mode = embr::mem::detail::deduce_block_mode<control_type>();
         constexpr bytes block_sz = block::header_size(mode);
         unsigned sz = reserved * sizeof(T) + block_sz.count() + sizeof(control_type);
 
@@ -120,8 +120,7 @@ public:
 
     struct policy_type
     {
-        // DEBT: Put in something here, even if it's a comment as to why
-        // policy options aren't specified
+        constexpr static unsigned pad_bytes() { return 2; }
     };
 
     using handle_with_offset = estd::internal::handle_with_offset<handle_type>;

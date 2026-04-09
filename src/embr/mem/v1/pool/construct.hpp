@@ -10,7 +10,7 @@ namespace embr { namespace mem {
 namespace detail { inline namespace v1 {
 
 template <class T>
-constexpr block_mode_enum::modes ascertain_block_mode()
+constexpr block_mode_enum::modes deduce_block_mode()
 {
     using is_trivial = estd::is_trivially_constructible<T>;
     using is_rtto_base = estd::is_base_of<estd::internal::rtto_base::base, T>;
@@ -27,14 +27,14 @@ constexpr block_mode_enum::modes ascertain_block_mode()
 template <class T, class Traits, class ...Args>
 typename pool_ops<Traits>::handle_type construct(pool_ops<Traits>& ops, Args&&...args)
 {
-    constexpr block_mode_enum::modes mode = ascertain_block_mode<T>();
+    constexpr block_modes mode = deduce_block_mode<T>();
 
     return ops.template construct<mode, T>(std::forward<Args>(args)...).handle;
 }
 
 
 template <class Traits>
-template <block_mode_enum::modes mode, class T, class ...Args>
+template <block_modes mode, class T, class ...Args>
 pool_codes pool_ops<Traits>::construct_ll(bundle* bn, pos_type phys_sz, Args&&...args)
 {
     constexpr bool rtto_proxied = mode == block::RttoProxy;
@@ -53,7 +53,7 @@ pool_codes pool_ops<Traits>::construct_ll(bundle* bn, pos_type phys_sz, Args&&..
 }
 
 template <class Traits>
-template <block_mode_enum::modes mode, class T, class ...Args>
+template <block_modes mode, class T, class ...Args>
 auto pool_ops<Traits>::construct(Args&&...args) -> bundle
 {
     // DEBT: Effective but error prone accounting for various block sizing.  Probably

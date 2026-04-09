@@ -26,14 +26,14 @@ struct block_mode_enum
     static const char* to_string(modes);
 };
 
+using block_modes = block_mode_enum::modes;
 
-
-inline const char* to_string(block_mode_enum::modes m)
+inline const char* to_string(block_modes m)
 {
     return block_mode_enum::to_string(m);
 }
 
-inline char to_abbrev(block_mode_enum::modes m);
+inline char to_abbrev(block_modes m);
 
 }}
 

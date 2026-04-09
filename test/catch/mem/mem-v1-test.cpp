@@ -146,7 +146,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                 SECTION("copy")
                 {
                     int counter = 0;
-                    constexpr block::modes mode = detail::v1::ascertain_block_mode<SideEffector>();
+                    constexpr block::modes mode = detail::v1::deduce_block_mode<SideEffector>();
 
                     bundle bn = op.construct<mode, SideEffector>(&counter);
 
@@ -170,7 +170,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                 SECTION("construct")
                 {
                     int counter = 0;
-                    constexpr block::modes mode = detail::v1::ascertain_block_mode<SideEffector>();
+                    constexpr block::modes mode = detail::v1::deduce_block_mode<SideEffector>();
 
                     static_assert(mode == block::RttoProxy);
 
