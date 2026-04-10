@@ -93,7 +93,9 @@ esp_err_t gptimer_scheduler<Traits, Container>::init()
 #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 4, 0)
             .allow_pd = false,
 #endif
+#if ESP_IDF_VERSION < ESP_IDF_VERSION_VAL(6, 0, 0)
             .backup_before_sleep = false,   // deprecated, still present in IDF 6.0
+#endif
         }
     };
 

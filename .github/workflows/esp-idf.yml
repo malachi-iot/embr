@@ -1,0 +1,22 @@
+name: ESP-IDF
+
+on:
+  push:
+    branches: [ "feat/**", "alpha" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        version: [v5.4.3, v5.5.4]
+        target: [esp32, esp32s3]
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v6
+    - name: "esp-idf build"
+      uses: espressif/esp-idf-ci-action@v1
+      with:
+        esp_idf_version: ${{ matrix.version }}
+        target: ${{ matrix.target }}
+        path: 'test/esp-idf/unity'

@@ -17,7 +17,7 @@
 #include <estd/ostream.h>
 
 #if ESTD_OS_FREERTOS
-#include <estd/port/freertos/event_groups.h>
+#include <estd/port/freertos/event_group.h>
 #endif
 
 // If LwIP loopback capability is present, then consider enabling our loopback tests

@@ -18,7 +18,7 @@ auto scheduler_with_notify<Traits, Container>::process_one(duration timeout) -> 
 
     mutex_.lock();
 
-    duration interval = estd::min(timeout, base_type::next() - now);
+    duration interval = estd::min(timeout, duration(base_type::next() - now));
 
     mutex_.unlock();
 

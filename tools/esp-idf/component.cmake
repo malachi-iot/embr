@@ -6,7 +6,9 @@ if(NOT DEFINED ESTD_COMPONENT_NAME)
 	set(ESTD_COMPONENT_NAME estd)
 endif()
 
-set(COMPONENT_REQUIRES ${ESTD_COMPONENT_NAME} driver esp_event esp_timer)
+set(COMPONENT_REQUIRES ${ESTD_COMPONENT_NAME} driver
+	esp_driver_gptimer esp_driver_gpio esp_ringbuf
+	esp_event esp_timer)
 
 # Get ESP_IDF_SOURCE_FILES from here
 include(${SRC_DIR}/sources.cmake)
