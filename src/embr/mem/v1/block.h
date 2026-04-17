@@ -23,6 +23,7 @@ class block_diagnostic;
 class alignas(void*) block_header_8 : public block_base_uint8
 {
     using this_type = block_header_8;
+    using bytes = estd::units::bytes<unsigned>;
 
 protected:
     template <class T>
@@ -85,12 +86,22 @@ public:
         return {};
     }
 
-    // FIX: Probably not 100% right, because RttoBase mode includes size of rtto::u_ in the object itself
-    static constexpr estd::units::bytes<unsigned> header_size(modes mode)
+    // How much extra allocation is needed for this block to accomodate rtto.  Note
+    // that RttoBase and RttoVirtual being an "is a" have already allocated that space,
+    // so size is 0.
+    static constexpr bytes rtto_overhead(modes mode)
     {
-        return estd::units::bytes<unsigned>((mode == Trivial || mode == RttoBase || mode == RttoVirtual) ?
-            sizeof(this_type) :
-            (sizeof(this_type) + sizeof(estd::internal::rtto_base::base)));
+        return bytes(mode == RttoProxy ?
+            // DEBT: This is too "just gotta know" - make something like
+            // rtto_base::proxy_size
+            sizeof(estd::internal::rtto_base::base) : 0);
+    }
+
+    static constexpr bytes header_size(modes mode)
+    {
+        // Due to https://github.com/malachi-iot/estdlib/issues/193 needing to wrap
+        // sizeof(this_type)
+        return rtto_overhead(mode) + bytes(sizeof(this_type));
     }
 
     // DEBT: Protect this and make friend classes, or pull WriteableBlock child stunt
