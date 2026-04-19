@@ -29,7 +29,11 @@ set(COMPONENT_SRCS
     service.cpp
     "timer.cpp")
 
-set(COMPONENT_REQUIRES estd embr unity testable esp_helper esp_psram)
+set(COMPONENT_REQUIRES
+    estd embr
+    unity testable
+    esp_helper
+    esp_psram)
 
 register_component()
 

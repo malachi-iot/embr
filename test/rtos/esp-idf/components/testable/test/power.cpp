@@ -2,7 +2,6 @@
 
 #include <esp_log.h>
 
-#include <embr/platform/esp-idf/timer.h>
 #include <embr/platform/esp-idf/pm.h>
 
 #include <embr/internal/scoped_guard.h>

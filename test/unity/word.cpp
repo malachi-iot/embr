@@ -13,13 +13,13 @@
 
 static const char* TAG = "unity::word";
 
-template <unsigned N, typename TInt>
+template <unsigned N, typename Int>
 static void test_word_basics()
 {
-    typedef embr::word<N> word_type;
+    using word_type = embr::word<N>;
 
     TEST_ASSERT_EQUAL(
-        estd::numeric_limits<TInt>::digits,
+        estd::numeric_limits<Int>::digits,
         estd::numeric_limits<typename word_type::type>::digits);
 
     word_type w(5);
@@ -85,7 +85,9 @@ static void test_v2_word_16bit()
     packer* p = &_p;
 #endif
 
-    // FIX: We have a warning about address of a packet member
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+
+    // FIX: We have a warning about address of a packed member
     word_type* words = p->words;
 
     // Alignment testing

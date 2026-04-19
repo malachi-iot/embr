@@ -4,6 +4,7 @@
 
 #include <unity.h>
 
+#include <cstdlib>   // DEBT: Need this due to https://github.com/malachi-iot/estdlib/issues/194
 #include <estd/functional.h>
 
 #include <embr/service/v2/enum.h>
