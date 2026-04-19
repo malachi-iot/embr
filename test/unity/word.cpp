@@ -70,21 +70,25 @@ struct __attribute__((packed, aligned(2))) packer2
 struct __attribute__((packed)) packer_raw
 {
     uint16_t v;
-    embr::v2::word<16, embr::v2::word_options::packed> words[4];
+    using word_type = embr::v2::word<16, embr::v2::word_options::raw>;
+    word_type words[4];
+
+    static_assert(sizeof(word_type::raw_) == 2);
 };
 
 
 constexpr const embr::v2::word<16> words_rom[4] { 0, 1, 2, 3 };
 
 // Alignment testing
-static void test_v2_words(const embr::v2::word<16>* words)
+template <class Word>
+static void test_v2_words(const Word* words)
 {
     for(int i = 0; i < 4; i++, words++)
         TEST_ASSERT_EQUAL(i, words->value());
 }
 
 // Sanity check
-static void test_uint16()
+[[maybe_unused]] static void test_uint16()
 {
     packer2 _p;
     packer2* p = &_p;
@@ -100,11 +104,11 @@ static void test_v2_word_16bit_packed()
     packer_raw _p;
     packer_raw* p = &_p;
 
-#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
-
-    // FIX: We have a warning about address of a packed member
-    [[maybe_unused]]
     auto* words = p->words;
+
+    for(int i = 0; i < 4; i++)  words[i] = i;
+
+    test_v2_words(words);
 }
 
 
@@ -127,8 +131,7 @@ static void test_v2_word_16bit()
     word_type* words = p->words;
 
     // Alignment testing
-    for(int i = 0; i < 4; i++)
-        words[i] = i;
+    for(int i = 0; i < 4; i++)  words[i] = i;
 
     test_v2_words(words);
     test_v2_words(words_rom);
@@ -152,4 +155,5 @@ void test_word()
     RUN_TEST(test_word_32bit);
 
     RUN_TEST(test_v2_word_16bit);
+    RUN_TEST(test_v2_word_16bit_packed);
 }

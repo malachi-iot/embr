@@ -56,12 +56,24 @@ struct word_retriever<o,
 };
 
 
+constexpr bool is_raw(v2::word_options o)
+{
+    return is_set(o & v2::word_options::raw);
+}
+
+constexpr bool is_packed(v2::word_options o)
+{
+    return is_set(o & v2::word_options::packed);
+}
+
+
 // native endian flavor using regular storage
 template <size_t bits, v2::word_options o>
 //struct word_v2_base<bits, o, estd::enable_if_t<o == v2::word_options::native>>
 struct word_v2_base<bits, o,
     estd::enable_if_t<
         is_native_endian<o>::value &&
+        !is_raw(o) &&
         (!is_set(o & v2::word_options::packed) ||
             type_from_bits<bits, false>::matched)>>
 {
@@ -121,6 +133,7 @@ template <size_t bits, v2::word_options o>
 struct word_v2_base<bits, o,
     estd::enable_if_t<
         is_native_endian<o>::value == false &&
+        !is_raw(o) &&
         (!is_set(o & v2::word_options::packed) ||
             type_from_bits<bits, false>::matched)>>
 {
@@ -168,7 +181,7 @@ template <size_t bits, v2::word_options o>
 struct word_v2_base<bits, o,
     estd::enable_if_t<
         //is_native_endian<o>::value &&
-        is_set(o & v2::word_options::raw) ||
+        is_raw(o) ||
             (is_set(o & v2::word_options::packed) &&
             type_from_bits<bits, false>::matched == false)>> :
     type_from_bits<bits, is_set(o & v2::word_options::is_signed)>
