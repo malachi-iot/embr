@@ -3,7 +3,7 @@
 #include "embr/mem/v1/block.h"
 #include "embr/mem/v1/unit.h"
 
-#if NDEBUG
+#ifndef __ASSERT_FILE
 #define VERIFY(x) do { if(!(x)) std::abort(); } while(0)
 #else
 // CHECK and REQUIRE are already defined by Catch2.
