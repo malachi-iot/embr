@@ -296,6 +296,10 @@ TEST_CASE("gc mem v1 vector", "[memory][gc][vector]")
 
             vector.emplace_back(&counter);
 
+            // DEBT: Looks like we don't have impl empty yet
+            //vector.empty();
+            REQUIRE(vector.size() > 0);
+
             REQUIRE(vector[1].value().counter() == 1);
             REQUIRE(vector[1]().moved_to_counter == 0);
             REQUIRE(vector[1]().moved_from_counter == 0);

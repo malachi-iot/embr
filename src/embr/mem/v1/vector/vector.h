@@ -102,7 +102,8 @@ public:
         bundle bn;
 
         // DEBT: Consider overprovisioning
-        assert(construct_ll(&bn, c->size_, *c) == POOL_OK);
+        pool_codes ret = construct_ll(&bn, c->size_, *c);
+        assert(ret == POOL_OK);
         handle_ = bn.handle;
 
         copy_from.unlock();
@@ -304,7 +305,9 @@ public:
         assert(!is_allocated());
         bundle bn;
 
-        assert(construct_ll(&bn, capacity) == POOL_OK);
+        pool_codes ret = construct_ll(&bn, capacity);
+
+        assert(ret == POOL_OK);
 
         handle_ = bn.handle;
 
