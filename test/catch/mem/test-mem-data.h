@@ -3,6 +3,9 @@
 #include "embr/mem/v1/block.h"
 #include "embr/mem/v1/unit.h"
 
+#if NDEBUG
+#define VERIFY(x) do { if(!(x)) std::abort(); } while(0)
+#else
 // CHECK and REQUIRE are already defined by Catch2.
 //#define VERIFY(x) do { if(!(x)) std::abort(); } while(0)
 // Stolen from GCC.  DEBT: Do guards for !defined __GNUC__ || defined __STRICT_ANSI__
@@ -11,6 +14,7 @@
         ? void (0)                              \
         : __assert_fail (#expr, __ASSERT_FILE, __ASSERT_LINE,   \
               __ASSERT_FUNCTION))
+#endif
 
 // DEBT: See if we can scoop this from estd
 struct SideEffector
