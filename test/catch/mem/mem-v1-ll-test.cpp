@@ -12,6 +12,11 @@
 
 using namespace embr::mem;
 
+// Fine grain testing
+#define ENABLE_1 1
+#define ENABLE_2 1
+#define ENABLE_3 1
+
 TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
 {
     constexpr unsigned pool_size = 2048;
@@ -37,6 +42,7 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
     // DEBT: Still having to do this
     ops.reset();
 
+#if ENABLE_1
     SECTION("bundle things")
     {
         bundle bn1;
@@ -230,12 +236,14 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
 
         }
     }
+#endif
+#if ENABLE_2
     SECTION("virtual_swap")
     {
         bundle b0 = ops.alloc(pos_type(8), block::Trivial);
         bundle b1 = ops.get_bundle(1);
 
-        REQUIRE(b0.page);   // FIX: Release mode page = nullptr
+        REQUIRE(b0.page);
 
         pos_type p0 = b0.pos();
         pos_type p1 = b1.pos();
@@ -297,6 +305,8 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
             REQUIRE(b2.pos() == p0);
         }
     }
+#endif
+#if ENABLE_3
     SECTION("first_free")
     {
         pos_type found_size(0);
@@ -475,10 +485,11 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
 
         auto se_free = static_cast<type*>(bn_free.block->data());
 
-        // Presumes that raw pool data is zeroed, which it is
+        // Presumes that raw pool data is zeroed, which it is during unit testing
         REQUIRE(se_free->counter_ == nullptr);
         REQUIRE(se_free->constructed_ == false);
 
+        // Move bn -> bn_free, deducing original size and proclaiming not overlapping
         validated_result r = ops.move(bn, bn_free, 0, logical_sz_bytes, false);
 
         REQUIRE(r);
@@ -509,4 +520,5 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
 
         REQUIRE(mode == detail::block_mode_enum::RttoVirtual);
     }
+#endif
 }

@@ -124,6 +124,7 @@ auto pool_ops<Traits>::resize(bundle bn, pos_type new_sz) -> block*
 }
 
 
+// DEBT: We need a real return code (i.e. pool_codes), not this semi-soft validated_result
 template <class Traits>
 validated_result pool_ops<Traits>::move(
     bundle from, bundle to,
@@ -210,7 +211,7 @@ validated_result pool_ops<Traits>::move(
         // Not yet supported
         //assert(false);
     }
-    else
+    else    // !is_overlapping
     {
         assert(to_block_phys_sz >= from_block_phys_sz);
 
@@ -254,6 +255,7 @@ validated_result pool_ops<Traits>::move(
                 // free block
 
                 // DEBT: Consolidate with the logic in alloc
+                // Hardcoding to 3 may be a bad idea - if this is RttoProxy we don't have space to further grow
                 constexpr pos_type split_threshold{3};
                 // We do not use existing calculated size because 'dealloc' may have changed free
                 // block landscape
@@ -268,8 +270,9 @@ validated_result pool_ops<Traits>::move(
                     const pos_type split_pos = to_next_pos - delta;
                     //const pos_type new_pos2 = to.pos() + from_block_phys_sz;
                     //assert(new_pos1 == new_pos2);
-                    // DEBT: Much like alloc, this is a bit harsh
-                    assert(split_at(to, split_pos));
+                    handle_type h = split_at(to, split_pos);
+                    // DEBT: Much like alloc, this is a bit harsh.  Probably return pool_codes instead
+                    assert(h != handle_traits::null);
                 }
                 else
                 {

@@ -106,8 +106,9 @@ public:
     bundle alloc(pos_type phys_sz, block::modes mode)
     {
         bundle out;
+        pool_codes ret = alloc(&out, phys_sz, mode);
         // DEBT: Consumers still rely on this flowing back out to check for mem block failure
-        assert(alloc(&out, phys_sz, mode) != POOL_NO_HANDLES);
+        assert(ret != POOL_NO_HANDLES);
         return out;
     }
 

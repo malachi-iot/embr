@@ -83,3 +83,9 @@ target_compile_options(${PROJECT_NAME} PRIVATE -ftemplate-backtrace-limit=0)
 target_link_libraries(${PROJECT_NAME} PRIVATE embr::embr)
 target_link_libraries(${PROJECT_NAME} PRIVATE malachi-iot::estd)
 target_link_libraries(${PROJECT_NAME} PRIVATE testrc Catch2::Catch2WithMain)
+
+list(APPEND CMAKE_MODULE_PATH ${Catch2_SOURCE_DIR}/extras)
+
+include(CTest)
+include(Catch)
+catch_discover_tests(${PROJECT_NAME})

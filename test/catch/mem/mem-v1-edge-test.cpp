@@ -261,7 +261,6 @@ TEST_CASE("gc mem v1 edge cases", "[memory][gc]")
                 REQUIRE(!bn1.is_null());
 
                 REQUIRE(bn0.allocated() == false);
-                // FIX: Release - bn1.block bad pointer
                 REQUIRE(bn1.allocated() == false);
                 REQUIRE(op.invariant());
             }
