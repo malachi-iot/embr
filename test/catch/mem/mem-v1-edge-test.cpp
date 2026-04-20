@@ -258,6 +258,7 @@ TEST_CASE("gc mem v1 edge cases", "[memory][gc]")
                 bundle bn1 = op.get_bundle(1);
 
                 REQUIRE(bn0.allocated() == false);
+                // FIX: Release - probably bn1.block nullptr
                 REQUIRE(bn1.allocated() == false);
                 REQUIRE(op.invariant());
             }

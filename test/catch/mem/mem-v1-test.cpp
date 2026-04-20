@@ -54,6 +54,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                     constexpr bytes block_sz = block::header_size(block::Trivial);
                     bundle bn = op.alloc(phys_sz, block::Trivial);
 
+                    // FIX: Release mode invariant failure
                     REQUIRE(bn.invariant());
                     REQUIRE(bn.is_null() == false);
                     REQUIRE(bn.block->allocated());
@@ -92,6 +93,7 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                     bundle bn = op.alloc(phys_sz, block::Trivial);
                     block* bl = bn.block;
                     page* p = bn.page;
+                    // FIX: Release mode nullptr
                     pos_type pos = p->pos();
                     pos_type new_phys_sz = phys_sz + pos_type(1);
                     REQUIRE(pos.count() == 0);

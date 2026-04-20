@@ -234,7 +234,7 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
     {
         bundle b0 = ops.alloc(pos_type(8), block::Trivial);
         bundle b1 = ops.get_bundle(1);
-        pos_type p0 = b0.pos();
+        pos_type p0 = b0.pos();     // FIX: Release mode nullptr
         pos_type p1 = b1.pos();
         std::ostringstream out;
 

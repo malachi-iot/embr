@@ -31,8 +31,9 @@ static void battery(Pool& pool, int it, unsigned seed)
     std::mt19937 gen{seed}; // fixed seed: deterministic sequence
     int allocated_handles = count_allocated(ops.handles());
 
-    CAPTURE(it, seed);
+    CAPTURE(it, seed, allocated_handles);
 
+    // FIX: Release mode failure
     VERIFY(allocated_handles == 1);
 
     {
@@ -244,6 +245,7 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
 
             fl.invoke(5);
 
+            // FIX: Release mode counter == 0;
             REQUIRE(counter == 15);
 
             counter = 0;
