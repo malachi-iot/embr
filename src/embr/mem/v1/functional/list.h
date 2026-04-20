@@ -8,11 +8,16 @@
 
 namespace embr { namespace mem { inline namespace v1 {
 
+// DEBT: I like proactively error'ing out with this static_assert.  However, somehow github actions (probably Clang)
+// stokes this into asserting anyway.  Bring this back somehow (probably static assert down within full implementation)
+// bringing back R when R is_void
+#if UNUSED
 template <class R, class ...Args, class Pool, Pool* pool>
 class funclist<R(Args...), Pool, pool>
 {
     static_assert(false, "Must have void return signature");
 };
+#endif
 
 // mimics what Boost::signals2::scoped_connection does
 // DEBT: isolate in a signals namespace or similar
