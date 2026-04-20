@@ -418,6 +418,8 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
         ops_type& op  = ops;;
         bundle bn = op.alloc(phys_sz, block::Trivial);
 
+        REQUIRE(bn.page);
+
         memcpy(op.lock(bn.handle), "Hello", 6);
         op.unlock(bn.handle);
 

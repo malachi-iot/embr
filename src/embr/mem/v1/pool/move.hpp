@@ -272,7 +272,7 @@ validated_result pool_ops<Traits>::move(
                     //assert(new_pos1 == new_pos2);
                     handle_type h = split_at(to, split_pos);
                     // DEBT: Much like alloc, this is a bit harsh.  Probably return pool_codes instead
-                    assert(h != handle_traits::null);
+                    assert(h != handles_traits::null);
                 }
                 else
                 {
