@@ -14,7 +14,7 @@ struct numeric_limits<embr::v2::word<bits, o> > :
     using word_type = embr::v2::word<bits, o>;
     using type = typename word_type::type;
 
-    static constexpr bool is_signed = o & embr::v2::word_options::is_signed;
+    static constexpr bool is_signed = is_set(o & embr::v2::word_options::is_signed);
     static constexpr int digits = bits;
 
     static constexpr unsigned long long range = 1ULL << bits;

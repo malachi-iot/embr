@@ -6,6 +6,8 @@ project(embr-unit-test VERSION 1.0.0)
 # isolate why.  Disabing for that reason
 option(EMBR_EXP_AUTOSTART "Experimental autostart testing" OFF)
 
+set(EMBR_ENABLE_CATCH_DISCOVERY ON CACHE BOOL "")
+
 # No longer dogfooding top level directly, since it makes CLion lose its mind
 add_subdirectory(../../src embr)
 
@@ -84,8 +86,10 @@ target_link_libraries(${PROJECT_NAME} PRIVATE embr::embr)
 target_link_libraries(${PROJECT_NAME} PRIVATE malachi-iot::estd)
 target_link_libraries(${PROJECT_NAME} PRIVATE testrc Catch2::Catch2WithMain)
 
-list(APPEND CMAKE_MODULE_PATH ${Catch2_SOURCE_DIR}/extras)
+if(EMBR_ENABLE_CATCH_DISCOVERY)
+    list(APPEND CMAKE_MODULE_PATH ${Catch2_SOURCE_DIR}/extras)
 
-include(CTest)
-include(Catch)
-catch_discover_tests(${PROJECT_NAME})
+    include(CTest)
+    include(Catch)
+    catch_discover_tests(${PROJECT_NAME})
+endif()

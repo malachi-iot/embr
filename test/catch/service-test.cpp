@@ -154,7 +154,9 @@ public:
     void on_notify(event::Registration e, embr::Service::runtime<TSubject, TImpl>& context)
     //void on_notify(event::Registration e, ::impl::DependentService2& context)
     {
-        printf("Service registered: %s (%s)\n", e.name, e.instance);
+        // FIX: Disabled since it interrupts catch service discovery.  Also this class of service is pretty
+        // much deprecated anyway
+        //printf("Service registered: %s (%s)\n", e.name, e.instance);
         fflush(stdout);
         // FIX: reference_wrapper doesn't appear to auto unwrap as expected,
         // have to nudge it along.  Even with underlying conversion operator helping us,
