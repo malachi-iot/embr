@@ -11,13 +11,14 @@ static const char* TAG = "unity::memory";
 
 using namespace embr;
 
+#if CONFIG_SOC_SPIRAM_SUPPORTED && !CONFIG_SPIRAM
+#pragma message "SPIRAM supported, but not enabled.  Recommended you enable it"
+#endif
+
 template <class T>
 #if CONFIG_SPIRAM
 using allocator = esp_idf::allocator<T, MALLOC_CAP_SPIRAM>;
 #else
-#if CONFIG_SOC_SPIRAM_SUPPORTED
-#warning SPIRAM supported, but not enabled.  Recommended you enable it
-#endif
 using allocator = esp_idf::allocator<T, MALLOC_CAP_INTERNAL>;
 #endif
 

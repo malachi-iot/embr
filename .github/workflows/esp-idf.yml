@@ -9,8 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        version: [v5.4.3, v5.5.4]
-        target: [esp32, esp32s3]
+        version: [v5.4.4, v5.5.4, v6.0]
+        target: [esp32, esp32s3, esp32c6]
     steps:
     - name: Checkout repo
       uses: actions/checkout@v6
