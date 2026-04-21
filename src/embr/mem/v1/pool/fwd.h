@@ -4,6 +4,8 @@
 
 #include "concepts.h"
 
+#include "../enum.h"    // DEBT: Clumsy
+
 namespace embr { namespace mem {
 
 namespace detail { inline namespace v1 {
@@ -36,6 +38,15 @@ class pool_crtp;
 
 template <class Derived, class Mutex = void>
 class pool_mutex_crtp;
+
+template <class T>
+constexpr block_mode_enum::modes deduce_block_mode();
+
+/// Override point for classes which may present as one block mode, but we want to
+/// force to another
+// DEBT: Overlap with innate_traits
+template <class T>
+struct item_traits;
 
 }}
 

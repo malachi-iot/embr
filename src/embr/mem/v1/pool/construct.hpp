@@ -27,7 +27,7 @@ constexpr block_mode_enum::modes deduce_block_mode()
 template <class T, class Traits, class ...Args>
 typename pool_ops<Traits>::handle_type construct(pool_ops<Traits>& ops, Args&&...args)
 {
-    constexpr block_modes mode = deduce_block_mode<T>();
+    constexpr block_modes mode = item_traits<T>::block_mode;
 
     return ops.template construct<mode, T>(std::forward<Args>(args)...).handle;
 }

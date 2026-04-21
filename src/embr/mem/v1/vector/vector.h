@@ -49,7 +49,7 @@ private:
     {
         using block = embr::mem::detail::block_8;
 
-        constexpr block::modes mode = embr::mem::detail::deduce_block_mode<control_type>();
+        constexpr block::modes mode = item_traits<control_type>::block_mode;
         constexpr bytes block_sz = block::header_size(mode);
         unsigned sz = reserved * sizeof(T) + block_sz.count() + sizeof(control_type);
 

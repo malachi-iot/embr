@@ -12,6 +12,23 @@
 
 using namespace embr;
 
+#define FEATURE_EMBR_TRIVIAL_VECTOR_OPT 1
+
+#if FEATURE_EMBR_TRIVIAL_VECTOR_OPT
+template <class T, unsigned bits>
+struct embr::mem::detail::item_traits<embr::mem::detail::vector_control<T, bits>>
+{
+    using type = embr::mem::detail::vector_control<T, bits>;
+    using modes = embr::mem::detail::block_modes;
+
+    static constexpr bool force_trivial =
+        std::is_trivially_move_constructible<T>::value &&
+        std::is_trivially_constructible<T>::value;
+
+    static constexpr modes block_mode = force_trivial ? modes::Trivial : deduce_block_mode<type>();
+};
+#endif
+
 template <class T, class Pool, Pool* pool = nullptr>
 class vector_revealed : public mem::vector<T, Pool, pool>
 {
@@ -221,9 +238,15 @@ TEST_CASE("gc mem v1 vector", "[memory][gc][vector]")
         // DEBT: Ultimately displace with 'revealed' approach
         REQUIRE(bn.handle == bn2.handle);
         REQUIRE(bn.allocated());
+#if FEATURE_EMBR_TRIVIAL_VECTOR_OPT
+        REQUIRE(bn.block->mode() == ops_type::block::Trivial);
+        // #1 = block, #2 = vector control block, #3 = vector data
+        REQUIRE(pool.ops().phys_size(bn).count() == 3);
+#else
         REQUIRE(bn.block->mode() == ops_type::block::RttoProxy);
         // #1 = block, #2 = rtto proxy, #3 = vector control block, #4 = vector data
         REQUIRE(pool.ops().phys_size(bn).count() == 4);
+#endif
 
         bn = pool.ops().get_bundle(*++it);
         REQUIRE(bn.allocated() == false);

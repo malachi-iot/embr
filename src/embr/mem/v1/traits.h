@@ -83,6 +83,13 @@ struct pool_ops_traits
     using handles_type = handles<handles_traits>;
 };
 
+
+template <class T>
+struct item_traits
+{
+    static constexpr block_mode_enum::modes block_mode = deduce_block_mode<T>();
+};
+
 }}
 
 
