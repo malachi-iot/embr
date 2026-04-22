@@ -22,9 +22,10 @@ jobs:
           - name: gcc
             c: gcc
             cxx: g++
-          - name: clang
+          - name: llvm
             c: clang
             cxx: clang++
+        release: ["Debug", "Release"]
 
     steps:
     - uses: actions/checkout@v6
@@ -36,9 +37,9 @@ jobs:
       with:
         source-dir: ${{env.unit_test_dir}}
         options: >
-          -DCMAKE_C_COMPILER=${{ matrix.c }}
-          -DCMAKE_CXX_COMPILER=${{ matrix.cxx }}
-          -DCMAKE_BUILD_TYPE=Release
+          CMAKE_C_COMPILER=${{ matrix.c }}
+          CMAKE_CXX_COMPILER=${{ matrix.cxx }}
+          CMAKE_BUILD_TYPE=${{ matrix.release }}
 
     - name: Test
       uses: threeal/ctest-action@v1.1.0
