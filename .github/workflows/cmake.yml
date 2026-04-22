@@ -15,6 +15,17 @@ jobs:
 
     runs-on: ubuntu-22.04
 
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: gcc
+            c: gcc
+            cxx: g++
+          - name: clang
+            c: clang
+            cxx: clang++
+
     steps:
     - uses: actions/checkout@v6
       with:
@@ -24,6 +35,10 @@ jobs:
       uses: threeal/cmake-action@v2.1.0
       with:
         source-dir: ${{env.unit_test_dir}}
+        options: >
+          -DCMAKE_C_COMPILER=${{ matrix.c }}
+          -DCMAKE_CXX_COMPILER=${{ matrix.cxx }}
+          -DCMAKE_BUILD_TYPE=Release
 
     - name: Test
       uses: threeal/ctest-action@v1.1.0

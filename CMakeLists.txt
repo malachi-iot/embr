@@ -1,7 +1,10 @@
+cmake_minimum_required(VERSION 3.16)
+
 if(ESP_PLATFORM)
-    cmake_minimum_required(VERSION 3.16)
     include(${CMAKE_CURRENT_LIST_DIR}/tools/esp-idf/component.cmake)
 else()
+    project(embr-meta)
     include(tools/cmake/setvars.cmake)
     add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/src embr)
+    add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/test/catch catch)
 endif()

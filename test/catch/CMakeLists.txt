@@ -9,9 +9,11 @@ option(EMBR_EXP_AUTOSTART "Experimental autostart testing" OFF)
 set(EMBR_ENABLE_CATCH_DISCOVERY ON CACHE BOOL "")
 
 # No longer dogfooding top level directly, since it makes CLion lose its mind
-add_subdirectory(../../src embr)
+if(NOT TARGET embr::embr)
+    add_subdirectory(../../src embr)
+endif()
 
-CPMAddPackage("gh:catchorg/Catch2@3.11.0")
+CPMAddPackage("gh:catchorg/Catch2@3.12.0")
 CPMAddPackage("gh:vector-of-bool/cmrc#952ffddba731fc110bd50409e8d2b8a06abbd237")
 
 set(RESOURCES resources/playlist.json)
