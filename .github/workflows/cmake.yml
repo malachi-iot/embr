@@ -33,7 +33,7 @@ jobs:
         submodules: recursive
 
     - name: Setup Clang
-      if: matrix.compiler.name == 'clang'
+      if: matrix.compiler.name == 'llvm'
       uses: egor-tensin/setup-clang@v1
       with:
         version: 18
