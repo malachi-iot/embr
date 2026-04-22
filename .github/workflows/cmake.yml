@@ -18,13 +18,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
+        compiler:
           - name: gcc
             c: gcc
             cxx: g++
           - name: llvm
-            c: clang
-            cxx: clang++
+            c: clang-18
+            cxx: clang++-18
         release: ["Debug", "Release"]
 
     steps:
@@ -32,13 +32,19 @@ jobs:
       with:
         submodules: recursive
 
+    - name: Setup Clang
+      if: matrix.compiler.name == 'clang'
+      uses: egor-tensin/setup-clang@v1
+      with:
+        version: 18
+
     - name: Build
       uses: threeal/cmake-action@v2.1.0
       with:
         source-dir: ${{env.unit_test_dir}}
         options: >
-          CMAKE_C_COMPILER=${{ matrix.c }}
-          CMAKE_CXX_COMPILER=${{ matrix.cxx }}
+          CMAKE_C_COMPILER=${{ matrix.compiler.c }}
+          CMAKE_CXX_COMPILER=${{ matrix.compiler.cxx }}
           CMAKE_BUILD_TYPE=${{ matrix.release }}
 
     - name: Test
