@@ -1,7 +1,5 @@
 menu "Garbage Collection"
 
-    # DORMANT
-
     config EMBR_GLOBAL_GC_STORAGE_SZ
         int "Global garbage collector static size (in bytes, 4-byte boundary)"
         default 0

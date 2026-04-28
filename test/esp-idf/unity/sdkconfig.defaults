@@ -1,2 +1,4 @@
 # DEBT: Make this a big timeout rather than completely disabling WDT
 CONFIG_ESP_TASK_WDT_INIT=n
+
+CONFIG_EMBR_GLOBAL_GC_STORAGE_SZ=2048
