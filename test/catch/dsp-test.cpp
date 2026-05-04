@@ -1,6 +1,7 @@
 #include <catch2/catch_all.hpp>
 
 #include <embr/dsp/precalc.h>
+#include <embr/dsp/v1/drc.h>
 #include <embr/dsp/v1/fp.h>
 #include <embr/dsp/v1/phase.h>
 
@@ -44,8 +45,8 @@ TEST_CASE("dsp")
         compare<dsp::PRECALC_QUART>(t2, 9.0f);
         compare<dsp::PRECALC_QUART>(t2, 32.0f);
 
-        delete table;
-        delete table2;
+        delete [] table;
+        delete [] table2;
     }
     SECTION("phase")
     {
@@ -169,6 +170,35 @@ TEST_CASE("dsp")
 
             static_assert(ct1::exponent == 16, "");
             static_assert(ct1::mantissa == 16, "");
+        }
+    }
+    SECTION("drc")
+    {
+        constexpr float _thresh = 0.7;
+        constexpr float _attack = 0.01;
+        constexpr float _release = 0.01;
+
+        SECTION("float")
+        {
+            dsp::drc<float> drc1;
+            float v;
+
+            v = drc1.process(v, _thresh, _attack, _release);
+        }
+        SECTION("fp")
+        {
+            using fp4_12 = dsp::v1::fixed_point<4, 12>;
+
+            fp4_12 v;
+
+            constexpr auto thresh = fp4_12::from(_thresh);
+            constexpr auto attack = fp4_12::from(_attack);
+            constexpr auto release = fp4_12::from(_release);
+
+            dsp::drc<fp4_12> drc1;
+
+            // No std::abs compatibility for fp yet
+            //v = drc1.process(v, thresh, attack, release);
         }
     }
 }
