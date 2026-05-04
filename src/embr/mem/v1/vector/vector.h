@@ -115,6 +115,18 @@ public:
         move_from.handle_ = base_type::null;
     }
 
+    // FIX: Placeholder - only here so things compiles.  Not done (will crash)
+    // plus we prefer the above low-level vector guys - something changed after estd v0.8.11
+    // which breaks things and forces this.  Also, a friend class Impl wouldn't be inappropriate up at dynamic_array.
+    // Finally, dynamic_array in 'detail' namespace may make some sense
+    constexpr vector(mem::v1::vector<T, Pool, pool>& copy_from) :
+        //base_type(copy_from.impl().handle_, copy_from.pool_())
+        base_type(base_type::null)
+    {
+        // As said above, not ready yet
+        abort();
+    }
+
     using size_type = unsigned;
 
     ESTD_CPP_STD_VALUE_TYPE(T)
