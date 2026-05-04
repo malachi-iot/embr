@@ -17,6 +17,8 @@ void compare(const estd::span<T, N>& t, T v)
     REQUIRE(std::abs(std::abs(v1) - std::abs(v1_)) < 0.001);
 }
 
+constexpr const float float_buf1[] { 0, 1, 2, 3, 4, 5, 6 };
+
 TEST_CASE("dsp")
 {
     SECTION("precalc")
@@ -175,15 +177,37 @@ TEST_CASE("dsp")
     SECTION("drc")
     {
         constexpr float _thresh = 0.7;
-        constexpr float _attack = 0.01;
+        constexpr float _attack = 0.8;
         constexpr float _release = 0.01;
 
         SECTION("float")
         {
+            float out[16] {};
             dsp::drc<float> drc1;
-            float v;
+            using params = dsp::drc<float>::params;
+            float v{1};
 
-            v = drc1.process(v, _thresh, _attack, _release);
+            constexpr params p1{ _thresh, _attack, _release };
+
+            v = drc1.process(v, p1);
+
+            REQUIRE_THAT(v, Catch::Matchers::WithinAbs(0.875, .001));
+
+            v = drc1.process(v, p1);
+
+            REQUIRE_THAT(v, Catch::Matchers::WithinAbs(0.712, .001));
+
+            drc1.reset();
+
+            process(
+                drc1, { 1.0f, 0.2f, 0.5f },
+                float_buf1, std::end(float_buf1), out);
+
+            REQUIRE(out[0] == 0);
+            REQUIRE(out[1] == 1);
+            REQUIRE(out[2] == 2);
+            REQUIRE_THAT(out[3], Catch::Matchers::WithinAbs(2.862, .001));
+            REQUIRE_THAT(out[4], Catch::Matchers::WithinAbs(2.441, .001));
         }
         SECTION("fp")
         {
