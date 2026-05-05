@@ -115,6 +115,7 @@ public:
         move_from.handle_ = base_type::null;
     }
 
+    /* 05MAY26 MB - Keeping this commented out, since it's a sign of an estd usage malfunction
     // FIX: Placeholder - only here so things compiles.  Not done (will crash)
     // plus we prefer the above low-level vector guys - something changed after estd v0.8.11
     // which breaks things and forces this.  Also, a friend class Impl wouldn't be inappropriate up at dynamic_array.
@@ -126,6 +127,7 @@ public:
         // As said above, not ready yet
         abort();
     }
+    */
 
     using size_type = unsigned;
 

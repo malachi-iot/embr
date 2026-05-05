@@ -20,9 +20,9 @@ add_library(embr::embr ALIAS ${PROJECT_NAME}-static)
 add_library(embr::interface ALIAS ${INTERFACE_NAME})
 
 CPMAddPackage("gh:malachi-iot/estdlib@0.8.11")
-# 04MAY26 MB - trouble in paradise, vector init copy constructor something has changed with
-# dynamic_array/runtime_array - see embr::mem::detail::vector
-#CPMAddPackage("gh:malachi-iot/estdlib#5c946d4cd607d89ec875bc2527f431f3b91b9461")
+# 05MAY26 MB - trouble in paradise, vector init copy constructor something has changed with
+# dynamic_array/runtime_array - see embr::mem::detail::vector.
+#CPMAddPackage("gh:malachi-iot/estdlib#a553313c8a4c0e82cb561bdb2c186e2ff2bd1ecd")
 
 # DEBT: Was done for macOS, but it doesn't pick it up.  Once that is resolved,
 # bring these in
