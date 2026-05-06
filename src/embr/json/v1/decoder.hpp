@@ -296,6 +296,11 @@ void decoder::worker<Streambuf, F>::decode_token(context& ctx, F&& f)
         case ARRAY:
             decode_array(ctx, std::forward<F>(f));
             break;
+
+        default:
+            // DEBT: Return error code, don't just abort
+            assert(false);
+            break;
     }
 }
 

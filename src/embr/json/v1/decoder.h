@@ -77,7 +77,7 @@ protected:
     using ios_base = estd::ios_base;
 
 public:
-    explicit decoder_state(const decoder_state* parent) :
+    explicit decoder_state(const decoder_state* parent) :   // NOLINT
         state_{IDLE},
         parent_{parent}
     {}
@@ -168,6 +168,7 @@ class decoder : public decoder_state
 
             void bump() { ch = sb.sbumpc(); }
 
+            // decoder.item_ determines which of these we're looking at
             union
             {
                 searcher_type literal_searcher;

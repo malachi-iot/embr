@@ -1,6 +1,5 @@
 #pragma once
 
-//#include <cstring>
 #include <estd/string.h>
 #include <estd/string_view.h>
 
@@ -85,6 +84,10 @@ private:
 public:
     constexpr pointer marker() const { return marker_; }
     constexpr pointer crumbs() const { return crumbs_; }
+
+    // DEBT: Only json decoder::context needs this default constructor, otherwise it really
+    // shouldn't be exposed
+    breadcrumb_searcher() = default;
 
     explicit constexpr breadcrumb_searcher(pointer crumbs) : crumbs_{crumbs} {}
 
