@@ -23,9 +23,11 @@ jobs:
         - version: v6.0.1
           target: esp32
           qemu: true
-        - version: v6.0.1
-          target: esp32c3
-          qemu: true
+        # Almost works but nothing past bootloader seems to visibly run.
+        # No RTOS or Unity output appears, seems to hang.
+        #- version: v6.0.1
+        #  target: esp32c3
+        #  qemu: true
         - version: v6.0.1
           target: esp32s3
           qemu: true
@@ -47,7 +49,8 @@ jobs:
         path: 'test/esp-idf/unity'
         command: "idf.py build ${{ env.BUILD_OPT }}"
     - name: "qemu"
-      timeout-minutes: 2
+      # Usually only takes a few seconds to run
+      timeout-minutes: 1
       if: matrix.qemu
       uses: espressif/esp-idf-ci-action@v1
       with:
