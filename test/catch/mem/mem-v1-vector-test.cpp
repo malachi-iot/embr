@@ -286,8 +286,6 @@ TEST_CASE("gc mem v1 vector", "[memory][gc][vector]")
         REQUIRE(bn2.handle != bn.handle);
         REQUIRE(bn.handle == 2);
 
-        // FIX: Somehow this guy isn't selecting dynamic_array copy/move constructor and going straight
-        // for perfect-forwarder
         vector_type copied(vector);
         const auto& copied_revealed = (vector_revealed<int, pool_type>&)copied;
 
