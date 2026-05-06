@@ -26,6 +26,9 @@ jobs:
         - version: v6.0.1
           target: esp32c3
           qemu: true
+        - version: v6.0.1
+          target: esp32s3
+          qemu: true
 
     steps:
     - name: Checkout repo
@@ -44,13 +47,14 @@ jobs:
         path: 'test/esp-idf/unity'
         command: "idf.py build ${{ env.BUILD_OPT }}"
     - name: "qemu"
-      timeout-minutes: 1
+      timeout-minutes: 2
       if: matrix.qemu
       uses: espressif/esp-idf-ci-action@v1
       with:
         esp_idf_version: ${{ matrix.version }}
         target: ${{ matrix.target }}
         path: 'test/esp-idf/unity'
+        # IDF 6.0+ gives us pass through to no-reboot
         command: idf.py qemu --qemu-extra-args="-no-reboot" | tee qemu_output.txt
     #- name: "qemu output inspection"
     #  if: ${{ matrix.qemu }}
