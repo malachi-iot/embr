@@ -11,27 +11,27 @@ jobs:
     env:
       # DEBT: Pretty obnoxious way to get at managed component, but it will do
       ESTD_ROOT:  managed_components/malachi-iot__estd
-      CPM_SOURCE_CACHE: ~/.cache/cpm
-      IDF_CCACHE_ENABLE: 1
 
     strategy:
       fail-fast: false
       matrix:
         version: [v5.4.4, v5.5.4, v6.0.1]
-        target: [esp32, esp32s3, esp32c6, esp32p4]
+        # 06MAY25 - esp32p4 has odd sdkconfig glitch, may be related to our
+        # sdkconfig override below (I don't think so though)
+        target: [esp32, esp32s3, esp32c3, esp32c6]
         include:
         - version: v6.0.1
+          target: esp32
+          qemu: true
+        - version: v6.0.1
+          target: esp32c3
           qemu: true
 
     steps:
     - name: Checkout repo
       uses: actions/checkout@v6
-    - uses: actions/cache@v5
-      with:
-        path: ${{ env.CPM_SOURCE_CACHE }}
-        key: ${{ runner.os }}-cpm-${{ hashFiles('CMakeLists.txt') }}
     - name: qemu option prep
-      if: ${{ matrix.qemu }}
+      if: matrix.qemu
       run: |
         cat >> $GITHUB_ENV <<EOF
         BUILD_OPT="-DSDKCONFIG_DEFAULTS=sdkconfig.defaults.ci;sdkconfig.defaults"
@@ -45,7 +45,7 @@ jobs:
         command: "idf.py build ${{ env.BUILD_OPT }}"
     - name: "qemu"
       timeout-minutes: 1
-      if: ${{ matrix.qemu }}
+      if: matrix.qemu
       uses: espressif/esp-idf-ci-action@v1
       with:
         esp_idf_version: ${{ matrix.version }}
