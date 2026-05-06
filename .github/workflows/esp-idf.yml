@@ -7,8 +7,15 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    env:
+      # DEBT: Pretty obnoxious way to get at managed component, but it will do
+      ESTD_ROOT:  managed_components/malachi-iot__estd
+      CPM_SOURCE_CACHE: ~/.cache/cpm
+      IDF_CCACHE_ENABLE: 1
+
     strategy:
-      fail-fast:false
+      fail-fast: false
       matrix:
         version: [v5.4.4, v5.5.4, v6.0.1]
         target: [esp32, esp32s3, esp32c6]
@@ -16,9 +23,14 @@ jobs:
         - version: v6.0.1
           target: esp32
           qemu: true
+
     steps:
     - name: Checkout repo
       uses: actions/checkout@v6
+    - uses: actions/cache@v5
+      with:
+        path: ${{ env.CPM_SOURCE_CACHE }}
+        key: ${{ runner.os }}-cpm-${{ hashFiles('CMakeLists.txt') }}
     - name: esp-idf QEMU option prep
       if: ${{ matrix.qemu }}
       run: |
