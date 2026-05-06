@@ -6,4 +6,8 @@ menu "embr::unity config"
         help
             Scheduler doesn't usually pass unit test due to expected deviations in timing.
 
+    config EMBR_QEMU_MODE
+        bool "Hard 'exit()' after tests"
+        default false
+
 endmenu

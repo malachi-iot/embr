@@ -44,11 +44,16 @@ extern "C" void app_main()
     unity_run_all_tests();
     UNITY_END();
 
+#if CONFIG_EMBR_QEMU_MODE
+    exit(0);
+#else
     print_banner("Starting interactive test menu");
+
     /* This function will not return, and will be busy waiting for UART input.
      * Make sure that task watchdog is disabled if you use this function.
      */
     unity_run_menu();
+#endif
 }
 
 static void print_banner(const char* text)

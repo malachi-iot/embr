@@ -8,15 +8,37 @@ jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast:false
       matrix:
-        version: [v5.4.4, v5.5.4, v6.0]
+        version: [v5.4.4, v5.5.4, v6.0.1]
         target: [esp32, esp32s3, esp32c6]
+        include:
+        - version: v6.0.1
+          target: esp32
+          qemu: true
     steps:
     - name: Checkout repo
       uses: actions/checkout@v6
+    - name: esp-idf QEMU option prep
+      if: ${{ matrix.qemu }}
+      run: |
+        cat >> $GITHUB_ENV <<EOF
+        BUILD_OPT="-DSDKCONFIG_DEFAULTS=sdkconfig.defaults.ci;sdkconfig.defaults"
+        EOF
     - name: "esp-idf build"
       uses: espressif/esp-idf-ci-action@v1
       with:
         esp_idf_version: ${{ matrix.version }}
         target: ${{ matrix.target }}
         path: 'test/esp-idf/unity'
+        command: "idf.py build ${{ env.BUILD_OPT }}"
+    - name: "esp-idf qemu"
+      timeout-minutes: 1
+      if: ${{ matrix.qemu }}
+      uses: espressif/esp-idf-ci-action@v1
+      with:
+        esp_idf_version: ${{ matrix.version }}
+        target: ${{ matrix.target }}
+        path: 'test/esp-idf/unity'
+        command: idf.py qemu --qemu-extra-args="-no-reboot" | tee qemu_output.txt
+
