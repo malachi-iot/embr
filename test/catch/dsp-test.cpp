@@ -106,6 +106,7 @@ TEST_CASE("dsp")
             static_assert(estd::is_same<fp12_4::value_type, uint16_t>::value, "");
             static_assert(estd::is_same<fp12_4::promoted_type, uint32_t>::value, "");
 
+            static_assert(sizeof(fp12_4) == 2, "");
             static_assert(sizeof(fp12_4::value_type) == 2, "");
             static_assert(sizeof(fp12_4::promoted_type) == 4, "");
 
@@ -176,6 +177,26 @@ TEST_CASE("dsp")
 
             static_assert(ct1::exponent == 16, "");
             static_assert(ct1::mantissa == 16, "");
+        }
+        SECTION("operator /")
+        {
+            using fp4_12 = dsp::v1::fixed_point<4, 12, dsp::v1::FP_SIGNED>;
+
+            auto v = fp4_12::from(0.1);
+
+            v = v / 100;
+
+            REQUIRE_THAT(v.as<float>(), Catch::Matchers::WithinAbs(0.0009765, .000001));
+        }
+        SECTION("operator *")
+        {
+            using fp8_8 = dsp::v1::fixed_point<8, 8, dsp::v1::FP_SIGNED>;
+
+            auto v = fp8_8::from(0.1);
+
+            v = v * 100;
+
+            REQUIRE_THAT(v.as<float>(), Catch::Matchers::WithinAbs(9.765, .001));
         }
     }
     SECTION("drc")

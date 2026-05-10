@@ -3,6 +3,7 @@
 #include <estd/algorithm.h>
 #include <estd/flags.h>
 #include <estd/type_traits.h>
+#include <estd/internal/units/fwd.h>
 
 #include <embr/fwd/type_from_bits.h>
 #include <embr/internal/type_from_bits.h>
@@ -43,7 +44,15 @@ struct __attribute__ ((packed)) fixed_point<exponent_, mantissa_, o, estd::endia
     static constexpr unsigned mantissa_max = 1 << mantissa;
     using promoted_type = type_from_bits_t<1 + exponent + mantissa, is_signed>;
 
-    fixed_point() = default;
+    using relaxed_t = estd::units::v1::relaxed_narrow_t;
+
+    constexpr fixed_point() = default;
+
+    template <class T>
+    constexpr fixed_point(relaxed_t, const T& v) :
+        base_type{static_cast<value_type>(v)}
+    {}
+
     constexpr explicit fixed_point(value_type v) :
         base_type{v}
     {}
@@ -223,28 +232,32 @@ struct __attribute__ ((packed)) fixed_point<exponent_, mantissa_, o, estd::endia
     {
         return compare_to.man() == man() && compare_to.exp() == exp();
     }   */
+
+    // NOTE: Deviates from standard C++ behavior in that auto-promotion to int doesn't happen
+    // TODO: See if we can crtp-consolidate this with estd::units
+    template <class Integer>
+    friend constexpr auto operator/(const fixed_point& lhs, Integer rhs) ->
+        estd::enable_if_t<estd::numeric_limits<Integer>::is_integer, fixed_point>
+    {
+        return { relaxed_t{}, lhs.value() / rhs };
+    }
+
+    // NOTE: Deviates from standard C++ behavior in that auto-promotion to int doesn't happen
+    template <class Integer>
+    friend constexpr auto operator*(const fixed_point& lhs, Integer rhs) ->
+        estd::enable_if_t<estd::numeric_limits<Integer>::is_integer, fixed_point>
+    {
+        return { relaxed_t{}, lhs.value() * rhs };
+    }
+
 };
 
 // DEBT: Look into type promotion and do that here
-template <unsigned num1, unsigned num2, unsigned den>
-inline constexpr fixed_point<estd::max(num1, num2), den> operator*(
-    fixed_point<num1, den> lhs, fixed_point<num2, den> rhs)
+template <unsigned exp1, unsigned exp2, unsigned man>
+inline constexpr fixed_point<estd::max(exp1, exp2), man> operator*(
+    fixed_point<exp1, man> lhs, fixed_point<exp2, man> rhs)
 {
-    return { (lhs.value() * rhs.value()) >> den };
-}
-
-template <unsigned exp, unsigned man, fixed_point_options o, class Integer>
-inline constexpr auto operator*(fixed_point<exp, man, o> lhs, Integer rhs) ->
-    estd::enable_if_t<estd::numeric_limits<Integer>::is_integer, fixed_point<exp, man>>
-{
-    return { lhs.value() * rhs };
-}
-
-template <unsigned exp, unsigned man, fixed_point_options o, class Integer>
-inline constexpr auto operator/(fixed_point<exp, man, o> lhs, Integer rhs) ->
-    estd::enable_if_t<estd::numeric_limits<Integer>::is_integer, fixed_point<exp, man>>
-{
-    return { lhs.value() / rhs };
+    return { estd::units::relaxed_narrow_t{}, (lhs.value() * rhs.value()) >> man };
 }
 
 }}}
