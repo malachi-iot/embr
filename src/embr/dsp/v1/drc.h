@@ -40,11 +40,13 @@ template <class Scalar>
 template <class Scalar2>
 inline Scalar2 drc<Scalar>::process(Scalar2 in, const params& p)
 {
+    using std::abs;
+
     Scalar& env = envelope_;
 
     // Calculate envelope
     // DEBT: https://github.com/malachi-iot/estdlib/issues/199
-    const Scalar abs_input = std::abs(in);
+    const Scalar abs_input = abs(in);
     if (abs_input > env) {
         env = env * (1 - p.attack) + p.attack * abs_input;
     } else {

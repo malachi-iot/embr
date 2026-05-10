@@ -71,7 +71,8 @@ struct __attribute__ ((packed)) fixed_point<exponent_, mantissa_, o, estd::endia
     /// @return
     ///
     template <class Numeric>
-    static constexpr this_type from(const Numeric& v)
+    static constexpr auto from(const Numeric& v) ->
+        estd::enable_if_t<estd::is_arithmetic<Numeric>::value, fixed_point>
     {
         // NOTE: constexpr if largely unnecessary - but it is easy enough to
         // give compiler every opportunity to use a bit shift instead of a multiply
@@ -259,6 +260,23 @@ struct __attribute__ ((packed)) fixed_point<exponent_, mantissa_, o, estd::endia
         return { relaxed_t{}, lhs.value() * rhs };
     }
 
+    friend constexpr fixed_point operator-(const fixed_point& lhs, const fixed_point& rhs)
+    {
+        return { relaxed_t{}, lhs.value() - rhs.value() };
+    }
+
+    friend constexpr fixed_point operator+(const fixed_point& lhs, const fixed_point& rhs)
+    {
+        return { relaxed_t{}, lhs.value() + rhs.value() };
+    }
+
+    /*
+     * 10MAY26 Changing my mind on this - way too implicit
+    template <class Numeric>
+    friend constexpr fixed_point operator-(Numeric lhs, const fixed_point& rhs)
+    {
+        return from(lhs) + rhs;
+    }   */
 };
 
 // DEBT: Look into type promotion and do that here
@@ -270,12 +288,10 @@ inline constexpr fixed_point<estd::max(exp1, exp2), man> operator*(
 }
 
 template <unsigned exp, unsigned man, embr::dsp::v1::fixed_point_options o>
-fixed_point<exp, man, o> abs(const fixed_point<exp, man, o>& v)
+constexpr fixed_point<exp, man, o> abs(const fixed_point<exp, man, o>& v)
 {
     return v.value() > 0 ? v : -v;
 }
-
-
 
 }}}
 

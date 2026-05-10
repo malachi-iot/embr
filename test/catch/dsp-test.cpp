@@ -248,6 +248,15 @@ TEST_CASE("dsp")
             // since it does divides instead of bit shifts
             REQUIRE(v2.as<int>() == 10);
         }
+        SECTION("operator -")
+        {
+            using fp8_8 = dsp::v1::fixed_point<8, 8, dsp::v1::FP_SIGNED>;
+
+            fp8_8 v = fp8_8::from(1) - fp8_8::from(0.5);
+
+            REQUIRE(v.exp() == 0);
+            REQUIRE(v.man() == 128);
+        }
     }
     SECTION("drc")
     {
