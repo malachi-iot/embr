@@ -194,11 +194,17 @@ TEST_CASE("dsp")
 
             auto v = fp4_12::from(0.1);
 
-            SECTION("/")
+            SECTION("/ int")
             {
                 v = v / 100;
 
                 REQUIRE_THAT(v.as<float>(), Catch::Matchers::WithinAbs(0.0009765, .000001));
+            }
+            SECTION("/ fp")
+            {
+                v = v / fp4_12::from(2);
+
+                REQUIRE_THAT(v.as<float>(), Catch::Matchers::WithinAbs(0.0498046, .000001));
             }
             SECTION("/=")
             {
@@ -295,7 +301,10 @@ TEST_CASE("dsp")
         }
         SECTION("fp")
         {
-            using fp4_12 = dsp::v1::fixed_point<4, 12>;
+            // Implicit conversions required for '1 - exp' operations to work
+            using fp4_12 = dsp::v1::fixed_point<4, 12,
+                dsp::v1::fixed_point_options::FP_SIGNED |
+                dsp::v1::fixed_point_options::FP_IMPLICIT>;
 
             fp4_12 v;
 
@@ -309,8 +318,7 @@ TEST_CASE("dsp")
                 thresh, attack, release
             };
 
-            // No std::abs compatibility for fp yet, and needs some basic math overloads too
-            //v = drc1.process(v, p);
+            v = drc1.process(v, p);
         }
     }
 }

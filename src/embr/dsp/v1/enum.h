@@ -12,7 +12,7 @@ enum fixed_point_options
     FP_DEFAULT          =       FP_UNSIGNED | FP_ENDIAN_NATIVE,
 
     FP_SIGNED           =       0x01,
-    FP_IMPLICIT         =       0x02,
+    FP_IMPLICIT         =       0x02,           ///< Permit some implicit conversions from intrinsics.  Constructor is a special case.
 
     FP_ENDIAN_LE        =       0x10,
     FP_ENDIAN_BE        =       0x20

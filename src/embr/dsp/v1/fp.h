@@ -40,6 +40,7 @@ struct __attribute__ ((packed)) fixed_point<exponent_, mantissa_, o, estd::endia
     using typename base_type::value_type;
     using this_type = fixed_point;
 
+    static constexpr bool is_implicit = o & FP_IMPLICIT;
     static constexpr bool is_signed = o & FP_SIGNED;
     static constexpr unsigned mantissa_max = 1 << mantissa;
     using promoted_type = type_from_bits_t<1 + exponent + mantissa, is_signed>;
@@ -53,7 +54,22 @@ struct __attribute__ ((packed)) fixed_point<exponent_, mantissa_, o, estd::endia
         base_type{static_cast<value_type>(v)}
     {}
 
+#if __cpp_consteval
+    // 10MAY26 - I don't like how this and the following constructor behave differently despite nearly
+    // identical signatures.  Since it's guarded by is_implicit, I think it's OK - implicit carries
+    // "magic" behaviors
+    consteval fixed_point(double v) requires is_implicit :
+        base_type(from(v))
+    {}
+#endif
+
     constexpr explicit fixed_point(value_type v) :
+        base_type{v}
+    {}
+
+    // EXPERIMENTAL
+    // Alternative to above explicit raw ininitializer
+    constexpr fixed_point(estd::in_place_t, value_type v) :
         base_type{v}
     {}
 
@@ -225,13 +241,13 @@ struct __attribute__ ((packed)) fixed_point<exponent_, mantissa_, o, estd::endia
         return { relaxed_t{}, -v_ };
     }
 
-    constexpr bool operator==(const this_type& compare_to)
+    constexpr bool operator==(const this_type& compare_to) const
     {
         return compare_to.value() == base_type::v_;
     }
 
     template <unsigned exp2, fixed_point_options o2>
-    constexpr bool operator==(const fixed_point<exp2, mantissa, o2>& compare_to)
+    constexpr bool operator==(const fixed_point<exp2, mantissa, o2>& compare_to) const
     {
         return compare_to.man() == man() && compare_to.exp() == exp();
     }
@@ -270,21 +286,34 @@ struct __attribute__ ((packed)) fixed_point<exponent_, mantissa_, o, estd::endia
         return { relaxed_t{}, lhs.value() + rhs.value() };
     }
 
-    /*
-     * 10MAY26 Changing my mind on this - way too implicit
     template <class Numeric>
-    friend constexpr fixed_point operator-(Numeric lhs, const fixed_point& rhs)
+    friend constexpr auto operator-(Numeric lhs, const fixed_point& rhs) ->
+        estd::enable_if_t<is_implicit && estd::is_arithmetic<Numeric>::value, fixed_point>
+    {
+        return from(lhs) - rhs;
+    }
+
+    template <class Numeric>
+    friend constexpr auto operator+(Numeric lhs, const fixed_point& rhs) ->
+        estd::enable_if_t<is_implicit && estd::is_arithmetic<Numeric>::value, fixed_point>
     {
         return from(lhs) + rhs;
-    }   */
+    }
 };
 
 // DEBT: Look into type promotion and do that here
-template <unsigned exp1, unsigned exp2, unsigned man>
-inline constexpr fixed_point<estd::max(exp1, exp2), man> operator*(
-    fixed_point<exp1, man> lhs, fixed_point<exp2, man> rhs)
+template <unsigned exp1, unsigned exp2, unsigned man, embr::dsp::v1::fixed_point_options o>
+inline constexpr fixed_point<estd::max(exp1, exp2), man, o> operator*(
+    fixed_point<exp1, man, o> lhs, fixed_point<exp2, man, o> rhs)
 {
     return { estd::units::relaxed_narrow_t{}, (lhs.value() * rhs.value()) >> man };
+}
+
+template <unsigned exp1, unsigned exp2, unsigned man, embr::dsp::v1::fixed_point_options o>
+inline constexpr fixed_point<estd::max(exp1, exp2), man, o> operator/(
+    fixed_point<exp1, man, o> lhs, fixed_point<exp2, man, o> rhs)
+{
+    return { estd::units::relaxed_narrow_t{}, (lhs.value() << man) / rhs.value() };
 }
 
 template <unsigned exp, unsigned man, embr::dsp::v1::fixed_point_options o>
@@ -292,6 +321,9 @@ constexpr fixed_point<exp, man, o> abs(const fixed_point<exp, man, o>& v)
 {
     return v.value() > 0 ? v : -v;
 }
+
+// DEBT: Add < and > and friends in the event that FP is non-FP_ENDIAN_NATIVE in which case
+// the packed_word flavors of < and > won't play nice
 
 }}}
 

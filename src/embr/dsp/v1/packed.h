@@ -191,6 +191,7 @@ protected:
     // DEBT: type punning not always available this way
     union
     {
+        // As indicated in above specialization rules, only 16-bit packed words come through here
         uint8_t value_[2];
         value_type native_;
     };
@@ -229,6 +230,33 @@ public:
         }
     }
 };
+
+template <packed_word_options o, class IntSeq>
+constexpr bool operator ==(
+    const packed_word_base<o, IntSeq>& lhs,
+    const packed_word_base<o, IntSeq>& rhs)
+{
+    return lhs.value() == rhs.value();
+}
+
+// Warning: it's up to you to determine if < or > is appropriate for your packed word.  We support it here
+// in the spirit of low-level-ness
+
+template <packed_word_options o, class IntSeq>
+constexpr bool operator <(
+    const packed_word_base<o, IntSeq>& lhs,
+    const packed_word_base<o, IntSeq>& rhs)
+{
+    return lhs.value() < rhs.value();
+}
+
+template <packed_word_options o, class IntSeq>
+constexpr bool operator >(
+    const packed_word_base<o, IntSeq>& lhs,
+    const packed_word_base<o, IntSeq>& rhs)
+{
+    return lhs.value() > rhs.value();
+}
 
 }}
 
