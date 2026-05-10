@@ -65,25 +65,6 @@ struct __attribute__ ((packed)) fixed_point<exponent_, mantissa_, o, estd::endia
 
     }   */
 
-    template <class Float>
-    static constexpr this_type from_float(const Float& v)
-    {
-        // -1.75
-        // -1
-        // -1.75 - -1 = -0.75
-        // Otherwise, float
-        const auto floor = static_cast<value_type>(v);
-        const auto man = static_cast<value_type>(std::abs(v - floor) * mantissa_max);
-        const value_type exp_and_man = floor << mantissa | man;
-
-        // DEBT: Very crude -- floor usually picks up sign.  However, two's complement has no concept of
-        // -0 (seems reasonable to me) which means sign vanishes when we do a floor on -0.5.  I get the
-        // feeling we can twiddle with abs() above more and eliminate this step
-        const bool vanished_negative = v < 0 && v > -1;
-
-        return fixed_point(vanished_negative ? exp_and_man * -1 : exp_and_man);
-    }
-
     ///
     /// @brief from
     /// @param v intrinsic such as a float, int, etc
@@ -92,10 +73,12 @@ struct __attribute__ ((packed)) fixed_point<exponent_, mantissa_, o, estd::endia
     template <class Numeric>
     static constexpr this_type from(const Numeric& v)
     {
+        // NOTE: constexpr if largely unnecessary - but it is easy enough to
+        // give compiler every opportunity to use a bit shift instead of a multiply
         if constexpr (estd::numeric_limits<Numeric>::is_integer)
             return fixed_point(v << mantissa);
         else
-            return from_float(v);
+            return fixed_point(v * mantissa_max);
     }
 
     ///
