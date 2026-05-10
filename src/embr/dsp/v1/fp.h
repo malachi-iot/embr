@@ -75,7 +75,8 @@ struct __attribute__ ((packed)) fixed_point<exponent_, mantissa_, o, estd::endia
     {
         // NOTE: constexpr if largely unnecessary - but it is easy enough to
         // give compiler every opportunity to use a bit shift instead of a multiply
-        if constexpr (estd::numeric_limits<Numeric>::is_integer)
+        if constexpr (estd::numeric_limits<Numeric>::is_integer &&
+            !estd::numeric_limits<Numeric>::is_signed)
             return fixed_point(v << mantissa);
         else
             return fixed_point(v * mantissa_max);
@@ -108,6 +109,7 @@ struct __attribute__ ((packed)) fixed_point<exponent_, mantissa_, o, estd::endia
 
     constexpr value_type exp() const
     {
+        // DEBT: I think we can just return channel<0, value_type> right?
         if constexpr(is_signed)
             return base_type::template channel<0, signed_type>();
         else
@@ -217,9 +219,9 @@ struct __attribute__ ((packed)) fixed_point<exponent_, mantissa_, o, estd::endia
         return *this;
     }
 
-    fixed_point<exponent, mantissa, o | FP_SIGNED> operator-() const
+    constexpr fixed_point<exponent, mantissa, o | FP_SIGNED> operator-() const
     {
-        return { -exp(), man() };
+        return { relaxed_t{}, -v_ };
     }
 
     constexpr bool operator==(const this_type& compare_to)
@@ -266,6 +268,14 @@ inline constexpr fixed_point<estd::max(exp1, exp2), man> operator*(
 {
     return { estd::units::relaxed_narrow_t{}, (lhs.value() * rhs.value()) >> man };
 }
+
+template <unsigned exp, unsigned man, embr::dsp::v1::fixed_point_options o>
+fixed_point<exp, man, o> abs(const fixed_point<exp, man, o>& v)
+{
+    return v.value() > 0 ? v : -v;
+}
+
+
 
 }}}
 

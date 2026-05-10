@@ -234,6 +234,20 @@ TEST_CASE("dsp")
                 REQUIRE_THAT(v.as<float>(), Catch::Matchers::WithinAbs(-0.9765, .001));
             }
         }
+        SECTION("abs")
+        {
+            using fp8_8 = dsp::v1::fixed_point<8, 8, dsp::v1::FP_SIGNED>;
+
+            constexpr auto v = fp8_8::from(-10);
+
+            static_assert(v.as<int>() == -10, "");
+
+            fp8_8 v2 = abs(v);
+
+            // NOTE: We don't usually as<int> but technically it's valid.  Just more expensive
+            // since it does divides instead of bit shifts
+            REQUIRE(v2.as<int>() == 10);
+        }
     }
     SECTION("drc")
     {
@@ -281,9 +295,13 @@ TEST_CASE("dsp")
             constexpr auto release = fp4_12::from(_release);
 
             dsp::drc<fp4_12> drc1;
+            dsp::drc<fp4_12>::params p
+            {
+                thresh, attack, release
+            };
 
-            // No std::abs compatibility for fp yet
-            //v = drc1.process(v, thresh, attack, release);
+            // No std::abs compatibility for fp yet, and needs some basic math overloads too
+            //v = drc1.process(v, p);
         }
     }
 }
