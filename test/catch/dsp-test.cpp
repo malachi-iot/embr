@@ -91,6 +91,10 @@ TEST_CASE("dsp")
         using fp8 = dsp::v1::fixed_point<8, 8>;
         using fp16 = dsp::v1::fixed_point<16, 16>;
 
+        static_assert(dsp::is_fixed_point<fp8>::value, "");
+        static_assert(dsp::is_fixed_point<fp8_24>::value, "");
+        static_assert(!dsp::is_fixed_point<int>::value, "");
+
         // Actual font support is in embr::gl - this is just fp verifications
         SECTION("lv font related")
         {
