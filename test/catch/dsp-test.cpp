@@ -146,8 +146,11 @@ TEST_CASE("dsp")
         }
         SECTION("general")
         {
+            using fp4_12 = dsp::v1::fixed_point<4, 12, dsp::v1::FP_SIGNED>;
+
             static_assert(std::is_same<fp8_24::value_type, uint32_t>::value, "");
             static_assert(std::is_same<fp8_24::promoted_type, uint64_t>::value, "");
+            static_assert(std::is_same<fp4_12::value_type, int16_t>::value, "");
 
             fp8_24 v1{0x1800000};
             fp8 v2{0x0180};
@@ -170,6 +173,13 @@ TEST_CASE("dsp")
 
             REQUIRE(v3.exp() == 1);
             REQUIRE(v3.man() == 0x8000);
+
+            float f = -0.1;
+
+            auto v5 = fp4_12::from(f);
+            auto v5f = v5.as<float>();
+
+            REQUIRE_THAT(v5f, Catch::Matchers::WithinAbs(-0.0998, .0001));
         }
         SECTION("common_type")
         {
@@ -184,19 +194,45 @@ TEST_CASE("dsp")
 
             auto v = fp4_12::from(0.1);
 
-            v = v / 100;
+            SECTION("/")
+            {
+                v = v / 100;
 
-            REQUIRE_THAT(v.as<float>(), Catch::Matchers::WithinAbs(0.0009765, .000001));
+                REQUIRE_THAT(v.as<float>(), Catch::Matchers::WithinAbs(0.0009765, .000001));
+            }
+            SECTION("/=")
+            {
+                v /= 100;
+
+                REQUIRE_THAT(v.as<float>(), Catch::Matchers::WithinAbs(0.0009765, .000001));
+
+                v = v.from(-0.1);
+
+                v /= 10;
+
+                REQUIRE_THAT(v.as<float>(), Catch::Matchers::WithinAbs(-0.009765, .000001));
+            }
         }
         SECTION("operator *")
         {
             using fp8_8 = dsp::v1::fixed_point<8, 8, dsp::v1::FP_SIGNED>;
 
-            auto v = fp8_8::from(0.1);
+            SECTION("*")
+            {
+                auto v = fp8_8::from(0.1);
 
-            v = v * 100;
+                v = v * 100;
 
-            REQUIRE_THAT(v.as<float>(), Catch::Matchers::WithinAbs(9.765, .001));
+                REQUIRE_THAT(v.as<float>(), Catch::Matchers::WithinAbs(9.765, .001));
+            }
+            SECTION("*=")
+            {
+                auto v = fp8_8::from(-0.1);
+
+                v *= 10;
+
+                REQUIRE_THAT(v.as<float>(), Catch::Matchers::WithinAbs(-0.9765, .001));
+            }
         }
     }
     SECTION("drc")

@@ -51,7 +51,7 @@ public:
     template <unsigned Index, class T = value_type>
     constexpr T channel() const
     {
-        static_assert(Index <= 1, "Only 2 channels supported for this type");
+        static_assert(Index == 0 || Index == 1, "Only 2 channels supported for this type");
 
         if constexpr(Index == 0)
         {
