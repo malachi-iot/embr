@@ -81,6 +81,27 @@ static void test_drc(const char* tag)
     ESP_LOGI(TAG, "embr::dsp::drc %s m1=%" PRIu64 "us", tag, m1.count());
 }
 
+
+// DEBT: Put this out into a math.cpp
+template <class Scalar>
+static void test_divide(const char* tag)
+{
+    constexpr Scalar v1 = 0.5;
+
+    int count = 100000;
+
+    perf::Profiler p;
+
+    while(count-- > 0)
+    {
+        // TODO: Need to divide against (pseudo)random to avoid cache shenanigans
+    }
+
+    duration m1 = p.mark();
+
+    ESP_LOGI(TAG, "embr::dsp::divide %s m1=%" PRIu64 "us", tag, m1.count());
+}
+
 void test_dsp()
 {
     using fp4_12 = dsp::v1::fixed_point<4, 12,
@@ -95,4 +116,8 @@ void test_dsp()
     test_drc<double>("double");
     test_drc<fp4_12>("fp4.12");
     test_drc<fp8_24>("fp8.24");
+    test_divide<float>("float");
+    test_divide<double>("double");
+    test_divide<fp4_12>("fp4.12");
+    test_divide<fp8_24>("fp8.24");
 }
