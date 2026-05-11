@@ -59,7 +59,7 @@ struct __attribute__ ((packed)) fixed_point<exponent_, mantissa_, o, estd::endia
     // identical signatures.  Since it's guarded by is_implicit, I think it's OK - implicit carries
     // "magic" behaviors
     consteval fixed_point(double v) requires is_implicit :
-        base_type(from(v))
+        base_type(from_ll(v))
     {}
 #endif
 
@@ -87,16 +87,23 @@ struct __attribute__ ((packed)) fixed_point<exponent_, mantissa_, o, estd::endia
     /// @return
     ///
     template <class Numeric>
-    static constexpr auto from(const Numeric& v) ->
-        estd::enable_if_t<estd::is_arithmetic<Numeric>::value, fixed_point>
+    static constexpr auto from_ll(const Numeric& v) ->
+        estd::enable_if_t<estd::is_arithmetic<Numeric>::value, value_type>
     {
         // NOTE: constexpr if largely unnecessary - but it is easy enough to
         // give compiler every opportunity to use a bit shift instead of a multiply
         if constexpr (estd::numeric_limits<Numeric>::is_integer &&
             !estd::numeric_limits<Numeric>::is_signed)
-            return fixed_point(v << mantissa);
+            return v << mantissa;
         else
-            return fixed_point(v * mantissa_max);
+            return v * mantissa_max;
+    }
+
+    template <class Numeric>
+    static constexpr auto from(const Numeric& v) ->
+        estd::enable_if_t<estd::is_arithmetic<Numeric>::value, fixed_point>
+    {
+        return fixed_point(from_ll(v));
     }
 
     ///

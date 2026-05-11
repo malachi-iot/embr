@@ -8,4 +8,8 @@ using duration = typename clock_type::duration;
 void test_dsp();
 void test_span();
 
+inline namespace perf {
+
 using Profiler = embr::Profiler<clock_type>;
+
+}
