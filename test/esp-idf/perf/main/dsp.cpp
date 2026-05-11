@@ -28,13 +28,13 @@ void test_dsp()
 
     duration m1 = p.mark();
 
-    ESP_LOGI(TAG, "std::sin %f %" PRIu64 "us", j, m1.count());
+    ESP_LOGI(TAG, "std::sin %f m1=%" PRIu64 "us", j, m1.count());
 
     j = 0;
 
     p.reset();
 
-    using pc = embr::dsp::detail::precalc<embr::dsp::PRECALC_DEFAULT>;
+    //using pc = embr::dsp::detail::precalc<embr::dsp::PRECALC_DEFAULT>;
 
     for(float v = 0; v < max; v += incr)
     {
@@ -46,5 +46,5 @@ void test_dsp()
 
     duration m2 = p.mark();
 
-    ESP_LOGI(TAG, "embr::dsp::sin_lookup %f %" PRIu64 "us", j, m2.count());
+    ESP_LOGI(TAG, "embr::dsp::sin_lookup %f m2=%" PRIu64 "us", j, m2.count());
 }
