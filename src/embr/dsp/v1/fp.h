@@ -13,6 +13,10 @@
 
 #include <estd/internal/macro/push.h>
 
+// EXPERIMENTAL
+// Working well so far, just not noticeably quicker
+#define FEATURE_EMBR_DSP_FP_PERMISSIVE_CONVERSION 0
+
 namespace embr { namespace dsp { inline namespace v1 {
 
 // Guidance from:
@@ -73,13 +77,33 @@ struct __attribute__ ((packed)) fixed_point<exponent_, mantissa_, o, estd::endia
         base_type{v}
     {}
 
-    /*
-     * Not ready yet
+    constexpr fixed_point(const fixed_point&) = default;
+
     template <unsigned exponent2, unsigned mantissa2>
-    constexpr explicit fixed_point(const fixed_point<exponent2, mantissa2, o>& copy_from)
+    constexpr value_type convert_ll(const fixed_point<exponent2, mantissa2, o>& convert_from)
+    {
+        // DEBT: Looks like we might want a convenience shifter helper for this
+        constexpr int d = mantissa - mantissa2;
+        if constexpr(d == 0)
+            return convert_from.value();
+        else if constexpr(d > 0)
+            return convert_from.value() << d;
+        else
+            return convert_from.value() >> -d;
+    }
+
+
+#if FEATURE_EMBR_DSP_FP_PERMISSIVE_CONVERSION
+    // EXPERIMENTAL
+    // Implicit conversion - silent precision loss permitted
+    template <unsigned exponent2, unsigned mantissa2,
+        bool Implicit = is_implicit, estd::enable_if_t<Implicit, int> = 0>
+    constexpr fixed_point(const fixed_point<exponent2, mantissa2, o>& copy_from) :
+        base_type(convert_ll(copy_from))
     {
 
-    }   */
+    }
+#endif
 
     ///
     /// @brief from
@@ -306,15 +330,44 @@ struct __attribute__ ((packed)) fixed_point<exponent_, mantissa_, o, estd::endia
     {
         return from(lhs) + rhs;
     }
+
+    /*
+    template <unsigned exp2, unsigned man2,
+        bool Implicit = is_implicit, estd::enable_if_t<Implicit, int> = 0>
+    operator fixed_point<exp2, man2, o>() const
+    {
+        return fixed_point<exp2, man2, o>(*this);
+    }   */
 };
 
-// DEBT: Look into type promotion and do that here
+
 template <unsigned exp1, unsigned exp2, unsigned man, embr::dsp::v1::fixed_point_options o>
-inline constexpr fixed_point<estd::max(exp1, exp2), man, o> operator*(
-    fixed_point<exp1, man, o> lhs, fixed_point<exp2, man, o> rhs)
+inline constexpr auto operator*(
+    fixed_point<exp1, man, o> lhs, fixed_point<exp2, man, o> rhs) ->
+#if FEATURE_EMBR_DSP_FP_PERMISSIVE_CONVERSION
+    estd::enable_if_t<
+        !(o & fixed_point_options::FP_IMPLICIT),
+        fixed_point<estd::max(exp1, exp2), man, o>>
+#else
+    fixed_point<estd::max(exp1, exp2), man, o>
+#endif
 {
     return { estd::units::relaxed_narrow_t{}, (lhs.value() * rhs.value()) >> man };
 }
+
+#if FEATURE_EMBR_DSP_FP_PERMISSIVE_CONVERSION
+// 100% experimental
+template <unsigned exp1, unsigned exp2, unsigned man1, unsigned man2, fixed_point_options o>
+inline constexpr auto operator*(
+    fixed_point<exp1, man1, o> lhs, fixed_point<exp2, man2, o> rhs) ->
+    estd::enable_if_t<
+        o & fixed_point_options::FP_IMPLICIT,
+        fixed_point<estd::max(exp1, exp2), man1 + man2, o>>
+{
+    // DEBT: Consolidate with convert_ll
+    return { estd::units::relaxed_narrow_t{}, lhs.value() * rhs.value() };
+}
+#endif
 
 template <unsigned exp1, unsigned exp2, unsigned man, embr::dsp::v1::fixed_point_options o>
 inline constexpr fixed_point<estd::max(exp1, exp2), man, o> operator/(

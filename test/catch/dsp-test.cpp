@@ -263,6 +263,38 @@ TEST_CASE("dsp")
             REQUIRE(v.exp() == 0);
             REQUIRE(v.man() == 128);
         }
+        SECTION("experimental: precision juggling")
+        {
+            SECTION("fp8 -> fp16")
+            {
+                constexpr auto v1 = fp8::from(0.5);
+                fp16 v2(v1.value() * v1.value());
+
+                REQUIRE_THAT(v2.as<float>(), Catch::Matchers::WithinAbs(0.25, .001));
+            }
+            SECTION("fp4_12 -> fp4_28")
+            {
+                using fp4_12 = dsp::v1::fixed_point<4, 12>;
+                using fp4_24 = dsp::v1::fixed_point<4, 24>;
+
+                constexpr auto v1 = fp4_12::from(0.5);
+                fp4_24 v2(v1.value() * v1.value());
+
+                REQUIRE_THAT(v2.as<float>(), Catch::Matchers::WithinAbs(0.25, .001));
+            }
+#if FEATURE_EMBR_DSP_FP_PERMISSIVE_CONVERSION
+            SECTION("fp4_12 -> fp3_13 (implicit)")
+            {
+                using fp4_12 = dsp::v1::fixed_point<4, 12, dsp::v1::fixed_point_options::FP_IMPLICIT>;
+                using fp3_13 = dsp::v1::fixed_point<3, 13, dsp::v1::fixed_point_options::FP_IMPLICIT>;
+
+                auto v1 = fp4_12::from(0.5);
+                fp3_13 v2(v1 * v1);
+
+                REQUIRE_THAT(v2.as<float>(), Catch::Matchers::WithinAbs(0.25, .001));
+            }
+#endif
+        }
     }
     SECTION("drc")
     {

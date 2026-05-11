@@ -54,7 +54,7 @@ inline Scalar2 drc<Scalar>::process(Scalar2 in, const params& p)
     }
 
     // Apply compression
-    return env > p.threshold ? in * (p.threshold / env) : in;
+    return env > p.threshold ? Scalar(in * (p.threshold / env)) : in;
 }
 
 template <class Scalar, class It, class ItOut>
