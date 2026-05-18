@@ -7,7 +7,7 @@ static estd::arduino_ostream cout(Serial);
 
 struct Mutex
 {
-    static inline void lock_push() { cli(); }
+    static inline bool lock_push() { cli(); return true; }
     static inline void unlock_push() { sei(); }
     static inline void lock_pop() { cli(); }
     static inline void unlock_pop() { sei(); }

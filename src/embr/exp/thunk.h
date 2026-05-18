@@ -12,12 +12,16 @@ namespace embr { namespace experimental {
 // If so, enforce it with a concept
 struct NoopMutex
 {
-    static constexpr bool lock_push() { return {}; }
+    static constexpr bool lock_push() { return true; }
     static constexpr bool unlock_push() { return {}; }
     static constexpr bool lock_pop() { return {}; }
     static constexpr bool unlock_pop() { return {}; }
 };
 
+// DEBT: Refactor and split apart:
+// 1. obj_bipbuf (size-aware and perhaps RTTO aware)
+// 2. thunk_base inherits from (consider changing convention)
+// 3. EXPERIMENTAL: Add additional trivial parameter config to use extra space in 'Item'
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::Bipbuf) Buf,
     class Mutex>
 class ThunkBase : protected Mutex
@@ -85,6 +89,7 @@ public:
     ESTD_CPP_FORWARDING_CTOR_MEMBER(ThunkBase, buf_)
 
     // DEBT: See if we can find clever way to oerload and handle no-parameter flavor of F too
+    // TODO: A real errc return code would be more interesting here
     template <class F, class Mutex2>
     bool enqueue(F&& f, Mutex2&& mutex)
     {
@@ -105,7 +110,7 @@ public:
         using model_type = function_type::model<F2>;
         //int sz = sizeof(inline_function) + sizeof(Item);
 
-        mutex.lock_push();
+        if(!mutex.lock_push())  return false;
 
         // Make sure we have enough space
         if(buf_.unused() < sizeof(model_type))
