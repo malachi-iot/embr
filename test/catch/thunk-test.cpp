@@ -174,4 +174,22 @@ TEST_CASE("thunk")
         REQUIRE(counter == 1);
         REQUIRE(t2.empty() == true);
     }
+    SECTION("msg_bipbuf")
+    {
+        using type = embr::internal::msg_bipbuf<estd::layer1::bipbuf<128>>;
+        using message = type::message;
+
+        type mbb;
+        estd::errc err;
+
+        err = mbb.enqueue([](message* m)
+        {
+
+        }, 10);
+
+        REQUIRE(err == estd::errc{});
+        // FIX: Since we are operating on pointers to payload and message,
+        // we need to consider alignment.
+        REQUIRE(mbb.buf().used() == sizeof(message) + 10);
+    }
 }

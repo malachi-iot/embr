@@ -6,6 +6,8 @@
 #include <estd/internal/bip/buffer.h>
 #include <estd/functional.h>
 
+#include "../internal/msg-bipbuf.h"
+
 namespace embr { namespace experimental {
 
 // DEBT: It seems we might be able to considate this with ringbuffer's noop mutex.

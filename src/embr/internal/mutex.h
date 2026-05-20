@@ -25,9 +25,9 @@ struct MutexContext
 
 struct noop_mutex
 {
-    static ESTD_CPP_CONSTEXPR(14) void lock(MutexContext = {false}) {}
+    static constexpr bool lock(MutexContext = {false}) { return true; }
 
-    static ESTD_CPP_CONSTEXPR(14) void unlock(MutexContext = {false}) {}
+    static ESTD_CPP_CONSTEXPR(14) void unlock(MutexContext = {false}) { }
 };
 
 
