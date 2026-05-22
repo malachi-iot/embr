@@ -399,6 +399,7 @@ TEST_CASE("msg_bipbuf", "[bipbuf]")
             REQUIRE(sum1 == sum2);
         }
 #endif
+#if BIPBUF_TEST_ENABLE3
         SECTION("async: varied")
         {
             using message = decltype(mbb)::message;
@@ -406,18 +407,44 @@ TEST_CASE("msg_bipbuf", "[bipbuf]")
             std::mt19937 gen{}; // fixed seed: deterministic sequence
             test_mutex<0> mutex;
 
+            unsigned sz = gen() % 32;
+
             for(int i = 0; i < 100; ++i)
             {
-                mbb.push([&](message* m)
+                auto f = [&, sz, i]
                 {
+                    estd::errc err;
+                    do
+                    {
+                        err = mbb.push([sz](message* m)
+                            {
+                                std::memset(m->payload(), '0' + sz, sz);
+                            }, sz, mutex);
 
-                }, 10, mutex);
-                auto f = [&, i]
-                {
+                    }   while(err != estd::errc{});
                 };
 
                 futures.push_back(std::async(std::launch::async, std::move(f)));
             }
+
+            int active = 0;
+
+            do
+            {
+                active = 0;
+                for(std::future<void>& future : futures)
+                {
+                    if(future.valid() == false) continue;
+
+                    ++active;
+
+                    if(future.wait_for(std::chrono::milliseconds(10)) == std::future_status::timeout) continue;
+
+                    future.get();
+                }
+
+            }   while(active);
         }
+#endif
     }
 }
