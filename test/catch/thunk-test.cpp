@@ -6,7 +6,7 @@
 #include <vector>
 
 #include <embr/exp/thunk.h>
-#include <embr/internal/msg-bipbuf.h>
+#include <embr/thunk.h>
 
 #include "mem/test-mem-data.h"
 
@@ -88,6 +88,7 @@ struct test_mutex
 
 TEST_CASE("thunk")
 {
+    embr::sys::detail::v1::thunk<estd::layer1::bipbuf<256>> t_new;
     embr::experimental::layer1::Thunk<256> t;
 
     SECTION("pt1")
