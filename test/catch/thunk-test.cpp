@@ -272,12 +272,11 @@ TEST_CASE("msg_bipbuf", "[bipbuf]")
         }
 #endif
 #if BIPBUF_TEST_ENABLE2
-        SECTION("async")
+        SECTION("async: fixed")
         {
             std::vector<std::future<int>> futures;
             std::mt19937 gen{}; // fixed seed: deterministic sequence
 
-            // For post-morem inspection
             std::vector<int> generated, parity;
             std::mutex parity_mutex;
 
@@ -289,7 +288,6 @@ TEST_CASE("msg_bipbuf", "[bipbuf]")
             test_mutex<0> mutex;
             int retry_total = 0;
 
-            // NOTE: Almost there, still fails sometimes
             for(int i = 0; i < 100; ++i)
             {
                 futures.push_back(std::async(std::launch::async, [&, i]
@@ -401,5 +399,25 @@ TEST_CASE("msg_bipbuf", "[bipbuf]")
             REQUIRE(sum1 == sum2);
         }
 #endif
+        SECTION("async: varied")
+        {
+            using message = decltype(mbb)::message;
+            std::vector<std::future<void>> futures;
+            std::mt19937 gen{}; // fixed seed: deterministic sequence
+            test_mutex<0> mutex;
+
+            for(int i = 0; i < 100; ++i)
+            {
+                mbb.push([&](message* m)
+                {
+
+                }, 10, mutex);
+                auto f = [&, i]
+                {
+                };
+
+                futures.push_back(std::async(std::launch::async, std::move(f)));
+            }
+        }
     }
 }
