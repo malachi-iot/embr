@@ -223,7 +223,7 @@ TEST_CASE("msg_bipbuf", "[bipbuf]")
 #if BIPBUF_TEST_ENABLE1
         SECTION("basic")
         {
-            err = mbb.push([](message* m)
+            err = mbb.push({}, [](message* m)
                 {
 
                 }, 10);
@@ -253,7 +253,7 @@ TEST_CASE("msg_bipbuf", "[bipbuf]")
                         REQUIRE(!parity.empty());
                         int v_parity = parity.front();
 
-                        err = mbb.pop([&](message* m)
+                        err = mbb.pop({}, [&](message* m)
                             {
                                 auto payload = (int*)m->payload();
 
@@ -370,13 +370,13 @@ TEST_CASE("msg_bipbuf", "[bipbuf]")
                     // blocking enqueues.
                     if(parity_index >= parity_size) continue;
 
-                    err = mbb.pop([&](message* m)
+                    err = mbb.pop(mutex, [&](message* m)
                         {
                             int* v_ptr = (int*)m->payload();
                             v = *v_ptr;
                             sum2 += *v_ptr;
                             REQUIRE(m->sz == sizeof(int));
-                        }, mutex);
+                        });
 
                     REQUIRE(err == estd::errc{});
 
@@ -409,6 +409,8 @@ TEST_CASE("msg_bipbuf", "[bipbuf]")
             std::mt19937 gen{}; // fixed seed: deterministic sequence
             test_mutex<0> mutex;
 
+            // FIX: Alignment concerns are still present
+
             for(int i = 0; i < 50; ++i)
             {
                 unsigned sz = gen() % 32;
@@ -419,10 +421,10 @@ TEST_CASE("msg_bipbuf", "[bipbuf]")
                     estd::errc err;
                     do
                     {
-                        err = mbb.push([sz](message* m)
+                        err = mbb.push(mutex, [sz](message* m)
                             {
                                 std::memset(m->payload(), '0' + sz, sz);
-                            }, sz, mutex);
+                            }, sz);
 
                         if(err == estd::errc::not_enough_memory)
                             std::this_thread::sleep_for(20ms);
@@ -462,7 +464,7 @@ TEST_CASE("msg_bipbuf", "[bipbuf]")
 
                     future.get();
 
-                    err = mbb.pop([&](message* m)
+                    err = mbb.pop(mutex, [&](message* m)
                         {
 #if BIPBUF_TEST_ASYNC_LOG
                             printf("async varied: sz=%d\n", m->sz);
@@ -474,7 +476,7 @@ TEST_CASE("msg_bipbuf", "[bipbuf]")
                                 {
                                     return c == '0' + sz;
                                 }));
-                        }, mutex);
+                        });
 
                     REQUIRE(err == estd::errc{});
                 }

@@ -12,11 +12,11 @@
 
 namespace embr { namespace internal {
 
-template <ESTD_CPP_CONCEPT(estd::concepts::v1::Bipbuf) Buf, class Mutex = noop_mutex>
+template <ESTD_CPP_CONCEPT(estd::concepts::v1::Bipbuf) Buf>
 class msg_bipbuf;
 
-template <ESTD_CPP_CONCEPT(estd::concepts::v1::Bipbuf) Buf, class Mutex>
-class msg_bipbuf : protected Mutex
+template <ESTD_CPP_CONCEPT(estd::concepts::v1::Bipbuf) Buf>
+class msg_bipbuf
 {
 public:
     struct message_unaligned
@@ -86,8 +86,8 @@ public:
     ///     - no_lock_available: can't mutex lock
     ///     - not_enough_memory: out of bipbuf space
     ///     - {} == OK
-    template <class F, class Mutex2 = Mutex>
-    estd::errc push(F&& init, unsigned sz, Mutex2&& mutex = {})
+    template <class F, class Mutex = internal::noop_mutex>
+    estd::errc push(Mutex&& mutex, F&& init, unsigned sz)
     {
         if(!mutex.lock())  return estd::errc::no_lock_available;
 
@@ -113,23 +113,27 @@ public:
     }
 
 
-    template <class T, class ...Args, class Mutex2 = embr::internal::noop_mutex>
-    estd::errc emplace(Mutex2&& mutex, Args&&...args)
+    template <class T, class ...Args, class Mutex = noop_mutex>
+    estd::errc emplace(Mutex&& mutex, Args&&...args)
     {
         return push(
+            std::forward<Mutex>(mutex),
             [&](message* m)
             {
                 new (m->payload()) T(std::forward<Args>(args)...);
             },
-            sizeof(T), std::forward<Mutex2>(mutex));
+            sizeof(T));
     }
 
-    template <class F, class Mutex2 = Mutex>
-    estd::errc pop(F&& f, Mutex2&& mutex = {})
+    template <class F, class Mutex = internal::noop_mutex>
+    estd::errc pop(Mutex&& mutex, F&& f)
     {
         // DEBT: Works well enough, but peek may be doing a little more
         // than we need right now
+        // DEBT: We don't get alignment warnings, but we'd kind of expect it here
         auto m = (message*)buf_.peek(sizeof(message));
+        // FIX: there is no non-const peek yet but we do need one
+        //auto m = reinterpret_cast<message*>(buf_.peek(sizeof(message)));
 
         // See https://malachi.atlassian.net/wiki/x/AYClD for breakdown of why
         // peek is lock-free
