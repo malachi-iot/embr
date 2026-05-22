@@ -234,9 +234,8 @@ TEST_CASE("msg_bipbuf", "[bipbuf]")
             int sum2 = 0;
             test_mutex mutex;
 
-            // NOTE: Start too many and I think async goes to defer mode, which then pseudo-deadlocks
-            // buffer availability.  Still sorting that out
-            for(int i = 0; i < 10; ++i)
+            // NOTE: Almost there, still fails sometimes
+            for(int i = 0; i < 100; ++i)
             {
                 futures.push_back(std::async(std::launch::async, [&, i]
                     {
@@ -248,31 +247,50 @@ TEST_CASE("msg_bipbuf", "[bipbuf]")
                         //err = mbb.emplace<int>(mutex, v);
                         int retries = 0;
                         for(;
-                            retries < 10 && (err = mbb.emplace<int>(mutex, v)) == estd::errc::not_enough_memory;
+                            retries < 20 && (err = mbb.emplace<int>(mutex, v)) == estd::errc::not_enough_memory;
                             ++retries)
                         {
                             //printf("\nLooping");
                             //VERIFY(retries < 10);
                             //if(retries > 10)
                                 //FAIL("Too many failed allocation attempts");
-                            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                            std::this_thread::sleep_for(std::chrono::milliseconds(50));
                         }
-                        //printf("Queued err=%d retries=%d\n", err, retries);
+                        // printf is currently better behaved in async than cerr
+                        if(err != estd::errc{})
+                            printf("Queued i=%d err=%d retries=%d\n", i, err, retries);
                         //VERIFY(err == estd::errc{});
                         return v;
                     }));
             }
 
-            for(std::future<int>& future : futures)
+            int attempts = 0;
+            int active;
+
+            do
             {
-                sum1 += future.get();
-                mbb.pop([&](message* m)
-                    {
-                        int* v = (int*)m->payload();
-                        sum2 += *v;
-                        REQUIRE(m->sz == sizeof(int));
-                    }, mutex);
+                active = 0;
+                for(std::future<int>& future : futures)
+                {
+                    if(future.valid() == false) continue;
+
+                    ++active;
+
+                    if(future.wait_for(std::chrono::milliseconds(10)) == std::future_status::timeout) continue;
+
+                    sum1 += future.get();
+
+                    mbb.pop([&](message* m)
+                        {
+                            int* v = (int*)m->payload();
+                            sum2 += *v;
+                            REQUIRE(m->sz == sizeof(int));
+                        }, mutex);
+                }
+
+                ++attempts;
             }
+            while(active);
 
             REQUIRE(sum1 == sum2);
         }
