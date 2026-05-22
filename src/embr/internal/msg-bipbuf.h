@@ -3,6 +3,7 @@
 #include <estd/internal/bip/buffer.h>
 #include <estd/internal/optional.h>
 #include <estd/internal/utility.h>
+#include <estd/span.h>
 #include <estd/system_error.h>
 
 #include "mutex.h"
@@ -60,6 +61,8 @@ public:
         constexpr unsigned size() const { return size(sz); }
 
         constexpr unsigned aligned_size() const { return size(sz); }
+
+        estd::span<char> to_span() { return { (char*)payload(), sz }; }
     };
 
     using message = message_aligned;

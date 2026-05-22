@@ -4,17 +4,27 @@
 Language: Cpp
 BasedOnStyle: GNU
 BreakBeforeBraces: Allman
+
+ContinuationIndentWidth: 4
+AlignAfterOpenBracket: DontAlign
+
 NamespaceIndentation: None
 TabWidth: 4
 IndentCaseBlocks: false
 IndentCaseLabels: true
 IndentWidth: 4
+
 BraceWrapping:
     AfterCaseLabel: true
-    AfterControlStatement: true
+    AfterControlStatement: Always
     IndentBraces: false
-SpaceBeforeParens: SBPO_Custom
-    AfterControlStatements: false
+
+SpaceBeforeParens: Custom
+
+SpaceBeforeParensOptions:
     AfterFunctionDefinitionName: false
     AfterFunctionDeclarationName: false
     AfterIfMacros: false
+    AfterControlStatements: false
+
+AllowShortLambdasOnASingleLine: Empty

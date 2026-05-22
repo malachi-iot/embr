@@ -203,6 +203,7 @@ TEST_CASE("thunk")
 
 #define BIPBUF_TEST_ENABLE1 1
 #define BIPBUF_TEST_ENABLE2 1
+#define BIPBUF_TEST_ENABLE3 1
 
 // Extra logging (non-error)
 #define BIPBUF_TEST_ASYNC_LOG 0
@@ -402,17 +403,19 @@ TEST_CASE("msg_bipbuf", "[bipbuf]")
 #if BIPBUF_TEST_ENABLE3
         SECTION("async: varied")
         {
+            using namespace std::chrono_literals;
             using message = decltype(mbb)::message;
             std::vector<std::future<void>> futures;
             std::mt19937 gen{}; // fixed seed: deterministic sequence
             test_mutex<0> mutex;
 
-            unsigned sz = gen() % 32;
-
-            for(int i = 0; i < 100; ++i)
+            for(int i = 0; i < 50; ++i)
             {
+                unsigned sz = gen() % 32;
+
                 auto f = [&, sz, i]
                 {
+                    int tries = 0;
                     estd::errc err;
                     do
                     {
@@ -421,7 +424,24 @@ TEST_CASE("msg_bipbuf", "[bipbuf]")
                                 std::memset(m->payload(), '0' + sz, sz);
                             }, sz, mutex);
 
-                    }   while(err != estd::errc{});
+                        if(err == estd::errc::not_enough_memory)
+                            std::this_thread::sleep_for(20ms);
+
+                    }   while(err != estd::errc{} && ++tries < 100);
+
+                    if(tries > 1)
+                    {
+                        if(err != estd::errc{})
+                        {
+                            printf("async varied Q FAIL: i=%d sz=%d err=%d\n", i, sz, int(err));
+                        }
+                        else
+                        {
+#if BIPBUF_TEST_ASYNC_LOG
+                            printf("async varied Q OK: i=%d tries=%d\n", i, tries);
+#endif
+                        }
+                    }
                 };
 
                 futures.push_back(std::async(std::launch::async, std::move(f)));
@@ -438,10 +458,30 @@ TEST_CASE("msg_bipbuf", "[bipbuf]")
 
                     ++active;
 
-                    if(future.wait_for(std::chrono::milliseconds(10)) == std::future_status::timeout) continue;
+                    if(future.wait_for(10ms) == std::future_status::timeout) continue;
 
                     future.get();
+
+                    err = mbb.pop([&](message* m)
+                        {
+#if BIPBUF_TEST_ASYNC_LOG
+                            printf("async varied: sz=%d\n", m->sz);
+#endif
+                            auto payload = (const char*)m->payload();
+                            int sz = m->sz;
+                            REQUIRE(sz <= 32);
+                            REQUIRE(std::all_of(payload, payload + sz, [sz](char c)
+                                {
+                                    return c == '0' + sz;
+                                }));
+                        }, mutex);
+
+                    REQUIRE(err == estd::errc{});
                 }
+
+#if BIPBUF_TEST_ASYNC_LOG
+                printf("async varied: active=%d\n", active);
+#endif
 
             }   while(active);
         }
