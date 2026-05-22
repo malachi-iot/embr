@@ -70,13 +70,14 @@ struct Tracked
     }
 };
 
+template <unsigned ms>
 struct test_mutex
 {
     std::timed_mutex mutex;
 
     bool lock()
     {
-        return mutex.try_lock_for(std::chrono::milliseconds(200));
+        return mutex.try_lock_for(std::chrono::milliseconds(ms));
     }
 
     void unlock()
@@ -199,9 +200,14 @@ TEST_CASE("thunk")
     }
 }
 
-#define BIPBUF_TEST_ENABLE1 0
+#define BIPBUF_TEST_ENABLE1 1
 #define BIPBUF_TEST_ENABLE2 1
 
+// Extra logging (non-error)
+#define BIPBUF_TEST_ASYNC_LOG 0
+
+// DEBT: Move all this to a dedicated bipbuf area, and some of this may even eventually
+// scoot its way up to estd
 TEST_CASE("msg_bipbuf", "[bipbuf]")
 {
     SECTION("layer1")
@@ -269,61 +275,76 @@ TEST_CASE("msg_bipbuf", "[bipbuf]")
         {
             std::vector<std::future<int>> futures;
             std::mt19937 gen{}; // fixed seed: deterministic sequence
-            std::queue<int> parity, parity_gen;
 
             // For post-morem inspection
-            std::vector<int> generated, queued;
+            std::vector<int> generated, parity;
+            std::mutex parity_mutex;
 
             int sum1 = 0;
             int sum2 = 0;
-            test_mutex mutex;
+
+            // Trying for the most aggressive 0ms timeout to test our spinwait/retry
+            // Still never hit it though it's always OOM
+            test_mutex<0> mutex;
+            int retry_total = 0;
 
             // NOTE: Almost there, still fails sometimes
-            for(int i = 0; i < 20; ++i)
+            for(int i = 0; i < 100; ++i)
             {
                 futures.push_back(std::async(std::launch::async, [&, i]
                     {
                         //CAPTURE(i);       // Catch2 will body slam you if you try this.  Don't CAPTURE
                                             // in a bunch of async threads
-                        if(mutex.lock() == false)
-                        {
-                            printf("Couldn't lock down rng\n");
-                        }
-                        int v = gen() % 100;
-                        parity_gen.push(v);
+                        const int v = gen() % 100;
+
+                        // parity_mutex ensures that 'parity' vector stays lock-step with what we've
+                        // pushed into mbb - regardless of any blockages along the way
+                        parity_mutex.lock();
                         generated.push_back(v);
-                        mutex.unlock();
-                        //err = mbb.emplace<int>(mutex, v);
+
                         int retries = 0;
+                        int err_retained = -1;
+                        estd::errc err;
+
+                        // Attempt to emplace generated value.  Might get rejected due to OOM or lock
                         for(;
                             retries < 50 && (err = mbb.emplace<int>(mutex, v)) != estd::errc{};
                             ++retries)
                         {
-                            //printf("\nLooping");
-                            //VERIFY(retries < 10);
-                            //if(retries > 10)
-                                //FAIL("Too many failed allocation attempts");
-                            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+                            parity_mutex.unlock();
+
+                            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+                            if(err != estd::errc{}) err_retained = int(err);
+
+                            parity_mutex.lock();
                         }
                         // printf is currently better behaved in async than cerr
                         if(err != estd::errc{})
-                            printf("Queued i=%d err=%d retries=%d\n", i, err, retries);
+                            printf("Q FAIL i=%d err=%d retries=%d\n", i, err, retries);
                         else
                         {
-                            if(mutex.lock() == false)
-                                printf("Couldn't lock down parity queue");
-                            parity.push(v);
-                            queued.push_back(v);
-                            mutex.unlock();
+#if BIPBUF_TEST_ASYNC_LOG
+                            if(retries > 0)
+                            {
+                                printf("Q OK i=%d retained=%d retries=%d\n", i, err_retained, retries);
+                            }
+#endif
+
+                            // NOTE: parity queue won't be 100% in generated order since we might get
+                            // blocked on our emplace
+                            parity.push_back(v);
                         }
-                        //VERIFY(err == estd::errc{});
+                        parity_mutex.unlock();
+
+                        retry_total += retries;
+
                         return v;
                     }));
             }
 
             int attempts = 0;
             int active;
-            int i = 0;
+            int parity_index = 0;
 
             do
             {
@@ -339,15 +360,15 @@ TEST_CASE("msg_bipbuf", "[bipbuf]")
                     sum1 += future.get();
 
                     int v;
-                    if(mutex.lock() == false)
-                    {
-                        printf("Couldn't lock down consumer queue\n");
-                    }
-                    int v_parity = parity.front();
-                    int v_parity_gen = parity_gen.front();
+                    parity_mutex.lock();
+                    int v_parity = parity[parity_index];
                     int parity_size = parity.size();
-                    parity.pop();
-                    mutex.unlock();
+                    int generated_size = generated.size();
+                    parity_mutex.unlock();
+
+                    // Although generated values are probably aplenty, we may not have parity yet due to
+                    // blocking enqueues.
+                    if(parity_index >= parity_size) continue;
 
                     err = mbb.pop([&](message* m)
                         {
@@ -359,17 +380,20 @@ TEST_CASE("msg_bipbuf", "[bipbuf]")
 
                     REQUIRE(err == estd::errc{});
 
-                    CAPTURE(parity_size, i);
-                    CAPTURE(generated, queued);
+                    CAPTURE(generated_size, parity_size, parity_index, retry_total);
+                    //CAPTURE(generated);
+                    CAPTURE(parity);
 
                     REQUIRE(v == v_parity);
 
-                    ++i;
+                    ++parity_index;
                 }
 
                 ++attempts;
 
+#if BIPBUF_TEST_ASYNC_LOG
                 printf("Cycle: active=%d\n", active);
+#endif
             }
             while(active);
 
