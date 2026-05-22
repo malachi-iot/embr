@@ -1,6 +1,7 @@
 #include <catch2/catch_all.hpp>
 
 #include <future>
+#include <queue>
 #include <random>
 #include <vector>
 
@@ -230,6 +231,7 @@ TEST_CASE("msg_bipbuf", "[bipbuf]")
         {
             std::vector<std::future<int>> futures;
             std::mt19937 gen{}; // fixed seed: deterministic sequence
+            std::queue<int> parity;
             int sum1 = 0;
             int sum2 = 0;
             test_mutex mutex;
@@ -241,13 +243,13 @@ TEST_CASE("msg_bipbuf", "[bipbuf]")
                     {
                         //CAPTURE(i);       // Catch2 will body slam you if you try this.  Don't CAPTURE
                                             // in a bunch of async threads
-                        mutex.lock();
+                        mutex.mutex.lock();
                         int v = gen();
                         mutex.unlock();
                         //err = mbb.emplace<int>(mutex, v);
                         int retries = 0;
                         for(;
-                            retries < 20 && (err = mbb.emplace<int>(mutex, v)) == estd::errc::not_enough_memory;
+                            retries < 50 && (err = mbb.emplace<int>(mutex, v)) != estd::errc{};
                             ++retries)
                         {
                             //printf("\nLooping");
@@ -259,6 +261,12 @@ TEST_CASE("msg_bipbuf", "[bipbuf]")
                         // printf is currently better behaved in async than cerr
                         if(err != estd::errc{})
                             printf("Queued i=%d err=%d retries=%d\n", i, err, retries);
+                        else
+                        {
+                            mutex.mutex.lock();
+                            parity.push(v);
+                            mutex.unlock();
+                        }
                         //VERIFY(err == estd::errc{});
                         return v;
                     }));
@@ -266,6 +274,7 @@ TEST_CASE("msg_bipbuf", "[bipbuf]")
 
             int attempts = 0;
             int active;
+            int i = 0;
 
             do
             {
@@ -276,16 +285,32 @@ TEST_CASE("msg_bipbuf", "[bipbuf]")
 
                     ++active;
 
-                    if(future.wait_for(std::chrono::milliseconds(10)) == std::future_status::timeout) continue;
+                    if(future.wait_for(std::chrono::milliseconds(5)) == std::future_status::timeout) continue;
 
                     sum1 += future.get();
 
-                    mbb.pop([&](message* m)
+                    int v;
+                    mutex.mutex.lock();
+                    int v_parity = parity.front();
+                    int parity_size = parity.size();
+                    parity.pop();
+                    mutex.mutex.unlock();
+
+                    err = mbb.pop([&](message* m)
                         {
-                            int* v = (int*)m->payload();
-                            sum2 += *v;
+                            int* v_ptr = (int*)m->payload();
+                            v = *v_ptr;
+                            sum2 += *v_ptr;
                             REQUIRE(m->sz == sizeof(int));
                         }, mutex);
+
+                    REQUIRE(err == estd::errc{});
+
+                    CAPTURE(parity_size, i);
+
+                    REQUIRE(v == v_parity);
+
+                    ++i;
                 }
 
                 ++attempts;
