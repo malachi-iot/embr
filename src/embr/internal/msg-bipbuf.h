@@ -84,7 +84,7 @@ public:
     ///     - not_enough_memory: out of bipbuf space
     ///     - {} == OK
     template <class F, class Mutex2 = Mutex>
-    estd::errc enqueue(F&& init, unsigned sz, Mutex2&& mutex = {})
+    estd::errc push(F&& init, unsigned sz, Mutex2&& mutex = {})
     {
         if(!mutex.lock())  return estd::errc::no_lock_available;
 
@@ -109,8 +109,20 @@ public:
         return {};
     }
 
+
+    template <class T, class ...Args, class Mutex2>
+    estd::errc emplace(Mutex2&& mutex, Args&&...args)
+    {
+        return push(
+            [&](message* m)
+            {
+                new (m->payload()) T(std::forward<Args>(args)...);
+            },
+            sizeof(T), std::forward<Mutex2>(mutex));
+    }
+
     template <class F, class Mutex2 = Mutex>
-    estd::errc dequeue(F&& f, Mutex2&& mutex = {})
+    estd::errc pop(F&& f, Mutex2&& mutex = {})
     {
         // DEBT: Works well enough, but peek may be doing a little more
         // than we need right now

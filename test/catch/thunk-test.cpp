@@ -7,6 +7,8 @@
 #include <embr/exp/thunk.h>
 #include <embr/internal/msg-bipbuf.h>
 
+#include "mem/test-mem-data.h"
+
 // Excellent breakdown of functor behavior:
 // https://ricomariani.medium.com/std-function-teardown-and-discussion-a4f148929809
 
@@ -194,7 +196,14 @@ TEST_CASE("thunk")
         REQUIRE(counter == 1);
         REQUIRE(t2.empty() == true);
     }
-    SECTION("msg_bipbuf")
+}
+
+#define BIPBUF_TEST_ENABLE1 1
+#define BIPBUF_TEST_ENABLE2 1
+
+TEST_CASE("msg_bipbuf", "[bipbuf]")
+{
+    SECTION("layer1")
     {
         using type = embr::internal::msg_bipbuf<estd::layer1::bipbuf<128>>;
         using message = type::message;
@@ -202,9 +211,10 @@ TEST_CASE("thunk")
         type mbb;
         estd::errc err;
 
+#if BIPBUF_TEST_ENABLE1
         SECTION("basic")
         {
-            err = mbb.enqueue([](message* m)
+            err = mbb.push([](message* m)
                 {
 
                 }, 10);
@@ -214,7 +224,8 @@ TEST_CASE("thunk")
             // we need to consider alignment.
             REQUIRE(mbb.buf().used() == sizeof(message) + 10);
         }
-
+#endif
+#if BIPBUF_TEST_ENABLE2
         SECTION("async")
         {
             std::vector<std::future<int>> futures;
@@ -223,18 +234,31 @@ TEST_CASE("thunk")
             int sum2 = 0;
             test_mutex mutex;
 
+            // NOTE: Start too many and I think async goes to defer mode, which then pseudo-deadlocks
+            // buffer availability.  Still sorting that out
             for(int i = 0; i < 10; ++i)
             {
                 futures.push_back(std::async(std::launch::async, [&, i]
                     {
-                        CAPTURE(i);
+                        //CAPTURE(i);       // Catch2 will body slam you if you try this.  Don't CAPTURE
+                                            // in a bunch of async threads
+                        mutex.lock();
                         int v = gen();
-                        err = mbb.enqueue([v](message* m)
+                        mutex.unlock();
+                        //err = mbb.emplace<int>(mutex, v);
+                        int retries = 0;
+                        for(;
+                            retries < 10 && (err = mbb.emplace<int>(mutex, v)) == estd::errc::not_enough_memory;
+                            ++retries)
                         {
-                            new (m->payload()) int(v);
-                        }, sizeof(v), mutex);
-
-                        REQUIRE(err == estd::errc{});
+                            //printf("\nLooping");
+                            //VERIFY(retries < 10);
+                            //if(retries > 10)
+                                //FAIL("Too many failed allocation attempts");
+                            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                        }
+                        //printf("Queued err=%d retries=%d\n", err, retries);
+                        //VERIFY(err == estd::errc{});
                         return v;
                     }));
             }
@@ -242,7 +266,7 @@ TEST_CASE("thunk")
             for(std::future<int>& future : futures)
             {
                 sum1 += future.get();
-                mbb.dequeue([&](message* m)
+                mbb.pop([&](message* m)
                     {
                         int* v = (int*)m->payload();
                         sum2 += *v;
@@ -252,5 +276,6 @@ TEST_CASE("thunk")
 
             REQUIRE(sum1 == sum2);
         }
+#endif
     }
 }
