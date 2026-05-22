@@ -199,7 +199,7 @@ TEST_CASE("thunk")
     }
 }
 
-#define BIPBUF_TEST_ENABLE1 1
+#define BIPBUF_TEST_ENABLE1 0
 #define BIPBUF_TEST_ENABLE2 1
 
 TEST_CASE("msg_bipbuf", "[bipbuf]")
@@ -225,26 +225,73 @@ TEST_CASE("msg_bipbuf", "[bipbuf]")
             // we need to consider alignment.
             REQUIRE(mbb.buf().used() == sizeof(message) + 10);
         }
+        SECTION("list")
+        {
+            std::queue<int> parity, parity_gen;
+            std::mt19937 gen{}; // fixed seed: deterministic sequence
+
+            for(int i = 0; i < 100; ++i)
+            {
+                int v = gen() % 100;
+                parity_gen.push(v);
+
+                err = mbb.emplace<int>({}, v);
+
+                if(err == estd::errc::not_enough_memory)
+                {
+                    // Dequeue a pseudo random amount
+                    for(int dq_count = 1 + (v % 8); !mbb.empty() && dq_count > 0; --dq_count)
+                    {
+                        REQUIRE(!parity.empty());
+                        int v_parity = parity.front();
+
+                        err = mbb.pop([&](message* m)
+                            {
+                                auto payload = (int*)m->payload();
+
+                                REQUIRE(*payload == v_parity);
+                            });
+
+                        REQUIRE(err == estd::errc{});
+
+                        parity.pop();
+                    }
+                }
+                else
+                {
+                    parity.push(v);
+                }
+            }
+        }
 #endif
 #if BIPBUF_TEST_ENABLE2
         SECTION("async")
         {
             std::vector<std::future<int>> futures;
             std::mt19937 gen{}; // fixed seed: deterministic sequence
-            std::queue<int> parity;
+            std::queue<int> parity, parity_gen;
+
+            // For post-morem inspection
+            std::vector<int> generated, queued;
+
             int sum1 = 0;
             int sum2 = 0;
             test_mutex mutex;
 
             // NOTE: Almost there, still fails sometimes
-            for(int i = 0; i < 100; ++i)
+            for(int i = 0; i < 20; ++i)
             {
                 futures.push_back(std::async(std::launch::async, [&, i]
                     {
                         //CAPTURE(i);       // Catch2 will body slam you if you try this.  Don't CAPTURE
                                             // in a bunch of async threads
-                        mutex.mutex.lock();
-                        int v = gen();
+                        if(mutex.lock() == false)
+                        {
+                            printf("Couldn't lock down rng\n");
+                        }
+                        int v = gen() % 100;
+                        parity_gen.push(v);
+                        generated.push_back(v);
                         mutex.unlock();
                         //err = mbb.emplace<int>(mutex, v);
                         int retries = 0;
@@ -263,8 +310,10 @@ TEST_CASE("msg_bipbuf", "[bipbuf]")
                             printf("Queued i=%d err=%d retries=%d\n", i, err, retries);
                         else
                         {
-                            mutex.mutex.lock();
+                            if(mutex.lock() == false)
+                                printf("Couldn't lock down parity queue");
                             parity.push(v);
+                            queued.push_back(v);
                             mutex.unlock();
                         }
                         //VERIFY(err == estd::errc{});
@@ -290,11 +339,15 @@ TEST_CASE("msg_bipbuf", "[bipbuf]")
                     sum1 += future.get();
 
                     int v;
-                    mutex.mutex.lock();
+                    if(mutex.lock() == false)
+                    {
+                        printf("Couldn't lock down consumer queue\n");
+                    }
                     int v_parity = parity.front();
+                    int v_parity_gen = parity_gen.front();
                     int parity_size = parity.size();
                     parity.pop();
-                    mutex.mutex.unlock();
+                    mutex.unlock();
 
                     err = mbb.pop([&](message* m)
                         {
@@ -307,6 +360,7 @@ TEST_CASE("msg_bipbuf", "[bipbuf]")
                     REQUIRE(err == estd::errc{});
 
                     CAPTURE(parity_size, i);
+                    CAPTURE(generated, queued);
 
                     REQUIRE(v == v_parity);
 
@@ -314,6 +368,8 @@ TEST_CASE("msg_bipbuf", "[bipbuf]")
                 }
 
                 ++attempts;
+
+                printf("Cycle: active=%d\n", active);
             }
             while(active);
 

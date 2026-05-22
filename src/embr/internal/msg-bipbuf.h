@@ -110,7 +110,7 @@ public:
     }
 
 
-    template <class T, class ...Args, class Mutex2>
+    template <class T, class ...Args, class Mutex2 = embr::internal::noop_mutex>
     estd::errc emplace(Mutex2&& mutex, Args&&...args)
     {
         return push(
@@ -153,6 +153,8 @@ public:
     }
 
     constexpr const Buf& buf() const { return buf_; }
+
+    constexpr bool empty() const { return buf_.used() == 0; }
 };
 
 }}
