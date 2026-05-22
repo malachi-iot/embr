@@ -18,7 +18,14 @@ template <ESTD_CPP_CONCEPT(estd::concepts::v1::Bipbuf) Buf, class Mutex>
 class msg_bipbuf : protected Mutex
 {
 public:
-    struct message
+    struct message_unaligned
+    {
+        const uint16_t sz;
+
+        char payload[];
+    };
+
+    struct message_aligned
     {
         struct
         {
@@ -32,12 +39,12 @@ public:
             unsigned ready : 1;
         };
 
-        constexpr explicit message(unsigned sz, bool ready) :
+        constexpr explicit message_aligned(unsigned sz, bool ready) :
             sz{sz},
             ready{ready}
         {}
 
-        constexpr explicit message(estd::nullopt_t) :
+        constexpr explicit message_aligned(estd::nullopt_t) :
             sz{0},
             ready{true}
         {}
@@ -46,12 +53,16 @@ public:
 
         static constexpr unsigned size(unsigned payload_size)
         {
-            return sizeof(message) + payload_size;
+            return sizeof(message_aligned) + payload_size;
         }
 
         // Total size w/ payload
         constexpr unsigned size() const { return size(sz); }
+
+        constexpr unsigned aligned_size() const { return size(sz); }
     };
+
+    using message = message_aligned;
 
 private:
     Buf buf_;
@@ -73,7 +84,7 @@ public:
     ///     - not_enough_memory: out of bipbuf space
     ///     - {} == OK
     template <class F, class Mutex2 = Mutex>
-    estd::errc enqueue(F&& init, unsigned sz, Mutex2 mutex = {})
+    estd::errc enqueue(F&& init, unsigned sz, Mutex2&& mutex = {})
     {
         if(!mutex.lock())  return estd::errc::no_lock_available;
 
@@ -99,7 +110,7 @@ public:
     }
 
     template <class F, class Mutex2 = Mutex>
-    estd::errc dequeue(F&& f, Mutex2 mutex = {})
+    estd::errc dequeue(F&& f, Mutex2&& mutex = {})
     {
         // DEBT: Works well enough, but peek may be doing a little more
         // than we need right now

@@ -1,6 +1,11 @@
 #include <catch2/catch_all.hpp>
 
+#include <future>
+#include <random>
+#include <vector>
+
 #include <embr/exp/thunk.h>
+#include <embr/internal/msg-bipbuf.h>
 
 // Excellent breakdown of functor behavior:
 // https://ricomariani.medium.com/std-function-teardown-and-discussion-a4f148929809
@@ -59,6 +64,21 @@ struct Tracked
     ~Tracked()
     {
         if(tracker) --tracker->count;
+    }
+};
+
+struct test_mutex
+{
+    std::timed_mutex mutex;
+
+    bool lock()
+    {
+        return mutex.try_lock_for(std::chrono::milliseconds(200));
+    }
+
+    void unlock()
+    {
+        mutex.unlock();
     }
 };
 
@@ -182,14 +202,55 @@ TEST_CASE("thunk")
         type mbb;
         estd::errc err;
 
-        err = mbb.enqueue([](message* m)
+        SECTION("basic")
         {
+            err = mbb.enqueue([](message* m)
+                {
 
-        }, 10);
+                }, 10);
 
-        REQUIRE(err == estd::errc{});
-        // FIX: Since we are operating on pointers to payload and message,
-        // we need to consider alignment.
-        REQUIRE(mbb.buf().used() == sizeof(message) + 10);
+            REQUIRE(err == estd::errc{});
+            // FIX: Since we are operating on pointers to payload and message,
+            // we need to consider alignment.
+            REQUIRE(mbb.buf().used() == sizeof(message) + 10);
+        }
+
+        SECTION("async")
+        {
+            std::vector<std::future<int>> futures;
+            std::mt19937 gen{}; // fixed seed: deterministic sequence
+            int sum1 = 0;
+            int sum2 = 0;
+            test_mutex mutex;
+
+            for(int i = 0; i < 10; ++i)
+            {
+                futures.push_back(std::async(std::launch::async, [&, i]
+                    {
+                        CAPTURE(i);
+                        int v = gen();
+                        err = mbb.enqueue([v](message* m)
+                        {
+                            new (m->payload()) int(v);
+                        }, sizeof(v), mutex);
+
+                        REQUIRE(err == estd::errc{});
+                        return v;
+                    }));
+            }
+
+            for(std::future<int>& future : futures)
+            {
+                sum1 += future.get();
+                mbb.dequeue([&](message* m)
+                    {
+                        int* v = (int*)m->payload();
+                        sum2 += *v;
+                        REQUIRE(m->sz == sizeof(int));
+                    }, mutex);
+            }
+
+            REQUIRE(sum1 == sum2);
+        }
     }
 }
