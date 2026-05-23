@@ -58,10 +58,18 @@ public:
         char payload[];
     };
 
-    // alignas(align_to) goofs up things, seems to just be too much pressure on a 128-byte bipbuf
-    class alignas(align_to) message_aligned
-    //class message_aligned
+    class alignas(align_to) header_aligned_extended // NOLINT
     {
+        struct
+        {
+            unsigned sz;
+            // For very big alignment requirements, bit packing gets awkward
+        };
+    };
+
+    class alignas(align_to) header_aligned
+    {
+    protected:
         //static constexpr unsigned align_size = alignof(message_unaligned);
         // DEBT: No estd equivalent yet
         static constexpr unsigned align_size = align_to;
@@ -75,14 +83,14 @@ public:
             // * 4k on 16-bit (AVR)
             // * 512MB on 32-bit (ESP32)
             const unsigned sz : (sizeof(unsigned) * 8) - 4;
-            
+
             // EXPERIMENTAL - condition where producer knows it's time consuming to fully
             // enqueue data, so you can reserve a certain size then set this flag later
             unsigned ready : 1;
         };
 
     public:
-        constexpr explicit message_aligned(unsigned size_in_bytes, bool ready) :
+        constexpr explicit header_aligned(unsigned size_in_bytes, bool ready) :
             //sz{retain_size ? size_in_bytes : size_in_bytes >> align_bits},
             sz{size_in_bytes},
             ready{ready}
@@ -90,9 +98,21 @@ public:
             //assert(size_in_bytes % align_size == 0);
         }
 
-        constexpr explicit message_aligned(estd::nullopt_t) :
+        constexpr explicit header_aligned(estd::nullopt_t) :
             sz{0},
             ready{true}
+        {}
+    };
+
+    class alignas(align_to) message_aligned : public header_aligned
+    {
+        using base_type = header_aligned;
+        using base_type::sz;
+
+    public:
+        template <class ...Args>
+        constexpr explicit message_aligned(Args&&...args) :
+            header_aligned(std::forward<Args>(args)...)
         {}
 
         void* payload() { return this + 1; }
