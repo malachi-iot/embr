@@ -32,7 +32,7 @@ list(TRANSFORM EXTRA_FILES PREPEND ${EMBR_ROOT_DIR}/)
 
 set(SOURCE_FILES
     base64-test.cpp
-    basics-test.cpp
+    bipbuf-test.cpp
     bits-test.cpp
     bitset-test.cpp
     ble-test.cpp
