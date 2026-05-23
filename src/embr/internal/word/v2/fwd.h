@@ -1,5 +1,7 @@
 #pragma once
 
+#include <estd/cstdint.h>
+
 #include "enum.h"
 #include "feature.h"
 

@@ -39,6 +39,6 @@ else()
     add_executable(${PROJECT_NAME} main.cpp ${SOURCES})
 endif()
 
-target_link_libraries(${PROJECT_NAME} unity embr malachi-iot::estd)
+target_link_libraries(${PROJECT_NAME} unity embr::embr malachi-iot::estd)
 
 target_include_directories(${PROJECT_NAME} PUBLIC .)

@@ -1,5 +1,6 @@
 set(SOURCES
         bits.cpp
+        bipbuf.cpp
         ble.cpp
         delegate-queue.cpp
         dsp.cpp
