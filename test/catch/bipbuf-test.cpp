@@ -164,14 +164,15 @@ static void test_async_fixed(bipbuf<Buf>& mbb, std::mt19937 gen)
             int v;
             parity_mutex.lock();
             int v_parity = parity[parity_index];
-            int parity_size = parity.size();
-            int generated_size = generated.size();
+            unsigned parity_size = parity.size();
+            unsigned generated_size = generated.size();
             parity_mutex.unlock();
 
             // Although generated values are probably aplenty, we may not have parity yet due to
             // blocking enqueues.
             if(parity_index >= parity_size) continue;
 
+            // NOTE: Consequence of parity_size check above is that we don't tend to notice Q FAIL here
             estd::errc err = mbb.pop(mutex, [&](message* m)
                 {
                     int* v_ptr = (int*)m->payload();
@@ -268,7 +269,7 @@ static void test_async_varied(bipbuf<Buf>& mbb, std::mt19937 gen)
             estd::errc err = mbb.pop(mutex, [&](message* m)
                 {
 #if BIPBUF_TEST_ASYNC_LOG
-                    printf("async varied: sz=%d\n", m->sz);
+                    printf("async varied: payload sz=%d\n", m->payload_size());
 #endif
                     auto payload = (const char*)m->payload();
                     int sz = m->payload_size();
@@ -290,15 +291,18 @@ static void test_async_varied(bipbuf<Buf>& mbb, std::mt19937 gen)
 }
 
 
-TEST_CASE("bipartite buffer: message-oriented", "[msg-bipbuf]")
+TEST_CASE("bipartite buffer: message-oriented", "[msg-bipbuf][bipbuf]")
 {
+    std::mt19937 gen{}; // NOLINT fixed seed: deterministic sequence = what we want
+
     SECTION("layer1")
     {
         bipbuf<estd::layer1::bipbuf<128>> mbb;
-        std::mt19937 gen{}; // NOLINT fixed seed: deterministic sequence = what we want
+        bipbuf<estd::layer1::bipbuf<256>> mbb_256;
         using message = decltype(mbb)::message;
-        constexpr message dummy;
-        
+        constexpr message dummy(estd::nullopt_t{0});
+
+#if BIPBUF_TEST_ENABLE1
         SECTION("basic")
         {
             estd::errc err = mbb.push({}, [](message* m)
@@ -315,13 +319,32 @@ TEST_CASE("bipartite buffer: message-oriented", "[msg-bipbuf]")
         {
             test_list(mbb, gen);
         }
+#endif
+#if BIPBUF_TEST_ENABLE2
         SECTION("async: fixed")
         {
             test_async_fixed(mbb, gen);
         }
+#endif
+#if BIPBUF_TEST_ENABLE3
         SECTION("async: varied")
         {
             test_async_varied(mbb, gen);
         }
+#endif
+    }
+    SECTION("layer3")
+    {
+#if BIPBUF_TEST_ENABLE3
+        SECTION("async: varied")
+        {
+            auto buf = bipbuf_new(256);
+
+            bipbuf<estd::layer3::bipbuf> mbb(estd::in_place_t{}, buf);
+            test_async_varied(mbb, gen);
+
+            bipbuf_free(buf);
+        }
+#endif
     }
 }

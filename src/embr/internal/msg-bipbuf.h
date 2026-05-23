@@ -25,8 +25,13 @@ enum msg_bipbuf_options
 
 // 23MAY26 - Do we need to start considering a 'Traits' instead of options & align_to?
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::Bipbuf) Buf,
-    msg_bipbuf_options o = MBB_OPT_NONE, unsigned align_to = alignof(std::max_align_t)>
+    // NOTE: Defaulting align_to somewhat aggressively.  Technically this probably ought to be
+    // alignof(std::max_align_t) but that can be pretty big.
+    msg_bipbuf_options o = MBB_OPT_NONE, unsigned align_to = sizeof(unsigned)>
 class msg_bipbuf;
+
+template <ESTD_CPP_CONCEPT(estd::concepts::v1::Bipbuf) Buf, class Traits>
+class msg_bipbuf_exp;
 
 // Very limited scope crude, explicit constexpr log2 to assist with bit size deduction
 // Despite crudeness, pretty useful.  Consider putting this guy up into estd
@@ -53,8 +58,9 @@ public:
         char payload[];
     };
 
-    // alignas(align_to) goofs up things, probably our this + 1 trick
-    class message_aligned
+    // alignas(align_to) goofs up things, seems to just be too much pressure on a 128-byte bipbuf
+    class alignas(align_to) message_aligned
+    //class message_aligned
     {
         //static constexpr unsigned align_size = alignof(message_unaligned);
         // DEBT: No estd equivalent yet
@@ -76,10 +82,6 @@ public:
         };
 
     public:
-#if UNIT_TESTING
-        constexpr explicit message_aligned() : sz{}, ready{false} {};
-#endif
-
         constexpr explicit message_aligned(unsigned size_in_bytes, bool ready) :
             //sz{retain_size ? size_in_bytes : size_in_bytes >> align_bits},
             sz{size_in_bytes},
@@ -98,6 +100,7 @@ public:
 
         static constexpr unsigned size(unsigned payload_size)
         {
+            //static_assert(sizeof(message_aligned) == align_to);
             return sizeof(message_aligned) + payload_size;
         }
 
