@@ -7,18 +7,35 @@
 #include <estd/system_error.h>
 
 #include "mutex.h"
+#include "fwd.h"
 
 // A MPSC bit buffer with size-aware elements
 
 namespace embr { namespace internal {
 
-template <ESTD_CPP_CONCEPT(estd::concepts::v1::Bipbuf) Buf>
+enum msg_bipbuf_options
+{
+    MBB_OPT_NONE            = 0x00,
+    MBB_OPT_UNALIGNED       = 0x01,
+
+    /// By default, msg_bipbuf is free to take action on underlying message size without retaining
+    /// original size necessarily.  This flag ensures that original size really is retained.
+    MBB_OPT_PRECISE_SIZE    = 0x02
+};
+
+template <ESTD_CPP_CONCEPT(estd::concepts::v1::Bipbuf) Buf, msg_bipbuf_options o = MBB_OPT_NONE>
 class msg_bipbuf;
 
-template <ESTD_CPP_CONCEPT(estd::concepts::v1::Bipbuf) Buf>
+template <ESTD_CPP_CONCEPT(estd::concepts::v1::Bipbuf) Buf, msg_bipbuf_options o>
 class msg_bipbuf
 {
 public:
+    static constexpr bool aligned = !(o & MBB_OPT_UNALIGNED);
+    static constexpr bool retain_size = o & MBB_OPT_PRECISE_SIZE;
+
+    // Specifically to honor alignment
+    static constexpr unsigned message_header_size = sizeof(void*);
+
     struct message_unaligned
     {
         const uint16_t sz;
@@ -74,7 +91,7 @@ public:
     msg_bipbuf() = default;
 
     template <class ...Args>
-    constexpr msg_bipbuf(estd::in_place_t, Args&&...args) :
+    constexpr explicit msg_bipbuf(estd::in_place_t, Args&&...args) :
         buf_{std::forward<Args>(args)...}
     {}
 

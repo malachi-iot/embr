@@ -35,11 +35,10 @@ struct test_mutex
 };
 
 template <class Buf>
-static void test_list(bipbuf<Buf>& mbb)
+static void test_list(bipbuf<Buf>& mbb, std::mt19937 gen)
 {
     using message = typename bipbuf<Buf>::message;
     std::queue<int> parity, parity_gen;
-    std::mt19937 gen{}; // NOLINT fixed seed: deterministic sequence = what we want
 
     for(int i = 0; i < 100; ++i)
     {
@@ -76,11 +75,10 @@ static void test_list(bipbuf<Buf>& mbb)
 }
 
 template <class Buf>
-static void test_async_fixed(bipbuf<Buf>& mbb)
+static void test_async_fixed(bipbuf<Buf>& mbb, std::mt19937 gen)
 {
     using message = typename bipbuf<Buf>::message;
     std::vector<std::future<int>> futures;
-    std::mt19937 gen{}; // NOLINT fixed seed: deterministic sequence
 
     std::vector<int> generated, parity;
     std::mutex parity_mutex;
@@ -205,12 +203,11 @@ static void test_async_fixed(bipbuf<Buf>& mbb)
 }
 
 template <class Buf>
-static void test_async_varied(bipbuf<Buf>& mbb)
+static void test_async_varied(bipbuf<Buf>& mbb, std::mt19937 gen)
 {
     using namespace std::chrono_literals;
     using message = typename bipbuf<Buf>::message;
     std::vector<std::future<void>> futures;
-    std::mt19937 gen{}; // NOLINT fixed seed: deterministic sequence
     test_mutex<0> mutex;
 
     // FIX: Alignment concerns are still present
@@ -298,6 +295,7 @@ TEST_CASE("bipartite buffer: message-oriented", "[msg-bipbuf]")
     SECTION("layer1")
     {
         bipbuf<estd::layer1::bipbuf<128>> mbb;
+        std::mt19937 gen{}; // NOLINT fixed seed: deterministic sequence = what we want
         using message = decltype(mbb)::message;
 
         SECTION("basic")
@@ -314,15 +312,15 @@ TEST_CASE("bipartite buffer: message-oriented", "[msg-bipbuf]")
         }
         SECTION("list")
         {
-            test_list(mbb);
+            test_list(mbb, gen);
         }
         SECTION("async: fixed")
         {
-            test_async_fixed(mbb);
+            test_async_fixed(mbb, gen);
         }
         SECTION("async: varied")
         {
-            test_async_varied(mbb);
+            test_async_varied(mbb, gen);
         }
     }
 }
