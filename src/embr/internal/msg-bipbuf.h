@@ -23,18 +23,28 @@ enum msg_bipbuf_options
     MBB_OPT_PRECISE_SIZE    = 0x02
 };
 
-template <ESTD_CPP_CONCEPT(estd::concepts::v1::Bipbuf) Buf, msg_bipbuf_options o = MBB_OPT_NONE>
+// 23MAY26 - Do we need to start considering a 'Traits' instead of options & align_to?
+template <ESTD_CPP_CONCEPT(estd::concepts::v1::Bipbuf) Buf,
+    msg_bipbuf_options o = MBB_OPT_NONE, unsigned align_to = alignof(std::max_align_t)>
 class msg_bipbuf;
 
-template <ESTD_CPP_CONCEPT(estd::concepts::v1::Bipbuf) Buf, msg_bipbuf_options o>
+// Very limited scope crude, explicit constexpr log2 to assist with bit size deduction
+// Despite crudeness, pretty useful.  Consider putting this guy up into estd
+constexpr int int_log2(uint32_t x, int r = -1)  // NOLINT
+{
+    return x ? int_log2(x >> 1, r + 1) : r;
+}
+
+template <ESTD_CPP_CONCEPT(estd::concepts::v1::Bipbuf) Buf,
+    msg_bipbuf_options o, unsigned align_to>
 class msg_bipbuf
 {
 public:
     static constexpr bool aligned = !(o & MBB_OPT_UNALIGNED);
     static constexpr bool retain_size = o & MBB_OPT_PRECISE_SIZE;
 
-    // Specifically to honor alignment
-    static constexpr unsigned message_header_size = sizeof(void*);
+    //static constexpr unsigned align_size = sizeof(void*);
+    //static constexpr unsigned align_log2 = int_log2(align_size);
 
     struct message_unaligned
     {
@@ -43,8 +53,16 @@ public:
         char payload[];
     };
 
-    struct message_aligned
+    // alignas(align_to) goofs up things, probably our this + 1 trick
+    class message_aligned
     {
+        //static constexpr unsigned align_size = alignof(message_unaligned);
+        // DEBT: No estd equivalent yet
+        static constexpr unsigned align_size = align_to;
+        static constexpr unsigned align_log2 = int_log2(align_size);
+
+        //static_assert(align_size == 0);
+
         struct
         {
             // Payload size:
@@ -57,10 +75,18 @@ public:
             unsigned ready : 1;
         };
 
-        constexpr explicit message_aligned(unsigned sz, bool ready) :
-            sz{sz},
+    public:
+#if UNIT_TESTING
+        constexpr explicit message_aligned() : sz{}, ready{false} {};
+#endif
+
+        constexpr explicit message_aligned(unsigned size_in_bytes, bool ready) :
+            //sz{retain_size ? size_in_bytes : size_in_bytes >> align_bits},
+            sz{size_in_bytes},
             ready{ready}
-        {}
+        {
+            //assert(size_in_bytes % align_size == 0);
+        }
 
         constexpr explicit message_aligned(estd::nullopt_t) :
             sz{0},
@@ -68,10 +94,18 @@ public:
         {}
 
         void* payload() { return this + 1; }
+        constexpr const void* payload() const { return this + 1; }
 
         static constexpr unsigned size(unsigned payload_size)
         {
             return sizeof(message_aligned) + payload_size;
+        }
+
+        /// In bytes
+        constexpr unsigned payload_size() const
+        {
+            //return retain_size ? sz : sz << align_bits;
+            return sz;
         }
 
         // Total size w/ payload

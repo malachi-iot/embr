@@ -177,7 +177,7 @@ static void test_async_fixed(bipbuf<Buf>& mbb, std::mt19937 gen)
                     int* v_ptr = (int*)m->payload();
                     v = *v_ptr;
                     sum2 += *v_ptr;
-                    REQUIRE(m->sz == sizeof(int));
+                    REQUIRE(m->payload_size() == sizeof(int));
                 });
 
             REQUIRE(err == estd::errc{});
@@ -271,7 +271,7 @@ static void test_async_varied(bipbuf<Buf>& mbb, std::mt19937 gen)
                     printf("async varied: sz=%d\n", m->sz);
 #endif
                     auto payload = (const char*)m->payload();
-                    int sz = m->sz;
+                    int sz = m->payload_size();
                     REQUIRE(sz <= 32);
                     REQUIRE(std::all_of(payload, payload + sz, [sz](char c)
                         {
@@ -297,7 +297,8 @@ TEST_CASE("bipartite buffer: message-oriented", "[msg-bipbuf]")
         bipbuf<estd::layer1::bipbuf<128>> mbb;
         std::mt19937 gen{}; // NOLINT fixed seed: deterministic sequence = what we want
         using message = decltype(mbb)::message;
-
+        constexpr message dummy;
+        
         SECTION("basic")
         {
             estd::errc err = mbb.push({}, [](message* m)
