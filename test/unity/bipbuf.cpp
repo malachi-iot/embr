@@ -84,23 +84,35 @@ static void test_async(bipbuf<Buf>& mbb, std::mt19937& gen)
 
     struct shared_type
     {
+        rtos::task parent;
         bipbuf<Buf>& mbb;
         std::mt19937& gen;
         test_mutex mutex;
 
+        void push()
+        {
+            const uint8_t sz = gen() % 32;
+
+            [[maybe_unused]]
+            estd::errc err = mbb.push(mutex, [sz](message* m)
+            {
+                estd::fill_n((char*)m->payload(), sz, sz);
+            }, sz);
+        }
+
         void do_things()
         {
-            auto v = mutex.mutex_.native_handle();
-            // FIX: Strangely, mutex gets mad here.  Why?
-            //mbb.push(mutex, [](message*) {}, 10);
+            for(int i = 0; i < 10; ++i) push();
+
+            parent.notify_give(0);
         }
 
         // DEBT: Why does out mutex buddy need this explicit initializer?  Odd.
-    }   shared{mbb, gen, {}};
+    }   shared{rtos::task::current(), mbb, gen, {}};
 
     auto f = [](void* arg)
     {
-        // DO NOT LOG IN HERE! 2K stack isn't enough for that
+        // DO NOT LOG HERE! 2K stack isn't enough for that
         auto shared = (shared_type*) arg;
 
         shared->do_things();
@@ -108,7 +120,6 @@ static void test_async(bipbuf<Buf>& mbb, std::mt19937& gen)
         vTaskDelete(nullptr);
     };
 
-    // DEBT:  https://github.com/malachi-iot/estdlib/issues/202
     rtos::task tasks[2];
     for(rtos::task& task : tasks)
     {
@@ -116,9 +127,31 @@ static void test_async(bipbuf<Buf>& mbb, std::mt19937& gen)
         TEST_ASSERT_TRUE(r);
     }
 
-    estd::errc err = mbb.pop(shared.mutex, [](message*) {});
+    int counter = 0;
 
-    TEST_ASSERT_EQUAL(estd::errc::no_buffer_space, err);
+    for(int i = 0; i < 20 && counter < 1000;++counter)
+    {
+        estd::errc err = mbb.pop(shared.mutex, [&](message* p)
+        {
+            char temp[32];
+            uint8_t sz = p->payload_size();
+            estd::fill_n(temp, sz, sz);
+            TEST_ASSERT_EQUAL_HEX8_ARRAY(temp, p->payload(), sz);
+        });
+
+        TEST_ASSERT_NOT_EQUAL(estd::errc::no_lock_available, err);
+
+        if(err == estd::errc{})
+        {
+            ++i;
+        }
+    }
+
+    // Wait for workers to finish
+    for(auto& _ : tasks)
+        ulTaskNotifyTakeIndexed(0, pdFALSE, portMAX_DELAY);
+
+    TEST_ASSERT_LESS_THAN(10000, counter);
 }
 
 // Although std::async and pthreads are an option, it feels like a better test to
