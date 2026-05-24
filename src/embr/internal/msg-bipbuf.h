@@ -205,17 +205,19 @@ public:
         // DEBT: Works well enough, but peek may be doing a little more
         // than we need right now
         // DEBT: We don't get alignment warnings, but we'd kind of expect it here
-        if(!mutex.lock())   return estd::errc::no_lock_available;
+
+        //if(!mutex.lock())   return estd::errc::no_lock_available; // See below for why we don't need locks here
         auto m = (message*)buf_.peek(sizeof(message));
-        mutex.unlock();
+        //mutex.unlock();
+
         // FIX: there is no non-const peek yet but we do need one
         //auto m = reinterpret_cast<message*>(buf_.peek(sizeof(message)));
 
         // See https://malachi.atlassian.net/wiki/x/AYClD for breakdown of why
-        // peek is *almost* lock-free.  It isn't though since a_end and a_start
-        // aren't atomically assigned together (but maybe could be if they were
-        // in an atomic-assigned struct?)
-
+        // peek is lock free.  In short, only 'pop' changes a_start, and only
+        // `offer_end` changes a_end. a_end only ever changes from a is-empty condition
+        // to a not is-empty condition.  Meaning that our empty check can
+        // conservatively keep reporting 'nothing yet' until something's there.
 
         // DEBT: Use resource_unavailable_try_again once we have that
         // https://github.com/malachi-iot/estdlib/issues/201
