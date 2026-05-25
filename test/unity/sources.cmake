@@ -11,5 +11,6 @@ set(SOURCES
         observer.cpp
         scheduler.cpp
         setup.cpp
+        thunk.cpp
         word.cpp
         )
