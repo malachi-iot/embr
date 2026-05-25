@@ -338,7 +338,7 @@ TEST_CASE("bipartite buffer: message-oriented", "[msg-bipbuf][bipbuf]")
 #if BIPBUF_TEST_ENABLE3
         SECTION("async: varied")
         {
-            auto buf = bipbuf_new(256);
+            bipbuf_t* buf = bipbuf_new(256);
 
             bipbuf<estd::layer3::bipbuf> mbb(estd::in_place_t{}, buf);
             test_async_varied(mbb, gen);

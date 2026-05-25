@@ -1,8 +1,30 @@
 #pragma once
 
+#if __cpp_lib_concepts
+#include <concepts>
+#endif
+
 #include <estd/internal/platform.h>
 
 // At this time, mostly used to support Scheduler things
+
+#if __cpp_concepts
+namespace embr::internal::concepts {
+
+template <class T>
+concept Mutex = requires(T t)
+{
+    // Should we bother with https://github.com/malachi-iot/estdlib/issues/46 ?
+#if __cpp_lib_concepts
+    { t.lock() } -> std::same_as<bool>;
+#endif
+    t.unlock();
+};
+
+
+}
+#endif
+
 
 namespace embr { namespace internal {
 

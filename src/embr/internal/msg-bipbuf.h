@@ -160,7 +160,7 @@ public:
     ///     - no_lock_available: can't mutex lock
     ///     - not_enough_memory: out of bipbuf space
     ///     - {} == OK
-    template <class F, class Mutex = internal::noop_mutex>
+    template <class F, ESTD_CPP_CONCEPT(internal::concepts::Mutex) Mutex = internal::noop_mutex>
     estd::errc push(Mutex&& mutex, F&& init, unsigned sz)
     {
         if(!mutex.lock())  return estd::errc::no_lock_available;
@@ -187,7 +187,7 @@ public:
     }
 
 
-    template <class T, class ...Args, class Mutex = noop_mutex>
+    template <class T, class ...Args, ESTD_CPP_CONCEPT(internal::concepts::Mutex) Mutex = noop_mutex>
     estd::errc emplace(Mutex&& mutex, Args&&...args)
     {
         return push(
@@ -199,7 +199,7 @@ public:
             sizeof(T));
     }
 
-    template <class F, class Mutex = internal::noop_mutex>
+    template <class F, ESTD_CPP_CONCEPT(internal::concepts::Mutex) Mutex = internal::noop_mutex>
     estd::errc pop(Mutex&& mutex, F&& f)
     {
         // DEBT: Works well enough, but peek may be doing a little more

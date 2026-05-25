@@ -10,10 +10,16 @@ inline namespace sys {
 
 namespace detail { inline namespace v1 {
 
-template <ESTD_CPP_CONCEPT(estd::concepts::v1::Bipbuf) Buf>
-class thunk : protected internal::msg_bipbuf<Buf>
+// Inspired by Boost ASIO and C# BeginInvoke
+// https://www.boost.org/doc/libs/latest/doc/html/boost_asio/reference/io_context.html
+
+template <ESTD_CPP_CONCEPT(estd::concepts::v1::Bipbuf) Buf,
+    ESTD_CPP_CONCEPT(internal::concepts::Mutex) Mutex = internal::noop_mutex>
+class thunk : protected internal::msg_bipbuf<Buf>,
+    protected Mutex
 {
     using base_type = internal::msg_bipbuf<Buf>;
+    using mutex_type = Mutex;
     using message = typename base_type::message;
 
     // Edge-case version which auto-invokes functor destructor immediately
@@ -23,9 +29,18 @@ class thunk : protected internal::msg_bipbuf<Buf>
         estd::detail::impl::function_fnptr2_oneshot>;
     using model_base = typename function_type::model_base;
 
+    mutex_type& mutex() { return *this; }
+
 public:
-    template <class F, class Mutex2>
-    estd::errc enqueue(F&& f, Mutex2&& mutex)
+    thunk() = default;
+
+    template <class ...Args>
+    constexpr explicit thunk(estd::in_place_t, Args&&...args) :
+        base_type{estd::in_place_t{}, std::forward<Args>(args)...}
+    {}
+
+    template <class F, ESTD_CPP_CONCEPT(internal::concepts::Mutex) Mutex2>
+    estd::errc post(Mutex2&& mutex, F&& f)
     {
         using model_type = function_type::model<F>;
 
@@ -33,11 +48,10 @@ public:
             std::forward<Mutex2>(mutex), std::forward<F>(f));
     }
 
-    template <class Mutex2>
+    template <ESTD_CPP_CONCEPT(internal::concepts::Mutex) Mutex2>
     estd::errc poll_one(Mutex2&& mutex)
     {
-        // DEBT: mutex should be as first parameter on pop to match emplace
-        return base_type::pop([&](message* m)
+        return base_type::pop(std::forward<Mutex2>(mutex), [](message* m)
         {
             auto model = reinterpret_cast<model_base*>(m->payload());
 
@@ -45,7 +59,18 @@ public:
 
             // DEBT: We'd like the option to return a success or fail code here too
 
-        }, std::forward<Mutex2>(mutex));
+        });
+    }
+
+    template <class F>
+    estd::errc post(F&& f)
+    {
+        return post(mutex(), std::forward<F>(f));
+    }
+
+    estd::errc poll_one()
+    {
+        return poll_one(mutex());
     }
 };
 

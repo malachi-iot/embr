@@ -71,9 +71,51 @@ struct Tracked
 };
 
 
-TEST_CASE("thunk")
+
+TEST_CASE("thunk", "[thunk]")
 {
-    embr::sys::detail::v1::thunk<estd::layer1::bipbuf<256>> t_new;
+    int counter = 0;
+
+    SECTION("layer1")
+    {
+        embr::sys::detail::v1::thunk<estd::layer1::bipbuf<256>> thunk;
+
+        thunk.post([&] { ++counter; });
+        thunk.poll_one();
+
+        REQUIRE(counter == 1);
+    }
+    SECTION("layer3")
+    {
+        bipbuf_t* buf = bipbuf_new(256);
+
+        embr::sys::detail::v1::thunk<estd::layer3::bipbuf> thunk(estd::in_place_t{}, buf);
+
+        REQUIRE(bipbuf_used(buf) == 0);
+
+        thunk.post([&] { ++counter; });
+
+        //   4 = message header
+        // + function pointer
+        // + capture reference (pointer, really)
+        // = 20 typically
+        constexpr int message_size = 4 + sizeof(void*) * 2;
+
+        REQUIRE(bipbuf_used(buf) == message_size);
+
+        thunk.poll_one();
+
+        REQUIRE(bipbuf_used(buf) == 0);
+
+        REQUIRE(counter == 1);
+
+        bipbuf_free(buf);
+    }
+}
+
+
+TEST_CASE("thunk: legacy exp", "[thunk]")
+{
     embr::experimental::layer1::Thunk<256> t;
 
     SECTION("pt1")
@@ -185,4 +227,3 @@ TEST_CASE("thunk")
         REQUIRE(t2.empty() == true);
     }
 }
-
