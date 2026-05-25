@@ -25,7 +25,6 @@ concept Mutex = requires(T t)
 }
 #endif
 
-
 namespace embr { namespace internal {
 
 struct MutexContext
@@ -44,6 +43,59 @@ struct MutexContext
     }
 };
 
+
+
+// DEBT: This ought to go into a port/platform area
+// Primarily used by thunk/msg-bipbuf
+#if ESP_PLATFORM
+struct freertos_hw_mutex
+{
+    portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
+
+    bool lock()
+    {
+        taskENTER_CRITICAL(&mux);
+        return true;
+    }
+
+    void unlock()
+    {
+        taskEXIT_CRITICAL(&mux);
+    }
+};
+
+
+struct freertos_hw_mutex_isr
+{
+    portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
+
+    bool lock()
+    {
+        taskENTER_CRITICAL_ISR(&mux);
+        return true;
+    }
+
+    void unlock()
+    {
+        taskEXIT_CRITICAL_ISR(&mux);
+    }
+};
+#elif ESTD_OS_FREERTOS
+// UNTESTED
+struct freertos_hw_mutex
+{
+    bool lock()
+    {
+        taskENTER_CRITICAL();
+        return true;
+    }
+
+    void unlock()
+    {
+        taskEXIT_CRITICAL();
+    }
+};
+#endif
 
 struct noop_mutex
 {

@@ -11,13 +11,12 @@
 
 using namespace embr;
 
-namespace rtos = estd::freertos::wrapper;
-
 template <class Buf>
 using bipbuf = internal::msg_bipbuf<Buf>;
 
 // I hate copy/pasting.  However abstracting this test to run in both Catch2
-// and unity would be silly.
+// and unity would be silly.  EDIT: Changed my mind.  This particular test
+// could be abstracted with an is_true functor
 // See also PGESP#105 
 // https://bitbucket.org/malachib/playground.esp/issues/105/catch2
 template <class Buf>
@@ -63,21 +62,28 @@ static void test_list(bipbuf<Buf>& mbb, std::mt19937& gen)
     }
 }
 
+namespace rtos = estd::freertos::wrapper;
+
 using namespace estd::chrono_literals;
 
-struct test_mutex
+// DEBT: Put this up into embr::internal area
+// DEBT: Glance at assembly to make sure that ms constexpr's all the way out and
+// doesn't result in a runtime ms-to-ticks calc
+template <unsigned ms>
+struct freertos_timed_mutex
 {
     estd::freertos::timed_mutex<true> mutex_;
 
     bool lock()
     {
-        return mutex_.try_lock_for(50ms);
+        return mutex_.try_lock_for(estd::chrono::milliseconds(ms));
     }
 
     void unlock() { mutex_.unlock(); }
 };
 
-template <class Bipbuf>
+template <class Bipbuf,
+    ESTD_CPP_CONCEPT(embr::internal::concepts::Mutex) Mutex = freertos_timed_mutex<50>>
 struct shared_type
 {
     using message = typename Bipbuf::message;
@@ -85,7 +91,7 @@ struct shared_type
     rtos::task parent;
     Bipbuf& mbb;
     std::mt19937& gen;
-    test_mutex mutex;
+    Mutex mutex;
 
     constexpr static int loops = 10;
 
@@ -130,15 +136,15 @@ static void wait_for_worker_finish()
 }
 
 
-template <class Bipbuf, class Buf>
-static void test_async(shared_type<Bipbuf>& shared, bipbuf<Buf>& mbb, std::mt19937& gen)
+template <class Bipbuf, class Mutex, class Buf>
+static void test_async(shared_type<Bipbuf, Mutex>& shared, bipbuf<Buf>& mbb, std::mt19937& gen)
 {
     using message = typename bipbuf<Buf>::message;
 
     auto f = [](void* arg)
     {
         // DO NOT LOG HERE! 2K stack isn't enough for that
-        auto shared = (shared_type<Bipbuf>*) arg;
+        auto shared = (shared_type<Bipbuf, Mutex>*) arg;
 
         shared->do_things();
 
@@ -189,15 +195,24 @@ static void test_layer1()
         type mbb;
         test_list(mbb, gen);
     }
+#if ESTD_OS_FREERTOS
     {
         type mbb;
         shared_type<layer1_type>
         // DEBT: Why does out mutex buddy need this explicit initializer?  Odd.
-        shared{rtos::task::current(), mbb, gen, {}};
+            shared{rtos::task::current(), mbb, gen, {}};
         ::shared.layer1 = &shared;
         
         test_async(*::shared.layer1, mbb, gen);
     }
+    {
+        type mbb;
+        shared_type<layer1_type, embr::internal::freertos_hw_mutex>
+            shared{rtos::task::current(), mbb, gen, {}};
+
+        test_async(shared, mbb, gen);
+    }
+#endif
 }
 
 #ifdef ESP_IDF_TESTING

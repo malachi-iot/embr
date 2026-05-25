@@ -2,36 +2,11 @@
 
 #include <embr/thunk.h>
 
-// TODO: Only enable during FreeRTOS
+#if ESTD_OS_FREERTOS
 
-#define MULTICORE 1
-
-#if ESP_PLATFORM && MULTICORE
 // NOTE: Be careful.  'post' operations are expected to be very fast,
 // but exotic captures might slow things down.
-struct esp_hw_mutex_non_isr
-{
-    portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
-
-    bool lock()
-    {
-        taskENTER_CRITICAL(&mux);
-        return true;
-    }
-
-    void unlock()
-    {
-        taskEXIT_CRITICAL(&mux);
-    }
-};
-
-using hw_mutex = esp_hw_mutex_non_isr;
-#else
-struct hw_mutex
-{
-
-};
-#endif
+using hw_mutex = embr::internal::freertos_hw_mutex;
 
 static void test_thunk_ll()
 {
@@ -52,3 +27,5 @@ void test_thunk()
 {
     RUN_TEST(test_thunk_ll);
 }
+
+#endif
