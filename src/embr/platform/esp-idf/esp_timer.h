@@ -21,14 +21,14 @@ namespace chrono {
 // Designed to be used in conjunction with embr::Profiler
 struct timer
 {
-    using rep = estd::chrono::internal::micro_rep;
+    using rep = decltype(esp_timer_get_time());
     //typedef micro period;
     using time_point = rep;
     using duration = rep;
     
     static time_point now()
     {
-        return time_point(duration(esp_timer_get_time()));
+        return esp_timer_get_time();
     }
 };
 

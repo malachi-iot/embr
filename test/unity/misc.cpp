@@ -31,7 +31,8 @@ static void test_profiler_raw()
 
     Profiler<clock> p;
 
-    uint64_t elapsed = p.mark();
+    volatile uint64_t elapsed = p.mark();
+    elapsed = p.mark();
 
     TEST_ASSERT_GREATER_THAN(0, elapsed);
 #endif
