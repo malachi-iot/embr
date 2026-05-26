@@ -99,8 +99,6 @@ estd::errc push_with_retry(Bipbuf& mbb, Mutex&& mutex, F&& f,
     }
 
     abort();
-
-    //return err;
 }
 
 // DEBT: Put this definition elsewhere
@@ -165,6 +163,7 @@ using layer3_type = bipbuf<estd::layer3::bipbuf>;
 static union
 {
     shared_type<layer1_type>* layer1;
+    shared_type<layer3_type>* layer3;
 }   shared;
 
 

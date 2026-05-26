@@ -3,13 +3,16 @@
 #include <esp_log.h>
 
 #include <estd/chrono.h>
+
+#if ESTD_OS_FREERTOS
+
 #include <estd/port/freertos/mutex.h>
 #include <estd/port/freertos/thread.h>
 
 #include <embr/platform/freertos/mutex.h>
 #include <embr/thunk.h>
 
-#if ESTD_OS_FREERTOS
+#include "shared.h"
 
 using namespace embr;
 namespace rtos = estd::freertos::wrapper;
