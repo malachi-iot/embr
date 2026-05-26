@@ -4,6 +4,7 @@
 #include <estd/chrono.h>
 #include <estd/port/freertos/mutex.h>
 #include <estd/port/freertos/thread.h>
+#include <embr/platform/freertos/mutex.h>
 
 #include <embr/internal/msg-bipbuf.h>
 
@@ -69,10 +70,10 @@ using namespace estd::chrono_literals;
 // DEBT: Put this up into embr::internal area
 // DEBT: Glance at assembly to make sure that ms constexpr's all the way out and
 // doesn't result in a runtime ms-to-ticks calc
-template <unsigned ms>
+template <unsigned ms, bool static_allocated = true>
 struct freertos_timed_mutex
 {
-    estd::freertos::timed_mutex<true> mutex_;
+    estd::freertos::timed_mutex<static_allocated> mutex_;
 
     bool lock()
     {
@@ -83,7 +84,7 @@ struct freertos_timed_mutex
 };
 
 template <class Bipbuf,
-    ESTD_CPP_CONCEPT(embr::internal::concepts::Mutex) Mutex = freertos_timed_mutex<50>>
+    ESTD_CPP_CONCEPT(embr::internal::concepts::Mutex) Mutex = embr::freertos::timed_mutex<50>>
 struct shared_type
 {
     using message = typename Bipbuf::message;

@@ -1,5 +1,9 @@
 #include "unit-test.h"
 
+#include <estd/chrono.h>
+#include <estd/port/freertos/mutex.h>
+#include <estd/port/freertos/thread.h>
+
 #include <embr/thunk.h>
 
 #if ESTD_OS_FREERTOS
@@ -17,6 +21,13 @@ static void test_thunk_ll()
     thunk.poll_one();
 
     TEST_ASSERT_EQUAL(1, counter);
+}
+
+
+static void test_thunk_async()
+{
+    int counter = 0;
+    embr::sys::detail::v1::thunk<estd::layer1::bipbuf<256>, hw_mutex> thunk;
 }
 
 #ifdef ESP_IDF_TESTING
