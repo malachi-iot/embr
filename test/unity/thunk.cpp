@@ -26,8 +26,8 @@ static constexpr int task_count = 3;
 
 static void wait_for_worker_finish()
 {
-    // FIX: Because scheduler leaves task notification in a naughty state, we have to
-    // consume one extra here
+    // FIX: Because scheduler or bipbuf tests leaves task notification in a naughty state,
+    // we have to consume one extra here
     for(int i = 0; i < task_count + 1; ++i)
     {
         [[maybe_unused]]

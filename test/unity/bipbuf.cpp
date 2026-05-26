@@ -1,9 +1,13 @@
 #include <queue>
 #include <random>
 
+#include <esp_log.h>
+
 #include <estd/chrono.h>
 #include <estd/port/freertos/mutex.h>
+#include <estd/port/freertos/semaphore.h>
 #include <estd/port/freertos/thread.h>
+
 #include <embr/platform/freertos/mutex.h>
 
 #include <embr/internal/msg-bipbuf.h>
@@ -12,8 +16,33 @@
 
 using namespace embr;
 
+static const char* TAG = "embr::unity::bipbuf";
+
+// Task notifications are great, but if I don't get them exactly right they goof up
+// other unit tests it seems. 
+#define USE_TASK_NOTIFICATION 0
+
 template <class Buf>
 using bipbuf = internal::msg_bipbuf<Buf>;
+
+static constexpr int task_count = 3;
+
+#if !USE_TASK_NOTIFICATION
+using semaphore = estd::freertos::wrapper::semaphore;
+static semaphore worker_finished;
+#endif
+
+static void wait_for_worker_finish()
+{
+    for(int i = 0; i < task_count; ++i)
+    {
+#if USE_TASK_NOTIFICATION
+        ulTaskNotifyTakeIndexed(0, pdFALSE, portMAX_DELAY);
+#else
+        worker_finished.take(portMAX_DELAY);
+#endif
+    }
+}
 
 // I hate copy/pasting.  However abstracting this test to run in both Catch2
 // and unity would be silly.  EDIT: Changed my mind.  This particular test
@@ -68,6 +97,33 @@ namespace rtos = estd::freertos::wrapper;
 using namespace estd::chrono_literals;
 
 template <class Bipbuf,
+    ESTD_CPP_CONCEPT(embr::internal::concepts::Mutex) Mutex,
+    class F, class OnRetry>
+estd::errc push_with_retry(Bipbuf& mbb, Mutex&& mutex, F&& f,
+    unsigned sz, int retry_max, OnRetry&& on_retry)
+{
+    for(int retry = 0; retry < retry_max;)
+    {
+        const estd::errc err = mbb.push(
+            std::forward<Mutex>(mutex),
+            std::forward<F>(f),
+            sz);
+
+        if(err == estd::errc{}) return err;
+
+        ++retry;
+
+        if(retry >= retry_max)  return err;
+
+        on_retry();
+    }
+
+    abort();
+
+    //return err;
+}
+
+template <class Bipbuf,
     ESTD_CPP_CONCEPT(embr::internal::concepts::Mutex) Mutex = embr::freertos::timed_mutex<50>>
 struct shared_type
 {
@@ -83,26 +139,39 @@ struct shared_type
     void push()
     {
         const uint8_t sz = gen() % 32;
-
-        [[maybe_unused]]
-        estd::errc err = mbb.push(mutex, [sz](message* m)
+        auto f = [sz](message* m)
         {
             estd::fill_n((char*)m->payload(), sz, sz);
-        }, sz);
+        };
+
+        [[maybe_unused]]
+        estd::errc err;// = mbb.push(mutex, f, sz);
 
         // DEBT: Do some retries and maybe some metrics gathering - test will eventually
         // fail without the retries portion
+
+        err = push_with_retry(mbb, mutex, f, sz, 5, []
+            {
+                vTaskDelay(5);
+            });
+
+        TEST_ASSERT_EQUAL(estd::errc{}, err);
     }
 
     void do_things()
     {
         for(int i = 0; i < loops; ++i) push();
 
+#if USE_TASK_NOTIFICATION
         parent.notify_give(0);
+#else
+        worker_finished.give();
+#endif
     }
 };
 
 using layer1_type = bipbuf<estd::layer1::bipbuf<128>>;
+using layer3_type = bipbuf<estd::layer3::bipbuf>;
 
 // TODO: Not used yet, this is theoretically a way to overcome part fault
 // on unit test failure.  In particular, worker tasks are still running but
@@ -115,13 +184,6 @@ static union
     shared_type<layer1_type>* layer1;
 }   shared;
 
-static constexpr int task_count = 3;
-
-static void wait_for_worker_finish()
-{
-    for(int i = 0; i < task_count; ++i)
-        ulTaskNotifyTakeIndexed(0, pdFALSE, portMAX_DELAY);
-}
 
 
 template <class Bipbuf, class Mutex, class Buf>
@@ -147,17 +209,20 @@ static void test_async(shared_type<Bipbuf, Mutex>& shared, bipbuf<Buf>& mbb, std
     }
 
     int counter = 0;
-    int popped = 0;
+    int i = 0;
+    int bytes_processed = 0;
 
-    for(int i = 0; i < task_count * shared.loops && counter < 1000; ++counter)
+    for(; i < task_count * shared.loops && counter < 1000; ++counter)
     {
         estd::errc err = mbb.pop(shared.mutex, [&](const message* p)
         {
             char temp[32];
             uint8_t sz = p->payload_size();
             estd::fill_n(temp, sz, sz);
+            TEST_ASSERT_GREATER_THAN(0, sz);
+            TEST_ASSERT_NOT_NULL(p->payload());
             TEST_ASSERT_EQUAL_HEX8_ARRAY(temp, p->payload(), sz);
-            ++popped;
+            bytes_processed += sz;
         });
 
         TEST_ASSERT_NOT_EQUAL(estd::errc::no_lock_available, err);
@@ -168,23 +233,27 @@ static void test_async(shared_type<Bipbuf, Mutex>& shared, bipbuf<Buf>& mbb, std
         }
         else
         {
-            //vTaskDelay(1);
+            vTaskDelay(1);
         }
     }
 
+    ESP_LOGD(TAG, "bytes_processed=%d", bytes_processed);
+
     wait_for_worker_finish();
 
-    // Needs attention, need to check 'popped'
-    //TEST_ASSERT_LESS_THAN(1000, counter);
+    //TEST_ASSERT_GREATER_THAN(shared.loops, popped);
+    TEST_ASSERT_EQUAL(i, task_count * shared.loops);
+    TEST_ASSERT_LESS_THAN(1000, counter);
 }
 
 // Although std::async and pthreads are an option, it feels like a better test to
 // do with real FreeRTOS tasks directly
 
+// DEBT: Whoa!  mt19937 uses over 2k of stack!!  Find an alternative
+static std::mt19937 gen{}; // NOLINT fixed seed: deterministic sequence = what we want
+
 static void test_layer1()
 {
-    // DEBT: Whoa!  mt19937 uses over 2k of stack!!  Find an alternative
-    static std::mt19937 gen{}; // NOLINT fixed seed: deterministic sequence = what we want
     using type = layer1_type;
     {
         type mbb;
@@ -210,13 +279,41 @@ static void test_layer1()
 #endif
 }
 
+static void test_layer3()
+{
+#if ESTD_OS_FREERTOS
+    union
+    {
+        bipbuf_t bipbuf;
+        char storage[sizeof(bipbuf) + 128];
+    };
+
+    bipbuf_init(&bipbuf, 128);
+
+    // TODO: Reconsider needing in_place_t here, since init varies very little
+    layer3_type mbb(estd::in_place_t{}, &bipbuf);
+    static shared_type<layer3_type> //, embr::freertos::hw_mutex>
+        shared{rtos::task::current(), mbb, gen, {}};
+
+    test_async(shared, mbb, gen);
+#endif
+}
+
+
 #ifdef ESP_IDF_TESTING
 TEST_CASE("bipbuf", "[bipbuf]")
 #else
 void test_bipbuf()
 #endif
 {
+#if !USE_TASK_NOTIFICATION
+    worker_finished.create_counting(3, 0);
+#endif
+
     {
         RUN_TEST(test_layer1);
+    }
+    {
+        //RUN_TEST(test_layer3);
     }
 }
