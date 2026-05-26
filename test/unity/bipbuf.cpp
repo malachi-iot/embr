@@ -19,31 +19,10 @@ using namespace embr;
 
 static const char* TAG = "embr::unity::bipbuf";
 
-// Task notifications are great, but if I don't get them exactly right they goof up
-// other unit tests it seems. 
-#define USE_TASK_NOTIFICATION 1
-
 template <class Buf>
 using bipbuf = internal::msg_bipbuf<Buf>;
 
 static constexpr int task_count = 3;
-
-#if !USE_TASK_NOTIFICATION
-using semaphore = estd::freertos::wrapper::semaphore;
-static semaphore worker_finished;
-#endif
-
-static void wait_for_worker_finish()
-{
-    for(int i = 0; i < task_count; ++i)
-    {
-#if USE_TASK_NOTIFICATION
-        ulTaskNotifyTakeIndexed(0, pdFALSE, portMAX_DELAY);
-#else
-        worker_finished.take(portMAX_DELAY);
-#endif
-    }
-}
 
 // I hate copy/pasting.  However abstracting this test to run in both Catch2
 // and unity would be silly.  EDIT: Changed my mind.  This particular test
@@ -124,9 +103,12 @@ estd::errc push_with_retry(Bipbuf& mbb, Mutex&& mutex, F&& f,
     //return err;
 }
 
+// DEBT: Put this definition elsewhere
+test::shared::semaphore test::shared::finished;
+
 template <class Bipbuf,
     ESTD_CPP_CONCEPT(embr::internal::concepts::Mutex) Mutex = embr::freertos::timed_mutex<50>>
-struct shared_type
+struct shared_type : test::shared
 {
     using message = typename Bipbuf::message;
 
@@ -134,12 +116,11 @@ struct shared_type
     std::mt19937& gen;
     // DEBT: Why does out mutex buddy need this explicit initializer?  Odd.
     Mutex mutex{};
-#if USE_TASK_NOTIFICATION
-    rtos::task parent = rtos::task::current();
-#endif
 
     constexpr static int loops = 10;
     constexpr static int sample = 32;
+
+    shared_type(Bipbuf& bb, std::mt19937& gen) : mbb{bb}, gen{gen}  {}
 
     void push()
     {
@@ -168,11 +149,7 @@ struct shared_type
     {
         for(int i = 0; i < loops; ++i) push();
 
-#if USE_TASK_NOTIFICATION
-        parent.notify_give(0);
-#else
-        worker_finished.give();
-#endif
+        finish();
     }
 };
 
@@ -245,7 +222,7 @@ static void test_async(shared_type<Bipbuf, Mutex>& shared, bipbuf<Buf>& mbb)
 
     ESP_LOGD(TAG, "bytes_processed=%d", bytes_processed);
 
-    wait_for_worker_finish();
+    shared.wait(task_count);
 
     TEST_ASSERT_EQUAL(i, task_count * shared.loops);
     TEST_ASSERT_LESS_THAN(1000, counter);
@@ -327,8 +304,8 @@ TEST_CASE("bipbuf", "[bipbuf]")
 void test_bipbuf()
 #endif
 {
-#if !USE_TASK_NOTIFICATION
-    worker_finished.create_counting(3, 0);
+#if !USE_TASK_NOTIFICATION_SHARED
+    test::shared::finished.create_counting(3, 0);
 #endif
 
     {
