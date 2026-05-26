@@ -78,6 +78,13 @@ public:
     
 inline namespace v1 {
 
+namespace layer1 {
+
+template <unsigned sz, ESTD_CPP_CONCEPT(internal::concepts::Mutex) Mutex = internal::noop_mutex>
+using thunk = sys::detail::v1::thunk<estd::layer1::bipbuf<sz>, Mutex>;
+
+}
+
 }   // namespace embr::inline sys::inline v1
 
 }   // namespace embr::inline sys

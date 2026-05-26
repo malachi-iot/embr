@@ -67,22 +67,6 @@ namespace rtos = estd::freertos::wrapper;
 
 using namespace estd::chrono_literals;
 
-// DEBT: Put this up into embr::internal area
-// DEBT: Glance at assembly to make sure that ms constexpr's all the way out and
-// doesn't result in a runtime ms-to-ticks calc
-template <unsigned ms, bool static_allocated = true>
-struct freertos_timed_mutex
-{
-    estd::freertos::timed_mutex<static_allocated> mutex_;
-
-    bool lock()
-    {
-        return mutex_.try_lock_for(estd::chrono::milliseconds(ms));
-    }
-
-    void unlock() { mutex_.unlock(); }
-};
-
 template <class Bipbuf,
     ESTD_CPP_CONCEPT(embr::internal::concepts::Mutex) Mutex = embr::freertos::timed_mutex<50>>
 struct shared_type
@@ -208,7 +192,7 @@ static void test_layer1()
     }
     {
         type mbb;
-        shared_type<layer1_type, embr::internal::freertos_hw_mutex>
+        shared_type<layer1_type, embr::freertos::hw_mutex>
             shared{rtos::task::current(), mbb, gen, {}};
 
         test_async(shared, mbb, gen);
