@@ -12,6 +12,7 @@
 
 #include <embr/internal/msg-bipbuf.h>
 
+#include "shared.h"
 #include "unit-test.h"
 
 using namespace embr;
@@ -20,7 +21,7 @@ static const char* TAG = "embr::unity::bipbuf";
 
 // Task notifications are great, but if I don't get them exactly right they goof up
 // other unit tests it seems. 
-#define USE_TASK_NOTIFICATION 0
+#define USE_TASK_NOTIFICATION 1
 
 template <class Buf>
 using bipbuf = internal::msg_bipbuf<Buf>;
@@ -129,16 +130,21 @@ struct shared_type
 {
     using message = typename Bipbuf::message;
 
-    rtos::task parent;
     Bipbuf& mbb;
     std::mt19937& gen;
-    Mutex mutex;
+    // DEBT: Why does out mutex buddy need this explicit initializer?  Odd.
+    Mutex mutex{};
+#if USE_TASK_NOTIFICATION
+    rtos::task parent = rtos::task::current();
+#endif
 
     constexpr static int loops = 10;
+    constexpr static int sample = 32;
 
     void push()
     {
-        const uint8_t sz = gen() % 32;
+        // NOTE: We want 0-size once in a while just for fuller coverage
+        const uint8_t sz = gen() % sample;
         auto f = [sz](message* m)
         {
             estd::fill_n((char*)m->payload(), sz, sz);
@@ -187,7 +193,7 @@ static union
 
 
 template <class Bipbuf, class Mutex, class Buf>
-static void test_async(shared_type<Bipbuf, Mutex>& shared, bipbuf<Buf>& mbb, std::mt19937& gen)
+static void test_async(shared_type<Bipbuf, Mutex>& shared, bipbuf<Buf>& mbb)
 {
     using message = typename bipbuf<Buf>::message;
 
@@ -218,8 +224,8 @@ static void test_async(shared_type<Bipbuf, Mutex>& shared, bipbuf<Buf>& mbb, std
         {
             char temp[32];
             uint8_t sz = p->payload_size();
+            if(sz == 0) return;
             estd::fill_n(temp, sz, sz);
-            TEST_ASSERT_GREATER_THAN(0, sz);
             TEST_ASSERT_NOT_NULL(p->payload());
             TEST_ASSERT_EQUAL_HEX8_ARRAY(temp, p->payload(), sz);
             bytes_processed += sz;
@@ -241,9 +247,13 @@ static void test_async(shared_type<Bipbuf, Mutex>& shared, bipbuf<Buf>& mbb, std
 
     wait_for_worker_finish();
 
-    //TEST_ASSERT_GREATER_THAN(shared.loops, popped);
     TEST_ASSERT_EQUAL(i, task_count * shared.loops);
     TEST_ASSERT_LESS_THAN(1000, counter);
+
+    // If our random distribution is OK, we should always exceed 25% of maximum
+    // random byte processed possibility
+    TEST_ASSERT_GREATER_THAN(shared.loops * task_count * (shared.sample / 4),
+        bytes_processed);
 }
 
 // Although std::async and pthreads are an option, it feels like a better test to
@@ -263,18 +273,17 @@ static void test_layer1()
     {
         type mbb;
         shared_type<layer1_type>
-        // DEBT: Why does out mutex buddy need this explicit initializer?  Odd.
-            shared{rtos::task::current(), mbb, gen, {}};
+            shared{mbb, gen};
         ::shared.layer1 = &shared;
         
-        test_async(*::shared.layer1, mbb, gen);
+        test_async(*::shared.layer1, mbb);
     }
     {
         type mbb;
         shared_type<layer1_type, embr::freertos::hw_mutex>
-            shared{rtos::task::current(), mbb, gen, {}};
+            shared{mbb, gen};
 
-        test_async(shared, mbb, gen);
+        test_async(shared, mbb);
     }
 #endif
 }
@@ -288,14 +297,26 @@ static void test_layer3()
         char storage[sizeof(bipbuf) + 128];
     };
 
-    bipbuf_init(&bipbuf, 128);
+    {
+        bipbuf_init(&bipbuf, 128);
 
-    // TODO: Reconsider needing in_place_t here, since init varies very little
-    layer3_type mbb(estd::in_place_t{}, &bipbuf);
-    static shared_type<layer3_type> //, embr::freertos::hw_mutex>
-        shared{rtos::task::current(), mbb, gen, {}};
+        // TODO: Reconsider needing in_place_t here, since init varies very little
+        layer3_type mbb(estd::in_place_t{}, &bipbuf);
+        static shared_type<layer3_type>
+            shared{mbb, gen};
 
-    test_async(shared, mbb, gen);
+        test_async(shared, mbb);
+    }
+    {
+        bipbuf_init(&bipbuf, 128);
+
+        // TODO: Reconsider needing in_place_t here, since init varies very little
+        layer3_type mbb(estd::in_place_t{}, &bipbuf);
+        static shared_type<layer3_type, embr::freertos::hw_mutex>
+            shared{mbb, gen};
+
+        test_async(shared, mbb);
+    }
 #endif
 }
 
@@ -314,6 +335,6 @@ void test_bipbuf()
         RUN_TEST(test_layer1);
     }
     {
-        //RUN_TEST(test_layer3);
+        RUN_TEST(test_layer3);
     }
 }
