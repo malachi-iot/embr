@@ -19,7 +19,6 @@ class thunk : protected internal::msg_bipbuf<Buf>,
     protected Mutex
 {
     using base_type = internal::msg_bipbuf<Buf>;
-    using mutex_type = Mutex;
     using message = typename base_type::message;
 
     // Edge-case version which auto-invokes functor destructor immediately
@@ -28,6 +27,11 @@ class thunk : protected internal::msg_bipbuf<Buf>,
         void(void),
         estd::detail::impl::function_fnptr2_oneshot>;
     using model_base = typename function_type::model_base;
+
+#if UNIT_TESTING
+public:
+#endif
+    using mutex_type = Mutex;
 
     mutex_type& mutex() { return *this; }
 
@@ -38,6 +42,8 @@ public:
     constexpr explicit thunk(estd::in_place_t, Args&&...args) :
         base_type{estd::in_place_t{}, std::forward<Args>(args)...}
     {}
+
+    constexpr const mutex_type& mutex() const { return *this; }
 
     template <class F, ESTD_CPP_CONCEPT(internal::concepts::Mutex) Mutex2>
     estd::errc post(Mutex2&& mutex, F&& f)

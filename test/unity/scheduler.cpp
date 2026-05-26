@@ -212,6 +212,7 @@ TEST_CASE("scheduler tests", "[scheduler]")
 void test_scheduler()
 #endif
 {
+    // FIX: Scheduler leaves task notification in a naughty state.  See 'thunk' area
 #if ESTD_OS_FREERTOS
     freertos::test_scheduler_with_event();
     freertos::test_scheduler_with_notify();
