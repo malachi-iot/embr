@@ -13,23 +13,6 @@
 
 namespace embr { namespace internal {
 
-enum msg_bipbuf_options
-{
-    MBB_OPT_NONE            = 0x00,
-    MBB_OPT_UNALIGNED       = 0x01,
-
-    /// By default, msg_bipbuf is free to take action on underlying message size without retaining
-    /// original size necessarily.  This flag ensures that original size really is retained.
-    MBB_OPT_PRECISE_SIZE    = 0x02
-};
-
-// 23MAY26 - Do we need to start considering a 'Traits' instead of options & align_to?
-template <ESTD_CPP_CONCEPT(estd::concepts::v1::Bipbuf) Buf,
-    // NOTE: Defaulting align_to somewhat aggressively.  Technically this probably ought to be
-    // alignof(std::max_align_t) but that can be pretty big.
-    msg_bipbuf_options o = MBB_OPT_NONE, unsigned align_to = sizeof(unsigned)>
-class msg_bipbuf;
-
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::Bipbuf) Buf, class Traits>
 class msg_bipbuf_exp;
 

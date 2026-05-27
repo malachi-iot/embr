@@ -2,6 +2,7 @@
 
 #include <estd/functional.h>
 
+#include "fwd/thunk.h"
 #include "internal/msg-bipbuf.h"
 
 namespace embr {
@@ -14,7 +15,7 @@ namespace detail { inline namespace v1 {
 // https://www.boost.org/doc/libs/latest/doc/html/boost_asio/reference/io_context.html
 
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::Bipbuf) Buf,
-    ESTD_CPP_CONCEPT(internal::concepts::Mutex) Mutex = internal::noop_mutex>
+    ESTD_CPP_CONCEPT(internal::concepts::Mutex) Mutex>
 class thunk : protected internal::msg_bipbuf<Buf>,
     protected Mutex
 {
@@ -81,17 +82,6 @@ public:
 };
 
 }}  // namespace embr::inline sys::detail::inline v1
-    
-inline namespace v1 {
-
-namespace layer1 {
-
-template <unsigned sz, ESTD_CPP_CONCEPT(internal::concepts::Mutex) Mutex = internal::noop_mutex>
-using thunk = sys::detail::v1::thunk<estd::layer1::bipbuf<sz>, Mutex>;
-
-}
-
-}   // namespace embr::inline sys::inline v1
 
 }   // namespace embr::inline sys
 
