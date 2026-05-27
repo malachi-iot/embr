@@ -29,9 +29,7 @@ static constexpr int task_count = 3;
 
 static void wait_for_worker_finish()
 {
-    // FIX: Because scheduler or bipbuf tests leaves task notification in a naughty state,
-    // we have to consume one extra here
-    for(int i = 0; i < task_count + 1; ++i)
+    for(int i = 0; i < task_count; ++i)
     {
         [[maybe_unused]]
         unsigned v = ulTaskNotifyTakeIndexed(0, pdFALSE, portMAX_DELAY);
@@ -90,26 +88,21 @@ static void test_thunk_ll()
 
 // TODO: Pull in gcc stack warnings from estd
 
-using shared_layer1 = shared_type<sys::v1::layer1::thunk<256, timed_mutex>>;
+template <class Mutex>
+using shared_layer1 = shared_type<sys::v1::layer1::thunk<256, Mutex>>;
 
-static void thunk_worker(void* arg)
+template <class Mutex>
+using shared_layer3 = shared_type<sys::v1::layer3::thunk<Mutex>>;
+
+template <class Shared>
+static void test_thunk_async_ll(Shared& shared)
 {
-    // DO NOT LOG HERE! 2K stack isn't enough for that
-    auto shared = (shared_layer1*) arg;
-
-    shared->do_things();
-
-    vTaskDelete(nullptr);
-}
-
-static void test_thunk_async()
-{
-    shared_layer1 shared;
-
     rtos::task tasks[task_count];
     for(rtos::task& task : tasks)
     {
-        BaseType_t r = task.create(thunk_worker, "thunk worker", 2048, &shared, 1);
+        // DO NOT IN WORKER! 2K stack isn't enough for that
+        BaseType_t r = task.create(
+            embr::test::shared::worker<Shared>, "thunk worker", 2048, &shared, 1);
         TEST_ASSERT_TRUE(r);
     }
 
@@ -146,12 +139,33 @@ static void test_thunk_async()
     TEST_ASSERT_LESS_THAN(1000, counter);
 }
 
+void test_thunk_async()
+{
+    {
+        shared_layer1<timed_mutex> shared;
+        test_thunk_async_ll(shared);
+    }
+    {
+        shared_layer1<hw_mutex> shared;
+        test_thunk_async_ll(shared);
+    }
+    {
+        //bipbuf_t bb;
+        //shared_layer3<timed_mutex> shared(estd::in_place_t{}, &bb);
+    }
+}
+
 #ifdef ESP_IDF_TESTING
 TEST_CASE("thunk", "[thunk]")
 #else
 void test_thunk()
 #endif
 {
+    // FIX: Because scheduler or bipbuf tests leaves task notification in a naughty state,
+    // we have to consume one extra here
+    [[maybe_unused]]
+    unsigned v = ulTaskNotifyTakeIndexed(0, pdFALSE, portMAX_DELAY);
+
     RUN_TEST(test_thunk_ll);
     RUN_TEST(test_thunk_async);
 }

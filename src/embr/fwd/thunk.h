@@ -22,6 +22,13 @@ using thunk = sys::detail::v1::thunk<estd::layer1::bipbuf<sz>, Mutex>;
 
 }
 
+namespace layer3 {
+
+template <ESTD_CPP_CONCEPT(internal::concepts::Mutex) Mutex = internal::noop_mutex>
+using thunk = sys::detail::v1::thunk<estd::layer3::bipbuf, Mutex>;
+
+}
+
 }   // namespace embr::inline sys::inline v1
 
 }}  // namespace embr::inline sys

@@ -31,6 +31,17 @@ struct shared
 #endif        
     }
 
+    template <class Shared>
+    static void worker(void* arg)
+    {
+        auto shared = (Shared*) arg;
+
+        shared->do_things();
+
+        vTaskDelete(nullptr);
+    }
+
+
     // DEBT: Sure feels like FreeRTOS would have something like this already
     static void wait(int task_count)
     {
@@ -41,7 +52,7 @@ struct shared
 #else
             finished.take(portMAX_DELAY);
 #endif
-    }
+        }
     }
 };
 
