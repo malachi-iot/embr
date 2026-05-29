@@ -27,25 +27,18 @@ using timed_mutex = embr::freertos::timed_mutex<50>;
 // DEBT: dedup with bipbuf code
 static constexpr int task_count = 3;
 
-static void wait_for_worker_finish()
-{
-    for(int i = 0; i < task_count; ++i)
-    {
-        [[maybe_unused]]
-        unsigned v = ulTaskNotifyTakeIndexed(0, pdFALSE, portMAX_DELAY);
-
-        //ESP_LOGI(TAG, "wait_for_worker_finish: %u", v);
-    }
-
-    ESP_LOGV(TAG, "wait_for_worker_finish: done");
-}
-
 template <class Thunk>
 struct shared_type : test::shared
 {
     int counter = 0;
     Thunk thunk;
-    constexpr static int loops = 10;
+    constexpr static int loops = 50;
+    int total_retries = 0;
+
+    shared_type() = default;
+
+    template <class ...Args>
+    constexpr shared_type(Args&&...args) : thunk(std::forward<Args>(args)...) {}
 
     void post()
     {
@@ -54,11 +47,13 @@ struct shared_type : test::shared
             estd::errc err;
 
             for(int retries = 0;
-                retries < 10 &&
+                //retries < 10 &&
                 (err = thunk.post([&] { ++counter; })) != estd::errc{};
-                ++retries)
+                ++retries, ++total_retries)
             {
-                vTaskDelay(5);
+                vTaskDelay(1);
+
+                TEST_ASSERT_LESS_THAN(10, retries);
             }
         }
     }
@@ -99,7 +94,7 @@ static void test_thunk_async_ll(Shared& shared)
     rtos::task tasks[task_count];
     for(rtos::task& task : tasks)
     {
-        // DO NOT IN WORKER! 2K stack isn't enough for that
+        // DO NOT LOG IN WORKER! 2K stack isn't enough for that
         BaseType_t r = task.create(
             embr::test::shared::worker<Shared>, "thunk worker", 2048, &shared, 1);
         TEST_ASSERT_TRUE(r);
@@ -133,7 +128,8 @@ static void test_thunk_async_ll(Shared& shared)
     }
 
     test::shared::wait(task_count);
-    //wait_for_worker_finish();
+
+    ESP_LOGD(TAG, "total retries: %d", shared.total_retries);
 
     TEST_ASSERT_EQUAL(task_count * shared.loops, shared.counter);
     TEST_ASSERT_LESS_THAN(1000, counter);
@@ -142,16 +138,24 @@ static void test_thunk_async_ll(Shared& shared)
 void test_thunk_async()
 {
     {
+        ESP_LOGD(TAG, "async layer1 timed_mutex");
         shared_layer1<timed_mutex> shared;
         test_thunk_async_ll(shared);
     }
     {
+        ESP_LOGD(TAG, "async layer1 hw_mutex");
         shared_layer1<hw_mutex> shared;
         test_thunk_async_ll(shared);
     }
     {
-        //bipbuf_t bb;
-        //shared_layer3<timed_mutex> shared(estd::in_place_t{}, &bb);
+        union
+        {
+            bipbuf_t bb;
+            char backing[sizeof(bb) + 256];
+        };
+        ESP_LOGD(TAG, "async layer3 hw_mutex");
+        shared_layer3<timed_mutex> shared(estd::in_place_t{}, &bb, 256);
+        test_thunk_async_ll(shared);
     }
 }
 

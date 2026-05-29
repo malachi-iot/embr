@@ -1,3 +1,5 @@
+// 28MAY26 MB - Obsolete.  Use 'thunk' instead.  Keeping because
+// usage of ESP-IDF's FreeRTOS ring buffer extension is a novel curiosity.
 // NOTE: Depends on esp-idf framework!  Also depends on c++11
 // delegate_queue is entirely based on esp-idf's ring buffer.
 // Since we might implement our own version of this ring buffer someday, putting
@@ -32,7 +34,7 @@ struct reference_delegate_queue
 // promises zero copy, but F&& f behaviors might interrupt that - it depends
 // on if compiler truly inlines 'enqueue'
 template <class TImpl = impl::reference_delegate_queue<> >
-struct delegate_queue : TImpl
+struct ESTD_CPP_ATTR_DEPRECATED("Use embr::detail::thunk instead") delegate_queue : TImpl
 {
     static constexpr const char* TAG = "delegate_queue";
 

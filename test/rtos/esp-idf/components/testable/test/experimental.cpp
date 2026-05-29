@@ -1,3 +1,5 @@
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 #include <experimental/observer-event-handler.hpp>
 #include <embr/platform/freertos/exp/transport-retry.h>
 #include <embr/platform/lwip/transport.h>
