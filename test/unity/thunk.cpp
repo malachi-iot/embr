@@ -41,9 +41,8 @@ static void wait_for_worker_finish()
 }
 
 template <class Thunk>
-struct shared_type
+struct shared_type : test::shared
 {
-    rtos::task parent = rtos::task::current();
     int counter = 0;
     Thunk thunk;
     constexpr static int loops = 10;
@@ -69,7 +68,7 @@ struct shared_type
         post();
 
         //puts("thunk give");
-        parent.notify_give(0);
+        finish();
     }
 };
 
@@ -133,7 +132,8 @@ static void test_thunk_async_ll(Shared& shared)
         }   */
     }
 
-    wait_for_worker_finish();
+    test::shared::wait(task_count);
+    //wait_for_worker_finish();
 
     TEST_ASSERT_EQUAL(task_count * shared.loops, shared.counter);
     TEST_ASSERT_LESS_THAN(1000, counter);
