@@ -4,6 +4,7 @@
 
 #include <embr/platform/esp-idf/property/v1/property.h>
 
+[[maybe_unused]]
 static const char* TAG = "embr::unity::property";
 
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"

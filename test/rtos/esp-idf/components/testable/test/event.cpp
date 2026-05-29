@@ -95,6 +95,7 @@ TEST_CASE("event experimentation", "[event-exp]")
 
 TEST_CASE("typed event", "[event]")
 {
+    [[maybe_unused]]
     constexpr esp_event_loop_args_t loop_args
     {
         .queue_size = 5,
