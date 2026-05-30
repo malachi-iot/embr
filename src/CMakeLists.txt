@@ -15,6 +15,8 @@ include(${ROOT_DIR}/tools/cmake/version.cmake)
 
 add_library(${INTERFACE_NAME} INTERFACE)
 add_library(${PROJECT_NAME}-static STATIC)
+# 30MAY26 MB - SHARED flavor not tested
+add_library(${PROJECT_NAME}-shared SHARED)
 add_library(malachi-iot::embr ALIAS ${INTERFACE_NAME})
 add_library(embr::embr ALIAS ${PROJECT_NAME}-static)
 add_library(embr::interface ALIAS ${INTERFACE_NAME})
@@ -31,10 +33,15 @@ target_sources(${INTERFACE_NAME} INTERFACE ${SOURCE_FILES} ${INCLUDE_FILES})
 
 target_compile_features(${INTERFACE_NAME} INTERFACE cxx_std_11)
 
+# More peacemeal about setting up linking/includes because WHOLE_ARCHIVE feature
+# starts duplicating symbols otherwise
 target_link_libraries(${INTERFACE_NAME} INTERFACE estd)
-target_link_libraries(${PROJECT_NAME}-static PUBLIC embr::interface)
+target_link_libraries(${PROJECT_NAME}-static PRIVATE embr::interface)
+target_link_libraries(${PROJECT_NAME}-shared PRIVATE embr::interface)
 
 target_include_directories(${INTERFACE_NAME} INTERFACE .)
+target_include_directories(${PROJECT_NAME}-static PUBLIC .)
+target_include_directories(${PROJECT_NAME}-shared PUBLIC .)
 
 # Apparently interface libraries don't play well with LINKER_LANGUAGE.  Probably OK since
 # a header library doesn't need its own link phase.
