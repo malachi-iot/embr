@@ -300,7 +300,7 @@ TEST_CASE("bipartite buffer: message-oriented", "[msg-bipbuf][bipbuf]")
         bipbuf<estd::layer1::bipbuf<128>> mbb;
         bipbuf<estd::layer1::bipbuf<256>> mbb_256;
         using message = decltype(mbb)::message;
-        constexpr message dummy(estd::nullopt_t{0});
+        constexpr message dummy(estd::nullopt);
 
 #if BIPBUF_TEST_ENABLE1
         SECTION("basic")
