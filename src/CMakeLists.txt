@@ -6,6 +6,7 @@ project(embr VERSION 0.4.6 LANGUAGES CXX
     )
 
 include(../tools/cmake/setvars.cmake)
+include(../tools/cmake/options.cmake)
 
 set(INTERFACE_NAME ${PROJECT_NAME}-interface)
 

@@ -18,6 +18,8 @@ CPMAddPackage("gh:vector-of-bool/cmrc#952ffddba731fc110bd50409e8d2b8a06abbd237")
 
 set(RESOURCES resources/playlist.json)
 
+# 30MAY26 MB DEBT - TESTRC link-time namespace should be unique, so morph this to include
+# embr
 cmrc_add_resource_library(TESTRC ${RESOURCES} ALIAS testrc)
 
 set(EXTRA_FILES
