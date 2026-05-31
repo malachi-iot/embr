@@ -7,6 +7,15 @@ namespace embr { inline namespace sys {
 
 namespace detail { inline namespace v1 {
 
+// EXPERIMENTAL, unused
+template <ESTD_CPP_CONCEPT(internal::concepts::Mutex) Mutex>
+struct thunk_traits
+{
+    using mutex_type = Mutex;
+
+    static constexpr unsigned retry_max = 10;
+};
+
 template <ESTD_CPP_CONCEPT(estd::concepts::v1::Bipbuf) Buf,
     ESTD_CPP_CONCEPT(internal::concepts::Mutex) Mutex = internal::noop_mutex>
 class thunk;

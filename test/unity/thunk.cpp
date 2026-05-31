@@ -69,11 +69,24 @@ static void test_thunk_ll()
 {
     int counter = 0;
     sys::v1::layer1::thunk<256, hw_mutex> thunk;
+    estd::errc err;
+
+    //using namespace embr::freertos;
 
     thunk.post([&] { ++counter; });
+    thunk << [&] {++counter; };
     thunk.poll_one();
 
     TEST_ASSERT_EQUAL(1, counter);
+
+    thunk.poll_one();
+
+    TEST_ASSERT_EQUAL(2, counter);
+
+    err = thunk.poll_one();
+
+    TEST_ASSERT_EQUAL(estd::errc::no_message_available, err);
+    TEST_ASSERT_EQUAL(2, counter);
 }
 
 // TODO: Pull in gcc stack warnings from estd

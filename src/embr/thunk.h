@@ -5,6 +5,10 @@
 #include "fwd/thunk.h"
 #include "internal/msg-bipbuf.h"
 
+#if ESTD_OS_FREERTOS
+#include "platform/freertos/thunk.h"
+#endif
+
 namespace embr {
 
 inline namespace sys {
@@ -40,6 +44,9 @@ public:
 
 public:
     thunk() = default;
+
+    // EXPERIMENTAL
+    using traits = thunk_traits<Mutex>;
 
     template <class ...Args>
     constexpr explicit thunk(estd::in_place_t, Args&&...args) :
