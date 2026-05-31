@@ -127,6 +127,8 @@ public:
 private:
     Buf buf_;
 
+    using errc = estd::errc;
+
 public:
     msg_bipbuf() = default;
 
@@ -144,16 +146,16 @@ public:
     ///     - not_enough_memory: out of bipbuf space
     ///     - {} == OK
     template <class F, ESTD_CPP_CONCEPT(internal::concepts::Mutex) Mutex = internal::noop_mutex>
-    estd::errc push(Mutex&& mutex, F&& init, unsigned sz)
+    errc push(Mutex&& mutex, F&& init, unsigned sz)
     {
-        if(!mutex.lock())  return estd::errc::no_lock_available;
+        if(!mutex.lock())  return errc::no_lock_available;
 
         const unsigned msg_size = message::size(sz);
 
         if(buf_.unused() < msg_size)
         {
             mutex.unlock();
-            return estd::errc::not_enough_memory;
+            return errc::not_enough_memory;
         }
 
         auto m = (message*) buf_.offer_begin();
@@ -170,8 +172,32 @@ public:
     }
 
 
+    template <ESTD_CPP_CONCEPT(embr::internal::concepts::Mutex) Mutex = internal::noop_mutex,
+        class F, class OnRetry>
+    errc push_with_retry(Mutex&& mutex, F&& f,
+        unsigned sz, int retry_max, OnRetry&& on_retry)
+    {
+        for(int retry = 0; retry < retry_max;)
+        {
+            const errc err = push(
+                std::forward<Mutex>(mutex),
+                std::forward<F>(f),
+                sz);
+
+            if(err == errc{}) return err;
+
+            ++retry;
+
+            if(retry >= retry_max)  return err;
+
+            on_retry();
+        }
+
+        abort();
+    }
+
     template <class T, class ...Args, ESTD_CPP_CONCEPT(internal::concepts::Mutex) Mutex = noop_mutex>
-    estd::errc emplace(Mutex&& mutex, Args&&...args)
+    errc emplace(Mutex&& mutex, Args&&...args)
     {
         return push(
             std::forward<Mutex>(mutex),
@@ -183,7 +209,7 @@ public:
     }
 
     template <class F, ESTD_CPP_CONCEPT(internal::concepts::Mutex) Mutex = internal::noop_mutex>
-    estd::errc pop(Mutex&& mutex, F&& f)
+    errc pop(Mutex&& mutex, F&& f)
     {
         // DEBT: Works well enough, but peek may be doing a little more
         // than we need right now
@@ -202,9 +228,7 @@ public:
         // to a not is-empty condition.  Meaning that our empty check can
         // conservatively keep reporting 'nothing yet' until something's there.
 
-        // DEBT: Use resource_unavailable_try_again once we have that
-        // https://github.com/malachi-iot/estdlib/issues/201
-        if(m == nullptr)    return estd::errc::no_buffer_space;
+        if(m == nullptr)    return errc::no_message_available;
 
         f(m);
 
@@ -212,7 +236,7 @@ public:
         // state
         // DEBT: Need a method like dequeue_poll() to recover from this
         // condition
-        if(!mutex.lock())  return estd::errc::no_lock_available;
+        if(!mutex.lock())  return errc::no_lock_available;
 
         // DEBT: Similar to peek, we really want a poll_end to streamline
         // these always-coupled operations

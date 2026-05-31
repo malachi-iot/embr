@@ -76,31 +76,6 @@ namespace rtos = estd::freertos::wrapper;
 
 using namespace estd::chrono_literals;
 
-template <class Bipbuf,
-    ESTD_CPP_CONCEPT(embr::internal::concepts::Mutex) Mutex,
-    class F, class OnRetry>
-estd::errc push_with_retry(Bipbuf& mbb, Mutex&& mutex, F&& f,
-    unsigned sz, int retry_max, OnRetry&& on_retry)
-{
-    for(int retry = 0; retry < retry_max;)
-    {
-        const estd::errc err = mbb.push(
-            std::forward<Mutex>(mutex),
-            std::forward<F>(f),
-            sz);
-
-        if(err == estd::errc{}) return err;
-
-        ++retry;
-
-        if(retry >= retry_max)  return err;
-
-        on_retry();
-    }
-
-    abort();
-}
-
 // DEBT: Put this definition elsewhere
 test::shared::semaphore test::shared::finished;
 
@@ -135,7 +110,7 @@ struct shared_type : test::shared
         // DEBT: Do some retries and maybe some metrics gathering - test will eventually
         // fail without the retries portion
 
-        err = push_with_retry(mbb, mutex, f, sz, 5, []
+        err = mbb.push_with_retry(mutex, f, sz, 5, []
             {
                 vTaskDelay(5);
             });

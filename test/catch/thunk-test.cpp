@@ -20,6 +20,8 @@
 // This has large overlap with "delegate_queue" and was coming along well to displace it IIRC
 // IIRC I detoured to beef up estd functor behavior to better handle dtor operations here and never
 // resumed
+// 31MAY26
+// delegate_queue worked well, but relied on ESP-IDF specific FreeRTOS ringbuffer extension.  Thunk does not.
 
 struct Tracker
 {

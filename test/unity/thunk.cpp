@@ -46,15 +46,11 @@ struct shared_type : test::shared
         {
             estd::errc err;
 
-            for(int retries = 0;
-                //retries < 10 &&
-                (err = thunk.post([&] { ++counter; })) != estd::errc{};
-                ++retries, ++total_retries)
-            {
-                vTaskDelay(1);
+            err = thunk.post_with_retry(
+                [&]{ ++counter; }, 10,
+                [&]{ ++total_retries; vTaskDelay(1); });
 
-                TEST_ASSERT_LESS_THAN(10, retries);
-            }
+            TEST_ASSERT_EQUAL(estd::errc{}, err);
         }
     }
 
@@ -133,6 +129,7 @@ static void test_thunk_async_ll(Shared& shared)
 
     TEST_ASSERT_EQUAL(task_count * shared.loops, shared.counter);
     TEST_ASSERT_LESS_THAN(1000, counter);
+    TEST_ASSERT_GREATER_THAN(0, shared.total_retries);
 }
 
 void test_thunk_async()
