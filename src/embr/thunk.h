@@ -26,13 +26,6 @@ class thunk : protected internal::msg_bipbuf<Buf>,
     using base_type = internal::msg_bipbuf<Buf>;
     using message = typename base_type::message;
 
-    // Edge-case version which auto-invokes functor destructor immediately
-    // after invocation
-    using function_type = estd::detail::v2::function<
-        void(void),
-        estd::detail::impl::function_fnptr2_oneshot>;
-    using model_base = typename function_type::model_base;
-
 #if UNIT_TESTING
 public:
 #endif
@@ -45,8 +38,9 @@ public:
 public:
     thunk() = default;
 
-    // EXPERIMENTAL
     using traits = thunk_traits<Mutex>;
+    using function_type = typename traits::function_type;
+    using model_base = typename function_type::model_base;
 
     template <class ...Args>
     constexpr explicit thunk(estd::in_place_t, Args&&...args) :
@@ -58,7 +52,7 @@ public:
     template <class F, ESTD_CPP_CONCEPT(internal::concepts::Mutex) Mutex2>
     errc post(Mutex2&& mutex, F&& f)
     {
-        using model_type = function_type::model<F>;
+        using model_type = typename function_type::template model<F>;
 
         return base_type::template emplace<model_type>(
             std::forward<Mutex2>(mutex), std::forward<F>(f));
@@ -67,7 +61,7 @@ public:
     template <class F, ESTD_CPP_CONCEPT(internal::concepts::Mutex) Mutex2, class OnRetry>
     errc post_with_retry(Mutex2&& mutex, F&& f, int retry_max, OnRetry&& on_retry)
     {
-        using model_type = function_type::model<F>;
+        using model_type = typename function_type::template model<F>;
 
         return base_type::push_with_retry(
             std::forward<Mutex2>(mutex),
@@ -101,6 +95,13 @@ public:
             std::forward<F>(f),
             retry_max,
             std::forward<OnRetry>(on_retry));
+    }
+
+    template <class F>
+    errc post_with_retry(F&& f)
+    {
+        // TBD feed from traits
+        return errc::not_supported;
     }
 
     template <class F>
