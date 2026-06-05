@@ -114,6 +114,24 @@ public:
     {
         return poll_one(mutex());
     }
+
+    // UNTESTED
+    // Mirrors https://www.boost.org/doc/libs/latest/doc/html/boost_asio/reference/io_context/poll.html
+    template <ESTD_CPP_CONCEPT(internal::concepts::Mutex) Mutex2>
+    errc poll(Mutex2&& mutex)
+    {
+        errc err;
+        while((err = poll_one(std::forward<Mutex2>(mutex))) == errc{})
+        {
+            // TBD, special functor maybe?
+        }
+
+        if(err == errc::no_message_available)   return errc{};
+
+        return err;
+    }
+
+    errc poll() { return poll(mutex()); }
 };
 
 }}  // namespace embr::inline sys::detail::inline v1
