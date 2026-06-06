@@ -80,12 +80,36 @@ TEST_CASE("thunk", "[thunk]")
 
     SECTION("layer1")
     {
-        embr::sys::detail::v1::thunk<estd::layer1::bipbuf<256>> thunk;
+        embr::sys::layer1::thunk<256> thunk;
 
         thunk.post([&] { ++counter; });
-        thunk.poll_one();
 
-        REQUIRE(counter == 1);
+        SECTION("poll_one")
+        {
+            estd::errc err;
+            err = thunk.poll_one();
+            REQUIRE(err == estd::errc{});
+            err = thunk.poll_one();
+            REQUIRE(err == estd::errc::no_message_available);
+
+            REQUIRE(counter == 1);
+        }
+        SECTION("poll")
+        {
+            //estd::expected<unsigned, estd::errc> err;
+
+            thunk.post([&] { counter += 2; });
+
+            // DEBT: Avoiding expected operator= due to https://github.com/malachi-iot/estdlib/issues/206
+            auto err = thunk.poll();
+            REQUIRE(err.has_value());
+            REQUIRE(err.value() == 2);
+            auto err2 = thunk.poll();
+            REQUIRE(err2.has_value());
+            REQUIRE(err2.value() == 0);
+
+            REQUIRE(counter == 3);
+        }
     }
     SECTION("layer3")
     {

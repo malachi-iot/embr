@@ -1,5 +1,6 @@
 #pragma once
 
+#include <estd/expected.h>
 #include <estd/functional.h>
 
 #include "fwd/thunk.h"
@@ -10,6 +11,16 @@
 #endif
 
 namespace embr {
+
+namespace internal {
+
+struct noop_functor
+{
+    template <class ...Args>
+    constexpr bool operator()(Args&&...) const { return {}; }
+};
+
+}
 
 inline namespace sys {
 
@@ -117,21 +128,23 @@ public:
 
     // UNTESTED
     // Mirrors https://www.boost.org/doc/libs/latest/doc/html/boost_asio/reference/io_context/poll.html
-    template <ESTD_CPP_CONCEPT(internal::concepts::Mutex) Mutex2>
-    errc poll(Mutex2&& mutex)
+    template <ESTD_CPP_CONCEPT(internal::concepts::Mutex) Mutex2, class Iterate = internal::noop_functor>
+    estd::expected<unsigned, errc> poll(Mutex2&& mutex, Iterate&& it = {})
     {
+        unsigned count = 0;
         errc err;
         while((err = poll_one(std::forward<Mutex2>(mutex))) == errc{})
         {
-            // TBD, special functor maybe?
+            ++count;
+            it();
         }
 
-        if(err == errc::no_message_available)   return errc{};
+        if(err == errc::no_message_available)   return count;
 
-        return err;
+        return estd::unexpected{ err };
     }
 
-    errc poll() { return poll(mutex()); }
+    estd::expected<unsigned, errc> poll() { return poll(mutex()); }
 };
 
 }}  // namespace embr::inline sys::detail::inline v1
