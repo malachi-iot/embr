@@ -100,13 +100,12 @@ TEST_CASE("thunk", "[thunk]")
 
             thunk.post([&] { counter += 2; });
 
-            // DEBT: Avoiding expected operator= due to https://github.com/malachi-iot/estdlib/issues/206
-            auto err = thunk.poll();
+            estd::expected<unsigned, estd::errc> err = thunk.poll();
             REQUIRE(err.has_value());
             REQUIRE(err.value() == 2);
-            auto err2 = thunk.poll();
-            REQUIRE(err2.has_value());
-            REQUIRE(err2.value() == 0);
+            err = thunk.poll();
+            REQUIRE(err.has_value());
+            REQUIRE(err.value() == 0);
 
             REQUIRE(counter == 3);
         }

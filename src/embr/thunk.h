@@ -141,7 +141,7 @@ public:
 
         if(err == errc::no_message_available)   return count;
 
-        return estd::unexpected{ err };
+        return estd::unexpected<estd::errc>{ err };
     }
 
     estd::expected<unsigned, errc> poll() { return poll(mutex()); }

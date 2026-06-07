@@ -49,8 +49,7 @@ public:
         size_{copy_from.size_},
         lock_count_{}
     {
-        // DEBT: Make an estd flavor of this https://github.com/malachi-iot/estdlib/issues/181
-        std::uninitialized_copy_n(copy_from.data(), size_, data());
+        estd::uninitialized_copy_n(copy_from.data(), size_, data());
 
         assert(copy_from.lock_count_ == 0);
     }
@@ -60,8 +59,7 @@ public:
         size_{move_from.size_},
         lock_count_{}
     {
-        // DEBT: Make an estd flavor of this https://github.com/malachi-iot/estdlib/issues/181
-        std::uninitialized_move_n(move_from.data(), size_, data());
+        estd::uninitialized_move_n(move_from.data(), size_, data());
 
         assert(move_from.lock_count_ == 0);
     }
