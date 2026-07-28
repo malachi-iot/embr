@@ -70,6 +70,7 @@ These tests are all for variants of Espressif ESP32
 | 10JUL23 | unity        | WEMOS D1             | ESP32          | v5.0.2   | Pass     |
 | 28MAY26 | unity        | M5 Core              | ESP32          | v6.0.1   | Pass     |
 | 24SEP24 | unity        | UM FeatherS3         | ESP32S3        | v5.2.2   | Pass     | 
+| 28JUL26 | unity        | UM FeatherS3         | ESP32S3        | v5.5.5   | Pass     | 
 | 28MAY26 | unity        | UM FeatherS3         | ESP32S3        | v6.0.1   | Pass     | 
 | 17SEP23 | unity        | RejsaCAN v3.1        | ESP32S3        | v5.1.1   | Pass     | 
 | 07JAN24 | unity        | Lilygo QT Pro        | ESP32S3        | v5.1.2   | Pass     | 
