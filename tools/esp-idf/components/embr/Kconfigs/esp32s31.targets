@@ -1,0 +1,9 @@
+config BOARD_ESP32S31_ESPRESSIF_FUNCTION_COREBOARD
+    # https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32s31/esp32-s31-function-coreboard-1/index.html
+    bool "Espressif ESP32-S31 Function Coreboard"
+    depends on IDF_TARGET_ESP32S31
+
+config BOARD_ESP32S31_ESPRESSIF_KORVO
+    # https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32s31/esp32-s31-korvo-1/index.html
+    bool "Espressif ESP32-S31 Korvo"
+    depends on IDF_TARGET_ESP32S31

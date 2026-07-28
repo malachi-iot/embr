@@ -80,6 +80,7 @@ These tests are all for variants of Espressif ESP32
 | 07MAR25 | unity        | QEMU                 | ESP32S3        | v5.3.2   | Pass     |
 | 16JUN25 | unity        | QEMU                 | ESP32          | v5.4.1   | Pass     |
 | 19APR26 | unity        | QEMU                 | ESP32S3        | v6.0.0   | Pass     |
+| 28JUL26 | unity        | Function Coreboard   | ESP32-S31      | v6.1.0b  | Pass     |
 
 # References
 

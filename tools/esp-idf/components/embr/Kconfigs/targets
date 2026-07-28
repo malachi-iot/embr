@@ -14,5 +14,8 @@ rsource "esp32p4.targets"
 if IDF_TARGET_ESP32S3
     rsource "esp32s3.targets"
 endif
+if IDF_TARGET_ESP32S31
+    rsource "esp32s31.targets"
+endif
 
 rsource '$(EMBR_KCONFIG_DIR)Kconfig.embr.bsp'
