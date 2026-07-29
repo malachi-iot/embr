@@ -4,7 +4,9 @@
 
 namespace embr { namespace service { namespace v2 {
 
-const char* to_string(detail::service::states v)
+namespace detail {
+
+const char* to_string(service::states v)
 {
     switch(v)
     {
@@ -15,7 +17,7 @@ const char* to_string(detail::service::states v)
     }
 }
 
-const char* to_string(detail::service::substates v)
+const char* to_string(service::substates v)
 {
     switch(v)
     {
@@ -37,6 +39,7 @@ const char* to_string(detail::service::substates v)
         CASE(Disconnecting)
         CASE(Offline)
         CASE(Degraded)
+        CASE(Reconfiguring)
         CASE(Pausing)
         CASE(Stopping)
         CASE(Resetting)
@@ -47,10 +50,12 @@ const char* to_string(detail::service::substates v)
         CASE(ErrConfig)
         CASE(ErrMemory)
         CASE(ErrTimeout)
+        CASE(ErrAuth)
 
         default:    return "Unknown";
     }
 }
 
+}
 
 }}}

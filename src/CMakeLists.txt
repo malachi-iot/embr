@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.13)
 
-project(embr VERSION 0.4.7 LANGUAGES CXX
+project(embr VERSION 0.4.8 LANGUAGES CXX
     DESCRIPTION "Embedded utility library"
     HOMEPAGE_URL "https://github.com/malachi-iot/embr"
     )
@@ -22,7 +22,7 @@ add_library(malachi-iot::embr ALIAS ${INTERFACE_NAME})
 add_library(embr::embr ALIAS ${PROJECT_NAME}-static)
 add_library(embr::interface ALIAS ${INTERFACE_NAME})
 
-CPMAddPackage("gh:malachi-iot/estdlib@0.8.12-beta1")
+CPMAddPackage("gh:malachi-iot/estdlib@0.8.12")
 #CPMAddPackage("gh:malachi-iot/estdlib#8e5875925a4846a84b281615e8a6000522469687")
 
 # DEBT: Was done for macOS, but it doesn't pick it up.  Once that is resolved,

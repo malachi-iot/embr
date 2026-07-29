@@ -47,6 +47,7 @@ struct service
         Disconnecting,
         Offline,
         Degraded,
+        Reconfiguring,
         Pausing,
         Stopping,
         Resetting,          ///< When restarting, this is the transition out of running -> restarting state
@@ -117,6 +118,9 @@ protected:
         substate_ = static_cast<substates>(s << separator);
     }
 };
+
+const char* to_string(service::states);
+const char* to_string(service::substates);
 
 }
 
