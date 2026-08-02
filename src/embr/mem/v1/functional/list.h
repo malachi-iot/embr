@@ -81,7 +81,10 @@ class funclist<void(Args...), Pool, pool> :
         detail::v1::sparse_function<void(Args...), Pool, estd::detail::impl::function_virtual>,
         Pool, pool>
 {
+public:
     using value_type = detail::v1::sparse_function<void(Args...), Pool, estd::detail::impl::function_virtual>;
+
+private:
     using base_type = vector<value_type, Pool, pool>;
     using handle_type = typename Pool::handle_type;
     // using model_type = typename value_type::model;
@@ -119,6 +122,8 @@ public:
     template <class F>
     value_type push_back(F&& f)
     {
+        // DEBT: Can/should we consider an emplace?  Probably not worth it since sparse_function truly is
+        // sparse
         value_type item{value_type::make(impl().pool_(), std::forward<F>(f))};
         // FIX: Underlying 'grow by' auto-pads 32, which is OK for the time being but not OK
         // for a fixed default.  See https://github.com/malachi-iot/estdlib/issues/188

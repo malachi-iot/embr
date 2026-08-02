@@ -1,7 +1,9 @@
 #include <catch2/catch_all.hpp>
 
+#include <embr/mem/v1/pool.hpp>
 #include <embr/observer.h>
 #include <embr/property/v1/notifier.h>
+#include <embr/property/v2/provider.h>
 
 #include "property-test.h"
 
@@ -143,6 +145,28 @@ public:
     };
 };
 
+template <class Pool, Pool* pool = nullptr>
+struct synthetic_provider : property::v2::provider<Pool, pool>
+{
+    using base_type = property::v2::provider<Pool, pool>;
+    using base_type::changed_;
+    using base_type::set_fn;
+    using base_type::update;
+
+    // DEBT: Open-ended initializer like this not great, in_place_t and similar may be
+    // interesting
+    template <class ...Args>
+    synthetic_provider(Args&&...args) : base_type(std::forward<Args>(args)...)  {}
+};
+
+inline constexpr const char prop1[] = "prop1";
+
+template <>
+struct property::v2::traits<prop1> : property::v2::detail::traits<int>
+{
+
+};
+
 TEST_CASE("properties")
 {
     SECTION("v1")
@@ -172,6 +196,27 @@ TEST_CASE("properties")
             WithConstructor::runtime<void_subject> s(10);
 
             REQUIRE(s.value == 10);
+        }
+    }
+    SECTION("v2")
+    {
+        using pool_type = mem::v1::layer1::pool<512, 8>;
+        pool_type pool;
+        int counter = 0;
+        int state = 0;
+
+        SECTION("provider")
+        {
+            synthetic_provider<pool_type> provider(&pool);
+
+            provider.on_changed([&](const property::v2::changed<>* c)
+                {
+                    ++counter;
+                });
+
+            provider.update<prop1>(state, 1);
+
+            //REQUIRE(counter == 1);
         }
     }
 }
