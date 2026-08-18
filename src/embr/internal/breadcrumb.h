@@ -44,6 +44,8 @@ struct breadcrumb_searcher_base
 };
 
 // For character by character affairs
+// Typically you'll use T = Breadcrumb, but you might have your own tracking mechanism so
+// it's interchangeable
 template <class T, class Traits = breadcrumb_traits<T>>
 struct breadcrumb_searcher : breadcrumb_searcher_base
 {
@@ -238,24 +240,31 @@ inline const breadcrumb* search2(const breadcrumb* crumbs, const char* s)
     return nullptr;
 }
 
+constexpr bool has_children(const breadcrumb* crumbs)
+{
+    // Paradigm is such that if children exist, they are the very next item after
+    // the parent
+    return (crumbs + 1)->parent == crumbs->id;
+}
+
 template <class Impl>
 const breadcrumb* search(const breadcrumb* crumbs,
-    const estd::detail::basic_string<Impl>& name,
-    int parent = -1)
+    const estd::detail::basic_string<Impl>& name)
 {
+    const int parent = crumbs->parent;
     for(;!crumbs->name.empty() && crumbs->parent == parent; ++crumbs)
     {
         if(name == crumbs->name) return crumbs;
     }
 
-    return crumbs;
+    // No match
+    return nullptr;
 }
 
 inline const breadcrumb* search(const breadcrumb* crumbs,
-    const char* name,
-    int parent = -1)
+    const char* name)
 {
-    return search(crumbs, estd::layer2::const_string(name), parent);
+    return search(crumbs, estd::layer2::const_string(name));
 }
 
 
