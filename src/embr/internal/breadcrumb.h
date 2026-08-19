@@ -9,15 +9,19 @@ namespace embr { namespace internal {
 
 struct breadcrumb
 {
+    static constexpr int null_id = -1;
+
+    // 19AUG26 MB DEBT: string_view is convenient but ultimately may be a space waster
     const estd::string_view name;
-    const int id = -1;
-    const int parent = -1;
+    const int id = null_id;
+    const int parent = null_id;
 
     static ESTD_CPP_CONSTEVAL breadcrumb null()
     {
         return { {} };
     }
 
+    // EXPERIMENTAL - favor using traits::equals instead
     // Since we're performance oriented, do not compare name or parent, only id which is
     // presumed unique
     constexpr bool operator ==(const breadcrumb& compare_to) const
@@ -37,8 +41,23 @@ struct breadcrumb
 template <class T>
 struct breadcrumb_traits
 {
+    using reference = const T&;
+
     static constexpr const estd::string_view& name(const T& v) { return v.name; }
-    static constexpr bool is_null(const T& v) { return v.name.empty(); }
+    //static constexpr bool is_null(const T& v) { return v.name.empty(); }
+    static constexpr bool is_null(reference v) { return v.id == T::null_id; }
+    static constexpr bool is_child(reference parent, reference child)
+    {
+        return parent.id == child.parent;
+    }
+    static constexpr bool is_sibling(reference lhs, reference rhs)
+    {
+        return lhs.parent == rhs.parent;
+    }
+    static constexpr bool equals(reference lhs, reference rhs)
+    {
+        return lhs.id == rhs.id;
+    }
 };
 
 struct breadcrumb_searcher_base
@@ -257,27 +276,40 @@ inline const breadcrumb* search2(const breadcrumb* crumbs, const char* s)
 
 constexpr bool has_children(const breadcrumb* crumbs)
 {
+    using traits = breadcrumb_traits<breadcrumb>;
+
     // Paradigm is such that if children exist, they are the very next item after
     // the parent
-    return (crumbs + 1)->parent == crumbs->id;
+    return traits::is_child(*crumbs, *(crumbs + 1));
 }
 
-ESTD_CPP_CONSTEXPR(17) const breadcrumb* first_child(const breadcrumb* crumbs)
+/// Return the first child of a given parent node
+/// @param parent
+/// @return nullptr if no children or end marker, otherwise pointer to first child
+ESTD_CPP_CONSTEXPR(17) const breadcrumb* first_child(const breadcrumb* parent)
 {
-    assert(crumbs);
+    assert(parent->id != -1);
+    assert(parent);
 
-    const breadcrumb* child = crumbs + 1;
+    using traits = breadcrumb_traits<breadcrumb>;
 
-    return child->parent == crumbs->id ? child : nullptr;
+    const breadcrumb* child = parent + 1;
+
+    return traits::is_child(*parent, *child) ? child : nullptr;
 }
 
 ESTD_CPP_CONSTEXPR(17) const breadcrumb* next_sibling(const breadcrumb* crumbs)
 {
+    assert(crumbs->id != -1);
     assert(crumbs);
+
+    using traits = breadcrumb_traits<breadcrumb>;
 
     const breadcrumb* sibling = crumbs + 1;
 
-    return sibling->parent == crumbs->parent ? sibling : nullptr;
+    if(traits::is_null(*sibling)) return nullptr;
+
+    return traits::is_sibling(*sibling, *crumbs) ? sibling : nullptr;
 }
 
 /// Search siblings, inclusive
@@ -286,11 +318,11 @@ ESTD_CPP_CONSTEXPR(17) const breadcrumb* next_sibling(const breadcrumb* crumbs)
 /// @return
 /// DEBT: Too permissive, ADL is gonna go crazy here on breadcrumb match
 template <class Breadcrumb = breadcrumb, class Impl>
-const Breadcrumb* search_siblings(const Breadcrumb* crumbs,
+ESTD_CPP_CONSTEXPR(17) const Breadcrumb* search_siblings(const Breadcrumb* crumbs,
     const estd::detail::basic_string<Impl>& name)
 {
     const int parent = crumbs->parent;
-    using traits = breadcrumb_traits<breadcrumb>;
+    using traits = breadcrumb_traits<Breadcrumb>;
     for(;!traits::is_null(*crumbs); ++crumbs)
     {
         // DEBT: We could stop searching if we leave siblings area too.  I think we can look for a parent id

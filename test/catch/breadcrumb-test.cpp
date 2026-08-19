@@ -116,8 +116,14 @@ TEST_CASE("breadcrumb tests", "[breadcrumb]")
     }
     SECTION("misc")
     {
+        using traits = embr::internal::breadcrumb_traits<bc>;
         constexpr bc bc1{"hi", 0, -1};
 
         REQUIRE(bc1 != bc::null());
+        REQUIRE(traits::equals(bc1, bc::null()) == false);
+
+        const bc* r = embr::internal::first_child(nav + id_side1);
+
+        REQUIRE(r == nullptr);
     }
 }
