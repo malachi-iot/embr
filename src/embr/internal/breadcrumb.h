@@ -80,7 +80,7 @@ private:
     static bool match_prefix(const estd::string_view& eval, const estd::string_view& matched, unsigned len)
     {
         return len <= eval.length() && len <= matched.length() &&
-            (std::memcmp(eval.data(), matched.data(), len) == 0);
+            (memcmp(eval.data(), matched.data(), len) == 0);
     }
 
 public:
@@ -254,13 +254,22 @@ ESTD_CPP_CONSTEXPR(17) const breadcrumb* child(const breadcrumb* crumbs)
     return child->parent == crumbs->id ? child : nullptr;
 }
 
+/// Search siblings
+/// @param crumbs
+/// @param name
+/// @return
 template <class Impl>
 const breadcrumb* search(const breadcrumb* crumbs,
     const estd::detail::basic_string<Impl>& name)
 {
     const int parent = crumbs->parent;
-    for(;!crumbs->name.empty() && crumbs->parent == parent; ++crumbs)
+    using traits = breadcrumb_traits<breadcrumb>;
+    for(;!traits::is_null(*crumbs); ++crumbs)
     {
+        // DEBT: We could stop searching if we leave siblings area too.  I think we can look for a parent id
+        // smaller than our own.  Not 100% sure yet though
+        if(crumbs->parent != parent) continue;  // Skip children in hopes we find another sibling
+
         if(name == crumbs->name) return crumbs;
     }
 
