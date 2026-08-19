@@ -247,6 +247,13 @@ constexpr bool has_children(const breadcrumb* crumbs)
     return (crumbs + 1)->parent == crumbs->id;
 }
 
+ESTD_CPP_CONSTEXPR(17) const breadcrumb* child(const breadcrumb* crumbs)
+{
+    const breadcrumb* child = crumbs + 1;
+
+    return child->parent == crumbs->id ? child : nullptr;
+}
+
 template <class Impl>
 const breadcrumb* search(const breadcrumb* crumbs,
     const estd::detail::basic_string<Impl>& name)

@@ -66,8 +66,9 @@ TEST_CASE("breadcrumb tests", "[breadcrumb]")
         // Paradigm is such that if children exist, they are the very next item after
         // the parent
         REQUIRE(has_children(found));
-        ++found;
+        found = child(found);
 
+        REQUIRE(found);
         REQUIRE(found->parent == id_lvl1_1);
         found = embr::internal::search(found, "lvl1.1.2");
 
