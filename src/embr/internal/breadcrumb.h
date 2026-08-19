@@ -17,6 +17,21 @@ struct breadcrumb
     {
         return { {} };
     }
+
+    // Since we're performance oriented, do not compare name or parent, only id which is
+    // presumed unique
+    constexpr bool operator ==(const breadcrumb& compare_to) const
+    {
+        // TODO: Do asserts on name and parent IF id matches just for integrity checks, but not
+        // as an actual == feature
+
+        return id == compare_to.id;
+    }
+
+    constexpr bool operator !=(const breadcrumb& compare_to) const
+    {
+        return operator==(compare_to) == false;
+    }
 };
 
 template <class T>
@@ -247,19 +262,31 @@ constexpr bool has_children(const breadcrumb* crumbs)
     return (crumbs + 1)->parent == crumbs->id;
 }
 
-ESTD_CPP_CONSTEXPR(17) const breadcrumb* child(const breadcrumb* crumbs)
+ESTD_CPP_CONSTEXPR(17) const breadcrumb* first_child(const breadcrumb* crumbs)
 {
+    assert(crumbs);
+
     const breadcrumb* child = crumbs + 1;
 
     return child->parent == crumbs->id ? child : nullptr;
 }
 
-/// Search siblings
+ESTD_CPP_CONSTEXPR(17) const breadcrumb* next_sibling(const breadcrumb* crumbs)
+{
+    assert(crumbs);
+
+    const breadcrumb* sibling = crumbs + 1;
+
+    return sibling->parent == crumbs->parent ? sibling : nullptr;
+}
+
+/// Search siblings, inclusive
 /// @param crumbs
 /// @param name
 /// @return
-template <class Impl>
-const breadcrumb* search(const breadcrumb* crumbs,
+/// DEBT: Too permissive, ADL is gonna go crazy here on breadcrumb match
+template <class Breadcrumb = breadcrumb, class Impl>
+const Breadcrumb* search_siblings(const Breadcrumb* crumbs,
     const estd::detail::basic_string<Impl>& name)
 {
     const int parent = crumbs->parent;
@@ -267,7 +294,9 @@ const breadcrumb* search(const breadcrumb* crumbs,
     for(;!traits::is_null(*crumbs); ++crumbs)
     {
         // DEBT: We could stop searching if we leave siblings area too.  I think we can look for a parent id
-        // smaller than our own.  Not 100% sure yet though
+        // smaller than our own.  Not 100% sure yet though.  Alternatively, track that they're all true children
+        // (requiring an id stack or recursion).  In the meantime, we're just doing some extra/unnecessary searching
+        // but no risk of a false positive
         if(crumbs->parent != parent) continue;  // Skip children in hopes we find another sibling
 
         if(name == crumbs->name) return crumbs;
@@ -277,10 +306,10 @@ const breadcrumb* search(const breadcrumb* crumbs,
     return nullptr;
 }
 
-inline const breadcrumb* search(const breadcrumb* crumbs,
+inline const breadcrumb* search_siblings(const breadcrumb* crumbs,
     const char* name)
 {
-    return search(crumbs, estd::layer2::const_string(name));
+    return search_siblings(crumbs, estd::layer2::const_string(name));
 }
 
 
