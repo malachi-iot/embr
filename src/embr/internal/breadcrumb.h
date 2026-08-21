@@ -33,9 +33,10 @@ inline const breadcrumb* search2(const breadcrumb* crumbs, const char* s)
     return nullptr;
 }
 
-constexpr bool has_children(const breadcrumb* crumbs)
+template <class Breadcrumb>
+constexpr bool has_children(const Breadcrumb* crumbs)
 {
-    using traits = breadcrumb_traits<breadcrumb>;
+    using traits = breadcrumb_traits<Breadcrumb>;
 
     // Paradigm is such that if children exist, they are the very next item after
     // the parent
@@ -46,7 +47,7 @@ constexpr bool has_children(const breadcrumb* crumbs)
 /// @param parent
 /// @return nullptr if no children or end marker, otherwise pointer to first child
 template <class Breadcrumb>
-inline ESTD_CPP_CONSTEXPR(14) const Breadcrumb* first_child(const Breadcrumb* parent)
+ESTD_CPP_CONSTEXPR(14) const Breadcrumb* first_child(const Breadcrumb* parent)
 {
     using traits = breadcrumb_traits<Breadcrumb>;
 
@@ -58,14 +59,15 @@ inline ESTD_CPP_CONSTEXPR(14) const Breadcrumb* first_child(const Breadcrumb* pa
     return traits::is_child(*parent, *child) ? child : nullptr;
 }
 
-inline ESTD_CPP_CONSTEXPR(14) const breadcrumb* next_sibling(const breadcrumb* crumbs)
+template <class Breadcrumb>
+ESTD_CPP_CONSTEXPR(14) const Breadcrumb* next_sibling(const Breadcrumb* crumbs)
 {
-    using traits = breadcrumb_traits<breadcrumb>;
+    using traits = breadcrumb_traits<Breadcrumb>;
 
     assert(crumbs);
     assert(!traits::is_null(*crumbs));
 
-    const breadcrumb* sibling = crumbs + 1;
+    const Breadcrumb* sibling = crumbs + 1;
 
     if(traits::is_null(*sibling)) return nullptr;
 

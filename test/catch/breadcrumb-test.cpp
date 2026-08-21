@@ -68,7 +68,7 @@ TEST_CASE("breadcrumb tests", "[breadcrumb]")
 
         REQUIRE(found->id == id_lvl1_0);
 
-        found = embr::internal::search_siblings(next_sibling(found), "lvl1.0");
+        found = search_siblings(next_sibling(found), "lvl1.0");
 
         REQUIRE(found == nullptr);
 
@@ -84,7 +84,7 @@ TEST_CASE("breadcrumb tests", "[breadcrumb]")
 
         REQUIRE(found);
         REQUIRE(found->parent == id_lvl1_1);
-        found = embr::internal::search_siblings(found, "lvl1.1.2");
+        found = search_siblings(found, "lvl1.1.2");
 
         REQUIRE(found->id == id_lvl1_1_2);
     }
@@ -132,8 +132,13 @@ TEST_CASE("breadcrumb tests", "[breadcrumb]")
     }
     SECTION("misc")
     {
-        using traits = embr::internal::breadcrumb_traits<bc>;
+        using traits = embr::breadcrumb::traits<bc>;
         constexpr bc bc1{"hi", 0, -1};
+#if __cpp_constexpr >= 201400
+        // Almost works, but https://github.com/malachi-iot/estdlib/issues/88 has non-constexpr guys
+        // in his path thus goofing up string_view::size for this
+        //constexpr const bc* bc2 = search_siblings(nav, "lvl2.0");
+#endif
 
         static_assert(bc1 != bc::null(), "Regular equality");
         static_assert(traits::equals(bc1, bc::null()) == false, "traits-assist equality");
@@ -141,7 +146,7 @@ TEST_CASE("breadcrumb tests", "[breadcrumb]")
 
         SECTION("eof check")
         {
-            const bc* r = embr::internal::first_child(nav + id_side1);
+            const bc* r = first_child(nav + id_side1);
 
             REQUIRE(r == nullptr);
         }
