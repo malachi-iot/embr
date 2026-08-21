@@ -11,6 +11,22 @@
 
 using bc = embr::internal::breadcrumb;
 
+struct local_bc
+{
+    static constexpr uint16_t null_id = 1000;
+
+    const char* path{};
+    const uint16_t id = null_id;
+    const uint16_t parent = null_id;
+};
+
+template <>
+struct embr::internal::breadcrumb_traits<local_bc> : breadcrumb_traits_base<local_bc>
+{
+    static constexpr const char* name(const local_bc& b) { return b.path; }
+};
+
+
 enum nav_ids
 {
     id_lvl1_0,
@@ -56,7 +72,7 @@ TEST_CASE("breadcrumb tests", "[breadcrumb]")
 
         REQUIRE(found == nullptr);
 
-        found = embr::internal::search_siblings(nav + 1, "lvl1.1");
+        found = search_siblings(nav + 1, "lvl1.1");
 
         REQUIRE(found->parent == -1);
         REQUIRE(found == nav + 1);
@@ -119,11 +135,40 @@ TEST_CASE("breadcrumb tests", "[breadcrumb]")
         using traits = embr::internal::breadcrumb_traits<bc>;
         constexpr bc bc1{"hi", 0, -1};
 
-        REQUIRE(bc1 != bc::null());
-        REQUIRE(traits::equals(bc1, bc::null()) == false);
+        static_assert(bc1 != bc::null(), "Regular equality");
+        static_assert(traits::equals(bc1, bc::null()) == false, "traits-assist equality");
+        static_assert(traits::is_null(bc1) == false, "null check");
 
-        const bc* r = embr::internal::first_child(nav + id_side1);
+        SECTION("eof check")
+        {
+            const bc* r = embr::internal::first_child(nav + id_side1);
 
-        REQUIRE(r == nullptr);
+            REQUIRE(r == nullptr);
+        }
+        SECTION("foreign")
+        {
+            static constexpr local_bc local_nav[]
+            {
+                { "lvl1.0",     id_lvl1_0 },
+                { "lvl1.1",     id_lvl1_1 },
+                { "lvl1.1.1",   id_lvl1_1_1,    id_lvl1_1 },
+            {  }
+            };
+
+            const local_bc* r = embr::internal::search_siblings(local_nav, "lvl1.0");
+
+            REQUIRE(r == local_nav);
+
+            r = embr::internal::search_siblings(local_nav, "lvl1.1");
+
+            REQUIRE(r == local_nav + 1);
+
+            r = embr::internal::first_child(r);
+
+            REQUIRE(r == local_nav + 2);
+
+            // Correctly doesn't compile - we don't want things too permissive
+            //first_child(r);
+        }
     }
 }

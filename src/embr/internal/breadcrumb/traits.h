@@ -5,12 +5,11 @@
 namespace embr { namespace internal {
 
 template <class T>
-struct breadcrumb_traits
+struct breadcrumb_traits_base
 {
     using value_type = T;
     using reference = const T&;
 
-    static constexpr const estd::string_view& name(reference v) { return v.name; }
     //static constexpr bool is_null(const T& v) { return v.name.empty(); }
     static constexpr bool is_null(reference v) { return v.id == T::null_id; }
     static constexpr bool is_child(reference parent, reference child)
@@ -25,6 +24,12 @@ struct breadcrumb_traits
     {
         return lhs.id == rhs.id;
     }
+};
+
+template <class T>
+struct breadcrumb_traits : breadcrumb_traits_base<T>
+{
+    static constexpr const estd::string_view& name(const T& v) { return v.name; }
 };
 
 }}

@@ -45,14 +45,15 @@ constexpr bool has_children(const breadcrumb* crumbs)
 /// Return the first child of a given parent node
 /// @param parent
 /// @return nullptr if no children or end marker, otherwise pointer to first child
-inline ESTD_CPP_CONSTEXPR(14) const breadcrumb* first_child(const breadcrumb* parent)
+template <class Breadcrumb>
+inline ESTD_CPP_CONSTEXPR(14) const Breadcrumb* first_child(const Breadcrumb* parent)
 {
-    using traits = breadcrumb_traits<breadcrumb>;
+    using traits = breadcrumb_traits<Breadcrumb>;
 
     assert(parent);
     assert(!traits::is_null(*parent));
 
-    const breadcrumb* child = parent + 1;
+    const Breadcrumb* child = parent + 1;
 
     return traits::is_child(*parent, *child) ? child : nullptr;
 }
@@ -90,14 +91,15 @@ ESTD_CPP_CONSTEXPR(14) const Breadcrumb* search_siblings(const Breadcrumb* crumb
         // but no risk of a false positive
         if(crumbs->parent != parent) continue;  // Skip children in hopes we find another sibling
 
-        if(name == crumbs->name) return crumbs;
+        if(traits::name(*crumbs) == name) return crumbs;
     }
 
     // No match
     return nullptr;
 }
 
-inline const breadcrumb* search_siblings(const breadcrumb* crumbs,
+template <class Breadcrumb>
+constexpr const Breadcrumb* search_siblings(const Breadcrumb* crumbs,
     const char* name)
 {
     return search_siblings(crumbs, estd::layer2::const_string(name));
