@@ -74,7 +74,7 @@ TEST_CASE("breadcrumb tests", "[breadcrumb]")
 
         found = search_siblings(nav + 1, "lvl1.1");
 
-        REQUIRE(found->parent == -1);
+        REQUIRE(found->parent == bc::null_id);
         REQUIRE(found == nav + 1);
 
         // Paradigm is such that if children exist, they are the very next item after
@@ -132,18 +132,21 @@ TEST_CASE("breadcrumb tests", "[breadcrumb]")
     }
     SECTION("misc")
     {
-        using traits = embr::breadcrumb::traits<bc>;
-        constexpr bc bc1{"hi", 0, -1};
+        SECTION("static_asserts")
+        {
+            constexpr bc bc1{"hi", 0, -1};
 #if __cpp_constexpr >= 201400
-        // Almost works, but https://github.com/malachi-iot/estdlib/issues/88 has non-constexpr guys
-        // in his path thus goofing up string_view::size for this
-        //constexpr const bc* bc2 = search_siblings(nav, "lvl2.0");
+            // Almost works, but https://github.com/malachi-iot/estdlib/issues/88 has non-constexpr guys
+            // in his path thus goofing up string_view::size for this
+            //constexpr const bc* bc2 = search_siblings(nav, "lvl2.0");
 #endif
 
-        static_assert(bc1 != bc::null(), "Regular equality");
-        static_assert(traits::equals(bc1, bc::null()) == false, "traits-assist equality");
-        static_assert(traits::is_null(bc1) == false, "null check");
+            using traits = embr::breadcrumb::traits<bc>;
 
+            static_assert(bc1 != bc::null(), "Regular equality");
+            static_assert(traits::equals(bc1, bc::null()) == false, "traits-assist equality");
+            static_assert(traits::is_null(bc1) == false, "null check");
+        }
         SECTION("eof check")
         {
             const bc* r = first_child(nav + id_side1);
@@ -152,13 +155,17 @@ TEST_CASE("breadcrumb tests", "[breadcrumb]")
         }
         SECTION("foreign")
         {
+            using traits = embr::breadcrumb::traits<local_bc>;
+
             static constexpr local_bc local_nav[]
             {
                 { "lvl1.0",     id_lvl1_0 },
                 { "lvl1.1",     id_lvl1_1 },
                 { "lvl1.1.1",   id_lvl1_1_1,    id_lvl1_1 },
-            {  }
+                {  }
             };
+
+            static_assert(traits::is_null(*(local_nav + 3)), "null check");
 
             const local_bc* r = embr::internal::search_siblings(local_nav, "lvl1.0");
 

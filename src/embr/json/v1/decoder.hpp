@@ -48,9 +48,9 @@ inline int decoder_state::descriptor::str(Streambuf& sb, Char* s) const
 // top level parent (implicitly -1).  child ID is not sorted.
 constexpr embr::internal::breadcrumb literals[]
 {
-    { { "false", 5 },  ID_FALSE },
-    { { "null", 4 },   ID_NULL },
-    { { "true", 4 },   ID_TRUE },
+    { "false",  ID_FALSE },
+    { "null",   ID_NULL },
+    { "true",   ID_TRUE },
     { {} },
 };
 
