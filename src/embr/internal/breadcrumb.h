@@ -11,9 +11,10 @@ namespace embr { namespace internal {
 
 inline const breadcrumb* search2(const breadcrumb* crumbs, const char* s)
 {
-    using searcher = breadcrumb_searcher<breadcrumb>;
+    using traits = breadcrumb_traits<breadcrumb>;
+    using searcher = breadcrumb_searcher<traits>;
     searcher srch{crumbs};
-    breadcrumb_functor functor{&srch};
+    breadcrumb_functor<traits> functor{&srch};
 
     do
     {
@@ -107,8 +108,10 @@ inline const breadcrumb* search_siblings(const breadcrumb* crumbs,
 
 namespace embr { namespace breadcrumb { inline namespace v1 {
 
+template <class T>
+using traits = embr::internal::breadcrumb_traits<T>;
 using breadcrumb = embr::internal::breadcrumb;
-using functor = embr::internal::breadcrumb_functor;
-using searcher = embr::internal::breadcrumb_searcher<breadcrumb>;
+using functor = embr::internal::breadcrumb_functor<traits<breadcrumb>>;
+using searcher = embr::internal::breadcrumb_searcher<traits<breadcrumb>>;
 
 }}}

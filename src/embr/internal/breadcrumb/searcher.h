@@ -27,13 +27,13 @@ struct breadcrumb_searcher_base
 // For character by character affairs
 // Typically you'll use T = Breadcrumb, but you might have your own tracking mechanism so
 // it's interchangeable
-template <class T, class Traits = breadcrumb_traits<T>>
+template <class Traits>
 struct breadcrumb_searcher : breadcrumb_searcher_base
 {
-    using reference = const T&;
-    using pointer = const T*;
-
     using traits = Traits;
+    using reference = typename traits::reference;
+    using pointer = const typename traits::value_type*;
+
     using char_type = const char;
 
 private:
@@ -143,16 +143,19 @@ public:
 // DONE = specify no further searching
 // PROCEED = valid place to look
 // FAST_FORWARD = skip over this one
-struct breadcrumb_functor
+template <class Traits>
+struct breadcrumb_functor : breadcrumb_searcher_base
 {
-    using traits = breadcrumb_traits<breadcrumb>;
-    using searcher = breadcrumb_searcher<breadcrumb>;
+    using traits = Traits;
+    using searcher = breadcrumb_searcher<traits>;
+    using reference = typename traits::reference;
+    using pointer = const typename traits::value_type*;
 
     // Not specifying 'parent' since that's awkward for root level nodes (parent is nullptr)
     // This also better aligns with init of searcher itself
-    const breadcrumb* first_;
+    pointer first_;
     bool in_grandchild_ = false;
-    const breadcrumb* prev_ = nullptr;
+    pointer prev_ = nullptr;
 
     constexpr explicit breadcrumb_functor(const searcher* parent) : first_{parent->crumbs()}   {}
 
@@ -162,22 +165,22 @@ struct breadcrumb_functor
         prev_ = nullptr;
     }
 
-    void reset(const breadcrumb* first)
+    void reset(pointer first)
     {
         first_ = first;
         in_grandchild_ = false;
         prev_ = nullptr;
     }
 
-    searcher::pred_result operator()(const breadcrumb& c)
+    pred_result operator()(reference c)
     {
-        if(traits::is_null(c))  return searcher::DONE;
+        if(traits::is_null(c))  return DONE;
 
         if(c.parent == first_->parent)
         {
             prev_ = &c;
             in_grandchild_ = false;
-            return searcher::PROCEED;
+            return PROCEED;
         }
 
         // Keep going until we notice we're back to parent->id matching, or otherwise all the way to the end
@@ -185,16 +188,16 @@ struct breadcrumb_functor
         // too expensive
 
         if(in_grandchild_)
-            return searcher::FAST_FORWARD;
+            return FAST_FORWARD;
         if(prev_ != nullptr && prev_->id == c.parent)
         {
             // If last encountered breadcrumb is parent of this one, we're in child mode
             in_grandchild_ = true;
-            return searcher::FAST_FORWARD;
+            return FAST_FORWARD;
         }
 
         // not a child or grandchild, and not a candidate to become a grandchild
-        return searcher::DONE;
+        return DONE;
     }
 };
 
