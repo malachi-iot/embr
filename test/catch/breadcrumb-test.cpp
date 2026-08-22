@@ -88,6 +88,28 @@ TEST_CASE("breadcrumb tests", "[breadcrumb]")
 
         REQUIRE(found->id == id_lvl1_1_2);
     }
+    SECTION("sorted search")
+    {
+        // DEBT: Do integrity checker
+
+        static constexpr bc sorted[]
+        {
+            { "v1", 0 },
+            { "v2", 1 },
+            { "v3", 2 },
+            { }
+        };
+
+        estd::layer2::const_string s("v2.1");
+
+        //REQUIRE(s.compare(sorted[0].name) > 0);
+        //REQUIRE(s.compare(sorted[1].name) > 0);
+        //s.compare(sorted[2].name);
+
+        const bc* found = search_siblings(sorted, "v2.1", true);
+
+        REQUIRE(!found);
+    }
     // Stateful mode is interesting if you're facing partial buffers, like LwIP or maybe CoAP appears over
     // a serial port
     SECTION("stateful")

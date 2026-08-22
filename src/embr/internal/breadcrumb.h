@@ -81,7 +81,7 @@ ESTD_CPP_CONSTEXPR(14) const Breadcrumb* next_sibling(const Breadcrumb* crumbs)
 /// DEBT: Too permissive, ADL is gonna go crazy here on breadcrumb match
 template <class Breadcrumb = breadcrumb, class Impl>
 ESTD_CPP_CONSTEXPR(14) const Breadcrumb* search_siblings(const Breadcrumb* crumbs,
-    const estd::detail::basic_string<Impl>& name)
+    const estd::detail::basic_string<Impl>& name, bool sorted = false)
 {
     const int parent = crumbs->parent;
     using traits = breadcrumb_traits<Breadcrumb>;
@@ -93,7 +93,21 @@ ESTD_CPP_CONSTEXPR(14) const Breadcrumb* search_siblings(const Breadcrumb* crumb
         // but no risk of a false positive
         if(crumbs->parent != parent) continue;  // Skip children in hopes we find another sibling
 
-        if(traits::name(*crumbs) == name) return crumbs;
+        // traits::name might return const char* or a string_view, so start compare with
+        // passed in name who always has a compare.  Perhaps https://github.com/malachi-iot/estdlib/issues/232
+        // can offer some oblique assistance
+        // FIX: Note - broken due to https://github.com/malachi-iot/estdlib/issues/233
+        int r = name.compare(traits::name(*crumbs));
+
+        if(r == 0)
+            return crumbs;
+        // r < 0 means that our name lexigraphically sorts before name in breadcrumbs.  We want to always
+        // appear before or on sorted names.  For example:
+        // d >  a - yes, keep searching
+        // d >  b - yes, keep searching
+        // d <  e - no, no further searching needed
+        else if(sorted && r < 0)
+            return nullptr;
     }
 
     // No match
@@ -102,11 +116,26 @@ ESTD_CPP_CONSTEXPR(14) const Breadcrumb* search_siblings(const Breadcrumb* crumb
 
 template <class Breadcrumb>
 constexpr const Breadcrumb* search_siblings(const Breadcrumb* crumbs,
-    const char* name)
+    const char* name, bool sorted = false)
 {
-    return search_siblings(crumbs, estd::layer2::const_string(name));
+    return search_siblings(crumbs, estd::layer2::const_string(name), sorted);
 }
 
+
+/// Investigate 'current' to see if its children match 'v'
+/// @param v
+/// @param top top-level node nav tree
+/// @param current nullptr (for virtual root node) otherwise node whose children to search
+/// @return
+/// @remarks Remember, breadcrumbs specifically do not search grandchildren too.  It's one generation at a time.
+template <class Breadcrumb, class String>
+ESTD_CPP_CONSTEXPR(17) static const Breadcrumb* search_children(
+    const String& v, const Breadcrumb* top, const Breadcrumb* current)
+{
+    // When just starting, pretend to have root node so search siblings without a child
+    current = current == nullptr ? top : first_child(current);
+    return search_siblings(current, v);
+}
 
 }}
 
