@@ -2,6 +2,8 @@
 
 #include "fwd.h"
 
+#include <estd/string_view.h>
+
 namespace embr { namespace internal {
 
 template <class T>
@@ -9,6 +11,8 @@ struct breadcrumb_traits_base
 {
     using value_type = T;
     using reference = const T&;
+
+    using int_type = estd::remove_cvref_t<decltype(T::id)>;
 
     //static constexpr bool is_null(const T& v) { return v.name.empty(); }
     static constexpr bool is_null(reference v) { return v.id == T::null_id; }

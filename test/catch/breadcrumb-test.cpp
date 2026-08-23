@@ -102,9 +102,9 @@ TEST_CASE("breadcrumb tests", "[breadcrumb]")
 
         estd::layer2::const_string s("v2.1");
 
-        //REQUIRE(s.compare(sorted[0].name) > 0);
-        //REQUIRE(s.compare(sorted[1].name) > 0);
-        //s.compare(sorted[2].name);
+        REQUIRE(s.compare(sorted[0].name) > 0);
+        REQUIRE(s.compare(sorted[1].name) > 0);
+        REQUIRE(s.compare(sorted[2].name) < 0);
 
         const bc* found = search_siblings(sorted, "v2.1", true);
 
@@ -151,6 +151,10 @@ TEST_CASE("breadcrumb tests", "[breadcrumb]")
             REQUIRE(r);
             REQUIRE(r->id == id_lvl2_0);
         }
+    }
+    SECTION("visitor")
+    {
+        const bc* c = visit_children(nav + 1);
     }
     SECTION("misc")
     {

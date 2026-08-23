@@ -1,6 +1,7 @@
 #pragma once
 
 #include <estd/string.h>
+#include <estd/vector.h>
 
 #include "breadcrumb/searcher.h"
 #include "breadcrumb/traits.h"
@@ -41,6 +42,17 @@ constexpr bool has_children(const Breadcrumb* crumbs)
     // Paradigm is such that if children exist, they are the very next item after
     // the parent
     return traits::is_child(*crumbs, *(crumbs + 1));
+}
+
+// TBD not ready yet
+template <class Node>
+ESTD_CPP_CONSTEXPR(14) const Node* visit_children(const Node* parent)
+{
+    using traits = breadcrumb_traits<Node>;
+    estd::layer1::vector<typename traits::int_type, 8> nav;
+    nav.push_back(parent->id);
+    const Node* node = parent + 1;
+    return node;
 }
 
 /// Return the first child of a given parent node
@@ -96,8 +108,7 @@ ESTD_CPP_CONSTEXPR(14) const Breadcrumb* search_siblings(const Breadcrumb* crumb
         // traits::name might return const char* or a string_view, so start compare with
         // passed in name who always has a compare.  Perhaps https://github.com/malachi-iot/estdlib/issues/232
         // can offer some oblique assistance
-        // FIX: Note - broken due to https://github.com/malachi-iot/estdlib/issues/233
-        int r = name.compare(traits::name(*crumbs));
+        const int r = name.compare(traits::name(*crumbs));
 
         if(r == 0)
             return crumbs;
