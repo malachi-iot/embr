@@ -45,11 +45,12 @@ constexpr bool has_children(const Breadcrumb* crumbs)
 }
 
 template <class Node, class F>
-ESTD_CPP_CONSTEXPR(14) const Node* visit_children(const Node* parent, F&& f)
+ESTD_CPP_CONSTEXPR(14) const Node* visit_children(const Node* parent, F&& f, bool virtual_root = false)
 {
     using traits = breadcrumb_traits<Node>;
     estd::layer1::vector<const Node*, 8> nav;
     const Node* node = parent;
+    constexpr Node vroot{};
 
     auto is_null = [](const Node* node) { return traits::is_null(*node); };
     auto is_child = [](const Node* parent, const Node* child)
@@ -61,19 +62,29 @@ ESTD_CPP_CONSTEXPR(14) const Node* visit_children(const Node* parent, F&& f)
     {
         assert(nav.size() < nav.max_size());
 
-        nav.push_back(parent);
+        if(virtual_root)
+        {
+            parent = &vroot;
+            nav.push_back(&vroot);
+            virtual_root = false;
+        }
+        else
+        {
+            nav.push_back(parent);
 
-        ++node;
+            ++node;
+        }
 
         // iterate through first-level children (siblings)
-        for(;!is_null(node) && is_child(parent, node); ++node)
+        for(;is_child(parent, node); ++node)
         {
+            if(is_null(node))   return node;
+
             f(node);
         }
 
         // if it's not a first-level child, then we either went up or down the hierarchy.
         // Have a look
-        // FIX: Obviously node-1 is not tenable for long
         if(is_child(node - 1, node))
         {
             // we've gone down (deeper) into hierarchy
@@ -92,7 +103,11 @@ ESTD_CPP_CONSTEXPR(14) const Node* visit_children(const Node* parent, F&& f)
             // in that list, that's enough and we're done.
             if(nav.empty()) return node;
 
-            parent = node;
+            parent = nav.back();
+
+            --node;
+            // DEBT: Doing this because we immediately push it parent back on the stack
+            nav.pop_back();
         }
     }
     return node;

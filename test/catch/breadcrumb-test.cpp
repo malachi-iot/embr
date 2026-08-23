@@ -7,6 +7,8 @@
 #include <estd/sstream.h>
 #include <estd/string_view.h>
 
+#include <bitset>
+
 //#include "test-data.h"
 
 using bc = embr::internal::breadcrumb;
@@ -29,16 +31,16 @@ struct embr::internal::breadcrumb_traits<local_bc> : breadcrumb_traits_base<loca
 
 enum nav_ids
 {
-    id_lvl1_0,
-    id_lvl1_1,
-    id_lvl1_1_1,
-    id_lvl1_1_2,
-    id_lvl1_1_2_1,
-    id_lvl2,
-    id_lvl2_0,
-    id_lvl2_0_0,
-    id_lvl2_1,
-    id_side1,
+    id_lvl1_0,      // 0
+    id_lvl1_1,      // 1
+    id_lvl1_1_1,    // 2
+    id_lvl1_1_2,    // 3
+    id_lvl1_1_2_1,  // 4
+    id_lvl2,        // 5
+    id_lvl2_0,      // 6
+    id_lvl2_0_0,    // 7
+    id_lvl2_1,      // 8
+    id_side1,       // 9
 };
 
 
@@ -155,15 +157,40 @@ TEST_CASE("breadcrumb tests", "[breadcrumb]")
     SECTION("visitor")
     {
         int counter = 0;
+        const bc* c;
 
-        const bc* c = visit_children(nav + 1,
-            [&](const bc*)
+        SECTION("isolated")
         {
-            ++counter;
-        });
+            c = visit_children(nav + 1,
+                [&](const bc*)
+                {
+                    ++counter;
+                });
 
-        REQUIRE(counter == 3);
-        REQUIRE(*c == nav[id_lvl2]);
+            REQUIRE(counter == 3);
+            REQUIRE(c == nav + id_lvl2);
+        }
+        SECTION("all")
+        {
+            // -1 due to null terminator
+            constexpr int sz = std::size(nav) - 1;
+            std::bitset<sz> visited, set;
+
+            // Renders from right to left for Catch2
+            set.set();
+            //set.set(0, false); // rightmost
+
+            c = visit_children(nav,
+                [&](const bc* node)
+                {
+                    int index = node - nav;
+                    REQUIRE(visited[index] == false);
+                    visited.set(index);
+                }, true);
+
+            REQUIRE(visited == set);
+            REQUIRE(*c == bc{});
+        }
     }
     SECTION("misc")
     {
