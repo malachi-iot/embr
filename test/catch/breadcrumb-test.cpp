@@ -154,7 +154,16 @@ TEST_CASE("breadcrumb tests", "[breadcrumb]")
     }
     SECTION("visitor")
     {
-        const bc* c = visit_children(nav + 1);
+        int counter = 0;
+
+        const bc* c = visit_children(nav + 1,
+            [&](const bc*)
+        {
+            ++counter;
+        });
+
+        REQUIRE(counter == 3);
+        REQUIRE(*c == nav[id_lvl2]);
     }
     SECTION("misc")
     {

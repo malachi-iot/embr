@@ -44,14 +44,57 @@ constexpr bool has_children(const Breadcrumb* crumbs)
     return traits::is_child(*crumbs, *(crumbs + 1));
 }
 
-// TBD not ready yet
-template <class Node>
-ESTD_CPP_CONSTEXPR(14) const Node* visit_children(const Node* parent)
+template <class Node, class F>
+ESTD_CPP_CONSTEXPR(14) const Node* visit_children(const Node* parent, F&& f)
 {
     using traits = breadcrumb_traits<Node>;
-    estd::layer1::vector<typename traits::int_type, 8> nav;
-    nav.push_back(parent->id);
-    const Node* node = parent + 1;
+    estd::layer1::vector<const Node*, 8> nav;
+    const Node* node = parent;
+
+    auto is_null = [](const Node* node) { return traits::is_null(*node); };
+    auto is_child = [](const Node* parent, const Node* child)
+    {
+        return traits::is_child(*parent, *child);
+    };
+
+    for(;!is_null(node);)
+    {
+        assert(nav.size() < nav.max_size());
+
+        nav.push_back(parent);
+
+        ++node;
+
+        // iterate through first-level children (siblings)
+        for(;!is_null(node) && is_child(parent, node); ++node)
+        {
+            f(node);
+        }
+
+        // if it's not a first-level child, then we either went up or down the hierarchy.
+        // Have a look
+        // FIX: Obviously node-1 is not tenable for long
+        if(is_child(node - 1, node))
+        {
+            // we've gone down (deeper) into hierarchy
+
+            --node;
+            parent = node;
+        }
+        else
+        {
+            // if not down, then up.  How far up?  See if we can find the owning parent
+            // of the presented node
+            for(; !nav.empty() &&
+                !is_child(nav.back(), node); nav.pop_back())   {}
+
+            // We only track ourself and children.  If we can't find a relationship
+            // in that list, that's enough and we're done.
+            if(nav.empty()) return node;
+
+            parent = node;
+        }
+    }
     return node;
 }
 
