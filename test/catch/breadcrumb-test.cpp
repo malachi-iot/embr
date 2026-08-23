@@ -189,7 +189,7 @@ TEST_CASE("breadcrumb tests", "[breadcrumb]")
                 [&](const bc*)
                 {
                     ++counter;
-                }, id_lvl1_1);
+                }, true);
 
             REQUIRE(counter == 3);
             REQUIRE(c == nav + id_lvl2);
@@ -210,7 +210,7 @@ TEST_CASE("breadcrumb tests", "[breadcrumb]")
                     int index = node - nav;
                     REQUIRE(visited[index] == false);
                     visited.set(index);
-                }, -1);
+                }, true);
 
             REQUIRE(visited == set);
             REQUIRE(*c == bc{});

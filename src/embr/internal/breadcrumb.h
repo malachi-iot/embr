@@ -47,7 +47,7 @@ constexpr bool has_children(const Breadcrumb* crumbs)
 // DEBT: estd::optional can't be treated like a literal here, make an issue for that
 template <class Node, class F, class Traits = breadcrumb_traits<Node>>
 ESTD_CPP_CONSTEXPR(14) const Node* visit_children(const Node* node, F&& f,
-    std::optional<typename Traits::int_type> sibling_parent = {})
+    bool sibling_mode = {})
 {
     using traits = Traits;
     using int_type = typename traits::int_type;
@@ -65,14 +65,14 @@ ESTD_CPP_CONSTEXPR(14) const Node* visit_children(const Node* node, F&& f,
 
     for(;!is_null(node);)
     {
-        if(sibling_parent.has_value())
+        if(sibling_mode)
         {
             // sibling mode means that first node is actually a sibling, so
             // set up parent based on passed in sibling_parent and don't
             // initially increment node
-            parent = *sibling_parent;
+            parent = node->parent;
             nav.push_back(parent);
-            sibling_parent.reset(); // After initial setup, everything otherwise operates without edge case processing
+            sibling_mode = false; // After initial setup, everything otherwise operates without edge case processing
         }
         else
             // Navigate to first child, if it exists
@@ -166,6 +166,64 @@ ESTD_CPP_CONSTEXPR(14) const Breadcrumb* search_siblings(const Breadcrumb* crumb
 {
     const int parent = crumbs->parent;
     using traits = breadcrumb_traits<Breadcrumb>;
+    for(;!traits::is_null(*crumbs); ++crumbs)
+    {
+        // DEBT: We could stop searching if we leave siblings area too.  I think we can look for a parent id
+        // smaller than our own.  Not 100% sure yet though.  Alternatively, track that they're all true children
+        // (requiring an id stack or recursion).  In the meantime, we're just doing some extra/unnecessary searching
+        // but no risk of a false positive
+        if(crumbs->parent != parent) continue;  // Skip children in hopes we find another sibling
+
+        // traits::name might return const char* or a string_view, so start compare with
+        // passed in name who always has a compare.  Perhaps https://github.com/malachi-iot/estdlib/issues/232
+        // can offer some oblique assistance
+        const int r = name.compare(traits::name(*crumbs));
+
+        if(r == 0)
+            return crumbs;
+        // r < 0 means that our name lexigraphically sorts before name in breadcrumbs.  We want to always
+        // appear before or on sorted names.  For example:
+        // d >  a - yes, keep searching
+        // d >  b - yes, keep searching
+        // d <  e - no, no further searching needed
+        else if(sorted && r < 0)
+            return nullptr;
+    }
+
+    // No match
+    return nullptr;
+}
+
+
+// NOT READY YET
+template <class Node = breadcrumb, class Impl>
+ESTD_CPP_CONSTEXPR(14) const Node* search_siblings_new(const Node* crumbs,
+    const estd::detail::basic_string<Impl>& name, bool sorted = false)
+{
+    const int parent = crumbs->parent;
+    using traits = breadcrumb_traits<Node>;
+
+    return visit_children(crumbs, [&](const Node* node)
+        {
+            if(node->parent != parent) return;  // Skip children in hopes we find another sibling
+
+            // traits::name might return const char* or a string_view, so start compare with
+            // passed in name who always has a compare.  Perhaps https://github.com/malachi-iot/estdlib/issues/232
+            // can offer some oblique assistance
+            const int r = name.compare(traits::name(*crumbs));
+
+            if(r == 0)
+                return crumbs;
+            // r < 0 means that our name lexigraphically sorts before name in breadcrumbs.  We want to always
+            // appear before or on sorted names.  For example:
+            // d >  a - yes, keep searching
+            // d >  b - yes, keep searching
+            // d <  e - no, no further searching needed
+            else if(sorted && r < 0)
+                return nullptr;
+
+        }, crumbs->parent);
+
     for(;!traits::is_null(*crumbs); ++crumbs)
     {
         // DEBT: We could stop searching if we leave siblings area too.  I think we can look for a parent id
