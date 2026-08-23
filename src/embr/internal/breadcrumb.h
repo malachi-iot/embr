@@ -44,31 +44,35 @@ constexpr bool has_children(const Breadcrumb* crumbs)
     return traits::is_child(*crumbs, *(crumbs + 1));
 }
 
-template <class Node, class F>
-ESTD_CPP_CONSTEXPR(14) const Node* visit_children(const Node* parent, F&& f, bool virtual_root = false)
+// DEBT: estd::optional can't be treated like a literal here, make an issue for that
+template <class Node, class F, class Traits = breadcrumb_traits<Node>>
+ESTD_CPP_CONSTEXPR(14) const Node* visit_children(const Node* node, F&& f,
+    std::optional<typename Traits::int_type> sibling_parent = {})
 {
-    using traits = breadcrumb_traits<Node>;
-    const Node* node = parent;
-    // DEBT: Only tracking Node* for convenience.  Switch this to int_type and this way
-    // we don't need a temporary vroot around for parent comparisons
-    estd::layer1::vector<const Node*, 8> nav;
-    constexpr Node vroot{};
+    using traits = Traits;
+    using int_type = typename traits::int_type;
+
+    int_type parent = traits::id(*node);
+    estd::layer1::vector<int_type, 8> nav;
 
     auto is_null = [](const Node* node) { return traits::is_null(*node); };
-    auto is_child = [](const Node* parent, const Node* child)
+    auto is_child = [](int_type parent, const Node* child)
     {
-        return traits::is_child(*parent, *child);
+        // DEBT: Do a traits for this type of comparison also
+        return parent == child->parent;
+        //return traits::is_child(*parent, *child);
     };
 
     for(;!is_null(node);)
     {
-        if(virtual_root)
+        if(sibling_parent.has_value())
         {
-            // Virtualized root starts above the nav list, treating
-            // 'parent' as the first sibling
-            parent = &vroot;
+            // sibling mode means that first node is actually a sibling, so
+            // set up parent based on passed in sibling_parent and don't
+            // initially increment node
+            parent = *sibling_parent;
             nav.push_back(parent);
-            virtual_root = false;
+            sibling_parent.reset(); // After initial setup, everything otherwise operates without edge case processing
         }
         else
             // Navigate to first child, if it exists
@@ -84,11 +88,11 @@ ESTD_CPP_CONSTEXPR(14) const Node* visit_children(const Node* parent, F&& f, boo
 
         // if it's not a first-level child, then we either went up or down the hierarchy.
         // Have a look
-        if(is_child(node - 1, node))
+        if(traits::is_child(*(node - 1), *node))
         {
             // we've gone down (deeper) into hierarchy
 
-            parent = --node;
+            parent = traits::id(*--node);
 
             assert(nav.size() < nav.max_size());
 
@@ -112,6 +116,13 @@ ESTD_CPP_CONSTEXPR(14) const Node* visit_children(const Node* parent, F&& f, boo
     }
     return node;
 }
+
+template <class Node>
+constexpr const Node* skip_children(const Node* parent)
+{
+    return visit_children(parent, [](auto){});
+}
+
 
 /// Return the first child of a given parent node
 /// @param parent

@@ -68,6 +68,7 @@ TEST_CASE("breadcrumb tests", "[breadcrumb]")
     {
         const bc* found = search_siblings(nav, "lvl1.0");
 
+        REQUIRE(found);
         REQUIRE(found->id == id_lvl1_0);
 
         found = search_siblings(next_sibling(found), "lvl1.0");
@@ -76,6 +77,7 @@ TEST_CASE("breadcrumb tests", "[breadcrumb]")
 
         found = search_siblings(nav + 1, "lvl1.1");
 
+        REQUIRE(found);
         REQUIRE(found->parent == bc::null_id);
         REQUIRE(found == nav + 1);
 
@@ -170,7 +172,29 @@ TEST_CASE("breadcrumb tests", "[breadcrumb]")
             REQUIRE(counter == 3);
             REQUIRE(c == nav + id_lvl2);
         }
-        SECTION("all")
+        SECTION("single")
+        {
+            c = visit_children(nav + id_lvl2,
+                [&](const bc*)
+                {
+                    ++counter;
+                });
+
+            REQUIRE(counter == 0);
+            REQUIRE(c == nav + id_lvl2_0);
+        }
+        SECTION("sibling mode")
+        {
+            c = visit_children(nav + id_lvl1_1_1,
+                [&](const bc*)
+                {
+                    ++counter;
+                }, id_lvl1_1);
+
+            REQUIRE(counter == 3);
+            REQUIRE(c == nav + id_lvl2);
+        }
+        SECTION("all (virtual root aka sibling mode w/ -1 parent)")
         {
             // -1 due to null terminator
             constexpr int sz = std::size(nav) - 1;
@@ -186,7 +210,7 @@ TEST_CASE("breadcrumb tests", "[breadcrumb]")
                     int index = node - nav;
                     REQUIRE(visited[index] == false);
                     visited.set(index);
-                }, true);
+                }, -1);
 
             REQUIRE(visited == set);
             REQUIRE(*c == bc{});

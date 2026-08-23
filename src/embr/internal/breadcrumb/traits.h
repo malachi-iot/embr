@@ -28,6 +28,7 @@ struct breadcrumb_traits_base
     {
         return lhs.id == rhs.id;
     }
+    static constexpr int_type id(reference v) { return v.id; }
 };
 
 template <class T>
