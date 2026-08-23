@@ -48,8 +48,10 @@ template <class Node, class F>
 ESTD_CPP_CONSTEXPR(14) const Node* visit_children(const Node* parent, F&& f, bool virtual_root = false)
 {
     using traits = breadcrumb_traits<Node>;
-    estd::layer1::vector<const Node*, 8> nav;
     const Node* node = parent;
+    // DEBT: Only tracking Node* for convenience.  Switch this to int_type and this way
+    // we don't need a temporary vroot around for parent comparisons
+    estd::layer1::vector<const Node*, 8> nav;
     constexpr Node vroot{};
 
     auto is_null = [](const Node* node) { return traits::is_null(*node); };
@@ -60,20 +62,17 @@ ESTD_CPP_CONSTEXPR(14) const Node* visit_children(const Node* parent, F&& f, boo
 
     for(;!is_null(node);)
     {
-        assert(nav.size() < nav.max_size());
-
         if(virtual_root)
         {
+            // Virtualized root starts above the nav list, treating
+            // 'parent' as the first sibling
             parent = &vroot;
-            nav.push_back(&vroot);
+            nav.push_back(parent);
             virtual_root = false;
         }
         else
-        {
-            nav.push_back(parent);
-
+            // Navigate to first child, if it exists
             ++node;
-        }
 
         // iterate through first-level children (siblings)
         for(;is_child(parent, node); ++node)
@@ -89,8 +88,11 @@ ESTD_CPP_CONSTEXPR(14) const Node* visit_children(const Node* parent, F&& f, boo
         {
             // we've gone down (deeper) into hierarchy
 
-            --node;
-            parent = node;
+            parent = --node;
+
+            assert(nav.size() < nav.max_size());
+
+            nav.push_back(parent);
         }
         else
         {
@@ -106,8 +108,6 @@ ESTD_CPP_CONSTEXPR(14) const Node* visit_children(const Node* parent, F&& f, boo
             parent = nav.back();
 
             --node;
-            // DEBT: Doing this because we immediately push it parent back on the stack
-            nav.pop_back();
         }
     }
     return node;
