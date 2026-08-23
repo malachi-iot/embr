@@ -83,21 +83,29 @@ ESTD_CPP_CONSTEXPR(14) const Node* visit_children(const Node* node, F&& f,
         {
             if(is_null(node))   return nullptr;
 
-#if __cpp_if_constexpr
             using return_type = decltype(f(node));
 
+#if __cpp_if_constexpr
+            // DEBT: An is_void_v would be nice
             if constexpr (estd::is_void<return_type>::value)
             {
                 f(node);
             }
+            else if constexpr (estd::is_same_v<return_type, bool>)
+            {
+                if(f(node))    return node;
+            }
             else
             {
-                std::optional<Node*> r = f(node);
+                std::optional<const Node*> r = f(node);
 
                 if(r.has_value())   return *r;
             }
 #else
-            f(node);
+            // 23AUG26 MB - Not well tested
+            static_assert(estd::is_same<return_type, bool>::value, "Must return bool");
+
+            if(f(node))    return node;
 #endif
         }
 
@@ -170,13 +178,14 @@ ESTD_CPP_CONSTEXPR(14) const Breadcrumb* next_sibling(const Breadcrumb* crumbs)
     return traits::is_sibling(*sibling, *crumbs) ? sibling : nullptr;
 }
 
-/// Search siblings, inclusive
+/// Search siblings, inclusive.  No fancy optimizations here, brute forces through
+/// whole list
 /// @param crumbs
 /// @param name
 /// @return
 /// DEBT: Too permissive, ADL is gonna go crazy here on breadcrumb match
 template <class Breadcrumb = breadcrumb, class Impl>
-ESTD_CPP_CONSTEXPR(14) const Breadcrumb* search_siblings(const Breadcrumb* crumbs,
+ESTD_CPP_CONSTEXPR(14) const Breadcrumb* search_siblings_basic(const Breadcrumb* crumbs,
     const estd::detail::basic_string<Impl>& name, bool sorted = false)
 {
     const int parent = crumbs->parent;
@@ -210,15 +219,24 @@ ESTD_CPP_CONSTEXPR(14) const Breadcrumb* search_siblings(const Breadcrumb* crumb
 }
 
 
-// NOT READY YET
+/// Searches siblings, inclusive.  Does a fancy children inspection to short-circuit search once
+/// we leave the realm of our parent
+/// @brief search_siblings_full
+/// @param top
+/// @param name
+/// @param sorted
+/// @return
+/// @remarks Needs better name.  'full' seemed wrong since it aborts at a certain point
+/// also needs c++17 to work (which is a general embr requirement anyway, but I like to try
+/// for c++11 when possible)
 template <class Node = breadcrumb, class Impl>
-ESTD_CPP_CONSTEXPR(14) const Node* search_siblings_new(const Node* top,
+ESTD_CPP_CONSTEXPR(14) const Node* search_siblings_fancy(const Node* first,
     const estd::detail::basic_string<Impl>& name, bool sorted = false)
 {
     using traits = breadcrumb_traits<Node>;
-    const typename traits::int_type parent = top->parent;
+    const typename traits::int_type parent = first->parent;
 
-    return visit_children(top, [&](const Node* node) -> std::optional<Node*>
+    return visit_children(first, [&](const Node* node) -> std::optional<const Node*>
         {
             if(node->parent != parent) return {};  // Skip children in hopes we find another sibling
 
@@ -240,6 +258,14 @@ ESTD_CPP_CONSTEXPR(14) const Node* search_siblings_new(const Node* top,
             return {};
 
         }, true);
+}
+
+template <class Node = breadcrumb, class Impl>
+ESTD_CPP_CONSTEXPR(14) const Node* search_siblings(const Node* top,
+    const estd::detail::basic_string<Impl>& name, bool sorted = false)
+{
+    // 'fancy' one works too, but it's not fully optimized yet
+    return search_siblings_basic(top, name, sorted);
 }
 
 template <class Breadcrumb>

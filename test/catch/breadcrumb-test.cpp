@@ -164,9 +164,10 @@ TEST_CASE("breadcrumb tests", "[breadcrumb]")
         SECTION("isolated")
         {
             c = visit_children(nav + 1,
-                [&](const bc*)
+                [&](const bc*) -> bool
                 {
                     ++counter;
+                    return {};
                 });
 
             REQUIRE(counter == 3);
@@ -175,9 +176,10 @@ TEST_CASE("breadcrumb tests", "[breadcrumb]")
         SECTION("single")
         {
             c = visit_children(nav + id_lvl2,
-                [&](const bc*)
+                [&](const bc*) -> bool
                 {
                     ++counter;
+                    return {};
                 });
 
             REQUIRE(counter == 0);
@@ -186,9 +188,10 @@ TEST_CASE("breadcrumb tests", "[breadcrumb]")
         SECTION("end")
         {
             c = visit_children(nav + id_side1 + 1,
-                [&](const bc*)
+                [&](const bc*) -> bool
                 {
                     ++counter;
+                    return {};
                 }, true);
 
             REQUIRE(counter == 0);
@@ -197,9 +200,10 @@ TEST_CASE("breadcrumb tests", "[breadcrumb]")
         SECTION("sibling mode")
         {
             c = visit_children(nav + id_lvl1_1_1,
-                [&](const bc*)
+                [&](const bc*) -> bool
                 {
                     ++counter;
+                    return {};
                 }, true);
 
             REQUIRE(counter == 3);
@@ -216,11 +220,12 @@ TEST_CASE("breadcrumb tests", "[breadcrumb]")
             //set.set(0, false); // rightmost
 
             c = visit_children(nav,
-                [&](const bc* node)
+                [&](const bc* node) -> bool
                 {
                     int index = node - nav;
                     REQUIRE(visited[index] == false);
                     visited.set(index);
+                    return {};
                 }, true);
 
             REQUIRE(visited == set);
