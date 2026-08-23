@@ -183,6 +183,17 @@ TEST_CASE("breadcrumb tests", "[breadcrumb]")
             REQUIRE(counter == 0);
             REQUIRE(c == nav + id_lvl2_0);
         }
+        SECTION("end")
+        {
+            c = visit_children(nav + id_side1 + 1,
+                [&](const bc*)
+                {
+                    ++counter;
+                }, true);
+
+            REQUIRE(counter == 0);
+            REQUIRE(c == nullptr);
+        }
         SECTION("sibling mode")
         {
             c = visit_children(nav + id_lvl1_1_1,
@@ -213,7 +224,7 @@ TEST_CASE("breadcrumb tests", "[breadcrumb]")
                 }, true);
 
             REQUIRE(visited == set);
-            REQUIRE(*c == bc{});
+            REQUIRE(c == nullptr);
         }
     }
     SECTION("misc")

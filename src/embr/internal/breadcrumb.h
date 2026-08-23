@@ -47,7 +47,7 @@ constexpr bool has_children(const Breadcrumb* crumbs)
 // DEBT: estd::optional can't be treated like a literal here, make an issue for that
 template <class Node, class F, class Traits = breadcrumb_traits<Node>>
 ESTD_CPP_CONSTEXPR(14) const Node* visit_children(const Node* node, F&& f,
-    bool sibling_mode = {})
+    bool sibling_mode = false)
 {
     using traits = Traits;
     using int_type = typename traits::int_type;
@@ -81,9 +81,24 @@ ESTD_CPP_CONSTEXPR(14) const Node* visit_children(const Node* node, F&& f,
         // iterate through first-level children (siblings)
         for(;is_child(parent, node); ++node)
         {
-            if(is_null(node))   return node;
+            if(is_null(node))   return nullptr;
 
+#if __cpp_if_constexpr
+            using return_type = decltype(f(node));
+
+            if constexpr (estd::is_void<return_type>::value)
+            {
+                f(node);
+            }
+            else
+            {
+                std::optional<Node*> r = f(node);
+
+                if(r.has_value())   return *r;
+            }
+#else
             f(node);
+#endif
         }
 
         // if it's not a first-level child, then we either went up or down the hierarchy.
@@ -114,7 +129,7 @@ ESTD_CPP_CONSTEXPR(14) const Node* visit_children(const Node* node, F&& f,
             --node;
         }
     }
-    return node;
+    return nullptr;
 }
 
 template <class Node>
@@ -197,23 +212,23 @@ ESTD_CPP_CONSTEXPR(14) const Breadcrumb* search_siblings(const Breadcrumb* crumb
 
 // NOT READY YET
 template <class Node = breadcrumb, class Impl>
-ESTD_CPP_CONSTEXPR(14) const Node* search_siblings_new(const Node* crumbs,
+ESTD_CPP_CONSTEXPR(14) const Node* search_siblings_new(const Node* top,
     const estd::detail::basic_string<Impl>& name, bool sorted = false)
 {
-    const int parent = crumbs->parent;
     using traits = breadcrumb_traits<Node>;
+    const typename traits::int_type parent = top->parent;
 
-    return visit_children(crumbs, [&](const Node* node)
+    return visit_children(top, [&](const Node* node) -> std::optional<Node*>
         {
-            if(node->parent != parent) return;  // Skip children in hopes we find another sibling
+            if(node->parent != parent) return {};  // Skip children in hopes we find another sibling
 
             // traits::name might return const char* or a string_view, so start compare with
             // passed in name who always has a compare.  Perhaps https://github.com/malachi-iot/estdlib/issues/232
             // can offer some oblique assistance
-            const int r = name.compare(traits::name(*crumbs));
+            const int r = name.compare(traits::name(*node));
 
             if(r == 0)
-                return crumbs;
+                return node;
             // r < 0 means that our name lexigraphically sorts before name in breadcrumbs.  We want to always
             // appear before or on sorted names.  For example:
             // d >  a - yes, keep searching
@@ -222,34 +237,9 @@ ESTD_CPP_CONSTEXPR(14) const Node* search_siblings_new(const Node* crumbs,
             else if(sorted && r < 0)
                 return nullptr;
 
-        }, crumbs->parent);
+            return {};
 
-    for(;!traits::is_null(*crumbs); ++crumbs)
-    {
-        // DEBT: We could stop searching if we leave siblings area too.  I think we can look for a parent id
-        // smaller than our own.  Not 100% sure yet though.  Alternatively, track that they're all true children
-        // (requiring an id stack or recursion).  In the meantime, we're just doing some extra/unnecessary searching
-        // but no risk of a false positive
-        if(crumbs->parent != parent) continue;  // Skip children in hopes we find another sibling
-
-        // traits::name might return const char* or a string_view, so start compare with
-        // passed in name who always has a compare.  Perhaps https://github.com/malachi-iot/estdlib/issues/232
-        // can offer some oblique assistance
-        const int r = name.compare(traits::name(*crumbs));
-
-        if(r == 0)
-            return crumbs;
-        // r < 0 means that our name lexigraphically sorts before name in breadcrumbs.  We want to always
-        // appear before or on sorted names.  For example:
-        // d >  a - yes, keep searching
-        // d >  b - yes, keep searching
-        // d <  e - no, no further searching needed
-        else if(sorted && r < 0)
-            return nullptr;
-    }
-
-    // No match
-    return nullptr;
+        }, true);
 }
 
 template <class Breadcrumb>
