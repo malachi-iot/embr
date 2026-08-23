@@ -34,14 +34,16 @@ inline const breadcrumb* search2(const breadcrumb* crumbs, const char* s)
     return nullptr;
 }
 
-template <class Breadcrumb>
-constexpr bool has_children(const Breadcrumb* crumbs)
+// DEBT: Does not do null check, which will create a false positive sometimes for
+// having children
+template <class Node>
+constexpr bool has_children(const Node* nodes)
 {
-    using traits = breadcrumb_traits<Breadcrumb>;
+    using traits = breadcrumb_traits<Node>;
 
     // Paradigm is such that if children exist, they are the very next item after
     // the parent
-    return traits::is_child(*crumbs, *(crumbs + 1));
+    return traits::is_child(*nodes, *(nodes + 1));
 }
 
 // DEBT: estd::optional can't be treated like a literal here, make an issue for that
@@ -150,32 +152,32 @@ constexpr const Node* skip_children(const Node* parent)
 /// Return the first child of a given parent node
 /// @param parent
 /// @return nullptr if no children or end marker, otherwise pointer to first child
-template <class Breadcrumb>
-ESTD_CPP_CONSTEXPR(14) const Breadcrumb* first_child(const Breadcrumb* parent)
+template <class Node>
+ESTD_CPP_CONSTEXPR(14) const Node* first_child(const Node* parent)
 {
-    using traits = breadcrumb_traits<Breadcrumb>;
+    using traits = breadcrumb_traits<Node>;
 
     assert(parent);
     assert(!traits::is_null(*parent));
 
-    const Breadcrumb* child = parent + 1;
+    const Node* child = parent + 1;
 
     return traits::is_child(*parent, *child) ? child : nullptr;
 }
 
-template <class Breadcrumb>
-ESTD_CPP_CONSTEXPR(14) const Breadcrumb* next_sibling(const Breadcrumb* crumbs)
+template <class Node>
+ESTD_CPP_CONSTEXPR(14) const Node* next_sibling(const Node* nodes)
 {
-    using traits = breadcrumb_traits<Breadcrumb>;
+    using traits = breadcrumb_traits<Node>;
 
-    assert(crumbs);
-    assert(!traits::is_null(*crumbs));
+    assert(nodes);
+    assert(!traits::is_null(*nodes));
 
-    const Breadcrumb* sibling = crumbs + 1;
+    const Node* sibling = nodes + 1;
 
     if(traits::is_null(*sibling)) return nullptr;
 
-    return traits::is_sibling(*sibling, *crumbs) ? sibling : nullptr;
+    return traits::is_sibling(*sibling, *nodes) ? sibling : nullptr;
 }
 
 /// Search siblings, inclusive.  No fancy optimizations here, brute forces through
@@ -268,11 +270,11 @@ ESTD_CPP_CONSTEXPR(14) const Node* search_siblings(const Node* top,
     return search_siblings_basic(top, name, sorted);
 }
 
-template <class Breadcrumb>
-constexpr const Breadcrumb* search_siblings(const Breadcrumb* crumbs,
+template <class Node>
+constexpr const Node* search_siblings(const Node* nodes,
     const char* name, bool sorted = false)
 {
-    return search_siblings(crumbs, estd::layer2::const_string(name), sorted);
+    return search_siblings(nodes, estd::layer2::const_string(name), sorted);
 }
 
 
