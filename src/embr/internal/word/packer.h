@@ -7,6 +7,8 @@
 
 namespace embr { namespace internal {
 // DEBT: 'platform' really feels like it out to be 'source'
+// 'size' of 0 means runtime-specified, not super interesting to word<> but encoders/decoders
+// like CoAP who deal with varying length integers will appreciate it
 template <class T, size_t size, estd::endian target,
     estd::endian platform = estd::endian::native>
 struct packer;
@@ -136,6 +138,39 @@ constexpr ForwardIt fill_zero_n(ForwardIt first, Size count)
 
     return first;
 }
+
+// UNTESTED
+template <typename Integer>
+struct packer<Integer, 0, estd::endian::big, estd::endian::big>
+{
+    using value_type = Integer;
+
+    // in is big endian
+    // out is big endian (we are a big endian machine)
+    ESTD_CPP_CONSTEXPR(20) static value_type unpack(const uint8_t* start, const uint8_t* end)
+    {
+        value_type out;
+
+        estd::copy(start, end, (uint8_t*)&out);
+
+        return out;
+    }
+};
+
+// UNTESTED, not ready
+template <typename Integer>
+struct packer<Integer, 0, estd::endian::big, estd::endian::little>
+{
+    using value_type = Integer;
+
+    // in is big endian
+    // out is little endian, and we are a little endian machine
+    ESTD_CPP_CONSTEXPR(20) static value_type unpack(const uint8_t* start, const uint8_t* end)
+    {
+        //std::reverse_copy()
+        abort();
+    }
+};
 
 
 template <typename Integer, size_t N>
