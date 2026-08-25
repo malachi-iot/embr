@@ -3,7 +3,14 @@
 #include <estd/flags.h>
 
 namespace embr { namespace v2 {
-
+/**
+ * Default word behavior:
+ *
+ * - Native C++ int size.  i.e. 24 bit is represented by uint32_t.  This is done since it more closely resembles
+ *   native C++ behaviors and is more performant (speed wise).  'packed' or 'raw' is necessary to actually occupy
+ *   3 bytes
+ * - Unsigned
+ */
 enum class word_options
 {
     none,

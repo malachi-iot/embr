@@ -47,6 +47,10 @@ struct
     word<15> v1;
     word<24> v2;
     word<32> v3;
+
+    static_assert(sizeof(v1) == 2);
+    //static_assert(sizeof(v2) == 3);   // varies depending on options
+    static_assert(sizeof(v3) == 4);
 };
 
 TEST_CASE("word type test", "[word]")
@@ -204,9 +208,11 @@ TEST_CASE("word type test", "[word]")
             }
             SECTION("uint24")
             {
-                using limits = estd::numeric_limits<v2::word<24>>;
+                using uint24 = v2::word<24>;
+                using limits = estd::numeric_limits<uint24>;
 
                 REQUIRE(limits::max() == 0xFFFFFF);
+                static_assert(sizeof(uint24) == 4, "");
             }
             SECTION("uint48")
             {
@@ -355,6 +361,8 @@ TEST_CASE("word type test", "[word]")
             }
             SECTION("packed foreign-endian struct")
             {
+                // 25AUG26 - v2::word_options::raw quiets alignment warning for v3, which kind of makes sense
+                // since a uint32_t* itself is expected to point to an aligned location
                 using type = packed1<opposite_endian>;
 
                 type ps[4], *p;
@@ -379,9 +387,10 @@ TEST_CASE("word type test", "[word]")
 
                 REQUIRE(p->v1.value() == 1);
                 REQUIRE(p->v2.value() == 2);
-                // DEBT: It appears Catch2 takes address of these, thus diminishing
-                // our "safe_align" option
-                REQUIRE(p->v3 == 3);
+                // Catch2 takes address of these, creating a misalignment warning.  Performing
+                // equality outside of REQUIRE avoids that
+                b = p->v3 == 3;
+                REQUIRE(b);
             }
         }
         SECTION("implicit")
