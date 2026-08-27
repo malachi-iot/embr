@@ -212,7 +212,7 @@ TEST_CASE("breadcrumb tests", "[breadcrumb]")
         SECTION("all (virtual root aka sibling mode w/ -1 parent)")
         {
             // -1 due to null terminator
-            constexpr int sz = std::size(nav) - 1;
+            constexpr int sz = estd::size(nav) - 1;
             std::bitset<sz> visited, set;
 
             // Renders from right to left for Catch2

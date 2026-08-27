@@ -1,5 +1,6 @@
 #pragma once
 
+#include <estd/optional.h>
 #include <estd/string.h>
 #include <estd/vector.h>
 
@@ -238,7 +239,7 @@ ESTD_CPP_CONSTEXPR(14) const Node* search_siblings_fancy(const Node* first,
     using traits = breadcrumb_traits<Node>;
     const typename traits::int_type parent = first->parent;
 
-    return visit_children(first, [&](const Node* node) -> std::optional<const Node*>
+    return visit_children(first, [&](const Node* node) -> estd::optional<const Node*>
         {
             if(node->parent != parent) return {};  // Skip children in hopes we find another sibling
 
@@ -285,7 +286,7 @@ constexpr const Node* search_siblings(const Node* nodes,
 /// @return
 /// @remarks Remember, breadcrumbs specifically do not search grandchildren too.  It's one generation at a time.
 template <class Breadcrumb, class String>
-ESTD_CPP_CONSTEXPR(17) static const Breadcrumb* search_children(
+ESTD_CPP_CONSTEXPR(14) static const Breadcrumb* search_children(
     const String& v, const Breadcrumb* top, const Breadcrumb* current)
 {
     // When just starting, pretend to have root node so search siblings without a child
