@@ -8,6 +8,8 @@
 
 #include "property-test.h"
 
+#pragma GCC diagnostic ignored "-Wunused-variable"
+
 using namespace embr;
 
 constexpr experimental::module_info module{"unit tests"};

@@ -10,6 +10,10 @@
 
 #include "test-mem-data.h"
 
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#pragma GCC diagnostic ignored "-Wunused-local-typedefs"
+
+
 using namespace embr::mem;
 
 // Fine grain testing

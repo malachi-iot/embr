@@ -10,6 +10,8 @@
 
 #include "test-mem-data.h"
 
+#pragma GCC diagnostic ignored "-Wunused-local-typedefs"
+
 using namespace embr;
 
 #define FEATURE_EMBR_TRIVIAL_VECTOR_OPT 1

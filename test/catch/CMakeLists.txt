@@ -76,6 +76,8 @@ endif()
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${EXTRA_FILES} ${RESOURCES})
 
+estd_compile_options(${PROJECT_NAME})
+
 target_include_directories(${PROJECT_NAME} PUBLIC ${estd_SOURCE_DIR}/estd/port/esp-idf/fake)
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_11)

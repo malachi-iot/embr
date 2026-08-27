@@ -116,7 +116,7 @@ TEST_CASE("dsp")
             REQUIRE(v1.man() == 5);
             REQUIRE(v1.as<float>() == 1.3125F);
 
-            fp4_4 v2{char(0x94)};
+            fp4_4 v2{static_cast<int8_t>(0x94)};
 
             REQUIRE(v2.man() == 4);
             REQUIRE(int(v2.exp_u()) == 9);

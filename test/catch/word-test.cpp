@@ -16,6 +16,8 @@
 
 using namespace embr;
 
+#pragma GCC diagnostic ignored "-Wunused-variable"
+
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
 constexpr auto opposite_endian = embr::v2::word_options::big_endian;
 #else

@@ -24,7 +24,7 @@ add_library(embr::interface ALIAS ${INTERFACE_NAME})
 
 #CPMAddPackage("gh:malachi-iot/estdlib@0.8.12")
 # Needed for https://github.com/malachi-iot/estdlib/issues/233
-CPMAddPackage("gh:malachi-iot/estdlib#cb62d0f932208334261a925a727361eeb2887e96")
+CPMAddPackage("gh:malachi-iot/estdlib#9d709713aa7cc033ea01ffc6a459c8f64437909e")
 
 # DEBT: Was done for macOS, but it doesn't pick it up.  Once that is resolved,
 # bring these in
@@ -40,6 +40,9 @@ target_compile_features(${INTERFACE_NAME} INTERFACE cxx_std_11)
 target_link_libraries(${INTERFACE_NAME} INTERFACE estd)
 target_link_libraries(${PROJECT_NAME}-static PRIVATE embr::interface)
 target_link_libraries(${PROJECT_NAME}-shared PRIVATE embr::interface)
+
+estd_compile_options(${PROJECT_NAME}-static)
+estd_compile_options(${PROJECT_NAME}-shared)
 
 target_include_directories(${INTERFACE_NAME} INTERFACE .)
 target_include_directories(${PROJECT_NAME}-static PUBLIC .)
