@@ -14,6 +14,8 @@
 
 #include "test-mem-data.h"
 
+#pragma GCC diagnostic ignored "-Wunused-local-typedefs"
+
 using namespace embr;
 
 template <class Pool>

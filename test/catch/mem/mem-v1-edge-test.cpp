@@ -7,6 +7,7 @@
 #include "test-mem-data.h"
 
 //#pragma GCC diagnostic ignored "-Wunused-value"
+#pragma GCC diagnostic ignored "-Wunused-local-typedefs"
 
 using namespace embr::mem;
 

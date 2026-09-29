@@ -23,8 +23,11 @@ namespace detail { inline namespace v1 {
 namespace mixin {
 
 template <class Derived>
-class block_accessors : public block_mode_enum
+class block_accessors
+    // Enabling this brings about warnings for block_diagnostic offsetof
+    //: public block_mode_enum
 {
+    //using modes = block_mode_enum::modes;
 };
 
 }
@@ -34,8 +37,8 @@ struct block_base_uint8 : block_mode_enum, handles_traits_uint8 {};
 class block_diagnostic;
 
 class alignas(void*) block_header_8 :
-    public block_base_uint8
-    //public mixin::block_accessors<block_header_8>
+    public block_base_uint8,
+    public mixin::block_accessors<block_header_8>
 {
     using base_type = block_base_uint8;
     using this_type = block_header_8;
