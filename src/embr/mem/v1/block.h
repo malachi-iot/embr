@@ -12,8 +12,13 @@
 #include "fwd.h"
 #include "traits.h"
 
-#ifndef FEATURE_EMBR_GC_EXT
-#define FEATURE_EMBR_GC_EXT 1
+// Two issues:
+// 1. No gauruntee that a union between 8 and 16-bit header structures will pack the bits the same way
+// 2. null = max of value, but injecting this bit in there interrupts that
+// One thing though is the handles themselves are not bit packed meaning regular ordering and packing rules may
+// apply so we could manually bit-field it up
+#ifndef FEATURE_EMBR_GC_EXP
+#define FEATURE_EMBR_GC_EXP 0
 #endif
 
 namespace embr { namespace mem {
@@ -30,19 +35,45 @@ class block_accessors
     //using modes = block_mode_enum::modes;
 };
 
+template <class Derived>
+class block_invariant
+// Enabling this brings about warnings for block_diagnostic offsetof
+//: public block_mode_enum
+{
+    //using modes = block_mode_enum::modes;
+};
+
 }
 
-struct block_base_uint8 : block_mode_enum, handles_traits_uint8 {};
+template <typename Int>
+struct block_base_uint :
+    block_mode_enum,
+    handles_traits_uint_base<Int>
+{
+    using bytes = estd::units::bytes<unsigned>;
+
+    // How much extra allocation is needed for this block to accomodate rtto.  Note
+    // that RttoBase and RttoVirtual being an "is a" have already allocated that space,
+    // so size is 0.
+    static constexpr bytes rtto_overhead(modes mode)
+    {
+        return bytes(mode == RttoProxy ?
+            // DEBT: This is too "just gotta know" - make something like
+            // rtto_base::proxy_size
+            sizeof(estd::internal::rtto_base::base) : 0);
+    }
+};
+
+using block_base_uint8 = block_base_uint<uint8_t>;
 
 class block_diagnostic;
 
 class alignas(void*) block_header_8 :
-    public block_base_uint8,
+    public block_base_uint<uint8_t>,
     public mixin::block_accessors<block_header_8>
 {
-    using base_type = block_base_uint8;
+    using base_type = block_base_uint<uint8_t>;
     using this_type = block_header_8;
-    using bytes = estd::units::bytes<unsigned>;
 
 protected:
     template <class T>
@@ -56,9 +87,21 @@ protected:
     using rtto_proxy = estd::internal::rtto_base::rtto_base::proxy<>;
     using rtto_virt = estd::internal::rtto_base::virtual_base;
 
+    // To control bit placement, we need to manually manage a few flags
+    struct flags
+    {
+        uint8_t flags_;
+        unsigned lock_count_ : 4;
+        unsigned ref_count_ : 4;
+
+        constexpr modes mode() const { return static_cast<modes>(flags_ & 0x03); }
+        constexpr bool allocated() const { return static_cast<modes>(flags_ >> 4); }
+
+    }   __attribute__((packed));
+
     struct alignas(void*)
     {
-#if FEATURE_EMBR_GC_EXT
+#if FEATURE_EMBR_GC_EXT_EXP
         handle_type ext_ : 1;
 #endif
         handle_type prev_, next_;
@@ -75,7 +118,7 @@ public:
     block_header_8() = default;
     explicit constexpr block_header_8(modes mode, bool allocated,
         handle_type prev = null, handle_type next = null) :
-#if FEATURE_EMBR_GC_EXT
+#if FEATURE_EMBR_GC_EXT_EXP
         ext_{false},
 #endif
         prev_{prev},
@@ -109,17 +152,6 @@ public:
             "Circular linked list not allowed", "");
 
         return {};
-    }
-
-    // How much extra allocation is needed for this block to accomodate rtto.  Note
-    // that RttoBase and RttoVirtual being an "is a" have already allocated that space,
-    // so size is 0.
-    static constexpr bytes rtto_overhead(modes mode)
-    {
-        return bytes(mode == RttoProxy ?
-            // DEBT: This is too "just gotta know" - make something like
-            // rtto_base::proxy_size
-            sizeof(estd::internal::rtto_base::base) : 0);
     }
 
     static constexpr bytes header_size(modes mode)
@@ -189,6 +221,7 @@ class block_diagnostic
 {
     block_8 b{};
 
+    static_assert(sizeof(block_8::flags) == 2);
     static_assert(offsetof(block_8, data_) == sizeof(void*));
     static_assert(sizeof(block_8) == sizeof(void*));
 };

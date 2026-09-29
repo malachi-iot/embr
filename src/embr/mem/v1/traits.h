@@ -10,12 +10,16 @@ namespace embr { namespace mem {
 
 namespace detail { inline namespace v1 {
 
-struct handles_traits_uint8
+template <typename Int>
+struct handles_traits_uint_base
 {
-    using handle_type = uint8_t;
+    using handle_type = Int;
 
     static constexpr handle_type null = estd::numeric_limits<handle_type>::max();
 };
+
+using handles_traits_uint8 = handles_traits_uint_base<uint8_t>;
+using handles_traits_uint16 = handles_traits_uint_base<uint16_t>;
 
 // A little bit of a reversal, Page itself dictates some of the traits - this
 // is to keep C++ error spew smaller
