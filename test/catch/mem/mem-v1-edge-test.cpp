@@ -6,6 +6,7 @@
 
 #include "test-mem-data.h"
 
+//#pragma GCC diagnostic ignored "-Wunused-value"
 
 using namespace embr::mem;
 

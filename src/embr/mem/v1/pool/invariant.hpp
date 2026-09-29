@@ -41,7 +41,7 @@ invariant_result pool_ops<Traits>::invariant() const
     pos_type size_tally{0};
     unsigned handle_count = 0;
 
-    for(; bn.handle != null; ++handle_count, next(bn.block, &bn), bn)
+    for(; bn.handle != null; ++handle_count, next(bn.block, &bn))
     {
         EMBR_MEM_INVARIANT_ASSERT(handle_count < max_handles, "circular list detected", "during next check");
 
@@ -123,9 +123,9 @@ std::ostream& pool_ops<Traits>::dump(std::ostream& out) const
         return out;
     }
 
-    int counter = 0;
+    unsigned counter = 0;
 
-    for(const_bundle bn = get_bundle(*first); bn.handle != null; ++counter, next(bn.block, &bn), bn)
+    for(const_bundle bn = get_bundle(*first); bn.handle != null; ++counter, next(bn.block, &bn))
     {
         if(counter == handles_size)
         {

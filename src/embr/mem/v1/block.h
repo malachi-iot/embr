@@ -12,16 +12,32 @@
 #include "fwd.h"
 #include "traits.h"
 
+#ifndef FEATURE_EMBR_GC_EXT
+#define FEATURE_EMBR_GC_EXT 1
+#endif
+
 namespace embr { namespace mem {
 
 namespace detail { inline namespace v1 {
+
+namespace mixin {
+
+template <class Derived>
+class block_accessors : public block_mode_enum
+{
+};
+
+}
 
 struct block_base_uint8 : block_mode_enum, handles_traits_uint8 {};
 
 class block_diagnostic;
 
-class alignas(void*) block_header_8 : public block_base_uint8
+class alignas(void*) block_header_8 :
+    public block_base_uint8
+    //public mixin::block_accessors<block_header_8>
 {
+    using base_type = block_base_uint8;
     using this_type = block_header_8;
     using bytes = estd::units::bytes<unsigned>;
 
@@ -39,7 +55,10 @@ protected:
 
     struct alignas(void*)
     {
-        uint8_t prev_, next_;
+#if FEATURE_EMBR_GC_EXT
+        handle_type ext_ : 1;
+#endif
+        handle_type prev_, next_;
         modes mode_ : 2;
         bool allocated_ : 1;
         unsigned lock_count_ : 4;
@@ -53,8 +72,11 @@ public:
     block_header_8() = default;
     explicit constexpr block_header_8(modes mode, bool allocated,
         handle_type prev = null, handle_type next = null) :
-        prev_{uint8_t(prev)},
-        next_{uint8_t(next)},
+#if FEATURE_EMBR_GC_EXT
+        ext_{false},
+#endif
+        prev_{prev},
+        next_{next},
         mode_{mode},
         allocated_{allocated},
         lock_count_{0},
@@ -113,7 +135,6 @@ public:
         ref_count_ = 0;
     }
 };
-
 
 class alignas(void*) block_8 : public block_header_8
 {
