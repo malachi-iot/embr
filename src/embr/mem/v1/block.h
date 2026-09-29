@@ -9,17 +9,9 @@
 
 #include "enum.h"
 #include "error.h"
+#include "feature.h"
 #include "fwd.h"
 #include "traits.h"
-
-// Two issues:
-// 1. No gauruntee that a union between 8 and 16-bit header structures will pack the bits the same way
-// 2. null = max of value, but injecting this bit in there interrupts that
-// One thing though is the handles themselves are not bit packed meaning regular ordering and packing rules may
-// apply so we could manually bit-field it up
-#ifndef FEATURE_EMBR_GC_EXP
-#define FEATURE_EMBR_GC_EXP 0
-#endif
 
 namespace embr { namespace mem {
 
@@ -69,10 +61,20 @@ using block_base_uint8 = block_base_uint<uint8_t>;
 class block_diagnostic;
 
 class alignas(void*) block_header_8 :
+#if FEATURE_EMBR_GC_16BIT_EXP
+    // Yes, block_header_8 is a lie in this mode
+    public block_base_uint<uint16_t>,
+    public mixin::block_accessors<block_header_8>
+#else
     public block_base_uint<uint8_t>,
     public mixin::block_accessors<block_header_8>
+#endif
 {
+#if FEATURE_EMBR_GC_16BIT_EXP
+    using base_type = block_base_uint<uint16_t>;
+#else
     using base_type = block_base_uint<uint8_t>;
+#endif
     using this_type = block_header_8;
 
 protected:
@@ -94,16 +96,24 @@ protected:
         unsigned lock_count_ : 4;
         unsigned ref_count_ : 4;
 
-        constexpr modes mode() const { return static_cast<modes>(flags_ & 0x03); }
-        constexpr bool allocated() const { return static_cast<modes>(flags_ >> 4); }
+        static constexpr unsigned modes_mask = 0x03;
+        static constexpr unsigned allocated_pos = 3;
+        static constexpr unsigned ext_pos = 4;
+
+        constexpr modes mode() const { return static_cast<modes>(flags_ & modes_mask); }
+        void mode(modes m)
+        {
+            flags_ = (flags_ & ~modes_mask) | static_cast<unsigned>(m);
+        }
+        constexpr bool allocated() const
+        {
+            return static_cast<modes>(flags_ >> allocated_pos);
+        }
 
     }   __attribute__((packed));
 
     struct alignas(void*)
     {
-#if FEATURE_EMBR_GC_EXT_EXP
-        handle_type ext_ : 1;
-#endif
         handle_type prev_, next_;
         modes mode_ : 2;
         bool allocated_ : 1;
@@ -118,9 +128,6 @@ public:
     block_header_8() = default;
     explicit constexpr block_header_8(modes mode, bool allocated,
         handle_type prev = null, handle_type next = null) :
-#if FEATURE_EMBR_GC_EXT_EXP
-        ext_{false},
-#endif
         prev_{prev},
         next_{next},
         mode_{mode},
