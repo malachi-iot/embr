@@ -15,12 +15,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [v5.4.4, v5.5.4, v6.0.1]
+        version: [v5.4.4, v5.5.5, v6.0.3, v6.1]
         # 06MAY25 - esp32p4 has odd sdkconfig glitch, may be related to our
         # sdkconfig override below (I don't think so though)
         target: [esp32, esp32s3, esp32c3, esp32c6]
         include:
-        - version: v6.0.1
+        - version: v6.0.3
           target: esp32
           qemu: true
         # Almost works but nothing past bootloader seems to visibly run.
@@ -28,9 +28,10 @@ jobs:
         #- version: v6.0.1
         #  target: esp32c3
         #  qemu: true
-        - version: v6.0.1
+        - version: v6.0.3
           target: esp32s3
           qemu: true
+        # v6.1 dislikes esp-helper, so not enabling him here
 
     steps:
     - name: Checkout repo

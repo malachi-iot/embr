@@ -18,8 +18,11 @@ menu "Embr config"
 
         menu "High Resolution Timer Scheduler"
 
+            # 29SEP26 MB DEBT: Using int instead of bool since c++ EMBR_ESP_IDF_TIMER_PROFILING
+            # macro prefers that.  This pertains to v1 scheduler which itself is probably gonna
+            # get phased out
             config EMBR_ESP_IDF_TIMER_PROFILING
-                bool "Timer Scheduler ISR profiler"
+                int "Timer Scheduler ISR profiler"
                 default 0
                 help
                     Turn on or off esp-idf Timer Scheduler ISR profiler, which collects

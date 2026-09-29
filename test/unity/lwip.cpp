@@ -341,6 +341,7 @@ embr::lwip::experimental::netconn_streambuf_untemplated* base_netconn = nullptr;
 // However, LwIP has potentially conflicting instruction:
 // https://lwip.fandom.com/wiki/Netconn_API
 // It's starting to seem that the meaning of the event changes depending on the operation
+[[maybe_unused]]
 static void eval_netconn_callback(
     netconn* nc,
     embr::lwip::experimental::netconn_streambuf_untemplated* n,
@@ -433,6 +434,7 @@ static void test_tcp_netconn_nocopy()
     netconn_nocopy_ostream out(conn_accept);
     TEST_ASSERT_NOT_NULL(conn_accept.native()->callback);
     netconn_istreambuf isb(conn_client);
+    [[maybe_unused]]
     netconn_nocopy_ostreambuf& osb = *out.rdbuf();
     //netconn_istream in(conn_client);
 

@@ -80,8 +80,12 @@ These tests are all for variants of Espressif ESP32
 | 05JAN25 | unity        | QEMU                 | ESP32          | v5.3.2   | Pass     | NOTE: LwIP loopback now flaky due to disabled WiFi init
 | 07MAR25 | unity        | QEMU                 | ESP32S3        | v5.3.2   | Pass     |
 | 16JUN25 | unity        | QEMU                 | ESP32          | v5.4.1   | Pass     |
-| 19APR26 | unity        | QEMU                 | ESP32S3        | v6.0.0   | Pass     |
-| 28JUL26 | unity        | Function Coreboard   | ESP32-S31      | v6.1.0b  | Pass     |
+| 29SEP26 | unity        | QEMU                 | ESP32          | v6.0.3   | Pass     |
+| 29SEP26 | unity        | QEMU                 | ESP32S3        | v6.0.3   | Pass     |
+| 28JUL26 | unity        | Function Coreboard   | ESP32-S31      | v6.1.0   | Pass     |
+| 19APR26 | unity        | QEMU                 | ESP32C5        | v6.1.0   | Compiles | Not run tested
+| 29SEP26 | unity        | QEMU                 | ESP32S3        | v6.1.0   | Fail     | esp-helper.cpp gets mad
+| 29SEP26 | unity        | QEMU                 | ESP32-P4       | v5.5.3   | Fail     | WiFi specific macros inhibit compilation
 
 # References
 
