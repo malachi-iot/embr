@@ -40,7 +40,7 @@ jobs:
       if: matrix.qemu
       run: |
         cat >> $GITHUB_ENV <<EOF
-        BUILD_OPT="-DSDKCONFIG_DEFAULTS=sdkconfig.defaults.ci;sdkconfig.defaults"
+        BUILD_OPT="-DSDKCONFIG_DEFAULTS=sdkconfig.defaults;sdkconfig.defaults.ci"
         EOF
     - name: "build"
       uses: espressif/esp-idf-ci-action@v1
