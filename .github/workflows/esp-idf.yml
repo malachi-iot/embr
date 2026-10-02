@@ -60,7 +60,13 @@ jobs:
         path: 'test/esp-idf/unity'
         # IDF 6.0+ gives us pass through to no-reboot
         command: idf.py qemu --qemu-extra-args="-no-reboot" | tee qemu_output.txt
-    #- name: "qemu output inspection"
-    #  if: ${{ matrix.qemu }}
-    #  run: cat test/esp-idf/unity/qemu_output.txt | "${env.ESTD_ROOT}/tools/esp-idf/unity-gh-action.py"
+    - name: Install estd build-tooling (Unity decoder)
+      if: matrix.qemu
+      run: |
+        # DEBT: pin to estdlib#238 until that lands on alpha; then use @alpha
+        python3 -m pip install \
+          "git+https://github.com/malachi-iot/estdlib.git@refs/pull/238/head#subdirectory=tools"
+    - name: Unity output inspection
+      if: matrix.qemu
+      run: python3 -m estd.unity.decode < test/esp-idf/unity/qemu_output.txt
 
