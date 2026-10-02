@@ -8,10 +8,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    env:
-      # DEBT: Pretty obnoxious way to get at managed component, but it will do
-      ESTD_ROOT:  managed_components/malachi-iot__estd
-
     strategy:
       fail-fast: false
       matrix:
@@ -31,7 +27,11 @@ jobs:
         - version: v6.0.3
           target: esp32s3
           qemu: true
-        # v6.1 dislikes esp-helper, so not enabling him here
+        # Local IDF v6.1 QEMU (SPIRAM off) passed Unity; enable classic esp32 first.
+        # Keep esp32s3 off the v6.1 qemu matrix for now.
+        - version: v6.1
+          target: esp32
+          qemu: true
 
     steps:
     - name: Checkout repo
@@ -39,6 +39,8 @@ jobs:
     - name: qemu option prep
       if: matrix.qemu
       run: |
+        # Later files win. sdkconfig.defaults.ci must follow sdkconfig.defaults so it
+        # also overrides sdkconfig.defaults.${IDF_TARGET} (IDF loads file then file.target).
         cat >> $GITHUB_ENV <<EOF
         BUILD_OPT="-DSDKCONFIG_DEFAULTS=sdkconfig.defaults;sdkconfig.defaults.ci"
         EOF
@@ -69,4 +71,3 @@ jobs:
     - name: Unity output inspection
       if: matrix.qemu
       run: python3 -m estd.unity.decode < test/esp-idf/unity/qemu_output.txt
-

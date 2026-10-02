@@ -1,5 +1,5 @@
 CONFIG_EMBR_QEMU_MODE=y
-# Must be listed AFTER sdkconfig.defaults(.esp32s3) in SDKCONFIG_DEFAULTS so this wins.
+# QEMU override for target defaults (e.g. sdkconfig.defaults.esp32s3 SPIRAM=y).
 # QEMU ESP32-S3: SPIRAM shares MMU vaddr with flash mmap; SPIRAM=y breaks nvs_flash_init
 # (esp_mmu_map: no such vaddr range). Hardware keeps SPIRAM via sdkconfig.defaults.esp32s3.
 # Evidence / same workaround:
