@@ -27,8 +27,6 @@ jobs:
         - version: v6.0.3
           target: esp32s3
           qemu: true
-        # Local IDF v6.1 QEMU (SPIRAM off) passed Unity; enable classic esp32 first.
-        # Keep esp32s3 off the v6.1 qemu matrix for now.
         - version: v6.1
           target: esp32
           qemu: true
