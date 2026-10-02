@@ -8,10 +8,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    env:
-      # DEBT: Pretty obnoxious way to get at managed component, but it will do
-      ESTD_ROOT:  managed_components/malachi-iot__estd
-
     strategy:
       fail-fast: false
       matrix:
@@ -31,7 +27,9 @@ jobs:
         - version: v6.0.3
           target: esp32s3
           qemu: true
-        # v6.1 dislikes esp-helper, so not enabling him here
+        - version: v6.1
+          target: esp32
+          qemu: true
 
     steps:
     - name: Checkout repo
@@ -39,8 +37,10 @@ jobs:
     - name: qemu option prep
       if: matrix.qemu
       run: |
+        # Later files win. sdkconfig.defaults.ci must follow sdkconfig.defaults so it
+        # also overrides sdkconfig.defaults.${IDF_TARGET} (IDF loads file then file.target).
         cat >> $GITHUB_ENV <<EOF
-        BUILD_OPT="-DSDKCONFIG_DEFAULTS=sdkconfig.defaults.ci;sdkconfig.defaults"
+        BUILD_OPT="-DSDKCONFIG_DEFAULTS=sdkconfig.defaults;sdkconfig.defaults.ci"
         EOF
     - name: "build"
       uses: espressif/esp-idf-ci-action@v1
@@ -60,7 +60,11 @@ jobs:
         path: 'test/esp-idf/unity'
         # IDF 6.0+ gives us pass through to no-reboot
         command: idf.py qemu --qemu-extra-args="-no-reboot" | tee qemu_output.txt
-    #- name: "qemu output inspection"
-    #  if: ${{ matrix.qemu }}
-    #  run: cat test/esp-idf/unity/qemu_output.txt | "${env.ESTD_ROOT}/tools/esp-idf/unity-gh-action.py"
-
+    - name: Install estd build-tooling (Unity decoder)
+      if: matrix.qemu
+      run: |
+        python3 -m pip install \
+          "git+https://github.com/malachi-iot/estdlib.git@alpha#subdirectory=tools"
+    - name: Unity output inspection
+      if: matrix.qemu
+      run: python3 -m estd.unity.decode < test/esp-idf/unity/qemu_output.txt
