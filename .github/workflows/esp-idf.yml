@@ -63,9 +63,8 @@ jobs:
     - name: Install estd build-tooling (Unity decoder)
       if: matrix.qemu
       run: |
-        # DEBT: pin to estdlib#238 until that lands on alpha; then use @alpha
         python3 -m pip install \
-          "git+https://github.com/malachi-iot/estdlib.git@refs/pull/238/head#subdirectory=tools"
+          "git+https://github.com/malachi-iot/estdlib.git@alpha#subdirectory=tools"
     - name: Unity output inspection
       if: matrix.qemu
       run: python3 -m estd.unity.decode < test/esp-idf/unity/qemu_output.txt
