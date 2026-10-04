@@ -13,10 +13,13 @@ concept ContainerProviderTraits = requires
 };
 
 template <class T>
-concept HandlesTraits = ContainerProviderTraits<T> && requires
+concept HandleTraits = requires
 {
     typename T::handle_type;
 };
+
+template <class T>
+concept HandlesTraits = ContainerProviderTraits<T> && HandleTraits<T>;
 
 }
 

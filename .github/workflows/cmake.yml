@@ -18,6 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        standard: [17, 20]
         compiler:
           - name: gcc
             c: gcc
@@ -45,6 +46,7 @@ jobs:
         options: >
           CMAKE_C_COMPILER=${{ matrix.compiler.c }}
           CMAKE_CXX_COMPILER=${{ matrix.compiler.cxx }}
+          CMAKE_CXX_STANDARD=${{ matrix.standard }}
           CMAKE_BUILD_TYPE=${{ matrix.release }}
 
     - name: Test

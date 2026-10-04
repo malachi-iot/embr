@@ -7,6 +7,7 @@
 #include <ostream>
 #endif
 
+#include "concepts.h"
 #include "enum.h"
 #include "error.h"
 #include "feature.h"
@@ -41,7 +42,7 @@ struct block_base_uint : block_mode_enum
 {
     using bytes = estd::units::bytes<unsigned>;
 
-    // How much extra allocation is needed for this block to accomodate rtto.  Note
+    // How much extra allocation is needed for this block to accommodate rtto.  Note
     // that RttoBase and RttoVirtual being an "is a" have already allocated that space,
     // so size is 0.
     static constexpr bytes rtto_overhead(modes mode)
@@ -55,7 +56,7 @@ struct block_base_uint : block_mode_enum
 
 class block_diagnostic;
 
-template <ESTD_CPP_CONCEPT(HandlesTraits) HandlesTraits>
+template <ESTD_CPP_CONCEPT(concepts::HandleTraits) HandlesTraits>
 class alignas(void*) block_header_base :
     public HandlesTraits,
     public block_base_uint,
