@@ -37,10 +37,7 @@ class block_invariant
 
 }
 
-template <typename Int>
-struct block_base_uint :
-    block_mode_enum,
-    handles_traits_uint_base<Int>
+struct block_base_uint : block_mode_enum
 {
     using bytes = estd::units::bytes<unsigned>;
 
@@ -56,32 +53,27 @@ struct block_base_uint :
     }
 };
 
-using block_base_uint8 = block_base_uint<uint8_t>;
-
 class block_diagnostic;
 
-class alignas(void*) block_header_8 :
-#if FEATURE_EMBR_GC_16BIT_EXP
-    // Yes, block_header_8 is a lie in this mode
-    public block_base_uint<uint16_t>,
-    public mixin::block_accessors<block_header_8>
-#else
-    public block_base_uint<uint8_t>,
-    public mixin::block_accessors<block_header_8>
-#endif
+template <ESTD_CPP_CONCEPT(HandlesTraits) HandlesTraits>
+class alignas(void*) block_header_base :
+    public HandlesTraits,
+    public block_base_uint,
+    public mixin::block_accessors<block_header_base<HandlesTraits>>
 {
-#if FEATURE_EMBR_GC_16BIT_EXP
-    using base_type = block_base_uint<uint16_t>;
-#else
-    using base_type = block_base_uint<uint8_t>;
-#endif
-    using this_type = block_header_8;
+    using this_type = block_header_base;
+
+public:
+    using traits_type = HandlesTraits;
+
+    using typename traits_type::handle_type;
+    using traits_type::null;
 
 protected:
     template <class T>
     using rtto = estd::internal::rtto<T>;
 
-    template <class HandlesTraits, class Block>
+    template <class HandlesTraits2, class Block>
     friend struct bundle_base;
 
     // DEBT: rtto base is WAY overloaded.  Needs attention
@@ -118,6 +110,7 @@ protected:
     {
         modes mode_ : 2;
         bool allocated_ : 1;
+        bool ext_ : 1;              // Flag to indicate 8 or 16 bit mode (EXPERIMENTAL, INACTIVE)
         unsigned lock_count_ : 4;
         unsigned ref_count_ : 4;
         handle_type prev_, next_;
@@ -128,11 +121,12 @@ protected:
     char data_[0];
 
 public:
-    block_header_8() = default;
-    explicit constexpr block_header_8(modes mode, bool allocated,
+    block_header_base() = default;
+    explicit constexpr block_header_base(modes mode, bool allocated,
         handle_type prev = null, handle_type next = null) :
         mode_{mode},
         allocated_{allocated},
+        ext_{false},
         lock_count_{0},
         ref_count_{0},
         prev_{prev},
@@ -140,7 +134,7 @@ public:
         data_{}         // Just a compiler formality.  Obviously not doing anything
     {}
 
-    block_header_8(const this_type&) = default;
+    block_header_base(const this_type&) = default;
 
     this_type& operator=(const this_type&) = default;
     this_type& operator=(this_type&&) = default;
@@ -180,6 +174,8 @@ public:
         ref_count_ = 0;
     }
 };
+
+using block_header_8 = block_header_base<handles_traits_uint8>;
 
 class alignas(void*) block_8 : public block_header_8
 {
@@ -238,7 +234,7 @@ class block_diagnostic
 
 
 // EXPERIMENTAL
-class alignas(void*) block_6 : block_base_uint8
+class alignas(void*) block_6 : block_base_uint, handles_traits_uint_base<uint8_t>
 {
     struct alignas(void*)
     {

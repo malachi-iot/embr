@@ -39,6 +39,7 @@ static void battery(Pool& pool, int it, unsigned seed)
     VERIFY(allocated_handles == 1);
 
     {
+        [[maybe_unused]]
         int counter1 = 0, counter2 = 0;
 
         type fl1(&pool);
