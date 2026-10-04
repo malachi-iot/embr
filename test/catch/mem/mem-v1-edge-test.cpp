@@ -390,7 +390,7 @@ TEST_CASE("gc mem v1 edge cases", "[memory][gc]")
             // In fact this scenario never had a specific issue, I made mistake during battery test logic itself.
             // Keeping anyway
             assemble_pool(op, test::pool12);
-            int counter = 0;
+            [[maybe_unused]] int counter = 0;
 
             op.assess(&frag);
 

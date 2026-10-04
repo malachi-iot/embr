@@ -4,6 +4,7 @@
 #include <estd/span.h>
 
 #include "concepts.h"
+#include "feature.h"
 #include "fwd.h"
 
 namespace embr { namespace mem {
@@ -46,7 +47,11 @@ constexpr typename Page::unit_type page_traits<Page>::zero;
 
 template <class Container>
 struct handles_traits :
+#if FEATURE_EMBR_GC_16BIT_EXP
+    handles_traits_uint16,
+#else
     handles_traits_uint8,
+#endif
     container_traits<Container>,
     page_traits<typename container_traits<Container>::value_type>
 {

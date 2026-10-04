@@ -229,6 +229,7 @@ public:
         // FIX: We need the non-pointer variety of handle_with_offset
         // FIX: Feed this non-nullptr
         // FIX: We need to not use this temporal pointer
+        [[maybe_unused]]
         control_type* control = base_type::lock();
         base_type::unlock();
 

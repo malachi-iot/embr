@@ -90,6 +90,8 @@ protected:
     using rtto_virt = estd::internal::rtto_base::virtual_base;
 
     // To control bit placement, we need to manually manage a few flags
+    // 04OCT26 DEBT: Probably don't need to do this actually, since bit field is
+    // stable *enough*
     struct flags
     {
         uint8_t flags_;
@@ -114,11 +116,12 @@ protected:
 
     struct alignas(void*)
     {
-        handle_type prev_, next_;
         modes mode_ : 2;
         bool allocated_ : 1;
         unsigned lock_count_ : 4;
         unsigned ref_count_ : 4;
+        handle_type prev_, next_;
+
     }   __attribute__((packed));
 
     // DEBT: Apparently this and flexible array is a GCC extension.
@@ -128,12 +131,12 @@ public:
     block_header_8() = default;
     explicit constexpr block_header_8(modes mode, bool allocated,
         handle_type prev = null, handle_type next = null) :
-        prev_{prev},
-        next_{next},
         mode_{mode},
         allocated_{allocated},
         lock_count_{0},
         ref_count_{0},
+        prev_{prev},
+        next_{next},
         data_{}         // Just a compiler formality.  Obviously not doing anything
     {}
 
@@ -226,7 +229,7 @@ public:
 // Block is NOT packed since following data wants to sit comfortably on aligned pointer boundary
 class block_diagnostic
 {
-    block_8 b{};
+    [[maybe_unused]] block_8 b{};
 
     static_assert(sizeof(block_8::flags) == 2);
     static_assert(offsetof(block_8, data_) == sizeof(void*));
