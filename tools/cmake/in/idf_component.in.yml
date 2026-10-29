@@ -3,10 +3,17 @@ version: "${PROJECT_VERSION}"
 description: "${PROJECT_DESCRIPTION}"
 url: "${PROJECT_HOMEPAGE_URL}"
 repository: "${PROJECT_HOMEPAGE_URL}"
+issues: "${PROJECT_HOMEPAGE_URL}/issues"
 license: "Apache-2.0"
+tags:
+  - cpp
 files:
   exclude:
     - "test/**/*"
+    - "doc/**/*"
+    - "tools/ci/**/*"
+    - "**/.*"
+    - "**/.*/**/*"
     - "CHANGELOG.md"
 dependencies:
   malachi-iot/estd:

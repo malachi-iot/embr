@@ -1,0 +1,26 @@
+name: ESP Component Registry
+
+on:
+  push:
+    tags: [ "v*" ]
+    branches: [ "alpha", "feat/**" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v6
+    - name: Verify tag matches manifest version
+      if: startsWith(github.ref, 'refs/tags/')
+      run: tools/ci/check_version.py "$GITHUB_REF_NAME"
+    - name: Upload (dry run on branches, real on tags)
+      uses: espressif/upload-components-ci-action@v2
+      with:
+        components: "embr:."
+        namespace: "embr-iot"
+        api_token: ${{ secrets.IDF_COMPONENT_API_TOKEN }}
+        dry_run: ${{ startsWith(github.ref, 'refs/tags/') && '' || 'true' }}
