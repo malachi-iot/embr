@@ -3,10 +3,17 @@ version: "0.4.9"
 description: "Embedded utility library"
 url: "https://github.com/malachi-iot/embr"
 repository: "https://github.com/malachi-iot/embr"
+issues: "https://github.com/malachi-iot/embr/issues"
 license: "Apache-2.0"
+tags:
+  - cpp
 files:
   exclude:
     - "test/**/*"
+    - "doc/**/*"
+    - "tools/ci/**/*"
+    - "**/.*"
+    - "**/.*/**/*"
     - "CHANGELOG.md"
 dependencies:
   malachi-iot/estd:
