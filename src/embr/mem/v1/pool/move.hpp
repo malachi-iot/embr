@@ -76,7 +76,7 @@ void pool_ops<Traits>::virtual_swap(bundle& lhs, bundle& rhs)
 
 
 template <class Traits>
-void pool_ops<Traits>::virtual_move(bundle& from, bundle& to)
+EMBR_GC_INLINE void pool_ops<Traits>::virtual_move(bundle& from, bundle& to)
 {
     assert(from.page->is_null() == false && to.page->is_null());
 
@@ -126,7 +126,7 @@ auto pool_ops<Traits>::resize(bundle bn, pos_type new_sz) -> block*
 
 // DEBT: We need a real return code (i.e. pool_codes), not this semi-soft validated_result
 template <class Traits>
-validated_result pool_ops<Traits>::move(
+EMBR_GC_INLINE validated_result pool_ops<Traits>::move(
     bundle from, bundle to,
     unsigned logical_sz,
     unsigned desired_logical_sz,

@@ -141,23 +141,23 @@ public:
 
     // Best to have this guy here and not in above pool so that we make no assumptions
     // about page_type and handle_type
-    const_bundle get_bundle(const page_type& page, handle_type handle) const
+    EMBR_GC_INLINE const_bundle get_bundle(const page_type& page, handle_type handle) const
     {
         return { storage_.block(page.pos()), &page, handle };
     }
 
-    const_bundle get_bundle(handle_type h) const
+    EMBR_GC_INLINE const_bundle get_bundle(handle_type h) const
     {
         return get_bundle(handles_[h], h);
     }
 
-    const_bundle get_bundle(const page_type& page) const
+    EMBR_GC_INLINE const_bundle get_bundle(const page_type& page) const
     {
         return get_bundle(page, &page - &handles_[0]);
     }
 
     template <class ...Args>
-    bundle get_bundle(Args&&...args)
+    EMBR_GC_INLINE bundle get_bundle(Args&&...args)
     {
         return estd::as_const(*this).get_bundle(std::forward<Args>(args)...).unconst();
     }

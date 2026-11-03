@@ -24,13 +24,13 @@ class pool_crtp
 
 public:
     template <class Handle>
-    void* lock(Handle h)
+    EMBR_GC_INLINE void* lock(Handle h)
     {
         return OPS.lock(h);
     }
 
     template <class Handle>
-    void unlock(Handle h)
+    EMBR_GC_INLINE void unlock(Handle h)
     {
         OPS.unlock(h);
     }
@@ -42,7 +42,7 @@ public:
     }
 
     template <class Handle>
-    bool realloc(Handle h, unsigned size, Handle* out = nullptr)
+    EMBR_GC_INLINE bool realloc(Handle h, unsigned size, Handle* out = nullptr)
     {
         // Low level ops.realloc purely takes physical size, so we
         // need to account for block header plus aliasing

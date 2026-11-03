@@ -86,8 +86,8 @@ struct bundle_base : block_mode_enum
         return block->mode_ == RttoProxy ? block->proxy()->storage() : block->data();
     }
 
-    constexpr bool has_prev() const { return block->prev() != null; }
-    constexpr bool has_next() const { return block->next() != null; }
+    EMBR_GC_INLINE constexpr bool has_prev() const { return block->prev() != null; }
+    EMBR_GC_INLINE constexpr bool has_next() const { return block->next() != null; }
 
     constexpr bytes_unit<unsigned> header_size() const
     {

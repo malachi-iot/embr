@@ -159,6 +159,7 @@ public:
     }
 
     template <class ...Args2>
+    EMBR_GC_INLINE
     void invoke(Args2...args)
     {
         using impl_type = mem::detail::v1::vector<value_type, Pool, pool>;
@@ -182,7 +183,7 @@ public:
 
 // DEBT: Doesn't belong in list.h here
 template <class It, class End, class F, class Mutex = embr::internal::noop_mutex>
-void multi_op(It begin, End end, F&& f, Mutex mutex = {})
+EMBR_GC_INLINE_FLATTEN void multi_op(It begin, End end, F&& f, Mutex mutex = {})
 {
     mutex.lock();
 
@@ -193,7 +194,7 @@ void multi_op(It begin, End end, F&& f, Mutex mutex = {})
 
 // DEBT: It and End subject to easy errors
 template <class Traits, class It, class End, class Mutex>
-void multi_lock(detail::v1::pool_ops<Traits>& ops, It begin, End end, Mutex mutex)
+EMBR_GC_INLINE void multi_lock(detail::v1::pool_ops<Traits>& ops, It begin, End end, Mutex mutex)
 {
     using handle_type = typename Traits::handles_type::handle_type;
     using type = detail::v1::sparse_handle<void, handle_type>;
@@ -207,7 +208,7 @@ void multi_lock(detail::v1::pool_ops<Traits>& ops, It begin, End end, Mutex mute
 
 // DEBT: It and End subject to easy errors
 template <class Traits, class It, class End, class Mutex>
-void multi_unlock(detail::v1::pool_ops<Traits>& ops, It begin, End end, Mutex mutex)
+EMBR_GC_INLINE void multi_unlock(detail::v1::pool_ops<Traits>& ops, It begin, End end, Mutex mutex)
 {
     using handle_type = typename Traits::handles_type::handle_type;
     using type = detail::v1::sparse_handle<void, handle_type>;

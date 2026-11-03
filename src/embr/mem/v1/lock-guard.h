@@ -40,7 +40,7 @@ protected:
         move_from.data_ = nullptr;
     }
 
-    ~lock_guard_base()
+    EMBR_GC_INLINE_FLATTEN ~lock_guard_base()
     {
         // NOTE: Arguably could inspect has_value() instead
         if(data_)   base_type::unlock();
@@ -71,7 +71,7 @@ public:
     {
     }
 
-    constexpr explicit lock_guard(hnd h) :
+    EMBR_GC_INLINE_FLATTEN constexpr explicit lock_guard(hnd h) :
         base_type{h.lock(), h}
     {
     }
@@ -99,7 +99,7 @@ public:
     ESTD_CPP_STD_VALUE_TYPE(T)
 
     template <class ...Args>
-    constexpr lock_guard(Args&&...args) :
+    EMBR_GC_INLINE_FLATTEN constexpr lock_guard(Args&&...args) :
         base_type(std::forward<Args>(args)...) {}
 
     reference operator*() { return *(pointer)data_; }

@@ -6,6 +6,16 @@
 
 #include "../enum.h"    // DEBT: Clumsy
 
+#ifndef FEATURE_EMBR_GC_AGGRESSIVE_INLINE
+#define FEATURE_EMBR_GC_AGGRESSIVE_INLINE 1
+#endif
+
+#if FEATURE_EMBR_GC_AGGRESSIVE_INLINE
+#define EMBR_GC_INLINE inline __attribute__((always_inline))
+#define EMBR_GC_FLATTEN __attribute__((flatten))
+#define EMBR_GC_INLINE_FLATTEN inline __attribute__((always_inline, flatten))
+#endif
+
 namespace embr { namespace mem {
 
 namespace detail { inline namespace v1 {

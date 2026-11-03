@@ -239,7 +239,7 @@ void* pool_ops<Traits>::lock(bundle bn)
 
 template <class Traits>
 template <class Mutex>
-void* pool_ops<Traits>::lock(handle_type h, Mutex mutex)
+EMBR_GC_INLINE_FLATTEN void* pool_ops<Traits>::lock(handle_type h, Mutex mutex)
 {
 #if __has_builtin(__atomic_compare_exchange_n)
 #endif
@@ -251,7 +251,7 @@ void* pool_ops<Traits>::lock(handle_type h, Mutex mutex)
 
 template <class Traits>
 template <class Mutex>
-void pool_ops<Traits>::unlock(handle_type h, Mutex mutex)
+EMBR_GC_INLINE_FLATTEN void pool_ops<Traits>::unlock(handle_type h, Mutex mutex)
 {
     estd::lock_guard<Mutex> lg(mutex);
 
@@ -314,6 +314,7 @@ auto pool_ops<Traits>::alloced() const -> bytes
 
 
 template <class Traits>
+EMBR_GC_INLINE
 bool pool_ops<Traits>::realloc(bundle bn, pos_type phys_sz, handle_type* out)
 {
     // Don't try to shrink down below 1 block size.  Silently ignore

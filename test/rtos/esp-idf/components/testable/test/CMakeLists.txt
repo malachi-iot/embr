@@ -37,7 +37,7 @@ set(COMPONENT_REQUIRES
 
 register_component()
 
-component_compile_options("-Wstack-usage=512")
+target_compile_options(${COMPONENT_LIB} PRIVATE -Wstack-usage=128 -Wno-error=stack-usage=)
 
 # Doesn't appear to make a difference
 #component_compile_options("-Wstack-usage=128" "-DFEATURE_ESTD_CHARTRAITS=1")

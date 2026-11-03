@@ -15,6 +15,7 @@
 #include "traits.h"
 
 #include "pool/crtp.h"
+#include "pool/fwd.h"
 #include "pool/ops.h"
 
 #if FEATURE_STD_OSTREAM

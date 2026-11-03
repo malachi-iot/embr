@@ -22,7 +22,7 @@ protected:
     using handle_type = Handle;
 
     template <ESTD_CPP_CONCEPT(mem::concepts::Pool) Pool, class ...Args2>
-    static R invoke_ll(estd::false_type, Pool* pool, handle_type h, Args2&&...args)
+    EMBR_GC_INLINE static R invoke_ll(estd::false_type, Pool* pool, handle_type h, Args2&&...args)
     {
         auto underlying = static_cast<model_base*>(pool->lock(h));
 
@@ -34,7 +34,7 @@ protected:
     }
 
     template <ESTD_CPP_CONCEPT(mem::concepts::Pool) Pool, class ...Args2>
-    static void invoke_ll(estd::true_type, Pool* pool, handle_type h, Args2&&...args)
+    EMBR_GC_INLINE static void invoke_ll(estd::true_type, Pool* pool, handle_type h, Args2&&...args)
     {
         auto underlying = static_cast<model_base*>(pool->lock(h));
 
@@ -56,7 +56,7 @@ public:
 
 
     template <ESTD_CPP_CONCEPT(mem::concepts::Pool) Pool, class ...Args2>
-    static R invoke(Pool* pool, handle_type h, Args2&&...args)
+    EMBR_GC_INLINE static R invoke(Pool* pool, handle_type h, Args2&&...args)
     {
         return invoke_ll(estd::is_void<R>{}, pool, h, std::forward<Args2>(args)...);
     }
@@ -75,7 +75,7 @@ public:
     constexpr explicit sparse_function(Args2&&...args) : base_type(std::forward<Args2>(args)...) {}
 
     template <class ...Args2>
-    constexpr R invoke(Pool* pool, Args2&&...args)
+    EMBR_GC_INLINE constexpr R invoke(Pool* pool, Args2&&...args)
     {
         return base_type::invoke(pool, base_type::handle_, std::forward<Args2>(args)...);
     }

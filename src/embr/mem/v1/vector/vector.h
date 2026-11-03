@@ -297,7 +297,7 @@ public:
         }
     }
 
-    bool reallocate(unsigned new_cap)
+    EMBR_GC_INLINE bool reallocate(unsigned new_cap)
     {
         // DEBT: Check estd, it may be that reallocate is NEVER called in this unallocated
         // condition.  Leaning strongly towards it handles that for us

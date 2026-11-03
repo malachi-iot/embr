@@ -200,7 +200,7 @@ protected:
     ops_type& ops() { return value()->ops(); }
     constexpr const ops_type& ops() const { return value()->ops(); }
 
-    bundle get_bundle() { return ops().get_bundle(handle_); }
+    EMBR_GC_INLINE bundle get_bundle() { return ops().get_bundle(handle_); }
 
     // Low-level call which presumes we're already locked
     void* data()
@@ -241,12 +241,12 @@ public:
 
     constexpr lock_handle(const lock_handle&) = default;
 
-    void* lock() const
+    EMBR_GC_INLINE void* lock() const
     {
         return value()->lock(handle_);
     }
 
-    void unlock() const
+    EMBR_GC_INLINE void unlock() const
     {
         value()->unlock(handle_);
     }
