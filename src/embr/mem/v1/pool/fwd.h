@@ -11,9 +11,11 @@
 #endif
 
 #if FEATURE_EMBR_GC_AGGRESSIVE_INLINE
-#define EMBR_GC_INLINE inline __attribute__((always_inline))
 #define EMBR_GC_FLATTEN __attribute__((flatten))
-#define EMBR_GC_INLINE_FLATTEN inline __attribute__((always_inline, flatten))
+//#define EMBR_GC_INLINE inline __attribute__((always_inline))
+//#define EMBR_GC_INLINE_FLATTEN inline __attribute__((always_inline, flatten))
+#define EMBR_GC_INLINE inline __attribute__((always_inline, optimize("tree-sra")))
+#define EMBR_GC_INLINE_FLATTEN inline __attribute__((always_inline, flatten, optimize("tree-sra")))
 #endif
 
 namespace embr { namespace mem {

@@ -1,0 +1,4 @@
+#!/bin/bash
+
+puncover --gcc-tools-base "$(dirname "$(which xtensa-esp32-elf-objdump)")/xtensa-esp32-elf-" \
+    --elf_file build/unit_test_test.elf --build_dir build --src_root="$PWD/../.."

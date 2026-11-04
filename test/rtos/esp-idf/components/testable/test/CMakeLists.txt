@@ -37,6 +37,9 @@ set(COMPONENT_REQUIRES
 
 register_component()
 
+# For diagnostics only.  Generate .su stack usage reports and warnings if > 128 bytes
+# of stack usage
+target_compile_options(${COMPONENT_LIB} PRIVATE -fstack-usage)
 target_compile_options(${COMPONENT_LIB} PRIVATE -Wstack-usage=128 -Wno-error=stack-usage=)
 
 # Doesn't appear to make a difference
