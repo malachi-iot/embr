@@ -15,6 +15,10 @@ using namespace embr;
 
 using pool_type = mem::freertos::layer1::pool<256, 4>;
 
+// 05NOV26 MB TODO: Add:
+// FreeRTOS local (non global, static) mutex flavor, to test that we really aren't
+// copying estd::mutex around (which we are right now in embr::mem)
+
 #if FEATURE_EMBR_GLOBAL_GC
 static void test_mem_gc_global()
 {
