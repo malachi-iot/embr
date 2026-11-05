@@ -90,11 +90,11 @@ public:
     /// @param now
     /// @return true if item was processed and scheduled again, false otherwise
     template <class Mutex = noop_mutex>
-    process_result process_one(time_point now, Mutex = {});
+    process_result process_one(time_point now, Mutex&& = {});
     void process(time_point now);
 
     template <class Mutex = noop_mutex>
-    bool reschedule(pointer, Mutex = {});
+    bool reschedule(pointer, Mutex&& = {});
 
     // Not mutex protected below this line, be careful
 
