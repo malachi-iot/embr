@@ -120,7 +120,7 @@ public:
     }
 
     template <class F>
-    value_type push_back(F&& f)
+    EMBR_GC_INLINE value_type push_back(F&& f)
     {
         // DEBT: Can/should we consider an emplace?  Probably not worth it since sparse_function truly is
         // sparse
@@ -146,7 +146,7 @@ public:
     }
 
     template <class F>
-    friend funclist& operator+=(funclist& self, F&& f)
+    EMBR_GC_INLINE friend funclist& operator+=(funclist& self, F&& f)
     {
         self.push_back(std::forward<F>(f));
         return self;
@@ -160,7 +160,7 @@ public:
 
     template <class ...Args2>
     EMBR_GC_INLINE
-    void invoke(Args2...args)
+    void invoke(Args2&&...args)
     {
         using impl_type = mem::detail::v1::vector<value_type, Pool, pool>;
         impl_type& impl = this->impl();
@@ -193,6 +193,8 @@ EMBR_GC_INLINE_FLATTEN void multi_op(It begin, End end, F&& f, Mutex mutex = {})
 }
 
 // DEBT: It and End subject to easy errors
+// 04NOV26 MB - See if we can consolidate this style with https://en.cppreference.com/cpp/thread/lock,
+// probably not because we need a runtime begin/end but worth thinking about anyway
 template <class Traits, class It, class End, class Mutex>
 EMBR_GC_INLINE void multi_lock(detail::v1::pool_ops<Traits>& ops, It begin, End end, Mutex mutex)
 {

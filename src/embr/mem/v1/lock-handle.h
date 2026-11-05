@@ -256,14 +256,15 @@ public:
         value()->dealloc(handle_);
     }
 
+    EMBR_GC_INLINE
     constexpr const_bundle get_bundle() const { return ops().get_bundle(handle_); }
 
-    estd::units::bytes<unsigned> logical_size() const
+    EMBR_GC_INLINE estd::units::bytes<unsigned> logical_size() const
     {
         return ops().logical_size(get_bundle());
     }
 
-    pos_type phys_size() const
+    EMBR_GC_INLINE pos_type phys_size() const
     {
         return ops().phys_size(get_bundle());
     }

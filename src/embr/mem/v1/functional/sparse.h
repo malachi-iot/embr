@@ -22,7 +22,7 @@ protected:
     using handle_type = Handle;
 
     template <ESTD_CPP_CONCEPT(mem::concepts::Pool) Pool, class ...Args2>
-    EMBR_GC_INLINE static R invoke_ll(estd::false_type, Pool* pool, handle_type h, Args2&&...args)
+    EMBR_GC_INLINE static R invoke_ll(estd::false_type, Pool* pool, handle_type h, Args2...args)
     {
         auto underlying = static_cast<model_base*>(pool->lock(h));
 
@@ -34,7 +34,7 @@ protected:
     }
 
     template <ESTD_CPP_CONCEPT(mem::concepts::Pool) Pool, class ...Args2>
-    EMBR_GC_INLINE static void invoke_ll(estd::true_type, Pool* pool, handle_type h, Args2&&...args)
+    EMBR_GC_INLINE static void invoke_ll(estd::true_type, Pool* pool, handle_type h, Args2...args)
     {
         auto underlying = static_cast<model_base*>(pool->lock(h));
 
