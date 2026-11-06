@@ -98,6 +98,30 @@ static void test_mem_gc_global_funclist()
 
     TEST_ASSERT_EQUAL(5, counter);
 }
+
+static void test_mem_gc_global_funclist_bigparam()
+{
+    using namespace embr::mem::freertos;
+
+    struct thingy
+    {
+        int val1;
+        const char* val2;
+        double val3;
+    };
+
+    thingy v1{};
+
+    funclist<void(thingy)> fl;
+
+    fl += [&](thingy copy)
+    {
+        v1 = copy;
+    };
+
+    fl.invoke(thingy{0, "Hello", 5});
+}
+
 #endif
 
 
@@ -151,6 +175,7 @@ void test_mem_gc()
 #if FEATURE_EMBR_GLOBAL_GC
     RUN_TEST(test_mem_gc_global);
     RUN_TEST(test_mem_gc_global_funclist);
+    RUN_TEST(test_mem_gc_global_funclist_bigparam);
     RUN_TEST(test_mem_gc_global_vector);
 #endif
     RUN_TEST(test_mem_gc_base);
