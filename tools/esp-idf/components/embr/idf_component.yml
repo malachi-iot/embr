@@ -20,5 +20,6 @@ dependencies:
     # Range flavor is needed to auto-pickup v0.8.12 specific prerelease
     #version: "^0.8.11,<=0.8.12"
     #pre_release: true
-    #git: https://github.com/malachi-iot/estdlib
-    version: "^0.8.12"
+    git: https://github.com/malachi-iot/estdlib
+    version: 01ff6cb38df5a4f721462a3d141572b03824c32a
+    #version: "^0.8.12"

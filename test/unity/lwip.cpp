@@ -2,6 +2,9 @@
 
 #include <estd/thread.h>
 
+// 05NOV26 MB - All still active but new hotness is https://github.com/embr-iot/net
+// though it has a LONG way to go to catch up to what we do here
+
 // DEBT: Re-enable this on Arduino when lwip is present
 #if !defined(ARDUINO) && defined(ESP_PLATFORM) || defined(EMBR_PICOW_BOARD)
 
@@ -45,6 +48,11 @@ static void setup()
 static constexpr int listener_port = 1000;
 static constexpr int reply_listener_port = listener_port + 1;
 
+#if ESTD_OS_FREERTOS
+// Generic reusable event, since Unity tests are sequential
+estd::freertos::event_group<true> test_event;
+#endif
+
 static void listener(void* arg, struct udp_pcb* _pcb, struct pbuf* p, const ip_addr_t* addr, u16_t port)
 {
     const char* TAG = "listener";
@@ -79,6 +87,10 @@ static void reply_listener(void* arg, struct udp_pcb* _pcb, struct pbuf* p, cons
     output[0] = incoming_buf.get_at(0);
     output[1] = incoming_buf.get_at(1);
 
+#if ESTD_OS_FREERTOS
+    test_event.set_bits(1);
+#endif
+
     ESP_LOGI(TAG, "exit");
 }
 
@@ -97,7 +109,7 @@ static void test_basic_loopback()
 
     // DEBT: span broken, default ctor has an issue
     //estd::span<uint8_t, 4> output;
-    uint8_t output[4];
+    uint8_t output[4]{};
 
     buf.put_at(0, 1);
     buf.put_at(1, 2);
@@ -111,6 +123,10 @@ static void test_basic_loopback()
     LOCK_TCPIP_CORE();
     pcb1.send(buf, &loopback_addr, listener_port);
     UNLOCK_TCPIP_CORE();
+
+#if ESTD_OS_FREERTOS
+    test_event.wait_bits(1, true, true, estd::chrono::milliseconds(100));
+#endif
 
     TEST_ASSERT_EQUAL(11, output[0]);
     TEST_ASSERT_EQUAL(12, output[1]);

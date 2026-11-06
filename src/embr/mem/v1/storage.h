@@ -1,8 +1,8 @@
 #pragma once
 
 #include <estd/internal/macros.h>
-#include <estd/internal/size.h>
 
+#include "fwd.h"
 #include "unit.h"
 
 namespace embr { namespace mem {

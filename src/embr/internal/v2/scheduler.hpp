@@ -8,7 +8,7 @@ namespace detail {
 
 template <ESTD_CPP_CONCEPT(concepts::Traits) Traits, class Container>
 template <class Mutex>
-auto scheduler<Traits, Container>::process_one(time_point now, Mutex mutex) -> process_result
+auto scheduler<Traits, Container>::process_one(time_point now, Mutex&& mutex) -> process_result
 {
     mutex.lock();
 
@@ -59,7 +59,7 @@ void scheduler<Traits, Container>::process(time_point now)
 
 template <ESTD_CPP_CONCEPT(concepts::Traits) Traits, class Container>
 template <class Mutex>
-bool scheduler<Traits, Container>::reschedule(pointer v, Mutex mutex)
+bool scheduler<Traits, Container>::reschedule(pointer v, Mutex&& mutex)
 {
     mutex.lock();
     bool erased = items_.erase_if([v](pointer item) { return v == item; });

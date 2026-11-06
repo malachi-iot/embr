@@ -1,7 +1,6 @@
 #pragma once
 
 #include <estd/internal/macro/c++/ctor.h>
-#include <estd/internal/size.h>
 
 #include "../../internal/mutex.h"
 

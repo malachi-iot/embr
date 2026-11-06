@@ -2,7 +2,7 @@
 
 #include <estd/functional.h>
 #include <estd/internal/units/base.h>
-#include <estd/internal/size.h>
+#include <estd/iterator.h>  // For begin/end/data helpers
 
 #if __cpp_concepts
 #include <concepts>
