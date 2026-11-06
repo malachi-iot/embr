@@ -14,10 +14,12 @@
 #define EMBR_GC_FLATTEN __attribute__((flatten))
 //#define EMBR_GC_INLINE inline __attribute__((always_inline))
 //#define EMBR_GC_INLINE_FLATTEN inline __attribute__((always_inline, flatten))
+#define EMBR_GC_TREE_SRA __attribute__((optimize("tree-sra")))
 #define EMBR_GC_INLINE inline __attribute__((always_inline, optimize("tree-sra")))
 #define EMBR_GC_INLINE_FLATTEN inline __attribute__((always_inline, flatten, optimize("tree-sra")))
 #else
 #define EMBR_GC_FLATTEN
+#define EMBR_GC_TREE_SRA
 #define EMBR_GC_INLINE
 #define EMBR_GC_INLINE_FLATTEN
 #endif

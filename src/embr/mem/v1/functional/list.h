@@ -159,7 +159,7 @@ public:
     }
 
     template <class ...Args2>
-    EMBR_GC_INLINE
+    EMBR_GC_TREE_SRA
     void invoke(Args2&&...args)
     {
         using impl_type = mem::detail::v1::vector<value_type, Pool, pool>;

@@ -102,6 +102,8 @@ public:
     EMBR_GC_INLINE_FLATTEN constexpr lock_guard(Args&&...args) :
         base_type(std::forward<Args>(args)...) {}
 
+    ~lock_guard() = default;
+
     reference operator*() { return *(pointer)data_; }
     constexpr const_reference operator*() const { return *(pointer)data_; }
     pointer operator->() const { return (pointer)data_; }
