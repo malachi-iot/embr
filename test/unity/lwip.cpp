@@ -2,6 +2,9 @@
 
 #include <estd/thread.h>
 
+// 05NOV26 MB - All still active but new hotness is https://github.com/embr-iot/net
+// though it has a LONG way to go to catch up to what we do here
+
 // DEBT: Re-enable this on Arduino when lwip is present
 #if !defined(ARDUINO) && defined(ESP_PLATFORM) || defined(EMBR_PICOW_BOARD)
 
@@ -97,7 +100,7 @@ static void test_basic_loopback()
 
     // DEBT: span broken, default ctor has an issue
     //estd::span<uint8_t, 4> output;
-    uint8_t output[4];
+    uint8_t output[4]{};
 
     buf.put_at(0, 1);
     buf.put_at(1, 2);
