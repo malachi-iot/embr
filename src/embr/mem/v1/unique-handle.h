@@ -54,7 +54,10 @@ public:
         base_type(handle, p) {}
 
 
+    EMBR_GC_INLINE
     pointer lock() const { return static_cast<pointer>(base_type::lock()); }
+
+    EMBR_GC_INLINE
     const_pointer clock() const { return static_cast<const_pointer>(base_type::lock()); }
 
     typename base_type::template guard_type<T> guard() const

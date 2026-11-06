@@ -244,7 +244,7 @@ public:
         return *(control->data() + pos);
     }
 
-    size_type size() const
+    EMBR_GC_INLINE size_type size() const
     {
         if(!is_allocated()) return 0;
 
