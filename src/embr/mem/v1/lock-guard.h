@@ -98,6 +98,7 @@ class lock_guard : public detail::lock_guard<Pool, pool>
 public:
     ESTD_CPP_STD_VALUE_TYPE(T)
 
+    // 07NOV26 DEBT: 'FLATTEN' probably too aggressive here
     template <class ...Args>
     EMBR_GC_INLINE_FLATTEN constexpr lock_guard(Args&&...args) :
         base_type(std::forward<Args>(args)...) {}

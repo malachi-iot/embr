@@ -60,7 +60,7 @@ public:
     EMBR_GC_INLINE
     const_pointer clock() const { return static_cast<const_pointer>(base_type::lock()); }
 
-    typename base_type::template guard_type<T> guard() const
+    EMBR_GC_INLINE typename base_type::template guard_type<T> guard() const
     {
         return { *this };
     }

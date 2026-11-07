@@ -293,7 +293,7 @@ public:
     using guard_type = lock_guard<T, Pool, pool>;
 
     template <class T = void>
-    guard_type<T*> guard() const
+    EMBR_GC_INLINE guard_type<T*> guard() const
     {
         return { *this };
     }
