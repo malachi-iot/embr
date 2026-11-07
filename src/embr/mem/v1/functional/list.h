@@ -164,6 +164,7 @@ public:
     {
         using impl_type = mem::detail::v1::vector<value_type, Pool, pool>;
         impl_type& impl = this->impl();
+        if(impl.is_allocated() == false)    return;
         pointer begin = base_type::lock(), v = begin;
         pointer end = v + base_type::size();
 

@@ -159,7 +159,7 @@ public:
         return {};
     }
 
-    static constexpr bytes header_size(modes mode)
+    EMBR_GC_INLINE static constexpr bytes header_size(modes mode)
     {
         // Due to https://github.com/malachi-iot/estdlib/issues/193 needing to wrap
         // sizeof(this_type)

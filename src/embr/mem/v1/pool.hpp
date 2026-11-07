@@ -314,7 +314,7 @@ auto pool_ops<Traits>::alloced() const -> bytes
 
 
 template <class Traits>
-EMBR_GC_INLINE
+EMBR_GC_TREE_SRA
 bool pool_ops<Traits>::realloc(bundle bn, pos_type phys_sz, handle_type* out)
 {
     // Don't try to shrink down below 1 block size.  Silently ignore
@@ -410,7 +410,7 @@ bool pool_ops<Traits>::realloc(bundle bn, pos_type phys_sz, handle_type* out)
 
     fragmentation frag;
 
-    auto move_to_candidate = [&]
+    auto move_to_candidate = [&] EMBR_GC_INLINE_BARE
     {
         // Utilize defragger to determine a free block we can move to
         assess(&frag);

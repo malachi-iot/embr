@@ -176,14 +176,14 @@ public:
     template <class Mutex = embr::internal::noop_mutex>
     void unlock(handle_type h, Mutex&& mutex = {});
 
-    bundle prev(const const_bundle& bn) { return get_bundle(bn.block->prev()); }
-    const_bundle prev(const const_bundle& bn) const { return get_bundle(bn.block->prev()); }
+    EMBR_GC_INLINE bundle prev(const const_bundle& bn) { return get_bundle(bn.block->prev()); }
+    EMBR_GC_INLINE const_bundle prev(const const_bundle& bn) const { return get_bundle(bn.block->prev()); }
 
     template <class Block>
     void next(Block*, bundle_base<handles_traits, Block>* out) const;
 
-    bundle next(const const_bundle& bn) { return get_bundle(bn.block->next()); }
-    const_bundle next(const const_bundle& bn) const { return get_bundle(bn.block->next()); }
+    EMBR_GC_INLINE bundle next(const const_bundle& bn) { return get_bundle(bn.block->next()); }
+    EMBR_GC_INLINE const_bundle next(const const_bundle& bn) const { return get_bundle(bn.block->next()); }
 
     static estd::units::bytes<unsigned> logical_size(block::modes, pos_type phys_sz);
 
