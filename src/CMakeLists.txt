@@ -10,6 +10,9 @@ include(../tools/cmake/options.cmake)
 
 set(INTERFACE_NAME ${PROJECT_NAME}-interface)
 
+#CPMAddPackage("gh:malachi-iot/estdlib@0.8.12")
+CPMAddPackage("gh:malachi-iot/estdlib#900b77f7a860cfe49d8fb59b422ae6294ca99736")
+
 # Grab SOURCE_FILES
 include(sources.cmake)
 include(${ROOT_DIR}/tools/cmake/version.cmake)
@@ -21,10 +24,6 @@ add_library(${PROJECT_NAME}-shared SHARED)
 add_library(malachi-iot::embr ALIAS ${INTERFACE_NAME})
 add_library(embr::embr ALIAS ${PROJECT_NAME}-static)
 add_library(embr::interface ALIAS ${INTERFACE_NAME})
-
-#CPMAddPackage("gh:malachi-iot/estdlib@0.8.12")
-# Needed for https://github.com/malachi-iot/estdlib/issues/233
-CPMAddPackage("gh:malachi-iot/estdlib#9d709713aa7cc033ea01ffc6a459c8f64437909e")
 
 # DEBT: Was done for macOS, but it doesn't pick it up.  Once that is resolved,
 # bring these in

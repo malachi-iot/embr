@@ -21,5 +21,5 @@ dependencies:
     #version: "^0.8.11,<=0.8.12"
     #pre_release: true
     git: https://github.com/malachi-iot/estdlib
-    version: f6d547ce3e50bc18475915dfd25c882e3887426f
+    version: 900b77f7a860cfe49d8fb59b422ae6294ca99736
     #version: "^0.8.12"
