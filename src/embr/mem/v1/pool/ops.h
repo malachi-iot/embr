@@ -171,10 +171,10 @@ public:
     void* lock(bundle);
 
     template <class Mutex = embr::internal::noop_mutex>
-    void* lock(handle_type h, Mutex mutex = {});
+    void* lock(handle_type h, Mutex&& mutex = {});
 
     template <class Mutex = embr::internal::noop_mutex>
-    void unlock(handle_type h, Mutex mutex = {});
+    void unlock(handle_type h, Mutex&& mutex = {});
 
     bundle prev(const const_bundle& bn) { return get_bundle(bn.block->prev()); }
     const_bundle prev(const const_bundle& bn) const { return get_bundle(bn.block->prev()); }

@@ -239,21 +239,21 @@ void* pool_ops<Traits>::lock(bundle bn)
 
 template <class Traits>
 template <class Mutex>
-EMBR_GC_FLATTEN void* pool_ops<Traits>::lock(handle_type h, Mutex mutex)
+EMBR_GC_FLATTEN void* pool_ops<Traits>::lock(handle_type h, Mutex&& mutex)
 {
 #if __has_builtin(__atomic_compare_exchange_n)
 #endif
 
-    estd::lock_guard<Mutex> lg(mutex);
+    estd::lock_guard<Mutex> lg(std::forward<Mutex>(mutex));
 
     return lock(get_bundle(h));
 }
 
 template <class Traits>
 template <class Mutex>
-EMBR_GC_FLATTEN void pool_ops<Traits>::unlock(handle_type h, Mutex mutex)
+EMBR_GC_FLATTEN void pool_ops<Traits>::unlock(handle_type h, Mutex&& mutex)
 {
-    estd::lock_guard<Mutex> lg(mutex);
+    estd::lock_guard<Mutex> lg(std::forward<Mutex>(mutex));
 
     bundle bn(get_bundle(h));
 
