@@ -74,7 +74,7 @@ template <class Derived>
 using pool = detail::pool_crtp<Derived>;
 
 template <class Derived, class Mutex = void>
-using pool_mutex = detail::pool_mutex_crtp<Derived, void>;
+using pool_mutex = detail::pool_mutex_crtp<Derived, Mutex>;
 
 }}
 

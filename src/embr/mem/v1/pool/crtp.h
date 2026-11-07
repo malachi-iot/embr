@@ -82,16 +82,17 @@ public:
 // DEBT: I was resisting an ebo/mutex() paradigm but that's starting to look like
 // the best option
 template <class Derived, class Mutex>
-class pool_mutex_crtp : public pool_crtp<Derived>
+class pool_mutex_crtp : public pool_crtp<Derived>,
+    estd::internal::struct_evaporator<Mutex>
 {
     using base_type = pool_crtp<Derived>;
+    using provider = estd::internal::struct_evaporator<Mutex>;
+    using typename provider::evaporated_type;
 
 protected:
-    Mutex mutex_;
-
     template <class ...Args>
     constexpr explicit pool_mutex_crtp(estd::in_place_type_t<Mutex>, Args&&...args) :
-        mutex_{std::forward<Args>(args)...}
+        provider{std::forward<Args>(args)...}
     {
 
     }
@@ -101,18 +102,19 @@ protected:
 public:
     using mutex_type = Mutex;
 
-    constexpr mutex_type mutex() const { return mutex_; }
+    EMBR_GC_INLINE constexpr const evaporated_type mutex() const { return provider::value(); }
+    EMBR_GC_INLINE ESTD_CPP_CONSTEXPR(14) evaporated_type mutex() { return provider::value(); }
 
     template <class Handle>
-    void* lock(Handle h)
+    EMBR_GC_INLINE void* lock(Handle h)
     {
-        return OPS.lock(h, mutex_);
+        return OPS.lock(h, mutex());
     }
 
     template <class Handle>
-    void unlock(Handle h)
+    EMBR_GC_INLINE void unlock(Handle h)
     {
-        OPS.unlock(h, mutex_);
+        OPS.unlock(h, mutex());
     }
 
 
@@ -120,7 +122,7 @@ public:
     template <class Derived2 = Derived>
     typename Derived2::handle_type alloc(unsigned sz)
     {
-        estd::lock_guard<Mutex> lg(mutex_);
+        estd::lock_guard<Mutex> lg(mutex());
 
         constexpr auto mode = v1::block_mode_enum::Trivial;
         // DEBT: Uncouple from block_8
@@ -133,16 +135,16 @@ public:
     template <class T, class ...Args, class Derived2 = Derived>
     typename Derived2::handle_type construct(Args&&...args)
     {
-        estd::lock_guard<Mutex> lg(mutex_);
+        estd::lock_guard<Mutex> lg(mutex());
 
-        return detail::construct<T>(OPS.storage_, OPS.handles_, std::forward<Args>(args)...);
+        return detail::construct<T>(OPS, std::forward<Args>(args)...);
     }
 
 
     template <class Handle>
     void dealloc(Handle h)
     {
-        estd::lock_guard<Mutex> lg(mutex_);
+        estd::lock_guard<Mutex> lg(mutex());
 
         OPS.dealloc(h);
     }
@@ -150,12 +152,15 @@ public:
     // Higher thresh = demand quicker, easier GC
     int gc(int thresh = 0)
     {
-        estd::lock_guard<Mutex> lg(mutex_);
+        estd::lock_guard<Mutex> lg(mutex());
 
         return base_type::gc(thresh);
     }
 };
 
+// 07NOV26 MB DEBT: This specialization may be obsolete.  In particular,
+// if optimization of lock_guard and struct_evaporator are reliable enough,
+// regular pool_mutex_crtp fed noop_mutex may generate identical code.
 template <class Derived>
 class pool_mutex_crtp<Derived> : public pool_crtp<Derived>
 {
