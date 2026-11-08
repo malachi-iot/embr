@@ -188,18 +188,24 @@ public:
     template <class Mutex = embr::internal::noop_mutex>
     void unlock(handle_type h, Mutex&& mutex = {});
 
+    // 08NOV26 MB - Starting to think bundle/const_bundle differentiation isn't worth it
+    // need extra overloads to avoid conversions during -Og
+
+    EMBR_GC_INLINE bundle prev(const bundle& bn) { return get_bundle(bn.block->prev()); }
     EMBR_GC_INLINE bundle prev(const const_bundle& bn) { return get_bundle(bn.block->prev()); }
     EMBR_GC_INLINE const_bundle prev(const const_bundle& bn) const { return get_bundle(bn.block->prev()); }
 
     template <class Block>
     void next(Block*, bundle_base<handles_traits, Block>* out) const;
 
+    EMBR_GC_INLINE bundle next(const bundle& bn) { return get_bundle(bn.block->next()); }
     EMBR_GC_INLINE bundle next(const const_bundle& bn) { return get_bundle(bn.block->next()); }
     EMBR_GC_INLINE const_bundle next(const const_bundle& bn) const { return get_bundle(bn.block->next()); }
 
     static estd::units::bytes<unsigned> logical_size(block::modes, pos_type phys_sz);
 
-    estd::units::bytes<unsigned> logical_size(const const_bundle&) const;
+    template <class Block>
+    estd::units::bytes<unsigned> logical_size(const bundle_base<handles_traits, Block>&) const;
 
     /// @brief merge
     /// @param current
@@ -232,7 +238,8 @@ public:
     /// Free blocks only is RECOMMENDED
     block* move_block(page_type&, pos_type);
 
-    pos_type phys_size(const const_bundle&) const;
+    template <class Block>
+    pos_type phys_size(const bundle_base<handles_traits, Block>&) const;
 
     /// Grows or shrinks existing allocation, possibly moving it and others around
     /// @brief realloc

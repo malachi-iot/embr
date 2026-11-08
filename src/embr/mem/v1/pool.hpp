@@ -62,7 +62,8 @@ void pool_ops<Traits>::next(Block* b, bundle_base<handles_traits, Block>* out) c
 
 
 template <class Traits>
-auto pool_ops<Traits>::phys_size(const const_bundle& bn) const -> pos_type
+template <class Block>
+auto pool_ops<Traits>::phys_size(const bundle_base<handles_traits, Block>& bn) const -> pos_type
 {
     pos_type next_pos = bn.block->next() == handles_type::null ?
         pos_type(estd::size(storage().pool_) / aliasing) :
@@ -82,8 +83,9 @@ EMBR_GC_INLINE_FLATTEN estd::units::bytes<unsigned> pool_ops<Traits>::logical_si
 }
 
 template <class Traits>
+template <class Block>
 estd::units::bytes<unsigned> pool_ops<Traits>::logical_size(
-    const const_bundle& bn) const
+    const bundle_base<handles_traits, Block>& bn) const
 {
     return logical_size(bn.block->mode(), phys_size(bn));
 }
