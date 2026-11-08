@@ -73,7 +73,8 @@ auto pool_ops<Traits>::phys_size(const const_bundle& bn) const -> pos_type
 }
 
 template <class Traits>
-estd::units::bytes<unsigned> pool_ops<Traits>::logical_size(block::modes mode, pos_type phys_sz)
+EMBR_GC_INLINE_FLATTEN estd::units::bytes<unsigned> pool_ops<Traits>::logical_size(
+    block::modes mode, pos_type phys_sz)
 {
     // FIX: Needs more work
     const unsigned tbd = block::header_size(mode).count();
@@ -81,7 +82,8 @@ estd::units::bytes<unsigned> pool_ops<Traits>::logical_size(block::modes mode, p
 }
 
 template <class Traits>
-estd::units::bytes<unsigned> pool_ops<Traits>::logical_size(const const_bundle& bn) const
+estd::units::bytes<unsigned> pool_ops<Traits>::logical_size(
+    const const_bundle& bn) const
 {
     return logical_size(bn.block->mode(), phys_size(bn));
 }
@@ -176,7 +178,7 @@ pool_codes pool_ops<Traits>::alloc(bundle* out, pos_type phys_sz, block::modes m
 
 
 template <class Traits>
-bool pool_ops<Traits>::merge(bundle current, bundle next)
+bool pool_ops<Traits>::merge(const bundle& current, const bundle& next)
 {
     if(next.allocated()) return false;
 
@@ -195,7 +197,7 @@ bool pool_ops<Traits>::merge(bundle current, bundle next)
 }
 
 template <class Traits>
-bool pool_ops<Traits>::merge_if_free(bundle current, bundle next)
+bool pool_ops<Traits>::merge_if_free(const bundle& current, const bundle& next)
 {
     if(current.allocated()) return false;
 
@@ -410,7 +412,7 @@ bool pool_ops<Traits>::realloc(bundle bn, pos_type phys_sz, handle_type* out)
 
     fragmentation frag;
 
-    auto move_to_candidate = [&] EMBR_GC_INLINE_BARE
+    auto move_to_candidate = [&] EMBR_GC_TREE_SRA
     {
         // Utilize defragger to determine a free block we can move to
         assess(&frag);

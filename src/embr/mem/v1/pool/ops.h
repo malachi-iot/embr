@@ -18,16 +18,28 @@ struct fragmentation_base
 
     struct candidate
     {
-        int score;
+        int16_t score;
+        bool overlap;
+        bool adjacent;
         Bundle bundle;
         Bundle move_to;
-        bool overlap{true};
-        bool adjacent{true};
 
         constexpr bool invariant() const
         {
             return move_to.allocated() == false && bundle.allocated();
         }
+
+        candidate() = default;
+
+        constexpr candidate(int score,
+            const Bundle& bundle, const Bundle& move_to,
+            bool overlap = true, bool adjacent = false) :
+            score(score),
+            overlap{overlap},
+            adjacent{adjacent},
+            bundle{bundle},
+            move_to{move_to}
+        {}
     };
 
     candidate candidates[2];
@@ -193,14 +205,14 @@ public:
     /// @param current
     /// @param next MUST be a free block, returns false otherwise
     /// @details
-    bool merge(bundle current, bundle next);
+    bool merge(const bundle& current, const bundle& next);
 
     /// Same as merge but 'current' must be free also
     /// @brief merge_free
     /// @param current
     /// @param next
     /// @return
-    bool merge_if_free(bundle current, bundle next);
+    bool merge_if_free(const bundle& current, const bundle& next);
 
     ///
     /// @brief Moves an allocated block to a new free block location.  Updates block metadata so 'to' block becomes allocated
