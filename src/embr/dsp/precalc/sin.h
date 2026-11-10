@@ -53,7 +53,7 @@ struct precalc<PRECALC_HALF>
     void static init_sin(estd::span<T, N> table)
     {
         T* data = table.data();
-        for(int i = 0; i < N; i++, data++)
+        for(unsigned i = 0; i < N; i++, ++data)
         {
             const auto v = i * M_PI / N;
             *data = estd::sin(v);
