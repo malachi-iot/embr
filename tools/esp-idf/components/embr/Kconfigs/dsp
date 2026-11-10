@@ -16,13 +16,21 @@ menu "dsp"
             tables.  False means init calls will require a pointer of your
             own.
 
+    config EMBR_DSP_PRECALC_LINEAR_INTERPOLATION
+        bool "reduce table size with linear interpolation (NOT READY)"
+        depends on EMBR_DSP_PRECALC_TABLE
+        default n
+
     config EMBR_DSP_PRECALC_TABLE_SZ
         int "sin/cos precalc table size"
-        default 4096
+        default 1024
         depends on EMBR_DSP_PRECALC_TABLE
         help
             Whether tables are statically allocated or not, constexpr sizing is used
-            to squeeze that extra drop of performance
+            to squeeze that extra drop of performance.
+            1024 is loosely tuned for high quality circles on a 320x240 display.
+            It's likely you can get away with lower buffer size, unless you are rendering
+            at much higher resolution.
 
     choice
         prompt "algorithm used by global table [NOT ACTIVATED YET]"

@@ -14,7 +14,7 @@ static void compare(const estd::span<T, sz>& table, T2 v)
 
     // DEBT: Crude promotion of T to most precise.  May not work for things
     // like fixed point
-    TEST_ASSERT_LESS_THAN_DOUBLE(0.001, std::abs(std::abs(v1) - std::abs(v1_)));
+    TEST_ASSERT_LESS_THAN_DOUBLE(0.0015, std::abs(std::abs(v1) - std::abs(v1_)));
 }
 
 template <dsp::v1::precalc_modes mode, std::size_t sz, typename T>
