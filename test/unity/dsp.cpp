@@ -23,9 +23,9 @@ static void test_sin_table(const T* table)
     estd::span<const T, sz> t(table);
 
     compare<mode>(t, 0.2);
-    compare<mode>(t, 0.6);
+    compare<mode>(t, 0.6f);
     compare<mode>(t, 1.0);
-    compare<mode>(t, 3.0);
+    compare<mode>(t, 3.0f);
 }
 
 static void test_sinf()
@@ -33,6 +33,8 @@ static void test_sinf()
 #if FEATURE_EMBR_DSP_PRECALC_TABLE
     static constexpr std::size_t sz = EMBR_DSP_PRECALC_TABLE_SZ;
     test_sin_table<dsp::v1::PRECALC_HALF, sz>(dsp::detail::v1::sin_table);
+    volatile float v = 0.5;
+    v = dsp::sin_lookup(v); // Just to stoke compiler to generate a stack frame
 #else
 #endif
 }

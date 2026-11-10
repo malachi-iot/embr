@@ -3,6 +3,8 @@
 // TODO: Once https://github.com/malachi-iot/estdlib/issues/141 comes online,
 // refactor std::sin, etc to estd::sin
 
+#include <assert.h>
+
 #include <estd/cmath.h>
 #include <estd/span.h>
 
@@ -17,10 +19,16 @@ namespace embr { namespace dsp {
 
 namespace internal {
 
+// DEBT: Strongly consider forcing this to float every time.  However, precision loss
+// may hurt us and we'll occasionally round the wrong way
 template <class T>
 constexpr unsigned fast_round(T v)
 {
-    return static_cast<unsigned>(v + 0.5);
+#if EMBR_DSP_FAST_ROUND_STRICT
+    assert(v >= 0);
+#endif
+
+    return static_cast<unsigned>(v + 0.5f);
 }
 
 }
@@ -48,7 +56,11 @@ struct precalc<PRECALC_FULL>
         constexpr unsigned mask = N - 1;
         constexpr T2 multiplier = N / (2 * M_PI);
 
+#if EMBR_DSP_FAST_ROUND
+        unsigned i = internal::fast_round(v * multiplier);
+#else
         unsigned i = estd::round(v * multiplier);
+#endif
 
         if(do_mask)     i &= mask;
 
@@ -74,9 +86,12 @@ struct precalc<PRECALC_HALF>
     EMBR_DSP_INLINE constexpr static T sin_ll(const T* table, T2 v)
     {
         constexpr unsigned mask = N * 2 - 1;
-        constexpr T N_div_pi = N / M_PI;
-        // 10NOV26 MB DEBT: Might we consider a + 0.5 variety?  I feel like I'm missing something here
+        constexpr T2 N_div_pi = N / M_PI;
+#if EMBR_DSP_FAST_ROUND
+        unsigned i = internal::fast_round(v * N_div_pi);
+#else
         auto i = static_cast<unsigned>(estd::round(v * N_div_pi));
+#endif
 
         ESTD_CPP_IF_CONSTEXPR(do_mask)   i &= mask;
 

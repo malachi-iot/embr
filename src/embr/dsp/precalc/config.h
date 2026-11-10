@@ -41,3 +41,12 @@
 #define EMBR_DSP_INLINE
 #define EMBR_DSP_INLINE_FLATTEN
 #endif
+
+#ifndef EMBR_DSP_FAST_ROUND
+#define EMBR_DSP_FAST_ROUND 1
+#endif
+
+// Enforcer of sin_lookup >= 0, costs some cycles though
+#ifndef EMBR_DSP_FAST_ROUND_STRICT
+#define EMBR_DSP_FAST_ROUND_STRICT 0
+#endif
