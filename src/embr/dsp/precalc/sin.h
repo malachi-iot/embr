@@ -15,6 +15,16 @@
 
 namespace embr { namespace dsp {
 
+namespace internal {
+
+template <class T>
+constexpr unsigned fast_round(T v)
+{
+    return static_cast<unsigned>(v + 0.5);
+}
+
+}
+
 namespace detail { inline namespace v1 {
 
 // UNTESTED
@@ -61,10 +71,11 @@ struct precalc<PRECALC_HALF>
     }
 
     template <estd::size_t N, bool do_mask = true, typename T, typename T2>
-    constexpr static T sin_ll(const T* table, T2 v)
+    EMBR_DSP_INLINE constexpr static T sin_ll(const T* table, T2 v)
     {
         constexpr unsigned mask = N * 2 - 1;
         constexpr T N_div_pi = N / M_PI;
+        // 10NOV26 MB DEBT: Might we consider a + 0.5 variety?  I feel like I'm missing something here
         auto i = static_cast<unsigned>(estd::round(v * N_div_pi));
 
         ESTD_CPP_IF_CONSTEXPR(do_mask)   i &= mask;
@@ -73,7 +84,7 @@ struct precalc<PRECALC_HALF>
     }
 
     template <typename T, estd::size_t N, typename T2>
-    constexpr static T sin(const estd::span<T, N>& table, T2 v)
+    EMBR_DSP_INLINE constexpr static T sin(const estd::span<T, N>& table, T2 v)
     {
         return sin_ll<N>(table.data(), v);
     }
@@ -87,7 +98,7 @@ struct precalc<PRECALC_QUART>
     void static init_sin(estd::span<T, N> table)
     {
         T* data = table.data();
-        for(int i = 0; i < N; i++, ++data)
+        for(unsigned i = 0; i < N; i++, ++data)
         {
             const auto v = i * M_PI / (2.0 * N);
             *data = estd::sin(v);

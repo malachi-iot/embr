@@ -27,4 +27,17 @@
 #define EMBR_DSP_PRECALC_TABLE_SZ   4096
 #endif
 
+#endif  // ESP_PLATFORM && FEATURE_EMBR_DSP_PRECALC_TABLE
+
+// 10NOV26 MB DEBT - EMBR_DSP_AGGRESSIVE_INLINE and friends belong elsewhere
+#ifndef EMBR_DSP_AGGRESSIVE_INLINE
+#define EMBR_DSP_AGGRESSIVE_INLINE 1
+#endif
+
+#if EMBR_DSP_AGGRESSIVE_INLINE && !defined(__clang__)
+#define EMBR_DSP_INLINE inline __attribute__((always_inline, optimize("tree-sra")))
+#define EMBR_DSP_INLINE_FLATTEN inline __attribute__((always_inline, flatten, optimize("tree-sra")))
+#else
+#define EMBR_DSP_INLINE
+#define EMBR_DSP_INLINE_FLATTEN
 #endif
