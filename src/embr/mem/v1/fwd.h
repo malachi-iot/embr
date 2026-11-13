@@ -56,12 +56,6 @@ using add_const_conditional_t = estd::conditional_t<B, estd::add_const_t<T>, T>;
 template <class Derived>
 class pool_crtp;
 
-// Overlap with estd::experimental::global_provider
-
-template <class T, T* t, bool global = t != nullptr>
-struct global_provider;
-
-
 }}
 
 namespace internal { inline namespace v1 {

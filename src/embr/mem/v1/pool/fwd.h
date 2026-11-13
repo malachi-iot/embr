@@ -80,6 +80,11 @@ class sparse_handle;
 template <class Pool, Pool* pool>
 class unique_handle;
 
+// Overlap with estd::experimental::global_provider
+
+template <class T, T* t, bool global = t != nullptr>
+struct global_provider;
+
 }}
 
 namespace mixins { inline namespace v1 {
