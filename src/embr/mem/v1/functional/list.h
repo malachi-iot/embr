@@ -109,9 +109,10 @@ private:
     }
 
 public:
+    using base_type::size;
+
 #if FEATURE_EMBR_GC_FUNCLIST_REFCOUNT
-    // UNTESTED, not ready (doesn't compile)
-    constexpr explicit funclist(const funclist& copy_from) : base_type(copy_from)
+    constexpr explicit funclist(const funclist& copy_from) : base_type(copy_from.impl())
     {
         impl().foreach([&](Pool* p, const value_type& f)
         {
@@ -124,8 +125,12 @@ public:
     // SSO-style optimizataion later
     constexpr funclist(const funclist&) = delete;
 #endif
-    template <class ...Args2>
-    constexpr explicit funclist(Args2&&...args) : base_type(std::forward<Args2>(args)...)  {}
+    //template <class ...Args2>
+    //constexpr explicit funclist(Args2&&...args) : base_type(std::forward<Args2>(args)...)  {}
+
+    funclist() = default;
+    funclist(funclist&&) = default;
+    funclist(Pool* p) : base_type(p) {}
 
     void clear()
     {
@@ -164,7 +169,7 @@ public:
     {
         pinned_type pinned(impl());
         typename pinned_type::const_iterator it =
-            estd::find_if(pinned.begin(), pinned.end(), [v](value_type v2) { return v == v2; });
+            estd::find_if(pinned.begin(), pinned.end(), [v](sparse v2) { return v == v2; });
 
         if(it == pinned.end())  return;
 

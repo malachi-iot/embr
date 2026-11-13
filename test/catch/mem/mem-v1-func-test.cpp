@@ -280,8 +280,24 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
 #if FEATURE_EMBR_GC_FUNCLIST_REFCOUNT
         SECTION("copy")
         {
-            // Doesn't compile yet
-            //type fl2(fl);
+            type fl2(&pool);
+
+            auto handle = fl2.push_back([&](int v) { counter += v; });
+            auto bundle = pool.ops().get_bundle(handle.handle());
+
+            {
+                type fl3(fl2);
+
+                REQUIRE(fl3.size() == 1);
+
+                REQUIRE(bundle.ref_count() == 2);
+
+                fl3.invoke(1);
+
+                REQUIRE(counter == 1);
+            }
+
+            REQUIRE(bundle.ref_count() == 1);
         }
 #endif
     }
