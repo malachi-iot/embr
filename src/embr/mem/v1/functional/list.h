@@ -98,10 +98,32 @@ private:
 
     void clear_ll()
     {
-        impl().foreach([&](Pool* p, const value_type& f) { f.dealloc(*p); });
+        impl().foreach([&](Pool* p, const value_type& f)
+        {
+#if FEATURE_EMBR_GC_FUNCLIST_REFCOUNT
+            f.ref_down(*p);
+#else
+            f.dealloc(*p);
+#endif
+        });
     }
 
 public:
+#if FEATURE_EMBR_GC_FUNCLIST_REFCOUNT
+    // UNTESTED, not ready (doesn't compile)
+    constexpr explicit funclist(const funclist& copy_from) : base_type(copy_from)
+    {
+        impl().foreach([&](Pool* p, const value_type& f)
+        {
+            f.ref_up(*p);
+        });
+    }
+#else
+    // If tracked GC handles can't be refcounted, then funclist itself is not copyable.
+    // In theory we could treat impl/pinned area as refcounted instead but that would preclude
+    // SSO-style optimizataion later
+    constexpr funclist(const funclist&) = delete;
+#endif
     template <class ...Args2>
     constexpr explicit funclist(Args2&&...args) : base_type(std::forward<Args2>(args)...)  {}
 
@@ -128,6 +150,10 @@ public:
         // DEBT: Can/should we consider an emplace?  Probably not worth it since sparse_function truly is
         // sparse
         sparse item{sparse::make(impl().pool_(), std::forward<F>(f))};
+#if FEATURE_EMBR_GC_FUNCLIST_REFCOUNT
+        item.ref_up(*impl().pool_());
+#endif
+
         // FIX: Underlying 'grow by' auto-pads 32, which is OK for the time being but not OK
         // for a fixed default.  See https://github.com/malachi-iot/estdlib/issues/188
         base_type::push_back(item);
@@ -143,7 +169,11 @@ public:
         if(it == pinned.end())  return;
 
         pinned.erase(it);
+#if FEATURE_EMBR_GC_FUNCLIST_REFCOUNT
+        v.ref_down(*impl().pool_());
+#else
         v.dealloc(*impl().pool_());
+#endif
     }
 
     template <class F>

@@ -7,6 +7,12 @@
 #include "../concepts.h"
 #include "../pool/fwd.h"
 
+// 1 = funclist uses ref counters for all its tracked functors, enabling copyable funclist
+// 0 = more direct alloc/free for tracked functors, disabling copyable funclist
+#ifndef FEATURE_EMBR_GC_FUNCLIST_REFCOUNT
+#define FEATURE_EMBR_GC_FUNCLIST_REFCOUNT 0
+#endif
+
 namespace embr { namespace mem {
 
 template <class F, class Pool = void, Pool* pool = nullptr,

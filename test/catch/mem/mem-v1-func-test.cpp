@@ -277,6 +277,13 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
 
             fl2.erase(handle);
         }
+#if FEATURE_EMBR_GC_FUNCLIST_REFCOUNT
+        SECTION("copy")
+        {
+            // Doesn't compile yet
+            //type fl2(fl);
+        }
+#endif
     }
     SECTION("funclist: battery")
     {

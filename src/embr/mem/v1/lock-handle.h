@@ -86,17 +86,32 @@ public:
         return lock_handle<Pool>(handle_, &pool);
     }
 
-    template <ESTD_CPP_CONCEPT(mem::concepts::Pool) Pool, class Mutex = embr::internal::noop_mutex>
-    EMBR_GC_INLINE void ref_down(Pool& pool, Mutex&& mutex = {}) const
+    // 13NOV26 NOTE: Not using mixin here because ref_up, ref_down are lower level than
+    // we want exposed at 'pool'.  Subject to change
+    template <ESTD_CPP_CONCEPT(mem::concepts::Pool) Pool>
+    EMBR_GC_INLINE void ref_down(Pool& pool) const
+    {
+        pool.ops().ref_down(handle_, pool.mutex());
+    }
+
+    template <ESTD_CPP_CONCEPT(mem::concepts::Pool) Pool>
+    EMBR_GC_INLINE void ref_up(Pool& pool) const
+    {
+        pool.ops().ref_up(handle_, pool.mutex());
+    }
+
+    /*
+    template <ESTD_CPP_CONCEPT(mem::concepts::Pool) Pool, class Mutex>
+    EMBR_GC_INLINE void ref_down(Pool& pool, Mutex&& mutex) const
     {
         pool.ops().ref_down(handle_, std::forward<Mutex>(mutex));
     }
 
-    template <ESTD_CPP_CONCEPT(mem::concepts::Pool) Pool, class Mutex = embr::internal::noop_mutex>
-    EMBR_GC_INLINE void ref_up(Pool& pool, Mutex&& mutex = {}) const
+    template <ESTD_CPP_CONCEPT(mem::concepts::Pool) Pool, class Mutex>
+    EMBR_GC_INLINE void ref_up(Pool& pool, Mutex&& mutex) const
     {
         pool.ops().ref_up(handle_, std::forward<Mutex>(mutex));
-    }
+    }   */
 };
 
 // AKA "sparse handle"
