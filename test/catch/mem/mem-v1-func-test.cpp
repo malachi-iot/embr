@@ -273,7 +273,9 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
             fl += [&](int)     { ++counter; };
             fl += [&](int v)   { counter += v; };
 
-            fl2.push_back([&](int) { ++counter; });
+            auto handle = fl2.push_back([&](int) { ++counter; });
+
+            fl2.erase(handle);
         }
     }
     SECTION("funclist: battery")

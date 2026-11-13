@@ -131,7 +131,6 @@ public:
         return item;
     }
 
-    // TBD
     void erase(value_type v)
     {
         pinned_type pinned(impl());
@@ -143,6 +142,7 @@ public:
         if(it == pinned.end())  return;
 
         pinned.erase(it);
+        v.dealloc(*impl().pool_());
     }
 
     template <class F>
