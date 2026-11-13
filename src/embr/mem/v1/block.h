@@ -140,6 +140,11 @@ public:
     this_type& operator=(const this_type&) = default;
     this_type& operator=(this_type&&) = default;
 
+    struct max
+    {
+        static constexpr unsigned ref_count = 15;
+    };
+
     constexpr modes mode() const { return mode_; }
     constexpr handle_type prev() const { return prev_; }
     constexpr handle_type next() const { return next_; }
@@ -234,7 +239,8 @@ class block_diagnostic
 };
 
 
-// EXPERIMENTAL
+// EXPERIMENTAL, UNUSED
+// for ultra constrained environments
 class alignas(void*) block_6 : block_base_uint, handles_traits_uint_base<uint8_t>
 {
     struct alignas(void*)
@@ -249,6 +255,11 @@ public:
     // 0, 1 or 2
     constexpr unsigned lock_count() const { return locked_or_allocated_; }
     constexpr bool allocated() const { return locked_or_allocated_ != 3; }
+
+    struct max
+    {
+        static constexpr unsigned ref_count = 0;
+    };
 };
 
 

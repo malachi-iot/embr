@@ -84,6 +84,18 @@ public:
     {
         return lock_handle<Pool>(handle_, &pool);
     }
+
+    template <ESTD_CPP_CONCEPT(mem::concepts::Pool) Pool>
+    void ref_down(Pool& pool) const
+    {
+        pool.ops().ref_down(handle_);
+    }
+
+    template <ESTD_CPP_CONCEPT(mem::concepts::Pool) Pool>
+    void ref_up(Pool& pool) const
+    {
+        pool.ops().ref_up(handle_);
+    }
 };
 
 // AKA "sparse handle"

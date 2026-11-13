@@ -39,7 +39,7 @@ public:
 
     ~shared_handle()
     {
-        if(*this)   ops().ref_down(handle_);
+        if(base_type::has_value())   ops().ref_down(handle_);
     }
 };
 

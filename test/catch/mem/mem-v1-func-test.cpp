@@ -288,4 +288,36 @@ TEST_CASE("gc mem v1 estd::detail::function things", "[memory][gc][function]")
             battery(pool, i, rng());
         }
     }
+    SECTION("sparse_model")
+    {
+        //using model = mem::detail::v1::sparse_model<void(), handle_type>;
+    }
+    SECTION("sparse_function")
+    {
+        using function = mem::detail::v1::sparse_function<void(), pool_type>;
+
+        // DEBT: A little unreliable, architecutral changes will sway this
+        constexpr unsigned free_bytes = 2040;
+
+        REQUIRE(pool.ops().available() == free_bytes);
+
+        {
+            int counter = 0;
+
+            function f1 = function::make(&pool, [&]{ ++counter; });
+
+            // NOTE to self: Yes ref_up/ref_down are ultra low level to the point they don't activate automatically
+            // in any sense unless used in shared_handle context, including the ref_up part.
+            f1.ref_up(pool);
+
+            f1.invoke(&pool);
+
+            REQUIRE(counter == 1);
+            REQUIRE(pool.ops().available() < free_bytes);
+
+            f1.ref_down(pool);
+        }
+
+        REQUIRE(pool.ops().available() == free_bytes);
+    }
 }

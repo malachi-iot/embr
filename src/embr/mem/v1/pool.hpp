@@ -269,6 +269,8 @@ void pool_ops<Traits>::ref_up(handle_type h)
 {
     bundle bn(get_bundle(h));
 
+    assert(bn.ref_count() < block::max::ref_count);
+
     bn.ref_up();
 }
 
@@ -277,6 +279,8 @@ template <class Traits>
 void pool_ops<Traits>::ref_down(handle_type h)
 {
     bundle bn(get_bundle(h));
+
+    assert(bn.ref_count() > 0);
 
     if(bn.ref_down() == 0)
     {

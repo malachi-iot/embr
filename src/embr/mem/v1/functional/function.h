@@ -6,9 +6,9 @@
 
 namespace embr { namespace mem {
 
-// DEBT: Consider always making him shared_handle.  Briefly did that, but it occurs that very tight constraint
-// environments may have shared counter disabled (see block_6).  Counterpoint is unique_handle behaves much more
-// like std::function
+// Follows behavior pattern of std::function, who itself is unsophisticated with its memory
+// management.  Pretty much just owns the alloc for F&&
+// No shared/ref counters here.  Use shared_handle for that.
 template <class R, class ...Args, class Pool, Pool* pool,
     template <class, estd::detail::impl::fn_options> class Impl>
 class function<R(Args...), Pool, pool, Impl> : public detail::v1::unique_handle<Pool, pool>

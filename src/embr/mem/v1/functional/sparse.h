@@ -63,6 +63,8 @@ public:
 };
 
 
+// Main difference from sparse_model is 'invoke' wraps up handle_.  We don't overload
+// because static/instance signatures would be indistinguishable.
 template <class R, class ...Args, ESTD_CPP_CONCEPT(mem::concepts::Pool) Pool,
     template <class, estd::detail::impl::fn_options> class Impl>
 class sparse_function<R(Args...), Pool, Impl> : public sparse_model<R(Args...), typename Pool::handle_type>
@@ -71,6 +73,8 @@ class sparse_function<R(Args...), Pool, Impl> : public sparse_model<R(Args...), 
     //using typename base_type::handle_type;
 
 public:
+    constexpr sparse_function(base_type copy_from) : base_type(copy_from) {}
+
     template <class ...Args2>
     constexpr explicit sparse_function(Args2&&...args) : base_type(std::forward<Args2>(args)...) {}
 

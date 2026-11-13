@@ -66,7 +66,7 @@ protected:
     EMBR_GC_INLINE bundle get_bundle() { return ops().get_bundle(handle_); }
 
     // Low-level call which presumes we're already locked
-    void* data()
+    EMBR_GC_INLINE void* data()
     {
         // DEBT: This feels like it ought to live in a mixin
         bundle bn(get_bundle());
@@ -117,6 +117,20 @@ public:
     void dealloc() const
     {
         value()->dealloc(handle_);
+    }
+
+    // Though shared_handle is the preferred approach, manually ref counting is
+    // possible too
+    // UNTESTED
+    void ref_down() const
+    {
+        ops().ref_down(handle_);
+    }
+
+    // UNTESTED
+    void ref_up() const
+    {
+        ops().ref_up(handle_);
     }
 
     EMBR_GC_INLINE

@@ -51,6 +51,7 @@ struct bundle_base : block_mode_enum
         block{block}, page{page}, handle{handle}
     {}
 
+    constexpr unsigned ref_count() const { return block->ref_count_; }
     constexpr modes mode() const { return block->mode_; }
     constexpr bool allocated() const { return block->allocated(); }
 
