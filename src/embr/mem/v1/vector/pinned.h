@@ -38,9 +38,8 @@ public:
         pointer __pos = data() + _pos;
         const_pointer end = data() + size();
         if(end == pos)  return;
-        // DEBT: Use estd variety
-        // LIGHTLY TESTED
         pos->~T();
+        // DEBT: Use estd variety
         std::move(pos + 1, end, __pos);
         --base_type::data()->size_;
     }

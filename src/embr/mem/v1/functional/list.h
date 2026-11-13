@@ -90,6 +90,8 @@ private:
     // using model_type = typename value_type::model;
     using typename base_type::pointer;
     using control_type = typename base_type::impl_type::control_type;
+
+    // impl = detail::v1::vector<value_type, Pool, pool>
     using base_type::impl;
     using pinned_type = mem::v1::pinned<base_type>;
 
@@ -134,9 +136,7 @@ public:
     void erase(value_type v)
     {
         pinned_type pinned(impl());
-        // DEBT: https://github.com/malachi-iot/estdlib/issues/187
-        //typename pinned_type::const_iterator it =
-        auto it =
+        typename pinned_type::const_iterator it =
             estd::find_if(pinned.begin(), pinned.end(), [v](value_type v2) { return v == v2; });
 
         if(it == pinned.end())  return;
