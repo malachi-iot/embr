@@ -68,6 +68,18 @@ constexpr block_mode_enum::modes deduce_block_mode();
 template <class T>
 struct item_traits;
 
+template <class Pool, Pool* pool = nullptr>
+class lock_handle;
+
+template <class Pool, Pool* pool = nullptr>
+class shared_handle;
+
+template <class T, class Pool>
+class sparse_handle;
+
+template <class Pool, Pool* pool>
+class unique_handle;
+
 }}
 
 namespace mixins { inline namespace v1 {

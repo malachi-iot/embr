@@ -7,6 +7,9 @@
 
 using namespace embr;
 
+#pragma GCC diagnostic ignored "-Wunused-local-typedefs"
+#pragma GCC diagnostic ignored "-Wunused-variable"
+
 template <dsp::v1::precalc_modes mode = dsp::v1::PRECALC_HALF, class T, std::size_t N>
 void compare(const estd::span<T, N>& t, T v)
 {

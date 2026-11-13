@@ -9,6 +9,10 @@
 
 namespace embr { namespace mem {
 
+template <class F, class Pool = void, Pool* pool = nullptr,
+    template <class, estd::detail::impl::fn_options> class Impl = estd::detail::impl::function_default>
+class function;
+
 namespace detail { inline namespace v1 {
 
 template <class F, class Handle,
@@ -20,6 +24,9 @@ class sparse_model;
 template <class F, ESTD_CPP_CONCEPT(mem::concepts::Pool) Pool,
     template <class, estd::detail::impl::fn_options> class Impl = estd::detail::impl::function_default>
 class sparse_function;
+
+template <class F, class Pool>
+using nonowning_function = function<F, lock_handle<Pool>>;
 
 }}
 

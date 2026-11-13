@@ -1,6 +1,5 @@
 #pragma once
 
-#include <estd/functional.h>
 #include <estd/internal/units/base.h>
 #include <estd/iterator.h>  // For begin/end/data helpers
 
@@ -8,6 +7,7 @@
 #include <concepts>
 #endif
 
+#include "functional/fwd.h"
 #include "pool/fwd.h"
 
 // See https://github.com/malachi-iot/estdlib/issues/160
@@ -62,18 +62,6 @@ template <class T, T* t, bool global = t != nullptr>
 struct global_provider;
 
 
-template <class Pool, Pool* pool = nullptr>
-class lock_handle;
-
-template <class Pool, Pool* pool = nullptr>
-class shared_handle;
-
-template <class T, class Pool>
-class sparse_handle;
-
-template <class Pool, Pool* pool>
-class unique_handle;
-
 }}
 
 namespace internal { inline namespace v1 {
@@ -111,9 +99,5 @@ template <class T, class Pool, Pool* pool = nullptr>
 class unique_handle;
 
 }
-
-template <class F, class Pool = void, Pool* pool = nullptr,
-    template <class, estd::detail::impl::fn_options> class Impl = estd::detail::impl::function_default>
-class function;
 
 }}
