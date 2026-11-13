@@ -265,8 +265,11 @@ EMBR_GC_FLATTEN void pool_ops<Traits>::unlock(handle_type h, Mutex&& mutex)
 }
 
 template <class Traits>
-void pool_ops<Traits>::ref_up(handle_type h)
+template <class Mutex>
+EMBR_GC_FLATTEN void pool_ops<Traits>::ref_up(handle_type h, Mutex&& mutex)
 {
+    estd::lock_guard<Mutex> lg(std::forward<Mutex>(mutex));
+
     bundle bn(get_bundle(h));
 
     assert(bn.ref_count() < block::max::ref_count);
@@ -276,14 +279,19 @@ void pool_ops<Traits>::ref_up(handle_type h)
 
 
 template <class Traits>
-void pool_ops<Traits>::ref_down(handle_type h)
+template <class Mutex>
+EMBR_GC_FLATTEN void pool_ops<Traits>::ref_down(handle_type h, Mutex&& mutex)
 {
+    estd::lock_guard<Mutex> lg(std::forward<Mutex>(mutex));
+
     bundle bn(get_bundle(h));
 
     assert(bn.ref_count() > 0);
 
     if(bn.ref_down() == 0)
     {
+        assert(bn.block->lock_count() == 0);
+
         dealloc(bn);
     }
 }

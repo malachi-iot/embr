@@ -248,8 +248,11 @@ public:
     /// @return true on success, false on failure (no suitable free block found)
     bool realloc(bundle, pos_type new_sz, handle_type* out = nullptr);
 
-    void ref_down(handle_type h);
-    void ref_up(handle_type h);
+    template <class Mutex = embr::internal::noop_mutex>
+    void ref_down(handle_type h, Mutex&& = {});
+
+    template <class Mutex = embr::internal::noop_mutex>
+    void ref_up(handle_type h, Mutex&& = {});
 
     ESTD_CPP_CONSTEXPR(14) void reset();
 
