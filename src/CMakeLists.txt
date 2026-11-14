@@ -11,7 +11,9 @@ include(../tools/cmake/options.cmake)
 set(INTERFACE_NAME ${PROJECT_NAME}-interface)
 
 #CPMAddPackage("gh:malachi-iot/estdlib@0.8.12")
-CPMAddPackage("gh:malachi-iot/estdlib#900b77f7a860cfe49d8fb59b422ae6294ca99736")
+CPMAddPackage("gh:malachi-iot/estdlib#616ee52bb300c817d440ee2ed8e1c8c5758b0c93")
+
+estd_add_project_semver()
 
 # Grab SOURCE_FILES
 include(sources.cmake)

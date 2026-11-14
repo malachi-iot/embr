@@ -2,8 +2,6 @@ include(${CMAKE_CURRENT_LIST_DIR}/setvars.cmake)
 
 # DEBT: Consolidate with estd flavor
 
-string(TOUPPER ${PROJECT_NAME} PROJECT_NAME_UPPER)
-
 set(WORKING_DIR ${CMAKE_CURRENT_LIST_DIR}/in)
 
 message(DEBUG "version.cmake: ${CMAKE_CURRENT_SOURCE_DIR} / ${WORKING_DIR}")
