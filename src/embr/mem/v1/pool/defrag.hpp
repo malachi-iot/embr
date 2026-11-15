@@ -16,7 +16,7 @@ namespace detail { inline namespace v1 {
 
 
 template <class Traits>
-void pool_ops<Traits>::defrag(const typename fragmentation::candidate& c, bool relink)
+EMBR_GC_TREE_SRA void pool_ops<Traits>::defrag(const typename fragmentation::candidate& c, bool relink)
 {
     // DEBT: A bit sloppy converting bundles like this, but gets the job done
     bundle from(get_bundle(c.bundle.handle));
