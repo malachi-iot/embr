@@ -178,7 +178,7 @@ EMBR_GC_INLINE validated_result pool_ops<Traits>::move(
             memcpy(new_to_block->data(), from.block->data(), logical_sz);
 
             *new_to_block = retained;
-            new_to_block->reset(block::Trivial, true);
+            new_to_block->reset_mode(block::Trivial, true);
         }
         else
         {
@@ -201,7 +201,7 @@ EMBR_GC_INLINE validated_result pool_ops<Traits>::move(
             std::memmove(to.block->data(), from.block->data(), logical_sz);
 
             *new_from_block = retained;
-            to.block->reset(block::Trivial, true);
+            to.block->reset_mode(block::Trivial, true);
 
             from.block = new_from_block;
         }
@@ -221,6 +221,7 @@ EMBR_GC_INLINE validated_result pool_ops<Traits>::move(
 
         // MOVE_AND_DESTROY would be better here - an optimization.  A little tricky to do with rtto_proxy.
 
+        //*to.block = *from.block;
         to.block->move_from(from.block, logical_sz);
         to.allocated(true);
 

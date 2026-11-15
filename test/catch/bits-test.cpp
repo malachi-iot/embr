@@ -12,6 +12,9 @@
 
 using namespace embr;
 
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#pragma GCC diagnostic ignored "-Wunused-local-typedefs"
+
 void compare_le_example1(const uint8_t raw[])
 {
     test::compare(raw, le_example1, 4);

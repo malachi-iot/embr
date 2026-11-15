@@ -172,10 +172,15 @@ public:
     }
 
     // DEBT: Protect this and make friend classes, or pull WriteableBlock child stunt
-    void reset(modes mode, bool allocated)
+    void reset_mode(modes mode, bool allocated)
     {
         mode_ = mode;
         allocated_ = allocated;
+    }
+
+    void reset(modes mode, bool allocated)
+    {
+        reset_mode(mode, allocated);
         lock_count_ = 0;
         ref_count_ = 0;
     }
@@ -224,6 +229,8 @@ public:
     // Destroy tracked object, not necessarily block itself
     void destroy();
 
+    // 15NOV26 DEBT: These aren't a full move or full copy, they exclude prev/next pointers.
+    // Why?  I forget.  Comment here as to why
     void copy_from(this_type* from, unsigned sz);
     void move_from(this_type* from, unsigned sz);
 };

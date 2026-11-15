@@ -17,6 +17,7 @@
 using namespace embr;
 
 #pragma GCC diagnostic ignored "-Wunused-variable"
+#pragma GCC diagnostic ignored "-Wunused-local-typedefs"
 
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
 constexpr auto opposite_endian = embr::v2::word_options::big_endian;

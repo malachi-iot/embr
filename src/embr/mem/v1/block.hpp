@@ -39,6 +39,9 @@ inline block& block::operator=(block&& move_from)
 
 inline void block_8::copy_from(this_type* from, unsigned sz)
 {
+    ref_count_ = from->ref_count_;
+    lock_count_ = from->lock_count_;
+
     switch(from->mode_)
     {
         case Trivial:
@@ -68,6 +71,10 @@ inline void block_8::copy_from(this_type* from, unsigned sz)
 
 inline void block_8::move_from(this_type* from, unsigned sz)
 {
+    // 15NOV26 DEBT: Really ought to put this elsewhere, maybe in a special constructor?
+    ref_count_ = from->ref_count_;
+    lock_count_ = from->lock_count_;
+
     switch(from->mode_)
     {
         case Trivial:
