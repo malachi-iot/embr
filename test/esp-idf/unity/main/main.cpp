@@ -5,12 +5,8 @@
 #include <embr/streambuf.h>
 #include <estd/internal/platform.h>
 
-#include <esp-helper.h>
-
 #include "esp_system.h"
-#include "esp_wifi.h"
 #include "esp_log.h"
-#include "nvs_flash.h"
 
 static void print_banner(const char* text);
 
@@ -22,8 +18,6 @@ extern "C" void app_main()
 {
     static const char *TAG = "app_main";
 
-    init_flash();
-    
     ESP_LOGI(TAG, "startup");
 
     /*
