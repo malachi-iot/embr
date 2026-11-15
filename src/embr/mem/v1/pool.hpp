@@ -53,7 +53,7 @@ auto pool_ops<Traits>::first_free(pos_type phys_sz, pos_type* found_size) const 
 
 template <class Traits>
 template <class Block>
-void pool_ops<Traits>::next(Block* b, bundle_base<handles_traits, Block>* out) const
+EMBR_GC_INLINE void pool_ops<Traits>::next(Block* b, bundle_base<handles_traits, Block>* out) const
 {
     // DEBT: No auto please
     auto& page = handles_[b->next()];
@@ -63,7 +63,7 @@ void pool_ops<Traits>::next(Block* b, bundle_base<handles_traits, Block>* out) c
 
 template <class Traits>
 template <class Block>
-auto pool_ops<Traits>::phys_size(const bundle_base<handles_traits, Block>& bn) const -> pos_type
+EMBR_GC_TREE_SRA auto pool_ops<Traits>::phys_size(const bundle_base<handles_traits, Block>& bn) const -> pos_type
 {
     pos_type next_pos = bn.block->next() == handles_type::null ?
         pos_type(estd::size(storage().pool_) / aliasing) :
@@ -207,7 +207,7 @@ bool pool_ops<Traits>::merge_if_free(const bundle& current, const bundle& next)
 }
 
 template <class Traits>
-void pool_ops<Traits>::dealloc(bundle bn)
+EMBR_GC_FLATTEN void pool_ops<Traits>::dealloc(bundle bn)
 {
     // DEBT: Consolidate with other free operations
     bn.block->destroy();
@@ -280,7 +280,7 @@ EMBR_GC_FLATTEN void pool_ops<Traits>::ref_up(handle_type h, Mutex&& mutex)
 
 template <class Traits>
 template <class Mutex>
-EMBR_GC_FLATTEN void pool_ops<Traits>::ref_down(handle_type h, Mutex&& mutex)
+EMBR_GC_TREE_SRA void pool_ops<Traits>::ref_down(handle_type h, Mutex&& mutex)
 {
     estd::lock_guard<Mutex> lg(std::forward<Mutex>(mutex));
 

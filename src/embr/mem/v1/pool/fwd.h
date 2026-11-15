@@ -11,10 +11,10 @@
 #endif
 
 #if FEATURE_EMBR_GC_AGGRESSIVE_INLINE && !defined(__clang__)
-#define EMBR_GC_FLATTEN __attribute__((flatten))
+#define EMBR_GC_FLATTEN __attribute__((flatten, optimize("tree-sra")))
 //#define EMBR_GC_INLINE inline __attribute__((always_inline))
 //#define EMBR_GC_INLINE_FLATTEN inline __attribute__((always_inline, flatten))
-#define EMBR_GC_TREE_SRA __attribute__((optimize("tree-sra")))
+#define EMBR_GC_TREE_SRA __attribute__((optimize("tree-sra", "tree-dse")))
 #define EMBR_GC_INLINE_BARE __attribute__((always_inline, optimize("tree-sra")))
 #define EMBR_GC_INLINE inline EMBR_GC_INLINE_BARE
 #define EMBR_GC_INLINE_FLATTEN inline __attribute__((always_inline, flatten, optimize("tree-sra")))
