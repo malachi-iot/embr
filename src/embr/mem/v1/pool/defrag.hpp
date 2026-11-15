@@ -64,7 +64,7 @@ void pool_ops<Traits>::assess(fragmentation* frag) const
     // DEBT: 'next' if cur->has_next() is false creates a UB/invalid pointer for 'block'.  Doesn't violate
     // our internal rules but extremely easy to stumble over
     const_bundle bn_prev{}, bn_next = next(cur);
-    int last_sc = 0;
+    int last_score = 0;
 
     typename fragmentation::candidate& top = frag->candidates[0];
     top = {};
@@ -93,7 +93,8 @@ void pool_ops<Traits>::assess(fragmentation* frag) const
             }
         }
 
-        if(cur.is_null() == false && bn_prev.is_null() == false && cur.has_next())
+        if(cur.is_null() == false && bn_prev.is_null() == false && cur.has_next() &&
+            cur.unlocked() && bn_prev.unlocked())
         {
             pos_type bn_next_sz = phys_size(bn_next);
 
@@ -101,7 +102,7 @@ void pool_ops<Traits>::assess(fragmentation* frag) const
             if(!bn_prev.allocated() && cur.allocated() && !bn_next.allocated())
             {
                 //int sc = score(bn_prev, cur, bn_next);
-                pos_type v(0);
+                pos_type v(0);  // size calculated into weight
                 const_bundle* which = &bn_prev;
                 bool overlap = false;
 #if FEATURE_ESTD_RTTO_GET_METADATA
@@ -114,7 +115,7 @@ void pool_ops<Traits>::assess(fragmentation* frag) const
                 // maintenance involved.  Not enabling yet because it's convenient to poke the bear
                 // and have more overlaps
 
-                if(cur.is_trivial())
+                if(cur.trivial())
                 {
                     pos_type max = bn_prev_sz + bn_next_sz;
 
@@ -169,13 +170,13 @@ void pool_ops<Traits>::assess(fragmentation* frag) const
 #endif
                 }
 
-                int sc = v.count();
+                const int score = v.count();
 
-                if(sc > last_sc)
+                if(score > last_score)
                 {
                     estd::swap(frag->candidates[0], frag->candidates[1]);
-                    top = { sc, cur, *which, overlap };
-                    last_sc = sc;
+                    top = { score, cur, *which, overlap };
+                    last_score = score;
                 }
             }
 
@@ -193,7 +194,7 @@ void pool_ops<Traits>::assess(fragmentation* frag) const
                 const_bundle* which = &bn_prev;     // Presume bn_prev is the more interesting candidate
 
                 // DEBT: Assess bn_next too inside this branch
-                if(bn_prev.is_trivial())
+                if(bn_prev.trivial())
                 {
                     v += bn_prev_sz;
                     v += bn_cur_sz * booster;
@@ -216,7 +217,7 @@ void pool_ops<Traits>::assess(fragmentation* frag) const
                         v = prev_delta;
                     }
 
-                    if(bn_next.is_trivial())
+                    if(bn_next.trivial())
                     {
                         // DEBT: We do favor trivial, but shouldn't hard-select it
                         which = &bn_next;

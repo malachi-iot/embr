@@ -61,7 +61,9 @@ struct bundle_base : block_mode_enum
     // at present block can be a super invalid pointer (0xFF location off in the weeds)
     constexpr bool is_null() const { return block == nullptr; }
 
-    constexpr bool is_trivial() const { return block->mode() == v1::block_8::Trivial; }
+    constexpr bool trivial() const { return block->mode() == v1::block_8::Trivial; }
+
+    constexpr bool unlocked() const { return block->lock_count_ == 0; }
 
     invariant_result invariant() const
     {
