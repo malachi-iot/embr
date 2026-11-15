@@ -233,6 +233,8 @@ public:
     // Why?  I forget.  Comment here as to why
     void copy_from(this_type* from, unsigned sz);
     void move_from(this_type* from, unsigned sz);
+    // 15NOV26 DEBT: Copy just the ref_count and lock_count.  Crude and needs a rework
+    void copy_from_ll(this_type* from);
 };
 
 // Block is NOT packed since following data wants to sit comfortably on aligned pointer boundary

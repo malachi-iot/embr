@@ -179,6 +179,7 @@ EMBR_GC_INLINE validated_result pool_ops<Traits>::move(
 
             *new_to_block = retained;
             new_to_block->reset_mode(block::Trivial, true);
+            new_to_block->copy_from_ll(from.block);
         }
         else
         {
@@ -202,6 +203,7 @@ EMBR_GC_INLINE validated_result pool_ops<Traits>::move(
 
             *new_from_block = retained;
             to.block->reset_mode(block::Trivial, true);
+            to.block->copy_from_ll(&retained);
 
             from.block = new_from_block;
         }
@@ -223,6 +225,7 @@ EMBR_GC_INLINE validated_result pool_ops<Traits>::move(
 
         //*to.block = *from.block;
         to.block->move_from(from.block, logical_sz);
+        to.block->copy_from_ll(from.block);
         to.allocated(true);
 
         dealloc(from);
