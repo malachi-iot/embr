@@ -11,7 +11,7 @@ namespace detail { inline namespace v1 {
 // TODO: Consider also a brute relinker based purely on page.pos, though that's very extreme
 
 template <class Traits>
-void pool_ops<Traits>::virtual_swap(bundle& lhs, bundle& rhs)
+EMBR_GC_TREE_SRA void pool_ops<Traits>::virtual_swap(bundle& lhs, bundle& rhs)
 {
     //constexpr handle_type null = block::null;
     // At its core we're doing a doubly-linked list item swap operation
@@ -103,7 +103,7 @@ auto pool_ops<Traits>::move_block(page_type& page, pos_type new_pos) -> block*
 }
 
 template <class Traits>
-auto pool_ops<Traits>::resize(bundle bn, bundle bn_next, pos_type new_sz) -> block*
+EMBR_GC_INLINE auto pool_ops<Traits>::resize(bundle bn, bundle bn_next, pos_type new_sz) -> block*
 {
     const pos_type pos = bn.pos() + new_sz;
 
@@ -164,6 +164,7 @@ EMBR_GC_INLINE validated_result pool_ops<Traits>::move(
 
             // A:0  ... F:1 -> F:0  .. A:1
             // from ... to     from .. to
+            // ABCD ... xxx    xxx  .. ABCD
 
             block retained = *to.block;
 
@@ -174,8 +175,9 @@ EMBR_GC_INLINE validated_result pool_ops<Traits>::move(
 
             block* new_to_block = storage_.block(new_to_loc);
 
-            // moving A forward in memory = regular unfancy forward copy
-            memcpy(new_to_block->data(), from.block->data(), logical_sz);
+            // moving A forward in memory = fancy backward copy
+            // DEBT: Use std::copy_backward
+            std::memmove(new_to_block->data(), from.block->data(), logical_sz);
 
             *new_to_block = retained;
             new_to_block->reset_mode(block::Trivial, true);
@@ -198,7 +200,8 @@ EMBR_GC_INLINE validated_result pool_ops<Traits>::move(
 
             block* new_from_block = storage_.block(new_from_loc);
 
-            // moving A backward in memory = fancy reverse copy
+            // moving A backward in memory = unfancy forward copy
+            // DEBT: Use std::copy
             std::memmove(to.block->data(), from.block->data(), logical_sz);
 
             *new_from_block = retained;
