@@ -6,6 +6,7 @@ set(SOURCES
         dsp.cpp
         lwip.cpp
         mem.cpp
+        mem-gc.cpp
         misc.cpp
         objlist.cpp
         observer.cpp
