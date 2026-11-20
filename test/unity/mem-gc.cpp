@@ -11,6 +11,7 @@ using namespace embr;
 
 using pool_type = mem::freertos::layer1::pool<256, 4>;
 using pool8_type = mem::freertos::layer1::pool<256, 8>;
+using funclist_type = mem::v1::funclist<void(int), pool8_type>;
 
 template <class Pool>
 static void fill_pattern(Pool& pool, typename Pool::handle_type h, unsigned sz, uint8_t seed)
@@ -135,7 +136,7 @@ static void test_mem_gc_funclist_invoke()
     int calls = 0;
     int moved_locked = 0;
 
-    mem::v1::funclist<void(int), pool8_type> fl(&pool);
+    funclist_type fl(&pool);
 
     int pad0 = pool.alloc(16);
     fl += [&](int)
@@ -144,7 +145,7 @@ static void test_mem_gc_funclist_invoke()
 
         for(unsigned i = 0; i < 8; ++i)
         {
-            auto bn = pool.ops().get_bundle(i);
+            pool8_type::ops_type::bundle bn = pool.ops().get_bundle(i);
             if(!bn.page->is_null() && bn.allocated() && bn.block->lock_count())
                 before[i] = bn.data();
         }
@@ -183,11 +184,11 @@ static void test_mem_gc_funclist_move_refcount()
     pool8_type pool;
     int calls = 0;
     {
-        mem::v1::funclist<void(int), pool8_type> fl(&pool);
+        funclist_type fl(&pool);
 
         fl += [&](int) { ++calls; };        // anchor, so vector handle precedes functor below
         int pad0 = pool.alloc(32);
-        auto h = fl.push_back([&](int v) { calls += v; });
+        funclist_type::value_type h = fl.push_back([&](int v) { calls += v; });
         int pad1 = pool.alloc(32);
 
         pool.dealloc(pad0);
