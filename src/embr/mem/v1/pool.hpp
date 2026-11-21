@@ -235,6 +235,8 @@ EMBR_GC_FLATTEN void pool_ops<Traits>::dealloc(bundle bn)
 template <class Traits>
 void* pool_ops<Traits>::lock(bundle bn)
 {
+    assert(bn.lock_count() < block::max::lock_count);
+
     bn.lock_up();
 
     return bn.data();
@@ -260,6 +262,8 @@ EMBR_GC_FLATTEN void pool_ops<Traits>::unlock(handle_type h, Mutex&& mutex)
     estd::lock_guard<Mutex> lg(std::forward<Mutex>(mutex));
 
     bundle bn(get_bundle(h));
+
+    assert(bn.lock_count() > 0);
 
     bn.lock_down();
 }

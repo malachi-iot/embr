@@ -143,6 +143,7 @@ public:
     struct max
     {
         static constexpr unsigned ref_count = 15;
+        static constexpr unsigned lock_count = 15;
     };
 
     constexpr modes mode() const { return mode_; }
@@ -268,6 +269,7 @@ public:
     struct max
     {
         static constexpr unsigned ref_count = 0;
+        static constexpr unsigned lock_count = 3;
     };
 };
 

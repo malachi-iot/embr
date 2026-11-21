@@ -47,7 +47,7 @@ public:
     explicit constexpr sparse_model(const handle_type& handle) : base_type{handle} {}
 
     template <ESTD_CPP_CONCEPT(mem::concepts::Pool) Pool, class F>
-    constexpr static sparse_model make(Pool* pool, F&& f)
+    EMBR_GC_INLINE constexpr static sparse_model make(Pool* pool, F&& f)
     {
         using model_type = typename function_type::template model<F>;
 
@@ -59,6 +59,14 @@ public:
     EMBR_GC_INLINE static R invoke(Pool* pool, handle_type h, Args2&&...args)
     {
         return invoke_ll(estd::is_void<R>{}, pool, h, std::forward<Args2>(args)...);
+    }
+
+    template <ESTD_CPP_CONCEPT(mem::concepts::Pool) Pool, class ...Args2>
+    EMBR_GC_INLINE static R invoke_nolock(Pool* pool, handle_type h, Args2...args)
+    {
+        auto underlying = static_cast<model_base*>(pool->ops().get_block(h)->data());
+
+        return underlying->operator()(std::forward<Args2>(args)...);
     }
 };
 
@@ -82,6 +90,12 @@ public:
     EMBR_GC_INLINE constexpr R invoke(Pool* pool, Args2&&...args)
     {
         return base_type::invoke(pool, base_type::handle_, std::forward<Args2>(args)...);
+    }
+
+    template <class ...Args2>
+    EMBR_GC_INLINE constexpr R invoke_nolock(Pool* pool, Args2&&...args)
+    {
+        return base_type::invoke_nolock(pool, base_type::handle_, std::forward<Args2>(args)...);
     }
 };
 

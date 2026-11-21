@@ -151,6 +151,18 @@ public:
 
     const_bundle first_free(pos_type phys_sz, pos_type* found_size) const;
 
+    // Low level block acquisition for those who don't need all of bundle.  Usually you'll
+    // prefer bundle
+    EMBR_GC_INLINE block* get_block(const page_type& page)
+    {
+        return storage_.block(page.pos());
+    }
+
+    EMBR_GC_INLINE block* get_block(handle_type h)
+    {
+        return get_block(handles_[h]);
+    }
+
     // Best to have this guy here and not in above pool so that we make no assumptions
     // about page_type and handle_type
     EMBR_GC_INLINE const_bundle get_bundle(const page_type& page, handle_type handle) const
