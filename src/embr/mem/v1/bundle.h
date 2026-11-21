@@ -113,9 +113,6 @@ private:
     // Bundle also serves as an accessor gateway, so that block can keep its data private otherwise
     // In turn, only 'pool' friend can access these
 
-    void lock_up()              { ++block->lock_count_; }
-    unsigned lock_down()        { return --block->lock_count_; }
-    void lock_reset()           { block->lock_count_ = 0; }
     void ref_up() const         { ++block->ref_count_; }
     unsigned ref_down() const   { return --block->ref_count_; }
 

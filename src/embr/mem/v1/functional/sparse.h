@@ -64,7 +64,7 @@ public:
     template <ESTD_CPP_CONCEPT(mem::concepts::Pool) Pool, class ...Args2>
     EMBR_GC_INLINE static R invoke_nolock(Pool* pool, handle_type h, Args2...args)
     {
-        auto underlying = static_cast<model_base*>(pool->ops().get_block(h)->data());
+        auto underlying = static_cast<model_base*>(pool->ops().get_block(h)->cooked_data());
 
         return underlying->operator()(std::forward<Args2>(args)...);
     }

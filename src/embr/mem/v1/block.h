@@ -77,6 +77,9 @@ protected:
     template <class HandlesTraits2, class Block>
     friend struct bundle_base;
 
+    template <class Traits>
+    friend class pool_ops;
+
     // DEBT: rtto base is WAY overloaded.  Needs attention
     using rtto_base_type = estd::internal::rtto_base::base;
     using rtto_proxy = estd::internal::rtto_base::rtto_base::proxy<>;
@@ -120,6 +123,22 @@ protected:
 
     // DEBT: Apparently this and flexible array is a GCC extension.
     char data_[0];
+
+    void lock_up()
+    {
+        assert(lock_count_ < max::lock_count);
+
+        ++lock_count_;
+    }
+
+    unsigned lock_down()
+    {
+        assert(lock_count_ > 0);
+
+        return --lock_count_;
+    }
+
+    void lock_reset()           { lock_count_ = 0; }
 
 public:
     block_header_base() = default;
@@ -218,6 +237,11 @@ public:
     const rtto_base_type* rtto_base() const { return (rtto_base_type*) data_; }
     rtto_virt* virt() { return (rtto_virt*) data_; }
     const rtto_virt* virt() const { return (rtto_virt*) data_; }
+
+    void* cooked_data()
+    {
+        return mode_ == RttoProxy ? proxy()->storage() : data_;
+    }
 
     template <class T, class ...Args>
     void emplace_rtto_proxied(Args&&...args);
