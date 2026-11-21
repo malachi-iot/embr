@@ -235,7 +235,7 @@ EMBR_GC_FLATTEN void pool_ops<Traits>::dealloc(bundle bn)
 template <class Traits>
 void* pool_ops<Traits>::lock(block* b)
 {
-    b->lock_up();
+    EMBR_MEM_ASSERT(b->lock_up());
 
     return b->cooked_data();
 }
@@ -259,7 +259,7 @@ EMBR_GC_FLATTEN void pool_ops<Traits>::unlock(handle_type h, Mutex&& mutex)
 {
     estd::lock_guard<Mutex> lg(std::forward<Mutex>(mutex));
 
-    get_block(h)->lock_down();
+    EMBR_MEM_ASSERT(get_block(h)->lock_down());
 }
 
 template <class Traits>

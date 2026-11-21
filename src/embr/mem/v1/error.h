@@ -47,4 +47,6 @@ std::basic_ostream<Char>& operator <<(std::basic_ostream<Char>& out, const invar
 
 #endif
 
+#define EMBR_MEM_ASSERT(x)  if((x) == false)    abort()
+
 }}}

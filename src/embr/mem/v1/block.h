@@ -131,18 +131,22 @@ protected:
     // DEBT: Apparently this and flexible array is a GCC extension.
     char data_[0];
 
-    void lock_up()
+    bool lock_up()
     {
-        assert(lock_count_ < max::lock_count);
+        if(lock_count_ >= max::lock_count)   return false;
 
         ++lock_count_;
+
+        return true;
     }
 
-    unsigned lock_down()
+    bool lock_down()
     {
-        assert(lock_count_ > 0);
+        if(lock_count_ == 0)    return false;
 
-        return --lock_count_;
+        --lock_count_;
+
+        return true;
     }
 
     void lock_reset()           { lock_count_ = 0; }
