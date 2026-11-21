@@ -356,7 +356,7 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
         // 2048 - (2 free blocks headers) - (allocated physical block size)
         REQUIRE(op.available() == pool_size - phys_sz_bytes - block_sz * 2);
 
-        memcpy(data = op.lock(bn), "Hello", 6);
+        memcpy(data = op.lock(bn.block), "Hello", 6);
 
         op.assess(&frag);
 
@@ -419,8 +419,8 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
         // handle 0 was determined the move_to destination, which means he should
         // have the old handle 1 data
         REQUIRE(bn.is_null() == false);
-        REQUIRE(data != op.lock(bn));
-        REQUIRE(estd::string_view((char*)op.lock(bn)) == "Hello");
+        REQUIRE(data != op.lock(bn.block));
+        REQUIRE(estd::string_view((char*)op.lock(bn.block)) == "Hello");
         REQUIRE(bn.allocated());
         REQUIRE(bn.invariant());
         REQUIRE(op.invariant());
@@ -523,7 +523,7 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
         REQUIRE(se2->moved_from_counter == 1);
         REQUIRE(se2->moved_to_counter == 0);
 
-        se2 = static_cast<type*>(ops.lock(bn_free));
+        se2 = static_cast<type*>(ops.lock(bn_free.block));
 
         REQUIRE(se2 == se_free);
 

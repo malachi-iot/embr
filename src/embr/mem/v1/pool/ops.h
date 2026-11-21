@@ -87,6 +87,12 @@ protected:
     typename traits::storage_type storage_;
     typename traits::handles_type handles_;
 
+#if UNIT_TESTING
+public:
+#endif
+    void* lock(block*);
+
+
 public:
     // DEBT: Pool gets punished a little with just one init parameter, I think we'll be OK though
     template <class PoolArg, class ...HandlesArgs>
@@ -191,8 +197,6 @@ public:
     {
         return pos_type((v + aliasing - 1) / aliasing);
     }
-
-    void* lock(bundle);
 
     template <class Mutex = embr::internal::noop_mutex>
     void* lock(handle_type h, Mutex&& mutex = {});

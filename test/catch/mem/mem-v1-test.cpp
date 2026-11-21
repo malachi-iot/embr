@@ -155,13 +155,13 @@ TEST_CASE("gc mem v1 tests", "[memory][gc]")
                     REQUIRE(bn.allocated());
 
                     // DEBT: Broaching on UB to copy a locked block.  Acceptable though.
-                    auto se = (SideEffector*)op.lock(bn);
+                    auto se = (SideEffector*)op.lock(bn.block);
 
                     REQUIRE(se->copied_from_counter == 0);
 
                     bundle copied = op.copy(bn);
 
-                    auto se_copied = (SideEffector*)op.lock(copied);
+                    auto se_copied = (SideEffector*)op.lock(copied.block);
 
                     REQUIRE(se->copied_from_counter == 1);
                     REQUIRE(se_copied->counter_ == &counter);

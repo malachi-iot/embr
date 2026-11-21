@@ -87,7 +87,7 @@ static void battery(typename detail::pool_ops<Traits>& ops, int it, unsigned see
 
             if(bn.handle != null)
             {
-                void* data = ops.lock(bn);
+                void* data = ops.lock(bn.block);
                 memset(data, 'a' + bn.handle, logical_sz.count());
                 ops.unlock(bn.handle);
                 handle_metadata.emplace(bn.handle, metadata { logical_sz, mode } );
@@ -220,7 +220,7 @@ static void battery(typename detail::pool_ops<Traits>& ops, int it, unsigned see
         VERIFY(r);
         VERIFY(bn.allocated());
 
-        auto data = (char*)ops.lock(bn);
+        auto data = (char*)ops.lock(bn.block);
         const metadata& m = handle_metadata.at(bn.handle);
 
         CAPTURE(m.mode);

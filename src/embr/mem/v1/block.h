@@ -36,6 +36,12 @@ class block_invariant
     //using modes = block_mode_enum::modes;
 };
 
+template <class Derived>
+class block_mutators
+{
+};
+
+
 }
 
 struct block_base_uint : block_mode_enum
@@ -60,7 +66,8 @@ template <ESTD_CPP_CONCEPT(concepts::HandleTraits) HandlesTraits>
 class alignas(void*) block_header_base :
     public HandlesTraits,
     public block_base_uint,
-    public mixin::block_accessors<block_header_base<HandlesTraits>>
+    public mixin::block_accessors<block_header_base<HandlesTraits>>,
+    public mixin::block_mutators<block_header_base<HandlesTraits>>
 {
     using this_type = block_header_base;
 
