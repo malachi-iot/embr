@@ -357,9 +357,22 @@ TEST_CASE("gc mem v1 low level tests", "[memory][gc][ll]")
         REQUIRE(op.available() == pool_size - phys_sz_bytes - block_sz * 2);
 
         memcpy(data = op.lock(bn), "Hello", 6);
+
+        op.assess(&frag);
+
+        // locked handle cannot be moved, and no other allocations present.
+        // Therefore, candidates
+        REQUIRE(frag.candidates[0].score == 0);
+        REQUIRE(frag.candidates[0].bundle.is_null());
+        REQUIRE(frag.candidates[1].score == 0);
+        REQUIRE(frag.candidates[1].bundle.is_null());
+
         op.unlock(bn.handle);
 
         op.assess(&frag);
+
+        REQUIRE(frag.candidates[0].score > 0);
+        REQUIRE(!frag.candidates[0].bundle.is_null());
 
         REQUIRE(frag.largest_free_handle == 2);
         REQUIRE(frag0.overlap == false);
