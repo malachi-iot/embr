@@ -65,6 +65,11 @@ static void test_mem_gc_locked_nested()
 {
     pool_type pool;
 
+    auto block = [&](int handle)
+    {
+        return pool.ops().get_block(handle);
+    };
+
     int a = pool.alloc(32);
     int v = pool.alloc(16);
     int b = pool.alloc(32);
@@ -84,10 +89,10 @@ static void test_mem_gc_locked_nested()
     TEST_ASSERT_EQUAL(0, pool.gc());
     pool.unlock(v);
     TEST_ASSERT_EQUAL(0, pool.gc());
-    TEST_ASSERT_EQUAL_PTR(data, pool.ops().get_bundle(v).data());
+    TEST_ASSERT_EQUAL_PTR(data, block(v)->cooked_data());
     pool.unlock(v);
     TEST_ASSERT_GREATER_THAN(0, pool.gc());
-    TEST_ASSERT_NOT_EQUAL(data, pool.ops().get_bundle(v).data());
+    TEST_ASSERT_NOT_EQUAL(data, block(v)->cooked_data());
     TEST_ASSERT_TRUE(check_pattern(pool, v, 16, 0x60));
     TEST_ASSERT_TRUE(pool.ops().invariant().has_value());
 
@@ -99,6 +104,11 @@ static void test_mem_gc_locked_neighbor()
 {
     pool8_type pool;
 
+    auto data = [&](int handle)
+    {
+        return pool.ops().get_block(handle)->cooked_data();
+    };
+
     int f0 = pool.alloc(24);
     int l = pool.alloc(16);
     int f1 = pool.alloc(24);
@@ -109,7 +119,7 @@ static void test_mem_gc_locked_neighbor()
     fill_pattern(pool, u, 16, 0x20);
 
     const void* l_data = pool.lock(l);
-    const void* u_data = pool.ops().get_bundle(u).data();
+    const void* u_data = data(u);
 
     pool.dealloc(f0);
     pool.dealloc(f1);
@@ -119,8 +129,8 @@ static void test_mem_gc_locked_neighbor()
     while(pool.gc() > 0 && moves < 8) ++moves;
 
     TEST_ASSERT_GREATER_THAN(0, moves);
-    TEST_ASSERT_EQUAL_PTR(l_data, pool.ops().get_bundle(l).data());
-    TEST_ASSERT_NOT_EQUAL(u_data, pool.ops().get_bundle(u).data());
+    TEST_ASSERT_EQUAL_PTR(l_data, data(l));
+    TEST_ASSERT_NOT_EQUAL(u_data, data(u));
     TEST_ASSERT_TRUE(check_pattern(pool, u, 16, 0x20));
 
     pool.unlock(l);
@@ -182,6 +192,12 @@ static void test_mem_gc_funclist_invoke()
 static void test_mem_gc_funclist_move_refcount()
 {
     pool8_type pool;
+
+    auto data = [&](int handle)
+    {
+        return pool.ops().get_block(handle)->cooked_data();
+    };
+
     int calls = 0;
     {
         funclist_type fl(&pool);
@@ -194,10 +210,10 @@ static void test_mem_gc_funclist_move_refcount()
         pool.dealloc(pad0);
         pool.dealloc(pad1);
 
-        const void* before = pool.ops().get_bundle(h.handle()).data();
+        const void* before = data(h.handle());
         TEST_ASSERT_GREATER_THAN(0, pool.gc());
-        TEST_ASSERT_NOT_EQUAL(before, pool.ops().get_bundle(h.handle()).data());
-        TEST_ASSERT_EQUAL(1, pool.ops().get_bundle(h.handle()).ref_count());
+        TEST_ASSERT_NOT_EQUAL(before, data(h.handle()));
+        TEST_ASSERT_EQUAL(1, pool.ops().get_block(h.handle())->ref_count());
 
         fl.invoke(10);
         TEST_ASSERT_EQUAL(11, calls);
