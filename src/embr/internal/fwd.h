@@ -5,6 +5,11 @@
 
 #include "enum.h"
 
+// 24NOV26 MB DEBT: Not the best location for these two
+#define EMBR_GENERIC_INLINE inline __attribute__((always_inline, optimize("tree-sra")))
+#define EMBR_GENERIC_FLATTEN __attribute__((flatten, optimize("tree-sra")))
+#define EMBR_GENERIC_INLINE_FLATTEN inline __attribute__((always_inline, flatten, optimize("tree-sra")))
+
 namespace embr { namespace internal {
 
 // 23MAY26 - Do we need to start considering a 'Traits' instead of options & align_to?

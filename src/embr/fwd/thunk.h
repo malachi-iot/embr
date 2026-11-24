@@ -9,6 +9,16 @@
 #include "../internal/mutex.h"
 #include "../internal/fwd.h"
 
+#ifndef FEATURE_EMBR_THUNK_AGGRESSIVE_INLINE
+#define FEATURE_EMBR_THUNK_AGGRESSIVE_INLINE 1
+#endif
+
+#if FEATURE_EMBR_THUNK_AGGRESSIVE_INLINE && !defined(__clang__)
+#define EMBR_THUNK_INLINE EMBR_GENERIC_INLINE
+#else
+#define EMBR_THUNK_INLINE
+#endif
+
 namespace embr { inline namespace sys {
 
 namespace detail { inline namespace v1 {

@@ -61,6 +61,7 @@ public:
     constexpr const mutex_type& mutex() const { return *this; }
 
     template <class F, ESTD_CPP_CONCEPT(internal::concepts::Mutex) Mutex2>
+    EMBR_THUNK_INLINE
     errc post(Mutex2&& mutex, F&& f)
     {
         using model_type = typename function_type::template model<F>;
@@ -70,6 +71,7 @@ public:
     }
 
     template <class F, ESTD_CPP_CONCEPT(internal::concepts::Mutex) Mutex2, class OnRetry>
+    EMBR_THUNK_INLINE
     errc post_with_retry(Mutex2&& mutex, F&& f, int retry_max, OnRetry&& on_retry)
     {
         using model_type = typename function_type::template model<F>;
@@ -86,7 +88,7 @@ public:
     }
 
     template <ESTD_CPP_CONCEPT(internal::concepts::Mutex) Mutex2>
-    errc poll_one(Mutex2&& mutex)
+    EMBR_THUNK_INLINE errc poll_one(Mutex2&& mutex)
     {
         return base_type::pop(std::forward<Mutex2>(mutex), [](message* m)
         {
@@ -100,7 +102,7 @@ public:
     }
 
     template <class F, class OnRetry>
-    errc post_with_retry(F&& f, int retry_max, OnRetry&& on_retry)
+    EMBR_THUNK_INLINE errc post_with_retry(F&& f, int retry_max, OnRetry&& on_retry)
     {
         return post_with_retry(mutex(),
             std::forward<F>(f),
@@ -116,12 +118,12 @@ public:
     }
 
     template <class F>
-    errc post(F&& f)
+    EMBR_THUNK_INLINE errc post(F&& f)
     {
         return post(mutex(), std::forward<F>(f));
     }
 
-    errc poll_one()
+    EMBR_THUNK_INLINE errc poll_one()
     {
         return poll_one(mutex());
     }

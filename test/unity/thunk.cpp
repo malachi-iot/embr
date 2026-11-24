@@ -27,6 +27,7 @@ using timed_mutex = embr::freertos::timed_mutex<50>;
 // DEBT: dedup with bipbuf code
 static constexpr int task_count = 3;
 
+// test::shared assists with a singleton-esque shared worker
 template <class Thunk>
 struct shared_type : test::shared
 {

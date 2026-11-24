@@ -9,6 +9,16 @@
 #include "mutex.h"
 #include "fwd.h"
 
+#ifndef FEATURE_EMBR_BIPBUF_AGGRESSIVE_INLINE
+#define FEATURE_EMBR_BIPBUF_AGGRESSIVE_INLINE 1
+#endif
+
+#if FEATURE_EMBR_BIPBUF_AGGRESSIVE_INLINE && !defined(__clang__)
+#define EMBR_BIPBUF_INLINE EMBR_GENERIC_INLINE
+#else
+#define EMBR_BIPBUF_INLINE
+#endif
+
 // A MPSC bit buffer with size-aware elements
 
 namespace embr { namespace internal {
@@ -174,7 +184,7 @@ public:
 
     template <ESTD_CPP_CONCEPT(embr::internal::concepts::Mutex) Mutex = internal::noop_mutex,
         class F, class OnRetry>
-    errc push_with_retry(Mutex&& mutex, F&& f,
+    EMBR_BIPBUF_INLINE errc push_with_retry(Mutex&& mutex, F&& f,
         unsigned sz, int retry_max, OnRetry&& on_retry)
     {
         for(int retry = 0; retry < retry_max;)
@@ -197,7 +207,7 @@ public:
     }
 
     template <class T, class ...Args, ESTD_CPP_CONCEPT(internal::concepts::Mutex) Mutex = noop_mutex>
-    errc emplace(Mutex&& mutex, Args&&...args)
+    EMBR_BIPBUF_INLINE errc emplace(Mutex&& mutex, Args&&...args)
     {
         return push(
             std::forward<Mutex>(mutex),
@@ -208,8 +218,9 @@ public:
             sizeof(T));
     }
 
+    /// @params f = evaluate what was popped in a mutex-safe context
     template <class F, ESTD_CPP_CONCEPT(internal::concepts::Mutex) Mutex = internal::noop_mutex>
-    errc pop(Mutex&& mutex, F&& f)
+    EMBR_BIPBUF_INLINE errc pop(Mutex&& mutex, F&& f)
     {
         // DEBT: Works well enough, but peek may be doing a little more
         // than we need right now
